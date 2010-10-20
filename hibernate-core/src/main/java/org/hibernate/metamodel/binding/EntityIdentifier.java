@@ -21,19 +21,40 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.binding;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Additional contract for things that can occur in an inheritance hierarchy (specifically ones we would
- * need to traverse).
+ * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public interface Hierarchical extends AttributeContainer {
+public class EntityIdentifier {
+	private static final Logger log = LoggerFactory.getLogger( EntityIdentifier.class );
+
+	private final EntityBinding entityBinding;
+	private AttributeBinding attributeBinding;
+	// todo : generator, mappers, etc
+
 	/**
-	 * Retrieve the super type.
-	 *
-	 * @return The super type, or null if no super type.
+	 * Create an identifier
+	 * @param entityBinding
 	 */
-	public Hierarchical getSuperType();
+	public EntityIdentifier(EntityBinding entityBinding) {
+		this.entityBinding = entityBinding;
+	}
+
+	public AttributeBinding getValueBinding() {
+		return attributeBinding;
+	}
+
+	public void setValueBinding(AttributeBinding attributeBinding) {
+		if ( this.attributeBinding != null ) {
+			// todo : error?  or just log?  for now just log
+			log.warn( "setting entity-identifier value binding where one already existed : {}.", entityBinding.getEntity().getName() );
+		}
+		this.attributeBinding = attributeBinding;
+	}
 }

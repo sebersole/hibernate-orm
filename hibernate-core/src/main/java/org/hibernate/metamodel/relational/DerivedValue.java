@@ -31,8 +31,8 @@ package org.hibernate.metamodel.relational;
 public class DerivedValue extends AbstractSimpleValue implements SimpleValue {
 	private final String expression;
 
-	public DerivedValue(ValueContainer table, String expression) {
-		super( table );
+	public DerivedValue(TableSpecification table, int position, String expression) {
+		super( table, position );
 		this.expression = expression;
 	}
 
@@ -40,6 +40,6 @@ public class DerivedValue extends AbstractSimpleValue implements SimpleValue {
 	 * {@inheritDoc}
 	 */
 	public String toLoggableString() {
-		return getValueContainer().toLoggableString() + ".{derived-column}";
+		return getTable().toLoggableString() + ".{derived-column}";
 	}
 }

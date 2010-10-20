@@ -21,41 +21,26 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
-
-import org.hibernate.testing.junit.UnitTestCase;
+package org.hibernate.metamodel.domain;
 
 /**
- * TODO : javadoc
+ * Basic information about a Java type, in regards to its role in particular set of mappings.
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
-	}
+public interface Type {
+	/**
+	 * Get the name of the type.
+	 *
+	 * @return The name
+	 */
+	public String getName();
 
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
+	/**
+	 * Return the persistence type.
+	 *
+	 * @return persistence type
+	 */
+	public TypeNature getNature();
 
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-	}
-
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
-	}
 }
-

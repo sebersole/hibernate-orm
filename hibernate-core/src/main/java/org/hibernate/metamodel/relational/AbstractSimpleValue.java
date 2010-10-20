@@ -26,6 +26,8 @@ package org.hibernate.metamodel.relational;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.hibernate.metamodel.ValidationException;
+
 /**
  * Basic support for {@link SimpleValue} implementations.
  *
@@ -34,35 +36,43 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractSimpleValue implements SimpleValue {
 	private static final Logger log = LoggerFactory.getLogger( AbstractSimpleValue.class );
 
-	private final ValueContainer container;
+	private final TableSpecification table;
+	private final int position;
 	private Datatype datatype;
 
-	protected AbstractSimpleValue(ValueContainer container) {
-		this.container = container;
+	protected AbstractSimpleValue(TableSpecification table, int position) {
+		this.table = table;
+		this.position = position;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public ValueContainer getValueContainer() {
-		return container;
+	@Override
+	public TableSpecification getTable() {
+		return table;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
+	public int getPosition() {
+		return position;
+	}
+
+	@Override
 	public Datatype getDatatype() {
 		return datatype;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
+	@Override
 	public void setDatatype(Datatype datatype) {
 		log.debug( "setting datatype for column {} : {}", toLoggableString(), datatype );
 		if ( this.datatype != null && ! this.datatype.equals( datatype ) ) {
 			log.debug( "overriding previous datatype : {}", this.datatype );
 		}
 		this.datatype = datatype;
+	}
+
+	@Override
+	public void validateJdbcTypes(JdbcCodes typeCodes) {
+		// todo : better compatibility testing...
+		if ( datatype.getTypeCode() != typeCodes.nextJdbcCde() ) {
+			throw new ValidationException( "Mismatched types" );
+		}
 	}
 }

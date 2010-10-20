@@ -23,39 +23,16 @@
  */
 package org.hibernate.metamodel.relational;
 
-import org.hibernate.testing.junit.UnitTestCase;
-
 /**
- * TODO : javadoc
+ * Marker for things which can be logged.
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
-	}
-
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-	}
-
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
-	}
+public interface Loggable {
+	/**
+	 * Obtain the string representation of this value usable in log statements.
+	 *
+	 * @return The loggable representation
+	 */
+	public String toLoggableString();
 }
-

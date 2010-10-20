@@ -21,41 +21,18 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
-
-import org.hibernate.testing.junit.UnitTestCase;
+package org.hibernate.metamodel.domain;
 
 /**
- * TODO : javadoc
+ * A single valued (non-collection) attribute
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
-	}
-
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-	}
-
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
-	}
+public interface SingularAttribute extends Attribute {
+	/**
+	 * Retrieve the attribute type descriptor.
+	 *
+	 * @return THe attribute type.
+	 */
+	public Type getSingularAttributeType();
 }
-

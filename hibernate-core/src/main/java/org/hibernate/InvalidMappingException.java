@@ -24,6 +24,8 @@
  */
 package org.hibernate;
 
+import org.hibernate.util.xml.XmlDocument;
+
 /**
  * Thrown when a mapping is found to be invalid.
  * Similar to MappingException, but this contains more info about the path and type of mapping (e.g. file, resource or url)
@@ -32,7 +34,6 @@ package org.hibernate;
  *
  */
 public class InvalidMappingException extends MappingException {
-
 	private final String path;
 	private final String type;
 
@@ -46,6 +47,14 @@ public class InvalidMappingException extends MappingException {
 		super(customMessage);
 		this.type=type;
 		this.path=path;
+	}
+
+	public InvalidMappingException(String customMessage, XmlDocument xmlDocument, Throwable cause) {
+		this( customMessage, xmlDocument.getOrigin().getType(), xmlDocument.getOrigin().getName(), cause );
+	}
+
+	public InvalidMappingException(String customMessage, XmlDocument xmlDocument) {
+		this( customMessage, xmlDocument.getOrigin().getType(), xmlDocument.getOrigin().getName() );
 	}
 	
 	public InvalidMappingException(String type, String path) {

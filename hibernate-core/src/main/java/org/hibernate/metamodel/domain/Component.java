@@ -21,35 +21,22 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.domain;
 
 /**
- * Desribes an attribute.
+ * Models the notion of a component (what JPA calls an Embeddable).
+ * <p/>
+ * NOTE : Components are not currently really hierarchical.  But that is a feature I want to add.
  *
  * @author Steve Ebersole
  */
-public interface Attribute {
-	/**
-	 * Retrieve the attribute name.
-	 *
-	 * @return The attribute name.
-	 */
-	public String getName();
+public class Component extends AbstractAttributeContainer implements Hierarchical {
+	public Component(String name, Hierarchical superType) {
+		super( name, superType );
+	}
 
-	/**
-	 * Retrieve the declaring container for this attribute (entity/component).
-	 *
-	 * @return The attribute container.
-	 */
-	public AttributeContainer getAttributeContainer();
-
-	/**
-	 * An attribute can be either:<ul>
-	 * <li>singular - castable to {@link SingularAttribute}</li>
-	 * <li>plural - castable to {@link PluralAttribute}
-	 * </ul>
-	 *
-	 * @return True if attribute is singular; false if plural.
-	 */
-	public boolean isSingular();
+	@Override
+	public TypeNature getNature() {
+		return TypeNature.COMPONENT;
+	}
 }

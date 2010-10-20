@@ -21,22 +21,48 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.binding;
 
 /**
- * Models the notion of a component (what JPA calls an Embeddable).
- * <p/>
- * NOTE : Components are not currently really hierarchical.  But that is a feature I want to add.
+ * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class Component extends AbstractAttributeContainer implements Hierarchical {
-	public Component(String name, Hierarchical superType) {
-		super( name, superType );
+public class Caching {
+	private String region;
+	private String strategy;
+	private boolean cacheLazyProperties;
+
+	public Caching() {
 	}
 
-	@Override
-	public TypeNature getNature() {
-		return TypeNature.COMPONENT;
+	public Caching(String region, String strategy, boolean cacheLazyProperties) {
+		this.region = region;
+		this.strategy = strategy;
+		this.cacheLazyProperties = cacheLazyProperties;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
+	public String getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(String strategy) {
+		this.strategy = strategy;
+	}
+
+	public boolean isCacheLazyProperties() {
+		return cacheLazyProperties;
+	}
+
+	public void setCacheLazyProperties(boolean cacheLazyProperties) {
+		this.cacheLazyProperties = cacheLazyProperties;
 	}
 }

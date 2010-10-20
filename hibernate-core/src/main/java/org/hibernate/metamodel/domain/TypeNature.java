@@ -21,41 +21,30 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
-
-import org.hibernate.testing.junit.UnitTestCase;
+package org.hibernate.metamodel.domain;
 
 /**
- * TODO : javadoc
+ * Describes the type of a type :/
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
+public enum TypeNature {
+	BASIC( "basic" ),
+	COMPONENT( "component" ),
+	ENTITY( "entity" ),
+	SUPERCLASS( "superclass" );
+
+	private final String name;
+
+	private TypeNature(String name) {
+		this.name = name;
 	}
 
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
+	public String getName() {
+		return name;
 	}
 
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
+	public String toString() {
+		return super.toString() + "[" + getName() + "]";
 	}
 }
-

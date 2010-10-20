@@ -21,30 +21,35 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.domain;
 
 /**
- * Describes the type of a type :/
+ * Desribes an attribute.
  *
  * @author Steve Ebersole
  */
-public enum TypeNature {
-	BASIC( "basic" ),
-	COMPONENT( "component" ),
-	ENTITY( "entity" ),
-	SUPERCLASS( "superclass" );
+public interface Attribute {
+	/**
+	 * Retrieve the attribute name.
+	 *
+	 * @return The attribute name.
+	 */
+	public String getName();
 
-	private final String name;
+	/**
+	 * Retrieve the declaring container for this attribute (entity/component).
+	 *
+	 * @return The attribute container.
+	 */
+	public AttributeContainer getAttributeContainer();
 
-	private TypeNature(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String toString() {
-		return super.toString() + "[" + getName() + "]";
-	}
+	/**
+	 * An attribute can be either:<ul>
+	 * <li>singular - castable to {@link SingularAttribute}</li>
+	 * <li>plural - castable to {@link PluralAttribute}
+	 * </ul>
+	 *
+	 * @return True if attribute is singular; false if plural.
+	 */
+	public boolean isSingular();
 }

@@ -21,18 +21,33 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.relational;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * A single valued (non-collection) attribute
+ * Represents a database and manages the named schema/catalog pairs defined within.
  *
  * @author Steve Ebersole
  */
-public interface SingularAttribute extends Attribute {
-	/**
-	 * Retrieve the attribute type descriptor.
-	 *
-	 * @return THe attribute type.
-	 */
-	public Type getSingularAttributeType();
+public class Database {
+	private Map<Schema.Name,Schema> schemaMap = new HashMap<Schema.Name, Schema>();
+
+	public Schema getSchema(Schema.Name name) {
+		Schema schema = schemaMap.get( name );
+		if ( schema == null ) {
+			schema = new Schema( name );
+			schemaMap.put( name, schema );
+		}
+		return schema;
+	}
+
+	public Schema getSchema(Identifier schema, Identifier catalog) {
+		return getSchema( new Schema.Name( schema, catalog ) );
+	}
+
+	public Schema getSchema(String schema, String catalog) {
+		return getSchema( new Schema.Name( Identifier.toIdentifier( schema ), Identifier.toIdentifier( catalog ) ) );
+	}
 }

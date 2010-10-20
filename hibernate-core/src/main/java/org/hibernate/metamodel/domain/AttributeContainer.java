@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.domain;
 
 import java.util.Set;
 
@@ -38,6 +38,8 @@ public interface AttributeContainer extends Type {
 	 * @return The contained attributes
 	 */
 	public Set<Attribute> getAttributes();
+
+	public SingularAttribute getOrCreateSingularAttribute(String name);
 
 	/**
 	 * Retrieve an attribute by name.

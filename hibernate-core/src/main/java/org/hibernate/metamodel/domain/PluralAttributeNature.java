@@ -21,41 +21,37 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
+package org.hibernate.metamodel.domain;
 
-import org.hibernate.testing.junit.UnitTestCase;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * TODO : javadoc
+ * Identifies the specific semantic of a plural valued attribute.
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
+public enum PluralAttributeNature {
+	BAG( "bag", Collection.class ),
+	SET( "set", Set.class ),
+	LIST( "list", List.class ),
+	MAP( "map", Map.class );
+
+	private final String name;
+	private final Class javaContract;
+
+	PluralAttributeNature(String name, Class javaContract) {
+		this.name = name;
+		this.javaContract = javaContract;
 	}
 
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
+	public String getName() {
+		return name;
 	}
 
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
+	public Class getJavaContract() {
+		return javaContract;
 	}
 }
-

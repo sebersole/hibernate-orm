@@ -21,37 +21,22 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package org.hibernate.metamodel.domain;
 
 /**
- * Identifies the specific semantic of a plural valued attribute.
+ * Models the concept of a (intermediate) superclass
  *
  * @author Steve Ebersole
  */
-public enum PluralAttributeNature {
-	BAG( "bag", Collection.class ),
-	SET( "set", Set.class ),
-	LIST( "list", List.class ),
-	MAP( "map", Map.class );
-
-	private final String name;
-	private final Class javaContract;
-
-	PluralAttributeNature(String name, Class javaContract) {
-		this.name = name;
-		this.javaContract = javaContract;
+public class Superclass extends AbstractAttributeContainer implements Hierarchical {
+	public Superclass(String name, Hierarchical superType) {
+		super( name, superType );
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public Class getJavaContract() {
-		return javaContract;
+	/**
+	 * {@inheritDoc}
+	 */
+	public TypeNature getNature() {
+		return TypeNature.SUPERCLASS;
 	}
 }

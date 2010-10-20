@@ -21,41 +21,44 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
-
-import org.hibernate.testing.junit.UnitTestCase;
+package org.hibernate.metamodel.binding;
 
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
+public class EntityDiscriminator {
+	private final EntityBinding entityBinding;
+	private SimpleAttributeBinding valueBinding;
+	private boolean forced;
+	private boolean inserted = true;
+
+	public EntityDiscriminator(EntityBinding entityBinding) {
+		this.entityBinding = entityBinding;
 	}
 
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
+	public SimpleAttributeBinding getValueBinding() {
+		return valueBinding;
 	}
 
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
+	public void setValueBinding(SimpleAttributeBinding valueBinding) {
+		this.valueBinding = valueBinding;
+	}
+
+	public boolean isForced() {
+		return forced;
+	}
+
+	public void setForced(boolean forced) {
+		this.forced = forced;
+	}
+
+	public boolean isInserted() {
+		return inserted;
+	}
+
+	public void setInserted(boolean inserted) {
+		this.inserted = inserted;
 	}
 }
-

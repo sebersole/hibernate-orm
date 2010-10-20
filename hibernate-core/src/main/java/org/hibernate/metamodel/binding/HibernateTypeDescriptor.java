@@ -21,22 +21,37 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.binding;
+
+import org.hibernate.type.Type;
 
 /**
- * Models the concept of a (intermediate) superclass
+ * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class Superclass extends AbstractAttributeContainer implements Hierarchical {
-	public Superclass(String name, Hierarchical superType) {
-		super( name, superType );
+public class HibernateTypeDescriptor {
+	private final AttributeBinding attributeBinding;
+	private String typeName;
+	private Type explicitType;
+
+	public HibernateTypeDescriptor(AttributeBinding attributeBinding) {
+		this.attributeBinding = attributeBinding;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public TypeNature getNature() {
-		return TypeNature.SUPERCLASS;
+	public String getTypeName() {
+		return typeName;
+	}
+
+	public void setTypeName(String typeName) {
+		this.typeName = typeName;
+	}
+
+	public Type getExplicitType() {
+		return explicitType;
+	}
+
+	public void setExplicitType(Type explicitType) {
+		this.explicitType = explicitType;
 	}
 }

@@ -21,27 +21,17 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.binding;
 
 /**
- * Models a basic type, a simple value.
+ * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class BasicType implements Type {
-	private final String name;
+public interface KeyValueBinding extends AttributeBinding {
+	public boolean isKeyCasadeDeleteEnabled();
 
-	public BasicType(String name) {
-		this.name = name;
-	}
+	public String getUnsavedValue();
 
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	@Override
-	public TypeNature getNature() {
-		return TypeNature.BASIC;
-	}
+	public boolean isUpdateable();
 }

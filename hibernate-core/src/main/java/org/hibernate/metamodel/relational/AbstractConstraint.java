@@ -60,7 +60,7 @@ public abstract class AbstractConstraint implements Constraint {
 	}
 
 	public void addColumn(Column column) {
-		if ( column.getValueContainer() != getTable() ) {
+		if ( column.getTable() != getTable() ) {
 			throw new IllegalArgumentException( "Unable to add column to constraint; tables did not match" );
 		}
 		columns.add( column );

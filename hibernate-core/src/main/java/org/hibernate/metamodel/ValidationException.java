@@ -21,41 +21,21 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
+package org.hibernate.metamodel;
 
-import org.hibernate.testing.junit.UnitTestCase;
+import org.hibernate.HibernateException;
 
 /**
- * TODO : javadoc
+ * Indicates a problem validating the metamodel.
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
+public class ValidationException extends HibernateException {
+	public ValidationException(String s) {
+		super( s );
 	}
 
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-	}
-
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
+	public ValidationException(String string, Throwable root) {
+		super( string, root );
 	}
 }
-

@@ -35,7 +35,7 @@ public interface Value {
 	 *
 	 * @return The owning table.
 	 */
-	public ValueContainer getValueContainer();
+	public TableSpecification getTable();
 
 	/**
 	 * Obtain the string representation of this value usable in log statements.
@@ -43,4 +43,36 @@ public interface Value {
 	 * @return The loggable representation
 	 */
 	public String toLoggableString();
+
+	/**
+	 * Used to track JDBC type usage throughout a series of potential recursive calls to component
+	 * values since we do not know ahead of time which values correspond to which indexes of the
+	 * jdbc type array.
+	 */
+	public static class JdbcCodes {
+		private final int[] typeCodes;
+		private int index = 0;
+
+		public JdbcCodes(int[] typeCodes) {
+			this.typeCodes = typeCodes;
+		}
+
+		public int nextJdbcCde() {
+			return typeCodes[index++];
+		}
+
+		public int getIndex() {
+			return index;
+		}
+	}
+
+	/**
+	 * Validate the value against the incoming JDBC type code array, both in terms of number of types
+	 * and compatibility of types.
+	 *
+	 * @param typeCodes The type codes.
+	 *
+	 * @throws org.hibernate.metamodel.ValidationException if validaton fails.
+	 */
+	public void validateJdbcTypes(JdbcCodes typeCodes);
 }

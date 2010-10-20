@@ -21,26 +21,27 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.logical;
+package org.hibernate.metamodel.domain;
 
 /**
- * Basic information about a Java type, in regards to its role in particular set of mappings.
+ * Models a basic type, a simple value.
  *
  * @author Steve Ebersole
  */
-public interface Type {
-	/**
-	 * Get the name of the type.
-	 *
-	 * @return The name
-	 */
-	public String getName();
+public class BasicType implements Type {
+	private final String name;
 
-	/**
-	 * Return the persistence type.
-	 *
-	 * @return persistence type
-	 */
-	public TypeNature getNature();
+	public BasicType(String name) {
+		this.name = name;
+	}
 
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public TypeNature getNature() {
+		return TypeNature.BASIC;
+	}
 }

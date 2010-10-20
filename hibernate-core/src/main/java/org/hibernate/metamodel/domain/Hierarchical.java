@@ -21,41 +21,19 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.relational;
-
-import org.hibernate.testing.junit.UnitTestCase;
+package org.hibernate.metamodel.domain;
 
 /**
- * TODO : javadoc
+ * Additional contract for things that can occur in an inheritance hierarchy (specifically ones we would
+ * need to traverse).
  *
  * @author Steve Ebersole
  */
-public class ObjectNameTests extends UnitTestCase {
-	public ObjectNameTests(String string) {
-		super( string );
-	}
-
-	public void testMissingName() {
-		try {
-			new ObjectName( (String)null, null, null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-
-		try {
-			new ObjectName( "schema", "catalog", null );
-			fail();
-		}
-		catch ( IllegalIdentifierException ignore ) {
-		}
-	}
-
-	public void testIdentifierBuilding() {
-		ObjectName on = new ObjectName( "schema", "catalog", "name" );
-		assertEquals( "schema.catalog.name", on.toText() );
-		on = new ObjectName( "schema", null, "name" );
-		assertEquals( "schema.name", on.toText() );
-	}
+public interface Hierarchical extends AttributeContainer {
+	/**
+	 * Retrieve the super type.
+	 *
+	 * @return The super type, or null if no super type.
+	 */
+	public Hierarchical getSuperType();
 }
-
