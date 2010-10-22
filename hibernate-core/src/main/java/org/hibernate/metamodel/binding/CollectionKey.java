@@ -23,33 +23,24 @@
  */
 package org.hibernate.metamodel.binding;
 
-import java.util.Properties;
-
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.relational.ForeignKey;
 
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
+public class CollectionKey {
+	private final PluralAttributeBinding collection;
 
-	public String getTypeName() {
-		return typeName;
-	}
+	private ForeignKey foreignKey;
+	private boolean inverse;
+	private HibernateTypeDescriptor hibernateTypeDescriptor;
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
-	}
+// todo : this would be nice to have but we do not always know it, especially in HBM case.
+//	private SimpleAttributeBinding otherSide;
 
-	public Type getExplicitType() {
-		return explicitType;
-	}
-
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
+	public CollectionKey(PluralAttributeBinding collection) {
+		this.collection = collection;
 	}
 }

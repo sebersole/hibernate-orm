@@ -23,33 +23,13 @@
  */
 package org.hibernate.metamodel.binding;
 
-import java.util.Properties;
-
-import org.hibernate.type.Type;
-
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
-
-	public String getTypeName() {
-		return typeName;
-	}
-
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
-	}
-
-	public Type getExplicitType() {
-		return explicitType;
-	}
-
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
+public class BagBinding extends PluralAttributeBinding {
+	protected BagBinding(EntityBinding entityBinding) {
+		super( entityBinding );
 	}
 }

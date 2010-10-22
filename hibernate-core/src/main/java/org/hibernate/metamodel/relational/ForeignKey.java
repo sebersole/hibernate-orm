@@ -43,6 +43,8 @@ public class ForeignKey extends AbstractConstraint implements Constraint, Export
 
 	private final TableSpecification targetTable;
 	private List<Column> targetColumns;
+	private ReferentialAction deleteRule = ReferentialAction.NO_ACTION;
+	public ReferentialAction updateRule = ReferentialAction.NO_ACTION;
 
 	protected ForeignKey(TableSpecification sourceTable, TableSpecification targetTable, String name) {
 		super( sourceTable, name );
@@ -109,9 +111,27 @@ public class ForeignKey extends AbstractConstraint implements Constraint, Export
 		return getSourceTable().getLoggableValueQualifier() + ".FK-" + getName();
 	}
 
-	public void validate() {
-		if ( getSourceTable() == null ) {
+	public ReferentialAction getDeleteRule() {
+		return deleteRule;
+	}
 
-		}
+	public void setDeleteRule(ReferentialAction deleteRule) {
+		this.deleteRule = deleteRule;
+	}
+
+	public ReferentialAction getUpdateRule() {
+		return updateRule;
+	}
+
+	public void setUpdateRule(ReferentialAction updateRule) {
+		this.updateRule = updateRule;
+	}
+
+	public static enum ReferentialAction {
+		NO_ACTION,
+		CASCADE,
+		SET_NULL,
+		SET_DEFAULT,
+		RESTRICT
 	}
 }

@@ -25,6 +25,7 @@ package org.hibernate.metamodel.binding;
 
 import org.xml.sax.InputSource;
 
+import org.hibernate.metamodel.relational.Column;
 import org.hibernate.metamodel.source.Metadata;
 import org.hibernate.testing.junit.UnitTestCase;
 import org.hibernate.util.ConfigHelper;
@@ -34,7 +35,7 @@ import org.hibernate.util.xml.Origin;
 import org.hibernate.util.xml.XmlDocument;
 
 /**
- * TODO : javadoc
+ * Basic tests of {@code hbm.xml} beinding code
  *
  * @author Steve Ebersole
  */
@@ -47,35 +48,47 @@ public class BasicHbmBindingTests extends UnitTestCase {
 		Metadata metadata = new Metadata();
 
 		{
-			XmlDocument xmlDocument = readResource( "/org/hibernate/test/id/Car.hbm.xml" );
+			XmlDocument xmlDocument = readResource( "/org/hibernate/metamodel/binding/SimpleEntity.hbm.xml" );
 			metadata.getHibernateXmlBinder().bindRoot( xmlDocument );
-			EntityBinding carBinding = metadata.getEntityBinding( org.hibernate.test.id.Car.class.getName() );
-			assertNotNull( carBinding );
-			assertNotNull( carBinding.getEntityIdentifier() );
-			assertNotNull( carBinding.getEntityIdentifier().getValueBinding() );
-			assertNull( carBinding.getVersioningValueBinding() );
+			EntityBinding entityBinding = metadata.getEntityBinding( SimpleEntity.class.getName() );
+			assertNotNull( entityBinding );
+			assertNotNull( entityBinding.getEntityIdentifier() );
+			assertNotNull( entityBinding.getEntityIdentifier().getValueBinding() );
+			assertNull( entityBinding.getVersioningValueBinding() );
+
+			AttributeBinding idAttributeBinding = entityBinding.getAttributeBinding( "id" );
+			assertNotNull( idAttributeBinding );
+			assertSame( idAttributeBinding, entityBinding.getEntityIdentifier().getValueBinding() );
+			assertNotNull( idAttributeBinding.getAttribute() );
+			assertNotNull( idAttributeBinding.getValue() );
+			assertTrue( idAttributeBinding.getValue() instanceof Column );
+
+			AttributeBinding nameBinding = entityBinding.getAttributeBinding( "name" );
+			assertNotNull( nameBinding );
+			assertNotNull( nameBinding.getAttribute() );
+			assertNotNull( nameBinding.getValue() );
 		}
 		{
-			XmlDocument xmlDocument = readResource( "/org/hibernate/test/version/PersonThing.hbm.xml" );
+			XmlDocument xmlDocument = readResource( "/org/hibernate/metamodel/binding/SimpleVersionedEntity.hbm.xml" );
 			metadata.getHibernateXmlBinder().bindRoot( xmlDocument );
-			EntityBinding personBinding = metadata.getEntityBinding( org.hibernate.test.version.Person.class.getName() );
-			assertNotNull( personBinding );
-			assertNotNull( personBinding.getEntityIdentifier() );
-			assertNotNull( personBinding.getEntityIdentifier().getValueBinding() );
-			assertNotNull( personBinding.getVersioningValueBinding() );
-			assertNotNull( personBinding.getVersioningValueBinding().getAttribute() );
-			EntityBinding thingBinding = metadata.getEntityBinding( org.hibernate.test.version.Thing.class.getName() );
-			assertNotNull( thingBinding );
-			assertNotNull( thingBinding.getEntityIdentifier() );
-			assertNotNull( thingBinding.getEntityIdentifier().getValueBinding() );
-			assertNotNull( thingBinding.getVersioningValueBinding() );
-			assertNotNull( thingBinding.getVersioningValueBinding().getAttribute() );
-			EntityBinding taskBinding = metadata.getEntityBinding( org.hibernate.test.version.Task.class.getName() );
-			assertNotNull( taskBinding );
-			assertNotNull( taskBinding.getEntityIdentifier() );
-			assertNotNull( taskBinding.getEntityIdentifier().getValueBinding() );
-			assertNotNull( taskBinding.getVersioningValueBinding() );
-			assertNotNull( taskBinding.getVersioningValueBinding().getAttribute() );
+			EntityBinding entityBinding = metadata.getEntityBinding( SimpleVersionedEntity.class.getName() );
+			assertNotNull( entityBinding );
+			assertNotNull( entityBinding.getEntityIdentifier() );
+			assertNotNull( entityBinding.getEntityIdentifier().getValueBinding() );
+			assertNotNull( entityBinding.getVersioningValueBinding() );
+			assertNotNull( entityBinding.getVersioningValueBinding().getAttribute() );
+
+			AttributeBinding idAttributeBinding = entityBinding.getAttributeBinding( "id" );
+			assertNotNull( idAttributeBinding );
+			assertSame( idAttributeBinding, entityBinding.getEntityIdentifier().getValueBinding() );
+			assertNotNull( idAttributeBinding.getAttribute() );
+			assertNotNull( idAttributeBinding.getValue() );
+			assertTrue( idAttributeBinding.getValue() instanceof Column );
+
+			AttributeBinding nameBinding = entityBinding.getAttributeBinding( "name" );
+			assertNotNull( nameBinding );
+			assertNotNull( nameBinding.getAttribute() );
+			assertNotNull( nameBinding.getValue() );
 		}
 	}
 

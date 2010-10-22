@@ -84,7 +84,7 @@ class RootEntityBinder extends AbstractEntityBinder {
 		bindCaching( entityElement, entityBinding );
 
 		// called createClassProperties in HBMBinder...
-//		processPropertyBindings( node, entity, mappings, inheritedMetas );
+		buildAttributeBindings( entityElement, entityBinding );
 
 		getHibernateXmlBinder().getMetadata().addEntity( entityBinding );
 	}
@@ -212,12 +212,6 @@ class RootEntityBinder extends AbstractEntityBinder {
 		 * "illegal use of an array as an identifier (arrays don't reimplement equals)" );
 		 */
 //		makeIdentifier( idNode, id, mappings );
-	}
-
-	protected Value processValues(Element identifierElement, TableSpecification baseTable, String propertyPath) {
-		// first boolean (false here) indicates that by default columns are nullable
-		// second boolean (true here) indicates that by default column names should be guessed
-		return processValues( identifierElement, baseTable, false, true, propertyPath );
 	}
 
 	private static void bindCompositeId(Element identifierElement, EntityBinding entityBinding) {

@@ -23,33 +23,35 @@
  */
 package org.hibernate.metamodel.binding;
 
-import java.util.Properties;
-
-import org.hibernate.type.Type;
-
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
+public class SimpleEntity {
+	private Long id;
+	private String name;
 
-	public String getTypeName() {
-		return typeName;
+	public SimpleEntity() {
 	}
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
+	public SimpleEntity(String name) {
+		this.name = name;
 	}
 
-	public Type getExplicitType() {
-		return explicitType;
+	public Long getId() {
+		return id;
 	}
 
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }

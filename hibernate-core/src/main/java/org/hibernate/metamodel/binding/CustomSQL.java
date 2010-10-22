@@ -23,33 +23,33 @@
  */
 package org.hibernate.metamodel.binding;
 
-import java.util.Properties;
-
-import org.hibernate.type.Type;
+import org.hibernate.engine.ExecuteUpdateResultCheckStyle;
 
 /**
- * TODO : javadoc
- *
- * @author Steve Ebersole
- */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
+* TODO : javadoc
+*
+* @author Steve Ebersole
+*/
+public class CustomSQL {
+	private final String sql;
+	private final boolean isCallable;
+	private final ExecuteUpdateResultCheckStyle checkStyle;
 
-	public String getTypeName() {
-		return typeName;
+	public CustomSQL(String sql, boolean callable, ExecuteUpdateResultCheckStyle checkStyle) {
+		this.sql = sql;
+		isCallable = callable;
+		this.checkStyle = checkStyle;
 	}
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
+	public String getSql() {
+		return sql;
 	}
 
-	public Type getExplicitType() {
-		return explicitType;
+	public boolean isCallable() {
+		return isCallable;
 	}
 
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
+	public ExecuteUpdateResultCheckStyle getCheckStyle() {
+		return checkStyle;
 	}
 }

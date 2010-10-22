@@ -62,15 +62,50 @@ public abstract class AbstractAttributeContainer implements AttributeContainer, 
 	}
 
 	@Override
+	public Attribute getAttribute(String name) {
+		return attributeMap.get( name );
+	}
+
+	@Override
 	public SingularAttribute getOrCreateSingularAttribute(String name) {
-		final SingularAttributeImpl attribute = new SingularAttributeImpl( name, this );
-		addAttribute( attribute );
+		SingularAttribute attribute = (SingularAttribute) getAttribute( name );
+		if ( attribute == null ) {
+			attribute = new SingularAttributeImpl( name, this );
+			addAttribute( attribute );
+		}
 		return attribute;
 	}
 
 	@Override
-	public Attribute getAttribute(String name) {
-		return attributeMap.get( name );
+	public PluralAttribute getOrCreateBag(String name) {
+		return getOrCreatePluralAttribute( name, PluralAttributeNature.BAG );
+	}
+
+	@Override
+	public PluralAttribute getOrCreateSet(String name) {
+		return getOrCreatePluralAttribute( name, PluralAttributeNature.SET );
+	}
+
+	@Override
+	public IndexedPluralAttribute getOrCreateList(String name) {
+		return (IndexedPluralAttribute) getOrCreatePluralAttribute( name, PluralAttributeNature.LIST );
+	}
+
+	@Override
+	public IndexedPluralAttribute getOrCreateMap(String name) {
+		return (IndexedPluralAttribute) getOrCreatePluralAttribute( name, PluralAttributeNature.MAP );
+	}
+
+	@Override
+	public PluralAttribute getOrCreatePluralAttribute(String name, PluralAttributeNature nature) {
+		PluralAttribute attribute = (PluralAttribute) getAttribute( name );
+		if ( attribute == null ) {
+			attribute = nature.isIndexed()
+					? new IndexedPluralAttributeImpl( name, nature, this )
+					: new PluralAttributeImpl( name, nature, this );
+			addAttribute( attribute );
+		}
+		return attribute;
 	}
 
 	protected void addAttribute(Attribute attribute) {
@@ -110,6 +145,68 @@ public abstract class AbstractAttributeContainer implements AttributeContainer, 
 		@Override
 		public boolean isSingular() {
 			return true;
+		}
+	}
+
+	public static class PluralAttributeImpl implements PluralAttribute {
+		private final AttributeContainer attributeContainer;
+		private final PluralAttributeNature nature;
+		private final String name;
+
+		private Type elementType;
+
+		public PluralAttributeImpl(String name,  PluralAttributeNature nature, AttributeContainer attributeContainer) {
+			this.name = name;
+			this.nature = nature;
+			this.attributeContainer = attributeContainer;
+		}
+
+		@Override
+		public AttributeContainer getAttributeContainer() {
+			return attributeContainer;
+		}
+
+		@Override
+		public boolean isSingular() {
+			return false;
+		}
+
+		@Override
+		public PluralAttributeNature getNature() {
+			return nature;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public Type getElementType() {
+			return elementType;
+		}
+
+		@Override
+		public void setElementType(Type elementType) {
+			this.elementType = elementType;
+		}
+	}
+
+	public static class IndexedPluralAttributeImpl extends PluralAttributeImpl implements IndexedPluralAttribute {
+		private Type indexType;
+
+		public IndexedPluralAttributeImpl(String name, PluralAttributeNature nature, AttributeContainer attributeContainer) {
+			super( name, nature, attributeContainer );
+		}
+
+		@Override
+		public Type getIndexType() {
+			return indexType;
+		}
+
+		@Override
+		public void setIndexType(Type indexType) {
+			this.indexType = indexType;
 		}
 	}
 }

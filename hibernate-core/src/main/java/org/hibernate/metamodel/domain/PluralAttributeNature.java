@@ -41,10 +41,12 @@ public enum PluralAttributeNature {
 
 	private final String name;
 	private final Class javaContract;
+	private final boolean indexed;
 
 	PluralAttributeNature(String name, Class javaContract) {
 		this.name = name;
 		this.javaContract = javaContract;
+		this.indexed = Map.class.isAssignableFrom( javaContract ) || List.class.isAssignableFrom( javaContract );
 	}
 
 	public String getName() {
@@ -53,5 +55,9 @@ public enum PluralAttributeNature {
 
 	public Class getJavaContract() {
 		return javaContract;
+	}
+
+	public boolean isIndexed() {
+		return indexed;
 	}
 }

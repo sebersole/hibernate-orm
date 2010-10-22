@@ -21,35 +21,15 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.binding;
-
-import java.util.Properties;
-
-import org.hibernate.type.Type;
+package org.hibernate.metamodel.domain;
 
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
-
-	public String getTypeName() {
-		return typeName;
-	}
-
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
-	}
-
-	public Type getExplicitType() {
-		return explicitType;
-	}
-
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
-	}
+public interface PluralAttribute extends Attribute {
+	public PluralAttributeNature getNature();
+	public Type getElementType();
+	public void setElementType(Type elementType);
 }

@@ -23,27 +23,28 @@
  */
 package org.hibernate.metamodel.source;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.hibernate.DuplicateMappingException;
-import org.hibernate.MappingException;
+import org.hibernate.annotations.common.reflection.MetadataProvider;
+import org.hibernate.annotations.common.reflection.MetadataProviderInjector;
+import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
 import org.hibernate.cfg.EJB3NamingStrategy;
-import org.hibernate.cfg.ExtendsQueueEntry;
-import org.hibernate.cfg.HbmBinder;
 import org.hibernate.cfg.NamingStrategy;
+import org.hibernate.cfg.annotations.reflection.JPAMetadataProvider;
 import org.hibernate.mapping.FetchProfile;
 import org.hibernate.mapping.MetadataSource;
 import org.hibernate.metamodel.binding.EntityBinding;
+import org.hibernate.metamodel.binding.PluralAttributeBinding;
 import org.hibernate.metamodel.relational.Database;
-import org.hibernate.metamodel.relational.ObjectName;
-import org.hibernate.metamodel.relational.TableSpecification;
 import org.hibernate.metamodel.source.hbm.HibernateXmlBinder;
 
 /**
@@ -51,13 +52,43 @@ import org.hibernate.metamodel.source.hbm.HibernateXmlBinder;
  *
  * @author Steve Ebersole
  */
-public class Metadata {
+public class Metadata implements Serializable {
 	private static final Logger log = LoggerFactory.getLogger( Metadata.class );
 
 	private final HibernateXmlBinder hibernateXmlBinder = new HibernateXmlBinder( this );
+	private final ExtendsQueue extendsQueue = new ExtendsQueue( this );
+	private final MetadataSourceQueue metadataSourceQueue = new MetadataSourceQueue( this );
+
+	private transient ReflectionManager reflectionManager = createReflectionManager();
 
 	public HibernateXmlBinder getHibernateXmlBinder() {
 		return hibernateXmlBinder;
+	}
+
+	public ExtendsQueue getExtendsQueue() {
+		return extendsQueue;
+	}
+
+	public MetadataSourceQueue getMetadataSourceQueue() {
+		return metadataSourceQueue;
+	}
+
+	public ReflectionManager getReflectionManager() {
+		return reflectionManager;
+	}
+
+	public void setReflectionManager(ReflectionManager reflectionManager) {
+		this.reflectionManager = reflectionManager;
+	}
+
+	private ReflectionManager createReflectionManager() {
+		return createReflectionManager( new JPAMetadataProvider() );
+	}
+
+	private ReflectionManager createReflectionManager(MetadataProvider metadataProvider) {
+		ReflectionManager reflectionManager = new JavaReflectionManager();
+		( (MetadataProviderInjector) reflectionManager ).setMetadataProvider( metadataProvider );
+		return reflectionManager;
 	}
 
 	private final Database database = new Database();
@@ -76,12 +107,6 @@ public class Metadata {
 		this.namingStrategy = namingStrategy;
 	}
 
-	private Set<ExtendsQueueEntry> extendsQueue = new HashSet<ExtendsQueueEntry>();
-
-	public void addToExtendsQueue(ExtendsQueueEntry extendsQueueEntry) {
-		extendsQueue.add( extendsQueueEntry );
-	}
-
 	private Map<String,EntityBinding> entityBindingMap = new HashMap<String, EntityBinding>();
 
 	public EntityBinding getEntityBinding(String entityName) {
@@ -97,7 +122,27 @@ public class Metadata {
 		if ( entityBindingMap.containsKey( entityName ) ) {
 			throw new DuplicateMappingException( DuplicateMappingException.Type.ENTITY, entityName );
 		}
-		entityBindingMap.put( entityBinding.getEntity().getName(), entityBinding );
+		entityBindingMap.put( entityName, entityBinding );
+	}
+
+	private Map<String,PluralAttributeBinding> collectionBindingMap = new HashMap<String, PluralAttributeBinding>();
+
+	public PluralAttributeBinding getCollection(String collectionRole) {
+		return collectionBindingMap.get( collectionRole );
+	}
+
+	public Iterable<PluralAttributeBinding> getCollections() {
+		return collectionBindingMap.values();
+	}
+
+	public void addCollection(PluralAttributeBinding pluralAttributeBinding) {
+		final String owningEntityName = pluralAttributeBinding.getEntityBinding().getEntity().getName();
+		final String attributeName = pluralAttributeBinding.getAttribute().getName();
+		final String collectionRole = owningEntityName + '.' + attributeName;
+		if ( collectionBindingMap.containsKey( collectionRole ) ) {
+			throw new DuplicateMappingException( DuplicateMappingException.Type.ENTITY, collectionRole );
+		}
+		collectionBindingMap.put( collectionRole, pluralAttributeBinding );
 	}
 
 	private Map<String,String> imports;
@@ -126,5 +171,19 @@ public class Metadata {
 			fetchProfiles.put( profileName, profile );
 		}
 		return profile;
+	}
+
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		//we need  reflectionManager before reading the other components (MetadataSourceQueue in particular)
+		final MetadataProvider metadataProvider = (MetadataProvider) ois.readObject();
+		this.reflectionManager = createReflectionManager( metadataProvider );
+		ois.defaultReadObject();
+	}
+
+	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+		//We write MetadataProvider first as we need  reflectionManager before reading the other components
+		final MetadataProvider metadataProvider = ( ( MetadataProviderInjector ) reflectionManager ).getMetadataProvider();
+		out.writeObject( metadataProvider );
+		out.defaultWriteObject();
 	}
 }

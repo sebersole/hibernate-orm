@@ -40,6 +40,11 @@ public interface AttributeContainer extends Type {
 	public Set<Attribute> getAttributes();
 
 	public SingularAttribute getOrCreateSingularAttribute(String name);
+	public PluralAttribute getOrCreatePluralAttribute(String name, PluralAttributeNature nature);
+	public PluralAttribute getOrCreateBag(String name);
+	public PluralAttribute getOrCreateSet(String name);
+	public IndexedPluralAttribute getOrCreateList(String name);
+	public IndexedPluralAttribute getOrCreateMap(String name);
 
 	/**
 	 * Retrieve an attribute by name.

@@ -39,6 +39,13 @@ import org.hibernate.metamodel.relational.Value;
  */
 public interface AttributeBinding {
 	/**
+	 * Obtain the entity binding to which this attribute binding exists.
+	 *
+	 * @return The entity binding.
+	 */
+	public EntityBinding getEntityBinding();
+
+	/**
 	 * Obtain the attribute bound.
 	 *
 	 * @return The attribute.
@@ -66,6 +73,11 @@ public interface AttributeBinding {
 	 */
 	public void setValue(Value value);
 
+	/**
+	 * Obtain the descriptor for the Hibernate Type for this binding.
+	 *
+	 * @return The type descriptor
+	 */
 	public HibernateTypeDescriptor getHibernateTypeDescriptor();
 
 	/**

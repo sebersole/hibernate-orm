@@ -41,10 +41,16 @@ import org.hibernate.cfg.NamingStrategy;
 import org.hibernate.engine.Versioning;
 import org.hibernate.mapping.MetaAttribute;
 import org.hibernate.mapping.PropertyGeneration;
+import org.hibernate.metamodel.binding.AttributeBinding;
+import org.hibernate.metamodel.binding.BagBinding;
 import org.hibernate.metamodel.binding.EntityBinding;
+import org.hibernate.metamodel.binding.PluralAttributeBinding;
 import org.hibernate.metamodel.binding.SimpleAttributeBinding;
 import org.hibernate.metamodel.domain.Entity;
 import org.hibernate.metamodel.domain.Hierarchical;
+import org.hibernate.metamodel.domain.PluralAttribute;
+import org.hibernate.metamodel.domain.PluralAttributeNature;
+import org.hibernate.metamodel.domain.SingularAttribute;
 import org.hibernate.metamodel.relational.Column;
 import org.hibernate.metamodel.relational.Index;
 import org.hibernate.metamodel.relational.Schema;
@@ -313,6 +319,278 @@ abstract class AbstractEntityBinder {
 // todo : find out the purpose of these logical bindings
 //			mappings.addTableBinding( schema, catalog, logicalTableName, physicalTableName, denormalizedSuperTable );
 		return physicalTableName;
+	}
+
+	protected void buildAttributeBindings(Element entityElement, EntityBinding entityBinding) {
+		// null = UniqueKey (we are not binding a natural-id mapping)
+		// true = mutable, by default properties are mutable
+		// true = nullable, by default properties are nullable.
+		buildAttributeBindings( entityElement, entityBinding, null, true, true );
+	}
+
+	/**
+	 * This form is essentially used to create natural-id mappings.  But the processing is the same, aside from these
+	 * extra parameterized values, so we encapsulate it here.
+	 *
+	 * @param entityElement
+	 * @param entityBinding
+	 * @param uniqueKey
+	 * @param mutable
+	 * @param nullable
+	 */
+	protected void buildAttributeBindings(
+			Element entityElement,
+			EntityBinding entityBinding,
+			UniqueKey uniqueKey,
+			boolean mutable,
+			boolean nullable) {
+		final boolean naturalId = uniqueKey != null;
+
+		final String entiytName = entityBinding.getEntity().getName();
+		final TableSpecification tabe = entityBinding.getBaseTable();
+
+		AttributeBinding attributeBinding = null;
+
+		Iterator iter = entityElement.elementIterator();
+		while ( iter.hasNext() ) {
+			final Element subElement = (Element) iter.next();
+			final String subElementName = subElement.getName();
+			final String propertyName = subElement.attributeValue( "name" );
+
+			if ( "bag".equals( subElementName ) ) {
+				BagBinding bagBinding = entityBinding.makeBagAttributeBinding( propertyName );
+				bindCollection( subElement, bagBinding, entityBinding, PluralAttributeNature.BAG, propertyName );
+				hibernateMappingBinder.getHibernateXmlBinder().getMetadata().addCollection( bagBinding );
+				attributeBinding = bagBinding;
+			}
+			else if ( "idbag".equals( subElementName ) ) {
+				BagBinding bagBinding = entityBinding.makeBagAttributeBinding( propertyName );
+				bindCollection( subElement, bagBinding, entityBinding, PluralAttributeNature.BAG, propertyName );
+				hibernateMappingBinder.getHibernateXmlBinder().getMetadata().addCollection( bagBinding );
+				attributeBinding = bagBinding;
+				// todo: handle identifier
+			}
+			else if ( "set".equals( subElementName ) ) {
+				BagBinding bagBinding = entityBinding.makeBagAttributeBinding( propertyName );
+				bindCollection( subElement, bagBinding, entityBinding, PluralAttributeNature.SET, propertyName );
+				hibernateMappingBinder.getHibernateXmlBinder().getMetadata().addCollection( bagBinding );
+				attributeBinding = bagBinding;
+			}
+			else if ( "list".equals( subElementName ) ) {
+				BagBinding bagBinding = entityBinding.makeBagAttributeBinding( propertyName );
+				bindCollection( subElement, bagBinding, entityBinding, PluralAttributeNature.LIST, propertyName );
+				hibernateMappingBinder.getHibernateXmlBinder().getMetadata().addCollection( bagBinding );
+				attributeBinding = bagBinding;
+				// todo : handle list index
+			}
+			else if ( "map".equals( subElementName ) ) {
+				BagBinding bagBinding = entityBinding.makeBagAttributeBinding( propertyName );
+				bindCollection( subElement, bagBinding, entityBinding, PluralAttributeNature.MAP, propertyName );
+				hibernateMappingBinder.getHibernateXmlBinder().getMetadata().addCollection( bagBinding );
+				attributeBinding = bagBinding;
+				// todo : handle map key
+			}
+			else if ( "many-to-one".equals( subElementName ) ) {
+// todo : implement
+//				value = new ManyToOne( mappings, table );
+//				bindManyToOne( subElement, (ManyToOne) value, propertyName, nullable, mappings );
+			}
+			else if ( "any".equals( subElementName ) ) {
+// todo : implement
+//				value = new Any( mappings, table );
+//				bindAny( subElement, (Any) value, nullable, mappings );
+			}
+			else if ( "one-to-one".equals( subElementName ) ) {
+// todo : implement
+//				value = new OneToOne( mappings, table, persistentClass );
+//				bindOneToOne( subElement, (OneToOne) value, propertyName, true, mappings );
+			}
+			else if ( "property".equals( subElementName ) ) {
+				SimpleAttributeBinding binding = entityBinding.makeSimpleAttributeBinding( propertyName );
+				bindSimpleAttribute( subElement, binding, entityBinding, propertyName );
+				attributeBinding = binding;
+			}
+			else if ( "component".equals( subElementName )
+					|| "dynamic-component".equals( subElementName )
+					|| "properties".equals( subElementName ) ) {
+// todo : implement
+//				String subpath = StringHelper.qualify( entityName, propertyName );
+//				value = new Component( mappings, persistentClass );
+//
+//				bindComponent(
+//						subElement,
+//						(Component) value,
+//						persistentClass.getClassName(),
+//						propertyName,
+//						subpath,
+//						true,
+//						"properties".equals( subElementName ),
+//						mappings,
+//						inheritedMetas,
+//						false
+//					);
+			}
+			else if ( "join".equals( subElementName ) ) {
+// todo : implement
+//				Join join = new Join();
+//				join.setPersistentClass( persistentClass );
+//				bindJoin( subElement, join, mappings, inheritedMetas );
+//				persistentClass.addJoin( join );
+			}
+			else if ( "subclass".equals( subElementName ) ) {
+// todo : implement
+//				handleSubclass( persistentClass, mappings, subElement, inheritedMetas );
+			}
+			else if ( "joined-subclass".equals( subElementName ) ) {
+// todo : implement
+//				handleJoinedSubclass( persistentClass, mappings, subElement, inheritedMetas );
+			}
+			else if ( "union-subclass".equals( subElementName ) ) {
+// todo : implement
+//				handleUnionSubclass( persistentClass, mappings, subElement, inheritedMetas );
+			}
+			else if ( "filter".equals( subElementName ) ) {
+// todo : implement
+//				parseFilter( subElement, entityBinding );
+			}
+			else if ( "natural-id".equals( subElementName ) ) {
+// todo : implement
+//				UniqueKey uk = new UniqueKey();
+//				uk.setName("_UniqueKey");
+//				uk.setTable(table);
+//				//by default, natural-ids are "immutable" (constant)
+//				boolean mutableId = "true".equals( subElement.attributeValue("mutable") );
+//				createClassProperties(
+//						subElement,
+//						persistentClass,
+//						mappings,
+//						inheritedMetas,
+//						uk,
+//						mutableId,
+//						false,
+//						true
+//					);
+//				table.addUniqueKey(uk);
+			}
+			else if ( "query".equals(subElementName) ) {
+// todo : implement
+//				bindNamedQuery(subElement, persistentClass.getEntityName(), mappings);
+			}
+			else if ( "sql-query".equals(subElementName) ) {
+// todo : implement
+//				bindNamedSQLQuery(subElement, persistentClass.getEntityName(), mappings);
+			}
+			else if ( "resultset".equals(subElementName) ) {
+// todo : implement
+//				bindResultSetMappingDefinition( subElement, persistentClass.getEntityName(), mappings );
+			}
+
+//			if ( value != null ) {
+//				Property property = createProperty( value, propertyName, persistentClass
+//					.getClassName(), subElement, mappings, inheritedMetas );
+//				if ( !mutable ) property.setUpdateable(false);
+//				if ( naturalId ) property.setNaturalIdentifier(true);
+//				persistentClass.addProperty( property );
+//				if ( uniqueKey!=null ) uniqueKey.addColumns( property.getColumnIterator() );
+//			}
+
+		}
+	}
+
+	protected void bindSimpleAttribute(Element propertyElement, SimpleAttributeBinding attributeBinding, EntityBinding entityBinding, String attributeName) {
+		if ( attributeBinding.getAttribute() == null ) {
+			// attribute has not been bound yet
+			SingularAttribute attribute = entityBinding.getEntity().getOrCreateSingularAttribute( attributeName );
+			attributeBinding.setAttribute( attribute );
+			basicAttributeBinding( propertyElement, attributeBinding );
+		}
+
+		if ( attributeBinding.getValue() == null ) {
+			// relational model has not been bound yet
+			Value idValue = processValues( propertyElement, entityBinding.getBaseTable(), attributeName );
+			attributeBinding.setValue( idValue );
+		}
+	}
+
+	protected void bindCollection(
+			Element collectionElement,
+			PluralAttributeBinding collectionBinding,
+			EntityBinding entityBinding,
+			PluralAttributeNature attributeNature,
+			String attributeName) {
+		if ( collectionBinding.getAttribute() == null ) {
+			// domain model has not been bound yet
+			PluralAttribute attribute = entityBinding.getEntity().getOrCreatePluralAttribute( attributeName, attributeNature );
+			collectionBinding.setAttribute( attribute );
+			basicCollectionBinding( collectionElement, collectionBinding );
+		}
+
+		// todo : relational model binding
+	}
+
+	protected void basicCollectionBinding(Element collectionElement, PluralAttributeBinding collectionBinding) {
+		// todo : implement
+	}
+
+//	private static Property createProperty(
+//			final Value value,
+//	        final String propertyName,
+//			final String className,
+//	        final Element subnode,
+//	        final Mappings mappings,
+//			java.util.Map inheritedMetas) throws MappingException {
+//
+//		if ( StringHelper.isEmpty( propertyName ) ) {
+//			throw new MappingException( subnode.getName() + " mapping must defined a name attribute [" + className + "]" );
+//		}
+//
+//		value.setTypeUsingReflection( className, propertyName );
+//
+//		// this is done here 'cos we might only know the type here (ugly!)
+//		// TODO: improve this a lot:
+//		if ( value instanceof ToOne ) {
+//			ToOne toOne = (ToOne) value;
+//			String propertyRef = toOne.getReferencedPropertyName();
+//			if ( propertyRef != null ) {
+//				mappings.addUniquePropertyReference( toOne.getReferencedEntityName(), propertyRef );
+//			}
+//		}
+//		else if ( value instanceof Collection ) {
+//			Collection coll = (Collection) value;
+//			String propertyRef = coll.getReferencedPropertyName();
+//			// not necessarily a *unique* property reference
+//			if ( propertyRef != null ) {
+//				mappings.addPropertyReference( coll.getOwnerEntityName(), propertyRef );
+//			}
+//		}
+//
+//		value.createForeignKey();
+//		Property prop = new Property();
+//		prop.setValue( value );
+//		bindProperty( subnode, prop, mappings, inheritedMetas );
+//		return prop;
+//	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	protected Value processValues(Element identifierElement, TableSpecification baseTable, String propertyPath) {
+		// first boolean (false here) indicates that by default columns are nullable
+		// second boolean (true here) indicates that by default column names should be guessed
+		return processValues( identifierElement, baseTable, false, true, propertyPath );
 	}
 
 	protected Value processValues(

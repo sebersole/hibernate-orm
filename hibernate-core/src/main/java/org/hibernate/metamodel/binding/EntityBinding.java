@@ -117,7 +117,14 @@ public class EntityBinding {
 	}
 
 	public SimpleAttributeBinding makeSimpleAttributeBinding(String name) {
-		final SimpleAttributeBinding binding = new SimpleAttributeBinding();
+		final SimpleAttributeBinding binding = new SimpleAttributeBinding( this );
+		attributeBindingMap.put( name, binding );
+		binding.setAttribute( entity.getAttribute( name ) );
+		return binding;
+	}
+
+	public BagBinding makeBagAttributeBinding(String name) {
+		final BagBinding binding = new BagBinding( this );
 		attributeBindingMap.put( name, binding );
 		binding.setAttribute( entity.getAttribute( name ) );
 		return binding;
@@ -289,29 +296,5 @@ public class EntityBinding {
 
 	public void setCustomSqlDelete(String sql, boolean callable, ExecuteUpdateResultCheckStyle resultCheckStyle) {
 		customDelete = new CustomSQL( sql, callable, resultCheckStyle );
-	}
-
-	public static class CustomSQL {
-		private final String sql;
-		private final boolean isCallable;
-		private final ExecuteUpdateResultCheckStyle checkStyle;
-
-		public CustomSQL(String sql, boolean callable, ExecuteUpdateResultCheckStyle checkStyle) {
-			this.sql = sql;
-			isCallable = callable;
-			this.checkStyle = checkStyle;
-		}
-
-		public String getSql() {
-			return sql;
-		}
-
-		public boolean isCallable() {
-			return isCallable;
-		}
-
-		public ExecuteUpdateResultCheckStyle getCheckStyle() {
-			return checkStyle;
-		}
 	}
 }

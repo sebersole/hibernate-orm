@@ -23,33 +23,20 @@
  */
 package org.hibernate.metamodel.binding;
 
-import java.util.Properties;
-
-import org.hibernate.type.Type;
+import org.hibernate.mapping.Value;
 
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public class HibernateTypeDescriptor {
-	private String typeName;
-	private Type explicitType;
-	private Properties typeParameters;
+public class CollectionElement {
+	private final HibernateTypeDescriptor hibernateTypeDescriptor = new HibernateTypeDescriptor();
+	private final PluralAttributeBinding collectionBinding;
 
-	public String getTypeName() {
-		return typeName;
-	}
+	private Value elementValue;
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
-	}
-
-	public Type getExplicitType() {
-		return explicitType;
-	}
-
-	public void setExplicitType(Type explicitType) {
-		this.explicitType = explicitType;
+	CollectionElement(PluralAttributeBinding collectionBinding) {
+		this.collectionBinding = collectionBinding;
 	}
 }

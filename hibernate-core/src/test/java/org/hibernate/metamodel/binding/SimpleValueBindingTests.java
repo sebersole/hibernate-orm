@@ -34,7 +34,7 @@ import org.hibernate.metamodel.relational.Table;
 import org.hibernate.testing.junit.UnitTestCase;
 
 /**
- * TODO : javadoc
+ * Basic binding "smopke" tests
  *
  * @author Steve Ebersole
  */
