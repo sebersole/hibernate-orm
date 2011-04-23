@@ -23,6 +23,7 @@
  */
 package org.hibernate.service;
 
+import org.hibernate.bytecode.BytecodeProviderInitiator;
 import org.hibernate.engine.jdbc.batch.internal.BatchBuilderInitiator;
 import org.hibernate.engine.jdbc.internal.JdbcServicesInitiator;
 import org.hibernate.engine.transaction.internal.TransactionFactoryInitiator;
@@ -68,6 +69,8 @@ public class StandardServiceInitiators {
 
 		serviceInitiators.add( JtaPlatformInitiator.INSTANCE );
 		serviceInitiators.add( TransactionFactoryInitiator.INSTANCE );
+
+		serviceInitiators.add( BytecodeProviderInitiator.INSTANCE );
 
 		serviceInitiators.add( SessionFactoryServiceRegistryFactoryInitiator.INSTANCE );
 		serviceInitiators.add( IntegratorServiceInitiator.INSTANCE );

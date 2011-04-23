@@ -36,7 +36,6 @@ import org.jboss.logging.Logger;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Version;
-import org.hibernate.bytecode.spi.BytecodeProvider;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ConfigHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
@@ -176,9 +175,7 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 public final class Environment implements AvailableSettings {
 	private static final CoreMessageLogger LOG = Logger.getMessageLogger(CoreMessageLogger.class, Environment.class.getName());
 
-	private static final BytecodeProvider BYTECODE_PROVIDER_INSTANCE;
 	private static final boolean ENABLE_BINARY_STREAMS;
-	private static final boolean ENABLE_REFLECTION_OPTIMIZER;
 	private static final boolean JVM_HAS_TIMESTAMP_BUG;
 
 	private static final Properties GLOBAL_PROPERTIES;
@@ -187,7 +184,7 @@ public final class Environment implements AvailableSettings {
 	private static final Map OBSOLETE_PROPERTIES = new HashMap();
 	private static final Map RENAMED_PROPERTIES = new HashMap();
 
-	/**
+		/**
 	 * Issues warnings to the user when any obsolete or renamed property names are used.
 	 *
 	 * @param props The specified properties.
@@ -260,22 +257,11 @@ public final class Environment implements AvailableSettings {
 			LOG.usingStreams();
 		}
 
-		ENABLE_REFLECTION_OPTIMIZER = ConfigurationHelper.getBoolean(USE_REFLECTION_OPTIMIZER, GLOBAL_PROPERTIES);
-        if (ENABLE_REFLECTION_OPTIMIZER) {
-			LOG.usingReflectionOptimizer();
-		}
-
-		BYTECODE_PROVIDER_INSTANCE = buildBytecodeProvider( GLOBAL_PROPERTIES );
-
 		long x = 123456789;
 		JVM_HAS_TIMESTAMP_BUG = new Timestamp(x).getTime() != x;
         if (JVM_HAS_TIMESTAMP_BUG) {
 			LOG.usingTimestampWorkaround();
 		}
-	}
-
-	public static BytecodeProvider getBytecodeProvider() {
-		return BYTECODE_PROVIDER_INSTANCE;
 	}
 
 	/**
@@ -303,19 +289,6 @@ public final class Environment implements AvailableSettings {
 	}
 
 	/**
-	 * Should we use reflection optimization?
-	 *
-	 * @return True if reflection optimization should be used; false otherwise.
-	 *
-	 * @see #USE_REFLECTION_OPTIMIZER
-	 * @see #getBytecodeProvider()
-	 * @see BytecodeProvider#getReflectionOptimizer
-	 */
-	public static boolean useReflectionOptimizer() {
-		return ENABLE_REFLECTION_OPTIMIZER;
-	}
-
-	/**
 	 * Disallow instantiation
 	 */
 	private Environment() {
@@ -329,7 +302,7 @@ public final class Environment implements AvailableSettings {
 	 */
 	public static Properties getProperties() {
 		Properties copy = new Properties();
-		copy.putAll(GLOBAL_PROPERTIES);
+		copy.putAll( GLOBAL_PROPERTIES );
 		return copy;
 	}
 
@@ -342,20 +315,5 @@ public final class Environment implements AvailableSettings {
 	 */
 	public static String isolationLevelToString(int isolation) {
 		return (String) ISOLATION_LEVELS.get( new Integer(isolation) );
-	}
-
-	public static BytecodeProvider buildBytecodeProvider(Properties properties) {
-		String provider = ConfigurationHelper.getString( BYTECODE_PROVIDER, properties, "javassist" );
-        LOG.bytecodeProvider(provider);
-		return buildBytecodeProvider( provider );
-	}
-
-	private static BytecodeProvider buildBytecodeProvider(String providerName) {
-		if ( "javassist".equals( providerName ) ) {
-			return new org.hibernate.bytecode.internal.javassist.BytecodeProviderImpl();
-		}
-
-        LOG.unknownBytecodeProvider( providerName );
-		return new org.hibernate.bytecode.internal.javassist.BytecodeProviderImpl();
 	}
 }

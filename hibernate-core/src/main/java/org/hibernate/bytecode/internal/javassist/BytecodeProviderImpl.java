@@ -27,10 +27,9 @@ import java.lang.reflect.Modifier;
 
 import org.jboss.logging.Logger;
 
-import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.bytecode.buildtime.spi.ClassFilter;
 import org.hibernate.bytecode.buildtime.spi.FieldFilter;
-import org.hibernate.bytecode.spi.BytecodeProvider;
+import org.hibernate.bytecode.spi.AbstractBytecodeProvider;
 import org.hibernate.bytecode.spi.ClassTransformer;
 import org.hibernate.bytecode.spi.ProxyFactoryFactory;
 import org.hibernate.bytecode.spi.ReflectionOptimizer;
@@ -41,9 +40,12 @@ import org.hibernate.internal.util.StringHelper;
  *
  * @author Steve Ebersole
  */
-public class BytecodeProviderImpl implements BytecodeProvider {
+public class BytecodeProviderImpl extends AbstractBytecodeProvider {
+	private static final Logger log = Logger.getLogger( BytecodeProviderImpl.class );
 
-    private static final CoreMessageLogger LOG = Logger.getMessageLogger(CoreMessageLogger.class, BytecodeProviderImpl.class.getName());
+	public BytecodeProviderImpl(boolean useReflectionOptimization) {
+		super( useReflectionOptimization );
+	}
 
 	public ProxyFactoryFactory getProxyFactoryFactory() {
 		return new ProxyFactoryFactoryImpl();
@@ -54,6 +56,10 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 	        String[] getterNames,
 	        String[] setterNames,
 	        Class[] types) {
+		if ( ! isReflectionOptimizerEnabled() ) {
+			return null;
+		}
+
 		FastClass fastClass;
 		BulkAccessor bulkAccessor;
 		try {
@@ -73,18 +79,28 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 		catch ( Throwable t ) {
 			fastClass = null;
 			bulkAccessor = null;
-            if (LOG.isDebugEnabled()) {
+            if ( log.isDebugEnabled() ) {
                 int index = 0;
-                if (t instanceof BulkAccessorException) index = ((BulkAccessorException)t).getIndex();
-                if (index >= 0) LOG.debugf("Reflection optimizer disabled for: %s [%s: %s (property %s)",
-                                           clazz.getName(),
-                                           StringHelper.unqualify(t.getClass().getName()),
-                                           t.getMessage(),
-                                           setterNames[index]);
-                else LOG.debugf("Reflection optimizer disabled for: %s [%s: %s",
-                                clazz.getName(),
-                                StringHelper.unqualify(t.getClass().getName()),
-                                t.getMessage());
+                if (t instanceof BulkAccessorException) {
+					index = ((BulkAccessorException)t).getIndex();
+				}
+                if (index >= 0) {
+					log.debugf(
+							"Reflection optimizer disabled for: %s [%s: %s (property %s)",
+							clazz.getName(),
+							StringHelper.unqualify( t.getClass().getName() ),
+							t.getMessage(),
+							setterNames[index]
+					);
+				}
+                else {
+					log.debugf(
+							"Reflection optimizer disabled for: %s [%s: %s",
+							clazz.getName(),
+							StringHelper.unqualify( t.getClass().getName() ),
+							t.getMessage()
+					);
+				}
             }
 		}
 

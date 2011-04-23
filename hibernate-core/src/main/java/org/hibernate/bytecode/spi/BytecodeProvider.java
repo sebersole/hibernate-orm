@@ -25,6 +25,7 @@ package org.hibernate.bytecode.spi;
 
 import org.hibernate.bytecode.buildtime.spi.ClassFilter;
 import org.hibernate.bytecode.buildtime.spi.FieldFilter;
+import org.hibernate.service.Service;
 
 /**
  * Contract for providers of bytecode services to Hibernate.
@@ -37,7 +38,7 @@ import org.hibernate.bytecode.buildtime.spi.FieldFilter;
  *
  * @author Steve Ebersole
  */
-public interface BytecodeProvider {
+public interface BytecodeProvider extends Service {
 	/**
 	 * Retrieve the specific factory for this provider capable of
 	 * generating run-time proxies for lazy-loading purposes.

@@ -1418,8 +1418,8 @@ public interface CoreMessageLogger extends BasicLogger {
     void usingOldDtd();
 
     @LogMessage( level = INFO )
-    @Message( value = "Using bytecode reflection optimizer", id = 406 )
-    void usingReflectionOptimizer();
+    @Message( value = "Bytecode reflection optimizer enabled : %s", id = 406 )
+    void usingReflectionOptimizer(boolean enabled);
 
     @LogMessage( level = INFO )
     @Message( value = "Using java.io streams to persist binary types", id = 407 )
