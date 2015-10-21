@@ -17,6 +17,8 @@ import javax.persistence.AttributeConverter;
 import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
 import org.hibernate.annotations.common.reflection.XProperty;
+import org.hibernate.boot.model.MemberDescriptor;
+import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
 import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
@@ -194,6 +196,27 @@ public class AttributeConverterDescriptorNonAutoApplicableImpl implements Attrib
 
 	@Override
 	public boolean shouldAutoApplyToMapKey(XProperty xProperty, MetadataBuildingContext context) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldAutoApplyToAttribute(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldAutoApplyToCollectionElement(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldAutoApplyToMapKey(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
 		return false;
 	}
 }

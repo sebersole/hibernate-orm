@@ -8,6 +8,8 @@ package org.hibernate.boot.model.source.spi;
 
 import java.lang.annotation.Annotation;
 
+import org.jboss.jandex.MethodInfo;
+
 /**
  * @author Steve Ebersole
  */
@@ -19,7 +21,7 @@ public interface JpaCallbackSource {
 	 * @return the name of the JPA callback method defined for the associated {@link javax.persistence.Entity entity} or {@link javax.persistence.MappedSuperclass
 	 *         mapped superclass} and for the supplied callback annotation class.
 	 */
-	String getCallbackMethod(Class<? extends Annotation> callbackType);
+	MethodInfo getCallbackMethod(Class<? extends Annotation> callbackType);
 
 	/**
 	 * @return the name of the instantiated container where the JPA callbacks for the associated {@link javax.persistence.Entity entity} or

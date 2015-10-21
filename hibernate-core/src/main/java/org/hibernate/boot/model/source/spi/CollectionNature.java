@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * @author Steve Ebersole
  */
-public enum PluralAttributeNature {
+public enum CollectionNature {
 	BAG( Collection.class, false ),
 	ID_BAG( Collection.class, false ),
 	SET( Set.class, false ),
@@ -27,7 +27,7 @@ public enum PluralAttributeNature {
 	private final boolean indexed;
 	private final Class<?> reportedJavaType;
 
-	PluralAttributeNature(Class<?> reportedJavaType, boolean indexed) {
+	CollectionNature(Class<?> reportedJavaType, boolean indexed) {
 		this.reportedJavaType = reportedJavaType;
 		this.indexed = indexed;
 	}

@@ -8,6 +8,7 @@ package org.hibernate.cfg.annotations;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,19 @@ public class NamedProcedureCallDefinition {
 					)
 			);
 		}
+	}
+
+	public NamedProcedureCallDefinition(Builder builder) {
+		this.registeredName = builder.name;
+		this.procedureName = builder.procedureName;
+		this.resultClasses = builder.resultClasses.toArray( new Class[ builder.resultClasses.size() ] );
+		this.resultSetMappings = builder.resultSetMappingNames.toArray( new String[ builder.resultSetMappingNames.size() ] );
+		this.parameterDefinitions = new ParameterDefinitions(
+				builder.parameterStrategy,
+				builder.parameterDefinitionList
+		);
+		this.hints = new HashMap<String, Object>();
+		this.hints.putAll( builder.queryHints );
 	}
 
 	public String getRegisteredName() {
@@ -162,6 +176,13 @@ public class NamedProcedureCallDefinition {
 			}
 		}
 
+		public ParameterDefinitions(
+				ParameterStrategy parameterStrategy,
+				List<ParameterDefinition> parameterDefinitionList) {
+			this.parameterStrategy = parameterStrategy;
+			this.parameterDefinitions = parameterDefinitionList.toArray( new ParameterDefinition[ parameterDefinitionList.size() ] );
+		}
+
 		public ParameterStrategy getParameterStrategy() {
 			return parameterStrategy;
 		}
@@ -188,6 +209,13 @@ public class NamedProcedureCallDefinition {
 			this.type = annotation.type();
 		}
 
+		ParameterDefinition(Integer position, String name, ParameterMode parameterMode, Class type) {
+			this.position = position;
+			this.name = name;
+			this.parameterMode = parameterMode;
+			this.type = type;
+		}
+
 		public ParameterMemento toMemento(SessionFactoryImpl sessionFactory) {
 			return new ParameterMemento(
 					position,
@@ -201,5 +229,67 @@ public class NamedProcedureCallDefinition {
 
 	private static String normalize(String name) {
 		return StringHelper.isNotEmpty( name ) ? name : null;
+	}
+
+	public static class Builder {
+		private final String name;
+		private final String procedureName;
+		private final List<ParameterDefinition> parameterDefinitionList = new ArrayList<ParameterDefinition>();
+		private final Map<String, Object> queryHints = new HashMap<String, Object>();
+		private final List<Class> resultClasses = new ArrayList<Class>();
+		private final List<String> resultSetMappingNames = new ArrayList<String>();
+
+		private ParameterStrategy parameterStrategy = ParameterStrategy.UNKNOWN;
+
+		public Builder(String name, String procedureName) {
+			this.name = name;
+			this.procedureName = procedureName;
+		}
+
+		public void addParameter(String name, ParameterMode mode, Class javaType) {
+			final ParameterStrategy incomingParameterStrategy;
+			if ( StringHelper.isNotEmpty( name ) ) {
+				incomingParameterStrategy = ParameterStrategy.NAMED;
+			}
+			else {
+				incomingParameterStrategy = ParameterStrategy.POSITIONAL;
+			}
+
+			if ( parameterStrategy == ParameterStrategy.UNKNOWN ) {
+				parameterStrategy = incomingParameterStrategy;
+			}
+			else {
+				if ( parameterStrategy != incomingParameterStrategy ) {
+					throw new IllegalArgumentException(
+							"Attempt to mix named and position parameters for " +
+									"@NamedStoredProcedureQuery(name=" + name + ")"
+					);
+				}
+			}
+			parameterDefinitionList.add(
+					new ParameterDefinition(
+							parameterDefinitionList.size() + 1,
+							name,
+							mode,
+							javaType
+					)
+			);
+		}
+
+		public void addHint(String hintKey, String value) {
+			queryHints.put( hintKey, value );
+		}
+
+		public void addResultClass(Class resultClass) {
+			resultClasses.add( resultClass );
+		}
+
+		public void addResultSetMappingName(String name) {
+			resultSetMappingNames.add( name );
+		}
+
+		public NamedProcedureCallDefinition buildDefinition() {
+			return new NamedProcedureCallDefinition( this );
+		}
 	}
 }

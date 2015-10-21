@@ -965,11 +965,21 @@ public interface AvailableSettings {
 	 */
 	String AUTO_SESSION_EVENTS_LISTENER = "hibernate.session.events.auto";
 
+	/**
+	 * If enabled, an entity's member field types and method return types will automatically be indexed.  This allows,
+	 * for example, auto-discovery of @Embeddables without explicitly listing them in the annotated classes.  This
+	 * setting will also check classes identified by certain annotations (such as @Target).  JPA requires these classes
+	 * to be identified in the annotated classes, however legacy Hibernate behavior was to allow it.  Due to the
+	 * performance hit, disabled by default.
+	 *
+	 * @since {jandex-binding}
+	 */
+	String ENABLE_AUTO_INDEX_MEMBER_TYPES = "hibernate.enable_auto_index_member_types";
 
-
-
-
-
-
-
+	/**
+	 * Names a Jandex {@link org.jboss.jandex.Index} instance to use.
+	 *
+	 * @since {jandex-binding}
+	 */
+	String JANDEX_INDEX = "hibernate.jandex_index";
 }

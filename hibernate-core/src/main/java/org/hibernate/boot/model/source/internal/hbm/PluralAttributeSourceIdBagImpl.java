@@ -13,9 +13,9 @@ import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmIdBagCollectionType;
 import org.hibernate.boot.model.source.spi.AttributeSourceContainer;
 import org.hibernate.boot.model.source.spi.CollectionIdSource;
+import org.hibernate.boot.model.source.spi.CollectionNature;
 import org.hibernate.boot.model.source.spi.ColumnSource;
 import org.hibernate.boot.model.source.spi.Orderable;
-import org.hibernate.boot.model.source.spi.PluralAttributeNature;
 import org.hibernate.boot.model.source.spi.RelationalValueSource;
 import org.hibernate.boot.model.source.spi.SizeSource;
 import org.hibernate.internal.util.StringHelper;
@@ -89,8 +89,8 @@ public class PluralAttributeSourceIdBagImpl extends AbstractPluralAttributeSourc
 	}
 
 	@Override
-	public PluralAttributeNature getNature() {
-		return PluralAttributeNature.ID_BAG;
+	public CollectionNature getNature() {
+		return CollectionNature.ID_BAG;
 	}
 
 	@Override

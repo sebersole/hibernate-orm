@@ -17,7 +17,7 @@ public interface PluralAttributeSource
 				FetchableAttributeSource,
 				CascadeStyleSource {
 
-	public PluralAttributeNature getNature();
+	public CollectionNature getNature();
 
 	public CollectionIdSource getCollectionIdSource();
 

@@ -561,4 +561,18 @@ public final class ReflectHelper {
 
 		return potentialSetter;
 	}
+
+	public static String getPropertyNameFromGetterMethod(String methodName) {
+		if ( methodName.startsWith( "is" ) ) {
+			return Introspector.decapitalize( methodName.substring( 2 ) );
+		}
+		else if ( methodName.startsWith( "has" ) ) {
+			return Introspector.decapitalize( methodName.substring( 3 ) );
+		}
+		else if ( methodName.startsWith( "get" ) ) {
+			return Introspector.decapitalize( methodName.substring( 3 ) );
+		}
+
+		return null;
+	}
 }

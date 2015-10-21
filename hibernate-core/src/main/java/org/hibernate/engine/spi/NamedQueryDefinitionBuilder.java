@@ -36,6 +36,10 @@ public class NamedQueryDefinitionBuilder {
 		this.name = name;
 	}
 
+	public String getName() {
+		return name;
+	}
+
 	public NamedQueryDefinitionBuilder setName(String name) {
 		this.name = name;
 		return this;

@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.annotations.common.reflection.XProperty;
+import org.hibernate.boot.model.MemberDescriptor;
+import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
 import org.hibernate.boot.spi.AttributeConverterAutoApplyHandler;
 import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -24,6 +26,8 @@ import org.hibernate.internal.util.StringHelper;
 import org.jboss.logging.Logger;
 
 /**
+ * Manages access to AttributeConverters defined with {@code autoApply=true}
+ *
  * @author Steve Ebersole
  */
 public class AttributeConverterManager implements AttributeConverterAutoApplyHandler {
@@ -57,6 +61,122 @@ public class AttributeConverterManager implements AttributeConverterAutoApplyHan
 			return Collections.emptyList();
 		}
 		return attributeConverterDescriptorsByClass.values();
+	}
+
+	@Override
+	public AttributeConverterDescriptor findAutoApplyConverterForAttribute(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		List<AttributeConverterDescriptor> matched = new ArrayList<AttributeConverterDescriptor>();
+
+		for ( AttributeConverterDescriptor descriptor : converterDescriptors() ) {
+			log.debugf(
+					"Checking auto-apply AttributeConverter [%s] (type=%s) for match against attribute : %s (type=%s)",
+					descriptor.toString(),
+					descriptor.getDomainType().getSimpleName(),
+					memberDescriptor.toString(),
+					memberDescriptor.type().toString()
+			);
+
+			if ( descriptor.shouldAutoApplyToAttribute( memberDescriptor, context ) ) {
+				matched.add( descriptor );
+			}
+		}
+
+		if ( matched.isEmpty() ) {
+			return null;
+		}
+
+		if ( matched.size() == 1 ) {
+			return matched.get( 0 );
+		}
+
+		// otherwise, we had multiple matches
+		throw new MultipleMatchingConvertersException(
+				String.format(
+						Locale.ROOT,
+						"Multiple auto-apply converters matched attribute [%s.%s] : %s",
+						memberDescriptor.declaringClass().name(),
+						memberDescriptor.attributeName(),
+						StringHelper.join( matched, RENDERER )
+				)
+		);
+	}
+
+	@Override
+	public AttributeConverterDescriptor findAutoApplyConverterForCollectionElement(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		List<AttributeConverterDescriptor> matched = new ArrayList<AttributeConverterDescriptor>();
+
+		for ( AttributeConverterDescriptor descriptor : converterDescriptors() ) {
+			log.debugf(
+					"Checking auto-apply AttributeConverter [%s] (type=%s) for match against collection attribute : %s (type=%s)",
+					descriptor.toString(),
+					descriptor.getDomainType().getSimpleName(),
+					memberDescriptor.toString(),
+					memberDescriptor.type().toString()
+			);
+			if ( descriptor.shouldAutoApplyToCollectionElement( memberDescriptor, context ) ) {
+				matched.add( descriptor );
+			}
+		}
+
+		if ( matched.isEmpty() ) {
+			return null;
+		}
+
+		if ( matched.size() == 1 ) {
+			return matched.get( 0 );
+		}
+
+		// otherwise, we had multiple matches
+		throw new MultipleMatchingConvertersException(
+				String.format(
+						Locale.ROOT,
+						"Multiple auto-apply converters matched attribute [%s] collection element : %s",
+						memberDescriptor.attributeName(),
+						StringHelper.join( matched, RENDERER )
+				)
+		);
+	}
+
+	@Override
+	public AttributeConverterDescriptor findAutoApplyConverterForMapKey(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		List<AttributeConverterDescriptor> matched = new ArrayList<AttributeConverterDescriptor>();
+
+		for ( AttributeConverterDescriptor descriptor : converterDescriptors() ) {
+			log.debugf(
+					"Checking auto-apply AttributeConverter [%s] (type=%s) for match against map attribute's key : %s (type=%s)",
+					descriptor.toString(),
+					descriptor.getDomainType().getSimpleName(),
+					memberDescriptor.toString(),
+					memberDescriptor.type().toString()
+			);
+			if ( descriptor.shouldAutoApplyToMapKey( memberDescriptor, context ) ) {
+				matched.add( descriptor );
+			}
+		}
+
+		if ( matched.isEmpty() ) {
+			return null;
+		}
+
+		if ( matched.size() == 1 ) {
+			return matched.get( 0 );
+		}
+
+		// otherwise, we had multiple matches
+		throw new MultipleMatchingConvertersException(
+				String.format(
+						Locale.ROOT,
+						"Multiple auto-apply converters matched attribute [%s] map key : %s",
+						memberDescriptor.attributeName(),
+						StringHelper.join( matched, RENDERER )
+				)
+		);
 	}
 
 	@Override

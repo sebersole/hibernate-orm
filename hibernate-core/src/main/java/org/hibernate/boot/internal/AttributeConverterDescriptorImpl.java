@@ -19,9 +19,17 @@ import org.hibernate.HibernateException;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.annotations.common.reflection.java.JavaXMember;
+import org.hibernate.boot.model.MemberDescriptor;
+import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
+import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
 import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.AttributeConverterDefinition;
+
+import org.jboss.jandex.ClassInfo;
+import org.jboss.jandex.DotName;
+import org.jboss.jandex.ParameterizedType;
+import org.jboss.jandex.Type;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
@@ -94,6 +102,128 @@ public class AttributeConverterDescriptorImpl implements AttributeConverterDescr
 	@Override
 	public Class<?> getJdbcType() {
 		return jdbcType.getErasedType();
+	}
+
+	@Override
+	@SuppressWarnings("SimplifiableIfStatement")
+	public boolean shouldAutoApplyToAttribute(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		if ( !autoApply ) {
+			return false;
+		}
+
+		return typesMatch( domainType, memberDescriptor.type(), context );
+	}
+
+	private boolean typesMatch(ResolvedType converterDefinedType, Type memberType, AnnotationBindingContext context) {
+		final ClassInfo converterDefinedTypeClassInfo = context.getJandexIndex().getClassByName(
+				DotName.createSimple( converterDefinedType.getErasedType().getName() )
+		);
+		final ClassInfo memberTypeClassInfo = context.getJandexIndex().getClassByName( memberType.name() );
+		if ( !AnnotationBindingHelper.isAssignableFrom( converterDefinedTypeClassInfo, memberTypeClassInfo, context ) ) {
+			return false;
+		}
+
+		// if the converter did not define any nested type parameters, then the check above is
+		// enough for a match
+		if ( converterDefinedType.getTypeParameters().isEmpty() ) {
+			return true;
+		}
+
+		// however, here the converter *did* define nested type parameters, so we'd have a converter defined using something like, e.g., List<String> for its
+		// domain type.
+		//
+		// we need to check those nested types as well
+
+		if ( memberTypeClassInfo.typeParameters().isEmpty() ) {
+			// the domain type did not define nested type params.  a List<String> would not auto-match a List(<Object>)
+			return false;
+		}
+
+		if ( converterDefinedType.getTypeParameters().size() != memberTypeClassInfo.typeParameters().size() ) {
+			// they had different number of type params somehow.
+			return false;
+		}
+
+		ParameterizedType memberParameterizedType = memberType.asParameterizedType();
+		for ( int i = 0; i < converterDefinedType.getTypeParameters().size(); i++ ) {
+			if ( !typesMatch(
+					converterDefinedType.getTypeParameters().get( i ),
+					memberParameterizedType.arguments().get( i ),
+					context
+			) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean shouldAutoApplyToCollectionElement(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		if ( !autoApply ) {
+			return false;
+		}
+
+		if ( memberDescriptor.type().kind() != Type.Kind.PARAMETERIZED_TYPE ) {
+			// we have a member defined without type parameters, cannot match
+			return false;
+		}
+
+		final ClassInfo memberTypeClassInfo = context.getJandexIndex().getClassByName( memberDescriptor.type().name() );
+		final ClassInfo mapClassInfo = context.getJandexIndex().getClassByName( DotName.createSimple( Map.class.getName() ) );
+		final ClassInfo collectionClassInfo = context.getJandexIndex().getClassByName(
+				DotName.createSimple( Collection.class.getName() )
+		);
+
+		final Type collectionElementType;
+		if ( AnnotationBindingHelper.isAssignableFrom( mapClassInfo, memberTypeClassInfo, context ) ) {
+			collectionElementType = memberDescriptor.type().asParameterizedType().arguments().get( 1 );
+		}
+		else if ( AnnotationBindingHelper.isAssignableFrom( collectionClassInfo, memberTypeClassInfo, context ) ) {
+			collectionElementType = memberDescriptor.type().asParameterizedType().arguments().get( 0 );
+		}
+		else {
+			throw new HibernateException(
+					"Attribute [" + memberDescriptor.attributeName() + "] type was neither a Collection nor a Map : " +
+							memberDescriptor.type().name()
+			);
+		}
+
+		return typesMatch( domainType, collectionElementType, context );
+	}
+
+	@Override
+	public boolean shouldAutoApplyToMapKey(
+			MemberDescriptor memberDescriptor,
+			AnnotationBindingContext context) {
+		if ( !autoApply ) {
+			return false;
+		}
+
+		if ( memberDescriptor.type().kind() != Type.Kind.PARAMETERIZED_TYPE ) {
+			// we have a member defined without type parameters, cannot match
+			return false;
+		}
+
+		final ClassInfo memberTypeClassInfo = context.getJandexIndex().getClassByName( memberDescriptor.type().name() );
+		final ClassInfo mapClassInfo = context.getJandexIndex().getClassByName( DotName.createSimple( Map.class.getName() ) );
+
+		final Type collectionElementType;
+		if ( AnnotationBindingHelper.isAssignableFrom( mapClassInfo, memberTypeClassInfo, context ) ) {
+			collectionElementType = memberDescriptor.type().asParameterizedType().arguments().get( 1 );
+		}
+		else {
+			throw new HibernateException(
+					"Attribute [" + memberDescriptor.attributeName() + "] type was not a Map : " +
+							memberDescriptor.type().name()
+			);
+		}
+
+		return typesMatch( domainType, collectionElementType, context );
 	}
 
 	@Override

@@ -70,6 +70,6 @@ public class Origin implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format( Locale.ENGLISH, "Origin(name=%s,type=%s)", name, type );
+		return String.format( Locale.ROOT, "Origin(name=%s,type=%s)", name, type );
 	}
 }

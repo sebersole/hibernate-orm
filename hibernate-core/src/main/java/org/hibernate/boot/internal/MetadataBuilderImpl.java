@@ -37,11 +37,12 @@ import org.hibernate.boot.cfgxml.spi.CfgXmlAccessService;
 import org.hibernate.boot.cfgxml.spi.LoadedConfig;
 import org.hibernate.boot.cfgxml.spi.MappingReference;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
+import org.hibernate.boot.model.PersistentAttributeMemberResolver;
+import org.hibernate.boot.model.StandardPersistentAttributeMemberResolver;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.TypeContributor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl;
-import org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
 import org.hibernate.boot.model.process.spi.MetadataBuildingProcess;
@@ -52,7 +53,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.boot.spi.BasicTypeRegistration;
-import org.hibernate.boot.spi.JpaOrmXmlPersistenceUnitDefaultAware;
 import org.hibernate.boot.spi.MappingDefaults;
 import org.hibernate.boot.spi.MetadataBuilderImplementor;
 import org.hibernate.boot.spi.MetadataBuilderInitializer;
@@ -154,6 +154,10 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 	}
 
+	public MetadataBuildingOptionsImpl getOptions() {
+		return options;
+	}
+
 	@Override
 	public MetadataBuilder applyImplicitSchemaName(String implicitSchemaName) {
 		options.mappingDefaults.implicitSchemaName = implicitSchemaName;
@@ -194,6 +198,12 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	@Override
 	public MetadataBuilder applyAccessType(AccessType implicitCacheAccessType) {
 		this.options.mappingDefaults.implicitCacheAccessType = implicitCacheAccessType;
+		return this;
+	}
+
+	@Override
+	public MetadataBuilder enableAutoIndexMemberTypes(boolean enable) {
+		this.options.autoIndexMemberTypes = enable;
 		return this;
 	}
 
@@ -458,7 +468,8 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 						public AccessType convert(Object value) {
 							return AccessType.fromExternalName( value.toString() );
 						}
-					}
+					},
+					serviceRegistry.getService( RegionFactory.class ).getDefaultAccessType()
 			);
 		}
 
@@ -530,13 +541,13 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 	}
 
-	public static class MetadataBuildingOptionsImpl
-			implements MetadataBuildingOptions, JpaOrmXmlPersistenceUnitDefaultAware {
+	public static class MetadataBuildingOptionsImpl implements MetadataBuildingOptions {
 		private final StandardServiceRegistry serviceRegistry;
 		private final MappingDefaultsImpl mappingDefaults;
 
 		private ArrayList<BasicTypeRegistration> basicTypeRegistrations = new ArrayList<BasicTypeRegistration>();
 
+		private boolean autoIndexMemberTypes;
 		private IndexView jandexView;
 		private ClassLoader tempClassLoader;
 
@@ -570,8 +581,8 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 		private boolean autoQuoteKeywords;
 
-//		private PersistentAttributeMemberResolver persistentAttributeMemberResolver =
-//				StandardPersistentAttributeMemberResolver.INSTANCE;
+		private PersistentAttributeMemberResolver persistentAttributeMemberResolver =
+				StandardPersistentAttributeMemberResolver.INSTANCE;
 
 		public MetadataBuildingOptionsImpl(StandardServiceRegistry serviceRegistry) {
 			this.serviceRegistry = serviceRegistry;
@@ -581,7 +592,12 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 			this.mappingDefaults = new MappingDefaultsImpl( serviceRegistry );
 
-//			jandexView = (IndexView) configService.getSettings().get( AvailableSettings.JANDEX_INDEX );
+			autoIndexMemberTypes = configService.getSetting(
+					AvailableSettings.ENABLE_AUTO_INDEX_MEMBER_TYPES,
+					StandardConverters.BOOLEAN,
+					false
+			);
+			jandexView = (IndexView) configService.getSettings().get( AvailableSettings.JANDEX_INDEX );
 
 			scanOptions = new StandardScanOptions(
 					(String) configService.getSettings().get( AvailableSettings.SCANNER_DISCOVERY ),
@@ -778,6 +794,11 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		@Override
+		public boolean autoIndexMemberTypes() {
+			return autoIndexMemberTypes;
+		}
+
+		@Override
 		public ScanOptions getScanOptions() {
 			return scanOptions;
 		}
@@ -891,6 +912,11 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 					: new ArrayList<AttributeConverterDefinition>( attributeConverterDefinitionsByClass.values() );
 		}
 
+		@Override
+		public PersistentAttributeMemberResolver getPersistentAttributeMemberResolver() {
+			return persistentAttributeMemberResolver;
+		}
+
 		public void addAttributeConverterDefinition(AttributeConverterDefinition definition) {
 			if ( this.attributeConverterDefinitionsByClass == null ) {
 				this.attributeConverterDefinitionsByClass = new HashMap<Class, AttributeConverterDefinition>();
@@ -908,32 +934,5 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			}
 		}
 
-		/**
-		 * Yuck.  This is needed because JPA lets users define "global building options"
-		 * in {@code orm.xml} mappings.  Forget that there are generally multiple
-		 * {@code orm.xml} mappings if using XML approach...  Ugh
-		 */
-		public void apply(JpaOrmXmlPersistenceUnitDefaults jpaOrmXmlPersistenceUnitDefaults) {
-			if ( !mappingDefaults.shouldImplicitlyQuoteIdentifiers() ) {
-				mappingDefaults.implicitlyQuoteIdentifiers = jpaOrmXmlPersistenceUnitDefaults.shouldImplicitlyQuoteIdentifiers();
-			}
-
-			if ( mappingDefaults.getImplicitCatalogName() == null ) {
-				mappingDefaults.implicitCatalogName = StringHelper.nullIfEmpty(
-						jpaOrmXmlPersistenceUnitDefaults.getDefaultCatalogName()
-				);
-			}
-
-			if ( mappingDefaults.getImplicitSchemaName() == null ) {
-				mappingDefaults.implicitSchemaName = StringHelper.nullIfEmpty(
-						jpaOrmXmlPersistenceUnitDefaults.getDefaultSchemaName()
-				);
-			}
-		}
-
-		//		@Override
-//		public PersistentAttributeMemberResolver getPersistentAttributeMemberResolver() {
-//			return persistentAttributeMemberResolver;
-//		}
 	}
 }

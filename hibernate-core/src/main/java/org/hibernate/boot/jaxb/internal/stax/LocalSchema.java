@@ -20,21 +20,43 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public enum LocalSchema {
+	/**
+	 * The JPA orm.xml schema
+	 *
+	 * @deprecated Prefer to use {@link #MAPPING} instead
+	 */
+	@Deprecated
 	ORM(
 			"http://www.hibernate.org/xsd/orm/mapping",
 			"org/hibernate/jpa/orm_2_1.xsd",
 			"2.1"
 	),
+	/**
+	 * The legacy Hibernate hbm.xml schema
+	 *
+	 * @deprecated Prefer to use {@link #MAPPING} instead
+	 */
+	@Deprecated
 	HBM(
 			"http://www.hibernate.org/xsd/orm/hbm",
 			"org/hibernate/xsd/mapping/legacy-mapping-4.0.xsd",
 			"4.0"
 	),
+	/**
+	 * The unified mapping schema (JPA orm.xml + Hibernate extensions)
+	 */
+	MAPPING(
+			"http://www.hibernate.org/xsd/orm/mapping",
+			"org/hibernate/xsd/mapping/mapping-2.1.0.xsd",
+			"2.1.0"
+	),
+	/**
+	 * The Hibernate {@code cfg.xml} schema
+	 */
 	CFG(
 			"http://www.hibernate.org/xsd/orm/cfg",
 			"org/hibernate/hibernate-configuration-4.0.xsd",
 			"4.0"
-
 	)
 	;
 

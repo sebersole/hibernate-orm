@@ -1747,4 +1747,16 @@ public interface CoreMessageLogger extends BasicLogger {
 	@Message(value = "Hikari properties were encountered, but the Hikari ConnectionProvider was not found on the classpath; these properties are going to be ignored.",
 			id = 472)
 	void hikariProviderClassNotFound();
+
+
+
+	@Message(value = "The access type of class %s is AccessType.FIELD. To override the access for an attribute " +
+			"@Access has to be placed on the property (getter) with an access type of AccessType.PROPERTY. " +
+			"Using AccessType.FIELD on the property has no effect", id = 473)
+	String accessTypeOverrideShouldBeProperty( String className );
+
+	@Message(value = "The access type of class %s is AccessType.PROPERTY. To override the access for a field " +
+			"@Access has to be placed on the field with an access type of AccessType.FIELD. " +
+			"Using AccessType.PROPERTY on the field has no effect", id = 474)
+	String accessTypeOverrideShouldBeField( String className );
 }

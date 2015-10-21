@@ -110,4 +110,8 @@ public enum FlushMode {
 			throw new MappingException( "unknown FlushMode : " + externalName );
 		}
 	}
+
+	public String toExternalForm() {
+		return name().toLowerCase( Locale.ENGLISH );
+	}
 }

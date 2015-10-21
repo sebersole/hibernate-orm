@@ -8,8 +8,8 @@ package org.hibernate.boot.model.source.internal.hbm;
 
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmArrayType;
 import org.hibernate.boot.model.source.spi.AttributeSourceContainer;
+import org.hibernate.boot.model.source.spi.CollectionNature;
 import org.hibernate.boot.model.source.spi.PluralAttributeIndexSource;
-import org.hibernate.boot.model.source.spi.PluralAttributeNature;
 import org.hibernate.boot.model.source.spi.PluralAttributeSequentialIndexSource;
 import org.hibernate.boot.model.source.spi.PluralAttributeSourceArray;
 
@@ -43,8 +43,8 @@ public class PluralAttributeSourceArrayImpl
 	}
 
 	@Override
-	public PluralAttributeNature getNature() {
-		return PluralAttributeNature.ARRAY;
+	public CollectionNature getNature() {
+		return CollectionNature.ARRAY;
 	}
 
 	@Override

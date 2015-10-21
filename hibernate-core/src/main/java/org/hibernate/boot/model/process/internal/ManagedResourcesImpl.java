@@ -10,15 +10,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.jandex.internal.ResourceLocator;
+import org.hibernate.boot.jandex.spi.JandexIndexBuilder;
+import org.hibernate.boot.jandex.spi.JandexIndexBuilderFactory;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.process.spi.ManagedResources;
+import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingOptions;
 import org.hibernate.cfg.AttributeConverterDefinition;
 
@@ -26,6 +29,8 @@ import org.hibernate.cfg.AttributeConverterDefinition;
  * @author Steve Ebersole
  */
 public class ManagedResourcesImpl implements ManagedResources {
+	private final JandexIndexBuilder jandexIndexBuilder;
+
 	private Map<Class, AttributeConverterDefinition> attributeConverterDefinitionMap = new HashMap<Class,AttributeConverterDefinition>();
 	private Set<Class> annotatedClassReferences = new LinkedHashSet<Class>();
 	private Set<String> annotatedClassNames = new LinkedHashSet<String>();
@@ -33,7 +38,13 @@ public class ManagedResourcesImpl implements ManagedResources {
 	private List<Binding> mappingFileBindings = new ArrayList<Binding>();
 
 	public static ManagedResourcesImpl baseline(MetadataSources sources, MetadataBuildingOptions metadataBuildingOptions) {
-		final ManagedResourcesImpl impl = new ManagedResourcesImpl();
+		final JandexIndexBuilder jandexIndexBuilder = JandexIndexBuilderFactory.buildJandexIndexBuilder( metadataBuildingOptions );
+		final ResourceLocator resourceLocator = new ResourceLocator(
+				metadataBuildingOptions.getServiceRegistry().getService( ClassLoaderService.class )
+		);
+
+		final ManagedResourcesImpl impl = new ManagedResourcesImpl( jandexIndexBuilder );
+
 		for ( AttributeConverterDefinition attributeConverterDefinition : metadataBuildingOptions.getAttributeConverters() ) {
 			impl.addAttributeConverterDefinition( attributeConverterDefinition );
 		}
@@ -44,7 +55,8 @@ public class ManagedResourcesImpl implements ManagedResources {
 		return impl;
 	}
 
-	private ManagedResourcesImpl() {
+	private ManagedResourcesImpl(JandexIndexBuilder jandexIndexBuilder) {
+		this.jandexIndexBuilder = jandexIndexBuilder;
 	}
 
 	@Override
@@ -72,6 +84,11 @@ public class ManagedResourcesImpl implements ManagedResources {
 		return Collections.unmodifiableList( mappingFileBindings );
 	}
 
+	@Override
+	public JandexIndexBuilder getJandexIndexBuilder() {
+		return jandexIndexBuilder;
+	}
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// package private
@@ -97,5 +114,32 @@ public class ManagedResourcesImpl implements ManagedResources {
 
 	void addXmlBinding(Binding binding) {
 		mappingFileBindings.add( binding );
+	}
+
+	/**
+	 * The idea here is that scanning is not complete as well.  Initially, in {@link #baseline},
+	 * we only know about things we were explicitly told about.  At this point we can assume
+	 * we know about everything (all packages, classes and XML mappings).
+	 */
+	public void finishPreparation() {
+		for ( AttributeConverterDefinition definition : attributeConverterDefinitionMap.values() ) {
+			final String converterClassName = definition.getAttributeConverter().getClass().getName();
+			jandexIndexBuilder.indexClass( converterClassName );
+		}
+
+		for ( Class annotatedClassReference : annotatedClassReferences ) {
+			jandexIndexBuilder.indexClass( annotatedClassReference );
+		}
+
+		for ( String annotatedClassName : annotatedClassNames ) {
+			jandexIndexBuilder.indexClass( annotatedClassName );
+		}
+
+		for ( String annotatedPackageName : annotatedPackageNames ) {
+			jandexIndexBuilder.indexPackage( annotatedPackageName );
+		}
+
+		// todo : call jandexIndexBuilder for any known class references in the XML mappings
+
 	}
 }

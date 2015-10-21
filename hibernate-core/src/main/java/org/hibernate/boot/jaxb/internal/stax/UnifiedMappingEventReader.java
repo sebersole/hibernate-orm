@@ -22,38 +22,35 @@ import javax.xml.stream.events.XMLEvent;
 import javax.xml.stream.util.EventReaderDelegate;
 
 /**
- * A JPA {@code orm.xml} specific StAX EVentReader to handle a few oddities.
- *
- * Mainly we handle the namespace change.
- *
- * Ultimately we should handle "upgrading" the documents as well.  The idea being that
- * we'd always treat all versions as the latest.
- *
- * {@see HHH-8108} for more discussion.
+ * A StAX EventReader for reading JPA {@code orm.xml} documents, both with and without
+ * Hibernate extensions.   Either case is mapped using the unified mapping schema (with
+ * Hibernate extensions).
  *
  * @author Strong Liu
  * @author Steve Ebersole
  * @author Hardy Ferentschik
  */
-public class JpaOrmXmlEventReader extends EventReaderDelegate {
+public class UnifiedMappingEventReader extends EventReaderDelegate {
+	/**
+	 * List of namespaces to match for mapping to the unified schema namespace
+	 */
 	private static final List<String> NAMESPACE_URIS_TO_MAP = Arrays.asList(
 			// JPA 1.0 and 2.0 namespace uri
-			"http://java.sun.com/xml/ns/persistence/orm"
+			"http://java.sun.com/xml/ns/persistence/orm",
+			// JPA 2.1 namespace uri
+			"http://xmlns.jcp.org/xml/ns/persistence/orm"
 	);
 
 	private static final String ROOT_ELEMENT_NAME = "entity-mappings";
 	private static final String VERSION_ATTRIBUTE_NAME = "version";
 
-	private static final String DEFAULT_VERSION = "2.1";
-	private static final List<String> VALID_VERSIONS = Arrays.asList( "1.0", "2.0", "2.1" );
+	private static final List<String> VALID_JPA_VERSIONS = Arrays.asList( "1.0", "2.0", "2.1" );
+	private static final List<String> VALID_UNIFIED_VERSIONS = Arrays.asList( "2.1.0" );
+	private static final String LATEST_VERSION = "2.1.0";
 
 	private final XMLEventFactory xmlEventFactory;
 
-	public JpaOrmXmlEventReader(XMLEventReader reader) {
-		this( reader, XMLEventFactory.newInstance() );
-	}
-
-	public JpaOrmXmlEventReader(XMLEventReader reader, XMLEventFactory xmlEventFactory) {
+	public UnifiedMappingEventReader(XMLEventReader reader, XMLEventFactory xmlEventFactory) {
 		super( reader );
 		this.xmlEventFactory = xmlEventFactory;
 	}
@@ -88,7 +85,7 @@ public class JpaOrmXmlEventReader extends EventReaderDelegate {
 		// so that the event we ask it to generate for us has the same location info
 		xmlEventFactory.setLocation( startElement.getLocation() );
 		return xmlEventFactory.createStartElement(
-				new QName( LocalSchema.ORM.getNamespaceUri(), startElement.getName().getLocalPart() ),
+				new QName( LocalSchema.MAPPING.getNamespaceUri(), startElement.getName().getLocalPart() ),
 				newElementAttributeList.iterator(),
 				newNamespaceList.iterator()
 		);
@@ -125,11 +122,12 @@ public class JpaOrmXmlEventReader extends EventReaderDelegate {
 			if ( VERSION_ATTRIBUTE_NAME.equals( originalAttribute.getName().getLocalPart() ) ) {
 				final String specifiedVersion = originalAttribute.getValue();
 
-				if ( !VALID_VERSIONS.contains( specifiedVersion ) ) {
+				if ( !VALID_JPA_VERSIONS.contains( specifiedVersion )
+						&& !VALID_UNIFIED_VERSIONS.contains( specifiedVersion ) ) {
 					throw new BadVersionException( specifiedVersion );
 				}
 
-				return xmlEventFactory.createAttribute( VERSION_ATTRIBUTE_NAME, DEFAULT_VERSION );
+				return xmlEventFactory.createAttribute( VERSION_ATTRIBUTE_NAME, LATEST_VERSION );
 			}
 		}
 
@@ -156,7 +154,7 @@ public class JpaOrmXmlEventReader extends EventReaderDelegate {
 		}
 
 		if ( mappedNamespaces.isEmpty() ) {
-			mappedNamespaces.add( xmlEventFactory.createNamespace( LocalSchema.ORM.getNamespaceUri() ) );
+			mappedNamespaces.add( xmlEventFactory.createNamespace( LocalSchema.MAPPING.getNamespaceUri() ) );
 		}
 
 		return mappedNamespaces;
@@ -170,7 +168,7 @@ public class JpaOrmXmlEventReader extends EventReaderDelegate {
 	private Namespace mapNamespace(Namespace originalNamespace) {
 		if ( NAMESPACE_URIS_TO_MAP.contains( originalNamespace.getNamespaceURI() ) ) {
 			// this is a namespace "to map" so map it
-			return xmlEventFactory.createNamespace( originalNamespace.getPrefix(), LocalSchema.ORM.getNamespaceUri() );
+			return xmlEventFactory.createNamespace( originalNamespace.getPrefix(), LocalSchema.MAPPING.getNamespaceUri() );
 		}
 
 		return originalNamespace;
@@ -183,7 +181,7 @@ public class JpaOrmXmlEventReader extends EventReaderDelegate {
 		// so that the event we ask it to generate for us has the same location info
 		xmlEventFactory.setLocation( endElement.getLocation() );
 		return xmlEventFactory.createEndElement(
-				new QName( LocalSchema.ORM.getNamespaceUri(), endElement.getName().getLocalPart() ),
+				new QName( LocalSchema.MAPPING.getNamespaceUri(), endElement.getName().getLocalPart() ),
 				targetNamespaces.iterator()
 		);
 	}

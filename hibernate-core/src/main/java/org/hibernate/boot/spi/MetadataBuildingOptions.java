@@ -17,6 +17,7 @@ import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
+import org.hibernate.boot.model.PersistentAttributeMemberResolver;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
@@ -71,6 +72,15 @@ public interface MetadataBuildingOptions {
 	 * @return The Jandex index
 	 */
 	IndexView getJandexView();
+
+	/**
+	 * If we are building the index ourselves, should the types of class members be automatically
+	 * added to the Jandex Indexer?  If we are not building the index, this is ignored
+	 *
+	 * @return {@code true} if member types should automatically be indexed when building the index;
+	 * {@code false} otherwise.
+	 */
+	boolean autoIndexMemberTypes();
 
 	/**
 	 * Access to the options to be used for scanning
@@ -221,10 +231,10 @@ public interface MetadataBuildingOptions {
 
 	List<AttributeConverterDefinition> getAttributeConverters();
 
-//	/**
-//	 * Obtain the selected strategy for resolving members identifying persistent attributes
-//	 *
-//	 * @return The select resolver strategy
-//	 */
-//	PersistentAttributeMemberResolver getPersistentAttributeMemberResolver();
+	/**
+	 * Obtain the selected strategy for resolving members identifying persistent attributes
+	 *
+	 * @return The select resolver strategy
+	 */
+	PersistentAttributeMemberResolver getPersistentAttributeMemberResolver();
 }

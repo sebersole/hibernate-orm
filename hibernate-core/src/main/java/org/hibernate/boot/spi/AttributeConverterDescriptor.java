@@ -9,6 +9,8 @@ package org.hibernate.boot.spi;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.annotations.common.reflection.XProperty;
+import org.hibernate.boot.model.MemberDescriptor;
+import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
 
 /**
  * Internal descriptor for an AttributeConverter implementation.
@@ -20,8 +22,14 @@ public interface AttributeConverterDescriptor {
 	Class<?> getDomainType();
 	Class<?> getJdbcType();
 
-	boolean shouldAutoApplyToAttribute(XProperty xProperty, MetadataBuildingContext context);
-	boolean shouldAutoApplyToCollectionElement(XProperty xProperty, MetadataBuildingContext context);
-	boolean shouldAutoApplyToMapKey(XProperty xProperty, MetadataBuildingContext context);
+	boolean shouldAutoApplyToAttribute(MemberDescriptor memberDescriptor, AnnotationBindingContext context);
+	boolean shouldAutoApplyToCollectionElement(MemberDescriptor memberDescriptor, AnnotationBindingContext context);
+	boolean shouldAutoApplyToMapKey(MemberDescriptor memberDescriptor, AnnotationBindingContext context);
 
+	@Deprecated
+	boolean shouldAutoApplyToAttribute(XProperty xProperty, MetadataBuildingContext context);
+	@Deprecated
+	boolean shouldAutoApplyToCollectionElement(XProperty xProperty, MetadataBuildingContext context);
+	@Deprecated
+	boolean shouldAutoApplyToMapKey(XProperty xProperty, MetadataBuildingContext context);
 }

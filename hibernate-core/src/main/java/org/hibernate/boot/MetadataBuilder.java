@@ -139,6 +139,8 @@ public interface MetadataBuilder {
 	 */
 	MetadataBuilder applyAccessType(AccessType accessType);
 
+	MetadataBuilder enableAutoIndexMemberTypes(boolean enable);
+
 	/**
 	 * Allows specifying a specific Jandex index to use for reading annotation information.
 	 * <p/>

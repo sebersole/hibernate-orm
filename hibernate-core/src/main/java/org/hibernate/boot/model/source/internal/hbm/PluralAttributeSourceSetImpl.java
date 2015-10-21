@@ -8,8 +8,8 @@ package org.hibernate.boot.model.source.internal.hbm;
 
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmSetType;
 import org.hibernate.boot.model.source.spi.AttributeSourceContainer;
+import org.hibernate.boot.model.source.spi.CollectionNature;
 import org.hibernate.boot.model.source.spi.Orderable;
-import org.hibernate.boot.model.source.spi.PluralAttributeNature;
 import org.hibernate.boot.model.source.spi.Sortable;
 import org.hibernate.internal.util.StringHelper;
 
@@ -28,8 +28,8 @@ public class PluralAttributeSourceSetImpl extends AbstractPluralAttributeSourceI
 	}
 
 	@Override
-	public PluralAttributeNature getNature() {
-		return PluralAttributeNature.SET;
+	public CollectionNature getNature() {
+		return CollectionNature.SET;
 	}
 
 	@Override

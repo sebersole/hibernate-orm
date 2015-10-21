@@ -19,8 +19,8 @@ import org.hibernate.boot.UnsupportedOrmXsdVersionException;
 import org.hibernate.boot.jaxb.Origin;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmHibernateMapping;
 import org.hibernate.boot.jaxb.internal.stax.HbmEventReader;
-import org.hibernate.boot.jaxb.internal.stax.JpaOrmXmlEventReader;
 import org.hibernate.boot.jaxb.internal.stax.LocalSchema;
+import org.hibernate.boot.jaxb.internal.stax.UnifiedMappingEventReader;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.util.config.ConfigurationException;
@@ -62,14 +62,15 @@ public class MappingBinder extends AbstractBinder {
 			return new Binding<JaxbHbmHibernateMapping>( hbmBindings, origin );
 		}
 		else {
+			log.debugf( "Performing JAXB binding of orm.xml document : %s", origin.toString() );
 //			final XMLEventReader reader = new JpaOrmXmlEventReader( staxEventReader );
 //			return jaxb( reader, LocalSchema.MAPPING.getSchema(), JaxbEntityMappings.class, origin );
 
 			try {
-				final XMLEventReader reader = new JpaOrmXmlEventReader( staxEventReader, xmlEventFactory );
+				final XMLEventReader reader = new UnifiedMappingEventReader( staxEventReader, xmlEventFactory );
 				return new Binding<Document>( toDom4jDocument( reader, origin), origin );
 			}
-			catch (JpaOrmXmlEventReader.BadVersionException e) {
+			catch (UnifiedMappingEventReader.BadVersionException e) {
 				throw new UnsupportedOrmXsdVersionException( e.getRequestedVersion(), origin );
 			}
 		}

@@ -8,8 +8,8 @@ package org.hibernate.boot.model.source.internal.hbm;
 
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmListType;
 import org.hibernate.boot.model.source.spi.AttributeSourceContainer;
+import org.hibernate.boot.model.source.spi.CollectionNature;
 import org.hibernate.boot.model.source.spi.PluralAttributeIndexSource;
-import org.hibernate.boot.model.source.spi.PluralAttributeNature;
 import org.hibernate.boot.model.source.spi.PluralAttributeSequentialIndexSource;
 
 public class PluralAttributeSourceListImpl extends AbstractPluralAttributeSourceImpl implements IndexedPluralAttributeSource {
@@ -36,8 +36,8 @@ public class PluralAttributeSourceListImpl extends AbstractPluralAttributeSource
 	}
 
 	@Override
-	public PluralAttributeNature getNature() {
-		return PluralAttributeNature.LIST;
+	public CollectionNature getNature() {
+		return CollectionNature.LIST;
 	}
 
 	@Override

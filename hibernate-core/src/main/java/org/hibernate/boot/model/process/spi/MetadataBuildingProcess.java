@@ -6,15 +6,20 @@
  */
 package org.hibernate.boot.model.process.spi;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.internal.ClassLoaderAccessImpl;
 import org.hibernate.boot.internal.InFlightMetadataCollectorImpl;
 import org.hibernate.boot.internal.MetadataBuildingContextRootImpl;
+import org.hibernate.boot.jandex.internal.XmlAugmenter;
 import org.hibernate.boot.jaxb.internal.MappingBinder;
+import org.hibernate.boot.jaxb.mapping.spi.JaxbEntityMappings;
+import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.TypeContributor;
 import org.hibernate.boot.model.process.internal.ManagedResourcesImpl;
@@ -92,10 +97,11 @@ public class MetadataBuildingProcess {
 	 * @return Token/memento representing all known users resources (classes, packages, mapping files, etc).
 	 */
 	public static ManagedResources prepare(
-			final MetadataSources sources,
+			MetadataSources sources,
 			final MetadataBuildingOptions options) {
 		final ManagedResourcesImpl managedResources = ManagedResourcesImpl.baseline( sources, options );
 		ScanningCoordinator.INSTANCE.coordinateScan( managedResources, options, sources.getXmlMappingBinderAccess() );
+		managedResources.finishPreparation();
 		return managedResources;
 	}
 
@@ -131,12 +137,16 @@ public class MetadataBuildingProcess {
 				metadataCollector
 		);
 
-		final IndexView jandexView = options.getJandexView();
+		final IndexView jandexView = augmentJandexFromXml(
+				managedResources.getJandexIndexBuilder().buildIndexView(),
+				managedResources,
+				options
+		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Set up the processors and start binding
 		//		NOTE : this becomes even more simplified after we move purely
-		// 		to unified model
+		// 		to unified model in that we'd have just one processor
 
 		final MetadataSourceProcessor processor = new MetadataSourceProcessor() {
 			private final HbmMetadataSourceProcessorImpl hbmProcessor = new HbmMetadataSourceProcessorImpl(
@@ -305,20 +315,21 @@ public class MetadataBuildingProcess {
 		return metadataCollector.buildMetadataInstance( rootMetadataBuildingContext );
 	}
 
-//	private static JandexInitManager buildJandexInitializer(
-//			MetadataBuildingOptions options,
-//			ClassLoaderAccess classLoaderAccess) {
-//		final boolean autoIndexMembers = ConfigurationHelper.getBoolean(
-//				org.hibernate.cfg.AvailableSettings.ENABLE_AUTO_INDEX_MEMBER_TYPES,
-//				options.getServiceRegistry().getService( ConfigurationService.class ).getSettings(),
-//				false
-//		);
-//
-//		return new JandexInitManager( options.getJandexView(), classLoaderAccess, autoIndexMembers );
-//	}
+	private static IndexView augmentJandexFromXml(
+			IndexView baselineJandexIndex,
+			ManagedResources managedResources,
+			MetadataBuildingOptions options) {
+		final List<Binding<JaxbEntityMappings>> jpaXmlBindings = new ArrayList<Binding<JaxbEntityMappings>>();
+		for ( Binding binding : managedResources.getXmlMappingBindings() ) {
+			if ( JaxbEntityMappings.class.isInstance( binding.getRoot() ) ) {
+				// todo : this will be checked after hbm transformation is in place.
+				//noinspection unchecked
+				jpaXmlBindings.add( binding );
+			}
+		}
 
-
-
+		return XmlAugmenter.buildAugmentedIndex( baselineJandexIndex, jpaXmlBindings, options.getServiceRegistry() );
+	}
 
 	private static BasicTypeRegistry handleTypes(MetadataBuildingOptions options) {
 		final ClassLoaderService classLoaderService = options.getServiceRegistry().getService( ClassLoaderService.class );

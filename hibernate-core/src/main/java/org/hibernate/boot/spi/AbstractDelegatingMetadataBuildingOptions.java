@@ -18,6 +18,7 @@ import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
+import org.hibernate.boot.model.PersistentAttributeMemberResolver;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
@@ -60,8 +61,18 @@ public abstract class AbstractDelegatingMetadataBuildingOptions implements Metad
 	}
 
 	@Override
+	public PersistentAttributeMemberResolver getPersistentAttributeMemberResolver() {
+		return delegate.getPersistentAttributeMemberResolver();
+	}
+
+	@Override
 	public IndexView getJandexView() {
 		return delegate.getJandexView();
+	}
+
+	@Override
+	public boolean autoIndexMemberTypes() {
+		return delegate.autoIndexMemberTypes();
 	}
 
 	@Override

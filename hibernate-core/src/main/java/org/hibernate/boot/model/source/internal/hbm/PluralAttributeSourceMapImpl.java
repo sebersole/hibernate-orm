@@ -9,8 +9,8 @@ package org.hibernate.boot.model.source.internal.hbm;
 import org.hibernate.AssertionFailure;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmMapType;
 import org.hibernate.boot.model.source.spi.AttributeSourceContainer;
+import org.hibernate.boot.model.source.spi.CollectionNature;
 import org.hibernate.boot.model.source.spi.PluralAttributeIndexSource;
-import org.hibernate.boot.model.source.spi.PluralAttributeNature;
 
 public class PluralAttributeSourceMapImpl extends AbstractPluralAttributeSourceImpl implements IndexedPluralAttributeSource {
 	private final PluralAttributeIndexSource indexSource;
@@ -75,8 +75,8 @@ public class PluralAttributeSourceMapImpl extends AbstractPluralAttributeSourceI
 	}
 
 	@Override
-	public PluralAttributeNature getNature() {
-		return PluralAttributeNature.MAP;
+	public CollectionNature getNature() {
+		return CollectionNature.MAP;
 	}
 
 	@Override
