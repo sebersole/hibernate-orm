@@ -8,6 +8,8 @@ package org.hibernate.annotations;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.hibernate.cache.spi.access.AccessType;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
@@ -23,8 +25,16 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Cache {
 	/**
 	 * The concurrency strategy chosen.
+	 * @deprecated Use {@link #access()} instead
 	 */
-	CacheConcurrencyStrategy usage();
+	@Deprecated
+	CacheConcurrencyStrategy usage() default CacheConcurrencyStrategy.NONE;
+
+	/**
+	 * How Hibernate should control access to this particular cache region in terms of concurrent
+	 * access, isolation, etc
+	 */
+	CacheAccessStrategy access() default CacheAccessStrategy.UNSPECIFIED;
 
 	/**
 	 * The cache region name.

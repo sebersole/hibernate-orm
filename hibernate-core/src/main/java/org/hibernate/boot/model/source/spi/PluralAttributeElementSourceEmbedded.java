@@ -13,6 +13,5 @@ package org.hibernate.boot.model.source.spi;
  * @author Steve Ebersole
  */
 public interface PluralAttributeElementSourceEmbedded
-		extends PluralAttributeElementSource,
-				EmbeddableSourceContributor, ToolingHintContextContainer {
+		extends PluralAttributeElementSource, EmbeddableSourceContributor {
 }

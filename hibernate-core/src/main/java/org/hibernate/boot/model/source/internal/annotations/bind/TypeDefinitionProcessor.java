@@ -12,10 +12,10 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.AnnotationException;
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
 import org.hibernate.boot.model.TypeDefinition;
-import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
+import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.util.StringHelper;
 

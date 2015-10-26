@@ -7,14 +7,13 @@
 package org.hibernate.boot.model.source.spi;
 
 import org.hibernate.boot.model.TruthValue;
+import org.hibernate.engine.jdbc.JdbcDataType;
 
 /**
  * Contract for source information pertaining to a physical column definition specific to a particular attribute
  * context.
  * <p/>
  * Conceptual note: this really describes a column from the perspective of its binding to an attribute.
- * This is especially important for {@link #isIncludedInInsert} and {@link #isIncludedInUpdate}.  There it is
- * not the column itself being described.
  *
  * @author Steve Ebersole
  */

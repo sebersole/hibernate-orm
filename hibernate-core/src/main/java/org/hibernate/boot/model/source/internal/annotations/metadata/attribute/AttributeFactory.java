@@ -10,8 +10,8 @@ import java.util.EnumSet;
 import java.util.Map;
 import javax.persistence.AccessType;
 
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.MemberDescriptor;
 import org.hibernate.boot.model.source.internal.annotations.metadata.type.EntityBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.metadata.type.ManagedTypeMetadata;

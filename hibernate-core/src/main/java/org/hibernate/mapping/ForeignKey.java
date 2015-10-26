@@ -72,8 +72,8 @@ public class ForeignKey extends Constraint {
 		Iterator columnItr = getColumnIterator();
 		int i = 0;
 		while ( columnItr.hasNext() ) {
-			columnNames[i] = ( (Column) columnItr.next() ).getQuotedName( dialect );
-			referencedColumnNames[i] = referencedColumnItr.next().getQuotedName( dialect );
+			columnNames[i] = ( (Column) columnItr.next() ).getPhysicalName().render( dialect );
+			referencedColumnNames[i] = referencedColumnItr.next().getPhysicalName().render( dialect );
 			i++;
 		}
 
@@ -96,7 +96,7 @@ public class ForeignKey extends Constraint {
 	private void appendColumns(StringBuilder buf, Iterator columns) {
 		while ( columns.hasNext() ) {
 			Column column = (Column) columns.next();
-			buf.append( column.getName() );
+			buf.append( column.getPhysicalName().render() );
 			if ( columns.hasNext() ) {
 				buf.append( "," );
 			}
@@ -140,7 +140,7 @@ public class ForeignKey extends Constraint {
 		Iterator fkCols = getColumnIterator();
 		Iterator pkCols = referencedTable.getPrimaryKey().getColumnIterator();
 		while ( pkCols.hasNext() ) {
-			( (Column) fkCols.next() ).setLength( ( (Column) pkCols.next() ).getLength() );
+			( (Column) fkCols.next() ).getSize().setLength( ( (Column) pkCols.next() ).getSize().getLength() );
 		}
 
 	}

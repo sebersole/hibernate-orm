@@ -319,18 +319,19 @@ public abstract class Collection implements Fetchable, Value, Filterable {
 		checkColumnDuplication();
 	}
 
-	private void checkColumnDuplication(java.util.Set distinctColumns, Iterator columns)
+	private void checkColumnDuplication(java.util.Set<String> distinctColumns, Iterator columns)
 			throws MappingException {
 		while ( columns.hasNext() ) {
 			Selectable s = (Selectable) columns.next();
 			if ( !s.isFormula() ) {
 				Column col = (Column) s;
-				if ( !distinctColumns.add( col.getName() ) ) {
+				final String name = col.getPhysicalName().getCanonicalName();
+				if ( !distinctColumns.add( name ) ) {
 					throw new MappingException(
 							"Repeated column in mapping for collection: "
 									+ getRole()
 									+ " column: "
-									+ col.getName()
+									+ name
 					);
 				}
 			}
@@ -338,7 +339,7 @@ public abstract class Collection implements Fetchable, Value, Filterable {
 	}
 
 	private void checkColumnDuplication() throws MappingException {
-		HashSet cols = new HashSet();
+		HashSet<String> cols = new HashSet<String>();
 		checkColumnDuplication( cols, getKey().getColumnIterator() );
 		if ( isIndexed() ) {
 			checkColumnDuplication(

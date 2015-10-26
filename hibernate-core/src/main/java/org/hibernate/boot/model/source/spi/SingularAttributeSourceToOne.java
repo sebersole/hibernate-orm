@@ -14,20 +14,22 @@ import org.hibernate.type.ForeignKeyDirection;
  * @author Steve Ebersole
  */
 public interface SingularAttributeSourceToOne
-		extends SingularAttributeSource,
-			ForeignKeyContributingSource,
-			FetchableAttributeSource,
-			AssociationSource,
-			CascadeStyleSource{
+		extends SingularAttributeSource, ForeignKeyContributingSource, FetchableAttributeSource, AssociationSource, CascadeStyleSource {
 
-	public String getReferencedEntityAttributeName();
-	public String getReferencedEntityName();
-	public ForeignKeyDirection getForeignKeyDirection();
+	String getReferencedEntityAttributeName();
+
+	String getReferencedEntityName();
+
+	ForeignKeyDirection getForeignKeyDirection();
 
 	@Override
 	FetchCharacteristicsSingularAssociation getFetchCharacteristics();
 
-	public boolean isUnique();
-
-	public Boolean isEmbedXml();
+	/**
+	 * NOTE : only used (from hbm.xml side) to work out a many-to-one that is a logical
+	 * one-to-one.
+	 *
+	 * todo : Figure out the annotation equivalent and expose here
+	 */
+	boolean isUnique();
 }

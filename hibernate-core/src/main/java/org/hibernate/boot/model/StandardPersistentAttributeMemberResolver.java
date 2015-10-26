@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.Set;
 import javax.persistence.AccessType;
 
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.source.internal.annotations.metadata.type.EntityBindingContext;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;

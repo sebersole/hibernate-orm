@@ -41,8 +41,6 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.PrimaryKey;
 import org.hibernate.mapping.Table;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.LongType;
-import org.hibernate.type.StringType;
 import org.hibernate.type.Type;
 
 /**
@@ -93,10 +91,12 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 	private static final String DEFAULT_VALUE_COLUMN = "sequence_next_hi_value";
 
 	private QualifiedName qualifiedTableName;
-	private String tableName;
-	private String segmentColumnName;
+	private String tableNameText;
+	private Identifier segmentColumnName;
+	private String segmentColumnNameText;
 	private String segmentName;
-	private String valueColumnName;
+	private Identifier valueColumnName;
+	private String valueColumnNameText;
 	private String query;
 	private String insert;
 	private String update;
@@ -177,7 +177,7 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 						rows = executeUpdate( updatePreparedStatement, statsCollector );
 					}
 					catch (SQLException sqle) {
-						LOG.error( LOG.unableToUpdateHiValue( tableName ), sqle );
+						LOG.error( LOG.unableToUpdateHiValue( tableNameText ), sqle );
 						throw sqle;
 					}
 					finally {
@@ -262,10 +262,12 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 		qualifiedTableName = determineGeneratorTableName( params, jdbcEnvironment );
 
 		segmentColumnName = determineSegmentColumnName( params, jdbcEnvironment );
+		segmentColumnNameText = segmentColumnName.render( jdbcEnvironment.getDialect() );
 		keySize = ConfigurationHelper.getInt( PK_LENGTH_NAME, params, DEFAULT_PK_LENGTH );
 		segmentName = ConfigurationHelper.getString( PK_VALUE_NAME, params, params.getProperty( TABLE ) );
 
 		valueColumnName = determineValueColumnName( params, jdbcEnvironment );
+		valueColumnNameText = valueColumnName.render( jdbcEnvironment.getDialect() );
 
 		//hilo config
 		maxLo = ConfigurationHelper.getInt( MAX_LO, params, Short.MAX_VALUE );
@@ -297,14 +299,14 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 		}
 	}
 
-	protected String determineSegmentColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
+	protected Identifier determineSegmentColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
 		final String name = ConfigurationHelper.getString( PK_COLUMN_NAME, params, DEFAULT_PK_COLUMN );
-		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name ).render( jdbcEnvironment.getDialect() );
+		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name );
 	}
 
-	protected String determineValueColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
+	protected Identifier determineValueColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
 		final String name = ConfigurationHelper.getString( VALUE_COLUMN_NAME, params, DEFAULT_VALUE_COLUMN );
-		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name ).render( jdbcEnvironment.getDialect() );
+		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name );
 	}
 
 	@Override
@@ -322,10 +324,8 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 			table.setPrimaryKey( new PrimaryKey() );
 
 			final Column pkColumn = new ExportableColumn(
-					database,
-					table,
 					segmentColumnName,
-					StringType.INSTANCE,
+					segmentColumnName,
 					database.getDialect().getTypeName( Types.VARCHAR, keySize, 0, 0 )
 			);
 			pkColumn.setNullable( false );
@@ -333,10 +333,9 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 			table.getPrimaryKey().addColumn( pkColumn );
 
 			final Column valueColumn = new ExportableColumn(
-					database,
-					table,
 					valueColumnName,
-					LongType.INSTANCE
+					valueColumnName,
+					database.getDialect().getTypeName( Types.BIGINT )
 			);
 			table.addColumn( valueColumn );
 		}
@@ -344,32 +343,32 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 		final JdbcEnvironment jdbcEnvironment = database.getJdbcEnvironment();
 
 		// allow physical naming strategies a chance to kick in
-		tableName = jdbcEnvironment.getQualifiedObjectNameFormatter().format(
+		tableNameText = jdbcEnvironment.getQualifiedObjectNameFormatter().format(
 				table.getQualifiedTableName(),
 				jdbcEnvironment.getDialect()
 		);
 
 		query = "select " +
-				valueColumnName +
+				valueColumnNameText +
 				" from " +
-				jdbcEnvironment.getDialect().appendLockHint( LockMode.PESSIMISTIC_WRITE, tableName ) +
-				" where " + segmentColumnName + " = '" + segmentName + "'" +
+				jdbcEnvironment.getDialect().appendLockHint( LockMode.PESSIMISTIC_WRITE, tableNameText ) +
+				" where " + segmentColumnNameText + " = '" + segmentName + "'" +
 				jdbcEnvironment.getDialect().getForUpdateString();
 
 		update = "update " +
-				tableName +
+				tableNameText +
 				" set " +
-				valueColumnName +
+				valueColumnNameText +
 				" = ? where " +
-				valueColumnName +
+				valueColumnNameText +
 				" = ? and " +
-				segmentColumnName +
+				segmentColumnNameText +
 				" = '" +
 				segmentName
 				+ "'";
 
-		insert = "insert into " + tableName +
-				"(" + segmentColumnName + ", " + valueColumnName + ") " +
+		insert = "insert into " + tableNameText +
+				"(" + segmentColumnNameText + ", " + valueColumnNameText + ") " +
 				"values('" + segmentName + "', ?)";
 
 
@@ -379,18 +378,18 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 	public String[] sqlCreateStrings(Dialect dialect) throws HibernateException {
 		return new String[] {
 				dialect.getCreateTableString()
-						+ ' ' + tableName + " ( "
-						+ segmentColumnName + ' ' + dialect.getTypeName( Types.VARCHAR, keySize, 0, 0 ) + ",  "
-						+ valueColumnName + ' ' + dialect.getTypeName( Types.INTEGER )
+						+ ' ' + tableNameText + " ( "
+						+ segmentColumnNameText + ' ' + dialect.getTypeName( Types.VARCHAR, keySize, 0, 0 ) + ",  "
+						+ valueColumnNameText + ' ' + dialect.getTypeName( Types.INTEGER )
 						+ " )" + dialect.getTableTypeString()
 		};
 	}
 
 	public String[] sqlDropStrings(Dialect dialect) throws HibernateException {
-		return new String[] {dialect.getDropTableString( tableName )};
+		return new String[] {dialect.getDropTableString( tableNameText )};
 	}
 
 	public Object generatorKey() {
-		return tableName;
+		return tableNameText;
 	}
 }

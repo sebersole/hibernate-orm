@@ -8,7 +8,7 @@ package org.hibernate.boot.model.process.spi;
 
 import java.util.Collection;
 
-import org.hibernate.boot.jandex.spi.JandexIndexBuilder;
+import org.hibernate.boot.model.process.jandex.spi.JandexIndexBuilder;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.cfg.AttributeConverterDefinition;
 

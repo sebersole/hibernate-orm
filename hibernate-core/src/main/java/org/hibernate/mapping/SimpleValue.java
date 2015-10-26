@@ -111,8 +111,6 @@ public class SimpleValue implements KeyValue {
 		if ( !columns.contains(column) ) {
 			columns.add(column);
 		}
-		column.setValue(this);
-		column.setTypeIndex( columns.size() - 1 );
 	}
 	
 	public void addFormula(Formula formula) {
@@ -239,7 +237,7 @@ public class SimpleValue implements KeyValue {
 		params.setProperty( PersistentIdentifierGenerator.TABLE, tableName );
 		
 		//pass the column name (a generated id almost always has a single column)
-		String columnName = ( (Column) getColumnIterator().next() ).getQuotedName(dialect);
+		String columnName = ( (Column) getColumnIterator().next() ).getPhysicalName().render( dialect );
 		params.setProperty( PersistentIdentifierGenerator.PK, columnName );
 		
 		if (rootClass!=null) {
@@ -615,7 +613,7 @@ public class SimpleValue implements KeyValue {
 			for ( int i = 0; i < columns.size(); i++ ) {
 				Selectable column = columns.get(i);
 				if (column instanceof Column){
-					columnsNames[i] = ((Column) column).getName();
+					columnsNames[i] = ((Column) column).getPhysicalName().getText();
 				}
 			}
 

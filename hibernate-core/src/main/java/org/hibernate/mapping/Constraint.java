@@ -63,7 +63,7 @@ public abstract class Constraint implements RelationalModel, Exportable, Seriali
 		Column[] alphabeticalColumns = columns.clone();
 		Arrays.sort( alphabeticalColumns, ColumnComparator.INSTANCE );
 		for ( Column column : alphabeticalColumns ) {
-			String columnName = column == null ? "" : column.getName();
+			String columnName = column == null ? "" : column.getPhysicalName().render();
 			sb.append( "column`" ).append( columnName ).append( "`" );
 		}
 		return prefix + hashedName( sb.toString() );
@@ -109,7 +109,7 @@ public abstract class Constraint implements RelationalModel, Exportable, Seriali
 		public static ColumnComparator INSTANCE = new ColumnComparator();
 
 		public int compare(Column col1, Column col2) {
-			return col1.getName().compareTo( col2.getName() );
+			return col1.getPhysicalName().compareTo( col2.getPhysicalName() );
 		}
 	}
 

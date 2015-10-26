@@ -6,8 +6,6 @@
  */
 package org.hibernate.boot.model.source.spi;
 
-import org.hibernate.boot.model.source.internal.hbm.IndexedPluralAttributeSource;
-
 /**
  * @author Steve Ebersole
  */

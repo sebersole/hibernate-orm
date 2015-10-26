@@ -25,7 +25,7 @@ public class PrimaryKey extends Constraint {
 	public void addColumn(Column column) {
 		if ( column.isNullable() ) {
 			if ( log.isDebugEnabled() ) {
-				final String columnName = column.getCanonicalName();
+				final String columnName = column.getPhysicalName().getCanonicalName();
 				log.debugf(
 						"Forcing column [%s] to be non-null as it is part of the primary key for table [%s]",
 						columnName,
@@ -41,9 +41,6 @@ public class PrimaryKey extends Constraint {
 		if ( getTable() != null ) {
 			return getTable().getNameIdentifier().getCanonicalName();
 		}
-		else if ( column.getValue() != null && column.getValue().getTable() != null ) {
-			return column.getValue().getTable().getNameIdentifier().getCanonicalName();
-		}
 		return "<unknown>";
 	}
 
@@ -51,7 +48,7 @@ public class PrimaryKey extends Constraint {
 		StringBuilder buf = new StringBuilder("primary key (");
 		Iterator iter = getColumnIterator();
 		while ( iter.hasNext() ) {
-			buf.append( ( (Column) iter.next() ).getQuotedName(dialect) );
+			buf.append( ( (Column) iter.next() ).getPhysicalName().render( dialect ) );
 			if ( iter.hasNext() ) {
 				buf.append(", ");
 			}
@@ -65,7 +62,7 @@ public class PrimaryKey extends Constraint {
 		).append('(');
 		Iterator iter = getColumnIterator();
 		while ( iter.hasNext() ) {
-			buf.append( ( (Column) iter.next() ).getQuotedName(dialect) );
+			buf.append( ( (Column) iter.next() ).getPhysicalName().render( dialect ) );
 			if ( iter.hasNext() ) {
 				buf.append(", ");
 			}

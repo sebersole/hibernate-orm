@@ -6,6 +6,8 @@
  */
 package org.hibernate.internal.log;
 
+import org.hibernate.boot.jaxb.Origin;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.LogMessage;
@@ -193,4 +195,11 @@ public interface DeprecationLogger extends BasicLogger {
 			value = "Found use of deprecated entity-type selector syntax in HQL/JPQL query ['%1$s.class']; use TYPE operator instead : type(%1$s)"
 	)
 	void logDeprecationOfClassEntityTypeSelector(String path);
+
+	@LogMessage(level = WARN)
+	@Message(
+			id = 90000018,
+			value = "Found hbm.xml mapping [%s] as source.  The hbm.xml schema is deprecated; use extended orm.xml schema instead"
+	)
+	void logDeprecationOfHbmXml(String origin);
 }

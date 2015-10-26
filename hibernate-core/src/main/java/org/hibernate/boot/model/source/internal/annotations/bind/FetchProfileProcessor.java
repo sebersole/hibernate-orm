@@ -12,7 +12,7 @@ import java.util.Locale;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.FetchProfiles;
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
 import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
 import org.hibernate.mapping.FetchProfile;

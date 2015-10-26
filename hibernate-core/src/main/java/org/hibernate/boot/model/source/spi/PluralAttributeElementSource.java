@@ -7,9 +7,16 @@
 package org.hibernate.boot.model.source.spi;
 
 /**
+ * Generic description of the element/value portion of a collection.
+ *
  * @author Steve Ebersole
  * @author Gail Badner
  */
 public interface PluralAttributeElementSource {
-	public PluralAttributeElementNature getNature();
+	/**
+	 * Get the specific nature of the element/value.
+	 *
+	 * @return Specific nature
+	 */
+	PluralAttributeElementNature getNature();
 }

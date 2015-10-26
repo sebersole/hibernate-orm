@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.CustomSql;
 import org.hibernate.boot.model.MemberDescriptor;
 import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
@@ -58,12 +58,18 @@ public class AnnotationBindingHelper {
 	/**
 	 * Is class represented by `target` assignable from class represented by `source`?
 	 *
-	 * @param target
-	 * @param source
-	 *
 	 * @return {@code true} if `target` is assignable from `source`; {@code false} otherwise.
 	 */
 	public static boolean isAssignableFrom(ClassInfo target, ClassInfo source, AnnotationBindingContext bindingContext) {
+		if ( target == null ) {
+			throw new NullPointerException( "Passed `target` cannot be null" );
+		}
+
+		if ( source == null ) {
+			log.debug( "`source` passed to AnnotationBindingHelper#isAssignableFrom was null" );
+			return false;
+		}
+
 		// first check the types directly
 		if ( target.name().equals( source.name() ) ) {
 			return true;
@@ -88,18 +94,29 @@ public class AnnotationBindingHelper {
 		return false;
 	}
 
+	@SuppressWarnings("SimplifiableIfStatement" )
 	public static boolean isEmbeddableType(ClassInfo classInfo, AnnotationBindingContext bindingContext) {
-		return bindingContext.getTypeAnnotationInstances( classInfo.name() ).containsKey( JpaDotNames.EMBEDDABLE );
+		if ( classInfo == null ) {
+			return false;
+		}
+		return isEmbeddableType( classInfo.name(), bindingContext );
 	}
 
+	@SuppressWarnings("SimplifiableIfStatement" )
 	public static boolean isEmbeddableType(Type type, AnnotationBindingContext bindingContext) {
-		final ClassInfo classInfo = bindingContext.getJandexIndex().getClassByName( type.name() );
-		return isEmbeddableType( classInfo, bindingContext );
+		if ( type == null ) {
+			return false;
+		}
+		return isEmbeddableType( type.name(), bindingContext );
 	}
 
+	@SuppressWarnings("SimplifiableIfStatement" )
 	public static boolean isEmbeddableType(DotName name, AnnotationBindingContext bindingContext) {
-		final ClassInfo classInfo = bindingContext.getJandexIndex().getClassByName( name );
-		return isEmbeddableType( classInfo, bindingContext );
+		final Map<DotName, AnnotationInstance> annotationMap = bindingContext.getTypeAnnotationInstances( name );
+		if ( annotationMap == null ) {
+			return false;
+		}
+		return annotationMap.containsKey( JpaDotNames.EMBEDDABLE );
 	}
 
 	public static java.util.Collection<AnnotationInstance> getCombinedAnnotations(

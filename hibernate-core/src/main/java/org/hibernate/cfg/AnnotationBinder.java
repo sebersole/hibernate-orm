@@ -76,6 +76,7 @@ import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheAccessStrategy;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
@@ -1158,6 +1159,11 @@ public final class AnnotationBinder {
 
 		public CacheConcurrencyStrategy usage() {
 			return usage;
+		}
+
+		@Override
+		public CacheAccessStrategy access() {
+			return CacheAccessStrategy.UNSPECIFIED;
 		}
 
 		public String region() {

@@ -79,12 +79,12 @@ public class SchemaValidatorImpl implements SchemaValidator {
 			}
 
 			final Column column = (Column) selectable;
-			final ColumnInformation existingColumn = tableInformation.getColumn( Identifier.toIdentifier( column.getQuotedName() ) );
+			final ColumnInformation existingColumn = tableInformation.getColumn( column.getPhysicalName() );
 			if ( existingColumn == null ) {
 				throw new SchemaManagementException(
 						String.format(
 								"Schema-validation: missing column [%s] in table [%s]",
-								column.getName(),
+								column.getPhysicalName().render(),
 								table.getName()
 						)
 				);

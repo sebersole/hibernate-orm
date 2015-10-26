@@ -12,20 +12,21 @@ import java.util.List;
  * Contract describing source of table constraints
  *
  * @author Hardy Ferentschik
- * @author Steve Ebersole
  */
 public interface ConstraintSource {
 	/**
 	 * @return returns the name of the constraint or {@code null} in case a generated name should be used
 	 */
-	public String name();
+	String name();
 
 	/**
 	 * Obtain the logical name of the table for this constraint.
 	 *
 	 * @return The logical table name. Can be {@code null} in the case of the "primary table".
 	 */
-	public String getTableName();
-
-	public List<String> columnNames();
+	String getTableName();
+	
+	List<String> columnNames();
+	
+	List<String> orderings();
 }

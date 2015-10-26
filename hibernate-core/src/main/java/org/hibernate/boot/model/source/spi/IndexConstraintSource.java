@@ -12,5 +12,5 @@ package org.hibernate.boot.model.source.spi;
  * @author Brett Meyer
  */
 public interface IndexConstraintSource extends ConstraintSource {
-	public boolean isUnique();
+	boolean isUnique();
 }

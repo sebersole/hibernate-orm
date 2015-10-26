@@ -40,20 +40,23 @@ import java.util.List;
  */
 public interface AttributesContainer {
 
-	 List<JaxbTransient> getTransient();
+	List<JaxbTransient> getTransient();
 
-	 List<JaxbBasic> getBasic();
+	List<JaxbBasic> getBasic();
 
-	 List<JaxbElementCollection> getElementCollection();
+	List<JaxbEmbedded> getEmbedded();
 
-	 List<JaxbEmbedded> getEmbedded();
+	List<JaxbOneToOne> getOneToOne();
 
-	 List<JaxbManyToMany> getManyToMany();
+	List<JaxbManyToOne> getManyToOne();
 
-	 List<JaxbManyToOne> getManyToOne();
+	List<JaxbAny> getAny();
 
-	 List<JaxbOneToMany> getOneToMany();
+	List<JaxbElementCollection> getElementCollection();
 
-	 List<JaxbOneToOne> getOneToOne();
+	List<JaxbManyToMany> getManyToMany();
 
+	List<JaxbOneToMany> getOneToMany();
+
+	List<JaxbManyToAny> getManyToAny();
 }

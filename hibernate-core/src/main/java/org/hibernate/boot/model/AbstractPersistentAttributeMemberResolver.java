@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 import javax.persistence.AccessType;
 
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.source.internal.ModifierUtils;
 import org.hibernate.boot.model.source.internal.annotations.AnnotationBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.metadata.type.EntityBindingContext;

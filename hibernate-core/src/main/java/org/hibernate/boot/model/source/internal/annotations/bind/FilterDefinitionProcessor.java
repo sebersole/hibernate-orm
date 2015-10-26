@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
 import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
 import org.hibernate.engine.spi.FilterDefinition;

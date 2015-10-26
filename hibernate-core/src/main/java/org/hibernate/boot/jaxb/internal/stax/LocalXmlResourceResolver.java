@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.net.URL;
 import javax.xml.stream.XMLStreamException;
 
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
+import org.hibernate.boot.model.process.spi.ResourceLocator;
 import org.hibernate.internal.log.DeprecationLogger;
 
 import org.jboss.logging.Logger;
@@ -24,10 +24,10 @@ public class LocalXmlResourceResolver implements javax.xml.stream.XMLResolver {
 
 	public static final String CLASSPATH_EXTENSION_URL_BASE = "classpath://";
 
-	private final ClassLoaderService classLoaderService;
+	private final ResourceLocator resourceLocator;
 
-	public LocalXmlResourceResolver(ClassLoaderService classLoaderService) {
-		this.classLoaderService = classLoaderService;
+	public LocalXmlResourceResolver(ResourceLocator resourceLocator) {
+		this.resourceLocator = resourceLocator;
 	}
 
 	@Override
@@ -130,11 +130,15 @@ public class LocalXmlResourceResolver implements javax.xml.stream.XMLResolver {
 
 	private InputStream resolveInLocalNamespace(String path) {
 		try {
-			return classLoaderService.locateResourceStream( path );
+			final URL resourceUrl = resourceLocator.locateResource( path );
+			if ( resourceUrl != null ) {
+				return openUrlStream( resourceUrl );
+			}
 		}
-		catch ( Throwable t ) {
-			return null;
+		catch (Exception ignore) {
 		}
+
+		return null;
 	}
 
 	/**

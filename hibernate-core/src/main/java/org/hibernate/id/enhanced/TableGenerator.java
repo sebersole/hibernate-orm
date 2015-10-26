@@ -46,8 +46,6 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.PrimaryKey;
 import org.hibernate.mapping.Table;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.LongType;
-import org.hibernate.type.StringType;
 import org.hibernate.type.Type;
 
 import org.jboss.logging.Logger;
@@ -223,11 +221,13 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	private QualifiedName qualifiedTableName;
 	private String renderedTableName;
 
-	private String segmentColumnName;
+	private Identifier segmentColumnName;
+	private String segmentColumnNameText;
 	private String segmentValue;
 	private int segmentValueLength;
 
-	private String valueColumnName;
+	private Identifier valueColumnName;
+	private String valueColumnNameText;
 	private int initialValue;
 	private int incrementSize;
 
@@ -267,12 +267,12 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	 *
 	 * @return The segment column name
 	 */
-	public final String getSegmentColumnName() {
-		return segmentColumnName;
+	public final String getSegmentColumnNameText() {
+		return segmentColumnNameText;
 	}
 
 	/**
-	 * The value in {@link #getSegmentColumnName segment column} which
+	 * The value in {@link #getSegmentColumnNameText segment column} which
 	 * corresponding to this generator instance.  In other words this value
 	 * indicates the row in which this generator instance will store values.
 	 *
@@ -283,7 +283,7 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	}
 
 	/**
-	 * The size of the {@link #getSegmentColumnName segment column} in the
+	 * The size of the {@link #getSegmentColumnNameText segment column} in the
 	 * underlying table.
 	 * <p/>
 	 * <b>NOTE</b> : should really have been called 'segmentColumnLength' or
@@ -301,8 +301,8 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	 *
 	 * @return The name of the value column.
 	 */
-	public final String getValueColumnName() {
-		return valueColumnName;
+	public final String getValueColumnNameText() {
+		return valueColumnNameText;
 	}
 
 	/**
@@ -352,7 +352,9 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 
 		qualifiedTableName = determineGeneratorTableName( params, jdbcEnvironment );
 		segmentColumnName = determineSegmentColumnName( params, jdbcEnvironment );
+		segmentColumnNameText = segmentColumnName.render( jdbcEnvironment.getDialect() );
 		valueColumnName = determineValueColumnName( params, jdbcEnvironment );
+		valueColumnNameText = valueColumnName.render( jdbcEnvironment.getDialect() );
 
 		segmentValue = determineSegmentValue( params );
 
@@ -416,15 +418,15 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	 * <p/>
 	 * Called during {@link #configure configuration}.
 	 *
-	 * @see #getSegmentColumnName()
+	 * @see #getSegmentColumnNameText()
 	 * @param params The params supplied in the generator config (plus some standard useful extras).
 	 * @param jdbcEnvironment The JDBC environment
 	 * @return The name of the segment column
 	 */
 	@SuppressWarnings("UnusedParameters")
-	protected String determineSegmentColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
+	protected Identifier determineSegmentColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
 		final String name = ConfigurationHelper.getString( SEGMENT_COLUMN_PARAM, params, DEF_SEGMENT_COLUMN );
-		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name ).render( jdbcEnvironment.getDialect() );
+		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name );
 	}
 
 	/**
@@ -432,15 +434,15 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	 * <p/>
 	 * Called during {@link #configure configuration}.
 	 *
-	 * @see #getValueColumnName()
+	 * @see #getValueColumnNameText()
 	 * @param params The params supplied in the generator config (plus some standard useful extras).
 	 * @param jdbcEnvironment The JDBC environment
 	 * @return The name of the value column
 	 */
 	@SuppressWarnings("UnusedParameters")
-	protected String determineValueColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
+	protected Identifier determineValueColumnName(Properties params, JdbcEnvironment jdbcEnvironment) {
 		final String name = ConfigurationHelper.getString( VALUE_COLUMN_PARAM, params, DEF_VALUE_COLUMN );
-		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name ).render( jdbcEnvironment.getDialect() );
+		return jdbcEnvironment.getIdentifierHelper().toIdentifier( name );
 	}
 
 	/**
@@ -470,12 +472,12 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	protected String determineDefaultSegmentValue(Properties params) {
 		final boolean preferSegmentPerEntity = ConfigurationHelper.getBoolean( CONFIG_PREFER_SEGMENT_PER_ENTITY, params, false );
 		final String defaultToUse = preferSegmentPerEntity ? params.getProperty( TABLE ) : DEF_SEGMENT_VALUE;
-		LOG.usingDefaultIdGeneratorSegmentValue( qualifiedTableName.render(), segmentColumnName, defaultToUse );
+		LOG.usingDefaultIdGeneratorSegmentValue( qualifiedTableName.render(), segmentColumnNameText, defaultToUse );
 		return defaultToUse;
 	}
 
 	/**
-	 * Determine the size of the {@link #getSegmentColumnName segment column}
+	 * Determine the size of the {@link #getSegmentColumnNameText segment column}
 	 * <p/>
 	 * Called during {@link #configure configuration}.
 	 *
@@ -498,23 +500,23 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	@SuppressWarnings("unchecked")
 	protected String buildSelectQuery(Dialect dialect) {
 		final String alias = "tbl";
-		final String query = "select " + StringHelper.qualify( alias, valueColumnName ) +
+		final String query = "select " + StringHelper.qualify( alias, valueColumnNameText ) +
 				" from " + renderedTableName + ' ' + alias +
-				" where " + StringHelper.qualify( alias, segmentColumnName ) + "=?";
+				" where " + StringHelper.qualify( alias, segmentColumnNameText ) + "=?";
 		final LockOptions lockOptions = new LockOptions( LockMode.PESSIMISTIC_WRITE );
 		lockOptions.setAliasSpecificLockMode( alias, LockMode.PESSIMISTIC_WRITE );
-		final Map updateTargetColumnsMap = Collections.singletonMap( alias, new String[] { valueColumnName } );
+		final Map updateTargetColumnsMap = Collections.singletonMap( alias, new String[] {valueColumnNameText} );
 		return dialect.applyLocksToSql( query, lockOptions, updateTargetColumnsMap );
 	}
 
 	protected String buildUpdateQuery() {
 		return "update " + renderedTableName +
-				" set " + valueColumnName + "=? " +
-				" where " + valueColumnName + "=? and " + segmentColumnName + "=?";
+				" set " + valueColumnNameText + "=? " +
+				" where " + valueColumnNameText + "=? and " + segmentColumnNameText + "=?";
 	}
 
 	protected String buildInsertQuery() {
-		return "insert into " + renderedTableName + " (" + segmentColumnName + ", " + valueColumnName + ") " + " values (?,?)";
+		return "insert into " + renderedTableName + " (" + segmentColumnNameText + ", " + valueColumnNameText + ") " + " values (?,?)";
 	}
 
 	private IntegralDataTypeHolder makeValue() {
@@ -652,9 +654,9 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	public String[] sqlCreateStrings(Dialect dialect) throws HibernateException {
 		return new String[] {
 				dialect.getCreateTableString() + ' ' + renderedTableName + " ( "
-						+ segmentColumnName + ' ' + dialect.getTypeName( Types.VARCHAR, segmentValueLength, 0, 0 ) + " not null "
-						+ ", " + valueColumnName + ' ' + dialect.getTypeName( Types.BIGINT )
-						+ ", primary key ( " + segmentColumnName + " ) )" + dialect.getTableTypeString()
+						+ segmentColumnNameText + ' ' + dialect.getTypeName( Types.VARCHAR, segmentValueLength, 0, 0 ) + " not null "
+						+ ", " + valueColumnNameText + ' ' + dialect.getTypeName( Types.BIGINT )
+						+ ", primary key ( " + segmentColumnNameText + " ) )" + dialect.getTableTypeString()
 		};
 	}
 
@@ -678,10 +680,8 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 
 			// todo : note sure the best solution here.  do we add the columns if missing?  other?
 			final Column segmentColumn = new ExportableColumn(
-					database,
-					table,
 					segmentColumnName,
-					StringType.INSTANCE,
+					segmentColumnName,
 					dialect.getTypeName( Types.VARCHAR, segmentValueLength, 0, 0 )
 			);
 			segmentColumn.setNullable( false );
@@ -693,10 +693,9 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 			table.getPrimaryKey().addColumn( segmentColumn );
 
 			final Column valueColumn = new ExportableColumn(
-					database,
-					table,
 					valueColumnName,
-					LongType.INSTANCE
+					valueColumnName,
+					dialect.getTypeName( Types.BIGINT )
 			);
 			table.addColumn( valueColumn );
 		}

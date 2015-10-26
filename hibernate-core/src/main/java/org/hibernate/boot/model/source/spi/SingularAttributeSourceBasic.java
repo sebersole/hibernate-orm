@@ -7,10 +7,13 @@
 package org.hibernate.boot.model.source.spi;
 
 import org.hibernate.boot.model.naming.ImplicitBasicColumnNameSource;
+import org.hibernate.boot.spi.AttributeConverterDescriptor;
 
 /**
  * @author Steve Ebersole
  */
 public interface SingularAttributeSourceBasic
 		extends SingularAttributeSource, RelationalValueSourceContainer, ImplicitBasicColumnNameSource {
+	IdentifierGenerationInformation getIdentifierGenerationInformation();
+	AttributeConverterDescriptor resolveAttributeConverterDescriptor();
 }

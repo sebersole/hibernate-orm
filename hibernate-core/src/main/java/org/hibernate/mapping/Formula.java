@@ -13,7 +13,8 @@ import org.hibernate.dialect.function.SQLFunctionRegistry;
 import org.hibernate.sql.Template;
 
 /**
- * A formula is a derived column value
+ * A formula is a derived column value (a SQL expression)
+ *
  * @author Gavin King
  */
 public class Formula implements Selectable, Serializable {

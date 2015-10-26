@@ -11,9 +11,22 @@ import java.util.List;
 import org.hibernate.boot.model.naming.ImplicitAnyKeyColumnNameSource;
 
 /**
+ * Describes the key column of an ANY mapping (the id of the corresponding entity)
+ *
  * @author Steve Ebersole
  */
 public interface AnyKeySource extends ImplicitAnyKeyColumnNameSource {
+	/**
+	 * Retrieve information about the Hibernate Type describing the key.
+	 *
+	 * @return The key information
+	 */
 	HibernateTypeSource getTypeSource();
+
+	/**
+	 * Retrieve information about column(s) holding the key value.
+	 *
+	 * @return The column(s) information
+	 */
 	List<RelationalValueSource> getRelationalValueSources();
 }

@@ -16,9 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.jandex.internal.ResourceLocator;
-import org.hibernate.boot.jandex.spi.JandexIndexBuilder;
-import org.hibernate.boot.jandex.spi.JandexIndexBuilderFactory;
+import org.hibernate.boot.model.process.spi.ResourceLocator;
+import org.hibernate.boot.model.process.jandex.spi.JandexIndexBuilder;
+import org.hibernate.boot.model.process.jandex.spi.JandexIndexBuilderFactory;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;

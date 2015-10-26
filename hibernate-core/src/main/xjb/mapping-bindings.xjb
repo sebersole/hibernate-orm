@@ -23,6 +23,18 @@
 					printMethod="org.hibernate.boot.jaxb.mapping.internal.AccessTypeMarshalling.toXml" />
         </bindings>
 
+		<bindings node="//xsd:simpleType[@name='hbm-cache-access-type']">
+			<javaType name="org.hibernate.cache.spi.access.AccessType"
+					parseMethod="org.hibernate.boot.jaxb.mapping.internal.CacheAccessTypeMarshalling.fromXml"
+					printMethod="org.hibernate.boot.jaxb.mapping.internal.CacheAccessTypeMarshalling.toXml" />
+        </bindings>
+
+		<bindings node="//xsd:simpleType[@name='hbm-cache-mode-type']">
+			<javaType name="org.hibernate.CacheMode"
+					parseMethod="org.hibernate.boot.jaxb.hbm.internal.CacheModeConverter.fromXml"
+					printMethod="org.hibernate.boot.jaxb.hbm.internal.CacheModeConverter.toXml" />
+        </bindings>
+
 		<bindings node="//xsd:simpleType[@name='discriminator-type']">
 			<javaType name="javax.persistence.DiscriminatorType"
 					parseMethod="org.hibernate.boot.jaxb.mapping.internal.DiscriminatorTypeMarshalling.fromXml"
@@ -59,11 +71,23 @@
 					printMethod="org.hibernate.boot.jaxb.mapping.internal.LockModeTypeMarshalling.toXml" />
         </bindings>
 
+		<bindings node="//xsd:simpleType[@name='hbm-optimistic-lock']">
+			<javaType name="org.hibernate.engine.OptimisticLockStyle"
+					parseMethod="org.hibernate.boot.jaxb.hbm.internal.OptimisticLockStyleConverter.fromXml"
+					printMethod="org.hibernate.boot.jaxb.hbm.internal.OptimisticLockStyleConverter.toXml" />
+		</bindings>
+
 		<bindings node="//xsd:simpleType[@name='parameter-mode']">
 			<javaType name="javax.persistence.ParameterMode"
 					parseMethod="org.hibernate.boot.jaxb.mapping.internal.ParameterModeMarshalling.fromXml"
 					printMethod="org.hibernate.boot.jaxb.mapping.internal.ParameterModeMarshalling.toXml" />
         </bindings>
+
+		<bindings node="//xsd:simpleType[@name='hbm-custom-sql-check-enum']">
+			<javaType name="org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle"
+					parseMethod="org.hibernate.boot.jaxb.hbm.internal.ExecuteUpdateResultCheckStyleConverter.fromXml"
+					printMethod="org.hibernate.boot.jaxb.hbm.internal.ExecuteUpdateResultCheckStyleConverter.toXml" />
+		</bindings>
 
 		<bindings node="//xsd:simpleType[@name='temporal-type']">
 			<javaType name="javax.persistence.TemporalType"

@@ -7,6 +7,8 @@
 package org.hibernate.boot.model.source.spi;
 
 /**
+ * Describes the identifier for an id-bag
+ *
  * @author Steve Ebersole
  */
 public interface CollectionIdSource {
@@ -15,19 +17,19 @@ public interface CollectionIdSource {
 	 *
 	 * @return The collection id column info.
 	 */
-	public ColumnSource getColumnSource();
+	ColumnSource getColumnSource();
 
 	/**
 	 * Obtain information about the Hibernate type ({@link org.hibernate.type.Type}) for the collection id
 	 *
 	 * @return The Hibernate type information
 	 */
-	public HibernateTypeSource getTypeInformation();
+	HibernateTypeSource getTypeInformation();
 
 	/**
 	 * Obtain the name of the identifier value generator.
 	 *
 	 * @return The identifier value generator name
 	 */
-	public String getGeneratorName();
+	String getGeneratorName();
 }

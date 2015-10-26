@@ -24,7 +24,7 @@ import org.hibernate.boot.jaxb.internal.stax.BufferedXMLEventReader;
 import org.hibernate.boot.jaxb.internal.stax.LocalXmlResourceResolver;
 import org.hibernate.boot.jaxb.spi.Binder;
 import org.hibernate.boot.jaxb.spi.Binding;
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
+import org.hibernate.boot.model.process.spi.ResourceLocator;
 
 import org.jboss.logging.Logger;
 
@@ -34,20 +34,22 @@ import org.jboss.logging.Logger;
 public abstract class AbstractBinder implements Binder {
 	private static final Logger log = Logger.getLogger( AbstractBinder.class );
 
+	private final ResourceLocator resourceLocator;
 	private final LocalXmlResourceResolver xmlResourceResolver;
 	private final boolean validateXml;
 
-	protected AbstractBinder(ClassLoaderService classLoaderService) {
-		this( classLoaderService, true );
-	}
-
-	protected AbstractBinder(ClassLoaderService classLoaderService, boolean validateXml) {
-		this.xmlResourceResolver = new LocalXmlResourceResolver( classLoaderService );
+	protected AbstractBinder(ResourceLocator resourceLocator, boolean validateXml) {
+		this.resourceLocator = resourceLocator;
+		this.xmlResourceResolver = new LocalXmlResourceResolver( resourceLocator );
 		this.validateXml = validateXml;
 	}
 
 	public boolean isValidationEnabled() {
 		return validateXml;
+	}
+
+	protected ResourceLocator getResourceLocator() {
+		return resourceLocator;
 	}
 
 	@Override

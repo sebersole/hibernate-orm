@@ -4,30 +4,6 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-
-/*
- * Hibernate, Relational Persistence for Idiomatic Java
- *
- * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
- * indicated by the @author tags or express copyright attribution
- * statements applied by the authors.  All third-party contributions are
- * distributed under license by Red Hat Inc.
- *
- * This copyrighted material is made available to anyone wishing to use, modify,
- * copy, or redistribute it subject to the terms and conditions of the GNU
- * Lesser General Public License, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this distribution; if not, write to:
- * Free Software Foundation, Inc.
- * 51 Franklin Street, Fifth Floor
- * Boston, MA  02110-1301  USA
- */
 package org.hibernate.boot.model.source.internal.annotations.metadata.attribute;
 
 import java.util.ArrayList;
@@ -49,18 +25,18 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.boot.jandex.spi.HibernateDotNames;
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.HibernateDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.Caching;
 import org.hibernate.boot.model.CustomSql;
 import org.hibernate.boot.model.MemberDescriptor;
 import org.hibernate.boot.model.TruthValue;
-import org.hibernate.boot.model.source.internal.annotations.impl.ForeignKeyInformation;
+import org.hibernate.boot.model.source.internal.annotations.ForeignKeyInformation;
 import org.hibernate.boot.model.source.internal.annotations.metadata.type.ManagedTypeMetadata;
 import org.hibernate.boot.model.source.internal.annotations.metadata.util.AssociationHelper;
 import org.hibernate.boot.model.source.internal.annotations.metadata.util.ConverterAndOverridesHelper;
 import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
-import org.hibernate.boot.model.source.internal.hbm.FetchCharacteristicsPluralAttributeImpl;
+import org.hibernate.boot.model.source.internal.annotations.FetchCharacteristicsPluralAttributeImpl;
 import org.hibernate.boot.model.source.spi.AttributePath;
 import org.hibernate.boot.model.source.spi.AttributeRole;
 import org.hibernate.boot.model.source.spi.CollectionNature;
@@ -156,7 +132,7 @@ public class PluralAttribute
 				accessorStrategy
 		);
 
-		this.collectionIdInformation = CollectionIdInformationImpl.make( this );
+		this.collectionIdInformation = CollectionIdInformation.make( this );
 		this.collectionNature = resolveCollectionNature( collectionIdInformation );
 
 		// we make an assumption here based on JPA spec that the exposed member type must be the
@@ -195,7 +171,7 @@ public class PluralAttribute
 				container.getLocalBindingContext(),
 				extractAnnotationValue( memberAnnotationMap().get( HibernateDotNames.FETCH ), "value", FetchMode.class ),
 				extractAnnotationValue( lazyCollectionAnnotation, "value", LazyCollectionOption.class ),
-				extractAnnotationValue( associationAnnotation, "value", FetchType.class ),
+				extractAnnotationValue( associationAnnotation, "fetch", FetchType.class ),
 				extractAnnotationValue( memberAnnotationMap().get( HibernateDotNames.BATCH_SIZE ), "value", Integer.class )
 		);
 		this.isOptional = AssociationHelper.determineOptionality( associationAnnotation );

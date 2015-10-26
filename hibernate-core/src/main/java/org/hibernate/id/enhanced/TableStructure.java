@@ -278,10 +278,9 @@ public class TableStructure implements DatabaseStructure {
 				" where " + valueColumnNameText + "=?";
 
 		ExportableColumn valueColumn = new ExportableColumn(
-				database,
-				table,
-				valueColumnNameText,
-				LongType.INSTANCE
+				logicalValueColumnNameIdentifier,
+				logicalValueColumnNameIdentifier,
+				dialect.getTypeName( Types.BIGINT )
 		);
 		table.addColumn( valueColumn );
 

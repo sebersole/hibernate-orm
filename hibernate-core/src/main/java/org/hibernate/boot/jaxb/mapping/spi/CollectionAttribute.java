@@ -38,48 +38,45 @@ import javax.persistence.TemporalType;
  * Common interface for JAXB bindings that represent persistent collection attributes.
  *
  * @author Brett Meyer
+ * @author Steve Ebersole
  */
-public interface CollectionAttribute extends FetchableAttribute {
+public interface CollectionAttribute extends PersistentAttribute, FetchableAttribute {
+	JaxbHbmType getCollectionType();
+	void setCollectionType(JaxbHbmType collectionType);
 
-    public String getOrderBy();
+	String getSort();
+	void setSort(String sort);
 
-    public void setOrderBy(String value);
+    String getOrderBy();
+	void setOrderBy(String value);
 
-    public JaxbOrderColumn getOrderColumn();
+	JaxbOrderColumn getOrderColumn();
+	void setOrderColumn(JaxbOrderColumn value);
 
-    public void setOrderColumn(JaxbOrderColumn value);
-	
-	public JaxbMapKey getMapKey();
+	JaxbMapKey getMapKey();
+	void setMapKey(JaxbMapKey value);
 
-    public void setMapKey(JaxbMapKey value);
+	JaxbMapKeyClass getMapKeyClass();
+	void setMapKeyClass(JaxbMapKeyClass value);
 
-    public JaxbMapKeyClass getMapKeyClass();
+	TemporalType getMapKeyTemporal();
+	void setMapKeyTemporal(TemporalType value);
 
-    public void setMapKeyClass(JaxbMapKeyClass value);
+	EnumType getMapKeyEnumerated();
+	void setMapKeyEnumerated(EnumType value);
 
-    public TemporalType getMapKeyTemporal();
+	JaxbHbmType getMapKeyType();
+	void setMapKeyType(JaxbHbmType value);
 
-    public void setMapKeyTemporal(TemporalType value);
+	List<JaxbAttributeOverride> getMapKeyAttributeOverride();
 
-    public EnumType getMapKeyEnumerated();
+	List<JaxbConvert> getMapKeyConvert();
 
-    public void setMapKeyEnumerated(EnumType value);
+	JaxbMapKeyColumn getMapKeyColumn();
+	void setMapKeyColumn(JaxbMapKeyColumn value);
 
-    public JaxbHbmType getMapKeyType();
+	List<JaxbMapKeyJoinColumn> getMapKeyJoinColumn();
 
-    public void setMapKeyType(JaxbHbmType value);
-
-    public List<JaxbAttributeOverride> getMapKeyAttributeOverride();
-
-    public List<JaxbConvert> getMapKeyConvert();
-
-    public JaxbMapKeyColumn getMapKeyColumn();
-
-    public void setMapKeyColumn(JaxbMapKeyColumn value);
-
-    public List<JaxbMapKeyJoinColumn> getMapKeyJoinColumn();
-
-    public JaxbForeignKey getMapKeyForeignKey();
-
-    public void setMapKeyForeignKey(JaxbForeignKey value);
+	JaxbForeignKey getMapKeyForeignKey();
+	void setMapKeyForeignKey(JaxbForeignKey value);
 }

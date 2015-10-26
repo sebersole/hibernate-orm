@@ -6,6 +6,10 @@
  */
 package org.hibernate.boot.model.source.spi;
 
+import java.util.Set;
+
+import org.hibernate.engine.spi.CascadeStyle;
+
 /**
  * Describes sources which define cascading.
  *
@@ -17,5 +21,5 @@ public interface CascadeStyleSource {
 	 *
 	 * @return The cascade styles.
 	 */
-	public String getCascadeStyleName();
+	Set<CascadeStyle> getCascadeStyles();
 }

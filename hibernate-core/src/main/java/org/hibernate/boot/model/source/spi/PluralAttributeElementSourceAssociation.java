@@ -7,6 +7,8 @@
 package org.hibernate.boot.model.source.spi;
 
 /**
+ * Describes a collection element whose value is an entity.
+ *
  * @author Gail Badner
  * @author Steve Ebersole
  */

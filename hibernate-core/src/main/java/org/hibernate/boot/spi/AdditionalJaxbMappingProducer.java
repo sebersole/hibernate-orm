@@ -9,7 +9,7 @@ package org.hibernate.boot.spi;
 import java.util.Collection;
 
 import org.hibernate.boot.jaxb.internal.MappingBinder;
-import org.hibernate.boot.model.source.internal.hbm.MappingDocument;
+import org.hibernate.boot.jaxb.mapping.spi.JaxbEntityMappings;
 
 import org.jboss.jandex.IndexView;
 
@@ -21,7 +21,7 @@ import org.jboss.jandex.IndexView;
  */
 @Deprecated
 public interface AdditionalJaxbMappingProducer {
-	Collection<MappingDocument> produceAdditionalMappings(
+	Collection<JaxbEntityMappings> produceAdditionalMappings(
 			MetadataImplementor metadata,
 			IndexView jandexIndex,
 			MappingBinder mappingBinder,

@@ -18,28 +18,27 @@ import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.Namespace;
-import org.hibernate.boot.model.source.internal.annotations.AttributeSource;
-import org.hibernate.boot.model.source.internal.annotations.DiscriminatorSource;
-import org.hibernate.boot.model.source.internal.annotations.EntityHierarchyBuilder;
-import org.hibernate.boot.model.source.internal.annotations.IdentifiableTypeSource;
-import org.hibernate.boot.model.source.internal.annotations.PluralAttributeSource;
+import org.hibernate.boot.model.source.spi.AttributeSource;
+import org.hibernate.boot.model.source.spi.DiscriminatorSource;
+import org.hibernate.boot.model.source.spi.IdentifiableTypeSource;
+import org.hibernate.boot.model.source.spi.IdentifierSourceSimple;
+import org.hibernate.boot.model.source.spi.PluralAttributeSource;
 import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
-import org.hibernate.boot.model.source.internal.annotations.SimpleIdentifierSource;
-import org.hibernate.boot.model.source.internal.annotations.SingularAttributeSource;
-import org.hibernate.boot.model.source.internal.annotations.SingularAttributeSourceBasic;
-import org.hibernate.boot.model.source.internal.annotations.impl.ColumnSourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.DerivedValueSourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.EntityHierarchySourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.EntitySourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.IdentifiableTypeSourceAdapter;
-import org.hibernate.boot.model.source.internal.annotations.impl.InLineViewSourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.JoinedSubclassEntitySourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.MappedSuperclassSourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.RootEntitySourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.SubclassEntitySourceImpl;
-import org.hibernate.boot.model.source.internal.annotations.impl.TableSourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.ColumnSourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.DerivedValueSourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.EntityHierarchySourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.EntitySourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.IdentifiableTypeSourceAdapter;
+import org.hibernate.boot.model.source.internal.annotations.InLineViewSourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.JoinedSubclassEntitySourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.MappedSuperclassSourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.RootEntitySourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.SubclassEntitySourceImpl;
+import org.hibernate.boot.model.source.internal.annotations.TableSourceImpl;
 import org.hibernate.boot.model.source.spi.InheritanceType;
 import org.hibernate.boot.model.source.spi.NaturalIdMutability;
+import org.hibernate.boot.model.source.spi.SingularAttributeSource;
+import org.hibernate.boot.model.source.spi.SingularAttributeSourceBasic;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -126,8 +125,8 @@ public class ModelProcessor {
 		// identifier
 		switch ( hierarchy.getIdentifierSource().getNature() ) {
 			case SIMPLE: {
-				final SimpleIdentifierSource simpleIdentifierSource = (SimpleIdentifierSource) hierarchy.getIdentifierSource();
-				final SingularAttributeSource idAttributeSource = simpleIdentifierSource.getIdentifierAttributeSource();
+				final IdentifierSourceSimple simpleIdentifierSource = (IdentifierSourceSimple) hierarchy.getIdentifierSource();
+				final SingularAttributeSourceBasic idAttributeSource = simpleIdentifierSource.getIdentifierAttributeSource();
 
 				final SimpleValue idValue = new SimpleValue(
 						rootBindingContext.getMetadataCollector(),
@@ -158,6 +157,19 @@ public class ModelProcessor {
 				rootEntityBinding.setIdentifier( idValue );
 				rootEntityBinding.setIdentifierProperty( idProperty );
 				rootEntityBinding.setIdentifierMapper( null );
+
+				if ( idAttributeSource.getRelationalValueSources().isEmpty() ) {
+					RelationalObjectBinder.bindImplicitSimpleIdColumn(
+							hierarchy.getRoot(),
+							idAttributeSource,
+							idValue,
+							rootBindingContext
+					);
+				}
+				else {
+
+				}
+
 				break;
 			}
 			case NON_AGGREGATED_COMPOSITE: {
@@ -319,7 +331,9 @@ public class ModelProcessor {
 			}
 			else {
 				final PluralAttributeSource pluralAttributeSource = (PluralAttributeSource) attributeSource;
-				throw new NotYetImplementedException( "todo" );
+				throw new NotYetImplementedException(
+						"plural attribute binding not yet implemented : " + pluralAttributeSource.getAnnotatedAttribute().toString()
+				);
 			}
 
 			entityBinding.addProperty( attributeBinding );

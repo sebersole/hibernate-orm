@@ -18,7 +18,7 @@ import javax.persistence.SqlResultSetMapping;
 
 import org.hibernate.LockMode;
 import org.hibernate.MappingException;
-import org.hibernate.boot.jandex.spi.JpaDotNames;
+import org.hibernate.boot.model.process.jandex.spi.JpaDotNames;
 import org.hibernate.boot.model.source.internal.annotations.RootAnnotationBindingContext;
 import org.hibernate.boot.model.source.internal.annotations.util.AnnotationBindingHelper;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;

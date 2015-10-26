@@ -40,6 +40,7 @@ import javax.persistence.AccessType;
  */
 public interface PersistentAttribute {
 	String getName();
+	void setName(String name);
 
 	AccessType getAccess();
 	void setAccess(AccessType accessType);

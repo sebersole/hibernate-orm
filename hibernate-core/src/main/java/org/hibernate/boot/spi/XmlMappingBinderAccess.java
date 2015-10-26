@@ -20,6 +20,7 @@ import org.hibernate.boot.jaxb.internal.InputStreamXmlSource;
 import org.hibernate.boot.jaxb.internal.MappingBinder;
 import org.hibernate.boot.jaxb.internal.UrlXmlSource;
 import org.hibernate.boot.jaxb.spi.Binding;
+import org.hibernate.boot.model.process.spi.ResourceLocator;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.service.ServiceRegistry;
 
@@ -40,7 +41,10 @@ public class XmlMappingBinderAccess {
 		// NOTE : The boolean here indicates whether or not to perform validation as we load XML documents.
 		// Should we expose this setting?  Disabling would speed up JAXP and JAXB at runtime, but potentially
 		// at the cost of less obvious errors when a document is not valid.
-		this.mappingBinder = new MappingBinder( serviceRegistry.getService( ClassLoaderService.class ), true );
+		this.mappingBinder = new MappingBinder(
+				new ResourceLocator( serviceRegistry.getService( ClassLoaderService.class ) ),
+				true
+		);
 	}
 
 	public MappingBinder getMappingBinder() {

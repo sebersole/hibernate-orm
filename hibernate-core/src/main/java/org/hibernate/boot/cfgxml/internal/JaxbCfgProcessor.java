@@ -10,6 +10,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.boot.jaxb.Origin;
 import org.hibernate.boot.jaxb.cfg.spi.JaxbCfgHibernateConfiguration;
 import org.hibernate.boot.jaxb.internal.stax.LocalXmlResourceResolver;
+import org.hibernate.boot.model.process.spi.ResourceLocator;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.util.config.ConfigurationException;
 import org.hibernate.internal.util.xml.XsdException;
@@ -55,7 +56,7 @@ public class JaxbCfgProcessor {
 
 	public JaxbCfgProcessor(ClassLoaderService classLoaderService) {
 		this.classLoaderService = classLoaderService;
-		this.xmlResourceResolver = new LocalXmlResourceResolver( classLoaderService );
+		this.xmlResourceResolver = new LocalXmlResourceResolver( new ResourceLocator( classLoaderService ) );
 	}
 
 	public JaxbCfgHibernateConfiguration unmarshal(InputStream stream, Origin origin) {

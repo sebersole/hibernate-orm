@@ -69,25 +69,23 @@ public class DenormalizedTable extends Table {
 		}
 	}
 
-	@Override
-	public Column getColumn(Column column) {
-		Column superColumn = super.getColumn( column );
-		if ( superColumn != null ) {
-			return superColumn;
-		}
-		else {
-			return includedTable.getColumn( column );
-		}
-	}
-
 	public Column getColumn(Identifier name) {
 		Column superColumn = super.getColumn( name );
 		if ( superColumn != null ) {
 			return superColumn;
 		}
-		else {
-			return includedTable.getColumn( name );
+
+		return includedTable.getColumn( name );
+	}
+
+	@Override
+	public Column getColumnByPhysicalName(Identifier name) {
+		Column superColumn = super.getColumn( name );
+		if ( superColumn != null ) {
+			return superColumn;
 		}
+
+		return includedTable.getColumn( name );
 	}
 
 	@Override
@@ -99,8 +97,13 @@ public class DenormalizedTable extends Table {
 	}
 
 	@Override
-	public boolean containsColumn(Column column) {
-		return super.containsColumn( column ) || includedTable.containsColumn( column );
+	public boolean containsColumn(Identifier name) {
+		return super.containsColumn( name ) || includedTable.containsColumn( name );
+	}
+
+	@Override
+	public boolean containsColumnByPhysicalName(Identifier name) {
+		return super.containsColumnByPhysicalName( name ) || includedTable.containsColumnByPhysicalName( name );
 	}
 
 	@Override

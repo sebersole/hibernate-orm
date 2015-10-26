@@ -15,8 +15,6 @@ import org.hibernate.boot.model.naming.ImplicitBasicColumnNameSource;
  * @author Steve Ebersole
  */
 public interface PluralAttributeElementSourceBasic
-		extends PluralAttributeElementSource,
-				RelationalValueSourceContainer,
-				ImplicitBasicColumnNameSource {
-	public HibernateTypeSource getExplicitHibernateTypeSource();
+		extends PluralAttributeElementSource, RelationalValueSourceContainer, ImplicitBasicColumnNameSource {
+	HibernateTypeSource getExplicitHibernateTypeSource();
 }

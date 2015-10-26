@@ -77,26 +77,21 @@
                 <xsd:element name="schema" type="xsd:string" minOccurs="0"/>
                 <xsd:element name="catalog" type="xsd:string" minOccurs="0"/>
 
-                <!-- allow a choice between the JPA and Hibernate "attribute access" declaration -->
-                <xsd:choice minOccurs="0">
-                    <!-- The JPA declaration is the discrete set (property|field) -->
-                    <xsd:element name="access" type="orm:access-type" />
-                    <!-- Hibernate allows pluggable contracts, so its declaration is open-ended -->
-                    <xsd:element name="attribute-accessor" type="xsd:string" />
-                </xsd:choice>
+                <xsd:element name="access" type="orm:access-type"/>
+                <xsd:element name="hbm-access" type="xsd:string"/>
 
-                <xsd:element name="auto-import" type="xsd:boolean" minOccurs="0" />
-                <xsd:element name="default-cascade" type="xsd:string" minOccurs="0" />
-                <xsd:element name="default-lazy" type="xsd:boolean" minOccurs="0" />
+                <xsd:element name="hbm-cascade" type="xsd:string" minOccurs="0" />
+                <xsd:element name="hbm-singular-lazy" type="xsd:boolean" minOccurs="0"/>
+                <xsd:element name="hbm-plural-lazy" type="xsd:boolean" minOccurs="0"/>
 
-                <xsd:element name="type-def" type="orm:hbm-type-def" minOccurs="0" maxOccurs="unbounded" />
-                <xsd:element name="filter-def" type="orm:hbm-filter-def" minOccurs="0" maxOccurs="unbounded" />
-                <xsd:element name="fetch-profile" type="orm:hbm-fetch-profile" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="hbm-type-def" type="orm:hbm-type-def" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="hbm-filter-def" type="orm:hbm-filter-def" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="hbm-fetch-profile" type="orm:hbm-fetch-profile" minOccurs="0" maxOccurs="unbounded" />
 
                 <xsd:element name="sequence-generator" type="orm:sequence-generator" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element name="table-generator" type="orm:table-generator" minOccurs="0" maxOccurs="unbounded"/>
 
-                <xsd:element name="identifier-generator-def" type="orm:hbm-id-generator-def" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="hbm-identifier-generator-def" type="orm:hbm-id-generator-def" minOccurs="0" maxOccurs="unbounded" />
 
                 <xsd:element name="named-query" type="orm:named-query" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element name="named-native-query" type="orm:named-native-query" minOccurs="0" maxOccurs="unbounded"/>
@@ -110,6 +105,7 @@
 
                 <!-- hbm : explicit query language "import" -->
                 <xsd:element name="import" minOccurs="0" maxOccurs="unbounded">
+                    <!-- See org.hibernate.annotations.QueryImports -->
                     <xsd:complexType>
                         <xsd:attribute name="class" type="xsd:string" use="required" />
                         <!-- default is unqualified class name -->
@@ -195,25 +191,22 @@
             <xsd:element name="catalog" type="xsd:string" minOccurs="0"/>
             <xsd:element name="delimited-identifiers" type="orm:emptyType" minOccurs="0"/>
 
-            <!-- allow a choice between the JPA and Hibernate "attribute access" declaration -->
-            <xsd:choice minOccurs="0">
-                <!-- The JPA declaration is discrete (property|field) -->
-                <xsd:element name="access" type="orm:access-type"/>
-                <!-- Hibernate allows pluggable contracts, so its declaration is open-ended -->
-                <xsd:element name="default-access" type="xsd:string"/>
-            </xsd:choice>
+            <xsd:element name="access" type="orm:access-type"/>
+            <xsd:element name="hbm-access" type="xsd:string"/>
+
+            <xsd:element name="hbm-cache-access" type="orm:hbm-cache-access-type"/>
 
             <!-- allow a choice between the JPA and Hibernate default cascading options -->
             <xsd:choice minOccurs="0">
                 <xsd:element name="cascade-persist" type="orm:emptyType" minOccurs="0"/>
                 <!-- Hibernate allows fully specified cascade options to use as default -->
-                <xsd:element name="default-cascade" type="xsd:string" />
+                <xsd:element name="hbm-cascade" type="xsd:string" />
             </xsd:choice>
 
-            <!-- hbm : should all referenced entities (and superclasses) be auto-imported for hql/jpql -->
-            <xsd:element name="auto-import" type="xsd:boolean" minOccurs="0"/>
-            <!-- hbm : whether entities should be lazy (by default) or not -->
-            <xsd:element name="default-lazy" type="xsd:boolean" minOccurs="0"/>
+            <!-- hbm : whether singular associations should be lazy (by default) or not -->
+            <xsd:element name="hbm-singular-lazy" type="xsd:boolean" minOccurs="0"/>
+            <!-- hbm : whether plural attributes should be lazy (by default) or not -->
+            <xsd:element name="hbm-plural-lazy" type="xsd:boolean" minOccurs="0"/>
 
             <xsd:element name="entity-listeners" type="orm:entity-listeners" minOccurs="0"/>
         </xsd:sequence>
@@ -231,6 +224,20 @@
         <xsd:restriction base="xsd:token">
             <xsd:enumeration value="PROPERTY"/>
             <xsd:enumeration value="FIELD"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="hbm-cache-access-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                org.hibernate.cache.spi.access.AccessType enum values
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="READ_ONLY"/>
+            <xsd:enumeration value="READ_WRITE"/>
+            <xsd:enumeration value="NONSTRICT_READ_WRITE"/>
+            <xsd:enumeration value="TRANSACTIONAL"/>
         </xsd:restriction>
     </xsd:simpleType>
 
@@ -418,6 +425,8 @@
                 of entity and collection state.
             </xsd:documentation>
         </xsd:annotation>
+        <xsd:attribute name="region" type="xsd:string"/>
+        <xsd:attribute name="access" type="orm:hbm-cache-access-type"/>
         <xsd:attribute name="include" default="all">
             <xsd:simpleType>
                 <xsd:restriction base="xsd:token">
@@ -426,23 +435,12 @@
                 </xsd:restriction>
             </xsd:simpleType>
         </xsd:attribute>
-        <xsd:attribute name="region" type="xsd:string"/>
-        <xsd:attribute name="usage" use="required">
-            <xsd:simpleType>
-                <xsd:restriction base="xsd:token">
-                    <xsd:enumeration value="nonstrict-read-write"/>
-                    <xsd:enumeration value="read-only"/>
-                    <xsd:enumeration value="read-write"/>
-                    <xsd:enumeration value="transactional"/>
-                </xsd:restriction>
-            </xsd:simpleType>
-        </xsd:attribute>
     </xsd:complexType>
 
 
     <!-- **************************************************** -->
 
-    <xsd:simpleType name="cache-mode-type">
+    <xsd:simpleType name="hbm-cache-mode-type">
         <xsd:annotation>
             <xsd:documentation>
                 org.hibernate.CacheMode enum values
@@ -760,6 +758,8 @@
             <xsd:element name="element-collection" type="orm:element-collection" minOccurs="0" maxOccurs="unbounded"/>
             <xsd:element name="embedded" type="orm:embedded" minOccurs="0" maxOccurs="unbounded"/>
             <xsd:element name="transient" type="orm:transient" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="any" type="orm:any" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="many-to-any" type="orm:many-to-any" minOccurs="0" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 
@@ -841,16 +841,7 @@
             <!-- hbm : is the state of this entity considered mutable : ! @Immutable -->
             <xsd:element name="mutable" type="xsd:boolean" minOccurs="0" />
             <!-- hbm : declares the basis for optimistic locking : @OptimisticLocking -->
-            <xsd:element name="optimistic-lock" default="version" minOccurs="0" >
-                <xsd:simpleType>
-                    <xsd:restriction base="xsd:token">
-                        <xsd:enumeration value="all"/>
-                        <xsd:enumeration value="dirty"/>
-                        <xsd:enumeration value="version"/>
-                        <xsd:enumeration value="none"/>
-                    </xsd:restriction>
-                </xsd:simpleType>
-            </xsd:element>
+            <xsd:element name="optimistic-lock" default="version" minOccurs="0" type="orm:hbm-optimistic-lock" />
 
             <xsd:choice minOccurs="0" >
                 <!-- Physical table -->
@@ -1391,6 +1382,7 @@
         <xsd:attribute name="hbm-fetch-mode" type="orm:hbm-fetch-mode"/>
         <xsd:attribute name="access" type="orm:access-type"/>
         <xsd:attribute name="attribute-accessor" type="xsd:string" />
+        <!-- todo : for transformation of mapped-by & inverse, use a tooling hint to name the mapped-by -->
         <xsd:attribute name="mapped-by" type="xsd:string"/>
         <xsd:attribute name="inverse" type="xsd:boolean"/> <!-- DEPRECATED -->
         <xsd:attribute name="hbm-key" type="xsd:string"/> <!-- DEPRECATED (needed to carry the inverse side's <key> -->
@@ -1621,7 +1613,7 @@
             <xsd:element name="timeout" type="xsd:int" minOccurs="0" />
             <xsd:element name="flush-mode" type="orm:flush-mode-type" minOccurs="0" />
             <xsd:element name="cacheable" type="xsd:boolean" minOccurs="0" />
-            <xsd:element name="cache-mode" type="orm:cache-mode-type" minOccurs="0" />
+            <xsd:element name="cache-mode" type="orm:hbm-cache-mode-type" minOccurs="0" />
             <xsd:element name="cache-region" type="xsd:string" minOccurs="0" />
             <xsd:element name="fetch-size" type="xsd:int" minOccurs="0" />
             <xsd:element name="read-only" type="xsd:boolean" minOccurs="0" />
@@ -1642,9 +1634,9 @@
         <xsd:sequence>
             <xsd:element name="description" type="xsd:string" minOccurs="0"/>
             <xsd:element name="query" type="xsd:string"/>
-            <xsd:element name="hint" type="orm:query-hint" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="hint" type="orm:query-hint" minOccurs="0" maxOccurs="unbounded" />
 
-            <xsd:element name="synchronize" type="orm:synchronize-type"/>
+            <xsd:element name="synchronize" type="orm:synchronize-type" maxOccurs="unbounded" />
             <!-- previous versions of hbm also support callable, to indicate a proc call -->
             <xsd:group ref="named-query-common-ext-elements"/>
         </xsd:sequence>
@@ -2348,7 +2340,7 @@
         <xsd:attribute name="name" use="required" type="xsd:string"/>
     </xsd:complexType>
 
-    <xsd:complexType name="hbm-filter" mixed="true">
+    <xsd:complexType name="hbm-filter">
         <xsd:annotation>
             <xsd:documentation>
                 Applies a filter defined by hbm-filter-def usage
@@ -2356,13 +2348,13 @@
         </xsd:annotation>
 
         <xsd:sequence>
-            <xsd:element name="aliases" minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="alias-mapping" minOccurs="0" maxOccurs="unbounded">
                 <xsd:complexType>
                     <xsd:simpleContent>
                         <xsd:extension base="xsd:string">
-                            <xsd:attribute name="alias" type="xsd:string" use="required"/>
-                            <xsd:attribute name="table" type="xsd:string"/>
-                            <xsd:attribute name="entity" type="xsd:string"/>
+                            <xsd:attribute name="alias" type="xsd:string" use="required" />
+                            <xsd:attribute name="table" type="xsd:string" />
+                            <xsd:attribute name="entity" type="xsd:string" />
                         </xsd:extension>
                     </xsd:simpleContent>
                 </xsd:complexType>
@@ -2370,9 +2362,8 @@
             <xsd:element name="condition" type="xsd:string" />
         </xsd:sequence>
 
-        <xsd:attribute name="name" use="required" type="xsd:string"/>
-        <xsd:attribute name="autoAliasInjection" type="xsd:boolean"/>
-        <xsd:attribute name="conditionAttribute" type="xsd:string"/>
+        <xsd:attribute name="name" use="required" type="xsd:string" />
+        <xsd:attribute name="autoAliasInjection" type="xsd:boolean" />
     </xsd:complexType>
 
 
@@ -2540,4 +2531,12 @@
         <xsd:attribute name="cache-region" type="xsd:string"/>
     </xsd:complexType>
 
+    <xsd:simpleType name="hbm-optimistic-lock">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="all"/>
+            <xsd:enumeration value="dirty"/>
+            <xsd:enumeration value="version"/>
+            <xsd:enumeration value="none"/>
+        </xsd:restriction>
+    </xsd:simpleType>
 </xsd:schema>

@@ -6,9 +6,6 @@
  */
 package org.hibernate.boot.model.source.spi;
 
-import java.util.Map;
-
-import org.hibernate.EntityMode;
 import org.hibernate.boot.model.JavaTypeDescriptor;
 
 /**
@@ -21,11 +18,17 @@ import org.hibernate.boot.model.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface EmbeddableSource extends AttributeSourceContainer {
-	public JavaTypeDescriptor getTypeDescriptor();
+	JavaTypeDescriptor getTypeDescriptor();
 
-	public String getParentReferenceAttributeName();
+	String getParentReferenceAttributeName();
 
-	public Map<EntityMode,String> getTuplizerClassMap();
+	/**
+	 * Retrieve the name of the {@link org.hibernate.tuple.component.ComponentTuplizer} implementor
+	 * class to use for this entity
+	 *
+	 * @return The tuplizer class name
+	 */
+	String getTuplizerImplementationName();
 
 	/**
 	 * Indicates whether this embeddable/component is dynamic (represented as a Map),
@@ -35,7 +38,7 @@ public interface EmbeddableSource extends AttributeSourceContainer {
 	 * {@code false} indicates there is a dedicated class for representing the
 	 * composition.
 	 */
-	public boolean isDynamic();
+	boolean isDynamic();
 
-	public boolean isUnique();
+	boolean isUnique();
 }
