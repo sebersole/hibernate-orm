@@ -4096,44 +4096,18 @@ public final class SessionImpl
 		return getEntityManagerFactory().findEntityGraphsByType( entityClass );
 	}
 
-
-	/**
-	 * Used by JDK serialization...
-	 *
-	 * @param oos The output stream to which we are being written...
-	 *
-	 * @throws IOException Indicates a general IO stream exception
-	 */
 	@Override
-	protected void writeObject(ObjectOutputStream oos) throws IOException {
+	protected void writeObjectOverride(ObjectOutputStream oos) throws IOException {
 		log.tracef( "Serializing Session [%s]", getSessionIdentifier() );
-
-		super.writeObject( oos );
-
-		oos.defaultWriteObject();
-
 		persistenceContext.serialize( oos );
 		actionQueue.serialize( oos );
 
 		oos.writeObject( loadQueryInfluencers );
 	}
 
-	/**
-	 * Used by JDK serialization...
-	 *
-	 * @param ois The input stream from which we are being read...
-	 *
-	 * @throws IOException Indicates a general IO stream exception
-	 * @throws ClassNotFoundException Indicates a class resolution issue
-	 */
 	@Override
-	protected void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
-		log.tracef( "Deserializing Session [%s]", getSessionIdentifier() );
-
-		super.readObject( ois );
-
-		ois.defaultReadObject();
-
+	protected void readObjectOverride(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
+		initializeFromSessionOwner( sessionOwner );
 		persistenceContext = StatefulPersistenceContext.deserialize( ois, this );
 		actionQueue = ActionQueue.deserialize( ois, this );
 
@@ -4143,7 +4117,7 @@ public final class SessionImpl
 		// filter, which will fail when called beforeQuery FilterImpl.afterDeserialize( factory );
 		// Instead lookup the filter by name and then call FilterImpl.afterDeserialize( factory ).
 		for ( String filterName : loadQueryInfluencers.getEnabledFilterNames() ) {
-			( (FilterImpl) loadQueryInfluencers.getEnabledFilter( filterName ) ).afterDeserialize( getFactory() );
+			((FilterImpl) loadQueryInfluencers.getEnabledFilter( filterName )).afterDeserialize( getFactory() );
 		}
 	}
 }

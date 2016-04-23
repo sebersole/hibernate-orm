@@ -6,6 +6,8 @@
  */
 package org.hibernate.internal;
 
+import java.io.Serializable;
+
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Interceptor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -13,7 +15,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 /**
  * @author Steve Ebersole
  */
-public class CoordinatingEntityNameResolver implements EntityNameResolver {
+public class CoordinatingEntityNameResolver implements EntityNameResolver, Serializable {
 	private final SessionFactoryImplementor sessionFactory;
 	private final Interceptor interceptor;
 
