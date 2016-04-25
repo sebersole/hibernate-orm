@@ -143,10 +143,11 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	private transient PersistenceContextType persistenceContextType;
 
 	private final boolean isTransactionCoordinatorShared;
-	private final TransactionCoordinator transactionCoordinator;
-	private final JdbcCoordinator jdbcCoordinator;
+	private transient TransactionCoordinator transactionCoordinator;
+	private transient JdbcCoordinator jdbcCoordinator;
 	private final Interceptor interceptor;
-	private final JdbcSessionContext jdbcSessionContext;
+	private StatementInspector statementInspector;
+	private transient JdbcSessionContext jdbcSessionContext;
 	private final EntityNameResolver entityNameResolver;
 
 	private FlushMode flushMode;
@@ -182,7 +183,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 
 		this.interceptor = interpret( options.getInterceptor() );
 
-		final StatementInspector statementInspector = interpret( options.getStatementInspector() );
+		this.statementInspector = interpret( options.getStatementInspector() );
 		this.jdbcSessionContext = new JdbcSessionContextImpl( this, statementInspector );
 
 		this.entityNameResolver = new CoordinatingEntityNameResolver( factory, interceptor );
@@ -1170,7 +1171,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		return scrollCustomQuery( getNativeQueryPlan( spec ).getCustomQuery(), queryParameters );
 	}
 
-	protected void writeObject(ObjectOutputStream oos) throws IOException {
+	private void writeObject(ObjectOutputStream oos) throws IOException {
 		log.trace( "Serializing " + getClass().getSimpleName() + " [" );
 
 		if ( !jdbcCoordinator.isReadyForSerialization() ) {
@@ -1187,22 +1188,39 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Step 1 :: write non-transient state...
 		oos.defaultWriteObject();
-
+		writeObjectOverride(oos);
+		((JdbcCoordinatorImpl)jdbcCoordinator).serialize( oos );
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Step 2 :: write transient state...
 		// 		-- none that we want to serialize atm (see concurrent access discussion)
+
 	}
 
-	protected void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
+	protected void writeObjectOverride(ObjectOutputStream oos) throws IOException {
+
+	}
+
+	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
 		log.trace( "Deserializing " + getClass().getSimpleName() );
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Step 1 :: read back non-transient state...
 		ois.defaultReadObject();
-
+		readObjectOverride( ois );
+		sessionEventsManager = new SessionEventListenerManagerImpl();
+		jdbcSessionContext = new JdbcSessionContextImpl( this, statementInspector );
+		jdbcCoordinator = JdbcCoordinatorImpl.deserialize( ois, this );
+		transactionCoordinator = factory.getServiceRegistry()
+				.getService( TransactionCoordinatorBuilder.class )
+				.buildTransactionCoordinator( jdbcCoordinator, this );
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Step 2 :: read back transient state...
 		//		-- again none, see above
+
+
+	}
+
+	protected void readObjectOverride(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
 
 	}
 }
