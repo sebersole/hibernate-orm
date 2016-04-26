@@ -184,7 +184,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	private final transient Map<String,IdentifierGenerator> identifierGenerators;
 	private final transient Map<String, FilterDefinition> filters;
 	private final transient Map<String, FetchProfile> fetchProfiles;
-	private final transient ConcurrentMap<EntityNameResolver,Object> entityNameResolvers = new ConcurrentHashMap<>();
 
 	private final transient TypeResolver typeResolver;
 	private final transient TypeHelper typeHelper;
@@ -288,7 +287,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 		this.metamodel = new MetamodelImpl( this );
 		this.metamodel.initialize( metadata, determineJpaMetaModelPopulationSetting( properties ) );
-
 		settings.getMultiTableBulkIdStrategy().prepare(
 				jdbcServices,
 				buildLocalConnectionAccess(),
@@ -498,33 +496,12 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		return typeResolver;
 	}
 
-	private void registerEntityNameResolvers(EntityPersister persister) {
-		if ( persister.getEntityMetamodel() == null || persister.getEntityMetamodel().getTuplizer() == null ) {
-			return;
-		}
-		registerEntityNameResolvers( persister.getEntityMetamodel().getTuplizer() );
-	}
-
-	private void registerEntityNameResolvers(EntityTuplizer tuplizer) {
-		EntityNameResolver[] resolvers = tuplizer.getEntityNameResolvers();
-		if ( resolvers == null ) {
-			return;
-		}
-
-		for ( EntityNameResolver resolver : resolvers ) {
-			registerEntityNameResolver( resolver );
-		}
-	}
 
 	private static final Object ENTITY_NAME_RESOLVER_MAP_VALUE = new Object();
 
-	public void registerEntityNameResolver(EntityNameResolver resolver) {
-		entityNameResolvers.put( resolver, ENTITY_NAME_RESOLVER_MAP_VALUE );
-	}
-
 	@Override
 	public Iterable<EntityNameResolver> iterateEntityNameResolvers() {
-		return entityNameResolvers.keySet();
+		return this.metamodel.iterateEntityNameResolvers();
 	}
 
 	public QueryPlanCache getQueryPlanCache() {
