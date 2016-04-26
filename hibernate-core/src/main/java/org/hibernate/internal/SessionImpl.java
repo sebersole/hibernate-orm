@@ -2291,7 +2291,7 @@ public final class SessionImpl
 	@Override
 	public String guessEntityName(Object object) throws HibernateException {
 		checkOpen();
-		return getEntityNameResolver().resolveEntityName( object );
+		return this.getEntityNameResolver().resolveEntityName( object );
 	}
 
 	@Override

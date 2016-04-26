@@ -231,6 +231,10 @@ public class MetamodelImpl implements MetamodelImplementor, Serializable {
 		}
 	}
 
+	public Iterable<EntityNameResolver> iterateEntityNameResolvers() {
+		return this.entityNameResolvers.keySet();
+	}
+
 	private static void handleUnusedMappedSuperclasses(MetadataContext context) {
 		final Set<MappedSuperclass> unusedMappedSuperclasses = context.getUnusedMappedSuperclasses();
 		if ( !unusedMappedSuperclasses.isEmpty() ) {
