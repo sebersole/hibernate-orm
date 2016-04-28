@@ -1239,6 +1239,11 @@ public final class SessionImpl
 			}
 		}
 		catch (RuntimeException e) {
+			if ( !getSessionFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
+				if ( e instanceof HibernateException ) {
+					throw e;
+				}
+			}
 			//including HibernateException
 			throw convert( e );
 		}
@@ -1257,6 +1262,12 @@ public final class SessionImpl
 			delayedAfterCompletion();
 		}
 		catch (RuntimeException e) {
+			if ( !getSessionFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
+				if ( e instanceof HibernateException ) {
+					handlePersistenceException( (HibernateException) e );
+					throw e;
+				}
+			}
 			//including HibernateException
 			throw convert( e );
 		}
