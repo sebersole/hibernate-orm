@@ -35,6 +35,9 @@ import javax.persistence.criteria.Selection;
 import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 
+import org.hibernate.HibernateException;
+import org.hibernate.MappingException;
+import org.hibernate.Session;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
@@ -81,6 +84,8 @@ import org.hibernate.query.criteria.internal.predicate.IsEmptyPredicate;
 import org.hibernate.query.criteria.internal.predicate.LikePredicate;
 import org.hibernate.query.criteria.internal.predicate.MemberOfPredicate;
 import org.hibernate.query.criteria.internal.predicate.NullnessPredicate;
+import org.hibernate.type.SerializableType;
+import org.hibernate.type.Type;
 
 /**
  * Hibernate implementation of the JPA {@link CriteriaBuilder} contract.
@@ -582,12 +587,21 @@ public class CriteriaBuilderImpl implements HibernateCriteriaBuilder, Serializab
 
 	@Override
 	public <T> ParameterExpression<T> parameter(Class<T> paramClass) {
-		return new ParameterExpressionImpl<T>( this, paramClass );
+		return new ParameterExpressionImpl<T>(
+				this,
+				paramClass,
+				sessionFactory.resolveParameterBindType( paramClass )
+		);
 	}
 
 	@Override
 	public <T> ParameterExpression<T> parameter(Class<T> paramClass, String name) {
-		return new ParameterExpressionImpl<T>( this, paramClass, name );
+		return new ParameterExpressionImpl<T>(
+				this,
+				paramClass,
+				name,
+				sessionFactory.resolveParameterBindType( paramClass )
+		);
 	}
 
 	@Override
