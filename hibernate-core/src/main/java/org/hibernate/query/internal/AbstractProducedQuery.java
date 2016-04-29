@@ -142,7 +142,10 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	public FlushModeType getFlushMode() {
-		return FlushModeTypeHelper.getFlushModeType( flushMode );
+		return ( flushMode == null ?
+				getProducer().getFlushMode() :
+				FlushModeTypeHelper.getFlushModeType( flushMode )
+		);
 	}
 
 	@Override
