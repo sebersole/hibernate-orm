@@ -874,7 +874,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 		final StrategySelector strategySelector = ssr.getService( StrategySelector.class );
 
 		// Locate and apply the requested SessionFactory-level interceptor (if one)
-		final Object sessionFactoryInterceptorSetting = configurationValues.remove( org.hibernate.cfg.AvailableSettings.INTERCEPTOR );
+		Object sessionFactoryInterceptorSetting = configurationValues.remove( AvailableSettings.INTERCEPTOR  );
 		if ( sessionFactoryInterceptorSetting != null ) {
 			final Interceptor sessionFactoryInterceptor =
 					strategySelector.resolveStrategy( Interceptor.class, sessionFactoryInterceptorSetting );
