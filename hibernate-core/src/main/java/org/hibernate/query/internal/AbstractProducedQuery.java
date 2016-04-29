@@ -31,12 +31,10 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
-import org.hibernate.MappingException;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.PropertyNotFoundException;
 import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
-import org.hibernate.Session;
 import org.hibernate.TypeMismatchException;
 import org.hibernate.engine.query.spi.EntityGraphQueryHint;
 import org.hibernate.engine.query.spi.HQLQueryPlan;
@@ -50,6 +48,7 @@ import org.hibernate.internal.HEMLogging;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.jpa.QueryHints;
+import org.hibernate.jpa.TypedParameterValue;
 import org.hibernate.jpa.graph.internal.EntityGraphImpl;
 import org.hibernate.jpa.internal.util.CacheModeHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
@@ -63,7 +62,6 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.transform.ResultTransformer;
-import org.hibernate.type.SerializableType;
 import org.hibernate.type.Type;
 
 import static org.hibernate.jpa.QueryHints.HINT_CACHEABLE;
@@ -293,22 +291,41 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(QueryParameter parameter, Object value) {
+	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value) {
 		queryParameterBindings.getBinding( parameter ).setBindValue( value );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(Parameter parameter, Object value) {
-		queryParameterBindings.getBinding( (QueryParameter) parameter ).setBindValue( value );
+	public <P> QueryImplementor setParameter(Parameter<P> parameter, P value) {
+		if ( value instanceof TypedParameterValue ) {
+			final TypedParameterValue  typedValueWrapper = (TypedParameterValue ) value;
+			setParameter( (QueryParameter) parameter, typedValueWrapper.getValue(), typedValueWrapper.getType() );
+		}
+		else if ( value instanceof Collection ) {
+			setParameterList( (QueryParameter) parameter, (Collection) value );
+		}
+		else {
+			queryParameterBindings.getBinding( (QueryParameter) parameter ).setBindValue( value );
+		}
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public QueryImplementor setParameter(String name, Object value) {
-		queryParameterBindings.getBinding( name ).setBindValue( value );
+		if ( value instanceof TypedParameterValue ) {
+			final TypedParameterValue  typedValueWrapper = (TypedParameterValue ) value;
+			setParameter( name, typedValueWrapper.getValue(), typedValueWrapper.getType() );
+		}
+		else if ( value instanceof Collection ) {
+			setParameterList( name, (Collection) value );
+		}
+		else {
+			queryParameterBindings.getBinding( name ).setBindValue( value );
+		}
+
 		return this;
 	}
 
@@ -321,7 +338,7 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(QueryParameter parameter, Object value, Type type) {
+	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value, Type type) {
 		queryParameterBindings.getBinding( parameter ).setBindValue( value, type );
 		return this;
 	}
@@ -342,7 +359,7 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(QueryParameter parameter, Object value, TemporalType temporalType) {
+	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value, TemporalType temporalType) {
 		queryParameterBindings.getBinding( parameter ).setBindValue( value, temporalType );
 		return this;
 	}
@@ -363,7 +380,7 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameterList(QueryParameter parameter, Collection values) {
+	public <P> QueryImplementor<R> setParameterList(QueryParameter<P> parameter, Collection<P> values) {
 		queryParameterBindings.getQueryParameterListBinding( parameter ).setBindValues( values );
 		return this;
 	}

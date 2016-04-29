@@ -181,7 +181,6 @@ import org.hibernate.query.criteria.internal.compile.CompilableCriteria;
 import org.hibernate.query.criteria.internal.compile.CriteriaCompiler;
 import org.hibernate.query.criteria.internal.expression.CompoundSelectionImpl;
 import org.hibernate.query.internal.CollectionFilterImpl;
-import org.hibernate.query.procedure.internal.StoredProcedureQueryImpl;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.resource.transaction.TransactionRequiredForJoinException;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl;
@@ -3805,14 +3804,7 @@ public final class SessionImpl
 			if ( memento == null ) {
 				throw new IllegalArgumentException( "No @NamedStoredProcedureQuery was found with that name : " + name );
 			}
-			final StoredProcedureQueryImpl jpaImpl = new StoredProcedureQueryImpl( memento, this );
-			// apply hints
-			if ( memento.getHintsMap() != null ) {
-				for ( Map.Entry<String,Object> hintEntry : memento.getHintsMap().entrySet() ) {
-					jpaImpl.setHint( hintEntry.getKey(), hintEntry.getValue() );
-				}
-			}
-			return jpaImpl;
+			return memento.makeProcedureCall( this );
 		}
 		catch ( RuntimeException e ) {
 			throw convert( e );
@@ -3821,12 +3813,8 @@ public final class SessionImpl
 
 	@Override
 	public StoredProcedureQuery createStoredProcedureQuery(String procedureName) {
-		checkOpen();
 		try {
-			return new StoredProcedureQueryImpl(
-					createStoredProcedureCall( procedureName ),
-					this
-			);
+			return createStoredProcedureCall( procedureName );
 		}
 		catch ( RuntimeException e ) {
 			throw convert( e );
@@ -3835,12 +3823,8 @@ public final class SessionImpl
 
 	@Override
 	public StoredProcedureQuery createStoredProcedureQuery(String procedureName, Class... resultClasses) {
-		checkOpen();
 		try {
-			return new StoredProcedureQueryImpl(
-					createStoredProcedureCall( procedureName, resultClasses ),
-					this
-			);
+			return createStoredProcedureCall( procedureName, resultClasses );
 		}
 		catch ( RuntimeException e ) {
 			throw convert( e );
@@ -3852,10 +3836,7 @@ public final class SessionImpl
 		checkOpen();
 		try {
 			try {
-				return new StoredProcedureQueryImpl(
-						createStoredProcedureCall( procedureName, resultSetMappings ),
-						this
-				);
+				return createStoredProcedureCall( procedureName, resultSetMappings );
 			}
 			catch (UnknownSqlResultSetMappingException unknownResultSetMapping) {
 				throw new IllegalArgumentException( unknownResultSetMapping.getMessage(), unknownResultSetMapping );
