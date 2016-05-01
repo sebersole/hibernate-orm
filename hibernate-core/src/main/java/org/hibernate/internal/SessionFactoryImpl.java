@@ -53,6 +53,7 @@ import org.hibernate.boot.cfgxml.spi.LoadedConfig;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.boot.spi.SessionFactoryOptions;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.Settings;
 import org.hibernate.context.internal.JTASessionContext;
@@ -225,6 +226,14 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 		this.properties = new HashMap<>();
 		this.properties.putAll( serviceRegistry.getService( ConfigurationService.class ).getSettings() );
+		if ( !properties.containsKey( AvailableSettings.JPA_VALIDATION_FACTORY ) ) {
+			if ( getSessionFactoryOptions().getValidatorFactoryReference() != null ) {
+				properties.put(
+						AvailableSettings.JPA_VALIDATION_FACTORY,
+						getSessionFactoryOptions().getValidatorFactoryReference()
+				);
+			}
+		}
 
 		this.sqlFunctionRegistry = new SQLFunctionRegistry( jdbcServices.getJdbcEnvironment().getDialect(), options.getCustomSqlFunctionMap() );
 		this.cacheAccess = this.serviceRegistry.getService( CacheImplementor.class );
