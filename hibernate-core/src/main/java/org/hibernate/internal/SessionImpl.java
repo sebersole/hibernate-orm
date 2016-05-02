@@ -2363,14 +2363,7 @@ public final class SessionImpl
 		log.tracef( "SessionImpl#afterTransactionCompletion(successful=%s, delayed=%s)", successful, delayed );
 
 		if ( !isClosed() ) {
-			// todo: should JPA and non-JPA behave the same?
-			// TransactionImpl#rollback previously performed a clear upon rollback
-			if ( getFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
-				if ( autoClear || !successful ) {
-					internalClear();
-				}
-			}
-			else if ( autoClear ) {
+			if ( autoClear || !successful ) {
 				internalClear();
 			}
 		}
