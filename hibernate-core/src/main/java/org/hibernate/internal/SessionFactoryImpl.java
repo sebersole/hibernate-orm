@@ -427,8 +427,8 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	public Session openTemporarySession() throws HibernateException {
 		return withOptions()
 				.autoClose( false )
-				.flushBeforeCompletion( false )
-				.connectionReleaseMode( ConnectionReleaseMode.AFTER_STATEMENT )
+				.flushMode( FlushMode.MANUAL )
+				.connectionHandlingMode( PhysicalConnectionHandlingMode.DELAYED_ACQUISITION_AND_RELEASE_AFTER_STATEMENT )
 				.openSession();
 	}
 
