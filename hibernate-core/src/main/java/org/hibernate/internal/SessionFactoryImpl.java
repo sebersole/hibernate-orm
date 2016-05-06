@@ -729,6 +729,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		}
 
 		LOG.closing();
+		observer.sessionFactoryClosing( this );
 
 		isClosed = true;
 
