@@ -31,7 +31,6 @@ import org.hibernate.envers.strategy.AuditStrategy;
 import org.hibernate.envers.strategy.ValidityAuditStrategy;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
-import org.hibernate.internal.util.xml.XMLHelper;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.spi.Configurable;
@@ -55,7 +54,6 @@ public class EnversServiceImpl implements EnversService, Configurable, Stoppable
 	private boolean integrationEnabled;
 	private boolean initialized;
 
-	private ServiceRegistry serviceRegistry;
 	private ClassLoaderService classLoaderService;
 
 	// todo : not at all a fan of all these...
@@ -74,8 +72,6 @@ public class EnversServiceImpl implements EnversService, Configurable, Stoppable
 	private RevisionInfoQueryCreator revisionInfoQueryCreator;
 	private RevisionInfoNumberReader revisionInfoNumberReader;
 	private ModifiedEntityNamesReader modifiedEntityNamesReader;
-
-	private XMLHelper xmlHelper;
 
 	@Override
 	public void configure(Map configurationValues) {
@@ -109,10 +105,8 @@ public class EnversServiceImpl implements EnversService, Configurable, Stoppable
 
 		initialized = true;
 
-
-		this.serviceRegistry = metadata.getMetadataBuildingOptions().getServiceRegistry();
+		final ServiceRegistry serviceRegistry = metadata.getMetadataBuildingOptions().getServiceRegistry();
 		this.classLoaderService = serviceRegistry.getService( ClassLoaderService.class );
-		this.xmlHelper = new XMLHelper( classLoaderService );
 
 		doInitialize( metadata, mappingCollector, serviceRegistry );
 	}
@@ -191,11 +185,6 @@ public class EnversServiceImpl implements EnversService, Configurable, Stoppable
 		}
 
 		return strategy;
-	}
-
-	@Override
-	public XMLHelper getXmlHelper() {
-		return xmlHelper;
 	}
 
 	/**
@@ -285,14 +274,6 @@ public class EnversServiceImpl implements EnversService, Configurable, Stoppable
 			throw new IllegalStateException( "Service is not yet initialized" );
 		}
 		return classLoaderService;
-	}
-
-	@Override
-	public ServiceRegistry getServiceRegistry() {
-		if ( !initialized ) {
-			throw new IllegalStateException( "Service is not yet initialized" );
-		}
-		return serviceRegistry;
 	}
 
 	@Override
