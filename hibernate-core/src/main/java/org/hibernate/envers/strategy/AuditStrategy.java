@@ -9,8 +9,8 @@ package org.hibernate.envers.strategy;
 import java.io.Serializable;
 
 import org.hibernate.Session;
-import org.hibernate.envers.boot.internal.EnversService;
-import org.hibernate.envers.configuration.internal.GlobalConfiguration;
+import org.hibernate.envers.boot.AuditService;
+import org.hibernate.envers.boot.spi.AuditServiceOptions;
 import org.hibernate.envers.internal.entities.mapper.PersistentCollectionChangeData;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleComponentData;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleIdData;
@@ -22,6 +22,7 @@ import org.hibernate.envers.internal.tools.query.QueryBuilder;
  *
  * @author Stephanie Pau
  * @author Adam Warski (adam at warski dot org)
+ * @author Chris Cranford
  */
 public interface AuditStrategy {
 	/**
@@ -29,7 +30,7 @@ public interface AuditStrategy {
 	 *
 	 * @param session Session, which can be used to persist the data.
 	 * @param entityName Name of the entity, in which the audited change happens
-	 * @param enversService The EnversService
+	 * @param auditService The AuditService
 	 * @param id Id of the entity.
 	 * @param data Audit data to persist
 	 * @param revision Current revision data
@@ -37,10 +38,11 @@ public interface AuditStrategy {
 	void perform(
 			Session session,
 			String entityName,
-			EnversService enversService,
+			AuditService auditService,
 			Serializable id,
 			Object data,
-			Object revision);
+			Object revision
+	);
 
 	/**
 	 * Perform the persistence of audited data for collection ("middle") entities.
@@ -48,7 +50,7 @@ public interface AuditStrategy {
 	 * @param session Session, which can be used to persist the data.
 	 * @param entityName Name of the entity, in which the audited change happens.
 	 * @param propertyName The name of the property holding the persistent collection
-	 * @param enversService The EnversService
+	 * @param auditService The AuditService
 	 * @param persistentCollectionChangeData Collection change data to be persisted.
 	 * @param revision Current revision data
 	 */
@@ -56,10 +58,9 @@ public interface AuditStrategy {
 			Session session,
 			String entityName,
 			String propertyName,
-			EnversService enversService,
+			AuditService auditService,
 			PersistentCollectionChangeData persistentCollectionChangeData,
 			Object revision);
-
 
 	/**
 	 * Update the rootQueryBuilder with an extra WHERE clause to restrict the revision for a two-entity relation.
@@ -73,7 +74,7 @@ public interface AuditStrategy {
 	 * </li>
 	 * </ul>
 	 *
-	 * @param globalCfg the {@link GlobalConfiguration}
+	 * @param options the {@link AuditServiceOptions}
 	 * @param rootQueryBuilder the {@link QueryBuilder} that will be updated
 	 * @param parameters root parameters to which restrictions shall be added
 	 * @param revisionProperty property of the revision column
@@ -87,7 +88,7 @@ public interface AuditStrategy {
 	 * @param inclusive indicates whether revision number shall be treated as inclusive or exclusive
 	 */
 	void addEntityAtRevisionRestriction(
-			GlobalConfiguration globalCfg,
+			AuditServiceOptions options,
 			QueryBuilder rootQueryBuilder,
 			Parameters parameters,
 			String revisionProperty,

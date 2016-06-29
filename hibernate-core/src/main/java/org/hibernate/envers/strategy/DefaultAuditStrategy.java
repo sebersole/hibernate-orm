@@ -9,8 +9,8 @@ package org.hibernate.envers.strategy;
 import java.io.Serializable;
 
 import org.hibernate.Session;
-import org.hibernate.envers.boot.internal.EnversService;
-import org.hibernate.envers.configuration.internal.GlobalConfiguration;
+import org.hibernate.envers.boot.AuditService;
+import org.hibernate.envers.boot.spi.AuditServiceOptions;
 import org.hibernate.envers.internal.entities.mapper.PersistentCollectionChangeData;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleComponentData;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleIdData;
@@ -26,6 +26,7 @@ import static org.hibernate.envers.internal.entities.mapper.relation.query.Query
  *
  * @author Adam Warski
  * @author Stephanie Pau
+ * @author Chris Cranford
  */
 public class DefaultAuditStrategy implements AuditStrategy {
 	private final SessionCacheCleaner sessionCacheCleaner;
@@ -38,11 +39,11 @@ public class DefaultAuditStrategy implements AuditStrategy {
 	public void perform(
 			Session session,
 			String entityName,
-			EnversService enversService,
+			AuditService auditService,
 			Serializable id,
 			Object data,
 			Object revision) {
-		session.save( enversService.getAuditEntitiesConfiguration().getAuditEntityName( entityName ), data );
+		session.save( auditService.getAuditEntityName( entityName ), data );
 		sessionCacheCleaner.scheduleAuditDataRemoval( session, data );
 	}
 
@@ -51,7 +52,7 @@ public class DefaultAuditStrategy implements AuditStrategy {
 			Session session,
 			String entityName,
 			String propertyName,
-			EnversService enversService,
+			AuditService auditService,
 			PersistentCollectionChangeData persistentCollectionChangeData,
 			Object revision) {
 		session.save( persistentCollectionChangeData.getEntityName(), persistentCollectionChangeData.getData() );
@@ -60,7 +61,7 @@ public class DefaultAuditStrategy implements AuditStrategy {
 
 
 	public void addEntityAtRevisionRestriction(
-			GlobalConfiguration globalCfg,
+			AuditServiceOptions options,
 			QueryBuilder rootQueryBuilder,
 			Parameters parameters,
 			String revisionProperty,
@@ -87,7 +88,7 @@ public class DefaultAuditStrategy implements AuditStrategy {
 		);
 
 		// add subquery to rootParameters
-		String subqueryOperator = globalCfg.getCorrelatedSubqueryOperator();
+		String subqueryOperator = options.getCorrelatedSubqueryOperator();
 		parameters.addWhere( revisionProperty, addAlias, subqueryOperator, maxERevQb );
 	}
 

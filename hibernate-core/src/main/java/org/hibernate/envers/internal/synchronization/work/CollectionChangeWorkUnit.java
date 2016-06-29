@@ -12,11 +12,13 @@ import java.util.Map;
 
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.RevisionType;
-import org.hibernate.envers.boot.internal.EnversService;
+import org.hibernate.envers.boot.AuditService;
+import org.hibernate.envers.internal.entities.mapper.ExtendedPropertyMapper;
 
 /**
  * @author Adam Warski (adam at warski dot org)
  * @author Michal Skowronek (mskowr at o2 dot pl)
+ * @author Chris Cranford
  */
 public class CollectionChangeWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit {
 	private Object entity;
@@ -27,10 +29,10 @@ public class CollectionChangeWorkUnit extends AbstractAuditWorkUnit implements A
 			SessionImplementor session,
 			String entityName,
 			String collectionPropertyName,
-			EnversService enversService,
+			AuditService auditService,
 			Serializable id,
 			Object entity) {
-		super( session, entityName, enversService, id, RevisionType.MOD );
+		super( session, entityName, auditService, id, RevisionType.MOD );
 
 		this.entity = entity;
 		this.collectionPropertyName = collectionPropertyName;
@@ -45,31 +47,18 @@ public class CollectionChangeWorkUnit extends AbstractAuditWorkUnit implements A
 	public Map<String, Object> generateData(Object revisionData) {
 		fillDataWithId( data, revisionData );
 		final Map<String, Object> preGenerateData = new HashMap<>( data );
-		enversService.getEntitiesConfigurations().get( getEntityName() ).getPropertyMapper().mapToMapFromEntity(
-				sessionImplementor,
-				data,
-				entity,
-				null
-		);
-		enversService.getEntitiesConfigurations().get( getEntityName() ).getPropertyMapper().mapModifiedFlagsToMapFromEntity(
-				sessionImplementor,
-				data,
-				entity,
-				entity
-		);
-		enversService.getEntitiesConfigurations().get( getEntityName() ).getPropertyMapper().mapModifiedFlagsToMapForCollectionChange(
-				collectionPropertyName,
-				data
-		);
+
+		final ExtendedPropertyMapper propertyMapper = getEntityPropertyMapper();
+		getEntityPropertyMapper().mapToMapFromEntity( sessionImplementor, data, entity, null );
+		propertyMapper.mapModifiedFlagsToMapFromEntity( sessionImplementor, data, entity, entity );
+		propertyMapper.mapModifiedFlagsToMapForCollectionChange( collectionPropertyName, data );
+
 		data.putAll( preGenerateData );
 		return data;
 	}
 
 	public void mergeCollectionModifiedData(Map<String, Object> data) {
-		enversService.getEntitiesConfigurations().get( getEntityName() ).getPropertyMapper().mapModifiedFlagsToMapForCollectionChange(
-				collectionPropertyName,
-				data
-		);
+		getEntityPropertyMapper().mapModifiedFlagsToMapForCollectionChange( collectionPropertyName, data );
 	}
 
 	@Override
@@ -102,5 +91,9 @@ public class CollectionChangeWorkUnit extends AbstractAuditWorkUnit implements A
 	@Override
 	public AuditWorkUnit dispatch(WorkUnitMergeVisitor first) {
 		return first.merge( this );
+	}
+
+	private ExtendedPropertyMapper getEntityPropertyMapper() {
+		return auditService.getEntityBindings().get( getEntityName() ).getPropertyMapper();
 	}
 }

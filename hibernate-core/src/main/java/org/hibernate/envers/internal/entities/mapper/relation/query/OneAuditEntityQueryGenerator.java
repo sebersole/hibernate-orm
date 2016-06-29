@@ -6,12 +6,10 @@
  */
 package org.hibernate.envers.internal.entities.mapper.relation.query;
 
-import org.hibernate.envers.configuration.internal.AuditEntitiesConfiguration;
-import org.hibernate.envers.configuration.internal.GlobalConfiguration;
+import org.hibernate.envers.boot.spi.AuditMetadataBuildingOptions;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleIdData;
 import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
-import org.hibernate.envers.strategy.AuditStrategy;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.DEL_REVISION_TYPE_PARAMETER;
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.REFERENCED_ENTITY_ALIAS;
@@ -23,16 +21,19 @@ import static org.hibernate.envers.internal.entities.mapper.relation.query.Query
  *
  * @author Adam Warski (adam at warski dot org)
  * @author Lukasz Antoniak (lukasz dot antoniak at gmail dot com)
+ * @author Chris Cranford
  */
 public final class OneAuditEntityQueryGenerator extends AbstractRelationQueryGenerator {
 	private final String queryString;
 	private final String queryRemovedString;
 
 	public OneAuditEntityQueryGenerator(
-			GlobalConfiguration globalCfg, AuditEntitiesConfiguration verEntCfg,
-			AuditStrategy auditStrategy, MiddleIdData referencingIdData,
-			String referencedEntityName, MiddleIdData referencedIdData, boolean revisionTypeInId) {
-		super( verEntCfg, referencingIdData, revisionTypeInId );
+			AuditMetadataBuildingOptions options,
+			MiddleIdData referencingIdData,
+			String referencedEntityName,
+			MiddleIdData referencedIdData,
+			boolean revisionTypeInId) {
+		super( options, referencingIdData, revisionTypeInId );
 
 		/*
 		 * The valid query that we need to create:
@@ -52,13 +53,11 @@ public final class OneAuditEntityQueryGenerator extends AbstractRelationQueryGen
 		 * (only non-deleted entities)
 		 *     e.revision_type != DEL
 		 */
-		final QueryBuilder commonPart = commonQueryPart( verEntCfg.getAuditEntityName( referencedEntityName ) );
+		final QueryBuilder commonPart = commonQueryPart( options.getAuditEntityName( referencedEntityName ) );
 		final QueryBuilder validQuery = commonPart.deepCopy();
 		final QueryBuilder removedQuery = commonPart.deepCopy();
-		createValidDataRestrictions(
-				globalCfg, auditStrategy, referencedIdData, validQuery, validQuery.getRootParameters()
-		);
-		createValidAndRemovedDataRestrictions( globalCfg, auditStrategy, referencedIdData, removedQuery );
+		createValidDataRestrictions( options, referencedIdData, validQuery, validQuery.getRootParameters() );
+		createValidAndRemovedDataRestrictions( options, referencedIdData, removedQuery );
 
 		queryString = queryToString( validQuery );
 		queryRemovedString = queryToString( removedQuery );
@@ -81,15 +80,25 @@ public final class OneAuditEntityQueryGenerator extends AbstractRelationQueryGen
 	 * Creates query restrictions used to retrieve only actual data.
 	 */
 	private void createValidDataRestrictions(
-			GlobalConfiguration globalCfg, AuditStrategy auditStrategy,
-			MiddleIdData referencedIdData, QueryBuilder qb, Parameters rootParameters) {
-		final String revisionPropertyPath = verEntCfg.getRevisionNumberPath();
+			AuditMetadataBuildingOptions options,
+			MiddleIdData referencedIdData,
+			QueryBuilder qb,
+			Parameters rootParameters) {
+		final String revisionPropertyPath = options.getRevisionNumberPath();
 		// (selecting e entities at revision :revision)
 		// --> based on auditStrategy (see above)
-		auditStrategy.addEntityAtRevisionRestriction(
-				globalCfg, qb, rootParameters, revisionPropertyPath,
-				verEntCfg.getRevisionEndFieldName(), true, referencedIdData, revisionPropertyPath,
-				verEntCfg.getOriginalIdPropName(), REFERENCED_ENTITY_ALIAS, REFERENCED_ENTITY_ALIAS_DEF_AUD_STR,
+		options.getAuditStrategy().addEntityAtRevisionRestriction(
+				options,
+				qb,
+				rootParameters,
+				revisionPropertyPath,
+				options.getRevisionEndFieldName(),
+				true,
+				referencedIdData,
+				revisionPropertyPath,
+				options.getOriginalIdPropName(),
+				REFERENCED_ENTITY_ALIAS,
+				REFERENCED_ENTITY_ALIAS_DEF_AUD_STR,
 				true
 		);
 		// e.revision_type != DEL
@@ -100,17 +109,18 @@ public final class OneAuditEntityQueryGenerator extends AbstractRelationQueryGen
 	 * Create query restrictions used to retrieve actual data and deletions that took place at exactly given revision.
 	 */
 	private void createValidAndRemovedDataRestrictions(
-			GlobalConfiguration globalCfg, AuditStrategy auditStrategy,
-			MiddleIdData referencedIdData, QueryBuilder remQb) {
+			AuditMetadataBuildingOptions options,
+			MiddleIdData referencedIdData,
+			QueryBuilder remQb) {
 		final Parameters disjoint = remQb.getRootParameters().addSubParameters( "or" );
 		// Restrictions to match all valid rows.
 		final Parameters valid = disjoint.addSubParameters( "and" );
 		// Restrictions to match all rows deleted at exactly given revision.
 		final Parameters removed = disjoint.addSubParameters( "and" );
 		// Excluding current revision, because we need to match data valid at the previous one.
-		createValidDataRestrictions( globalCfg, auditStrategy, referencedIdData, remQb, valid );
+		createValidDataRestrictions( options, referencedIdData, remQb, valid );
 		// e.revision = :revision
-		removed.addWhereWithNamedParam( verEntCfg.getRevisionNumberPath(), false, "=", REVISION_PARAMETER );
+		removed.addWhereWithNamedParam( options.getRevisionNumberPath(), false, "=", REVISION_PARAMETER );
 		// e.revision_type = DEL
 		removed.addWhereWithNamedParam( getRevisionTypePath(), false, "=", DEL_REVISION_TYPE_PARAMETER );
 	}
