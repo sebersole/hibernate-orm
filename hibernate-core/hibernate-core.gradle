@@ -217,5 +217,8 @@ if ( JavaVersion.current().isJava9Compatible() ) {
         exclude 'org/hibernate/jpa/test/enhancement/runtime/JpaRuntimeEnhancementTest.class'
         exclude 'org/hibernate/test/bytecode/enhancement/EnhancerTest.class'
         exclude 'org/hibernate/test/bytecode/enhancement/basic/BasicInSessionTest.class'
+        exclude 'org/hibernate/envers/internal/tools/MapProxyTest.class'
+        exclude 'org/hibernate/envers/test/integration/components/dynamic/AuditedDynamicComponentTest.class'
+        exclude 'org/hibernate/envers/test/integration/components/dynamic/AuditedDynamicComponentsAdvancedCasesTest.class'
     }
 }
