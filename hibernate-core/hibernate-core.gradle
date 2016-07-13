@@ -21,6 +21,7 @@ configurations {
 }
 
 dependencies {
+    compile 'org.hibernate:hibernate-sqm:1.0.0-SNAPSHOT'
     compile( libraries.jpa )
     compile( libraries.javassist )
     compile( libraries.antlr )
