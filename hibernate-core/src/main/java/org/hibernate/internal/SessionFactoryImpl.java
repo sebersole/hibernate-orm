@@ -191,8 +191,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	private final transient Map<String, FilterDefinition> filters;
 	private final transient Map<String, FetchProfile> fetchProfiles;
 
-	private final transient TypeHelper typeHelper;
-
 
 	public SessionFactoryImpl(final MetadataImplementor metadata, SessionFactoryOptions options) {
 		LOG.debug( "Building session factory" );
@@ -292,11 +290,9 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 			this.metamodel = new MetamodelImpl(
 					this,
-					metadata.getTypeResolver().scope( this ),
-					metadata.getTypeDescriptorRegistryAccess()
+					metadata.getTypeConfiguration()
 			);
 			this.metamodel.initialize( metadata, determineJpaMetaModelPopulationSetting( properties ) );
-			this.typeHelper = new TypeLocatorImpl( this.metamodel.getTypeResolver() );
 
 			//Named Queries:
 			this.namedQueryRepository = metadata.buildNamedQueryRepository( this );
