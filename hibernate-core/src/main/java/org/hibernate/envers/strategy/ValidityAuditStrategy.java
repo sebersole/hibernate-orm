@@ -289,11 +289,11 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			if ( options.isRevisionEndTimestampEnabled() ) {
 				// Determine the value of the revision property annotated with @RevisionTimestamp
 				String revEndTimestampFieldName = options.getRevisionEndTimestampFieldName();
-				Object revEndTimestampObj = this.revisionTimestampGetter.get( revision );
-				Date revisionEndTimestamp = convertRevEndTimestampToDate( revEndTimestampObj );
-
 				// Setting the end revision timestamp
-				( (Map<String, Object>) previousData ).put( revEndTimestampFieldName, revisionEndTimestamp );
+				( (Map<String, Object>) previousData ).put(
+						revEndTimestampFieldName,
+						getRevisionEndTimestampValue( revision, options )
+				);
 			}
 
 			// Saving the previous version
@@ -305,12 +305,22 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		}
 	}
 
-	private Date convertRevEndTimestampToDate(Object revEndTimestampObj) {
-		// convert to a java.util.Date
-		if ( revEndTimestampObj instanceof Date ) {
-			return (Date) revEndTimestampObj;
+	private Object getRevisionEndTimestampValue(Object revision, AuditServiceOptions options) {
+		Object value = this.revisionTimestampGetter.get( revision );
+		if ( options.isNumericRevisionEndTimestampEnabled() ) {
+			if ( Date.class.isInstance( value ) ) {
+				return ( (Date) value ).getTime();
+			}
+			return value;
 		}
-		return new Date( (Long) revEndTimestampObj );
+		else {
+			if ( Date.class.isInstance( value ) ) {
+				return value;
+			}
+			else {
+				return new Date( (long) value );
+			}
+		}
 	}
 
 	/**
@@ -396,9 +406,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		// [, REVEND_TSTMP = ?]
 		if ( options.isRevisionEndTimestampEnabled() ) {
 			final Type timestampType = rootAuditedEntityQueryable.getPropertyType( options.getRevisionEndTimestampFieldName() );
-			final Date timestampValue = convertRevEndTimestampToDate( revisionTimestampGetter.get( revision ) );
 			update.addColumn( rootAuditedEntityQueryable.toColumns( options.getRevisionEndTimestampFieldName() )[0] );
-			update.bind( timestampValue, timestampType );
+			update.bind( getRevisionEndTimestampValue( revision, options ), timestampType );
 		}
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
