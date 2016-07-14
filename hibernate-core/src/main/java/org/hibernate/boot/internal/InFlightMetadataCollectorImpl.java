@@ -99,7 +99,6 @@ import org.hibernate.mapping.SimpleValue;
 import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UniqueKey;
 import org.hibernate.query.spi.NamedQueryRepository;
-import org.hibernate.type.TypeResolver;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
 
@@ -199,13 +198,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public TypeResolver getTypeResolver() {
-		return typeConfiguration.getT;
-	}
-
-	@Override
-	public TypeDescriptorRegistryAccess getTypeDescriptorRegistryAccess() {
-		return typeDescriptorRegistryAccess;
+	public TypeConfiguration getTypeConfiguration() {
+		return typeConfiguration;
 	}
 
 	@Override
@@ -2180,8 +2174,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return new MetadataImpl(
 					uuid,
 					options,
-					typeResolver,
-					typeDescriptorRegistryAccess,
+					typeConfiguration,
 					identifierGeneratorFactory,
 					entityBindingMap,
 					mappedSuperClasses,
