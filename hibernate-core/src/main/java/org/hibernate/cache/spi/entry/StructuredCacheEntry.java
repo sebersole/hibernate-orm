@@ -9,10 +9,9 @@ package org.hibernate.cache.spi.entry;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.persister.entity.spi.EntityPersister;
 
 /**
  * Structured CacheEntry format for entities.  Used to store the entry into the second-level cache

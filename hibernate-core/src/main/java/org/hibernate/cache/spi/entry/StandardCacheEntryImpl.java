@@ -19,7 +19,7 @@ import org.hibernate.event.spi.EventType;
 import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.collections.ArrayHelper;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.type.TypeHelper;
 
 /**

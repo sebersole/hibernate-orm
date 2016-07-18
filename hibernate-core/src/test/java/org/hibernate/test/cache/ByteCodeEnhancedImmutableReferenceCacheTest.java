@@ -15,7 +15,7 @@ import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.ManagedEntity;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
 
