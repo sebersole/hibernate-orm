@@ -128,7 +128,7 @@ import org.hibernate.type.CollectionType;
 import org.hibernate.type.ComponentType;
 import org.hibernate.type.CompositeType;
 import org.hibernate.type.EntityType;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 import org.hibernate.type.TypeHelper;
 import org.hibernate.type.VersionType;
 
@@ -1126,10 +1126,8 @@ public abstract class AbstractEntityPersister
 		Serializable[] disassembledValues = cacheEntry.getDisassembledState();
 		final Object[] snapshot = entry.getLoadedState();
 		for ( int j = 0; j < lazyPropertyNames.length; j++ ) {
-			final Object propValue = lazyPropertyTypes[j].assemble(
-					disassembledValues[lazyPropertyNumbers[j]],
-					session,
-					entity
+			final Object propValue = lazyPropertyTypes[j].getMutabilityPlan().assemble(
+					disassembledValues[lazyPropertyNumbers[j]]
 			);
 			if ( initializeLazyProperty( fieldName, entity, session, snapshot, j, propValue ) ) {
 				result = propValue;
@@ -1151,7 +1149,7 @@ public abstract class AbstractEntityPersister
 		setPropertyValue( entity, lazyPropertyNumbers[j], propValue );
 		if ( snapshot != null ) {
 			// object have been loaded with setReadOnly(true); HHH-2236
-			snapshot[lazyPropertyNumbers[j]] = lazyPropertyTypes[j].deepCopy( propValue, factory );
+			snapshot[lazyPropertyNumbers[j]] = lazyPropertyTypes[j].getMutabilityPlan().deepCopy( propValue );
 		}
 		return fieldName.equals( lazyPropertyNames[j] );
 	}
@@ -4994,7 +4992,7 @@ public abstract class AbstractEntityPersister
 					if ( naturalIdValue != null ) {
 						final Type type = getPropertyTypes()[idPosition];
 						type.nullSafeSet( ps, naturalIdValue, positions, session );
-						positions += type.getColumnSpan( session.getFactory() );
+						positions += type.getColumnSpan();
 					}
 				}
 				ResultSet rs = session.getJdbcCoordinator().getResultSetReturn().extract( ps );
