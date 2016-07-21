@@ -56,7 +56,7 @@ import org.hibernate.result.Output;
 import org.hibernate.result.ResultSetOutput;
 import org.hibernate.result.UpdateCountOutput;
 import org.hibernate.result.spi.ResultContext;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 
 import org.jboss.logging.Logger;
 

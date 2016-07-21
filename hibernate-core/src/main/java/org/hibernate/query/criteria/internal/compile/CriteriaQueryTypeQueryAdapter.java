@@ -22,7 +22,7 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.query.Query;
 import org.hibernate.query.internal.AbstractProducedQuery;
 import org.hibernate.query.spi.QueryImplementor;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 
 /**
  * <strong>Make this go away in 6.0</strong> :)

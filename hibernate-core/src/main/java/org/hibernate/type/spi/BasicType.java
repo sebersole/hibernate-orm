@@ -22,7 +22,7 @@ import org.hibernate.type.spi.descriptor.java.MutabilityPlan;
  *
  * @since 6.0
  */
-public interface BasicType<T> extends Type<T>, org.hibernate.sqm.domain.BasicType<T>, javax.persistence.metamodel.BasicType<T> {
+public interface BasicType<T> extends Type_2<T>, org.hibernate.sqm.domain.BasicType<T>, javax.persistence.metamodel.BasicType<T> {
 	@Override
 	JavaTypeDescriptor<T> getJavaTypeDescriptor();
 
@@ -68,7 +68,7 @@ public interface BasicType<T> extends Type<T>, org.hibernate.sqm.domain.BasicTyp
 	}
 
 	@Override
-	default Type getSemiResolvedType(SessionFactoryImplementor factory) {
+	default Type_2 getSemiResolvedType(SessionFactoryImplementor factory) {
 		return this;
 	}
 

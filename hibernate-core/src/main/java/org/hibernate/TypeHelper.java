@@ -11,10 +11,10 @@ import java.util.Properties;
 import javax.persistence.metamodel.EntityType;
 
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.spi.Type_2;
 
 /**
- * Provides access to the various {@link Type} instances associated with the {@link SessionFactory}.
+ * Provides access to the various {@link Type_2} instances associated with the {@link SessionFactory}.
  * <p/>
  * This is intended for use by application developers.
  *
@@ -51,7 +51,7 @@ public interface TypeHelper {
 	public BasicType basic(Class javaType);
 
 	/**
-	 * Uses heuristics to deduce the proper {@link Type} given a string naming the type or Java class.
+	 * Uses heuristics to deduce the proper {@link Type_2} given a string naming the type or Java class.
 	 * <p/>
 	 * See {@link org.hibernate.type.TypeResolver#heuristicType(java.lang.String)} for a discussion of the
 	 * heuristic algorithm.
@@ -62,7 +62,7 @@ public interface TypeHelper {
 	 *
 	 * @see org.hibernate.type.TypeResolver#heuristicType(java.lang.String)
 	 */
-	public Type heuristicType(String name);
+	public Type_2 heuristicType(String name);
 
 	/**
 	 * Retrieve a type representing the given entity.
@@ -71,7 +71,7 @@ public interface TypeHelper {
 	 *
 	 * @return The type, or null
 	 */
-	public Type entity(Class entityClass);
+	public Type_2 entity(Class entityClass);
 
 	/**
 	 * Retrieve a type representing the given entity.
@@ -90,7 +90,7 @@ public interface TypeHelper {
 	 *
 	 * @return The type, or null
 	 */
-	public Type custom(Class userTypeClass);
+	public Type_2 custom(Class userTypeClass);
 
 	/**
 	 * Retrieve the type for the given user-type class ({@link org.hibernate.usertype.UserType} or
@@ -101,7 +101,7 @@ public interface TypeHelper {
 	 *
 	 * @return The type, or null
 	 */
-	public Type custom(Class userTypeClass, Properties properties);
+	public Type_2 custom(Class userTypeClass, Properties properties);
 
 	/**
 	 * Retrieve the type representing an ANY mapping.
@@ -111,5 +111,5 @@ public interface TypeHelper {
 	 *
 	 * @return The type, or null
 	 */
-	public Type any(Type metaType, Type identifierType);
+	public Type_2 any(Type_2 metaType, Type_2 identifierType);
 }
