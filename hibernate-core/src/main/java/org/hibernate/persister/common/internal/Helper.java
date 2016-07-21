@@ -43,6 +43,7 @@ import org.hibernate.type.SetType;
 import org.hibernate.type.SortedMapType;
 import org.hibernate.type.SortedSetType;
 import org.hibernate.type.spi.Type;
+import org.hibernate.type.spi.Type_2;
 
 /**
  * For now mainly a helper for reflection into stuff not exposed on the entity/collection persister
@@ -157,7 +158,7 @@ public class Helper {
 	public static Column[] makeValues(
 			SessionFactoryImplementor factory,
 			AbstractTable containingTable,
-			Type type,
+			Type_2 type,
 			String[] columns,
 			String[] formulas) {
 		assert formulas == null || columns.length == formulas.length;
@@ -181,7 +182,7 @@ public class Helper {
 		return values;
 	}
 
-	private static ColumnMapping determineColumnMapping(Type type, int i) {
+	private static ColumnMapping determineColumnMapping(Type_2 type, int i) {
 		if ( type instanceof BasicType ) {
 			if ( i > 0 ) {
 				throw new IllegalArgumentException( "BasicType can be mapped to just one column" );
@@ -197,9 +198,9 @@ public class Helper {
 			DomainMetamodelImpl domainMetamodel,
 			ManagedType source,
 			String propertyName,
-			Type propertyType,
+			Type_2 propertyType,
 			Column[] columns) {
-		if ( propertyType.getClassification() == Type.Classification.COLLECTION ) {
+		if ( propertyType.getClassification() == Type_2.Classification.COLLECTION ) {
 			return buildPluralAttribute(
 					databaseModel,
 					domainMetamodel,
@@ -226,7 +227,7 @@ public class Helper {
 			DomainMetamodelImpl domainMetamodel,
 			ManagedType source,
 			String attributeName,
-			org.hibernate.type.Type attributeType,
+			Type attributeType,
 			Column[] columns) {
 		final SingularAttribute.Classification classification = interpretSingularAttributeClassification( attributeType );
 		if ( classification == SingularAttribute.Classification.ANY ) {
@@ -291,7 +292,7 @@ public class Helper {
 		);
 	}
 
-	private static String extractEmbeddableName(org.hibernate.type.Type attributeType) {
+	private static String extractEmbeddableName(Type attributeType) {
 		// todo : fixme
 		return attributeType.getName();
 	}
@@ -301,7 +302,7 @@ public class Helper {
 			DomainMetamodelImpl domainMetamodel,
 			ManagedType source,
 			String subclassPropertyName,
-			Type attributeType,
+			Type_2 attributeType,
 			Column[] columns) {
 		final CollectionType collectionType = (CollectionType) attributeType;
 		final CollectionPersister collectionPersister = domainMetamodel.getSessionFactory().getMetamodel().collectionPersister( collectionType.getRole() );
@@ -321,27 +322,27 @@ public class Helper {
 		CollectionClassification getCollectionClassification();
 		PluralAttribute.ElementClassification getElementClassification();
 
-		Type getForeignKeyType();
+		Type_2 getForeignKeyType();
 		BasicType getCollectionIdType();
-		Type getElementType();
-		Type getIndexType();
+		Type_2 getElementType();
+		Type_2 getIndexType();
 	}
 
 	public static class CollectionMetadataImpl implements CollectionMetadata {
 		private final CollectionClassification collectionClassification;
 		private final PluralAttribute.ElementClassification elementClassification;
-		private final Type foreignKeyType;
+		private final Type_2 foreignKeyType;
 		private final BasicType collectionIdType;
-		private final Type elementType;
-		private final Type indexType;
+		private final Type_2 elementType;
+		private final Type_2 indexType;
 
 		public CollectionMetadataImpl(
 				CollectionClassification collectionClassification,
 				PluralAttribute.ElementClassification elementClassification,
-				Type foreignKeyType,
+				Type_2 foreignKeyType,
 				BasicType collectionIdType,
-				Type elementType,
-				Type indexType) {
+				Type_2 elementType,
+				Type_2 indexType) {
 			this.collectionClassification = collectionClassification;
 			this.elementClassification = elementClassification;
 			this.foreignKeyType = foreignKeyType;
@@ -361,7 +362,7 @@ public class Helper {
 		}
 
 		@Override
-		public Type getForeignKeyType() {
+		public Type_2 getForeignKeyType() {
 			return foreignKeyType;
 		}
 
@@ -371,12 +372,12 @@ public class Helper {
 		}
 
 		@Override
-		public Type getElementType() {
+		public Type_2 getElementType() {
 			return elementType;
 		}
 
 		@Override
-		public Type getIndexType() {
+		public Type_2 getIndexType() {
 			return indexType;
 		}
 	}
@@ -430,7 +431,7 @@ public class Helper {
 	}
 
 	private static PluralAttribute.ElementClassification interpretElementClassification(CollectionPersister collectionPersister) {
-		final Type elementType = collectionPersister.getElementType();
+		final Type_2 elementType = collectionPersister.getElementType();
 
 		if ( elementType.isAnyType() ) {
 			return PluralAttribute.ElementClassification.ANY;
@@ -451,7 +452,7 @@ public class Helper {
 		}
 	}
 
-	public static SingularAttribute.Classification interpretSingularAttributeClassification(Type attributeType) {
+	public static SingularAttribute.Classification interpretSingularAttributeClassification(Type_2 attributeType) {
 		assert !attributeType.isCollectionType();
 
 		if ( attributeType.isAnyType() ) {
@@ -471,7 +472,7 @@ public class Helper {
 		}
 	}
 
-	public static SingularAttribute.Classification interpretIdentifierClassification(Type ormIdType) {
+	public static SingularAttribute.Classification interpretIdentifierClassification(Type_2 ormIdType) {
 		return ormIdType instanceof EmbeddableType
 				? SingularAttribute.Classification.EMBEDDED
 				: SingularAttribute.Classification.BASIC;

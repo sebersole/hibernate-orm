@@ -9,5 +9,5 @@ package org.hibernate.type.spi;
 /**
  * @author Steve Ebersole
  */
-public interface AnyType extends Type, org.hibernate.sqm.domain.AnyType {
+public interface AnyType extends Type_2, org.hibernate.sqm.domain.AnyType {
 }

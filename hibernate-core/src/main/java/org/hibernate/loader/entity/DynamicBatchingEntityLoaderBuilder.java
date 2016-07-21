@@ -32,7 +32,7 @@ import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.persister.entity.MultiLoadOptions;
 import org.hibernate.persister.entity.OuterJoinLoadable;
 import org.hibernate.pretty.MessageHelper;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 
 import org.jboss.logging.Logger;
 
@@ -104,7 +104,7 @@ public class DynamicBatchingEntityLoaderBuilder extends BatchingEntityLoaderBuil
 		}
 		else {
 			maxBatchSize = session.getJdbcServices().getJdbcEnvironment().getDialect().getDefaultBatchLoadSizingStrategy().determineOptimalBatchLoadSize(
-					persister.getIdentifierType().getColumnSpan( session.getFactory() ),
+					persister.getIdentifierType().getColumnSpan(),
 					numberOfIdsLeft
 			);
 		}

@@ -9,6 +9,6 @@ package org.hibernate.type.spi;
 /**
  * @author Steve Ebersole
  */
-public interface CollectionType extends Type {
+public interface CollectionType extends Type_2 {
 	String getRole();
 }

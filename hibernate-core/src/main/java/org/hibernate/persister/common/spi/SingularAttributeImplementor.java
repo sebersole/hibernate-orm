@@ -7,13 +7,13 @@
 package org.hibernate.persister.common.spi;
 
 import org.hibernate.sqm.domain.SingularAttribute;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.spi.Type_2;
 
 /**
  * @author Steve Ebersole
  */
 public interface SingularAttributeImplementor extends SingularAttribute {
 	@Override
-	Type getType();
+	Type_2 getType();
 	Column[] getColumns();
 }

@@ -37,7 +37,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 import org.hibernate.type.internal.descriptor.JdbcTypeNameMapper;
 import org.hibernate.type.descriptor.converter.AttributeConverterSqlTypeDescriptorAdapter;
 import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
@@ -387,7 +387,7 @@ public class SimpleValue implements KeyValue {
 	}
 
 	public boolean isValid(Mapping mapping) throws MappingException {
-		return getColumnSpan()==getType().getColumnSpan(mapping);
+		return getColumnSpan()==getType().getColumnSpan();
 	}
 
 	public Type getType() throws MappingException {

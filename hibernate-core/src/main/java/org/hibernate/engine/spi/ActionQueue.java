@@ -43,7 +43,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.Type;
 
 /**
  * Responsible for maintaining the queue of actions related to events.
