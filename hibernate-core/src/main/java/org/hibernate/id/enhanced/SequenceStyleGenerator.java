@@ -246,7 +246,7 @@ public class SequenceStyleGenerator
 		);
 		this.optimizer = OptimizerFactory.buildOptimizer(
 				optimizationStrategy,
-				identifierType.getReturnedClass(),
+				identifierType.getJavaTypeDescriptor().getJavaType(),
 				incrementSize,
 				ConfigurationHelper.getInt( INITIAL_PARAM, params, -1 )
 		);
@@ -396,11 +396,24 @@ public class SequenceStyleGenerator
 			int incrementSize) {
 		final boolean useSequence = jdbcEnvironment.getDialect().supportsSequences() && !forceTableUse;
 		if ( useSequence ) {
-			return new SequenceStructure( jdbcEnvironment, sequenceName, initialValue, incrementSize, type.getReturnedClass() );
+			return new SequenceStructure(
+					jdbcEnvironment,
+					sequenceName,
+					initialValue,
+					incrementSize,
+					type.getJavaTypeDescriptor().getJavaType()
+			);
 		}
 		else {
 			final Identifier valueColumnName = determineValueColumnName( params, jdbcEnvironment );
-			return new TableStructure( jdbcEnvironment, sequenceName, valueColumnName, initialValue, incrementSize, type.getReturnedClass() );
+			return new TableStructure(
+					jdbcEnvironment,
+					sequenceName,
+					valueColumnName,
+					initialValue,
+					incrementSize,
+					type.getJavaTypeDescriptor().getJavaType()
+			);
 		}
 	}
 

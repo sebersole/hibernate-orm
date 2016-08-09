@@ -11,7 +11,7 @@ import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.type.CollectionType;
-import org.hibernate.type.CompositeType;
+import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.spi.Type;
 
@@ -99,11 +99,11 @@ public abstract class AbstractVisitor {
 	 */
 	final Object processValue(Object value, Type type) throws HibernateException {
 
-		if ( type.isCollectionType() ) {
+		if ( type.getClassification().equals( Type.Classification.COLLECTION ) ) {
 			//even process null collections
 			return processCollection( value, (CollectionType) type );
 		}
-		else if ( type.isEntityType() ) {
+		else if ( type.getClassification().equals( Type.Classification.ENTITY ) ) {
 			return processEntity( value, (EntityType) type );
 		}
 		else if ( type.isComponentType() ) {

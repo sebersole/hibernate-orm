@@ -11,7 +11,7 @@ import org.hibernate.hql.internal.NameGenerator;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.persister.collection.QueryableCollection;
 import org.hibernate.persister.entity.PropertyMapping;
-import org.hibernate.type.CompositeType;
+import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.spi.Type;
 
 /**
@@ -86,7 +86,7 @@ public class ComponentJoin extends FromElement {
 
 	@Override
 	public String getDisplayText() {
-		return "ComponentJoin{path=" + getComponentPath() + ", type=" + componentType.getReturnedClass() + "}";
+		return "ComponentJoin{path=" + getComponentPath() + ", type=" + componentType.getJavaTypeDescriptor().getJavaType() + "}";
 	}
 
 	public class ComponentFromElementType extends FromElementType {

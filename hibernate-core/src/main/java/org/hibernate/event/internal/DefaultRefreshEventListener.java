@@ -32,7 +32,7 @@ import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.CollectionType;
-import org.hibernate.type.CompositeType;
+import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.spi.Type;
 
 /**
@@ -193,7 +193,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 	private void evictCachedCollections(Type[] types, Serializable id, EventSource source)
 			throws HibernateException {
 		for ( Type type : types ) {
-			if ( type.isCollectionType() ) {
+			if ( type.getClassification().equals( Type.Classification.COLLECTION ) ) {
 				CollectionPersister collectionPersister = source.getFactory().getMetamodel().collectionPersister( ( (CollectionType) type ).getRole() );
 				if ( collectionPersister.hasCache() ) {
 					final CollectionRegionAccessStrategy cache = collectionPersister.getCacheAccessStrategy();
