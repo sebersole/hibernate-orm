@@ -9,8 +9,9 @@ package org.hibernate.type;
 import java.util.Comparator;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.java.PrimitiveByteArrayTypeDescriptor;
-import org.hibernate.type.descriptor.sql.VarbinaryTypeDescriptor;
+import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.spi.descriptor.java.PrimitiveByteArrayTypeDescriptor;
+import org.hibernate.type.spi.descriptor.sql.VarbinaryTypeDescriptor;
 
 /**
  * A type that maps between a {@link java.sql.Types#VARBINARY VARBINARY} and {@code byte[]}
@@ -18,9 +19,7 @@ import org.hibernate.type.descriptor.sql.VarbinaryTypeDescriptor;
  * @author Gavin King
  * @author Steve Ebersole
  */
-public class BinaryType
-		extends AbstractSingleColumnStandardBasicType<byte[]>
-		implements VersionType<byte[]> {
+public class BinaryType extends AbstractSingleColumnStandardBasicType<byte[]> implements org.hibernate.type.spi.VersionType<byte[]> {
 
 	public static final BinaryType INSTANCE = new BinaryType();
 
@@ -30,11 +29,6 @@ public class BinaryType
 
 	public BinaryType() {
 		super( VarbinaryTypeDescriptor.INSTANCE, PrimitiveByteArrayTypeDescriptor.INSTANCE );
-	}
-
-	@Override
-	public String[] getRegistrationKeys() {
-		return new String[] { getName(), "byte[]", byte[].class.getName() };
 	}
 
 	@Override
@@ -54,5 +48,11 @@ public class BinaryType
 	@Override
 	public Comparator<byte[]> getComparator() {
 		return PrimitiveByteArrayTypeDescriptor.INSTANCE.getComparator();
+	}
+
+	@Override
+	public JdbcLiteralFormatter<byte[]> getJdbcLiteralFormatter() {
+		// no support for binary literals
+		return null;
 	}
 }
