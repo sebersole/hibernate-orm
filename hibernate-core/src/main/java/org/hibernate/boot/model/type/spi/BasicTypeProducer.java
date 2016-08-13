@@ -6,7 +6,7 @@
  */
 package org.hibernate.boot.model.type.spi;
 
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * A "producer" for a BasicType, scoped by a {@link BasicTypeProducerRegistry}.

@@ -19,7 +19,7 @@ import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Support for query by example.

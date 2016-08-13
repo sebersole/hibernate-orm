@@ -38,7 +38,7 @@ import org.hibernate.loader.plan.exec.query.spi.NamedParameterContext;
 import org.hibernate.loader.plan.exec.spi.LoadQueryDetails;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.transform.ResultTransformer;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * A superclass for loader implementations based on using LoadPlans.

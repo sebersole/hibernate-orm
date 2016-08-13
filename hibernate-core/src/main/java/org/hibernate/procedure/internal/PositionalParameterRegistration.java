@@ -8,7 +8,7 @@ package org.hibernate.procedure.internal;
 
 import javax.persistence.ParameterMode;
 
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Represents a registered positional parameter

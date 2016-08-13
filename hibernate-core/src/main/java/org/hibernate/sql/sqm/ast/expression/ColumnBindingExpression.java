@@ -10,7 +10,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.sqm.ast.from.ColumnBinding;
 import org.hibernate.sql.sqm.exec.results.spi.ReturnReader;
 import org.hibernate.sql.sqm.convert.spi.SqlTreeWalker;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

@@ -147,11 +147,11 @@ import org.hibernate.mapping.Value;
 import org.hibernate.tuple.GeneratedValueGeneration;
 import org.hibernate.tuple.GenerationTiming;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**

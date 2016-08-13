@@ -73,10 +73,10 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicTypesBaseline;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.basic.RegistryKey;
-import org.hibernate.type.spi.basic.RegistryKeyImpl;
+import org.hibernate.type.mapper.spi.basic.RegistryKey;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
@@ -255,12 +255,12 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyBasicType(org.hibernate.type.spi.BasicType type) {
-		return applyBasicType( type, RegistryKeyImpl.from( type ) );
+	public MetadataBuilder applyBasicType(BasicType type) {
+		return applyBasicType( type, RegistryKey.from( type ) );
 	}
 
 	@Override
-	public MetadataBuilder applyBasicType(org.hibernate.type.spi.BasicType type, RegistryKey registryKey) {
+	public MetadataBuilder applyBasicType(BasicType type, RegistryKey registryKey) {
 		options.typeConfiguration.getBasicTypeRegistry().register( type, registryKey );
 		return this;
 	}
@@ -282,8 +282,20 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public void contributeType(org.hibernate.type.spi.BasicType type, RegistryKey key) {
-		options.typeConfiguration.getBasicTypeRegistry().register( type, key );
+	public void contributeType(BasicType type, String... registrationKeys) {
+		// register the BasicType with the BasicTypeRegistry
+		options.getTypeConfiguration().getBasicTypeRegistry().register( type, RegistryKey.from( type ) );
+
+		// then, register the BasicType with the BasicTypeProducerRegistry using the
+		// "registration keys"
+
+		// first the BasicType class name
+		options.getBasicTypeProducerRegistry().register( type, type.getClass().getName() );
+
+		// and then the passed keys, if any
+		if ( registrationKeys != null ) {
+			options.getBasicTypeProducerRegistry().register( type, registrationKeys );
+		}
 	}
 
 	@Override
@@ -709,7 +721,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		private void initializeTypes() {
-			StandardBasicTypes.prime( typeConfiguration, getBasicTypeProducerRegistry() );
+			BasicTypesBaseline.prime( typeConfiguration, getBasicTypeProducerRegistry() );
 		}
 
 		private ArrayList<MetadataSourceType> resolveInitialSourceProcessOrdering(ConfigurationService configService) {

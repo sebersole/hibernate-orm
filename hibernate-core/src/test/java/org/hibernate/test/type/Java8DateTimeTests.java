@@ -24,7 +24,7 @@ import javax.persistence.Table;
 import org.hibernate.Session;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.type.SerializableType;
+import org.hibernate.type.mapper.spi.basic.SerializableType;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
 
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;

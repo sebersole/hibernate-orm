@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.type.BooleanType;
+import org.hibernate.type.mapper.spi.basic.BooleanType;
 
 class SDOBooleanType extends BooleanType {
 

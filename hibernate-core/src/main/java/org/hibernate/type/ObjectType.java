@@ -7,6 +7,9 @@
 package org.hibernate.type;
 
 
+import org.hibernate.type.mapper.spi.basic.SerializableType;
+import org.hibernate.type.mapper.spi.basic.StringType;
+
 /**
  * Specific adaptation of the "any" type to the old deprecated "object" type
  *

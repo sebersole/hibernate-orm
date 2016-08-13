@@ -8,7 +8,7 @@ package org.hibernate.test.annotations.lob;
 
 import java.io.Serializable;
 
-import org.hibernate.type.SerializableToBlobType;
+import org.hibernate.type.mapper.spi.basic.SerializableToBlobType;
 
 /**
  * @author Janario Oliveira

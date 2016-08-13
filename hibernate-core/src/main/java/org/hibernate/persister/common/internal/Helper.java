@@ -30,9 +30,9 @@ import org.hibernate.sqm.domain.PluralAttribute.CollectionClassification;
 import org.hibernate.sqm.domain.SingularAttribute;
 import org.hibernate.type.ArrayType;
 import org.hibernate.type.BagType;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.CollectionType;
-import org.hibernate.type.spi.ColumnMapping;
+import org.hibernate.type.mapper.spi.ColumnMapping;
 import org.hibernate.type.spi.EmbeddableType;
 import org.hibernate.type.IdentifierBagType;
 import org.hibernate.type.ListType;
@@ -42,7 +42,7 @@ import org.hibernate.type.OrderedSetType;
 import org.hibernate.type.SetType;
 import org.hibernate.type.SortedMapType;
 import org.hibernate.type.SortedSetType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * For now mainly a helper for reflection into stuff not exposed on the entity/collection persister
@@ -249,7 +249,7 @@ public class Helper {
 			return new SingularAttributeBasic(
 					source,
 					attributeName,
-					(org.hibernate.type.spi.BasicType) attributeType,
+					(BasicType) attributeType,
 					columns
 			);
 		}

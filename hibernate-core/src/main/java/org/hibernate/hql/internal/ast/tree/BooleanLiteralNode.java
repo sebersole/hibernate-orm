@@ -6,12 +6,10 @@
  */
 package org.hibernate.hql.internal.ast.tree;
 
-import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.type.LiteralType;
 import org.hibernate.type.StandardBasicTypes;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Represents a boolean literal within a query.
@@ -49,18 +47,11 @@ public class BooleanLiteralNode extends LiteralNode implements ExpectedTypeAware
 	public String getRenderText(SessionFactoryImplementor sessionFactory) {
 		final boolean literalValue = getValue();
 
-		if ( expectedType instanceof AttributeConverterTypeAdapter ) {
-			return determineConvertedValue( (AttributeConverterTypeAdapter) expectedType, literalValue );
-		}
-		else if ( expectedType instanceof LiteralType ) {
-			try {
-				return ( (LiteralType) expectedType ).objectToSQLString( getValue(), sessionFactory.getDialect() );
-			}
-			catch( Exception t ) {
-				throw new QueryException( "Unable to render boolean literal value using expected LiteralType", t );
-			}
+		final JdbcLiteralFormatter jdbcLiteralFormatter = getDataType().getJdbcLiteralFormatter();
+		if ( jdbcLiteralFormatter == null ) {
+			return sessionFactory.getJdbcServices().getJdbcEnvironment().getDialect().toBooleanValueString( literalValue );
 		}
 
-		return sessionFactory.getDialect().toBooleanValueString( literalValue );
+		return jdbcLiteralFormatter.toJdbcLiteral( literalValue, sessionFactory.getJdbcServices().getJdbcEnvironment().getDialect() );
 	}
 }

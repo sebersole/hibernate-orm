@@ -18,7 +18,7 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.param.ParameterSpecification;
 import org.hibernate.type.OneToOneType;
 import org.hibernate.type.StandardBasicTypes;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import antlr.SemanticException;
 import antlr.collections.AST;

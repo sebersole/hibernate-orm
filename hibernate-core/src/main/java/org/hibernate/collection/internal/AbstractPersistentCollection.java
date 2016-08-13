@@ -39,13 +39,13 @@ import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.LongType;
-import org.hibernate.type.PostgresUUIDType;
-import org.hibernate.type.StringType;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.UUIDBinaryType;
-import org.hibernate.type.UUIDCharType;
+import org.hibernate.type.mapper.spi.basic.IntegerType;
+import org.hibernate.type.mapper.spi.basic.LongType;
+import org.hibernate.type.mapper.spi.basic.PostgresUUIDType;
+import org.hibernate.type.mapper.spi.basic.StringType;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.UUIDBinaryType;
+import org.hibernate.type.mapper.spi.basic.UUIDCharType;
 
 /**
  * Base class implementing {@link org.hibernate.collection.spi.PersistentCollection}

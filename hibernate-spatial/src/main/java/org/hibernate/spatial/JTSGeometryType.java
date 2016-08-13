@@ -6,18 +6,18 @@
  */
 package org.hibernate.spatial;
 
-import com.vividsolutions.jts.geom.Geometry;
-
-import org.hibernate.type.AbstractSingleColumnStandardBasicType;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.mapper.spi.basic.BasicTypeImpl;
 import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 /**
  * A {@code Type} that maps between the database geometry type and JTS {@code Geometry}.
  *
  * @author Karel Maesen
  */
-public class JTSGeometryType extends AbstractSingleColumnStandardBasicType<Geometry> implements Spatial {
+public class JTSGeometryType extends BasicTypeImpl<Geometry> implements Spatial {
 
 	/**
 	 * Constructs an instance with the specified {@code SqlTypeDescriptor}
@@ -28,14 +28,10 @@ public class JTSGeometryType extends AbstractSingleColumnStandardBasicType<Geome
 	public JTSGeometryType(
 			SqlTypeDescriptor sqlTypeDescriptor,
 			TypeDescriptorRegistryAccess typeDescriptorRegistryAccess) {
-		super( sqlTypeDescriptor, JTSGeometryJavaTypeDescriptor.INSTANCE );
-
-		typeDescriptorRegistryAccess.getSqlTypeDescriptorRegistry().addDescriptor( sqlTypeDescriptor );
-		typeDescriptorRegistryAccess.getJavaTypeDescriptorRegistry().addDescriptor( JTSGeometryJavaTypeDescriptor.INSTANCE );
+		super( JTSGeometryJavaTypeDescriptor.INSTANCE, sqlTypeDescriptor );
 	}
 
-	@Override
-	public String[] getRegistrationKeys() {
+	public static String[] getRegistrationKeys() {
 		return new String[] {
 				com.vividsolutions.jts.geom.Geometry.class.getCanonicalName(),
 				com.vividsolutions.jts.geom.Point.class.getCanonicalName(),

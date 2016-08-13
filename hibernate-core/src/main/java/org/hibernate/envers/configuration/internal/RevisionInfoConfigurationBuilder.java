@@ -45,7 +45,7 @@ import org.hibernate.envers.internal.revisioninfo.RevisionTimestampValueResolver
 import org.hibernate.envers.internal.tools.MutableBoolean;
 import org.hibernate.internal.util.xml.XMLHelper;
 import org.hibernate.mapping.PersistentClass;
-import org.hibernate.type.LongType;
+import org.hibernate.type.mapper.spi.basic.LongType;
 
 import org.dom4j.Document;
 import org.dom4j.Element;

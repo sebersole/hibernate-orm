@@ -8,7 +8,7 @@ package org.hibernate.persister.common.internal;
 
 import org.hibernate.persister.common.spi.AbstractSingularAttribute;
 import org.hibernate.persister.common.spi.Column;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.sqm.domain.ManagedType;
 import org.hibernate.sqm.domain.SingularAttribute;
 

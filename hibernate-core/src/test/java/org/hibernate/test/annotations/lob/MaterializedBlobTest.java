@@ -14,8 +14,8 @@ import org.hibernate.Session;
 import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.RequiresDialectFeature;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
-import org.hibernate.type.MaterializedBlobType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.MaterializedBlobType;
+import org.hibernate.type.mapper.spi.Type;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

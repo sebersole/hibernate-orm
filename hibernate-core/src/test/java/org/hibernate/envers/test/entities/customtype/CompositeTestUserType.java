@@ -13,9 +13,9 @@ import java.sql.SQLException;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.StringType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.IntegerType;
+import org.hibernate.type.mapper.spi.basic.StringType;
+import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.usertype.CompositeUserType;
 
 /**

@@ -34,7 +34,7 @@ import org.hibernate.loader.plan.spi.LoadPlan;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.persister.entity.OuterJoinLoadable;
 import org.hibernate.pretty.MessageHelper;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * A UniqueEntityLoader implementation based on using LoadPlans

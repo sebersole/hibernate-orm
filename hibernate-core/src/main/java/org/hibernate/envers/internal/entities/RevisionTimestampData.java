@@ -8,7 +8,7 @@ package org.hibernate.envers.internal.entities;
 
 import org.hibernate.envers.ModificationStore;
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Chris Cranford

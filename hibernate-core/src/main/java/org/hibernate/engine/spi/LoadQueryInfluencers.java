@@ -16,7 +16,7 @@ import javax.persistence.EntityGraph;
 import org.hibernate.Filter;
 import org.hibernate.UnknownProfileException;
 import org.hibernate.internal.FilterImpl;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Centralize all options which can influence the SQL query needed to load an

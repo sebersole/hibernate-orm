@@ -34,8 +34,8 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterListBinding;
-import org.hibernate.type.SerializableType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.SerializableType;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Manages the group of QueryParameterBinding for a particular query.

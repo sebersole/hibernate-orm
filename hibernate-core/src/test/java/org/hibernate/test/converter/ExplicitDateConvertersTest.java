@@ -15,14 +15,15 @@ import javax.persistence.Id;
 
 import org.hibernate.Session;
 import org.hibernate.persister.entity.spi.EntityPersister;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.junit.Test;
 
 import static org.hibernate.testing.junit4.ExtraAssertions.assertTyping;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -82,11 +83,9 @@ public class ExplicitDateConvertersTest extends BaseNonConfigCoreFunctionalTestC
 	public void testSimpleConvertUsage() throws MalformedURLException {
 		final EntityPersister ep = sessionFactory().getEntityPersister( Entity1.class.getName() );
 		final Type theDatePropertyType = ep.getPropertyType( "theDate" );
-		final AttributeConverterTypeAdapter type = assertTyping(
-				AttributeConverterTypeAdapter.class,
-				theDatePropertyType
-		);
-		assertTyping( LongToDateConverter.class, type.getAttributeConverter() );
+		final BasicType type = assertTyping( BasicType.class, theDatePropertyType );
+		assertNotNull( type.getAttributeConverterDefinition() );
+		assertTyping( LongToDateConverter.class, type.getAttributeConverterDefinition().getAttributeConverter() );
 
 		resetFlags();
 

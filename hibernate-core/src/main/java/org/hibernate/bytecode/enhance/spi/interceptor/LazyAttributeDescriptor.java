@@ -7,7 +7,7 @@
 package org.hibernate.bytecode.enhance.spi.interceptor;
 
 import org.hibernate.mapping.Property;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Descriptor for an attribute which is enabled for bytecode lazy fetching

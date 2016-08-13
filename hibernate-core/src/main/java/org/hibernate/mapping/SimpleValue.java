@@ -6,13 +6,10 @@
  */
 package org.hibernate.mapping;
 
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import javax.persistence.AttributeConverter;
 
@@ -21,11 +18,11 @@ import org.hibernate.MappingException;
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.internal.AttributeConverterDescriptorNonAutoApplicableImpl;
 import org.hibernate.boot.model.type.spi.BasicTypeProducer;
+import org.hibernate.boot.model.type.spi.BasicTypeSiteContextSupport;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
-import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.config.spi.ConfigurationService;
@@ -40,17 +37,10 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.BinaryType;
-import org.hibernate.type.RowVersionType;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.internal.descriptor.JdbcTypeNameMapper;
-import org.hibernate.type.descriptor.converter.AttributeConverterSqlTypeDescriptorAdapter;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.JdbcTypeJavaClassMappings;
-import org.hibernate.type.descriptor.sql.LobTypeMappings;
-import org.hibernate.type.descriptor.sql.NationalizedTypeMappings;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
 import org.hibernate.usertype.DynamicParameterizedType;
 
 /**
@@ -174,8 +164,8 @@ public class SimpleValue implements KeyValue {
 	}
 
 	public void setTypeName(String typeName) {
-		if ( typeName != null && typeName.startsWith( AttributeConverterTypeAdapter.NAME_PREFIX ) ) {
-			final String converterClassName = typeName.substring( AttributeConverterTypeAdapter.NAME_PREFIX.length() );
+		if ( typeName != null && typeName.startsWith( AttributeConverterDescriptor.EXPLICIT_TYPE_NAME_PREFIX ) ) {
+			final String converterClassName = typeName.substring( AttributeConverterDescriptor.EXPLICIT_TYPE_NAME_PREFIX.length() );
 			final ClassLoaderService cls = getMetadata().getMetadataBuildingOptions()
 					.getServiceRegistry()
 					.getService( ClassLoaderService.class );
@@ -446,143 +436,63 @@ public class SimpleValue implements KeyValue {
 		return type;
 	}
 
-	public void setTypeUsingReflection(String className, String propertyName) throws MappingException {
-		// NOTE : this is called as the last piece in setting SimpleValue type information, and implementations
-		// rely on that fact, using it as a signal that all information it is going to get is defined at this point...
+	private static class BasicTypeSiteContextTypeUsingReflection extends BasicTypeSiteContextSupport {
+		private final AttributeConverterDefinition attributeConverterDescriptor;
+		private final JavaTypeDescriptor javaTypeDescriptor;
+		private final SqlTypeDescriptor sqlTypeDescriptor;
 
-		if ( typeName != null ) {
-			// assume either (a) explicit type was specified or (b) determine was already performed
-			return;
-		}
+		public BasicTypeSiteContextTypeUsingReflection(
+				AttributeConverterDescriptor attributeConverterDescriptor,
+				String className,
+				String propertyName,
+				InFlightMetadataCollector metadata) {
+			this.attributeConverterDescriptor = attributeConverterDescriptor;
 
-		if ( type != null ) {
-			return;
-		}
+			if ( attributeConverterDescriptor == null ) {
+				final Class attributeType = ReflectHelper.reflectedPropertyClass(
+						className,
+						propertyName,
+						metadata.getMetadataBuildingOptions().getServiceRegistry().getService( ClassLoaderService.class )
+				);
+				javaTypeDescriptor = metadata.getTypeConfiguration().getJavaTypeDescriptorRegistry().getDescriptor( attributeType );
+				sqlTypeDescriptor = javaTypeDescriptor.getJdbcRecommendedSqlType(
+						metadata.getTypeConfiguration().getBasicTypeRegistry().getBaseJdbcRecommendedSqlTypeMappingContext()
+				);
 
-		if ( attributeConverterDescriptor == null ) {
-			// this is here to work like legacy.  This should change when we integrate with metamodel to
-			// look for SqlTypeDescriptor and JavaTypeDescriptor individually and create the BasicType (well, really
-			// keep a registry of [SqlTypeDescriptor,JavaTypeDescriptor] -> BasicType...)
-			if ( className == null ) {
-				throw new MappingException( "Attribute types for a dynamic entity must be explicitly specified: " + propertyName );
-			}
-			typeName = ReflectHelper.reflectedPropertyClass( className, propertyName, metadata.getMetadataBuildingOptions().getServiceRegistry().getService( ClassLoaderService.class ) ).getName();
-			// todo : to fully support isNationalized here we need do the process hinted at above
-			// 		essentially, much of the logic from #buildAttributeConverterTypeAdapter wrt resolving
-			//		a (1) SqlTypeDescriptor, a (2) JavaTypeDescriptor and dynamically building a BasicType
-			// 		combining them.
-			return;
-		}
-
-		// we had an AttributeConverter...
-		type = buildAttributeConverterTypeAdapter();
-	}
-
-	/**
-	 * Build a Hibernate Type that incorporates the JPA AttributeConverter.  AttributeConverter works totally in
-	 * memory, meaning it converts between one Java representation (the entity attribute representation) and another
-	 * (the value bound into JDBC statements or extracted from results).  However, the Hibernate Type system operates
-	 * at the lower level of actually dealing directly with those JDBC objects.  So even though we have an
-	 * AttributeConverter, we still need to "fill out" the rest of the BasicType data and bridge calls
-	 * to bind/extract through the converter.
-	 * <p/>
-	 * Essentially the idea here is that an intermediate Java type needs to be used.  Let's use an example as a means
-	 * to illustrate...  Consider an {@code AttributeConverter<Integer,String>}.  This tells Hibernate that the domain
-	 * model defines this attribute as an Integer value (the 'entityAttributeJavaType'), but that we need to treat the
-	 * value as a String (the 'databaseColumnJavaType') when dealing with JDBC (aka, the database type is a
-	 * VARCHAR/CHAR):<ul>
-	 *     <li>
-	 *         When binding values to PreparedStatements we need to convert the Integer value from the entity
-	 *         into a String and pass that String to setString.  The conversion is handled by calling
-	 *         {@link AttributeConverter#convertToDatabaseColumn(Object)}
-	 *     </li>
-	 *     <li>
-	 *         When extracting values from ResultSets (or CallableStatement parameters) we need to handle the
-	 *         value via getString, and convert that returned String to an Integer.  That conversion is handled
-	 *         by calling {@link AttributeConverter#convertToEntityAttribute(Object)}
-	 *     </li>
-	 * </ul>
-	 *
-	 * @return The built AttributeConverter -> Type adapter
-	 *
-	 * @todo : ultimately I want to see attributeConverterJavaType and attributeConverterJdbcTypeCode specify-able separately
-	 * then we can "play them against each other" in terms of determining proper typing
-	 *
-	 * @todo : see if we already have previously built a custom on-the-fly BasicType for this AttributeConverter; see note below about caching
-	 */
-	@SuppressWarnings("unchecked")
-	private Type buildAttributeConverterTypeAdapter() {
-		// todo : validate the number of columns present here?
-
-		final Class entityAttributeJavaType = attributeConverterDescriptor.getDomainType();
-		final Class databaseColumnJavaType = attributeConverterDescriptor.getJdbcType();
-
-
-		// resolve the JavaTypeDescriptor ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// For the JavaTypeDescriptor portion we simply resolve the "entity attribute representation" part of
-		// the AttributeConverter to resolve the corresponding descriptor.
-		final JavaTypeDescriptor entityAttributeJavaTypeDescriptor = metadata.getTypeConfiguration().getJavaTypeDescriptorRegistry().getDescriptor( entityAttributeJavaType );
-
-
-		// build the SqlTypeDescriptor adapter ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// Going back to the illustration, this should be a SqlTypeDescriptor that handles the Integer <-> String
-		//		conversions.  This is the more complicated piece.  First we need to determine the JDBC type code
-		//		corresponding to the AttributeConverter's declared "databaseColumnJavaType" (how we read that value out
-		// 		of ResultSets).  See JdbcTypeJavaClassMappings for details.  Again, given example, this should return
-		// 		VARCHAR/CHAR
-		int jdbcTypeCode = JdbcTypeJavaClassMappings.INSTANCE.determineJdbcTypeCodeForJavaClass( databaseColumnJavaType );
-		if ( isLob() ) {
-			if ( LobTypeMappings.INSTANCE.hasCorrespondingLobCode( jdbcTypeCode ) ) {
-				jdbcTypeCode = LobTypeMappings.INSTANCE.getCorrespondingLobCode( jdbcTypeCode );
 			}
 			else {
-				if ( Serializable.class.isAssignableFrom( entityAttributeJavaType ) ) {
-					jdbcTypeCode = Types.BLOB;
-				}
-				else {
-					throw new IllegalArgumentException(
-							String.format(
-									Locale.ROOT,
-									"JDBC type-code [%s (%s)] not known to have a corresponding LOB equivalent, and Java type is not Serializable (to use BLOB)",
-									jdbcTypeCode,
-									JdbcTypeNameMapper.getTypeName( jdbcTypeCode )
-							)
-					);
-				}
+				javaTypeDescriptor = attributeConverterDescriptor.getDomainType();
+				sqlTypeDescriptor = attributeConverterDescriptor.getJdbcType().getJdbcRecommendedSqlType(
+						metadata.getTypeConfiguration().getBasicTypeRegistry().getBaseJdbcRecommendedSqlTypeMappingContext()
+				);
 			}
 		}
-		if ( isNationalized() ) {
-			jdbcTypeCode = NationalizedTypeMappings.INSTANCE.getCorrespondingNationalizedCode( jdbcTypeCode );
+
+		@Override
+		public JavaTypeDescriptor getJavaTypeDescriptor() {
+			return javaTypeDescriptor;
 		}
-		// find the standard SqlTypeDescriptor for that JDBC type code.
-		final SqlTypeDescriptor sqlTypeDescriptor = metadata.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( jdbcTypeCode );
-		// find the JavaTypeDescriptor representing the "intermediate database type representation".  Back to the
-		// 		illustration, this should be the type descriptor for Strings
-		final JavaTypeDescriptor intermediateJavaTypeDescriptor = metadata.getTypeConfiguration().getJavaTypeDescriptorRegistry().getDescriptor( databaseColumnJavaType );
-		// and finally construct the adapter, which injects the AttributeConverter calls into the binding/extraction
-		// 		process...
-		final SqlTypeDescriptor sqlTypeDescriptorAdapter = new AttributeConverterSqlTypeDescriptorAdapter(
-				attributeConverterDescriptor.getAttributeConverter(),
-				sqlTypeDescriptor,
-				intermediateJavaTypeDescriptor
-		);
 
-		// todo : cache the AttributeConverterTypeAdapter in case that AttributeConverter is applied multiple times.
+		@Override
+		public SqlTypeDescriptor getSqlTypeDescriptor() {
+			return sqlTypeDescriptor;
+		}
 
-		final String name = AttributeConverterTypeAdapter.NAME_PREFIX + attributeConverterDescriptor.getAttributeConverter().getClass().getName();
-		final String description = String.format(
-				"BasicType adapter for AttributeConverter<%s,%s>",
-				entityAttributeJavaType.getSimpleName(),
-				databaseColumnJavaType.getSimpleName()
-		);
-		return new AttributeConverterTypeAdapter(
-				name,
-				description,
-				attributeConverterDescriptor.getAttributeConverter(),
-				sqlTypeDescriptorAdapter,
-				entityAttributeJavaType,
-				databaseColumnJavaType,
-				entityAttributeJavaTypeDescriptor
+		@Override
+		public AttributeConverterDefinition getAttributeConverterDefinition() {
+			return attributeConverterDescriptor;
+		}
+	}
+
+
+	public void setTypeUsingReflection(String className, String propertyName) throws MappingException {
+		basicTypeProducer.injectBasicTypeSiteContext(
+				new BasicTypeSiteContextTypeUsingReflection(
+						attributeConverterDescriptor,
+						className,
+						propertyName,
+						metadata
+				)
 		);
 	}
 

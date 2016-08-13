@@ -28,7 +28,7 @@ import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.persister.entity.Queryable;
 import org.hibernate.sql.InFragment;
 import org.hibernate.type.LiteralType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.jboss.logging.Logger;
 

@@ -6,7 +6,7 @@
  */
 package org.hibernate.loader.plan.spi;
 
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Specialization of a Join that is defined by the metadata.

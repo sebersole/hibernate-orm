@@ -18,8 +18,8 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.junit.After;
@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import static org.hibernate.testing.junit4.ExtraAssertions.assertTyping;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test mapping a model with an attribute combining {@code @Lob} with an AttributeConverter.
@@ -58,8 +59,9 @@ public class AndLobTest extends BaseUnitTestCase {
 				.buildMetadata();
 
 		final Type type = metadata.getEntityBinding( EntityImpl.class.getName() ).getProperty( "status" ).getType();
-		final AttributeConverterTypeAdapter concreteType = assertTyping( AttributeConverterTypeAdapter.class, type );
-		assertEquals( Types.BLOB, concreteType.getSqlTypeDescriptor().getSqlType() );
+		final BasicType concreteType = assertTyping( BasicType.class, type );
+		assertNotNull( concreteType.getAttributeConverterDefinition() );
+		assertEquals( Types.BLOB, concreteType.getColumnMapping().getSqlTypeDescriptor().getSqlType() );
 	}
 
 	@Converter

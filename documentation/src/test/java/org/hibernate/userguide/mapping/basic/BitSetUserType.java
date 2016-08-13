@@ -10,7 +10,7 @@ import java.util.Objects;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 import org.hibernate.usertype.UserType;
 
 import org.jboss.logging.Logger;

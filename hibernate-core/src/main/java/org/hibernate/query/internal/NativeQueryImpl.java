@@ -41,7 +41,7 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.transform.ResultTransformer;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import static org.hibernate.jpa.QueryHints.HINT_NATIVE_LOCKMODE;
 

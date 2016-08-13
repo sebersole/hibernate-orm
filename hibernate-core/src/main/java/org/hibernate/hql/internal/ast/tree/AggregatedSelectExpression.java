@@ -9,7 +9,7 @@ package org.hibernate.hql.internal.ast.tree;
 import java.util.List;
 
 import org.hibernate.transform.ResultTransformer;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Contract for a select expression which aggregates other select expressions together into a single return

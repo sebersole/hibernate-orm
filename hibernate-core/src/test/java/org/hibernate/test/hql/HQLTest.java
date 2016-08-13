@@ -49,9 +49,9 @@ import org.hibernate.hql.internal.ast.tree.SelectClause;
 import org.hibernate.hql.internal.ast.util.ASTUtil;
 import org.hibernate.hql.spi.QueryTranslator;
 import org.hibernate.hql.spi.QueryTranslatorFactory;
-import org.hibernate.type.CalendarDateType;
-import org.hibernate.type.DoubleType;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.CalendarDateType;
+import org.hibernate.type.mapper.spi.basic.DoubleType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 
 import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.FailureExpected;

@@ -9,7 +9,7 @@ import org.hibernate.MappingException;
 import org.hibernate.engine.spi.Mapping;
 import org.hibernate.persister.entity.AbstractPropertyMapping;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Gavin King

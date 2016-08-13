@@ -40,6 +40,7 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.QueryProducerImplementor;
 import org.hibernate.transform.ResultTransformer;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * <strong>Make this go away in 6.0</strong> :)

@@ -48,7 +48,7 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Table;
 import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.query.spi.NamedQueryRepository;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

@@ -19,8 +19,8 @@ import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.PostgreSQL81Dialect;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.type.StringNVarcharType;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.StringNVarcharType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseUnitTestCase;

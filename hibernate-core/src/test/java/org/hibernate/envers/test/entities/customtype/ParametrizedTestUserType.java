@@ -15,7 +15,7 @@ import java.util.Properties;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 

@@ -16,7 +16,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.type.IntegerType;
+import org.hibernate.type.mapper.spi.basic.IntegerType;
 import org.hibernate.usertype.UserType;
 
 /**

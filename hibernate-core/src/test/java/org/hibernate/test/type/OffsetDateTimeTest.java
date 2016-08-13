@@ -17,7 +17,7 @@ import javax.persistence.Table;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
-import org.hibernate.type.OffsetDateTimeType;
+import org.hibernate.type.mapper.spi.basic.OffsetDateTimeType;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;

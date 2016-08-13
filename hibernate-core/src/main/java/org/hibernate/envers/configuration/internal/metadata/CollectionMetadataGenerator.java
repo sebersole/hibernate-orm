@@ -81,7 +81,7 @@ import org.hibernate.type.MapType;
 import org.hibernate.type.SetType;
 import org.hibernate.type.SortedMapType;
 import org.hibernate.type.SortedSetType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.jboss.logging.Logger;
 

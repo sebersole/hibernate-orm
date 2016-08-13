@@ -22,7 +22,7 @@ import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
@@ -90,25 +90,22 @@ public class ParameterizedAttributeConverterParameterTypeTest extends BaseUnitTe
 
 		{
 			Property prop = pc.getProperty( "someStrings" );
-			AttributeConverterTypeAdapter type = assertTyping(
-					AttributeConverterTypeAdapter.class,
+			BasicType type = assertTyping(
+					BasicType.class,
 					prop.getType()
 			);
 			assertTyping(
 					StringListConverter.class,
-					type.getAttributeConverter()
+					type.getAttributeConverterDefinition().getAttributeConverter()
 			);
 		}
 
 		{
 			Property prop = pc.getProperty( "someIntegers" );
-			AttributeConverterTypeAdapter type = assertTyping(
-					AttributeConverterTypeAdapter.class,
-					prop.getType()
-			);
+			BasicType type = assertTyping( BasicType.class, prop.getType() );
 			assertTyping(
 					IntegerListConverter.class,
-					type.getAttributeConverter()
+					type.getAttributeConverterDefinition().getAttributeConverter()
 			);
 		}
 	}

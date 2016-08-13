@@ -26,7 +26,7 @@ import org.hibernate.persister.entity.Queryable;
 import org.hibernate.sql.InFragment;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.LiteralType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Parses the where clause of a hibernate query and translates it to an

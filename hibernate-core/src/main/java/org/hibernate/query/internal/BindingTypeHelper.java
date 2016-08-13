@@ -14,15 +14,15 @@ import java.util.Calendar;
 import javax.persistence.TemporalType;
 
 import org.hibernate.type.BasicType;
-import org.hibernate.type.CalendarDateType;
-import org.hibernate.type.CalendarTimeType;
-import org.hibernate.type.CalendarType;
-import org.hibernate.type.InstantType;
-import org.hibernate.type.OffsetDateTimeType;
-import org.hibernate.type.OffsetTimeType;
-import org.hibernate.type.TimestampType;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.ZonedDateTimeType;
+import org.hibernate.type.mapper.spi.basic.CalendarDateType;
+import org.hibernate.type.mapper.spi.basic.CalendarTimeType;
+import org.hibernate.type.mapper.spi.basic.CalendarType;
+import org.hibernate.type.mapper.spi.basic.InstantType;
+import org.hibernate.type.mapper.spi.basic.OffsetDateTimeType;
+import org.hibernate.type.mapper.spi.basic.OffsetTimeType;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.ZonedDateTimeType;
 
 /**
  * @author Steve Ebersole

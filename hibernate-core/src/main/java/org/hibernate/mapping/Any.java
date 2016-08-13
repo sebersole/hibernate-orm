@@ -13,7 +13,7 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.model.type.spi.BasicTypeProducer;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.type.AnyDiscriminatorMappingType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * A Hibernate "any" type (ie. polymorphic association to

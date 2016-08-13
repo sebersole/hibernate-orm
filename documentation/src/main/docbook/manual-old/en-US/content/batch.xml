@@ -309,8 +309,8 @@ session.close();]]></programlisting>
                     compilation rather than allowing the check to relegate to the database. 
                     This might, however, cause problems between Hibernate <literal>Type</literal>s which are
                     <emphasis>equivalent</emphasis> as opposed to <emphasis>equal</emphasis>.  This might cause
-                    issues with mismatches between a property defined as a <literal>org.hibernate.type.DateType</literal>
-                    and a property defined as a <literal>org.hibernate.type.TimestampType</literal>, even though the
+                    issues with mismatches between a property defined as a <literal>org.hibernate.type.mapper.spi.basic.DateType</literal>
+                    and a property defined as a <literal>org.hibernate.type.mapper.spi.basic.TimestampType</literal>, even though the
                     database might not make a distinction or might be able to handle the conversion.
                 </para>
             </listitem>

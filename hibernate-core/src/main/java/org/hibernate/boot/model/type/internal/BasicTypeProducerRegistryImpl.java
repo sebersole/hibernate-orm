@@ -17,7 +17,7 @@ import org.hibernate.boot.model.TypeDefinition;
 import org.hibernate.boot.model.type.spi.BasicTypeProducer;
 import org.hibernate.boot.model.type.spi.BasicTypeProducerRegistry;
 import org.hibernate.boot.model.type.spi.Release;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;

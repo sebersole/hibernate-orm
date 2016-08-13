@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import org.hibernate.Session;
 import org.hibernate.dialect.SybaseASE15Dialect;
+import org.hibernate.type.mapper.spi.basic.SerializableType;
+
 import org.hibernate.testing.SkipForDialect;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 
@@ -17,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
- * Tests of {@link org.hibernate.type.SerializableType}
+ * Tests of {@link SerializableType}
  * 
  * @author Steve Ebersole
  */

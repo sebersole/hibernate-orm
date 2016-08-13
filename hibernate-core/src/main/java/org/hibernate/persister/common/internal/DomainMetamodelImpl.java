@@ -22,10 +22,10 @@ import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.sqm.domain.BasicType;
 import org.hibernate.sqm.domain.DomainMetamodel;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.basic.AttributeConverterDefinition;
-import org.hibernate.type.spi.basic.BasicTypeParameters;
+import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
@@ -84,12 +84,12 @@ public class DomainMetamodelImpl implements DomainMetamodel {
 	}
 
 	@Override
-	public <T> org.hibernate.type.spi.BasicType<T> getBasicType(Class<T> javaType) {
+	public <T> org.hibernate.type.mapper.spi.basic.BasicType<T> getBasicType(Class<T> javaType) {
 		return getBasicType( javaType, null );
 	}
 
 	@Override
-	public <T> org.hibernate.type.spi.BasicType<T> getBasicType(Class<T> javaType, TemporalType temporalType) {
+	public <T> org.hibernate.type.mapper.spi.basic.BasicType<T> getBasicType(Class<T> javaType, TemporalType temporalType) {
 		return getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
 				new BasicTypeParameters<T>() {
 					@Override

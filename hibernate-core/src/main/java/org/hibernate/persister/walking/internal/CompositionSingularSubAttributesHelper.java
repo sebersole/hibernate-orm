@@ -34,7 +34,7 @@ import org.hibernate.persister.walking.spi.WalkingException;
 import org.hibernate.type.AnyType;
 import org.hibernate.type.AssociationType;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * A helper for getting attributes from a composition that is known

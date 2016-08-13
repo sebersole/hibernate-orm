@@ -7,11 +7,12 @@
 package org.hibernate.persister.common.spi;
 
 import org.hibernate.sqm.domain.ManagedType;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractSingularAttribute<O extends org.hibernate.type.spi.Type>
+public abstract class AbstractSingularAttribute<O extends Type>
 		extends AbstractAttributeImpl
 		implements SingularAttributeImplementor {
 	private final O ormType;

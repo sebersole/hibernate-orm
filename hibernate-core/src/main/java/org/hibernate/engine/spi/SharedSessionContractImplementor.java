@@ -33,8 +33,8 @@ import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.resource.jdbc.spi.JdbcSessionOwner;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder.Options;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.spi.descriptor.WrapperOptions;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Defines the internal contract shared between {@link org.hibernate.Session} and

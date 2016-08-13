@@ -13,7 +13,7 @@ import org.hibernate.EntityMode;
 import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Constrains the property to a specified list of values

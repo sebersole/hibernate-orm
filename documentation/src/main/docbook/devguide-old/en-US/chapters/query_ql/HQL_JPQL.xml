@@ -163,8 +163,8 @@
                 compilation rather than allowing the check to relegate to the database.  This may cause problems
                 between Hibernate Types which are <emphasis>equivalent</emphasis> as opposed to
                 <emphasis>equal</emphasis>.  For example, this might cause lead to issues with mismatches between an
-                attribute mapped as a <classname>org.hibernate.type.DateType</classname> and an attribute defined as
-                a <classname>org.hibernate.type.TimestampType</classname>, even though the database might not make a
+                attribute mapped as a <classname>org.hibernate.type.mapper.spi.basic.DateType</classname> and an attribute defined as
+                a <classname>org.hibernate.type.mapper.spi.basic.TimestampType</classname>, even though the database might not make a
                 distinction or might be able to handle the conversion.
             </para>
             <para>

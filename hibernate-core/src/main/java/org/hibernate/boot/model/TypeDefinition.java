@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Models the information pertaining to a custom type definition supplied by the user.  Used

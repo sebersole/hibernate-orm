@@ -13,7 +13,7 @@ import java.util.Map;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.type.EntityType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * A many-to-one association mapping

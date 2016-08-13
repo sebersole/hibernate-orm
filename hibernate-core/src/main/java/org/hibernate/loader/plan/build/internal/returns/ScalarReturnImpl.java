@@ -7,7 +7,7 @@
 package org.hibernate.loader.plan.build.internal.returns;
 
 import org.hibernate.loader.plan.spi.ScalarReturn;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

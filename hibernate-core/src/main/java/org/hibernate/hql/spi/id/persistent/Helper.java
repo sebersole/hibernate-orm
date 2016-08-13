@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.AbstractSessionImpl;
-import org.hibernate.type.UUIDCharType;
+import org.hibernate.type.mapper.spi.basic.UUIDCharType;
 
 /**
  * @author Steve Ebersole

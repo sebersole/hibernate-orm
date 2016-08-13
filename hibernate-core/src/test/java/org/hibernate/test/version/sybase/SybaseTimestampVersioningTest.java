@@ -16,9 +16,9 @@ import org.hibernate.dialect.SybaseASE15Dialect;
 import org.hibernate.testing.RequiresDialect;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
-import org.hibernate.type.BinaryType;
 import org.hibernate.type.RowVersionType;
 import org.hibernate.type.VersionType;
+import org.hibernate.type.mapper.spi.basic.BinaryType;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;

@@ -18,10 +18,11 @@ import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
 import org.hibernate.sqm.domain.BasicType;
-import org.hibernate.type.spi.basic.BasicTypeRegistry;
-import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptorRegistry;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptorRegistry;
+import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptorRegistry;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptorRegistry;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.BasicTypeRegistry;
 
 import static org.hibernate.internal.CoreLogging.messageLogger;
 

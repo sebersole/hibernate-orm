@@ -11,7 +11,6 @@ import java.util.Iterator;
 import org.junit.Test;
 
 import org.hibernate.Hibernate;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
@@ -21,7 +20,7 @@ import org.hibernate.dialect.Oracle8iDialect;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.hibernate.type.AbstractSingleColumnStandardBasicType;
-import org.hibernate.type.TextType;
+import org.hibernate.type.mapper.spi.basic.TextType;
 import org.hibernate.type.descriptor.sql.ClobTypeDescriptor;
 
 import static org.junit.Assert.assertEquals;

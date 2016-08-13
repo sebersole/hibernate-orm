@@ -7,7 +7,7 @@
 package org.hibernate.persister.collection.spi;
 
 import org.hibernate.sqm.domain.PluralAttribute.ElementClassification;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

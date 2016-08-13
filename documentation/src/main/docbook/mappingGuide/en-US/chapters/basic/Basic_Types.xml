@@ -513,9 +513,9 @@
             We said before that a Hibernate type is not a Java type, nor a SQL type, but that it
             understands both and performs the marshalling between them.  But looking at the
             basic type mappings from the previous examples, how did Hibernate know to use
-            its <classname>org.hibernate.type.StringType</classname> for mapping for
+            its <classname>org.hibernate.type.mapper.spi.basic.StringType</classname> for mapping for
             <classname>java.lang.String</classname> attributes or its
-            <classname>org.hibernate.type.IntegerType</classname> for mapping
+            <classname>org.hibernate.type.mapper.spi.basic.IntegerType</classname> for mapping
             <classname>java.lang.Integer</classname> attributes?
         </para>
 

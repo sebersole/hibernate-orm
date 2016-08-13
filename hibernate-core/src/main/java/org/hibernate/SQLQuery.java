@@ -18,7 +18,7 @@ import javax.persistence.TemporalType;
 import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.QueryParameter;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Represents a "native sql" query.

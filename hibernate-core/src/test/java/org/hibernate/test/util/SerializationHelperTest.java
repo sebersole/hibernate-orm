@@ -15,13 +15,15 @@ import org.junit.Test;
 import org.hibernate.LockMode;
 import org.hibernate.bytecode.spi.ByteCodeHelper;
 import org.hibernate.internal.util.SerializationHelper;
+import org.hibernate.type.mapper.spi.basic.SerializableType;
+
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
 /**
- * This is basically a test to assert the expectations of {@link org.hibernate.type.SerializableType}
+ * This is basically a test to assert the expectations of {@link SerializableType}
  * in regards to deserializing bytes from second level caches.
  *
  * @author Steve Ebersole

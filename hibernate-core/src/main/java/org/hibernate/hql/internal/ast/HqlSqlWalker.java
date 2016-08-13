@@ -79,8 +79,8 @@ import org.hibernate.persister.entity.Queryable;
 import org.hibernate.sql.JoinType;
 import org.hibernate.type.AssociationType;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.DbTimestampType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.DbTimestampType;
+import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.VersionType;
 import org.hibernate.usertype.UserVersionType;
 

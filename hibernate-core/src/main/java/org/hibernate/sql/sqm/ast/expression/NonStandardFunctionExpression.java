@@ -10,8 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.sql.sqm.convert.spi.SqlTreeWalker;
-import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Represents a call to a function other than one of the standardized ones.

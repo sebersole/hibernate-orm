@@ -6,12 +6,7 @@
  */
 package org.hibernate.type;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
-import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.spi.basic.BasicTypeImpl;
+import org.hibernate.type.mapper.spi.basic.BasicTypeImpl;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
@@ -20,9 +15,7 @@ import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractSingleColumnStandardBasicType<T>
-		extends BasicTypeImpl<T,Object>
-		implements SingleColumnType<T> {
+public abstract class AbstractSingleColumnStandardBasicType<T> extends BasicTypeImpl<T,Object> {
 
 	public AbstractSingleColumnStandardBasicType(SqlTypeDescriptor sqlTypeDescriptor, JavaTypeDescriptor<T> javaTypeDescriptor) {
 		super(
@@ -40,13 +33,5 @@ public abstract class AbstractSingleColumnStandardBasicType<T>
 
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
 		return getColumnMapping().getSqlTypeDescriptor();
-	}
-
-	@Override
-	public final void nullSafeSet(PreparedStatement st, Object value, int index, boolean[] settable, SharedSessionContractImplementor session)
-			throws HibernateException, SQLException {
-		if ( settable[0] ) {
-			nullSafeSet( st, value, index, session );
-		}
 	}
 }

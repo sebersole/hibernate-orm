@@ -9,7 +9,7 @@ package org.hibernate.query.internal;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.ParameterMetadata;
 import org.hibernate.query.Query;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

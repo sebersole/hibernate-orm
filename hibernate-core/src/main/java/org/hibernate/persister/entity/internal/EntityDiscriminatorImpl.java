@@ -8,7 +8,7 @@ package org.hibernate.persister.entity.internal;
 
 import org.hibernate.persister.common.spi.Column;
 import org.hibernate.persister.entity.spi.EntityDiscriminator;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * Binding of the discriminator in a entity hierarchy

@@ -8,7 +8,7 @@ package org.hibernate.persister.entity.spi;
 
 import org.hibernate.persister.common.spi.Column;
 import org.hibernate.sqm.domain.IdentifierDescriptor;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

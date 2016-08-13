@@ -7,7 +7,7 @@
 package org.hibernate.hql.internal.ast.tree;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.param.ParameterSpecification;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Implementation of ParameterNode.

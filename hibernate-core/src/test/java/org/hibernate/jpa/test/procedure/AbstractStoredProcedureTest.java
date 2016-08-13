@@ -13,9 +13,9 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.jpa.test.BaseEntityManagerFunctionalTestCase;
 import org.hibernate.procedure.internal.ProcedureCallMementoImpl;
 import org.hibernate.procedure.spi.ParameterStrategy;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.LongType;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.IntegerType;
+import org.hibernate.type.mapper.spi.basic.LongType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 
 import org.junit.Test;
 

@@ -12,7 +12,7 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.persister.collection.QueryableCollection;
 import org.hibernate.persister.entity.PropertyMapping;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Models an explicit join terminating at a component value (e.g. <tt>... from Person p join p.name as n ...</tt>)

@@ -16,7 +16,7 @@ import org.hibernate.QueryException;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.persister.entity.Queryable;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import antlr.collections.AST;
 

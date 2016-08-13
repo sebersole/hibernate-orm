@@ -18,7 +18,7 @@ import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.param.NamedParameterSpecification;
 import org.hibernate.param.ParameterSpecification;
 import org.hibernate.param.PositionalParameterSpecification;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Defines the information available for parameters encountered during
