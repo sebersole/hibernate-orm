@@ -217,8 +217,8 @@
         The <replaceable>select_statement</replaceable> can be any valid HQL select query, but the return types must
         match the types expected by the INSERT. Hibernate verifies the return types during query compilation, instead of
         expecting the database to check it. Problems might result from Hibernate types which are equivalent, rather than
-        equal. One such example is a mismatch between a property defined as an <type>org.hibernate.type.DateType</type>
-        and a property defined as an <type>org.hibernate.type.TimestampType</type>, even though the database may not
+        equal. One such example is a mismatch between a property defined as an <type>org.hibernate.type.mapper.spi.basic.DateType</type>
+        and a property defined as an <type>org.hibernate.type.mapper.spi.basic.TimestampType</type>, even though the database may not
         make a distinction, or may be capable of handling the conversion.
       </para>
       <para>

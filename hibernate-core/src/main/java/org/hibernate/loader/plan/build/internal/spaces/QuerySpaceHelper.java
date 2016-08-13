@@ -22,7 +22,7 @@ import org.hibernate.persister.walking.spi.AttributeDefinition;
 import org.hibernate.persister.walking.spi.WalkingException;
 import org.hibernate.type.spi.CollectionType;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.EntityType;
+import org.hibernate.type.mapper.spi.entity.EntityType;
 
 /**
  * @author Gail Badner

@@ -15,7 +15,7 @@ import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.envers.query.internal.property.PropertyNameGetter;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.type.ComponentType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Adam Warski (adam at warski dot org)

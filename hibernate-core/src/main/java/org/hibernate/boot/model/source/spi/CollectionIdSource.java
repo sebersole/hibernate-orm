@@ -8,7 +8,7 @@ package org.hibernate.boot.model.source.spi;
 
 import java.util.Map;
 
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

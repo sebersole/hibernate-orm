@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.jpa.HibernateEntityManager;
 import org.hibernate.query.Query;
 import org.hibernate.query.criteria.internal.ValueHandlerFactory;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Additional internal contracts for the Hibernate {@link javax.persistence.EntityManager} implementation.

@@ -7,7 +7,7 @@
 package org.hibernate.persister.entity.spi;
 
 import org.hibernate.persister.common.spi.Column;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * Binding of the discriminator in a entity hierarchy

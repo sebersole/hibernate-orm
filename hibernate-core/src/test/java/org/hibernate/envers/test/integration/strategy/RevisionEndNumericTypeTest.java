@@ -16,7 +16,7 @@ import org.hibernate.envers.test.entities.StrTestEntity;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.testing.TestForIssue;
-import org.hibernate.type.LongType;
+import org.hibernate.type.mapper.spi.basic.LongType;
 import org.junit.Test;
 
 import static org.hibernate.testing.junit4.ExtraAssertions.assertTyping;

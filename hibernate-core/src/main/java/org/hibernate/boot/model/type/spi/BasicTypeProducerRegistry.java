@@ -7,7 +7,7 @@
 package org.hibernate.boot.model.type.spi;
 
 import org.hibernate.boot.model.TypeDefinition;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * Defines a registry for BasicType "producers" based on registration keys

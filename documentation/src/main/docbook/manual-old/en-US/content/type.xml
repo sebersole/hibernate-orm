@@ -58,7 +58,7 @@
                 <title>java.lang.String</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.StringType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.StringType</classname></term>
                         <listitem>
                             <para>
                                 Maps a string to the JDBC VARCHAR type.  This is the standard mapping for a string if 
@@ -83,7 +83,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.TextType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.TextType</classname></term>
                         <listitem>
                             <para>
                                 Maps a string to a JDBC LONGVARCHAR type
@@ -100,7 +100,7 @@
                 <title><classname>java.lang.Character</classname> (or char primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CharacterType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CharacterType</classname></term>
                         <listitem>
                             <para>
                                 Maps a char or <classname>java.lang.Character</classname> to a JDBC CHAR
@@ -117,7 +117,7 @@
                 <title><classname>java.lang.Boolean</classname> (or boolean primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BooleanType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BooleanType</classname></term>
                         <listitem>
                             <para>
                                 Maps a boolean to a JDBC BIT type
@@ -129,7 +129,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.NumericBooleanType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.NumericBooleanType</classname></term>
                         <listitem>
                             <para>
                                 Maps a boolean to a JDBC INTEGER type as 0 = false, 1 = true
@@ -141,7 +141,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.YesNoType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.YesNoType</classname></term>
                         <listitem>
                             <para>
                                 Maps a boolean to a JDBC CHAR type as ('N' | 'n') = false, ( 'Y' | 'y' ) = true
@@ -153,7 +153,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.TrueFalseType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.TrueFalseType</classname></term>
                         <listitem>
                             <para>
                                 Maps a boolean to a JDBC CHAR type as ('F' | 'f') = false, ( 'T' | 't' ) = true
@@ -170,7 +170,7 @@
                 <title><classname>java.lang.Byte</classname> (or byte primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.ByteType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.ByteType</classname></term>
                         <listitem>
                             <para>
                                 Maps a byte or <classname>java.lang.Byte</classname> to a JDBC TINYINT
@@ -187,7 +187,7 @@
                 <title><classname>java.lang.Short</classname> (or short primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.ShortType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.ShortType</classname></term>
                         <listitem>
                             <para>
                                 Maps a short or <classname>java.lang.Short</classname> to a JDBC SMALLINT
@@ -221,7 +221,7 @@
                 <title><classname>java.lang.Long</classname> (or long primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.LongType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.LongType</classname></term>
                         <listitem>
                             <para>
                                 Maps a long or <classname>java.lang.Long</classname> to a JDBC BIGINT
@@ -238,7 +238,7 @@
                 <title><classname>java.lang.Float</classname> (or float primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.FloatType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.FloatType</classname></term>
                         <listitem>
                             <para>
                                 Maps a float or <classname>java.lang.Float</classname> to a JDBC FLOAT
@@ -255,7 +255,7 @@
                 <title><classname>java.lang.Double</classname> (or double primitive)</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.DoubleType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.DoubleType</classname></term>
                         <listitem>
                             <para>
                                 Maps a double or <classname>java.lang.Double</classname> to a JDBC DOUBLE
@@ -272,7 +272,7 @@
                 <title><classname>java.math.BigInteger</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BigIntegerType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BigIntegerType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.math.BigInteger</classname> to a JDBC NUMERIC
@@ -289,7 +289,7 @@
                 <title><classname>java.math.BigDecimal</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BigDecimalType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BigDecimalType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.math.BigDecimal</classname> to a JDBC NUMERIC
@@ -306,7 +306,7 @@
                 <title><classname>java.util.Date</classname> or <classname>java.sql.Timestamp</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.TimestampType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.TimestampType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.sql.Timestamp</classname> to a JDBC TIMESTAMP
@@ -323,7 +323,7 @@
                 <title><classname>java.sql.Time</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.TimeType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.TimeType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.sql.Time</classname> to a JDBC TIME
@@ -340,7 +340,7 @@
                 <title><classname>java.sql.Date</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.DateType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.DateType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.sql.Date</classname> to a JDBC DATE
@@ -357,7 +357,7 @@
                 <title><classname>java.util.Calendar</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CalendarType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CalendarType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.util.Calendar</classname> to a JDBC TIMESTAMP
@@ -370,7 +370,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CalendarDateType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CalendarDateType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.util.Calendar</classname> to a JDBC DATE
@@ -387,7 +387,7 @@
                 <title><classname>java.util.Currency</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CurrencyType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CurrencyType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.util.Currency</classname> to a JDBC VARCHAR (using the Currency code)
@@ -404,7 +404,7 @@
                 <title><classname>java.util.Locale</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.LocaleType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.LocaleType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.util.Locale</classname> to a JDBC VARCHAR (using the Locale code)
@@ -421,7 +421,7 @@
                 <title><classname>java.util.TimeZone</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.TimeZoneType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.TimeZoneType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.util.TimeZone</classname> to a JDBC VARCHAR (using the TimeZone ID)
@@ -438,7 +438,7 @@
                 <title><classname>java.net.URL</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.UrlType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.UrlType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.net.URL</classname> to a JDBC VARCHAR (using the external form)
@@ -455,7 +455,7 @@
                 <title><classname>java.lang.Class</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.ClassType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.ClassType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.lang.Class</classname> to a JDBC VARCHAR (using the Class name)
@@ -472,7 +472,7 @@
                 <title><classname>java.sql.Blob</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BlobType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BlobType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.sql.Blob</classname> to a JDBC BLOB
@@ -489,7 +489,7 @@
                 <title><classname>java.sql.Clob</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.ClobType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.ClobType</classname></term>
                         <listitem>
                             <para>
                                 Maps a <classname>java.sql.Clob</classname> to a JDBC CLOB
@@ -506,7 +506,7 @@
                 <title>byte[]</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BinaryType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BinaryType</classname></term>
                         <listitem>
                             <para>
                                 Maps a primitive byte[] to a JDBC VARBINARY
@@ -518,7 +518,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.MaterializedBlobType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.MaterializedBlobType</classname></term>
                         <listitem>
                             <para>
                                 Maps a primitive byte[] to a JDBC BLOB
@@ -530,7 +530,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.ImageType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.ImageType</classname></term>
                         <listitem>
                             <para>
                                 Maps a primitive byte[] to a JDBC LONGVARBINARY
@@ -547,7 +547,7 @@
                 <title>Byte[]</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.BinaryType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.BinaryType</classname></term>
                         <listitem>
                             <para>
                                 Maps a java.lang.Byte[] to a JDBC VARBINARY
@@ -564,7 +564,7 @@
                 <title>char[]</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CharArrayType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CharArrayType</classname></term>
                         <listitem>
                             <para>
                                 Maps a char[] to a JDBC VARCHAR
@@ -581,7 +581,7 @@
                 <title>Character[]</title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.CharacterArrayType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.CharacterArrayType</classname></term>
                         <listitem>
                             <para>
                                 Maps a java.lang.Character[] to a JDBC VARCHAR
@@ -598,7 +598,7 @@
                 <title><classname>java.util.UUID</classname></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.UUIDBinaryType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.UUIDBinaryType</classname></term>
                         <listitem>
                             <para>
                                 Maps a java.util.UUID to a JDBC BINARY
@@ -610,7 +610,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.UUIDCharType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.UUIDCharType</classname></term>
                         <listitem>
                             <para>
                                 Maps a java.util.UUID to a JDBC CHAR (though VARCHAR is fine too for existing schemas)
@@ -622,7 +622,7 @@
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.PostgresUUIDType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.PostgresUUIDType</classname></term>
                         <listitem>
                             <para>
                                 Maps a java.util.UUID to the PostgreSQL UUID data type (through
@@ -640,7 +640,7 @@
                 <title><interfacename>java.io.Serializable</interfacename></title>
                 <variablelist>
                     <varlistentry>
-                        <term><classname>org.hibernate.type.SerializableType</classname></term>
+                        <term><classname>org.hibernate.type.mapper.spi.basic.SerializableType</classname></term>
                         <listitem>
                             <para>
                                 Maps implementors of java.lang.Serializable to a JDBC VARBINARY
@@ -1021,7 +1021,7 @@ cfg.registerTypeOverride( new SuperDuperStringType() );]]></programlisting>
         </example>
         <para>
             One approach is to use inheritance (<classname>SuperDuperStringType</classname> extends 
-            <classname>org.hibernate.type.StringType</classname>); another is to use delegation.
+            <classname>org.hibernate.type.mapper.spi.basic.StringType</classname>); another is to use delegation.
         </para>
     </section>
 

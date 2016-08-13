@@ -11,7 +11,7 @@ import org.hibernate.persister.common.spi.SingularAttributeImplementor;
 import org.hibernate.sqm.domain.IdentifierDescriptorSingleAttribute;
 import org.hibernate.sqm.domain.ManagedType;
 import org.hibernate.sqm.domain.SingularAttribute;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * @author Steve Ebersole

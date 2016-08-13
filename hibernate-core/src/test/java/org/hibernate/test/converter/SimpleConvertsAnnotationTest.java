@@ -17,13 +17,14 @@ import javax.persistence.Id;
 
 import org.hibernate.Session;
 import org.hibernate.persister.entity.spi.EntityPersister;
-import org.hibernate.type.spi.Type;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.junit.Test;
 
 import static org.hibernate.testing.junit4.ExtraAssertions.assertTyping;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -40,13 +41,11 @@ public class SimpleConvertsAnnotationTest extends BaseNonConfigCoreFunctionalTes
 
 	@Test
 	public void testSimpleConvertsUsage() throws MalformedURLException {
-		final EntityPersister ep = sessionFactory().getEntityPersister( Entity1.class.getName() );
+		final EntityPersister ep = sessionFactory().getMetamodel().entityPersister( Entity1.class.getName() );
 		final Type websitePropertyType = ep.getPropertyType( "website" );
-		final AttributeConverterTypeAdapter type = assertTyping(
-				AttributeConverterTypeAdapter.class,
-				websitePropertyType
-		);
-		assertTyping( UrlConverter.class, type.getAttributeConverter() );
+		final BasicType type = assertTyping( BasicType.class, websitePropertyType );
+		assertNotNull( type.getAttributeConverterDefinition() );
+		assertTyping( UrlConverter.class, type.getAttributeConverterDefinition().getAttributeConverter() );
 
 		resetFlags();
 

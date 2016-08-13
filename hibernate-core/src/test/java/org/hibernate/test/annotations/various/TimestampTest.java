@@ -12,8 +12,8 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.type.DbTimestampType;
-import org.hibernate.type.TimestampType;
+import org.hibernate.type.mapper.spi.basic.DbTimestampType;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
 
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;

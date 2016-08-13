@@ -9,7 +9,7 @@ package org.hibernate.boot.spi;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.annotations.common.reflection.XProperty;
-import org.hibernate.type.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
 
 /**
  * Internal descriptor for an AttributeConverter implementation.
@@ -17,17 +17,9 @@ import org.hibernate.type.spi.basic.AttributeConverterDefinition;
  * @author Steve Ebersole
  */
 public interface AttributeConverterDescriptor extends AttributeConverterDefinition {
-	@Override
-	AttributeConverter getAttributeConverter();
-
-	@Override
-	Class<?> getDomainType();
-
-	@Override
-	Class<?> getJdbcType();
+	public static final String EXPLICIT_TYPE_NAME_PREFIX = "converted::";
 
 	boolean shouldAutoApplyToAttribute(XProperty xProperty, MetadataBuildingContext context);
 	boolean shouldAutoApplyToCollectionElement(XProperty xProperty, MetadataBuildingContext context);
 	boolean shouldAutoApplyToMapKey(XProperty xProperty, MetadataBuildingContext context);
-
 }

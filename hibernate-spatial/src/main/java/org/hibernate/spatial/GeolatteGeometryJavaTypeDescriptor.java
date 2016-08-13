@@ -7,12 +7,17 @@
 
 package org.hibernate.spatial;
 
+import javax.persistence.metamodel.Type;
+
 import org.geolatte.geom.Geometry;
 import org.geolatte.geom.codec.Wkt;
 import org.geolatte.geom.jts.JTS;
 
+import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.spi.descriptor.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.spi.descriptor.WrapperOptions;
-import org.hibernate.type.descriptor.java.AbstractTypeDescriptor;
+import org.hibernate.type.spi.descriptor.java.AbstractTypeDescriptor;
+import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * Descriptor for geolatte-geom {@code Geometry}s.
@@ -32,6 +37,23 @@ public class GeolatteGeometryJavaTypeDescriptor extends AbstractTypeDescriptor<G
 	 */
 	public GeolatteGeometryJavaTypeDescriptor() {
 		super( Geometry.class );
+	}
+
+	@Override
+	public PersistenceType getPersistenceType() {
+		return PersistenceType.BASIC;
+	}
+
+	@Override
+	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
+		// we dont know
+		return null;
+	}
+
+	@Override
+	public JdbcLiteralFormatter<Geometry> getJdbcLiteralFormatter() {
+		// JDBC/SQL literal support?
+		return null;
 	}
 
 	@Override

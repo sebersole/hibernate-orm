@@ -13,7 +13,9 @@ import org.hibernate.dialect.function.StandardSQLFunction;
 import org.hibernate.service.ServiceRegistry;
 
 
+import org.hibernate.spatial.GeolatteGeometryJavaTypeDescriptor;
 import org.hibernate.spatial.GeolatteGeometryType;
+import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.hibernate.spatial.JTSGeometryType;
 import org.hibernate.spatial.SpatialDialect;
 import org.hibernate.spatial.SpatialFunction;
@@ -80,8 +82,22 @@ public class GeoDBDialect extends H2Dialect implements SpatialDialect {
 	public void contributeTypes(TypeContributions typeContributions, ServiceRegistry serviceRegistry) {
 		super.contributeTypes( typeContributions, serviceRegistry );
 
-		typeContributions.contributeType( new GeolatteGeometryType( GeoDBGeometryTypeDescriptor.INSTANCE, typeContributions.getTypeDescriptorRegistryAccess() ) );
-		typeContributions.contributeType( new JTSGeometryType( GeoDBGeometryTypeDescriptor.INSTANCE, typeContributions.getTypeDescriptorRegistryAccess() ) );
+		// todo : we may not want to register the GeoDBGeometryTypeDescriptor SqlTypeDescriptor
+		//		it maps to the Types#ARRAY type-code, but this is highly specific ARRAY handling
+		//		do we need general ARRAY support?  Vlad and I were just discussing this very thing.
+
+		typeContributions.contributeSqlTypeDescriptor( GeoDBGeometryTypeDescriptor.INSTANCE );
+		typeContributions.contributeJavaTypeDescriptor( GeolatteGeometryJavaTypeDescriptor.INSTANCE );
+		typeContributions.contributeJavaTypeDescriptor( JTSGeometryJavaTypeDescriptor.INSTANCE );
+
+		typeContributions.contributeType(
+				new GeolatteGeometryType( GeoDBGeometryTypeDescriptor.INSTANCE, typeContributions.getTypeDescriptorRegistryAccess() ),
+				GeolatteGeometryType.getRegistrationKeys()
+		);
+		typeContributions.contributeType(
+				new JTSGeometryType( GeoDBGeometryTypeDescriptor.INSTANCE, typeContributions.getTypeDescriptorRegistryAccess() ),
+				JTSGeometryType.getRegistrationKeys()
+		);
 	}
 
 	@Override

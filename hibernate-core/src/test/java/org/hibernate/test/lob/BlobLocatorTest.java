@@ -13,6 +13,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.LockOptions;
 import org.hibernate.Session;
 import org.hibernate.dialect.TeradataDialect;
+import org.hibernate.type.mapper.spi.basic.BlobType;
 
 import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.RequiresDialectFeature;
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests lazy materialization of data mapped by
- * {@link org.hibernate.type.BlobType}, as well as bounded and unbounded
+ * {@link BlobType}, as well as bounded and unbounded
  * materialization and mutation.
  *
  * @author Steve Ebersole

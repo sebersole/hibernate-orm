@@ -24,7 +24,7 @@ import org.hibernate.type.AssociationType;
 import org.hibernate.type.CollectionType;
 import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.EntityType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import antlr.ASTFactory;
 import antlr.SemanticException;

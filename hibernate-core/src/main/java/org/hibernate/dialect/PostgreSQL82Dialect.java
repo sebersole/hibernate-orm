@@ -12,7 +12,7 @@ import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.hql.spi.id.local.AfterUseAction;
 import org.hibernate.hql.spi.id.local.LocalTemporaryTableBulkIdStrategy;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.PostgresUUIDType;
+import org.hibernate.type.mapper.spi.basic.PostgresUUIDType;
 
 /**
  * An SQL dialect for Postgres 8.2 and later, adds support for "if exists" when dropping tables

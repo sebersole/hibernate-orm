@@ -49,7 +49,7 @@ public class EmbeddablePersister implements EmbeddableType {
 
 		for ( int i = 0; i < ormType.getPropertyNames().length; i++ ) {
 			final String propertyName = ormType.getPropertyNames()[i];
-			final org.hibernate.type.spi.Type propertyType = ormType.getSubtypes()[i];
+			final org.hibernate.type.mapper.spi.Type propertyType = ormType.getSubtypes()[i];
 
 			final int columnSpan = propertyType.getColumnSpan();
 			final Column[] columns = new Column[columnSpan];

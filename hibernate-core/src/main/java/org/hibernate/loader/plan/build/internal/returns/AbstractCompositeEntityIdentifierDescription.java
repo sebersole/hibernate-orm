@@ -12,7 +12,7 @@ import org.hibernate.loader.plan.build.spi.ExpandingEntityIdentifierDescription;
 import org.hibernate.loader.plan.spi.EntityReference;
 import org.hibernate.loader.plan.spi.FetchSource;
 import org.hibernate.type.spi.CompositeType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

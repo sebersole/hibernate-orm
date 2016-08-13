@@ -13,6 +13,7 @@ import org.hibernate.Session;
 import org.hibernate.dialect.SybaseASE157Dialect;
 import org.hibernate.dialect.TeradataDialect;
 import org.hibernate.type.descriptor.java.DataHelper;
+import org.hibernate.type.mapper.spi.basic.ClobType;
 
 import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.RequiresDialectFeature;
@@ -25,7 +26,7 @@ import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests lazy materialization of data mapped by
- * {@link org.hibernate.type.ClobType} as well as bounded and unbounded
+ * {@link ClobType} as well as bounded and unbounded
  * materialization and mutation.
  *
  * @author Steve Ebersole

@@ -40,7 +40,7 @@ import org.hibernate.type.AssociationType;
 import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.EntityType;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Walks the metamodel, searching for joins, and collecting

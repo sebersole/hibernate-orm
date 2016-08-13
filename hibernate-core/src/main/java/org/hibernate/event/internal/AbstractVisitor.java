@@ -13,7 +13,7 @@ import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.type.CollectionType;
 import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.EntityType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Abstract superclass of algorithms that walk

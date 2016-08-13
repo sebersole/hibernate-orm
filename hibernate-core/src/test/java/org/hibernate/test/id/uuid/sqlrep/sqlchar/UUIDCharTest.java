@@ -7,7 +7,7 @@
 package org.hibernate.test.id.uuid.sqlrep.sqlchar;
 
 import org.hibernate.cfg.Configuration;
-import org.hibernate.type.UUIDCharType;
+import org.hibernate.type.mapper.spi.basic.UUIDCharType;
 
 import org.hibernate.test.id.uuid.sqlrep.sqlbinary.UUIDBinaryTest;
 

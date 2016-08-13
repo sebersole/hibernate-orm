@@ -6,7 +6,7 @@
  */
 package org.hibernate.boot.model.type.spi;
 
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

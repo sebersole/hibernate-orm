@@ -8,7 +8,7 @@ package org.hibernate.engine.spi;
 
 import org.hibernate.MappingException;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Defines operations common to "compiled" mappings (ie. <tt>SessionFactory</tt>)

@@ -10,10 +10,10 @@ import java.util.Comparator;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.type.spi.BasicTypeSiteContext;
-import org.hibernate.type.spi.basic.AttributeConverterDefinition;
-import org.hibernate.type.spi.basic.BasicTypeParameters;
+import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**

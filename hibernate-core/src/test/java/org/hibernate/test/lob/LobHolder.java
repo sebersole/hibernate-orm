@@ -8,16 +8,19 @@ package org.hibernate.test.lob;
 import java.sql.Blob;
 import java.sql.Clob;
 
+import org.hibernate.type.mapper.spi.basic.BlobType;
+import org.hibernate.type.mapper.spi.basic.ClobType;
+
 /**
  * An entity containing all kinds of good LOB-type data...
  * <p/>
  * {@link #clobLocator} is used to hold CLOB data that is materialized lazily
  * via a JDBC CLOB locator; it is mapped via the
- * {@link org.hibernate.type.ClobType}
+ * {@link ClobType}
  * <p/>
  * {@link #blobLocator} is used to hold BLOB data that is materialized lazily
  * via a JDBC BLOB locator; it is mapped via the
- * {@link org.hibernate.type.BlobType}
+ * {@link BlobType}
  * 
  *
  * @author Steve Ebersole

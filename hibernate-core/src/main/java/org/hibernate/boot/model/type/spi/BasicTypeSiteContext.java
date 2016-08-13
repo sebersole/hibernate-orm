@@ -8,7 +8,7 @@ package org.hibernate.boot.model.type.spi;
 
 import java.util.Map;
 
-import org.hibernate.type.spi.basic.BasicTypeParameters;
+import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
 import org.hibernate.type.spi.descriptor.JdbcRecommendedSqlTypeMappingContext;
 
 /**

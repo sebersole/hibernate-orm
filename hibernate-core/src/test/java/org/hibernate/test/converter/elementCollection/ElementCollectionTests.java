@@ -29,7 +29,7 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.IndexedCollection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
@@ -62,12 +62,12 @@ public class ElementCollectionTests extends BaseNonConfigCoreFunctionalTestCase 
 
 		Property setAttributeBinding = entityBinding.getProperty( "set" );
 		Collection setBinding = (Collection) setAttributeBinding.getValue();
-		assertTyping( AttributeConverterTypeAdapter.class, setBinding.getElement().getType() );
+		assertTyping( BasicType.class, setBinding.getElement().getType() );
 
 		Property mapAttributeBinding = entityBinding.getProperty( "map" );
 		IndexedCollection mapBinding = (IndexedCollection) mapAttributeBinding.getValue();
-		assertTyping( AttributeConverterTypeAdapter.class, mapBinding.getIndex().getType() );
-		assertTyping( AttributeConverterTypeAdapter.class, mapBinding.getElement().getType() );
+		assertTyping( BasicType.class, mapBinding.getIndex().getType() );
+		assertTyping( BasicType.class, mapBinding.getElement().getType() );
 
 		// now lets try to use the model, integration-testing-style!
 		TheEntity entity = new TheEntity(1);

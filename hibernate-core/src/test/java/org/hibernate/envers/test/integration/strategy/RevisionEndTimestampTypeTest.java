@@ -16,7 +16,7 @@ import org.hibernate.envers.test.entities.StrTestEntity;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.testing.TestForIssue;
-import org.hibernate.type.TimestampType;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
 import org.junit.Test;
 
 import static org.hibernate.testing.junit4.ExtraAssertions.assertTyping;

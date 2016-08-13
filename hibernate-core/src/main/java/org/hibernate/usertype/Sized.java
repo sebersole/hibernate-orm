@@ -7,7 +7,7 @@
 package org.hibernate.usertype;
 
 import org.hibernate.engine.jdbc.Size;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Extends dictated/default column size declarations from {@link Type} to the {@link UserType}

@@ -16,8 +16,8 @@ import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.id.enhanced.SequenceStyleGenerator;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.MaterializedBlobType;
-import org.hibernate.type.WrappedMaterializedBlobType;
+import org.hibernate.type.mapper.spi.basic.MaterializedBlobType;
+import org.hibernate.type.mapper.spi.basic.WrappedMaterializedBlobType;
 
 /**
  * An SQL dialect for Oracle 12c.

@@ -8,7 +8,7 @@ package org.hibernate.persister.walking.spi;
 
 import org.hibernate.type.AnyDiscriminatorMappingType;
 import org.hibernate.type.AnyType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Describes an ANY mapping

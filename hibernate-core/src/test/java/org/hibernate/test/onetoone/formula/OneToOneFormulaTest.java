@@ -18,7 +18,7 @@ import org.hibernate.criterion.Property;
 import org.hibernate.dialect.Oracle8iDialect;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.hibernate.type.AbstractSingleColumnStandardBasicType;
-import org.hibernate.type.TextType;
+import org.hibernate.type.mapper.spi.basic.TextType;
 import org.hibernate.type.descriptor.sql.ClobTypeDescriptor;
 
 import static org.junit.Assert.assertEquals;

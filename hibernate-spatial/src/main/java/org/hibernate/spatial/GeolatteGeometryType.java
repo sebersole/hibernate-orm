@@ -7,6 +7,10 @@
 
 package org.hibernate.spatial;
 
+import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.mapper.spi.basic.BasicTypeImpl;
+import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
+
 import org.geolatte.geom.Geometry;
 import org.geolatte.geom.GeometryCollection;
 import org.geolatte.geom.LineString;
@@ -16,18 +20,13 @@ import org.geolatte.geom.MultiPolygon;
 import org.geolatte.geom.Point;
 import org.geolatte.geom.Polygon;
 
-import org.hibernate.spatial.dialect.h2geodb.GeoDBGeometryTypeDescriptor;
-import org.hibernate.type.AbstractSingleColumnStandardBasicType;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
-
 /**
  * a {@code Type} that maps between the database geometry type and geolatte-geom {@code Geometry}.
  *
  * @author Karel Maesen, Geovise BVBA
  *         creation-date: 10/12/12
  */
-public class GeolatteGeometryType extends AbstractSingleColumnStandardBasicType<Geometry> implements Spatial {
+public class GeolatteGeometryType extends BasicTypeImpl<Geometry> implements Spatial {
 
 	/**
 	 * Constructs an instance with the specified {@code SqlTypeDescriptor}
@@ -38,14 +37,10 @@ public class GeolatteGeometryType extends AbstractSingleColumnStandardBasicType<
 	public GeolatteGeometryType(
 			SqlTypeDescriptor sqlTypeDescriptor,
 			TypeDescriptorRegistryAccess typeDescriptorRegistryAccess) {
-		super( sqlTypeDescriptor, GeolatteGeometryJavaTypeDescriptor.INSTANCE );
-
-		typeDescriptorRegistryAccess.getSqlTypeDescriptorRegistry().addDescriptor( sqlTypeDescriptor );
-		typeDescriptorRegistryAccess.getJavaTypeDescriptorRegistry().addDescriptor( GeolatteGeometryJavaTypeDescriptor.INSTANCE );
+		super( GeolatteGeometryJavaTypeDescriptor.INSTANCE, sqlTypeDescriptor );
 	}
 
-	@Override
-	public String[] getRegistrationKeys() {
+	public static String[] getRegistrationKeys() {
 		return new String[] {
 				Geometry.class.getCanonicalName(),
 				Point.class.getCanonicalName(),

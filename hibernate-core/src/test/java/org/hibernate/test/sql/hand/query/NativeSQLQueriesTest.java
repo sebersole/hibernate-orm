@@ -18,7 +18,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.Hibernate;
-import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.QueryException;
 import org.hibernate.SQLQuery;
@@ -34,10 +33,10 @@ import org.hibernate.engine.spi.NamedSQLQueryDefinitionBuilder;
 import org.hibernate.transform.BasicTransformerAdapter;
 import org.hibernate.transform.DistinctRootEntityResultTransformer;
 import org.hibernate.transform.Transformers;
-import org.hibernate.type.FloatType;
-import org.hibernate.type.LongType;
-import org.hibernate.type.StringType;
-import org.hibernate.type.TimestampType;
+import org.hibernate.type.mapper.spi.basic.FloatType;
+import org.hibernate.type.mapper.spi.basic.LongType;
+import org.hibernate.type.mapper.spi.basic.StringType;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
 
 import org.hibernate.testing.FailureExpected;
 import org.hibernate.testing.RequiresDialect;

@@ -43,9 +43,9 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
-import org.hibernate.type.BlobType;
-import org.hibernate.type.ClobType;
-import org.hibernate.type.NClobType;
+import org.hibernate.type.mapper.spi.basic.BlobType;
+import org.hibernate.type.mapper.spi.basic.ClobType;
+import org.hibernate.type.mapper.spi.basic.NClobType;
 
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;

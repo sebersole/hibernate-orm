@@ -20,10 +20,10 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.type.CharacterNCharType;
-import org.hibernate.type.MaterializedNClobType;
-import org.hibernate.type.NClobType;
-import org.hibernate.type.NTextType;
-import org.hibernate.type.StringNVarcharType;
+import org.hibernate.type.mapper.spi.basic.MaterializedNClobType;
+import org.hibernate.type.mapper.spi.basic.NClobType;
+import org.hibernate.type.mapper.spi.basic.NTextType;
+import org.hibernate.type.mapper.spi.basic.StringNVarcharType;
 
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.junit.Test;

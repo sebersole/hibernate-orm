@@ -21,12 +21,12 @@ import org.hibernate.procedure.ParameterBind;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
 import org.hibernate.procedure.spi.ParameterStrategy;
-import org.hibernate.type.CalendarDateType;
-import org.hibernate.type.CalendarTimeType;
-import org.hibernate.type.CalendarType;
+import org.hibernate.type.mapper.spi.basic.CalendarDateType;
+import org.hibernate.type.mapper.spi.basic.CalendarTimeType;
+import org.hibernate.type.mapper.spi.basic.CalendarType;
 import org.hibernate.type.ProcedureParameterExtractionAware;
 import org.hibernate.type.ProcedureParameterNamedBinder;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.jboss.logging.Logger;
 

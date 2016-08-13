@@ -6,7 +6,7 @@
  */
 package org.hibernate.loader.plan.spi;
 
-import org.hibernate.type.spi.EntityType;
+import org.hibernate.type.mapper.spi.entity.EntityType;
 
 /**
  * Models the requested fetching of an entity attribute.

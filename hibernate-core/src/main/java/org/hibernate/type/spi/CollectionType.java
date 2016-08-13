@@ -6,6 +6,8 @@
  */
 package org.hibernate.type.spi;
 
+import org.hibernate.type.mapper.spi.Type;
+
 /**
  * @author Steve Ebersole
  */

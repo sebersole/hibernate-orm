@@ -6,7 +6,7 @@
  */
 package org.hibernate.hql.internal.ast.tree;
 
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Represents a reference to one of the "collection properties".

@@ -7,7 +7,7 @@
 package org.hibernate.persister.common.spi;
 
 import org.hibernate.persister.collection.spi.PluralAttributeIndex;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * @author Steve Ebersole

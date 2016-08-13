@@ -8,8 +8,8 @@ package org.hibernate.test.annotations.lob;
 
 import org.hibernate.Session;
 import org.hibernate.mapping.PersistentClass;
-import org.hibernate.type.SerializableToBlobType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.SerializableToBlobType;
+import org.hibernate.type.mapper.spi.Type;
 
 import org.hibernate.testing.DialectChecks;
 import org.hibernate.testing.RequiresDialectFeature;

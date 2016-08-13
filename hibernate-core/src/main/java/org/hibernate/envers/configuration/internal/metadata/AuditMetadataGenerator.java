@@ -43,11 +43,11 @@ import org.hibernate.tuple.GenerationTiming;
 import org.hibernate.tuple.ValueGeneration;
 import org.hibernate.type.CollectionType;
 import org.hibernate.type.ComponentType;
-import org.hibernate.type.LongType;
+import org.hibernate.type.mapper.spi.basic.LongType;
 import org.hibernate.type.ManyToOneType;
 import org.hibernate.type.OneToOneType;
-import org.hibernate.type.TimestampType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
+import org.hibernate.type.mapper.spi.Type;
 import org.jboss.logging.Logger;
 
 /**

@@ -23,7 +23,8 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.MetadataSourceType;
 import org.hibernate.dialect.function.SQLFunction;
-import org.hibernate.type.spi.basic.RegistryKey;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.basic.RegistryKey;
 
 import org.jboss.jandex.IndexView;
 
@@ -304,7 +305,7 @@ public interface MetadataBuilder {
 	 *
 	 * @return {@code this}, for method chaining
 	 */
-	MetadataBuilder applyBasicType(org.hibernate.type.spi.BasicType type);
+	MetadataBuilder applyBasicType(BasicType type);
 
 	/**
 	 * Specify an additional or overridden basic type mapping.
@@ -313,7 +314,7 @@ public interface MetadataBuilder {
 	 *
 	 * @return {@code this}, for method chaining
 	 */
-	MetadataBuilder applyBasicType(org.hibernate.type.spi.BasicType type, RegistryKey registryKey);
+	MetadataBuilder applyBasicType(BasicType type, RegistryKey registryKey);
 
 	/**
 	 * Apply an explicit TypeContributor (implicit application via ServiceLoader will still happen too)

@@ -7,6 +7,7 @@
 package org.hibernate.type.spi;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * A formatter object for creating JDBC literals of a given type.

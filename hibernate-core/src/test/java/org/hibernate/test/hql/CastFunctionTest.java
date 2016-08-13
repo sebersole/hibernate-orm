@@ -73,7 +73,7 @@ public class CastFunctionTest extends BaseCoreFunctionalTestCase {
 		// using the java class name
 		s.createQuery( "select cast(e.theLostNumber as java.lang.Integer) from MyEntity e" ).list();
 		// using the fqn Hibernate Type name
-		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.IntegerType) from MyEntity e" ).list();
+		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.mapper.spi.basic.IntegerType) from MyEntity e" ).list();
 
 		s.getTransaction().commit();
 		s.close();
@@ -89,7 +89,7 @@ public class CastFunctionTest extends BaseCoreFunctionalTestCase {
 		// using the java class name
 		s.createQuery( "select cast(e.theLostNumber as java.lang.Long) from MyEntity e" ).list();
 		// using the fqn Hibernate Type name
-		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.LongType) from MyEntity e" ).list();
+		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.mapper.spi.basic.LongType) from MyEntity e" ).list();
 
 		s.getTransaction().commit();
 		s.close();
@@ -105,7 +105,7 @@ public class CastFunctionTest extends BaseCoreFunctionalTestCase {
 		// using the java class name
 		s.createQuery( "select cast(e.theLostNumber as java.lang.Float) from MyEntity e" ).list();
 		// using the fqn Hibernate Type name
-		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.FloatType) from MyEntity e" ).list();
+		s.createQuery( "select cast(e.theLostNumber as org.hibernate.type.mapper.spi.basic.FloatType) from MyEntity e" ).list();
 
 		s.getTransaction().commit();
 		s.close();

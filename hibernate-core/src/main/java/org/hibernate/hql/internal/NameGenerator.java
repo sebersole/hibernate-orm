@@ -7,7 +7,7 @@
 package org.hibernate.hql.internal;
 import org.hibernate.MappingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.Type;
 
 /**
  * Provides utility methods for generating HQL / SQL names.   Shared by both the 'classic' and 'new' query translators.

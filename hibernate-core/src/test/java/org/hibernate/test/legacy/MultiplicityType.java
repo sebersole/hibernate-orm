@@ -18,11 +18,11 @@ import org.hibernate.Session;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.IntegerType;
+import org.hibernate.type.mapper.spi.basic.IntegerType;
 import org.hibernate.type.ManyToOneType;
 import org.hibernate.type.StandardBasicTypes;
-import org.hibernate.type.StringType;
-import org.hibernate.type.spi.Type;
+import org.hibernate.type.mapper.spi.basic.StringType;
+import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.TypeFactory;
 import org.hibernate.usertype.CompositeUserType;
 

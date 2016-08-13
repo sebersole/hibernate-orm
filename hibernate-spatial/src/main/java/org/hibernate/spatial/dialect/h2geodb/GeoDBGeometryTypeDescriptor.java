@@ -15,13 +15,15 @@ import java.sql.Types;
 
 import org.geolatte.geom.Geometry;
 
+import org.hibernate.spatial.GeolatteGeometryJavaTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.spi.descriptor.ValueBinder;
 import org.hibernate.type.spi.descriptor.ValueExtractor;
 import org.hibernate.type.spi.descriptor.WrapperOptions;
 import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.BasicBinder;
-import org.hibernate.type.descriptor.sql.BasicExtractor;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.spi.descriptor.sql.BasicBinder;
+import org.hibernate.type.spi.descriptor.sql.BasicExtractor;
+import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * Descriptor for GeoDB Geometries.
@@ -29,7 +31,6 @@ import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
  * @author Karel Maesen, Geovise BVBA
  */
 public class GeoDBGeometryTypeDescriptor implements SqlTypeDescriptor {
-
 	/**
 	 * An instance of this Descriptor
 	 */
@@ -43,6 +44,11 @@ public class GeoDBGeometryTypeDescriptor implements SqlTypeDescriptor {
 	@Override
 	public boolean canBeRemapped() {
 		return false;
+	}
+
+	@Override
+	public JavaTypeDescriptor getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
+		return GeolatteGeometryJavaTypeDescriptor.INSTANCE;
 	}
 
 	@Override

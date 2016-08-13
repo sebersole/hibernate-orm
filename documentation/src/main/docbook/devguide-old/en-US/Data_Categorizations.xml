@@ -67,7 +67,7 @@
           </thead>
           <tbody>
             <row>
-              <entry>org.hibernate.type.StringType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.StringType</entry>
               <entry>string</entry>
               <entry>VARCHAR</entry>
               <entry>string, java.lang.String</entry>
@@ -79,49 +79,49 @@
               <entry>materialized_clob</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.TextType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.TextType</entry>
               <entry>string</entry>
               <entry>LONGVARCHAR</entry>
               <entry>text</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CharacterType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CharacterType</entry>
               <entry>char, java.lang.Character</entry>
               <entry>CHAR</entry>
               <entry>char, java.lang.Character</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BooleanType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BooleanType</entry>
               <entry>boolean</entry>
               <entry>BIT</entry>
               <entry>boolean, java.lang.Boolean</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.NumericBooleanType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.NumericBooleanType</entry>
               <entry>boolean</entry>
               <entry>INTEGER, 0 is false, 1 is true</entry>
               <entry>numeric_boolean</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.YesNoType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.YesNoType</entry>
               <entry>boolean</entry>
               <entry>CHAR, 'N'/'n' is false, 'Y'/'y' is true. The uppercase value is written to the database.</entry>
               <entry>yes_no</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.TrueFalseType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.TrueFalseType</entry>
               <entry>boolean</entry>
               <entry>CHAR, 'F'/'f' is false, 'T'/'t' is true. The uppercase value is written to the database.</entry>
               <entry>true_false</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.ByteType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.ByteType</entry>
               <entry>byte, java.lang.Byte</entry>
               <entry>TINYINT</entry>
               <entry>byte, java.lang.Byte</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.ShortType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.ShortType</entry>
               <entry>short, java.lang.Short</entry>
               <entry>SMALLINT</entry>
               <entry>short, java.lang.Short</entry>
@@ -133,164 +133,164 @@
               <entry>int, java.lang.Integer</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.LongType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.LongType</entry>
               <entry>long, java.lang.Long</entry>
               <entry>BIGINT</entry>
               <entry>long, java.lang.Long</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.FloatType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.FloatType</entry>
               <entry>float, java.lang.Float</entry>
               <entry>FLOAT</entry>
               <entry>float, java.lang.Float</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.DoubleType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.DoubleType</entry>
               <entry>double, java.lang.Double</entry>
               <entry>DOUBLE</entry>
               <entry>double, java.lang.Double</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BigIntegerType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BigIntegerType</entry>
               <entry>java.math.BigInteger</entry>
               <entry>NUMERIC</entry>
               <entry>big_integer</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BigDecimalType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BigDecimalType</entry>
               <entry>java.math.BigDecimal</entry>
               <entry>NUMERIC</entry>
               <entry>big_decimal, java.math.bigDecimal</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.TimestampType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.TimestampType</entry>
               <entry>java.sql.Timestamp</entry>
               <entry>TIMESTAMP</entry>
               <entry>timestamp, java.sql.Timestamp</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.TimeType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.TimeType</entry>
               <entry>java.sql.Time</entry>
               <entry>TIME</entry>
               <entry>time, java.sql.Time</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.DateType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.DateType</entry>
               <entry>java.sql.Date</entry>
               <entry>DATE</entry>
               <entry>date, java.sql.Date</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CalendarType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CalendarType</entry>
               <entry>java.util.Calendar</entry>
               <entry>TIMESTAMP</entry>
               <entry>calendar, java.util.Calendar</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CalendarDateType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CalendarDateType</entry>
               <entry>java.util.Calendar</entry>
               <entry>DATE</entry>
               <entry>calendar_date</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CurrencyType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CurrencyType</entry>
               <entry>java.util.Currency</entry>
               <entry>VARCHAR</entry>
               <entry>currency, java.util.Currency</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.LocaleType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.LocaleType</entry>
               <entry>java.util.Locale</entry>
               <entry>VARCHAR</entry>
               <entry>locale, java.utility.locale</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.TimeZoneType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.TimeZoneType</entry>
               <entry>java.util.TimeZone</entry>
               <entry>VARCHAR, using the TimeZone ID</entry>
               <entry>timezone, java.util.TimeZone</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.UrlType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.UrlType</entry>
               <entry>java.net.URL</entry>
               <entry>VARCHAR</entry>
               <entry>url, java.net.URL</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.ClassType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.ClassType</entry>
               <entry>java.lang.Class</entry>
               <entry>VARCHAR, using the class name</entry>
               <entry>class, java.lang.Class</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BlobType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BlobType</entry>
               <entry>java.sql.Blob</entry>
               <entry>BLOB</entry>
               <entry>blog, java.sql.Blob</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.ClobType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.ClobType</entry>
               <entry>java.sql.Clob</entry>
               <entry>CLOB</entry>
               <entry>clob, java.sql.Clob</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BinaryType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BinaryType</entry>
               <entry>primitive byte[]</entry>
               <entry>VARBINARY</entry>
               <entry>binary, byte[]</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.MaterializedBlobType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.MaterializedBlobType</entry>
               <entry>primitive byte[]</entry>
               <entry>BLOB</entry>
               <entry>materized_blob</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.ImageType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.ImageType</entry>
               <entry>primitive byte[]</entry>
               <entry>LONGVARBINARY</entry>
               <entry>image</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.BinaryType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.BinaryType</entry>
               <entry>java.lang.Byte[]</entry>
               <entry>VARBINARY</entry>
               <entry>wrapper-binary</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CharArrayType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CharArrayType</entry>
               <entry>char[]</entry>
               <entry>VARCHAR</entry>
               <entry>characters, char[]</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.CharacterArrayType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.CharacterArrayType</entry>
               <entry>java.lang.Character[]</entry>
               <entry>VARCHAR</entry>
               <entry>wrapper-characters, Character[], java.lang.Character[]</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.UUIDBinaryType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.UUIDBinaryType</entry>
               <entry>java.util.UUID</entry>
               <entry>BINARY</entry>
               <entry>uuid-binary, java.util.UUID</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.UUIDCharType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.UUIDCharType</entry>
               <entry>java.util.UUID</entry>
               <entry>CHAR, can also read VARCHAR</entry>
               <entry>uuid-char</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.PostgresUUIDType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.PostgresUUIDType</entry>
               <entry>java.util.UUID</entry>
               <entry>PostgreSQL UUID, through Types#OTHER, which complies to the PostgreSQL JDBC driver
               definition</entry>
               <entry>pg-uuid</entry>
             </row>
             <row>
-              <entry>org.hibernate.type.SerializableType</entry>
+              <entry>org.hibernate.type.mapper.spi.basic.SerializableType</entry>
               <entry>implementors of java.lang.Serializable</entry>
               <entry>VARBINARY</entry>
               <entry> Unlike the other value types, multiple instances of this type are registered. It is registered
@@ -361,31 +361,31 @@
                 </thead>
                 <tbody>
                     <row>
-                        <entry>org.hibernate.type.StringNVarcharType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.StringNVarcharType</entry>
                         <entry>string</entry>
                         <entry>NVARCHAR</entry>
                         <entry>nstring</entry>
                     </row>
                     <row>
-                        <entry>org.hibernate.type.NTextType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.NTextType</entry>
                         <entry>string</entry>
                         <entry>LONGNVARCHAR</entry>
                         <entry>materialized_clob</entry>
                     </row>
                     <row>
-                        <entry>org.hibernate.type.NClobType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.NClobType</entry>
                         <entry>java.sql.NClob</entry>
                         <entry>NCLOB</entry>
                         <entry>nclob</entry>
                     </row>
                     <row>
-                        <entry>org.hibernate.type.MaterializedNClobType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.MaterializedNClobType</entry>
                         <entry>string</entry>
                         <entry>NCLOB</entry>
                         <entry>materialized_nclob</entry>
                     </row>
                     <row>
-                        <entry>org.hibernate.type.PrimitiveCharacterArrayNClobType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.PrimitiveCharacterArrayNClobType</entry>
                         <entry>char[]</entry>
                         <entry>NCHAR</entry>
                         <entry>char[]</entry>
@@ -397,7 +397,7 @@
                         <entry>ncharacter</entry>
                     </row>
                     <row>
-                        <entry>org.hibernate.type.CharacterArrayNClobType</entry>
+                        <entry>org.hibernate.type.mapper.spi.basic.CharacterArrayNClobType</entry>
                         <entry>java.lang.Character[]</entry>
                         <entry>NCLOB</entry>
                         <entry>Character[], java.lang.Character[]</entry>

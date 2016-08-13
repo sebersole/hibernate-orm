@@ -13,7 +13,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
-import org.hibernate.type.StringType;
+import org.hibernate.type.mapper.spi.basic.StringType;
 
 /**
  * @author Sharath Reddy
