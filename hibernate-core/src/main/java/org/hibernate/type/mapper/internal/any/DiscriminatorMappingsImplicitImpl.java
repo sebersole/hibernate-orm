@@ -6,6 +6,8 @@
  */
 package org.hibernate.type.mapper.internal.any;
 
+import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
+
 /**
  * @author Steve Ebersole
  */

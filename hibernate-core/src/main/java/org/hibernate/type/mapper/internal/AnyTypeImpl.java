@@ -18,14 +18,12 @@ import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
-import org.hibernate.type.mapper.internal.any.DiscriminatorMappings;
-import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsExplicitImpl;
-import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsImplicitImpl;
-import org.hibernate.type.mapper.spi.any.AnyType;
-import org.hibernate.type.mapper.spi.basic.BasicType;
-import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.any.AnyType;
+import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
@@ -39,16 +37,10 @@ public class AnyTypeImpl implements AnyType {
 	public AnyTypeImpl(
 			BasicType identifierType,
 			BasicType discriminatorType,
-			Map<Object,String> discriminatorValueToEntityNameMap) {
+			DiscriminatorMappings discriminatorMappings) {
 		this.identifierType = identifierType;
 		this.discriminatorType = discriminatorType;
-
-		if ( discriminatorValueToEntityNameMap == null || discriminatorValueToEntityNameMap.isEmpty() ) {
-			discriminatorMappings = DiscriminatorMappingsImplicitImpl.INSTANCE;
-		}
-		else {
-			discriminatorMappings = new DiscriminatorMappingsExplicitImpl( discriminatorValueToEntityNameMap );
-		}
+		this.discriminatorMappings = discriminatorMappings;
 	}
 
 	@Override
@@ -59,6 +51,11 @@ public class AnyTypeImpl implements AnyType {
 	@Override
 	public Type getIdentifierType() {
 		return identifierType;
+	}
+
+	@Override
+	public DiscriminatorMappings getDiscriminatorMappings() {
+		return discriminatorMappings;
 	}
 
 	@Override

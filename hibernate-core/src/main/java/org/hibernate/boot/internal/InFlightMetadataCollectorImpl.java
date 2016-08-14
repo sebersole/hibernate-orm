@@ -104,7 +104,10 @@ import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UniqueKey;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.type.mapper.internal.AnyTypeImpl;
+import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsExplicitImpl;
+import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsImplicitImpl;
 import org.hibernate.type.mapper.spi.any.AnyType;
+import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -359,8 +362,16 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public AnyType any(BasicType identifierType, BasicType discriminatorType, Map discriminatorValues) {
-		return new AnyTypeImpl( identifierType, discriminatorType, discriminatorValues );
+	public AnyType any(BasicType identifierType, BasicType discriminatorType, Map<Object,String> discriminatorValueToEntityNameMap) {
+		final DiscriminatorMappings discriminatorMappings;
+		if ( discriminatorValueToEntityNameMap == null || discriminatorValueToEntityNameMap.isEmpty() ) {
+			discriminatorMappings = DiscriminatorMappingsImplicitImpl.INSTANCE;
+		}
+		else {
+			discriminatorMappings = new DiscriminatorMappingsExplicitImpl( discriminatorValueToEntityNameMap );
+		}
+
+		return new AnyTypeImpl( identifierType, discriminatorType, discriminatorMappings );
 
 	}
 

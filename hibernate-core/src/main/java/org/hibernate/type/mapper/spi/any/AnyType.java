@@ -18,4 +18,6 @@ public interface AnyType extends Type, org.hibernate.sqm.domain.AnyType {
 
 	@Override
 	Type getIdentifierType();
+
+	DiscriminatorMappings getDiscriminatorMappings();
 }
