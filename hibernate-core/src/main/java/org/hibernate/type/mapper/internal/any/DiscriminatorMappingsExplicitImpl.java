@@ -9,6 +9,8 @@ package org.hibernate.type.mapper.internal.any;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
+
 /**
  * @author Steve Ebersole
  */

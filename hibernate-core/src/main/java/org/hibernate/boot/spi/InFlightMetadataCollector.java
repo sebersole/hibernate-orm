@@ -45,6 +45,7 @@ import org.hibernate.mapping.Join;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Table;
+import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.mapper.spi.Type;
 
@@ -302,7 +303,7 @@ public interface InFlightMetadataCollector extends Mapping, MetadataImplementor 
 	/**
 	 * Performs same function as the legacy TypeFactory#any
 	 */
-	Type any(BasicType identifierType, BasicType discriminatorType, Map discriminatorValues);
+	Type any(BasicType identifierType, BasicType discriminatorType, Map<Object,String> discriminatorValueToEntityNameMap);
 
 	interface DelayedPropertyReferenceHandler extends Serializable {
 		void process(InFlightMetadataCollector metadataCollector);
