@@ -19,6 +19,9 @@ from an API perspective.
 == Misc
 
 * removed `org.hibernate.type.TypeHelper` and `org.hibernate.type.TypeResolver`, as well as methods exposing
-access to them.  For the most part, replace with calls to `org.hibernate.Metamodel`
-and/or `org.hibernate.type.spi.TypeConfiguration`.
+	access to them.  For the most part, replace with calls to `org.hibernate.Metamodel`
+	and/or `org.hibernate.type.spi.TypeConfiguration`.
 * removed `org.hibernate.type.TypeFactory` in favor of `TypeConfiguration`
+*  I think SqlTypeDescriptor should have some say in determining the JdbcLiteralFormatter to use.  Currently this is
+	defined on the mapper Type and the JavaTypeDescriptor.  But really its the fact that its a VARCHAR that dictates
+	that a literal should be quoted, e.g.

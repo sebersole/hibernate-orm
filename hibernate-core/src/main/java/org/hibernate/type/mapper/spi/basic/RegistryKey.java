@@ -9,10 +9,10 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.Comparator;
 import javax.persistence.AttributeConverter;
 
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * Designed to act as a key in the registry of basic type instances in {@link BasicTypeRegistry}

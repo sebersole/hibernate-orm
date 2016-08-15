@@ -6,11 +6,11 @@
  */
 package org.hibernate.boot.model;
 
+import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * Defines the target of contributing types, whether via dialects or {@link TypeContributor}

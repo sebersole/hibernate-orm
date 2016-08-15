@@ -9,8 +9,8 @@ package org.hibernate.type.mapper.spi.basic;
 import java.sql.Blob;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.spi.java.BlobTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.BlobTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#BLOB BLOB} and {@link Blob}
@@ -22,7 +22,7 @@ public class BlobType extends BasicTypeImpl<Blob> {
 	public static final BlobType INSTANCE = new BlobType();
 
 	public BlobType() {
-		super( BlobTypeDescriptor.INSTANCE, org.hibernate.type.spi.descriptor.sql.BlobTypeDescriptor.DEFAULT );
+		super( BlobTypeDescriptor.INSTANCE, org.hibernate.type.descriptor.spi.sql.BlobTypeDescriptor.DEFAULT );
 	}
 
 	@Override

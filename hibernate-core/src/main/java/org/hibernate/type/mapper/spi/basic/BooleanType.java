@@ -7,10 +7,10 @@
 package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.descriptor.spi.java.BooleanTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.BooleanTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#BOOLEAN BOOLEAN} and {@link Boolean}
@@ -24,7 +24,7 @@ public class BooleanType
 	public static final BooleanType INSTANCE = new BooleanType();
 
 	public BooleanType() {
-		this( BooleanTypeDescriptor.INSTANCE, org.hibernate.type.spi.descriptor.sql.BooleanTypeDescriptor.INSTANCE );
+		this( BooleanTypeDescriptor.INSTANCE, org.hibernate.type.descriptor.spi.sql.BooleanTypeDescriptor.INSTANCE );
 	}
 
 	protected BooleanType(JavaTypeDescriptor<Boolean> javaTypeDescriptor, SqlTypeDescriptor sqlTypeDescriptor) {
