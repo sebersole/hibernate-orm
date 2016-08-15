@@ -73,7 +73,7 @@ class JdbcResultMetadata {
 			length = resultSetMetaData.getColumnDisplaySize( columnPos );
 		}
 
-		return factory.getTypeResolver().heuristicType(
+		return factory.getTypeHelper().heuristicType(
 				factory.getDialect().getHibernateTypeName(
 						columnType,
 						length,

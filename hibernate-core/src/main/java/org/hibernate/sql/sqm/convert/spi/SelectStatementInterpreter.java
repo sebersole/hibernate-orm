@@ -14,14 +14,47 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.persister.collection.spi.ImprovedCollectionPersister;
 import org.hibernate.persister.common.spi.SingularAttributeImplementor;
 import org.hibernate.persister.common.spi.SqmTypeImplementor;
+import org.hibernate.persister.entity.spi.ImprovedEntityPersister;
+import org.hibernate.sql.sqm.ast.SelectQuery;
+import org.hibernate.sql.sqm.ast.expression.AttributeReference;
+import org.hibernate.sql.sqm.ast.expression.AvgFunction;
+import org.hibernate.sql.sqm.ast.expression.BinaryArithmeticExpression;
+import org.hibernate.sql.sqm.ast.expression.CaseSearchedExpression;
+import org.hibernate.sql.sqm.ast.expression.CaseSimpleExpression;
+import org.hibernate.sql.sqm.ast.expression.CoalesceExpression;
+import org.hibernate.sql.sqm.ast.expression.ColumnBindingExpression;
+import org.hibernate.sql.sqm.ast.expression.ConcatExpression;
+import org.hibernate.sql.sqm.ast.expression.CountFunction;
+import org.hibernate.sql.sqm.ast.expression.CountStarFunction;
+import org.hibernate.sql.sqm.ast.expression.Expression;
+import org.hibernate.sql.sqm.ast.expression.MaxFunction;
+import org.hibernate.sql.sqm.ast.expression.MinFunction;
+import org.hibernate.sql.sqm.ast.expression.NamedParameter;
+import org.hibernate.sql.sqm.ast.expression.NonStandardFunctionExpression;
+import org.hibernate.sql.sqm.ast.expression.NullifExpression;
+import org.hibernate.sql.sqm.ast.expression.PositionalParameter;
+import org.hibernate.sql.sqm.ast.expression.QueryLiteral;
+import org.hibernate.sql.sqm.ast.expression.SumFunction;
+import org.hibernate.sql.sqm.ast.expression.UnaryOperationExpression;
+import org.hibernate.sql.sqm.ast.from.CollectionTableGroup;
+import org.hibernate.sql.sqm.ast.from.ColumnBinding;
 import org.hibernate.sql.sqm.ast.from.EntityTableGroup;
 import org.hibernate.sql.sqm.ast.from.TableGroup;
 import org.hibernate.sql.sqm.ast.from.TableGroupJoin;
 import org.hibernate.sql.sqm.ast.from.TableSpace;
+import org.hibernate.sql.sqm.ast.predicate.BetweenPredicate;
+import org.hibernate.sql.sqm.ast.predicate.GroupedPredicate;
+import org.hibernate.sql.sqm.ast.predicate.InListPredicate;
+import org.hibernate.sql.sqm.ast.predicate.InSubQueryPredicate;
 import org.hibernate.sql.sqm.ast.predicate.Junction;
+import org.hibernate.sql.sqm.ast.predicate.LikePredicate;
+import org.hibernate.sql.sqm.ast.predicate.NegatedPredicate;
+import org.hibernate.sql.sqm.ast.predicate.NullnessPredicate;
 import org.hibernate.sql.sqm.ast.predicate.Predicate;
-import org.hibernate.sql.sqm.internal.FromClauseIndex;
-import org.hibernate.sql.sqm.internal.SqlAliasBaseManager;
+import org.hibernate.sql.sqm.ast.predicate.RelationalPredicate;
+import org.hibernate.sql.sqm.convert.internal.FromClauseIndex;
+import org.hibernate.sql.sqm.convert.internal.SqlAliasBaseManager;
+import org.hibernate.sql.sqm.exec.spi.QueryOptions;
 import org.hibernate.sqm.BaseSemanticQueryWalker;
 import org.hibernate.sqm.domain.PluralAttribute;
 import org.hibernate.sqm.domain.SingularAttribute;
@@ -173,19 +206,19 @@ public class SelectStatementInterpreter extends BaseSemanticQueryWalker {
 	}
 
 	@Override
-	public org.hibernate.sql.ast.sort.SortSpecification visitSortSpecification(SortSpecification sortSpecification) {
-		return new org.hibernate.sql.ast.sort.SortSpecification(
-				(org.hibernate.sql.ast.expression.Expression) sortSpecification.getSortExpression().accept( this ),
+	public org.hibernate.sql.sqm.ast.sort.SortSpecification visitSortSpecification(SortSpecification sortSpecification) {
+		return new org.hibernate.sql.sqm.ast.sort.SortSpecification(
+				(org.hibernate.sql.sqm.ast.expression.Expression) sortSpecification.getSortExpression().accept( this ),
 				sortSpecification.getCollation(),
 				sortSpecification.getSortOrder()
 		);
 	}
 
-	private Stack<org.hibernate.sql.ast.QuerySpec> querySpecStack = new Stack<>();
+	private Stack<org.hibernate.sql.sqm.ast.QuerySpec> querySpecStack = new Stack<>();
 
 	@Override
-	public org.hibernate.sql.ast.QuerySpec visitQuerySpec(QuerySpec querySpec) {
-		final org.hibernate.sql.ast.QuerySpec astQuerySpec = new org.hibernate.sql.ast.QuerySpec();
+	public org.hibernate.sql.sqm.ast.QuerySpec visitQuerySpec(QuerySpec querySpec) {
+		final org.hibernate.sql.sqm.ast.QuerySpec astQuerySpec = new org.hibernate.sql.sqm.ast.QuerySpec();
 		querySpecStack.push( astQuerySpec );
 
 		fromClauseIndex.pushFromClause( astQuerySpec.getFromClause() );
@@ -314,7 +347,7 @@ public class SelectStatementInterpreter extends BaseSemanticQueryWalker {
 				final ColumnBinding[] joinLhsColumns = lhsTableGroup.resolveBindings( singularAttribute );
 				final ColumnBinding[] joinRhsColumns;
 
-				final org.hibernate.type.EntityType ormType = (org.hibernate.type.EntityType) singularAttribute.getOrmType();
+				final org.hibernate.type.EntityType ormType = (org.hibernate.type.EntityType) singularAttribute.getType();
 				if ( ormType.getRHSUniqueKeyPropertyName() == null ) {
 					joinRhsColumns = ( (EntityTableGroup) group ).resolveIdentifierColumnBindings();
 				}
@@ -366,20 +399,20 @@ public class SelectStatementInterpreter extends BaseSemanticQueryWalker {
 	}
 
 	@Override
-	public org.hibernate.sql.ast.select.SelectClause visitSelectClause(SelectClause selectClause) {
+	public org.hibernate.sql.sqm.ast.select.SelectClause visitSelectClause(SelectClause selectClause) {
 		super.visitSelectClause( selectClause );
 		currentQuerySpec().getSelectClause().makeDistinct( selectClause.isDistinct() );
 		return currentQuerySpec().getSelectClause();
 	}
 
-	private org.hibernate.sql.ast.QuerySpec currentQuerySpec() {
+	private org.hibernate.sql.sqm.ast.QuerySpec currentQuerySpec() {
 		return querySpecStack.peek();
 	}
 
 	@Override
-	public org.hibernate.sql.ast.select.Selection visitSelection(Selection selection) {
-		org.hibernate.sql.ast.select.Selection ormSelection = new org.hibernate.sql.ast.select.Selection(
-				(org.hibernate.sql.ast.expression.Expression) selection.getExpression().accept( this ),
+	public org.hibernate.sql.sqm.ast.select.Selection visitSelection(Selection selection) {
+		org.hibernate.sql.sqm.ast.select.Selection ormSelection = new org.hibernate.sql.sqm.ast.select.Selection(
+				(org.hibernate.sql.sqm.ast.expression.Expression) selection.getExpression().accept( this ),
 				selection.getAlias()
 		);
 
@@ -389,15 +422,15 @@ public class SelectStatementInterpreter extends BaseSemanticQueryWalker {
 	}
 
 	@Override
-	public org.hibernate.sql.ast.expression.instantiation.DynamicInstantiation visitDynamicInstantiation(DynamicInstantiation dynamicInstantiation) {
+	public org.hibernate.sql.sqm.ast.expression.instantiation.DynamicInstantiation visitDynamicInstantiation(DynamicInstantiation dynamicInstantiation) {
 		final Class target = interpret( dynamicInstantiation.getInstantiationTarget() );
-		org.hibernate.sql.ast.expression.instantiation.DynamicInstantiation sqlTree =
-				new org.hibernate.sql.ast.expression.instantiation.DynamicInstantiation( target );
+		org.hibernate.sql.sqm.ast.expression.instantiation.DynamicInstantiation sqlTree =
+				new org.hibernate.sql.sqm.ast.expression.instantiation.DynamicInstantiation( target );
 
 		for ( DynamicInstantiationArgument dynamicInstantiationArgument : dynamicInstantiation.getArguments() ) {
 			sqlTree.addArgument(
 					dynamicInstantiationArgument.getAlias(),
-					(org.hibernate.sql.ast.expression.Expression) dynamicInstantiationArgument.getExpression().accept( this )
+					(org.hibernate.sql.sqm.ast.expression.Expression) dynamicInstantiationArgument.getExpression().accept( this )
 			);
 		}
 
@@ -843,7 +876,7 @@ public class SelectStatementInterpreter extends BaseSemanticQueryWalker {
 	public InSubQueryPredicate visitInSubQueryPredicate(InSubQuerySqmPredicate predicate) {
 		return new InSubQueryPredicate(
 				(Expression) predicate.getTestExpression().accept( this ),
-				(org.hibernate.sql.ast.QuerySpec) predicate.getSubQueryExpression().accept( this ),
+				(org.hibernate.sql.sqm.ast.QuerySpec) predicate.getSubQueryExpression().accept( this ),
 				predicate.isNegated()
 		);
 	}

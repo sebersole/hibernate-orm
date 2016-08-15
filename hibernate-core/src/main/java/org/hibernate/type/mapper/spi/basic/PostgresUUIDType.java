@@ -13,16 +13,16 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.UUID;
 
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BasicBinder;
+import org.hibernate.type.descriptor.spi.sql.BasicExtractor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.descriptor.ValueBinder;
-import org.hibernate.type.spi.descriptor.ValueExtractor;
-import org.hibernate.type.spi.descriptor.WrapperOptions;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.UUIDTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BasicBinder;
-import org.hibernate.type.spi.descriptor.sql.BasicExtractor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * Specialized type mapping for {@link UUID} and the Postgres UUID data type (which is mapped as OTHER in its

@@ -22,7 +22,7 @@ public class AdaptedImmutableType<T> extends BasicTypeImpl<T> {
 	private final String name;
 	private final JdbcLiteralFormatter<T> jdbcLiteralFormatter;
 
-	public AdaptedImmutableType(AbstractSingleColumnStandardBasicType<T> baseMutableType) {
+	public AdaptedImmutableType(BasicType<T> baseMutableType) {
 		super(
 				baseMutableType.getJavaTypeDescriptor(),
 				baseMutableType.getColumnMapping().getSqlTypeDescriptor(),

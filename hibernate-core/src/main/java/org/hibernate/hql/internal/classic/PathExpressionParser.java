@@ -93,7 +93,7 @@ public class PathExpressionParser implements Parser {
 		q.addType( currentName, entityName );
 		Queryable classPersister = q.getEntityPersister( entityName );
 		//QueryJoinFragment join = q.createJoinFragment(useThetaStyleJoin);
-		addJoin( currentName, q.getFactory().getTypeResolver().getTypeFactory().manyToOne( entityName ), joinColumns );
+		addJoin( currentName, q.getFactory().getMet.getTypeFactory().manyToOne( entityName ), joinColumns );
 		currentPropertyMapping = classPersister;
 		return currentName;
 	}

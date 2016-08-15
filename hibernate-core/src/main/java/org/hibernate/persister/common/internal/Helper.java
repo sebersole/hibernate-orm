@@ -33,7 +33,7 @@ import org.hibernate.type.BagType;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.CollectionType;
 import org.hibernate.type.mapper.spi.ColumnMapping;
-import org.hibernate.type.spi.EmbeddableType;
+import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.IdentifierBagType;
 import org.hibernate.type.ListType;
 import org.hibernate.type.MapType;
@@ -215,7 +215,7 @@ public class Helper {
 					domainMetamodel,
 					source,
 					propertyName,
-					propertyType,
+					(org.hibernate.type.Type) propertyType,
 					columns
 			);
 		}
@@ -228,7 +228,7 @@ public class Helper {
 			String attributeName,
 			org.hibernate.type.Type attributeType,
 			Column[] columns) {
-		final SingularAttribute.Classification classification = interpretSingularAttributeClassification( attributeType );
+		final SingularAttribute.Classification classification = interpretSingularAttributeClassification( (Type) attributeType );
 		if ( classification == SingularAttribute.Classification.ANY ) {
 			throw new NotYetImplementedException();
 		}
@@ -240,7 +240,7 @@ public class Helper {
 							databaseModel,
 							domainMetamodel,
 							source.getTypeName() + '.' + attributeName,
-							(EmbeddableType) attributeType,
+							(CompositeType) attributeType,
 							columns
 					)
 			);
@@ -269,7 +269,6 @@ public class Helper {
 					attributeName,
 					classification,
 					ormEntityType,
-					domainMetamodel.toSqmType( ormEntityType ),
 					columns
 			);
 		}
@@ -279,21 +278,16 @@ public class Helper {
 			DatabaseModel databaseModel,
 			DomainMetamodelImpl domainMetamodel,
 			String role,
-			EmbeddableType embeddableType,
+			CompositeType embeddableType,
 			Column[] columns) {
 		return new EmbeddablePersister(
-				extractEmbeddableName( embeddableType ),
+				embeddableType.getName(),
 				role,
 				embeddableType,
 				databaseModel,
 				domainMetamodel,
 				columns
 		);
-	}
-
-	private static String extractEmbeddableName(org.hibernate.type.Type attributeType) {
-		// todo : fixme
-		return attributeType.getName();
 	}
 
 	public AbstractAttributeImpl buildPluralAttribute(
@@ -469,11 +463,5 @@ public class Helper {
 		else {
 			return SingularAttribute.Classification.BASIC;
 		}
-	}
-
-	public static SingularAttribute.Classification interpretIdentifierClassification(Type ormIdType) {
-		return ormIdType instanceof EmbeddableType
-				? SingularAttribute.Classification.EMBEDDED
-				: SingularAttribute.Classification.BASIC;
 	}
 }

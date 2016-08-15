@@ -65,7 +65,7 @@ public class CastFunctionNode extends AbstractSelectExpression implements Functi
 		}
 
 		final String typeName = typeNode.getText();
-		this.castType = getSessionFactoryHelper().getFactory().getTypeResolver().heuristicType( typeName );
+		this.castType = getSessionFactoryHelper().getFactory().getTypeHelper().heuristicType( typeName );
 		if ( castType == null ) {
 			throw new QueryException( "Could not resolve requested type for CAST : " + typeName );
 		}

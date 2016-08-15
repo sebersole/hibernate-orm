@@ -9,9 +9,9 @@ package org.hibernate.type.mapper.spi.basic;
 import java.time.Duration;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.descriptor.spi.java.DurationJavaDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BigIntTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.DurationJavaDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BigIntTypeDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -41,6 +41,6 @@ public class DurationType
 
 	@Override
 	public String toJdbcLiteral(Duration value, Dialect dialect) {
-		return LongType.INSTANCE.toJdbcLiteral( value.toNanos(), dialect );
+		return LongType.INSTANCE.getJdbcLiteralFormatter().toJdbcLiteral( value.toNanos(), dialect );
 	}
 }

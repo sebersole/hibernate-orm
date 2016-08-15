@@ -158,7 +158,7 @@ public class InPredicate<T>
 			// but checking for that condition could take long time on a lon value list
 			final ParameterExpressionImpl parameterExpression = (ParameterExpressionImpl) exp;
 			final SessionFactoryImplementor sfi = criteriaBuilder().getEntityManagerFactory().unwrap( SessionFactoryImplementor.class );
-			final Type mappingType = sfi.getTypeResolver().heuristicType( parameterExpression.getParameterType().getName() );
+			final Type mappingType = sfi.getTypeHelper().heuristicType( parameterExpression.getParameterType().getName() );
 			buffer.append( "cast(" )
 					.append( parameterExpression.render( renderingContext ) )
 					.append( " as " )

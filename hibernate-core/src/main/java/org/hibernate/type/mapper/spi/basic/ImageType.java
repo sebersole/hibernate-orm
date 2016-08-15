@@ -6,8 +6,9 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.type.spi.descriptor.java.PrimitiveByteArrayTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.LongVarbinaryTypeDescriptor;
+
+import org.hibernate.type.descriptor.spi.java.PrimitiveByteArrayTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.LongVarbinaryTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#LONGVARBINARY LONGVARBINARY} and {@code byte[]}

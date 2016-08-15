@@ -6,9 +6,9 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
+import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.LongNVarcharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.StringTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.LongNVarcharTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#LONGNVARCHAR LONGNVARCHAR} and {@link String}

@@ -708,7 +708,7 @@ public class BinderHelper {
 			value.setMetaType( metaAnnDef.metaType() );
 
 			HashMap values = new HashMap();
-			Type metaType = context.getMetadataCollector().getTypeResolver().heuristicType( value.getMetaType() );
+			Type metaType = context.getMetadataCollector().heuristicType( value.getMetaType() );
 			for (MetaValue metaValue : metaAnnDef.metaValues()) {
 				try {
 					Object discrim = ( (org.hibernate.type.DiscriminatorType) metaType ).stringToObject( metaValue

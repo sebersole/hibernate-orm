@@ -16,7 +16,7 @@ import java.sql.Clob;
 import java.sql.SQLException;
 
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
-import org.hibernate.type.descriptor.java.DataHelper;
+import org.hibernate.type.descriptor.internal.java.DataHelper;
 
 /**
  * Manages aspects of proxying {@link Clob Clobs} for non-contextual creation, including proxy creation and

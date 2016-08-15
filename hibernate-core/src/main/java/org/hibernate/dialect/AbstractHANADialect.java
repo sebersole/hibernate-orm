@@ -45,15 +45,15 @@ import org.hibernate.hql.spi.id.global.GlobalTemporaryTableBulkIdStrategy;
 import org.hibernate.hql.spi.id.local.AfterUseAction;
 import org.hibernate.internal.util.JdbcExceptionHelper;
 import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BasicBinder;
+import org.hibernate.type.descriptor.spi.sql.BitTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.ClobTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.NClobTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SmallIntTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.descriptor.WrapperOptions;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BasicBinder;
-import org.hibernate.type.spi.descriptor.sql.BitTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.ClobTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.NClobTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SmallIntTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * An abstract base class for HANA dialects. <br/>

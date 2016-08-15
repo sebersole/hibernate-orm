@@ -6,16 +6,16 @@
  */
 package org.hibernate.type;
 
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.basic.BasicTypeImpl;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * TODO : javadoc
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractSingleColumnStandardBasicType<T> extends BasicTypeImpl<T,Object> {
+public abstract class AbstractSingleColumnStandardBasicType<T> extends BasicTypeImpl<T> {
 
 	public AbstractSingleColumnStandardBasicType(SqlTypeDescriptor sqlTypeDescriptor, JavaTypeDescriptor<T> javaTypeDescriptor) {
 		super(
@@ -26,7 +26,6 @@ public abstract class AbstractSingleColumnStandardBasicType<T> extends BasicType
 		);
 	}
 
-	@Override
 	public final int sqlType() {
 		return getSqlTypeDescriptor().getSqlType();
 	}

@@ -5,11 +5,9 @@
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package org.hibernate.type.mapper.spi.basic;
-import org.hibernate.type.mapper.spi.basic.BasicTypeImpl;
-import org.hibernate.type.mapper.spi.basic.CharacterArrayClobType;
+import org.hibernate.type.descriptor.spi.java.PrimitiveCharacterArrayTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.ClobTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.PrimitiveCharacterArrayTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.ClobTypeDescriptor;
 
 /**
  * Map a char[] to a Clob

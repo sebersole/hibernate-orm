@@ -61,7 +61,7 @@ public interface HibernateEntityManagerFactory extends EntityManagerFactory, Ser
 	 */
 	@Deprecated
 	default EntityType getEntityTypeByName(String entityName) {
-		final EntityType entityType = getMetamodel().getEntityTypeByName( entityName );
+		final EntityType entityType = getMetamodel().entity( entityName );
 		if ( entityType == null ) {
 			throw new IllegalArgumentException( "[" + entityName + "] did not refer to EntityType" );
 		}

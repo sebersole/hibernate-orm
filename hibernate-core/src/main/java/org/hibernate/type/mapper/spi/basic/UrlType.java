@@ -8,9 +8,9 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.net.URL;
 
+import org.hibernate.type.descriptor.spi.java.UrlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.UrlTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.VarcharTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#VARCHAR VARCHAR} and {@link URL}
