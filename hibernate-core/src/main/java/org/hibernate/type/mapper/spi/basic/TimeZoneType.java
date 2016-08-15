@@ -8,9 +8,9 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.TimeZone;
 
+import org.hibernate.type.descriptor.spi.java.TimeZoneTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.TimeZoneTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.VarcharTypeDescriptor;
 
 /**
  * A type mapping {@link java.sql.Types#VARCHAR VARCHAR} and {@link TimeZone}

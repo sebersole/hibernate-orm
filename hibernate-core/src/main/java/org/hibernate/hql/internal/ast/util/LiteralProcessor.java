@@ -159,7 +159,7 @@ public class LiteralProcessor implements HqlSqlTokenTypes {
 		}
 		Type type;
 		try {
-			type = walker.getSessionFactoryHelper().getFactory().getTypeResolver().heuristicType(
+			type = walker.getSessionFactoryHelper().getFactory().getTypeHelper().heuristicType(
 					value.getClass().getName()
 			);
 		}

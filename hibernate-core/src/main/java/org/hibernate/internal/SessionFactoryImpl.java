@@ -1010,7 +1010,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	@Override
 	public Type resolveParameterBindType(Class clazz){
 		String typename = clazz.getName();
-		Type type = getTypeResolver().heuristicType( typename );
+		Type type = getTypeHelper().heuristicType( typename );
 		boolean serializable = type != null && type instanceof SerializableType;
 		if ( type == null || serializable ) {
 			try {

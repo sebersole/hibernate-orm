@@ -7,10 +7,10 @@
 package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.descriptor.spi.java.BooleanTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.CharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.BooleanTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.StringTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.CharTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#CHAR CHAR(1)} and {@link Boolean} (using 'Y' and 'N')

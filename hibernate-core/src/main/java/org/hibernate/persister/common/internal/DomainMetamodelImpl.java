@@ -18,15 +18,16 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.collection.internal.ImprovedCollectionPersisterImpl;
 import org.hibernate.persister.collection.spi.ImprovedCollectionPersister;
+import org.hibernate.persister.entity.internal.ImprovedEntityPersisterImpl;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.sqm.domain.BasicType;
 import org.hibernate.sqm.domain.DomainMetamodel;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
 import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * @author Steve Ebersole

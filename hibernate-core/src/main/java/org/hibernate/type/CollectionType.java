@@ -265,8 +265,8 @@ public abstract class CollectionType extends AbstractType implements Association
 		}
 		else {
 			return getPersister(session)
-					.getKeyType()
-					.disassemble( key, session, owner );
+					.getKeyType().getMutabilityPlan()
+					.disassemble( key );
 		}
 	}
 
@@ -280,8 +280,8 @@ public abstract class CollectionType extends AbstractType implements Association
 		}
 		else {
 			final Serializable key = (Serializable) getPersister(session)
-					.getKeyType()
-					.assemble( cached, session, owner);
+					.getKeyType().getMutabilityPlan()
+					.assemble( cached );
 			return resolveKey( key, session, owner );
 		}
 	}

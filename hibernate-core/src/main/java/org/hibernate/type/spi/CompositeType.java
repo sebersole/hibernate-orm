@@ -6,7 +6,7 @@
  */
 package org.hibernate.type.spi;
 
-import org.hibernate.persister.embeddable.EmbeddablePersister;
+import org.hibernate.persister.embeddable.spi.EmbeddablePersister;
 import org.hibernate.type.mapper.spi.Type;
 
 /**

@@ -6,9 +6,9 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
+import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.NClobTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.StringTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.NClobTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#NCLOB NCLOB} and {@link String}

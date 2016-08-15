@@ -126,7 +126,7 @@ public class BasicTypesBaseline {
 	private void register(BasicType basicType, String... registrationKeys) {
 		typeConfiguration.getBasicTypeRegistry().register(
 				basicType,
-				RegistryKeyImpl.from( basicType )
+				RegistryKey.from( basicType )
 		);
 
 		basicTypeProducerRegistry.register(
