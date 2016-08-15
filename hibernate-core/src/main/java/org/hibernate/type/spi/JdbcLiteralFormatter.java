@@ -18,6 +18,8 @@ import org.hibernate.type.mapper.spi.basic.BasicType;
  * Performs a similar function as the legacy LiteralType, except continuing the paradigm
  * shift from inheritance to composition/delegation.
  *
+ * @todo I think SqlTypeDescriptor should have some say in determining the JdbcLiteralFormatter to use.  Currently this is defined on the mapper Type and the JavaTypeDescriptor.
+ *
  * @author Steve Ebersole
  */
 public interface JdbcLiteralFormatter<T> {

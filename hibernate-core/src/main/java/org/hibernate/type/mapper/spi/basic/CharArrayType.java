@@ -7,9 +7,10 @@
 package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.descriptor.spi.java.PrimitiveCharacterArrayTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.PrimitiveCharacterArrayTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.VarcharTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#VARCHAR VARCHAR} and {@code char[]}
@@ -37,6 +38,6 @@ public class CharArrayType
 
 	@Override
 	public String toJdbcLiteral(char[] value, Dialect dialect) {
-		return StringType.INSTANCE.toJdbcLiteral( toString( value ), dialect );
+		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
 	}
 }
