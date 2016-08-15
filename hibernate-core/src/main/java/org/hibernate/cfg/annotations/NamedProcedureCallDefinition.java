@@ -242,7 +242,7 @@ public class NamedProcedureCallDefinition {
 					name,
 					parameterMode,
 					type,
-					sessionFactory.getTypeResolver().heuristicType( type.getName() ),
+					sessionFactory.getTypeHelper().heuristicType( type.getName() ),
 					initialPassNullSetting
 			);
 		}

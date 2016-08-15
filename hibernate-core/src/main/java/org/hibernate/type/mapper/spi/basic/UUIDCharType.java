@@ -9,10 +9,10 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.UUID;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.StringTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.UUIDTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.VarcharTypeDescriptor;
 
 /**
  * A type mapping {@link java.sql.Types#CHAR} (or {@link java.sql.Types#VARCHAR}) and {@link java.util.UUID}

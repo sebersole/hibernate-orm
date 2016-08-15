@@ -19,8 +19,8 @@ import org.hibernate.id.uuid.StandardRandomStrategy;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.service.ServiceRegistry;
+import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.descriptor.java.UUIDTypeDescriptor;
 
 /**
  * An {@link IdentifierGenerator} which generates {@link UUID} values using a pluggable
@@ -46,12 +46,12 @@ public class UUIDGenerator implements IdentifierGenerator, Configurable {
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( UUIDGenerator.class );
 
 	private UUIDGenerationStrategy strategy;
-	private UUIDTypeDescriptor.ValueTransformer valueTransformer;
+//	private UUIDTypeDescriptor.ValueTransformer valueTransformer;
 
 	public static UUIDGenerator buildSessionFactoryUniqueIdentifierGenerator() {
 		final UUIDGenerator generator = new UUIDGenerator();
 		generator.strategy = StandardRandomStrategy.INSTANCE;
-		generator.valueTransformer = UUIDTypeDescriptor.ToStringTransformer.INSTANCE;
+//		generator.valueTransformer = UUIDTypeDescriptor.ToStringTransformer.INSTANCE;
 		return generator;
 	}
 

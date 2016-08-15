@@ -8,9 +8,9 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.io.Serializable;
 
+import org.hibernate.type.descriptor.spi.java.SerializableTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.VarbinaryTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.SerializableTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.VarbinaryTypeDescriptor;
 
 /**
  * A type that maps between a {@link java.sql.Types#VARBINARY VARBINARY} and {@link Serializable} classes.

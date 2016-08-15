@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.mapper.spi.basic.BigDecimalType;
 import org.hibernate.type.mapper.spi.basic.BigIntegerType;
@@ -84,7 +84,6 @@ import org.hibernate.type.mapper.spi.basic.ZonedDateTimeType;
  * Type mappings can be adjusted per {@link org.hibernate.SessionFactory}.  These adjusted mappings can be accessed
  * from the {@link org.hibernate.TypeHelper} instance obtained via {@link org.hibernate.SessionFactory#getTypeHelper()}
  *
- * @see BasicTypeRegistry
  * @see org.hibernate.TypeHelper
  * @see org.hibernate.SessionFactory#getTypeHelper()
  *

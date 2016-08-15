@@ -46,8 +46,8 @@ import org.hibernate.sql.DecodeCaseFragment;
 import org.hibernate.sql.JoinFragment;
 import org.hibernate.sql.OracleJoinFragment;
 import org.hibernate.type.StandardBasicTypes;
-import org.hibernate.type.descriptor.sql.BitTypeDescriptor;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BitTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 
 /**
  * A dialect for Oracle 8i.

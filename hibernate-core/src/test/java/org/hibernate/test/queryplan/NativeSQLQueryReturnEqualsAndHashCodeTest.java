@@ -35,13 +35,13 @@ public class NativeSQLQueryReturnEqualsAndHashCodeTest extends BaseCoreFunctiona
 
 	@Test
 	public void testNativeSQLQueryScalarReturn() {
-		NativeSQLQueryScalarReturn typeNoAlias = new NativeSQLQueryScalarReturn( null,sessionFactory().getTypeResolver().basic( "int" ) );
+		NativeSQLQueryScalarReturn typeNoAlias = new NativeSQLQueryScalarReturn( null,sessionFactory().getTypeHelper().basic( "int" ) );
 		NativeSQLQueryScalarReturn aliasNoType = new NativeSQLQueryScalarReturn( "abc", null );
-		NativeSQLQueryScalarReturn aliasTypeInt = new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "int" ) );
-		NativeSQLQueryScalarReturn aliasTypeLong =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "long" ) );
-		NativeSQLQueryScalarReturn aliasTypeLongClass =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( Long.class.getName() ) );
-		NativeSQLQueryScalarReturn aliasTypeString =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "string" ) );
-		NativeSQLQueryScalarReturn aliasTypeStringClass =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( String.class.getName() ) );
+		NativeSQLQueryScalarReturn aliasTypeInt = new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "int" ) );
+		NativeSQLQueryScalarReturn aliasTypeLong =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "long" ) );
+		NativeSQLQueryScalarReturn aliasTypeLongClass =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( Long.class.getName() ) );
+		NativeSQLQueryScalarReturn aliasTypeString =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "string" ) );
+		NativeSQLQueryScalarReturn aliasTypeStringClass =  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( String.class.getName() ) );
 
 		check( false, typeNoAlias, aliasNoType );
 		check( false, typeNoAlias, aliasTypeInt );
@@ -70,13 +70,13 @@ public class NativeSQLQueryReturnEqualsAndHashCodeTest extends BaseCoreFunctiona
 
 		check( true, aliasTypeString, aliasTypeStringClass );
 
-		check( true, typeNoAlias, new NativeSQLQueryScalarReturn( null,sessionFactory().getTypeResolver().basic( "int" ) ) );
+		check( true, typeNoAlias, new NativeSQLQueryScalarReturn( null,sessionFactory().getTypeHelper().basic( "int" ) ) );
 		check( true, aliasNoType, new NativeSQLQueryScalarReturn( "abc", null ) );
-		check( true, aliasTypeInt, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "int" ) ) );
-		check( true, aliasTypeLong, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "long" ) ) );
-		check( true, aliasTypeLongClass,  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( Long.class.getName() ) ) );
-		check( true, aliasTypeString, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( "string" ) ) );
-		check( true, aliasTypeStringClass, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeResolver().basic( String.class.getName() ) ) );
+		check( true, aliasTypeInt, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "int" ) ) );
+		check( true, aliasTypeLong, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "long" ) ) );
+		check( true, aliasTypeLongClass,  new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( Long.class.getName() ) ) );
+		check( true, aliasTypeString, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( "string" ) ) );
+		check( true, aliasTypeStringClass, new NativeSQLQueryScalarReturn( "abc",sessionFactory().getTypeHelper().basic( String.class.getName() ) ) );
 	}
 
 	@Test
@@ -230,7 +230,7 @@ public class NativeSQLQueryReturnEqualsAndHashCodeTest extends BaseCoreFunctiona
 
 	@Test
 	public void testNativeSQLQueryReturnTypes() {
-		NativeSQLQueryScalarReturn r1 = new NativeSQLQueryScalarReturn( "a",sessionFactory().getTypeResolver().basic( "int" ) );
+		NativeSQLQueryScalarReturn r1 = new NativeSQLQueryScalarReturn( "a",sessionFactory().getTypeHelper().basic( "int" ) );
 		NativeSQLQueryRootReturn r2 = new NativeSQLQueryRootReturn( "a", "b", LockMode.NONE );
 		NativeSQLQueryJoinReturn r3 = new NativeSQLQueryJoinReturn( "a", "b", "c", Collections.singletonMap( "key", "value" ), LockMode.NONE );
 		NativeSQLQueryCollectionReturn r4 = new NativeSQLQueryCollectionReturn( "a", "b", "c", Collections.singletonMap( "key", "value" ), LockMode.NONE);

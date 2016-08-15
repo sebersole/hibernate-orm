@@ -9,8 +9,10 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.Date;
 
 import org.hibernate.dialect.Dialect;
+import org.hibernate.type.AbstractSingleColumnStandardBasicType;
+import org.hibernate.type.descriptor.spi.java.JdbcDateTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.DateTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.JdbcDateTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#DATE DATE} and {@link java.sql.Date}
@@ -25,7 +27,7 @@ public class DateType
 	public static final DateType INSTANCE = new DateType();
 
 	protected DateType() {
-		super( JdbcDateTypeDescriptor.INSTANCE, org.hibernate.type.spi.descriptor.sql.DateTypeDescriptor.INSTANCE );
+		super( JdbcDateTypeDescriptor.INSTANCE, DateTypeDescriptor.INSTANCE );
 	}
 
 	@Override
@@ -40,6 +42,6 @@ public class DateType
 
 	@Override
 	public String toJdbcLiteral(Date value, Dialect dialect) {
-		return StringType.INSTANCE.toJdbcLiteral( toString( value ), dialect );
+		return StringType.INSTANCE.getJdbcLiteralFormatter().toJdbcLiteral( toString( value ), dialect );
 	}
 }

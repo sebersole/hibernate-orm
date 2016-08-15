@@ -8,9 +8,9 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.UUID;
 
+import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BinaryTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.UUIDTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BinaryTypeDescriptor;
 
 /**
  * A type mapping {@link java.sql.Types#BINARY} and {@link UUID}

@@ -114,7 +114,7 @@ public class CriteriaCompiler implements Serializable {
 
 			public String getCastType(Class javaType) {
 				SessionFactoryImplementor factory = entityManager.getFactory();
-				Type hibernateType = factory.getTypeResolver().heuristicType( javaType.getName() );
+				Type hibernateType = factory.getTypeHelper().heuristicType( javaType.getName() );
 				if ( hibernateType == null ) {
 					throw new IllegalArgumentException(
 							"Could not convert java type [" + javaType.getName() + "] to Hibernate type"

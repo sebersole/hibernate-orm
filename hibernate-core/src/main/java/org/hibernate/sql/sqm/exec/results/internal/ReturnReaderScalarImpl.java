@@ -16,11 +16,11 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.sqm.exec.results.spi.ResultSetProcessingOptions;
 import org.hibernate.sql.sqm.exec.results.spi.ReturnReader;
 import org.hibernate.sql.sqm.exec.results.spi.RowProcessingState;
+import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.spi.descriptor.TypeDescriptorRegistryAccess;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.SqlTypeDescriptor;
 
 /**
  * @author Steve Ebersole

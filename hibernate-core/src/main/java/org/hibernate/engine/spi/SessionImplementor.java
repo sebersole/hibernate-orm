@@ -23,7 +23,6 @@ import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.spi.descriptor.WrapperOptions;
 
 /**
  * Defines the "internal contract" for {@link Session} and other parts of Hibernate such as
@@ -41,10 +40,6 @@ import org.hibernate.type.spi.descriptor.WrapperOptions;
  *     </li>
  *     <li>
  *         {@link org.hibernate.engine.jdbc.LobCreationContext} to act as the context for JDBC LOB instance creation
- *     </li>
- *     <li>
- *         {@link WrapperOptions} to fulfill the behavior needed while
- *         binding/extracting values to/from JDBC as part of the Type contracts
  *     </li>
  * </ul>
  *

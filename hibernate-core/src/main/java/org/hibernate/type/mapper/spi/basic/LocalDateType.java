@@ -8,10 +8,10 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.time.LocalDate;
 
+import org.hibernate.type.descriptor.spi.java.LocalDateJavaDescriptor;
+import org.hibernate.type.descriptor.spi.sql.DateTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.descriptor.java.LocalDateJavaDescriptor;
-import org.hibernate.type.spi.descriptor.sql.DateTypeDescriptor;
 
 /**
  * @author Steve Ebersole

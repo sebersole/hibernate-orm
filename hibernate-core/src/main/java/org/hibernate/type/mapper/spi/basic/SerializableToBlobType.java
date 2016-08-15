@@ -11,10 +11,10 @@ import java.util.Properties;
 
 import org.hibernate.MappingException;
 import org.hibernate.internal.util.ReflectHelper;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.SerializableTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BlobTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.spi.descriptor.java.SerializableTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BlobTypeDescriptor;
 import org.hibernate.usertype.DynamicParameterizedType;
 
 /**

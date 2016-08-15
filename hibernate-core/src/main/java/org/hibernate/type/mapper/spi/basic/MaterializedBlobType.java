@@ -6,9 +6,9 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
+import org.hibernate.type.descriptor.spi.java.PrimitiveByteArrayTypeDescriptor;
+import org.hibernate.type.descriptor.spi.sql.BlobTypeDescriptor;
 import org.hibernate.type.spi.JdbcLiteralFormatter;
-import org.hibernate.type.spi.descriptor.java.PrimitiveByteArrayTypeDescriptor;
-import org.hibernate.type.spi.descriptor.sql.BlobTypeDescriptor;
 
 /**
  * A type that maps between {@link java.sql.Types#BLOB BLOB} and {@code byte[]}

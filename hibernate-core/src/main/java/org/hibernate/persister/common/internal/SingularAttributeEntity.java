@@ -16,18 +16,19 @@ import org.hibernate.sqm.domain.SingularAttribute;
  * @author Steve Ebersole
  */
 public class SingularAttributeEntity
-		extends AbstractSingularAttribute<org.hibernate.type.EntityType, EntityType> {
+		extends AbstractSingularAttribute<org.hibernate.type.EntityType> {
 	private final SingularAttribute.Classification classification;
 	private final Column[] columns;
+	private final EntityType sqmType;
 
 	public SingularAttributeEntity(
 			ManagedType declaringType,
 			String name,
 			SingularAttribute.Classification classification,
-			org.hibernate.type.EntityType ormType,
 			EntityType sqmType,
 			Column[] columns) {
-		super( declaringType, name, ormType, sqmType );
+		super( declaringType, name, sqmType );
+		this.sqmType = sqmType;
 		this.classification = classification;
 		this.columns = columns;
 	}
@@ -53,6 +54,6 @@ public class SingularAttributeEntity
 
 	@Override
 	public EntityType asManagedType() {
-		return getBoundType();
+		return sqmType;
 	}
 }

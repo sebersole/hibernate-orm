@@ -137,7 +137,7 @@ public abstract class AbstractParameterRegistrationImpl<T> implements ParameterR
 				name,
 				mode,
 				type,
-				procedureCall.getSession().getFactory().getTypeResolver().heuristicType( type.getName() ),
+				procedureCall.getSession().getFactory().getTypeHelper().heuristicType( type.getName() ),
 				initialPassNullsSetting
 		);
 	}
