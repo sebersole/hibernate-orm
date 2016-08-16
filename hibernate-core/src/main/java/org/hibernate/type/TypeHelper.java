@@ -16,6 +16,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.property.access.internal.PropertyAccessStrategyBackRefImpl;
 import org.hibernate.tuple.NonIdentifierAttribute;
 
+import org.hibernate.type.descriptor.spi.MutabilityPlan;
+import org.hibernate.type.mapper.spi.Type;
+
 /**
  * Collection of convenience methods relating to operations across arrays of types...
  *
@@ -77,7 +80,7 @@ public class TypeHelper {
 	}
 
 	/**
-	 * Apply the {@link Type#assemble} operation across a series of values.
+	 * Apply the {@link MutabilityPlan#assemble} operation across a series of values.
 	 *
 	 * @param row The values
 	 * @param types The value types
@@ -96,14 +99,14 @@ public class TypeHelper {
 				assembled[i] = row[i];
 			}
 			else {
-				assembled[i] = types[i].assemble( row[i], session, owner );
+				assembled[i] = types[i].getMutabilityPlan().assemble( row[i] );
 			}
 		}
 		return assembled;
 	}
 
 	/**
-	 * Apply the {@link Type#disassemble} operation across a series of values.
+	 * Apply the {@link MutabilityPlan#disassemble} operation across a series of values.
 	 *
 	 * @param row The values
 	 * @param types The value types
@@ -128,7 +131,7 @@ public class TypeHelper {
 				disassembled[i] = (Serializable) row[i];
 			}
 			else {
-				disassembled[i] = types[i].disassemble( row[i], session, owner );
+				disassembled[i] = types[i].getMutabilityPlan().disassemble( row[i] );
 			}
 		}
 		return disassembled;

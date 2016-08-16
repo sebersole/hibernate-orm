@@ -171,7 +171,11 @@ public class SimpleValue implements KeyValue {
 					.getService( ClassLoaderService.class );
 			try {
 				final Class<AttributeConverter> converterClass = cls.classForName( converterClassName );
-				attributeConverterDescriptor = new AttributeConverterDescriptorNonAutoApplicableImpl( converterClass.newInstance() );
+				attributeConverterDescriptor = new AttributeConverterDescriptorNonAutoApplicableImpl( converterClass.newInstance(),
+																									  getMetadata().getTypeConfiguration()
+																											  .getTypeDescriptorRegistryAccess()
+																											  .getJavaTypeDescriptorRegistry()
+				);
 				return;
 			}
 			catch (Exception e) {
