@@ -61,7 +61,7 @@ public final class CollectionKey implements Serializable {
 	private int generateHashCode() {
 		int result = 17;
 		result = 37 * result + role.hashCode();
-		result = 37 * result + keyType.getHashCode( key, factory );
+		result = 37 * result + keyType.getJavaTypeDescriptor().extractHashCode( key );
 		return result;
 	}
 

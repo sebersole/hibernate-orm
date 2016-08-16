@@ -252,11 +252,6 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 	}
 
 	@Override
-	public TypeDefinition getTypeDefinition(String typeName) {
-		return typeDefinitionMap.get( typeName );
-	}
-
-	@Override
 	public Map<String, FilterDefinition> getFilterDefinitions() {
 		return filterDefinitionMap;
 	}

@@ -36,25 +36,6 @@ public class BasicTypeProducerTypeDefinitionImpl extends AbstractBasicTypeProduc
 	}
 
 	@Override
-	protected Map<String,?> collectTypeParameters() {
-		HashMap<String,Object> params = null;
-
-		if ( CollectionHelper.isNotEmpty( typeDefinition.getParameters() ) ) {
-			params = new HashMap<>();
-			params.putAll( typeDefinition.getParameters() );
-		}
-
-		if ( getBasicTypeSiteContext() != null && CollectionHelper.isNotEmpty( getBasicTypeSiteContext().getLocalTypeParameters() ) ) {
-			if ( params == null ) {
-				params = new HashMap<>();
-			}
-			params.putAll( getBasicTypeSiteContext().getLocalTypeParameters() );
-		}
-
-		return params;
-	}
-
-	@Override
 	public String getName() {
 		return name;
 	}
