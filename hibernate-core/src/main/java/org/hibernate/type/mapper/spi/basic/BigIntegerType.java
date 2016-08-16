@@ -10,7 +10,7 @@ import java.math.BigInteger;
 
 import org.hibernate.type.descriptor.spi.java.BigIntegerTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.NumericTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between a {@link java.sql.Types#NUMERIC NUMERIC} and {@link BigInteger}.

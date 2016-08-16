@@ -25,14 +25,15 @@ import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Java type descriptor for the LocalDateTime type.
  *
  * @author Steve Ebersole
  */
-public class InstantJavaDescriptor extends AbstractTypeDescriptorBasicImpl<Instant> implements TemporalTypeDescriptor<Instant>,JdbcLiteralFormatter<Instant> {
+public class InstantJavaDescriptor extends AbstractTypeDescriptorBasicImpl<Instant> implements
+		TemporalJavaTypeDescriptor<Instant>,JdbcLiteralFormatter<Instant> {
 	/**
 	 * Singleton access
 	 */
@@ -145,7 +146,7 @@ public class InstantJavaDescriptor extends AbstractTypeDescriptorBasicImpl<Insta
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
-		return (TemporalTypeDescriptor<X>) this;
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+		return (TemporalJavaTypeDescriptor<X>) this;
 	}
 }

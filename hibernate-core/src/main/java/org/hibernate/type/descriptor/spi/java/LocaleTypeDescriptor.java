@@ -11,22 +11,19 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.function.Consumer;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.type.descriptor.internal.java.ComparatorLocaleImpl;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.mapper.spi.basic.StringType;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Locale} handling.
  * 
  * @author Steve Ebersole
  */
-public class LocaleTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Locale>
-		implements JdbcLiteralFormatter<Locale> {
+public class LocaleTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Locale> {
 	public static final LocaleTypeDescriptor INSTANCE = new LocaleTypeDescriptor();
 
 	public LocaleTypeDescriptor() {
@@ -41,16 +38,6 @@ public class LocaleTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Locale
 	@Override
 	public Comparator<Locale> getComparator() {
 		return ComparatorLocaleImpl.INSTANCE;
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Locale> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Locale value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
 	}
 
 	public String toString(Locale value) {

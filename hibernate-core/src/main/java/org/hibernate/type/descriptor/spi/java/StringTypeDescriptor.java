@@ -18,7 +18,7 @@ import org.hibernate.type.descriptor.internal.java.DataHelper;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link String} handling.

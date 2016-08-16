@@ -12,7 +12,7 @@ import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A node representing a static Java constant.

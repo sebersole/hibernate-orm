@@ -10,7 +10,7 @@ import java.net.URL;
 
 import org.hibernate.type.descriptor.spi.java.UrlTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#VARCHAR VARCHAR} and {@link URL}

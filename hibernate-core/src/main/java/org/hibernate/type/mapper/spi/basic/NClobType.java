@@ -10,7 +10,7 @@ import java.sql.NClob;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.spi.java.NClobTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#NCLOB NCLOB} and {@link java.sql.NClob}

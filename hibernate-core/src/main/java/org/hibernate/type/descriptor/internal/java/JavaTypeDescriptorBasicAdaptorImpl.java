@@ -13,7 +13,7 @@ import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.AbstractTypeDescriptorBasicImpl;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 
 /**

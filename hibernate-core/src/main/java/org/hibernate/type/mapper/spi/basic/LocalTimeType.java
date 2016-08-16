@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 import org.hibernate.type.descriptor.spi.java.LocalTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimeTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#TIMESTAMP TIMESTAMP} and {@link java.time.LocalDateTime}.

@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.type.descriptor.spi.java.PrimitiveCharacterArrayTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.NClobTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Map a char[] to a NClob

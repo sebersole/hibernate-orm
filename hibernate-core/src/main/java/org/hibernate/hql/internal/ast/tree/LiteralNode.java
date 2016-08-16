@@ -13,7 +13,7 @@ import org.hibernate.hql.internal.ast.util.ColumnHelper;
 import org.hibernate.type.SingleColumnType;
 import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 import antlr.SemanticException;
 

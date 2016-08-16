@@ -8,10 +8,10 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Comparator;
 
-import org.hibernate.type.descriptor.spi.java.TemporalTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.ColumnMapping;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 
 /**
@@ -23,7 +23,7 @@ import org.hibernate.type.descriptor.spi.MutabilityPlan;
 public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements TemporalType<T> {
 	private final javax.persistence.TemporalType precision;
 	private final ColumnMapping columnMapping;
-	private final TemporalTypeDescriptor<T> domainJavaType;
+	private final TemporalJavaTypeDescriptor<T> domainJavaType;
 
 	private final MutabilityPlan<T> mutabilityPlan;
 	private final Comparator<T> comparator;
@@ -32,19 +32,19 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 
 	private final JdbcLiteralFormatter<T> jdbcLiteralFormatter;
 
-	public TemporalTypeImpl(TemporalTypeDescriptor<T> domainJavaType, SqlTypeDescriptor sqlType) {
+	public TemporalTypeImpl(TemporalJavaTypeDescriptor<T> domainJavaType, SqlTypeDescriptor sqlType) {
 		this( domainJavaType.getPrecision(), domainJavaType, sqlType );
 	}
 
 	public TemporalTypeImpl(
 			javax.persistence.TemporalType precision,
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType) {
 		this( precision, domainJavaType, sqlType, domainJavaType.getMutabilityPlan(), domainJavaType.getComparator(), null );
 	}
 
 	public TemporalTypeImpl(
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType,
 			MutabilityPlan<T> mutabilityPlan,
 			Comparator<T> comparator) {
@@ -53,7 +53,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 
 	public TemporalTypeImpl(
 			javax.persistence.TemporalType precision,
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType,
 			MutabilityPlan<T> mutabilityPlan,
 			Comparator<T> comparator) {
@@ -61,7 +61,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 	}
 
 	public TemporalTypeImpl(
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType,
 			MutabilityPlan<T> mutabilityPlan,
 			Comparator<T> comparator,
@@ -71,7 +71,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 
 	public TemporalTypeImpl(
 			javax.persistence.TemporalType precision,
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType,
 			MutabilityPlan<T> mutabilityPlan,
 			Comparator<T> comparator,
@@ -89,7 +89,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 
 	public TemporalTypeImpl(
 			javax.persistence.TemporalType precision,
-			TemporalTypeDescriptor<T> domainJavaType,
+			TemporalJavaTypeDescriptor<T> domainJavaType,
 			SqlTypeDescriptor sqlType,
 			MutabilityPlan<T> mutabilityPlan,
 			Comparator<T> comparator,
@@ -105,7 +105,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 	}
 
 	@Override
-	public TemporalTypeDescriptor<T> getJavaTypeDescriptor() {
+	public TemporalJavaTypeDescriptor<T> getJavaTypeDescriptor() {
 		return domainJavaType;
 	}
 

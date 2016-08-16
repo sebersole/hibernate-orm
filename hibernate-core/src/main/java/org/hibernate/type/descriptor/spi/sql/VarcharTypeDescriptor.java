@@ -12,10 +12,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.hibernate.type.descriptor.internal.sql.JdbcLiteralFormatterCharacterData;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -35,13 +37,19 @@ public class VarcharTypeDescriptor implements SqlTypeDescriptor {
 	}
 
 	@Override
-	public boolean canBeRemapped() {
-		return true;
+	public JavaTypeDescriptor getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
+		return typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( String.class );
 	}
 
 	@Override
-	public JavaTypeDescriptor getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-		return typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( String.class );
+	@SuppressWarnings("unchecked")
+	public <T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor) {
+		return new JdbcLiteralFormatterCharacterData( javaTypeDescriptor );
+	}
+
+	@Override
+	public boolean canBeRemapped() {
+		return true;
 	}
 
 	@Override

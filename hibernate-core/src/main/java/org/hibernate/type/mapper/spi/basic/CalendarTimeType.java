@@ -12,7 +12,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.spi.java.CalendarTimeTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimeTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

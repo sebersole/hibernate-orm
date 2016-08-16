@@ -11,7 +11,7 @@ import javax.persistence.metamodel.BasicType;
 
 import org.hibernate.type.descriptor.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Abstract adapter for JavaTypeDescriptor implementations describing a "basic type" as defined
@@ -65,10 +65,5 @@ public abstract class AbstractTypeDescriptorBasicImpl<T>
 	@Override
 	public String extractLoggableRepresentation(T value) {
 		return (value == null) ? "null" : value.toString();
-	}
-
-	@Override
-	public JdbcLiteralFormatter<T> getJdbcLiteralFormatter() {
-		return null;
 	}
 }

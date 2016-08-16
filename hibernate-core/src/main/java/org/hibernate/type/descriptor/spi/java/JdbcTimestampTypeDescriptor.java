@@ -25,9 +25,10 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class JdbcTimestampTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Date> implements TemporalTypeDescriptor<Date> {
+public class JdbcTimestampTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Date>
+		implements TemporalJavaTypeDescriptor<Date> {
 	public static final JdbcTimestampTypeDescriptor INSTANCE = new JdbcTimestampTypeDescriptor();
-	public static final String TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
 	public JdbcTimestampTypeDescriptor() {
 		super( Date.class, MutabilityPlanTimestampImpl.INSTANCE );
@@ -155,15 +156,15 @@ public class JdbcTimestampTypeDescriptor extends AbstractTypeDescriptorBasicImpl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( precision == TemporalType.TIMESTAMP ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 		if ( precision == TemporalType.TIME ) {
-			return (TemporalTypeDescriptor<X>) JdbcTimeTypeDescriptor.INSTANCE;
+			return (TemporalJavaTypeDescriptor<X>) JdbcTimeTypeDescriptor.INSTANCE;
 		}
 		if ( precision == TemporalType.DATE ) {
-			return (TemporalTypeDescriptor<X>) JdbcDateTypeDescriptor.INSTANCE;
+			return (TemporalJavaTypeDescriptor<X>) JdbcDateTypeDescriptor.INSTANCE;
 		}
 
 		throw new IllegalArgumentException( "Unrecognized JPA TemporalType precision [" + precision + "]" );

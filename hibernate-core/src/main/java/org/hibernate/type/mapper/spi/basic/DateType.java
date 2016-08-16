@@ -9,10 +9,9 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.Date;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.type.AbstractSingleColumnStandardBasicType;
 import org.hibernate.type.descriptor.spi.java.JdbcDateTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.DateTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#DATE DATE} and {@link java.sql.Date}

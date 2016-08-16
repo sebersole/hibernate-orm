@@ -8,58 +8,39 @@ package org.hibernate.type.descriptor.spi.java;
 
 import java.sql.Time;
 import java.sql.Types;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-
 import javax.persistence.TemporalType;
 
-import org.hibernate.HibernateException;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.internal.java.MutabilityPlanTimeImpl;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Time} handling.
  *
  * @author Steve Ebersole
  */
-public class JdbcTimeTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Date> implements TemporalTypeDescriptor<Date>,JdbcLiteralFormatter<Date> {
+public class JdbcTimeTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Date>
+		implements TemporalJavaTypeDescriptor<Date> {
 	public static final JdbcTimeTypeDescriptor INSTANCE = new JdbcTimeTypeDescriptor();
-	public static final String TIME_FORMAT = "HH:mm:ss";
 
 	public JdbcTimeTypeDescriptor() {
 		super( Date.class, MutabilityPlanTimeImpl.INSTANCE );
 	}
 	@Override
 	public String toString(Date value) {
-		return new SimpleDateFormat( TIME_FORMAT ).format( value );
+		return DateTimeUtils.formatAsTime( value );
 	}
+
 	@Override
 	public Date fromString(String string) {
-		try {
-			return new Time( new SimpleDateFormat( TIME_FORMAT ).parse( string ).getTime() );
-		}
-		catch ( ParseException pe ) {
-			throw new HibernateException( "could not parse time string" + string, pe );
-		}
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Date> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Date value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralTime( value );
+		return DateTimeUtils.parseDateFromTime( string );
 	}
 
 	@Override
@@ -171,12 +152,12 @@ public class JdbcTimeTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Date
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( getPrecision() == precision ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 
-		final TemporalTypeDescriptor jdbcTimestampDescriptor = (TemporalTypeDescriptor) scope.getJavaTypeDescriptorRegistry()
+		final TemporalJavaTypeDescriptor jdbcTimestampDescriptor = (TemporalJavaTypeDescriptor) scope.getJavaTypeDescriptorRegistry()
 				.getDescriptor( java.sql.Timestamp.class );
 		return jdbcTimestampDescriptor.resolveTypeForPrecision( precision, scope );
 	}

@@ -9,7 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.java.BooleanTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.IntegerTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#INTEGER INTEGER} and {@link Boolean} (using 1 and 0)

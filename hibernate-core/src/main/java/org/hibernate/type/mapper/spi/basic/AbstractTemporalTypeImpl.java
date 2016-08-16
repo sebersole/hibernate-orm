@@ -11,7 +11,7 @@ import java.util.Comparator;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.TemporalTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
@@ -28,7 +28,7 @@ public abstract class AbstractTemporalTypeImpl<T> extends AbstractBasicTypeImpl<
 			return (TemporalType<X>) this;
 		}
 
-		final TemporalTypeDescriptor<X> treatedJavaTypeDescriptor = getJavaTypeDescriptor().resolveTypeForPrecision(
+		final TemporalJavaTypeDescriptor<X> treatedJavaTypeDescriptor = getJavaTypeDescriptor().resolveTypeForPrecision(
 				precision,
 				typeConfiguration
 		);

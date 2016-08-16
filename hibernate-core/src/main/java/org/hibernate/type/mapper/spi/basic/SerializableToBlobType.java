@@ -14,7 +14,7 @@ import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.SerializableTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BlobTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.usertype.DynamicParameterizedType;
 
 /**

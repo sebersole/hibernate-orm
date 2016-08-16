@@ -11,7 +11,7 @@ import java.util.Comparator;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.spi.java.LongTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BigIntTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#BIGINT BIGINT} and {@link Long}

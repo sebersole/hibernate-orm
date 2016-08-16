@@ -11,7 +11,7 @@ import javax.persistence.AttributeConverter;
 
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 
 /**

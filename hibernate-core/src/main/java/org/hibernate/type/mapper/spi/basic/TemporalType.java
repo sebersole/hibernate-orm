@@ -6,7 +6,7 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.type.descriptor.spi.java.TemporalTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -16,7 +16,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public interface TemporalType<T> extends BasicType<T> {
 	@Override
-	TemporalTypeDescriptor<T> getJavaTypeDescriptor();
+	TemporalJavaTypeDescriptor<T> getJavaTypeDescriptor();
 
 	javax.persistence.TemporalType getPrecision();
 

@@ -10,7 +10,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.java.CharacterTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.NCharTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#NCHAR NCHAR(1)} and {@link Character}

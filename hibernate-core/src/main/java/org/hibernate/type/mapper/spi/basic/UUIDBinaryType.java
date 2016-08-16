@@ -10,7 +10,7 @@ import java.util.UUID;
 
 import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BinaryTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type mapping {@link java.sql.Types#BINARY} and {@link UUID}

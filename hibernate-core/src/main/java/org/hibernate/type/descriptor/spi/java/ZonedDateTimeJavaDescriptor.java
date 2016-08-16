@@ -30,7 +30,7 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  */
 public class ZonedDateTimeJavaDescriptor
 		extends AbstractTypeDescriptorBasicImpl<ZonedDateTime>
-		implements TemporalTypeDescriptor<ZonedDateTime> {
+		implements TemporalJavaTypeDescriptor<ZonedDateTime> {
 
 	/**
 	 * Singleton access
@@ -134,7 +134,7 @@ public class ZonedDateTimeJavaDescriptor
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
-		return (TemporalTypeDescriptor<X>) this;
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+		return (TemporalJavaTypeDescriptor<X>) this;
 	}
 }

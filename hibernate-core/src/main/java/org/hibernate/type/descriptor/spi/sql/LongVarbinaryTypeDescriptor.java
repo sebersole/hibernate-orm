@@ -8,6 +8,9 @@ package org.hibernate.type.descriptor.spi.sql;
 
 import java.sql.Types;
 
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
+
 /**
  * Descriptor for {@link Types#LONGVARBINARY LONGVARBINARY} handling.
  *

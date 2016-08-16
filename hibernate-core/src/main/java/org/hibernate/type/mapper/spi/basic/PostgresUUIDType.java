@@ -21,7 +21,7 @@ import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BasicBinder;
 import org.hibernate.type.descriptor.spi.sql.BasicExtractor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
