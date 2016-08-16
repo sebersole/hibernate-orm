@@ -57,7 +57,7 @@ final class OldCacheKeyImplementation implements Serializable {
 	}
 
 	private int calculateHashCode(Type type, SessionFactoryImplementor factory) {
-		int result = type.getHashCode( id, factory );
+		int result = type.getJavaTypeDescriptor().extractHashCode( id );
 		result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
 		return result;
 	}

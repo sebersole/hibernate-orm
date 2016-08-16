@@ -189,7 +189,7 @@ public abstract class CollectionType extends AbstractType implements Association
 
 	protected String renderLoggableString(Object value, SessionFactoryImplementor factory) throws HibernateException {
 		final List<String> list = new ArrayList<String>();
-		Type elemType = getElementType( factory );
+		org.hibernate.type.mapper.spi.Type elemType = getElementType( factory );
 		Iterator itr = getElementsIterator( value );
 		while ( itr.hasNext() ) {
 			list.add( elemType.toLoggableString( itr.next(), factory ) );
@@ -371,7 +371,7 @@ public abstract class CollectionType extends AbstractType implements Association
 
 			// NOTE VERY HACKISH WORKAROUND!!
 			// TODO: Fix this so it will work for non-POJO entity mode
-			Type keyType = getPersister( session ).getKeyType();
+			org.hibernate.type.mapper.spi.Type keyType = getPersister( session ).getKeyType();
 			if ( !keyType.getReturnedClass().isInstance( id ) ) {
 				id = keyType.semiResolve(
 						entityEntry.getLoadedValue( foreignKeyPropertyName ),
@@ -399,7 +399,7 @@ public abstract class CollectionType extends AbstractType implements Association
 			ownerId = key;
 		}
 		else {
-			Type keyType = getPersister( session ).getKeyType();
+			org.hibernate.type.mapper.spi.Type keyType = getPersister( session ).getKeyType();
 			EntityPersister ownerPersister = getPersister( session ).getOwnerEntityPersister();
 			// TODO: Fix this so it will work for non-POJO entity mode
 			Class ownerMappedClass = ownerPersister.getMappedClass();
@@ -512,7 +512,7 @@ public abstract class CollectionType extends AbstractType implements Association
 		result.clear();
 
 		// copy elements into newly empty target collection
-		Type elemType = getElementType( session.getFactory() );
+		org.hibernate.type.mapper.spi.Type elemType = getElementType( session.getFactory() );
 		Iterator iter = ( (java.util.Collection) original ).iterator();
 		while ( iter.hasNext() ) {
 			result.add( elemType.replace( iter.next(), null, session, owner, copyCache ) );
@@ -544,7 +544,7 @@ public abstract class CollectionType extends AbstractType implements Association
 	private void preserveSnapshot(
 			PersistentCollection original,
 			PersistentCollection result,
-			Type elemType,
+			org.hibernate.type.mapper.spi.Type elemType,
 			Object owner,
 			Map copyCache,
 			SharedSessionContractImplementor session) {
@@ -684,7 +684,7 @@ public abstract class CollectionType extends AbstractType implements Association
 	 * @return The type of the collection elements
 	 * @throws MappingException Indicates the underlying persister could not be located.
 	 */
-	public final Type getElementType(SessionFactoryImplementor factory) throws MappingException {
+	public final org.hibernate.type.mapper.spi.Type getElementType(SessionFactoryImplementor factory) throws MappingException {
 		return factory.getCollectionPersister( getRole() ).getElementType();
 	}
 
