@@ -10,6 +10,7 @@ import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -30,6 +31,19 @@ public interface SqlTypeDescriptor {
 	int getSqlType();
 
 	/**
+	 * Get the JavaTypeDescriptor for the Java type recommended by the JDBC spec for mapping the
+	 * given JDBC/SQL type.  The standard implementations honor the JDBC recommended mapping as per
+	 * http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
+	 *
+	 * @param typeConfiguration Access to Hibernate's current TypeConfiguration (type information)
+	 *
+	 * @return the recommended Java type descriptor.
+	 */
+	JavaTypeDescriptor getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration);
+
+	<T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor);
+
+	/**
 	 * Is this descriptor available for remapping?
 	 * <p/>
 	 * Mainly this comes into play as part of Dialect SqlTypeDescriptor remapping,
@@ -43,17 +57,6 @@ public interface SqlTypeDescriptor {
 	 * @see org.hibernate.dialect.Dialect#getSqlTypeDescriptorOverride
 	 */
 	boolean canBeRemapped();
-
-	/**
-	 * Get the JavaTypeDescriptor for the Java type recommended by the JDBC spec for mapping the
-	 * given JDBC/SQL type.  The standard implementations honor the JDBC recommended mapping as per
-	 * http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
-	 *
-	 * @param typeConfiguration Access to Hibernate's current TypeConfiguration (type information)
-	 *
-	 * @return the recommended Java type descriptor.
-	 */
-	JavaTypeDescriptor getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration);
 
 	/**
 	 * Get the binder (setting JDBC in-going parameter values) capable of handling values of the type described by the

@@ -10,18 +10,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.hibernate.HibernateException;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link URL} handling.
  *
  * @author Steve Ebersole
  */
-public class UrlTypeDescriptor extends AbstractTypeDescriptorBasicImpl<URL> implements JdbcLiteralFormatter<URL> {
+public class UrlTypeDescriptor extends AbstractTypeDescriptorBasicImpl<URL> {
 	public static final UrlTypeDescriptor INSTANCE = new UrlTypeDescriptor();
 
 	public UrlTypeDescriptor() {
@@ -31,16 +29,6 @@ public class UrlTypeDescriptor extends AbstractTypeDescriptorBasicImpl<URL> impl
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return StringTypeDescriptor.INSTANCE.getJdbcRecommendedSqlType( context );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<URL> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(URL value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
 	}
 
 	public String toString(URL value) {

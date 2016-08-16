@@ -14,7 +14,7 @@ import org.hibernate.type.descriptor.internal.java.ComparatorTimeZoneImpl;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link TimeZone} handling.
@@ -22,8 +22,7 @@ import org.hibernate.type.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class TimeZoneTypeDescriptor
-		extends AbstractTypeDescriptorBasicImpl<TimeZone>
-		implements JdbcLiteralFormatter<TimeZone> {
+		extends AbstractTypeDescriptorBasicImpl<TimeZone> {
 	public static final TimeZoneTypeDescriptor INSTANCE = new TimeZoneTypeDescriptor();
 
 	public TimeZoneTypeDescriptor() {
@@ -36,16 +35,6 @@ public class TimeZoneTypeDescriptor
 
 	public TimeZone fromString(String string) {
 		return TimeZone.getTimeZone( string );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<TimeZone> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(TimeZone value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( value.getID(), dialect );
 	}
 
 	@Override

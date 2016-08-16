@@ -14,29 +14,17 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link BigInteger} handling.
  *
  * @author Steve Ebersole
  */
-public class BigIntegerTypeDescriptor extends AbstractTypeDescriptorBasicImpl<BigInteger>
-		implements JdbcLiteralFormatter<BigInteger> {
+public class BigIntegerTypeDescriptor extends AbstractTypeDescriptorBasicImpl<BigInteger> {
 	public static final BigIntegerTypeDescriptor INSTANCE = new BigIntegerTypeDescriptor();
 
 	public BigIntegerTypeDescriptor() {
 		super( BigInteger.class );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<BigInteger> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(BigInteger value, Dialect dialect) {
-		return toString( value );
 	}
 
 	@Override

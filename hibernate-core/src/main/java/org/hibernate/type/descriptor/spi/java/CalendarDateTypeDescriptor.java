@@ -14,7 +14,6 @@ import java.util.GregorianCalendar;
 import javax.persistence.TemporalType;
 
 import org.hibernate.cfg.Environment;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.util.compare.CalendarComparator;
 import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.internal.java.MutabilityPlanCalendarImpl;
@@ -22,7 +21,6 @@ import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Calendar} handling, but just for the date (month, day, year) portion.
@@ -31,21 +29,11 @@ import org.hibernate.type.spi.JdbcLiteralFormatter;
  */
 public class CalendarDateTypeDescriptor
 		extends AbstractTypeDescriptorBasicImpl<Calendar>
-		implements TemporalTypeDescriptor<Calendar>, JdbcLiteralFormatter<Calendar> {
+		implements TemporalJavaTypeDescriptor<Calendar> {
 	public static final CalendarDateTypeDescriptor INSTANCE = new CalendarDateTypeDescriptor();
 
 	protected CalendarDateTypeDescriptor() {
 		super( Calendar.class, MutabilityPlanCalendarImpl.INSTANCE );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Calendar> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Calendar value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralDate( value );
 	}
 
 	public String toString(Calendar value) {
@@ -147,17 +135,17 @@ public class CalendarDateTypeDescriptor
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(
 			TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		switch ( precision ) {
 			case TIMESTAMP: {
-				return (TemporalTypeDescriptor<X>) CalendarTimeTypeDescriptor.INSTANCE;
+				return (TemporalJavaTypeDescriptor<X>) CalendarTimeTypeDescriptor.INSTANCE;
 			}
 			case TIME: {
-				return (TemporalTypeDescriptor<X>) CalendarTypeDescriptor.INSTANCE;
+				return (TemporalJavaTypeDescriptor<X>) CalendarTypeDescriptor.INSTANCE;
 			}
 			default: {
-				return (TemporalTypeDescriptor<X>) this;
+				return (TemporalJavaTypeDescriptor<X>) this;
 			}
 		}
 	}

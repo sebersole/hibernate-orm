@@ -15,7 +15,7 @@ import org.hibernate.internal.util.ZonedDateTimeComparator;
 import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.spi.java.ZonedDateTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * @author Steve Ebersole

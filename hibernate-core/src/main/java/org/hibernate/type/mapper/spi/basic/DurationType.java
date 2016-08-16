@@ -11,7 +11,7 @@ import java.time.Duration;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.java.DurationJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BigIntTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * @author Steve Ebersole

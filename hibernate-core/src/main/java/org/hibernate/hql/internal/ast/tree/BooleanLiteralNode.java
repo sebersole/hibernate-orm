@@ -9,7 +9,7 @@ package org.hibernate.hql.internal.ast.tree;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Represents a boolean literal within a query.

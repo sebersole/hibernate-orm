@@ -10,18 +10,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Float} handling.
  *
  * @author Steve Ebersole
  */
-public class FloatTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Float> implements JdbcLiteralFormatter<Float> {
+public class FloatTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Float> {
 	public static final FloatTypeDescriptor INSTANCE = new FloatTypeDescriptor();
 
 	public FloatTypeDescriptor() {
@@ -31,16 +29,6 @@ public class FloatTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Float> 
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.FLOAT );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Float> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Float value, Dialect dialect) {
-		return value.toString();
 	}
 
 	@Override

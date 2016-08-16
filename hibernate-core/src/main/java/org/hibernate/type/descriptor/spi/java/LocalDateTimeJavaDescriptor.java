@@ -31,7 +31,9 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class LocalDateTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl<LocalDateTime> implements TemporalTypeDescriptor<LocalDateTime > {
+public class LocalDateTimeJavaDescriptor
+		extends AbstractTypeDescriptorBasicImpl<LocalDateTime>
+		implements TemporalJavaTypeDescriptor<LocalDateTime > {
 	private static final Logger log = Logger.getLogger( LocalDateTimeJavaDescriptor.class );
 
 	/**
@@ -143,16 +145,16 @@ public class LocalDateTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( precision == TemporalType.TIMESTAMP ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 		if ( precision == TemporalType.DATE ) {
-			return (TemporalTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalDate.class );
+			return (TemporalJavaTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalDate.class );
 		}
 		if ( precision == TemporalType.TIME ) {
 			log.debugf( "No JPA TemporalType#TIME Java representation for LocalDateTime, using LocalDateTime" );
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 
 		throw new IllegalArgumentException( "Unrecognized JPA TemporalType precision [" + precision + "]" );

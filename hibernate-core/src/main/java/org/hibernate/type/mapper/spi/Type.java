@@ -24,7 +24,6 @@ import org.hibernate.type.mapper.spi.any.AnyType;
 import org.hibernate.type.spi.CollectionType;
 import org.hibernate.type.spi.CompositeType;
 import org.hibernate.type.mapper.spi.entity.EntityType;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 
 /**

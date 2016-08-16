@@ -10,19 +10,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Double} handling.
  *
  * @author Steve Ebersole
  */
-public class DoubleTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Double>
-		implements JdbcLiteralFormatter<Double> {
+public class DoubleTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Double> {
 	public static final DoubleTypeDescriptor INSTANCE = new DoubleTypeDescriptor();
 
 	public DoubleTypeDescriptor() {
@@ -32,16 +29,6 @@ public class DoubleTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Double
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.DOUBLE );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Double> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Double value, Dialect dialect) {
-		return value.toString();
 	}
 
 	@Override

@@ -33,7 +33,9 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class OffsetTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl<OffsetTime> implements TemporalTypeDescriptor<OffsetTime> {
+public class OffsetTimeJavaDescriptor
+		extends AbstractTypeDescriptorBasicImpl<OffsetTime>
+		implements TemporalJavaTypeDescriptor<OffsetTime> {
 	/**
 	 * Singleton access
 	 */
@@ -140,12 +142,12 @@ public class OffsetTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl<Of
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( precision == TemporalType.TIME ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 		if ( precision == TemporalType.TIMESTAMP ) {
-			return (TemporalTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalDateTime.class );
+			return (TemporalJavaTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalDateTime.class );
 		}
 		if ( precision == TemporalType.DATE ) {
 			throw new IllegalArgumentException( "Cannot treat OffsetTime as javax.persistence.TemporalType#DATE" );

@@ -8,6 +8,9 @@ package org.hibernate.type.descriptor.spi.sql;
 
 import java.sql.Types;
 
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
+
 /**
  * Descriptor for {@link Types#LONGVARCHAR LONGVARCHAR} handling.
  *
@@ -22,5 +25,11 @@ public class LongVarcharTypeDescriptor extends VarcharTypeDescriptor {
 	@Override
 	public int getSqlType() {
 		return Types.LONGVARCHAR;
+	}
+
+	@Override
+	public <T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor) {
+		// no literal support for long character data
+		return null;
 	}
 }

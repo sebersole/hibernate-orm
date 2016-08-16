@@ -30,7 +30,9 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 /**
  * @author Chris Cranford
  */
-public class LocalTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl<LocalTime> implements TemporalTypeDescriptor<LocalTime> {
+public class LocalTimeJavaDescriptor
+		extends AbstractTypeDescriptorBasicImpl<LocalTime>
+		implements TemporalJavaTypeDescriptor<LocalTime> {
 	/**
 	 * Singleton access
 	 */
@@ -140,12 +142,12 @@ public class LocalTimeJavaDescriptor extends AbstractTypeDescriptorBasicImpl<Loc
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( precision == TemporalType.TIME ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 		if ( precision == TemporalType.TIMESTAMP ) {
-			return (TemporalTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalTime.class );
+			return (TemporalJavaTypeDescriptor<X>)scope.getJavaTypeDescriptorRegistry().getDescriptor( LocalTime.class );
 		}
 		if ( precision == TemporalType.DATE ) {
 			throw new IllegalArgumentException( "Cannot treat LocalDate as javax.persistence.TemporalType#TIME" );

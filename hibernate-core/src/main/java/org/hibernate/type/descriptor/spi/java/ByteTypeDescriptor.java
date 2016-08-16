@@ -8,11 +8,9 @@ package org.hibernate.type.descriptor.spi.java;
 
 import java.sql.Types;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Byte} handling.
@@ -20,7 +18,7 @@ import org.hibernate.type.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  * @author Lukasz Antoniak (lukasz dot antoniak at gmail dot com)
  */
-public class ByteTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Byte> implements JdbcLiteralFormatter<Byte> {
+public class ByteTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Byte> {
 	public static final ByteTypeDescriptor INSTANCE = new ByteTypeDescriptor();
 
 	public ByteTypeDescriptor() {
@@ -30,16 +28,6 @@ public class ByteTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Byte> im
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.TINYINT );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Byte> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Byte value, Dialect dialect) {
-		return toJdbcLiteral( value );
 	}
 
 	public String toJdbcLiteral(Byte value) {

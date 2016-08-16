@@ -52,7 +52,7 @@ import org.hibernate.type.descriptor.spi.java.PrimitiveCharacterArrayTypeDescrip
 import org.hibernate.type.descriptor.spi.java.SerializableTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.ShortTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.TemporalTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.TimeZoneTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.UrlTypeDescriptor;
@@ -174,8 +174,8 @@ public class BasicTypeRegistry {
 				comparator = javaTypeDescriptor.getComparator();
 			}
 
-			if ( TemporalTypeDescriptor.class.isInstance( javaTypeDescriptor ) ) {
-				impl = new TemporalTypeImpl( (TemporalTypeDescriptor) javaTypeDescriptor, sqlTypeDescriptor, mutabilityPlan, comparator );
+			if ( TemporalJavaTypeDescriptor.class.isInstance( javaTypeDescriptor ) ) {
+				impl = new TemporalTypeImpl( (TemporalJavaTypeDescriptor) javaTypeDescriptor, sqlTypeDescriptor, mutabilityPlan, comparator );
 			}
 			else {
 				impl = new BasicTypeImpl( javaTypeDescriptor, sqlTypeDescriptor, mutabilityPlan, comparator );
@@ -318,8 +318,8 @@ public class BasicTypeRegistry {
 		}
 
 		final BasicType<T> impl;
-		if ( TemporalTypeDescriptor.class.isInstance( javaTypeDescriptor ) ) {
-			final TemporalTypeDescriptor javaTemporalTypeDescriptor = (TemporalTypeDescriptor) javaTypeDescriptor;
+		if ( TemporalJavaTypeDescriptor.class.isInstance( javaTypeDescriptor ) ) {
+			final TemporalJavaTypeDescriptor javaTemporalTypeDescriptor = (TemporalJavaTypeDescriptor) javaTypeDescriptor;
 			impl = new TemporalTypeImpl(
 					javaTemporalTypeDescriptor,
 					sqlTypeDescriptor,
@@ -444,12 +444,12 @@ public class BasicTypeRegistry {
 		register( type, RegistryKey.from( javaTypeDescriptor, sqlTypeDescriptor, null ) );
 	}
 
-	private void registerTemporalType(TemporalTypeDescriptor temporalTypeDescriptor, SqlTypeDescriptor sqlTypeDescriptor) {
+	private void registerTemporalType(TemporalJavaTypeDescriptor temporalTypeDescriptor, SqlTypeDescriptor sqlTypeDescriptor) {
 		registerTemporalType( temporalTypeDescriptor, sqlTypeDescriptor, null );
 	}
 
 	@SuppressWarnings("unchecked")
-	private void registerTemporalType(TemporalTypeDescriptor temporalTypeDescriptor,
+	private void registerTemporalType(TemporalJavaTypeDescriptor temporalTypeDescriptor,
 			SqlTypeDescriptor sqlTypeDescriptor,
 			MutabilityPlan mutabilityPlan) {
 		final TemporalType type = new TemporalTypeImpl(

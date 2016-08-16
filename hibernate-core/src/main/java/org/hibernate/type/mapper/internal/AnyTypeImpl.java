@@ -24,7 +24,7 @@ import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.mapper.spi.any.AnyType;
 import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
 import org.hibernate.type.mapper.spi.basic.BasicType;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * @author Steve Ebersole

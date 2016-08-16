@@ -13,7 +13,7 @@ import javax.persistence.metamodel.Type;
 
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 
@@ -80,8 +80,6 @@ public interface JavaTypeDescriptor<T> extends Type<T>, Serializable {
 	 * @return The natural comparator.
 	 */
 	Comparator<T> getComparator();
-
-	JdbcLiteralFormatter<T> getJdbcLiteralFormatter();
 
 	/**
 	 * Extract a proper hash code for this value.

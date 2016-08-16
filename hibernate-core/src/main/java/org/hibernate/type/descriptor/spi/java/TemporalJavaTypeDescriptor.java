@@ -9,12 +9,14 @@ package org.hibernate.type.descriptor.spi.java;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 
 /**
+ * Specialization of JavaTypeDescriptor for values representing temporal values.
+ *
  * @author Steve Ebersole
  */
-public interface TemporalTypeDescriptor<T> extends JavaTypeDescriptor<T> {
+public interface TemporalJavaTypeDescriptor<T> extends JavaTypeDescriptor<T> {
 	javax.persistence.TemporalType getPrecision();
 
-	<X> TemporalTypeDescriptor<X> resolveTypeForPrecision(
+	<X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(
 			javax.persistence.TemporalType precision,
 			TypeDescriptorRegistryAccess scope);
 }

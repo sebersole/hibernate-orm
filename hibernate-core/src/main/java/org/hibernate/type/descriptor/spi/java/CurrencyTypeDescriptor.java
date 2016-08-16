@@ -8,19 +8,17 @@ package org.hibernate.type.descriptor.spi.java;
 
 import java.util.Currency;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Currency} handling.
  *
  * @author Steve Ebersole
  */
-public class CurrencyTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Currency>
-		implements JdbcLiteralFormatter<Currency> {
+public class CurrencyTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Currency> {
 	public static final CurrencyTypeDescriptor INSTANCE = new CurrencyTypeDescriptor();
 
 	public CurrencyTypeDescriptor() {
@@ -30,16 +28,6 @@ public class CurrencyTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Curr
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return StringTypeDescriptor.INSTANCE.getJdbcRecommendedSqlType( context );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Currency> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Currency value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
 	}
 
 	@Override

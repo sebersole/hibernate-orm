@@ -7,7 +7,7 @@
 package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.type.descriptor.spi.java.DoubleTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * A type that maps between {@link java.sql.Types#DOUBLE DOUBLE} and {@link Double}

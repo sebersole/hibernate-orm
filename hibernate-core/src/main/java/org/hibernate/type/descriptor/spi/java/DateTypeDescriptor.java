@@ -26,7 +26,7 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  */
 public class DateTypeDescriptor
 		extends AbstractTypeDescriptorBasicImpl<Date>
-		implements TemporalTypeDescriptor<Date> {
+		implements TemporalJavaTypeDescriptor<Date> {
 	public static final DateTypeDescriptor INSTANCE = new DateTypeDescriptor();
 
 	public DateTypeDescriptor() {
@@ -40,8 +40,8 @@ public class DateTypeDescriptor
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
-		final TemporalTypeDescriptor jdbcTimestampDescriptor = (TemporalTypeDescriptor) scope.getJavaTypeDescriptorRegistry()
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+		final TemporalJavaTypeDescriptor jdbcTimestampDescriptor = (TemporalJavaTypeDescriptor) scope.getJavaTypeDescriptorRegistry()
 				.getDescriptor( java.sql.Timestamp.class );
 		return jdbcTimestampDescriptor.resolveTypeForPrecision( precision, scope );
 	}

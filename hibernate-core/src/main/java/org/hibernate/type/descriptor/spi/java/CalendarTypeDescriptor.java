@@ -27,7 +27,9 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class CalendarTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Calendar> implements TemporalTypeDescriptor<Calendar> {
+public class CalendarTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Calendar>
+		implements TemporalJavaTypeDescriptor<Calendar> {
 	public static final CalendarTypeDescriptor INSTANCE = new CalendarTypeDescriptor();
 
 	@Override
@@ -37,15 +39,15 @@ public class CalendarTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Cale
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		if ( precision == TemporalType.TIMESTAMP ) {
-			return (TemporalTypeDescriptor<X>) this;
+			return (TemporalJavaTypeDescriptor<X>) this;
 		}
 		if ( precision == TemporalType.TIME ) {
-			return (TemporalTypeDescriptor<X>) CalendarTimeTypeDescriptor.INSTANCE;
+			return (TemporalJavaTypeDescriptor<X>) CalendarTimeTypeDescriptor.INSTANCE;
 		}
 		if ( precision == TemporalType.DATE ) {
-			return (TemporalTypeDescriptor<X>) CalendarDateTypeDescriptor.INSTANCE;
+			return (TemporalJavaTypeDescriptor<X>) CalendarDateTypeDescriptor.INSTANCE;
 		}
 
 		throw new IllegalArgumentException( "Unknown JPA TemporalType precision [" + precision + "]" );

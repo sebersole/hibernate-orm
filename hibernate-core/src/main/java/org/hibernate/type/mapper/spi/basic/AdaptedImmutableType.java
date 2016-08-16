@@ -6,8 +6,7 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.type.AbstractSingleColumnStandardBasicType;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 

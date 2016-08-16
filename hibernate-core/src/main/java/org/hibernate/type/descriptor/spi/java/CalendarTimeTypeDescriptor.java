@@ -27,7 +27,9 @@ import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class CalendarTimeTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Calendar> implements TemporalTypeDescriptor<Calendar> {
+public class CalendarTimeTypeDescriptor
+		extends AbstractTypeDescriptorBasicImpl<Calendar>
+		implements TemporalJavaTypeDescriptor<Calendar> {
 	public static final CalendarTimeTypeDescriptor INSTANCE = new CalendarTimeTypeDescriptor();
 
 	protected CalendarTimeTypeDescriptor() {
@@ -133,16 +135,16 @@ public class CalendarTimeTypeDescriptor extends AbstractTypeDescriptorBasicImpl<
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> TemporalTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
+	public <X> TemporalJavaTypeDescriptor<X> resolveTypeForPrecision(TemporalType precision, TypeDescriptorRegistryAccess scope) {
 		switch ( precision ) {
 			case TIMESTAMP: {
-				return (TemporalTypeDescriptor<X>) CalendarTypeDescriptor.INSTANCE;
+				return (TemporalJavaTypeDescriptor<X>) CalendarTypeDescriptor.INSTANCE;
 			}
 			case DATE: {
-				return (TemporalTypeDescriptor<X>) CalendarDateTypeDescriptor.INSTANCE;
+				return (TemporalJavaTypeDescriptor<X>) CalendarDateTypeDescriptor.INSTANCE;
 			}
 			default: {
-				return (TemporalTypeDescriptor<X>) this;
+				return (TemporalJavaTypeDescriptor<X>) this;
 			}
 		}
 	}

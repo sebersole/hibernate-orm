@@ -14,7 +14,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link BigDecimal} handling.
@@ -22,8 +22,7 @@ import org.hibernate.type.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class BigDecimalTypeDescriptor
-		extends AbstractTypeDescriptorBasicImpl<BigDecimal>
-		implements JdbcLiteralFormatter<BigDecimal> {
+		extends AbstractTypeDescriptorBasicImpl<BigDecimal> {
 	public static final BigDecimalTypeDescriptor INSTANCE = new BigDecimalTypeDescriptor();
 
 	public BigDecimalTypeDescriptor() {
@@ -46,16 +45,6 @@ public class BigDecimalTypeDescriptor
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.NUMERIC );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<BigDecimal> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(BigDecimal value, Dialect dialect) {
-		return value.toString();
 	}
 
 	@Override

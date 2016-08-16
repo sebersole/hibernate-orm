@@ -10,9 +10,9 @@ import java.util.Comparator;
 
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatterConvertedImpl;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatterConvertedImpl;
 import org.hibernate.type.mapper.spi.ColumnMapping;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 
 /**
@@ -154,7 +154,7 @@ public class BasicTypeImpl<T> extends AbstractBasicTypeImpl<T> {
 			return jdbcLiteralFormatter;
 		}
 
-		return domainJavaType.getJdbcLiteralFormatter();
+		return sqlType.getJdbcLiteralFormatter( domainJavaType );
 	}
 
 	@Override

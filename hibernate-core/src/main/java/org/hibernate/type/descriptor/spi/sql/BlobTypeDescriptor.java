@@ -17,6 +17,7 @@ import org.hibernate.engine.jdbc.BinaryStream;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -27,8 +28,13 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Brett Meyer
  */
 public abstract class BlobTypeDescriptor implements SqlTypeDescriptor {
-
 	private BlobTypeDescriptor() {
+	}
+
+	@Override
+	public <T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor) {
+		// literal values for BLOB data is not supported.
+		return null;
 	}
 
 	@Override

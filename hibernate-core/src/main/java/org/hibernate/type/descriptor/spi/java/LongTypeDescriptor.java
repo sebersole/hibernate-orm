@@ -10,18 +10,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link Integer} handling.
  *
  * @author Steve Ebersole
  */
-public class LongTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Long> implements JdbcLiteralFormatter<Long> {
+public class LongTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Long> {
 	public static final LongTypeDescriptor INSTANCE = new LongTypeDescriptor();
 
 	public LongTypeDescriptor() {
@@ -31,16 +29,6 @@ public class LongTypeDescriptor extends AbstractTypeDescriptorBasicImpl<Long> im
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.INTEGER );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<Long> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Long value, Dialect dialect) {
-		return value.toString();
 	}
 
 	@Override
