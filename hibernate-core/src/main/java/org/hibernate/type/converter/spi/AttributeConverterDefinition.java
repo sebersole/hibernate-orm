@@ -4,11 +4,12 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.type.mapper.spi.basic;
+package org.hibernate.type.converter.spi;
 
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 
 /**
  * Internal descriptor for an AttributeConverter implementation, with the intent of being

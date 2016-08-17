@@ -24,8 +24,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class CalendarTimeType
-		extends TemporalTypeImpl<Calendar>
-		implements JdbcLiteralFormatter<Calendar> {
+		extends TemporalTypeImpl<Calendar> {
 	public static final CalendarTimeType INSTANCE = new CalendarTimeType();
 
 	public CalendarTimeType() {
@@ -38,12 +37,7 @@ public class CalendarTimeType
 
 	@Override
 	public JdbcLiteralFormatter<Calendar> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Calendar value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralTime( value );
+		return TimeTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( CalendarTimeTypeDescriptor.INSTANCE );
 	}
 
 	@Override

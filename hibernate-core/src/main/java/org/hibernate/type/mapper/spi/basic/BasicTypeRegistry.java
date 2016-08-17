@@ -12,6 +12,7 @@ import java.util.Map;
 import javax.persistence.EnumType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;

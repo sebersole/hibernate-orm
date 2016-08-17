@@ -38,11 +38,11 @@ import org.hibernate.tuple.entity.EntityTuplizerFactory;
  */
 public interface SessionFactoryBuilder {
 	/**
-	 * Apply a Bean Validation ValidatorFactory to the SessionFactory being built.
+	 * Apply a ManagedBean Validation ValidatorFactory to the SessionFactory being built.
 	 *
-	 * NOTE : De-typed to avoid hard dependency on Bean Validation jar at runtime.
+	 * NOTE : De-typed to avoid hard dependency on ManagedBean Validation jar at runtime.
 	 *
-	 * @param validatorFactory The Bean Validation ValidatorFactory to use
+	 * @param validatorFactory The ManagedBean Validation ValidatorFactory to use
 	 *
 	 * @return {@code this}, for method chaining
 	 */

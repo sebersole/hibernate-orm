@@ -31,6 +31,8 @@ public class FloatType extends BasicTypeImpl<Float> {
 
 	@Override
 	public JdbcLiteralFormatter<Float> getJdbcLiteralFormatter() {
-		return FloatTypeDescriptor.INSTANCE;
+		return org.hibernate.type.descriptor.spi.sql.FloatTypeDescriptor.INSTANCE.getJdbcLiteralFormatter(
+				FloatTypeDescriptor.INSTANCE
+		);
 	}
 }

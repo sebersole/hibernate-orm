@@ -861,6 +861,7 @@ The entity state resulting from merging an entity copy will be overwritten when 
 
 For more details, check out the <<chapters/pc/PersistenceContext.adoc#pc-merge-gotchas,Merge gotchas>> section.
 
+|`hibernate.delay_cdi_access`| `true` or `false` (default value) | Defines delayed access to CDI `BeanManager`. Starting in 5.1 the preferred means for CDI bootstrapping is through `org.hibernate.resource.cdi.spi.ExtendedBeanManager`.
 |=====================================================================================================================================================================================================================================================
 
 [[configurations-envers]]

@@ -7,8 +7,7 @@
 package org.hibernate.type.mapper.spi;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
-import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 
 /**
  * @author Steve Ebersole

@@ -63,7 +63,7 @@ import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.mapper.spi.basic.StringNVarcharType;
 import org.hibernate.type.mapper.spi.basic.WrappedMaterializedBlobType;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 import org.hibernate.usertype.DynamicParameterizedType;
 

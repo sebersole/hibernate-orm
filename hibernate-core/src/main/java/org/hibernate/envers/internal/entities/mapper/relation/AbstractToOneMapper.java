@@ -94,7 +94,7 @@ public abstract class AbstractToOneMapper implements PropertyMapper {
 	}
 
 	/**
-	 * @return Bean property that represents the relation.
+	 * @return ManagedBean property that represents the relation.
 	 */
 	protected PropertyData getPropertyData() {
 		return propertyData;

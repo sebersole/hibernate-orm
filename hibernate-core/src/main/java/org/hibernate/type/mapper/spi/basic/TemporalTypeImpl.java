@@ -8,6 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Comparator;
 
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.ColumnMapping;
@@ -83,7 +84,7 @@ public class TemporalTypeImpl<T> extends AbstractTemporalTypeImpl<T> implements 
 				mutabilityPlan,
 				comparator,
 				converterDefinition,
-				domainJavaType.getJdbcLiteralFormatter()
+				sqlType.getJdbcLiteralFormatter( domainJavaType )
 		);
 	}
 

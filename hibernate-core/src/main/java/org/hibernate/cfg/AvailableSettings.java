@@ -8,6 +8,7 @@ package org.hibernate.cfg;
 
 import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.query.internal.ParameterMetadataImpl;
+import org.hibernate.resource.cdi.spi.ManagedBeanRegistry;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.tool.schema.JdbcMetadaAccessStrategy;
@@ -99,6 +100,7 @@ public interface AvailableSettings {
 	 * enabled as per the rules defined in JPA 2 section 3.1.7.
 	 * <p/>
 	 * See JPA 2 sections 9.4.3 and 8.2.1.7
+	 *
 	 * @see javax.persistence.SharedCacheMode
 	 */
 	String JPA_SHARED_CACHE_MODE = "javax.persistence.sharedCache.mode";
@@ -111,7 +113,7 @@ public interface AvailableSettings {
 	 *
 	 * @see javax.persistence.CacheRetrieveMode
 	 */
-	String JPA_SHARED_CACHE_RETRIEVE_MODE ="javax.persistence.cache.retrieveMode";
+	String JPA_SHARED_CACHE_RETRIEVE_MODE = "javax.persistence.cache.retrieveMode";
 
 	/**
 	 * NOTE : Not a valid EMF property...
@@ -121,13 +123,14 @@ public interface AvailableSettings {
 	 *
 	 * @see javax.persistence.CacheStoreMode
 	 */
-	String JPA_SHARED_CACHE_STORE_MODE ="javax.persistence.cache.storeMode";
+	String JPA_SHARED_CACHE_STORE_MODE = "javax.persistence.cache.storeMode";
 
 	/**
 	 * Used to indicate what form of automatic validation is in effect as per rules defined
 	 * in JPA 2 section 3.6.1.1
 	 * <p/>
 	 * See JPA 2 sections 9.4.3 and 8.2.1.8
+	 *
 	 * @see javax.persistence.ValidationMode
 	 */
 	String JPA_VALIDATION_MODE = "javax.persistence.validation.mode";
@@ -174,8 +177,30 @@ public interface AvailableSettings {
 
 	/**
 	 * Used to pass along the CDI BeanManager, if any, to be used.
+	 *
+	 * @see #CDI_BEAN_REGISTRY
 	 */
 	String CDI_BEAN_MANAGER = "javax.persistence.bean.manager";
+
+	/**
+	 * Used to pass along a {@link ManagedBeanRegistry} implementation.  Can refer to:<ul>
+	 *     <li>A {@link ManagedBeanRegistry} instance</li>
+	 *     <li>A {@link ManagedBeanRegistry} implementation Class reference</li>
+	 *     <li>A {@link ManagedBeanRegistry} implementation FQN</li>
+	 *     <li>
+	 *         A recognized short name:<ul>
+	 *             <li>{@code "no-cdi"}</li>
+	 *             <li>{@code "cdi"}</li>
+	 *         </ul>
+	 *     </li>
+	 * </ul>
+	 * <p/>
+	 * For the first cases it is expected that the named Class define a ctor accepting the BeanManager
+	 * reference *as an {@link Object}*.
+	 *
+	 * @see #CDI_BEAN_MANAGER
+	 */
+	String CDI_BEAN_REGISTRY = "hibernate.cdi.bean_registry";
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -192,8 +217,8 @@ public interface AvailableSettings {
 
 	/**
 	 * Names the {@link ClassLoader} used to load user application classes.
-	 * @since 4.0
 	 *
+	 * @since 4.0
 	 * @deprecated Use {@link #CLASSLOADERS} instead
 	 */
 	@Deprecated
@@ -201,6 +226,7 @@ public interface AvailableSettings {
 
 	/**
 	 * Names the {@link ClassLoader} Hibernate should use to perform resource loading.
+	 *
 	 * @since 4.0
 	 * @deprecated Use {@link #CLASSLOADERS} instead
 	 */
@@ -210,6 +236,7 @@ public interface AvailableSettings {
 	/**
 	 * Names the {@link ClassLoader} responsible for loading Hibernate classes.  By default this is
 	 * the {@link ClassLoader} that loaded this class.
+	 *
 	 * @since 4.0
 	 * @deprecated Use {@link #CLASSLOADERS} instead
 	 */
@@ -219,6 +246,7 @@ public interface AvailableSettings {
 	/**
 	 * Names the {@link ClassLoader} used when Hibernate is unable to locates classes on the
 	 * {@link #APP_CLASSLOADER} or {@link #HIBERNATE_CLASSLOADER}.
+	 *
 	 * @since 4.0
 	 * @deprecated Use {@link #CLASSLOADERS} instead
 	 */
@@ -276,62 +304,62 @@ public interface AvailableSettings {
 	/**
 	 * Names the {@link org.hibernate.engine.jdbc.connections.spi.ConnectionProvider} to use for obtaining
 	 * JDBC connections.  Can reference:<ul>
-	 *     <li>an instance of ConnectionProvider</li>
-	 *     <li>a {@code Class<? extends ConnectionProvider>} reference</li>
-	 *     <li>a {@code Class<? extends ConnectionProvider>} FQN</li>
+	 * <li>an instance of ConnectionProvider</li>
+	 * <li>a {@code Class<? extends ConnectionProvider>} reference</li>
+	 * <li>a {@code Class<? extends ConnectionProvider>} FQN</li>
 	 * </ul>
 	 * <p/>
 	 * The term {@code "class"} appears in the setting name due to legacy reasons; however it can accept instances.
 	 */
-	String CONNECTION_PROVIDER ="hibernate.connection.provider_class";
+	String CONNECTION_PROVIDER = "hibernate.connection.provider_class";
 
 	/**
 	 * Names the {@literal JDBC} driver class
 	 */
-	String DRIVER ="hibernate.connection.driver_class";
+	String DRIVER = "hibernate.connection.driver_class";
 
 	/**
 	 * Names the {@literal JDBC} connection url.
 	 */
-	String URL ="hibernate.connection.url";
+	String URL = "hibernate.connection.url";
 
 	/**
 	 * Names the connection user.  This might mean one of 2 things in out-of-the-box Hibernate
 	 * {@link org.hibernate.engine.jdbc.connections.spi.ConnectionProvider}: <ul>
-	 *     <li>The username used to pass along to creating the JDBC connection</li>
-	 *     <li>The username used to obtain a JDBC connection from a data source</li>
+	 * <li>The username used to pass along to creating the JDBC connection</li>
+	 * <li>The username used to obtain a JDBC connection from a data source</li>
 	 * </ul>
 	 */
-	String USER ="hibernate.connection.username";
+	String USER = "hibernate.connection.username";
 
 	/**
 	 * Names the connection password.  See usage discussion on {@link #USER}
 	 */
-	String PASS ="hibernate.connection.password";
+	String PASS = "hibernate.connection.password";
 
 	/**
 	 * Names the {@literal JDBC} transaction isolation level
 	 */
-	String ISOLATION ="hibernate.connection.isolation";
+	String ISOLATION = "hibernate.connection.isolation";
 
 	/**
 	 * Names the {@literal JDBC} autocommit mode
 	 */
-	String AUTOCOMMIT ="hibernate.connection.autocommit";
+	String AUTOCOMMIT = "hibernate.connection.autocommit";
 
 	/**
 	 * Maximum number of inactive connections for the built-in Hibernate connection pool.
 	 */
-	String POOL_SIZE ="hibernate.connection.pool_size";
+	String POOL_SIZE = "hibernate.connection.pool_size";
 
 	/**
 	 * Names a {@link javax.sql.DataSource}.  Can reference:<ul>
-	 *     <li>a {@link javax.sql.DataSource} instance</li>
-	 *     <li>a {@literal JNDI} name under which to locate the {@link javax.sql.DataSource}</li>
+	 * <li>a {@link javax.sql.DataSource} instance</li>
+	 * <li>a {@literal JNDI} name under which to locate the {@link javax.sql.DataSource}</li>
 	 * </ul>
 	 * For JNDI names, ses also {@link #JNDI_CLASS}, {@link #JNDI_URL}, {@link #JNDI_PREFIX}, etc.
 	 */
-	String DATASOURCE ="hibernate.connection.datasource";
+	String DATASOURCE = "hibernate.connection.datasource";
 
 	/**
 	 * Names a prefix used to define arbitrary JDBC connection properties.  These properties are passed along to
@@ -344,14 +372,14 @@ public interface AvailableSettings {
 	 *
 	 * @see javax.naming.Context#INITIAL_CONTEXT_FACTORY
 	 */
-	String JNDI_CLASS ="hibernate.jndi.class";
+	String JNDI_CLASS = "hibernate.jndi.class";
 
 	/**
 	 * Names the {@literal JNDI} provider/connection url
 	 *
 	 * @see javax.naming.Context#PROVIDER_URL
 	 */
-	String JNDI_URL ="hibernate.jndi.url";
+	String JNDI_URL = "hibernate.jndi.url";
 
 	/**
 	 * Names a prefix used to define arbitrary {@literal JNDI} {@link javax.naming.InitialContext} properties.  These
@@ -362,7 +390,7 @@ public interface AvailableSettings {
 	/**
 	 * Names the Hibernate {@literal SQL} {@link org.hibernate.dialect.Dialect} class
 	 */
-	String DIALECT ="hibernate.dialect";
+	String DIALECT = "hibernate.dialect";
 
 	/**
 	 * Names any additional {@link org.hibernate.engine.jdbc.dialect.spi.DialectResolver} implementations to
@@ -383,9 +411,9 @@ public interface AvailableSettings {
 	 * creating {@link TransactionCoordinator} instances.
 	 * <p/>
 	 * Can be<ul>
-	 *     <li>TransactionCoordinatorBuilder instance</li>
-	 *     <li>TransactionCoordinatorBuilder implementation {@link Class} reference</li>
-	 *     <li>TransactionCoordinatorBuilder implementation class name (FQN) or short-name</li>
+	 * <li>TransactionCoordinatorBuilder instance</li>
+	 * <li>TransactionCoordinatorBuilder implementation {@link Class} reference</li>
+	 * <li>TransactionCoordinatorBuilder implementation class name (FQN) or short-name</li>
 	 * </ul>
 	 *
 	 * @since 5.0
@@ -404,7 +432,7 @@ public interface AvailableSettings {
 	/**
 	 * Should we prefer using the {@link org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform#retrieveUserTransaction}
 	 * over using {@link org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform#retrieveTransactionManager}?
-	 *
+	 * <p>
 	 * Default is <code>false</code>
 	 *
 	 * @since 5.0
@@ -413,6 +441,7 @@ public interface AvailableSettings {
 
 	/**
 	 * Names the {@link org.hibernate.engine.transaction.jta.platform.spi.JtaPlatformResolver} implementation to use.
+	 *
 	 * @since 4.3
 	 */
 	String JTA_PLATFORM_RESOLVER = "hibernate.transaction.jta.platform_resolver";
@@ -432,7 +461,6 @@ public interface AvailableSettings {
 	 * @since 4.0
 	 */
 	String JTA_CACHE_UT = "hibernate.jta.cacheUserTransaction";
-
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -514,7 +542,7 @@ public interface AvailableSettings {
 
 	/**
 	 * Enable nationalized character support on all string / clob based attribute ( string, char, clob, text etc ).
-	 *
+	 * <p>
 	 * Default is {@code false}.
 	 *
 	 * @see MetadataBuilder#enableGlobalNationalizedCharacterDataSupport(boolean)
@@ -528,9 +556,9 @@ public interface AvailableSettings {
 	/**
 	 * Pass an implementation of {@link org.hibernate.boot.archive.scan.spi.Scanner}.
 	 * Accepts either:<ul>
-	 *     <li>an actual instance</li>
-	 *     <li>a reference to a Class that implements Scanner</li>
-	 *     <li>a fully qualified name (String) of a Class that implements Scanner</li>
+	 * <li>an actual instance</li>
+	 * <li>a reference to a Class that implements Scanner</li>
+	 * <li>a fully qualified name (String) of a Class that implements Scanner</li>
 	 * </ul>
 	 *
 	 * @see org.hibernate.boot.MetadataBuilder#applyScanner
@@ -540,9 +568,9 @@ public interface AvailableSettings {
 	/**
 	 * Pass {@link org.hibernate.boot.archive.spi.ArchiveDescriptorFactory} to use
 	 * in the scanning process.  Accepts either:<ul>
-	 *     <li>an ArchiveDescriptorFactory instance</li>
-	 *     <li>a reference to a Class that implements ArchiveDescriptorFactory</li>
-	 *     <li>a fully qualified name (String) of a Class that implements ArchiveDescriptorFactory</li>
+	 * <li>an ArchiveDescriptorFactory instance</li>
+	 * <li>a reference to a Class that implements ArchiveDescriptorFactory</li>
+	 * <li>a fully qualified name (String) of a Class that implements ArchiveDescriptorFactory</li>
 	 * </ul>
 	 * <p/>
 	 * See information on {@link org.hibernate.boot.archive.scan.spi.Scanner}
@@ -558,8 +586,8 @@ public interface AvailableSettings {
 	/**
 	 * Identifies a comma-separate list of values indicating the types of
 	 * things we should auto-detect during scanning.  Allowable values include:<ul>
-	 *     <li>"class" - discover classes - .class files are discovered as managed classes</li>
-	 *     <li>"hbm" - discover hbm mapping files - hbm.xml files are discovered as mapping files</li>
+	 * <li>"class" - discover classes - .class files are discovered as managed classes</li>
+	 * <li>"hbm" - discover hbm mapping files - hbm.xml files are discovered as mapping files</li>
 	 * </ul>
 	 *
 	 * @see org.hibernate.boot.MetadataBuilder#applyScanOptions
@@ -569,18 +597,17 @@ public interface AvailableSettings {
 	/**
 	 * Used to specify the {@link org.hibernate.boot.model.naming.ImplicitNamingStrategy} class to use.  The following
 	 * short-names are defined for this setting:<ul>
-	 *     <li>"default" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl}</li>
-	 *     <li>"jpa" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl}</li>
-	 *     <li>"legacy-jpa" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl}</li>
-	 *     <li>"legacy-hbm" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyHbmImpl}</li>
-	 *     <li>"component-path" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl}</li>
+	 * <li>"default" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl}</li>
+	 * <li>"jpa" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl}</li>
+	 * <li>"legacy-jpa" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl}</li>
+	 * <li>"legacy-hbm" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyHbmImpl}</li>
+	 * <li>"component-path" -> {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl}</li>
 	 * </ul>
-	 *
+	 * <p>
 	 * The default is defined by the ImplicitNamingStrategy registered under the "default" key.  If that happens to
 	 * be empty, the fallback is to use {@link org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl}.
 	 *
 	 * @see MetadataBuilder#applyImplicitNamingStrategy
-	 *
 	 * @since 5.0
 	 */
 	String IMPLICIT_NAMING_STRATEGY = "hibernate.implicit_naming_strategy";
@@ -589,7 +616,6 @@ public interface AvailableSettings {
 	 * Used to specify the {@link org.hibernate.boot.model.naming.PhysicalNamingStrategy} class to use.
 	 *
 	 * @see MetadataBuilder#applyPhysicalNamingStrategy
-	 *
 	 * @since 5.0
 	 */
 	String PHYSICAL_NAMING_STRATEGY = "hibernate.physical_naming_strategy";
@@ -614,17 +640,16 @@ public interface AvailableSettings {
 	String KEYWORD_AUTO_QUOTING_ENABLED = "hibernate.auto_quote_keyword";
 
 
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// SessionFactoryBuilder level settings
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	/**
 	 * Setting used to name the Hibernate {@link org.hibernate.SessionFactory}.
-	 *
+	 * <p>
 	 * Naming the SessionFactory allows for it to be properly serialized across JVMs as
 	 * long as the same name is used on each JVM.
-	 *
+	 * <p>
 	 * If {@link #SESSION_FACTORY_NAME_IS_JNDI} is set to {@code true}, this is also the
 	 * name under which the SessionFactory is bound into JNDI on startup and from which
 	 * it can be obtained from JNDI.
@@ -637,9 +662,9 @@ public interface AvailableSettings {
 	/**
 	 * Does the value defined by {@link #SESSION_FACTORY_NAME} represent a JNDI namespace into which
 	 * the {@link org.hibernate.SessionFactory} should be bound and made accessible?
-	 *
+	 * <p>
 	 * Defaults to {@code true} for backwards compatibility.
-	 *
+	 * <p>
 	 * Set this to {@code false} if naming a SessionFactory is needed for serialization purposes, but
 	 * no writable JNDI context exists in the runtime environment or if the user simply does not want
 	 * JNDI to be used.
@@ -651,17 +676,17 @@ public interface AvailableSettings {
 	/**
 	 * Enable logging of generated SQL to the console
 	 */
-	String SHOW_SQL ="hibernate.show_sql";
+	String SHOW_SQL = "hibernate.show_sql";
 
 	/**
 	 * Enable formatting of SQL logged to the console
 	 */
-	String FORMAT_SQL ="hibernate.format_sql";
+	String FORMAT_SQL = "hibernate.format_sql";
 
 	/**
 	 * Add comments to the generated SQL
 	 */
-	String USE_SQL_COMMENTS ="hibernate.use_sql_comments";
+	String USE_SQL_COMMENTS = "hibernate.use_sql_comments";
 
 	/**
 	 * Maximum depth of outer join fetching
@@ -733,9 +758,7 @@ public interface AvailableSettings {
 	 * this or {@link #RELEASE_CONNECTIONS}, not both
 	 *
 	 * @see org.hibernate.ConnectionAcquisitionMode
-	 *
 	 * @since 5.1
-	 *
 	 * @deprecated (since 5.2) use {@link #CONNECTION_HANDLING} instead
 	 */
 	@Deprecated
@@ -746,7 +769,6 @@ public interface AvailableSettings {
 	 * this or {@link #ACQUIRE_CONNECTIONS}, not both
 	 *
 	 * @see org.hibernate.ConnectionReleaseMode
-	 *
 	 * @deprecated (since 5.2) use {@link #CONNECTION_HANDLING} instead
 	 */
 	@Deprecated
@@ -757,7 +779,6 @@ public interface AvailableSettings {
 	 * Supersedes {@link #ACQUIRE_CONNECTIONS} and {@link #RELEASE_CONNECTIONS}
 	 *
 	 * @see org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode
-	 *
 	 * @since 5.2
 	 */
 	String CONNECTION_HANDLING = "hibernate.connection.handling_mode";
@@ -823,14 +844,13 @@ public interface AvailableSettings {
 
 	/**
 	 * Enable fetching JDBC statement warning for logging.
-	 *
+	 * <p>
 	 * Values are {@code true}  or {@code false} .
 	 * Default value is {@link org.hibernate.dialect.Dialect#isJdbcLogWarningsEnabledByDefault()}
 	 *
 	 * @since 5.1
 	 */
-	String LOG_JDBC_WARNINGS =  "hibernate.jdbc.log.warnings";
-
+	String LOG_JDBC_WARNINGS = "hibernate.jdbc.log.warnings";
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -873,7 +893,6 @@ public interface AvailableSettings {
 	String C3P0_IDLE_TEST_PERIOD = "hibernate.c3p0.idle_test_period";
 
 
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// proxool connection pooling specific settings
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -885,6 +904,7 @@ public interface AvailableSettings {
 
 	/**
 	 * Proxool/Hibernate property prefix
+	 *
 	 * @deprecated Use {@link #PROXOOL_CONFIG_PREFIX} instead
 	 */
 	@Deprecated
@@ -919,9 +939,9 @@ public interface AvailableSettings {
 
 	/**
 	 * The {@link org.hibernate.cache.spi.RegionFactory} implementation.  Can refer to:<ul>
-	 *     <li>an Object implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
-	 *     <li>a Class implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
-	 *     <li>FQN of a Class implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
+	 * <li>an Object implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
+	 * <li>a Class implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
+	 * <li>FQN of a Class implementing {@link org.hibernate.cache.spi.RegionFactory}</li>
 	 * </ul>
 	 */
 	String CACHE_REGION_FACTORY = "hibernate.cache.region.factory_class";
@@ -929,9 +949,9 @@ public interface AvailableSettings {
 	/**
 	 * Allow control to specify the {@link org.hibernate.cache.spi.CacheKeysFactory} impl to use.
 	 * Can refer to:<ul>
-	 *     <li>an Object implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
-	 *     <li>a Class implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
-	 *     <li>FQN of a Class implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
+	 * <li>an Object implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
+	 * <li>a Class implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
+	 * <li>FQN of a Class implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
 	 * </ul>
 	 *
 	 * @since 5.2 - note that currently this is only honored for hibernate-infinispan
@@ -986,10 +1006,6 @@ public interface AvailableSettings {
 	String USE_DIRECT_REFERENCE_CACHE_ENTRIES = "hibernate.cache.use_reference_entries";
 
 
-
-
-
-
 	// Still to categorize
 
 	/**
@@ -1017,7 +1033,7 @@ public interface AvailableSettings {
 	/**
 	 * Enable nullability checking.
 	 * Raises an exception if a property marked as not-null is null.
-	 * Default to false if Bean Validation is present in the classpath and Hibernate Annotations is used,
+	 * Default to false if ManagedBean Validation is present in the classpath and Hibernate Annotations is used,
 	 * true otherwise.
 	 */
 	String CHECK_NULLABILITY = "hibernate.check_nullability";
@@ -1025,7 +1041,7 @@ public interface AvailableSettings {
 
 	String BYTECODE_PROVIDER = "hibernate.bytecode.provider";
 
-	String JPAQL_STRICT_COMPLIANCE= "hibernate.query.jpaql_strict_compliance";
+	String JPAQL_STRICT_COMPLIANCE = "hibernate.query.jpaql_strict_compliance";
 
 	/**
 	 * When using pooled {@link org.hibernate.id.enhanced.Optimizer optimizers}, prefer interpreting the
@@ -1045,6 +1061,7 @@ public interface AvailableSettings {
 
 	/**
 	 * The maximum number of strong references maintained by {@link org.hibernate.engine.query.spi.QueryPlanCache}. Default is 128.
+	 *
 	 * @deprecated in favor of {@link #QUERY_PLAN_CACHE_PARAMETER_METADATA_MAX_SIZE}
 	 */
 	@Deprecated
@@ -1052,6 +1069,7 @@ public interface AvailableSettings {
 
 	/**
 	 * The maximum number of soft references maintained by {@link org.hibernate.engine.query.spi.QueryPlanCache}. Default is 2048.
+	 *
 	 * @deprecated in favor of {@link #QUERY_PLAN_CACHE_MAX_SIZE}
 	 */
 	@Deprecated
@@ -1060,11 +1078,11 @@ public interface AvailableSettings {
 	/**
 	 * The maximum number of entries including:
 	 * <ul>
-	 *     <li>{@link org.hibernate.engine.query.spi.HQLQueryPlan}</li>
-	 *     <li>{@link org.hibernate.engine.query.spi.FilterQueryPlan}</li>
-	 *     <li>{@link org.hibernate.engine.query.spi.NativeSQLQueryPlan}</li>
+	 * <li>{@link org.hibernate.engine.query.spi.HQLQueryPlan}</li>
+	 * <li>{@link org.hibernate.engine.query.spi.FilterQueryPlan}</li>
+	 * <li>{@link org.hibernate.engine.query.spi.NativeSQLQueryPlan}</li>
 	 * </ul>
-	 * 
+	 * <p>
 	 * maintained by {@link org.hibernate.engine.query.spi.QueryPlanCache}. Default is 2048.
 	 */
 	String QUERY_PLAN_CACHE_MAX_SIZE = "hibernate.query.plan_cache_max_size";
@@ -1151,7 +1169,7 @@ public interface AvailableSettings {
 	 * {@link java.sql.DatabaseMetaData#getDatabaseMajorVersion} for the target database.  This value is used to
 	 * help more precisely determine how to perform schema generation tasks for the underlying database in cases
 	 * where {@value #HBM2DDL_DB_NAME} does not provide enough distinction.
-
+	 *
 	 * @see #HBM2DDL_DB_NAME
 	 * @see #HBM2DDL_DB_MINOR_VERSION
 	 */
@@ -1173,12 +1191,12 @@ public interface AvailableSettings {
 	 * Specifies whether schema generation commands for schema creation are to be determine based on object/relational
 	 * mapping metadata, DDL scripts, or a combination of the two.  See {@link SourceType} for valid set of values.
 	 * If no value is specified, a default is assumed as follows:<ul>
-	 *     <li>
-	 *         if source scripts are specified (per {@value #HBM2DDL_CREATE_SCRIPT_SOURCE}),then "scripts" is assumed
-	 *     </li>
-	 *     <li>
-	 *         otherwise, "metadata" is assumed
-	 *     </li>
+	 * <li>
+	 * if source scripts are specified (per {@value #HBM2DDL_CREATE_SCRIPT_SOURCE}),then "scripts" is assumed
+	 * </li>
+	 * <li>
+	 * otherwise, "metadata" is assumed
+	 * </li>
 	 * </ul>
 	 *
 	 * @see SourceType
@@ -1189,12 +1207,12 @@ public interface AvailableSettings {
 	 * Specifies whether schema generation commands for schema dropping are to be determine based on object/relational
 	 * mapping metadata, DDL scripts, or a combination of the two.  See {@link SourceType} for valid set of values.
 	 * If no value is specified, a default is assumed as follows:<ul>
-	 *     <li>
-	 *         if source scripts are specified (per {@value #HBM2DDL_DROP_SCRIPT_SOURCE}),then "scripts" is assumed
-	 *     </li>
-	 *     <li>
-	 *         otherwise, "metadata" is assumed
-	 *     </li>
+	 * <li>
+	 * if source scripts are specified (per {@value #HBM2DDL_DROP_SCRIPT_SOURCE}),then "scripts" is assumed
+	 * </li>
+	 * <li>
+	 * otherwise, "metadata" is assumed
+	 * </li>
 	 * </ul>
 	 *
 	 * @see SourceType
@@ -1354,7 +1372,7 @@ public interface AvailableSettings {
 
 	/**
 	 * Strategy for multi-tenancy.
-
+	 *
 	 * @see org.hibernate.MultiTenancyStrategy
 	 * @since 4.0
 	 */
@@ -1373,9 +1391,9 @@ public interface AvailableSettings {
 	 * Names a {@link org.hibernate.context.spi.CurrentTenantIdentifierResolver} implementation to use.
 	 * <p/>
 	 * Can be<ul>
-	 *     <li>CurrentTenantIdentifierResolver instance</li>
-	 *     <li>CurrentTenantIdentifierResolver implementation {@link Class} reference</li>
-	 *     <li>CurrentTenantIdentifierResolver implementation class name</li>
+	 * <li>CurrentTenantIdentifierResolver instance</li>
+	 * <li>CurrentTenantIdentifierResolver implementation {@link Class} reference</li>
+	 * <li>CurrentTenantIdentifierResolver implementation class name</li>
 	 * </ul>
 	 *
 	 * @since 4.1
@@ -1391,9 +1409,9 @@ public interface AvailableSettings {
 	 * See {@link #SESSION_SCOPED_INTERCEPTOR} for an approach to create unique Interceptor instances for each Session
 	 * <p/>
 	 * Can reference<ul>
-	 *     <li>Interceptor instance</li>
-	 *     <li>Interceptor implementation {@link Class} reference</li>
-	 *     <li>Interceptor implementation class name</li>
+	 * <li>Interceptor instance</li>
+	 * <li>Interceptor implementation {@link Class} reference</li>
+	 * <li>Interceptor implementation class name</li>
 	 * </ul>
 	 *
 	 * @since 5.0
@@ -1408,8 +1426,8 @@ public interface AvailableSettings {
 	 * used for each Session.
 	 * <p/>
 	 * Can reference<ul>
-	 *     <li>Interceptor implementation {@link Class} reference</li>
-	 *     <li>Interceptor implementation class name</li>
+	 * <li>Interceptor implementation {@link Class} reference</li>
+	 * <li>Interceptor implementation class name</li>
 	 * </ul>
 	 * Note specifically that this setting cannot name an Interceptor instance.
 	 *
@@ -1420,9 +1438,9 @@ public interface AvailableSettings {
 	/**
 	 * Names a {@link org.hibernate.resource.jdbc.spi.StatementInspector} implementation to be applied to
 	 * the {@link org.hibernate.SessionFactory}.  Can reference<ul>
-	 *     <li>StatementInspector instance</li>
-	 *     <li>StatementInspector implementation {@link Class} reference</li>
-	 *     <li>StatementInspector implementation class name (FQN)</li>
+	 * <li>StatementInspector instance</li>
+	 * <li>StatementInspector implementation {@link Class} reference</li>
+	 * <li>StatementInspector implementation class name (FQN)</li>
 	 * </ul>
 	 *
 	 * @since 5.0
@@ -1437,18 +1455,18 @@ public interface AvailableSettings {
 	 * Names the {@link org.hibernate.loader.BatchFetchStyle} to use.  Can specify either the
 	 * {@link org.hibernate.loader.BatchFetchStyle} name (insensitively), or a
 	 * {@link org.hibernate.loader.BatchFetchStyle} instance.
-	 * 
+	 * <p>
 	 * {@code LEGACY} is the default value.
 	 */
 	String BATCH_FETCH_STYLE = "hibernate.batch_fetch_style";
-	
+
 	/**
 	 * A transaction can be rolled back by another thread ("tracking by thread")
 	 * -- not the original application. Examples of this include a JTA
 	 * transaction timeout handled by a background reaper thread.  The ability
 	 * to handle this situation requires checking the Thread ID every time
 	 * Session is called.  This can certainly have performance considerations.
-	 * 
+	 * <p>
 	 * Default is <code>true</code> (enabled).
 	 */
 	String JTA_TRACK_BY_THREAD = "hibernate.jta.track_by_thread";
@@ -1478,16 +1496,16 @@ public interface AvailableSettings {
 	 * SchemaUpdate needs to create these constraints, but DB's
 	 * support for finding existing constraints is extremely inconsistent. Further,
 	 * non-explicitly-named unique constraints use randomly generated characters.
-	 * 
+	 * <p>
 	 * Therefore, select from these strategies.
 	 * {@link org.hibernate.tool.hbm2ddl.UniqueConstraintSchemaUpdateStrategy#DROP_RECREATE_QUIETLY} (DEFAULT):
-	 * 			Attempt to drop, then (re-)create each unique constraint.
-	 * 			Ignore any exceptions thrown.
+	 * Attempt to drop, then (re-)create each unique constraint.
+	 * Ignore any exceptions thrown.
 	 * {@link org.hibernate.tool.hbm2ddl.UniqueConstraintSchemaUpdateStrategy#RECREATE_QUIETLY}:
-	 * 			attempt to (re-)create unique constraints,
-	 * 			ignoring exceptions thrown if the constraint already existed
+	 * attempt to (re-)create unique constraints,
+	 * ignoring exceptions thrown if the constraint already existed
 	 * {@link org.hibernate.tool.hbm2ddl.UniqueConstraintSchemaUpdateStrategy#SKIP}:
-	 * 			do not attempt to create unique constraints on a schema update
+	 * do not attempt to create unique constraints on a schema update
 	 */
 	String UNIQUE_CONSTRAINT_SCHEMA_UPDATE_STRATEGY = "hibernate.schema_update.unique_constraint_strategy";
 

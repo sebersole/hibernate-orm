@@ -38,6 +38,6 @@ public class LocalTimeType extends TemporalTypeImpl<LocalTime> {
 
 	@Override
 	public JdbcLiteralFormatter<LocalTime> getJdbcLiteralFormatter() {
-		return LocalTimeJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return TimeTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( LocalTimeJavaDescriptor.INSTANCE );
 	}
 }

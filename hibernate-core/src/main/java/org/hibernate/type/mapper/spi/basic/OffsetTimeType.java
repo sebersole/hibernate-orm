@@ -37,6 +37,6 @@ public class OffsetTimeType extends TemporalTypeImpl<OffsetTime> {
 
 	@Override
 	public JdbcLiteralFormatter<OffsetTime> getJdbcLiteralFormatter() {
-		return OffsetTimeJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return TimeTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( OffsetTimeJavaDescriptor.INSTANCE );
 	}
 }

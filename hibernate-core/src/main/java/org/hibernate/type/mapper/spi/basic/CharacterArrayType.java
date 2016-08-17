@@ -6,9 +6,7 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.java.CharacterArrayTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
@@ -19,8 +17,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class CharacterArrayType
-		extends BasicTypeImpl<Character[]>
-		implements JdbcLiteralFormatter<Character[]> {
+		extends BasicTypeImpl<Character[]> {
 	public static final CharacterArrayType INSTANCE = new CharacterArrayType();
 
 	public CharacterArrayType() {
@@ -33,11 +30,6 @@ public class CharacterArrayType
 
 	@Override
 	public JdbcLiteralFormatter<Character[]> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Character[] value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( CharacterArrayTypeDescriptor.INSTANCE );
 	}
 }

@@ -34,7 +34,7 @@ public class CalendarDateType
 
 	@Override
 	public JdbcLiteralFormatter<Calendar> getJdbcLiteralFormatter() {
-		return CalendarDateTypeDescriptor.INSTANCE;
+		return DateTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( CalendarDateTypeDescriptor.INSTANCE );
 	}
 
 	@Override

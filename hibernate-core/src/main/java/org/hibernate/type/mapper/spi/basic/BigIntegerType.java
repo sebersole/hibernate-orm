@@ -33,6 +33,6 @@ public class BigIntegerType extends BasicTypeImpl<BigInteger> {
 
 	@Override
 	public JdbcLiteralFormatter<BigInteger> getJdbcLiteralFormatter() {
-		return BigIntegerTypeDescriptor.INSTANCE;
+		return NumericTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( BigIntegerTypeDescriptor.INSTANCE );
 	}
 }

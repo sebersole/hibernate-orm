@@ -63,6 +63,6 @@ public class ShortType
 
 	@Override
 	public JdbcLiteralFormatter<Short> getJdbcLiteralFormatter() {
-		return ShortTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return SmallIntTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( ShortTypeDescriptor.INSTANCE );
 	}
 }

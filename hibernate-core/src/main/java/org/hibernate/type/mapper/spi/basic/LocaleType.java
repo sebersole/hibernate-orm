@@ -32,6 +32,6 @@ public class LocaleType extends BasicTypeImpl<Locale> {
 
 	@Override
 	public JdbcLiteralFormatter<Locale> getJdbcLiteralFormatter() {
-		return LocaleTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( LocaleTypeDescriptor.INSTANCE );
 	}
 }

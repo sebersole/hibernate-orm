@@ -9,10 +9,8 @@ package org.hibernate.type.mapper.spi.basic;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.ZonedDateTimeComparator;
-import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.spi.java.ZonedDateTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
@@ -22,7 +20,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  */
 public class ZonedDateTimeType
 		extends TemporalTypeImpl<ZonedDateTime>
-		implements VersionSupport<ZonedDateTime>, JdbcLiteralFormatter<ZonedDateTime> {
+		implements VersionSupport<ZonedDateTime> {
 
 	/**
 	 * Singleton access
@@ -65,11 +63,6 @@ public class ZonedDateTimeType
 
 	@Override
 	public JdbcLiteralFormatter<ZonedDateTime> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(ZonedDateTime value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralTimestamp( value );
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( ZonedDateTimeJavaDescriptor.INSTANCE );
 	}
 }

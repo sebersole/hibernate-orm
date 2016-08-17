@@ -110,7 +110,7 @@ class TypeSafeActivator {
 		final ConfigurationService cfgService = activationContext.getServiceRegistry().getService( ConfigurationService.class );
 		final ClassLoaderService classLoaderService = activationContext.getServiceRegistry().getService( ClassLoaderService.class );
 
-		// de-activate not-null tracking at the core level when Bean Validation is present unless the user explicitly
+		// de-activate not-null tracking at the core level when ManagedBean Validation is present unless the user explicitly
 		// asks for it
 		if ( cfgService.getSettings().get( Environment.CHECK_NULLABILITY ) == null ) {
 			activationContext.getSessionFactory().getSessionFactoryOptions().setCheckNullability( false );
