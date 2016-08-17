@@ -8,8 +8,6 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.UUID;
 
-import org.hibernate.dialect.Dialect;
-import org.hibernate.type.descriptor.spi.java.StringTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
@@ -19,7 +17,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  *
  * @author Steve Ebersole
  */
-public class UUIDCharType extends BasicTypeImpl<UUID> implements JdbcLiteralFormatter<UUID> {
+public class UUIDCharType extends BasicTypeImpl<UUID> {
 	public static final UUIDCharType INSTANCE = new UUIDCharType();
 
 	public UUIDCharType() {
@@ -32,11 +30,6 @@ public class UUIDCharType extends BasicTypeImpl<UUID> implements JdbcLiteralForm
 
 	@Override
 	public JdbcLiteralFormatter<UUID> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(UUID value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( UUIDTypeDescriptor.INSTANCE );
 	}
 }

@@ -25,7 +25,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public class CalendarType
 		extends TemporalTypeImpl<Calendar>
-		implements VersionSupport<Calendar>, JdbcLiteralFormatter<Calendar> {
+		implements VersionSupport<Calendar> {
 
 	public static final CalendarType INSTANCE = new CalendarType();
 
@@ -60,12 +60,7 @@ public class CalendarType
 
 	@Override
 	public JdbcLiteralFormatter<Calendar> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Calendar value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralTimestamp( value );
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( CalendarTypeDescriptor.INSTANCE );
 	}
 
 	@Override

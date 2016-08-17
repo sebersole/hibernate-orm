@@ -40,7 +40,7 @@ public class InvocationTargetExceptionTest extends BaseCoreFunctionalTestCase {
 
 	@Override
 	public String[] getMappings() {
-		return new String[] { "bytecode/Bean.hbm.xml" };
+		return new String[] { "bytecode/ManagedBean.hbm.xml" };
 	}
 
 	@Test

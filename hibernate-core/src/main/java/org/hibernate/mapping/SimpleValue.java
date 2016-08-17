@@ -39,7 +39,7 @@ import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.Type;
-import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.usertype.DynamicParameterizedType;
 
 /**

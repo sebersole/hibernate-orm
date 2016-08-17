@@ -43,7 +43,7 @@ import javax.persistence.Id;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
-import org.hibernate.jpa.event.spi.jpa.ExtendedBeanManager;
+import org.hibernate.resource.cdi.spi.ExtendedBeanManager;
 
 import org.junit.Test;
 

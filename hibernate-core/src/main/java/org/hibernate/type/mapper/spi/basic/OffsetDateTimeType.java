@@ -62,7 +62,7 @@ public class OffsetDateTimeType
 
 	@Override
 	public JdbcLiteralFormatter<OffsetDateTime> getJdbcLiteralFormatter() {
-		return OffsetDateTimeJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( OffsetDateTimeJavaDescriptor.INSTANCE );
 	}
 
 }

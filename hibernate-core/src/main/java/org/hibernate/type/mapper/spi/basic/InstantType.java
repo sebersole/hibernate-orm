@@ -60,6 +60,6 @@ public class InstantType
 
 	@Override
 	public JdbcLiteralFormatter<Instant> getJdbcLiteralFormatter() {
-		return InstantJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( InstantJavaDescriptor.INSTANCE );
 	}
 }

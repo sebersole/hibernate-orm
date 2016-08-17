@@ -21,7 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test verifying that DDL constraints get applied when Bean Validation / Hibernate Validator are enabled.
+ * Test verifying that DDL constraints get applied when ManagedBean Validation / Hibernate Validator are enabled.
  *
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik

@@ -120,7 +120,7 @@ public class ProxoolConnectionProvider
 		// Default the Proxool alias setting
 		proxoolAlias = (String) props.get( Environment.PROXOOL_POOL_ALIAS );
 
-		// Configured outside of Hibernate (i.e. Servlet container, or Java Bean Container
+		// Configured outside of Hibernate (i.e. Servlet container, or Java ManagedBean Container
 		// already has Proxool pools running, and this provider is to just borrow one of these
 		if ( "true".equals( externalConfig ) ) {
 			// Validate that an alias name was provided to determine which pool to use

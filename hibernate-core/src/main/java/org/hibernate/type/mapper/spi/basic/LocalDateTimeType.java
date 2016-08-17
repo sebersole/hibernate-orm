@@ -65,7 +65,7 @@ public class LocalDateTimeType
 
 	@Override
 	public JdbcLiteralFormatter<LocalDateTime> getJdbcLiteralFormatter() {
-		return LocalDateTimeJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( LocalDateTimeJavaDescriptor.INSTANCE );
 	}
 
 	@Override

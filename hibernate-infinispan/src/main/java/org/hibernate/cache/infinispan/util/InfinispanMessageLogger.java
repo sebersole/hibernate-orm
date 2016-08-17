@@ -15,6 +15,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 import javax.naming.NamingException;
 import javax.transaction.SystemException;
@@ -28,6 +29,7 @@ import static org.jboss.logging.Logger.Level.*;
  * @author Radim Vansa &ltrvansa@redhat.com&gt;
  */
 @MessageLogger(projectCode = "HHH")
+@ValidIdRange(min = 25001, max = 30000)
 public interface InfinispanMessageLogger extends BasicLogger {
    // Workaround for JBLOGGING-120: cannot add static interface method
 	class Provider {

@@ -19,8 +19,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class TrueFalseType
-		extends BasicTypeImpl<Boolean>
-		implements JdbcLiteralFormatter<Boolean> {
+		extends BasicTypeImpl<Boolean> {
 
 	public static final TrueFalseType INSTANCE = new TrueFalseType();
 
@@ -35,11 +34,6 @@ public class TrueFalseType
 
 	@Override
 	public JdbcLiteralFormatter<Boolean> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Boolean value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( value ? "T" : "F", dialect );
+		return CharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( getJavaTypeDescriptor() );
 	}
 }

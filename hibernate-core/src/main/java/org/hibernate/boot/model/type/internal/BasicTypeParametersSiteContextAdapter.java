@@ -12,7 +12,7 @@ import javax.persistence.TemporalType;
 import org.hibernate.boot.model.type.spi.BasicTypeSiteContext;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.mapper.spi.basic.AttributeConverterDefinition;
+import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 

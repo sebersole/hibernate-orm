@@ -22,7 +22,7 @@ import javax.management.openmbean.TabularType;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
 /**
- * Bean for exposing region stats
+ * ManagedBean for exposing region stats
  *
  * @author gkeim
  */

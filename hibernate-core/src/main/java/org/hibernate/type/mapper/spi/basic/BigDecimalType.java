@@ -32,6 +32,6 @@ public class BigDecimalType extends BasicTypeImpl<BigDecimal> {
 
 	@Override
 	public JdbcLiteralFormatter<BigDecimal> getJdbcLiteralFormatter() {
-		return BigDecimalTypeDescriptor.INSTANCE;
+		return NumericTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( BigDecimalTypeDescriptor.INSTANCE );
 	}
 }

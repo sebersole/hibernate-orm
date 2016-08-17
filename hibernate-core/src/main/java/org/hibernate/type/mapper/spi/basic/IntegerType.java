@@ -50,6 +50,8 @@ public class IntegerType
 
 	@Override
 	public JdbcLiteralFormatter<Integer> getJdbcLiteralFormatter() {
-		return IntegerTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return org.hibernate.type.descriptor.spi.sql.IntegerTypeDescriptor.INSTANCE.getJdbcLiteralFormatter(
+				IntegerTypeDescriptor.INSTANCE
+		);
 	}
 }

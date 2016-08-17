@@ -8,7 +8,6 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.time.Duration;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.spi.java.DurationJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BigIntTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
@@ -17,8 +16,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class DurationType
-		extends BasicTypeImpl<Duration>
-		implements JdbcLiteralFormatter<Duration> {
+		extends BasicTypeImpl<Duration> {
 
 	/**
 	 * Singleton access
@@ -36,11 +34,6 @@ public class DurationType
 
 	@Override
 	public JdbcLiteralFormatter<Duration> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Duration value, Dialect dialect) {
-		return LongType.INSTANCE.getJdbcLiteralFormatter().toJdbcLiteral( value.toNanos(), dialect );
+		return BigIntTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( DurationJavaDescriptor.INSTANCE );
 	}
 }

@@ -38,7 +38,7 @@ public class BeanInfoHelper {
 
 	public void applyToBeanInfo(Object bean, BeanInfoDelegate delegate) {
 		if ( ! beanClass.isInstance( bean ) ) {
-			throw new BeanIntrospectionException( "Bean [" + bean + "] was not of declared bean type [" + beanClass.getName() + "]" );
+			throw new BeanIntrospectionException( "ManagedBean [" + bean + "] was not of declared bean type [" + beanClass.getName() + "]" );
 		}
 
 		visitBeanInfo( beanClass, stopClass, delegate );

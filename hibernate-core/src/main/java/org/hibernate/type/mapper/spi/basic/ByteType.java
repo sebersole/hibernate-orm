@@ -38,7 +38,7 @@ public class ByteType
 
 	@Override
 	public JdbcLiteralFormatter<Byte> getJdbcLiteralFormatter() {
-		return ByteTypeDescriptor.INSTANCE;
+		return TinyIntTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( ByteTypeDescriptor.INSTANCE );
 	}
 
 	@Override

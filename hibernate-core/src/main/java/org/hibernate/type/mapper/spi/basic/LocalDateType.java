@@ -38,7 +38,7 @@ public class LocalDateType extends TemporalTypeImpl<LocalDate> {
 
 	@Override
 	public JdbcLiteralFormatter<LocalDate> getJdbcLiteralFormatter() {
-		return LocalDateJavaDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return DateTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( LocalDateJavaDescriptor.INSTANCE );
 	}
 
 	@Override

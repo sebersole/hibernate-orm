@@ -31,6 +31,6 @@ public class NTextType extends BasicTypeImpl<String> {
 	@Override
 	public JdbcLiteralFormatter<String> getJdbcLiteralFormatter() {
 		// no literal support for LONGNVARCHAR
-		return StringTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return null;
 	}
 }

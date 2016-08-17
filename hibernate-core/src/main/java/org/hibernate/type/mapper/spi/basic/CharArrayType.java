@@ -19,8 +19,7 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  * @author Steve Ebersole
  */
 public class CharArrayType
-		extends BasicTypeImpl<char[]>
-		implements JdbcLiteralFormatter<char[]> {
+		extends BasicTypeImpl<char[]> {
 	public static final CharArrayType INSTANCE = new CharArrayType();
 
 	public CharArrayType() {
@@ -33,11 +32,6 @@ public class CharArrayType
 
 	@Override
 	public JdbcLiteralFormatter<char[]> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(char[] value, Dialect dialect) {
-		return StringTypeDescriptor.INSTANCE.toJdbcLiteral( toString( value ), dialect );
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( PrimitiveCharacterArrayTypeDescriptor.INSTANCE );
 	}
 }

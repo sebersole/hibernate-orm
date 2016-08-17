@@ -60,6 +60,11 @@ public class PostgresUUIDType extends BasicTypeImpl<UUID> {
 			return UUIDTypeDescriptor.INSTANCE;
 		}
 
+		@Override
+		public <T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor) {
+			return null;
+		}
+
 		public <X> ValueBinder<X> getBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
 			return new BasicBinder<X>( javaTypeDescriptor, this ) {
 				@Override

@@ -30,6 +30,6 @@ public class StringType extends BasicTypeImpl<String> {
 
 	@Override
 	public JdbcLiteralFormatter<String> getJdbcLiteralFormatter() {
-		return StringTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( StringTypeDescriptor.INSTANCE );
 	}
 }

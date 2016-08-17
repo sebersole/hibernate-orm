@@ -33,6 +33,6 @@ public class TimeZoneType
 
 	@Override
 	public JdbcLiteralFormatter<TimeZone> getJdbcLiteralFormatter() {
-		return TimeZoneTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( TimeZoneTypeDescriptor.INSTANCE );
 	}
 }

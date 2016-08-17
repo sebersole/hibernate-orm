@@ -31,6 +31,8 @@ public class DoubleType extends BasicTypeImpl<Double> {
 
 	@Override
 	public JdbcLiteralFormatter<Double> getJdbcLiteralFormatter() {
-		return DoubleTypeDescriptor.INSTANCE;
+		return org.hibernate.type.descriptor.spi.sql.DoubleTypeDescriptor.INSTANCE.getJdbcLiteralFormatter(
+				DoubleTypeDescriptor.INSTANCE
+		);
 	}
 }

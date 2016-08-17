@@ -33,6 +33,6 @@ public class CurrencyType extends BasicTypeImpl<Currency> {
 
 	@Override
 	public JdbcLiteralFormatter<Currency> getJdbcLiteralFormatter() {
-		return CurrencyTypeDescriptor.INSTANCE;
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( CurrencyTypeDescriptor.INSTANCE );
 	}
 }

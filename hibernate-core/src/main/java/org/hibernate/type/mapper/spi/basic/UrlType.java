@@ -31,7 +31,7 @@ public class UrlType extends BasicTypeImpl<URL> {
 
 	@Override
 	public JdbcLiteralFormatter<URL> getJdbcLiteralFormatter() {
-		return UrlTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return VarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( UrlTypeDescriptor.INSTANCE );
 	}
 
 	@Override

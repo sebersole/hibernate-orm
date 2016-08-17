@@ -51,7 +51,7 @@ public final class Nullability {
 			final EntityPersister persister,
 			final boolean isUpdate) throws HibernateException {
 		/*
-		 * Typically when Bean Validation is on, we don't want to validate null values
+		 * Typically when ManagedBean Validation is on, we don't want to validate null values
 		 * at the Hibernate Core level. Hence the checkNullability setting.
 		 */
 		if ( checkNullability ) {

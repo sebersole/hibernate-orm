@@ -58,6 +58,6 @@ public class LongType
 
 	@Override
 	public JdbcLiteralFormatter<Long> getJdbcLiteralFormatter() {
-		return LongTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return BigIntTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( LongTypeDescriptor.INSTANCE );
 	}
 }

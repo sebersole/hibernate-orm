@@ -9,9 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import java.sql.Timestamp;
 import java.util.Date;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.internal.DateTimeUtils;
 import org.hibernate.type.descriptor.spi.java.JdbcTimestampTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
@@ -25,7 +23,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public class TimestampType
 		extends TemporalTypeImpl<Date>
-		implements VersionSupport<Date>, JdbcLiteralFormatter<Date> {
+		implements VersionSupport<Date> {
 
 	public static final TimestampType INSTANCE = new TimestampType();
 
@@ -55,12 +53,7 @@ public class TimestampType
 
 	@Override
 	public JdbcLiteralFormatter<Date> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(Date value, Dialect dialect) {
-		return DateTimeUtils.formatAsJdbcLiteralTimestamp( value );
+		return TimestampTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( JdbcTimestampTypeDescriptor.INSTANCE );
 	}
 
 	@Override

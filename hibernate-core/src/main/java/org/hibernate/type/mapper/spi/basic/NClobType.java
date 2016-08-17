@@ -37,6 +37,6 @@ public class NClobType extends BasicTypeImpl<NClob> {
 
 	@Override
 	public JdbcLiteralFormatter<NClob> getJdbcLiteralFormatter() {
-		return NClobTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return null;
 	}
 }

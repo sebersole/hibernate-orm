@@ -30,7 +30,7 @@ public class StringNVarcharType extends BasicTypeImpl<String> {
 
 	@Override
 	public JdbcLiteralFormatter<String> getJdbcLiteralFormatter() {
-		return StringTypeDescriptor.INSTANCE.getJdbcLiteralFormatter();
+		return NVarcharTypeDescriptor.INSTANCE.getJdbcLiteralFormatter( StringTypeDescriptor.INSTANCE );
 	}
 
 	@Override

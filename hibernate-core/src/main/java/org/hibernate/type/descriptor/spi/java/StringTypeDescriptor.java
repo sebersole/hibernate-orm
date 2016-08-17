@@ -11,22 +11,19 @@ import java.io.StringReader;
 import java.sql.Clob;
 import java.sql.Types;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.CharacterStream;
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
 import org.hibernate.type.descriptor.internal.java.DataHelper;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
  * Descriptor for {@link String} handling.
  *
  * @author Steve Ebersole
  */
-public class StringTypeDescriptor extends AbstractTypeDescriptorBasicImpl<String>
-		implements JdbcLiteralFormatter<String> {
+public class StringTypeDescriptor extends AbstractTypeDescriptorBasicImpl<String> {
 	public static final StringTypeDescriptor INSTANCE = new StringTypeDescriptor();
 
 	public StringTypeDescriptor() {
@@ -50,16 +47,6 @@ public class StringTypeDescriptor extends AbstractTypeDescriptorBasicImpl<String
 		}
 
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( jdbcTypeCode );
-	}
-
-	@Override
-	public JdbcLiteralFormatter<String> getJdbcLiteralFormatter() {
-		return this;
-	}
-
-	@Override
-	public String toJdbcLiteral(String value, Dialect dialect) {
-		return value == null ? "NULL" : dialect.quote( value );
 	}
 
 	public String toString(String value) {
