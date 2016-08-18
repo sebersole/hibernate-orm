@@ -17,7 +17,7 @@ import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.UUIDTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.BasicBinder;
 import org.hibernate.type.descriptor.spi.sql.BasicExtractor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;

@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.ShortTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.ShortTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SmallIntTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

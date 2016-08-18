@@ -11,7 +11,7 @@ import java.util.Comparator;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.ZonedDateTimeComparator;
-import org.hibernate.type.descriptor.spi.java.ZonedDateTimeJavaDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.ZonedDateTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

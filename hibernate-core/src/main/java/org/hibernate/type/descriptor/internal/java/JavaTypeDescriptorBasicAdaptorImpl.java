@@ -8,12 +8,16 @@ package org.hibernate.type.descriptor.internal.java;
 
 import java.util.Comparator;
 
+import org.hibernate.HibernateException;
+import org.hibernate.annotations.Immutable;
+import org.hibernate.internal.util.compare.ComparableComparator;
+import org.hibernate.type.descriptor.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.MutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
-import org.hibernate.type.descriptor.spi.java.AbstractTypeDescriptorBasicImpl;
+import org.hibernate.type.descriptor.spi.java.basic.AbstractTypeDescriptorBasicImpl;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
-import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 
 /**
@@ -24,19 +28,38 @@ import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
  */
 public class JavaTypeDescriptorBasicAdaptorImpl<T> extends AbstractTypeDescriptorBasicImpl<T> {
 	public JavaTypeDescriptorBasicAdaptorImpl(Class<T> type) {
-		super( type );
+		this( type, determineMutabilityPlan( type ) );
 	}
 
-	protected JavaTypeDescriptorBasicAdaptorImpl(
-			Class<T> type,
-			MutabilityPlan<T> mutabilityPlan) {
-		super( type, mutabilityPlan );
+	@SuppressWarnings("unchecked")
+	private static <T> MutabilityPlan<T> determineMutabilityPlan(final Class<T> type) {
+		// really we are interested in the @Immutable annotation on the field/getter, but we
+		// do not have access to that here...
+		if ( type.isAnnotationPresent( Immutable.class ) ) {
+			return ImmutableMutabilityPlan.INSTANCE;
+		}
+		// MutableMutabilityPlan is the "safest" option, but we do not necessarily know how to deepCopy etc...
+		return new MutableMutabilityPlan<T>() {
+			@Override
+			protected T deepCopyNotNull(T value) {
+				throw new HibernateException(
+						"Not known how to deep copy value of type [" + type.getName() + "]"
+				);
+			}
+		};
 	}
 
-	public JavaTypeDescriptorBasicAdaptorImpl(
-			Class<T> type,
-			MutabilityPlan<T> mutabilityPlan,
-			Comparator comparator) {
+	protected JavaTypeDescriptorBasicAdaptorImpl(Class<T> type, MutabilityPlan<T> mutabilityPlan) {
+		this( type, mutabilityPlan, determineComparator( type ) );
+	}
+
+	private static <T> Comparator determineComparator(Class<T> type) {
+		return Comparable.class.isAssignableFrom( type )
+				? ComparableComparator.INSTANCE
+				: null;
+	}
+
+	public JavaTypeDescriptorBasicAdaptorImpl(Class<T> type, MutabilityPlan<T> mutabilityPlan, Comparator comparator) {
 		super( type, mutabilityPlan, comparator );
 	}
 
@@ -48,19 +71,14 @@ public class JavaTypeDescriptorBasicAdaptorImpl<T> extends AbstractTypeDescripto
 	}
 
 	@Override
-	public JdbcLiteralFormatter<T> getJdbcLiteralFormatter() {
-		return null;
-	}
-
-	@Override
 	public String toString(T value) {
-		return value.toString();
+		return value == null ? "<null>" : value.toString();
 	}
 
 	@Override
 	public T fromString(String string) {
-		throw new UnsupportedOperationException(
-				"Conversion from String strategy not known for this Java type : " + getJavaTypeClass().getName()
+		throw new HibernateException(
+				"Not known how to convert String to given Java type [" + getJavaTypeClass().getName() + "]"
 		);
 	}
 

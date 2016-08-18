@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 import java.util.Comparator;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.OffsetDateTimeJavaDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.OffsetDateTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

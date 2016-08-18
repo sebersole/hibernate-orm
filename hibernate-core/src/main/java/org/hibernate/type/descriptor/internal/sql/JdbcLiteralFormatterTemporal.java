@@ -6,14 +6,13 @@
  */
 package org.hibernate.type.descriptor.internal.sql;
 
-import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
 import javax.persistence.TemporalType;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.type.descriptor.internal.DateTimeUtils;
-import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.TemporalJavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole

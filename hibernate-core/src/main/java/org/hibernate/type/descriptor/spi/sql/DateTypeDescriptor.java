@@ -21,7 +21,7 @@ import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.TemporalJavaTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 

@@ -16,7 +16,7 @@ import org.hibernate.type.descriptor.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
 
 /**
- * Abstract adapter for Java type descriptors.
+ * Abstract adapter for Java type descriptors based on Class
  *
  * @author Steve Ebersole
  */

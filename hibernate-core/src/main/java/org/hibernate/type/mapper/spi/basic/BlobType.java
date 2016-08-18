@@ -9,7 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import java.sql.Blob;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.BlobTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.BlobTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**

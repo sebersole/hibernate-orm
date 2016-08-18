@@ -12,7 +12,7 @@ import javax.persistence.AttributeConverter;
 
 import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.java.TemporalJavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.TemporalJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;

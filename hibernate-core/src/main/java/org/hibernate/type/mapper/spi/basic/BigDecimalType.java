@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.math.BigDecimal;
 
-import org.hibernate.type.descriptor.spi.java.BigDecimalTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.BigDecimalTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.NumericTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

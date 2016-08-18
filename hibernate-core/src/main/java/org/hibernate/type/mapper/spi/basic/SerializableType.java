@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.io.Serializable;
 
-import org.hibernate.type.descriptor.spi.java.SerializableTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.SerializableTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarbinaryTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

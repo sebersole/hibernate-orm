@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Calendar;
 
-import org.hibernate.type.descriptor.spi.java.CalendarDateTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.CalendarDateTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.DateTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;

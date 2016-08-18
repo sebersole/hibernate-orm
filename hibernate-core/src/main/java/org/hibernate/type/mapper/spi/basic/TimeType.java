@@ -9,7 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import java.sql.Time;
 import java.util.Date;
 
-import org.hibernate.type.descriptor.spi.java.JdbcTimeTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.JdbcTimeTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 

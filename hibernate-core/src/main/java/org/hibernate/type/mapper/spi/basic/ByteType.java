@@ -9,7 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.Comparator;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.ByteTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.ByteTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TinyIntTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

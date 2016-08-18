@@ -6,7 +6,7 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.type.descriptor.spi.java.FloatTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.FloatTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**
