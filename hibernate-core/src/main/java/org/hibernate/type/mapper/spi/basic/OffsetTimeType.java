@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.time.OffsetTime;
 
-import org.hibernate.type.descriptor.spi.java.OffsetTimeJavaDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.OffsetTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimeTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

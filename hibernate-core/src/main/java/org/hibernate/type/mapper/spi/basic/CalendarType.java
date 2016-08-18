@@ -9,10 +9,8 @@ package org.hibernate.type.mapper.spi.basic;
 import java.util.Calendar;
 import java.util.Comparator;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.internal.DateTimeUtils;
-import org.hibernate.type.descriptor.spi.java.CalendarTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.CalendarTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimestampTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;

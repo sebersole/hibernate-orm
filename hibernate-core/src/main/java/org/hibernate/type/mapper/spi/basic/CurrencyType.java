@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Currency;
 
-import org.hibernate.type.descriptor.spi.java.CurrencyTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.CurrencyTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

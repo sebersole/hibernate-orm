@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.math.BigInteger;
 
-import org.hibernate.type.descriptor.spi.java.BigIntegerTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.BigIntegerTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.NumericTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.time.LocalTime;
 
-import org.hibernate.type.descriptor.spi.java.LocalTimeJavaDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.LocalTimeJavaDescriptor;
 import org.hibernate.type.descriptor.spi.sql.TimeTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

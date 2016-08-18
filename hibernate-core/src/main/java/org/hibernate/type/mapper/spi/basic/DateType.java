@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Date;
 
-import org.hibernate.type.descriptor.spi.java.JdbcDateTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.JdbcDateTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.DateTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

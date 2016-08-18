@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.net.URL;
 
-import org.hibernate.type.descriptor.spi.java.UrlTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.UrlTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

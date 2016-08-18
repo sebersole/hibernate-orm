@@ -8,7 +8,7 @@ package org.hibernate.type.mapper.spi.basic;
 
 import java.util.Locale;
 
-import org.hibernate.type.descriptor.spi.java.LocaleTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.LocaleTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.VarcharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

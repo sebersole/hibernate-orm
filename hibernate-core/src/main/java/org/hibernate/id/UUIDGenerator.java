@@ -19,7 +19,7 @@ import org.hibernate.id.uuid.StandardRandomStrategy;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.descriptor.spi.java.UUIDTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.UUIDTypeDescriptor;
 import org.hibernate.type.mapper.spi.Type;
 
 /**

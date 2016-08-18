@@ -6,7 +6,7 @@
  */
 package org.hibernate.type.mapper.spi.basic;
 
-import org.hibernate.type.descriptor.spi.java.CharacterTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.CharacterTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.CharTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 

@@ -7,7 +7,7 @@
 package org.hibernate.type.mapper.spi.basic;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.IntegerTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.IntegerTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**

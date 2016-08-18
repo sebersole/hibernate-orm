@@ -9,7 +9,7 @@ package org.hibernate.type.mapper.spi.basic;
 import java.sql.NClob;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.descriptor.spi.java.NClobTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.NClobTypeDescriptor;
 import org.hibernate.type.mapper.spi.JdbcLiteralFormatter;
 
 /**

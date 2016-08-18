@@ -7,7 +7,7 @@
 package org.hibernate.type.mapper.spi.basic;
 
 
-import org.hibernate.type.descriptor.spi.java.PrimitiveByteArrayTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.basic.PrimitiveByteArrayTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.LongVarbinaryTypeDescriptor;
 
 /**
