@@ -5,9 +5,14 @@
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package org.hibernate.mapping;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorManagedImplementor;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorMappedSuperclassImplementor;
 
 /**
  * Represents a @MappedSuperclass.
@@ -27,18 +32,26 @@ import java.util.List;
  * @author Emmanuel Bernard
  */
 public class MappedSuperclass {
+	private final MetadataBuildingContext buildingContext;
+
 	private final MappedSuperclass superMappedSuperclass;
 	private final PersistentClass superPersistentClass;
-	private final List declaredProperties;
-	private Class mappedClass;
-	private Property identifierProperty;
-	private Property version;
-	private Component identifierMapper;
+	private final JavaTypeDescriptorMappedSuperclassImplementor typeDescriptor;
 
-	public MappedSuperclass(MappedSuperclass superMappedSuperclass, PersistentClass superPersistentClass) {
+	private final List<Property> declaredProperties = new ArrayList<>();
+	private Property identifierProperty;
+	private Component identifierMapper;
+	private Property version;
+
+	public MappedSuperclass(
+			JavaTypeDescriptorMappedSuperclassImplementor typeDescriptor,
+			MappedSuperclass superMappedSuperclass,
+			PersistentClass superPersistentClass,
+			MetadataBuildingContext buildingContext) {
+		this.typeDescriptor = typeDescriptor;
 		this.superMappedSuperclass = superMappedSuperclass;
 		this.superPersistentClass = superPersistentClass;
-		this.declaredProperties = new ArrayList();
+		this.buildingContext = buildingContext;
 	}
 
 	/**
@@ -87,12 +100,28 @@ public class MappedSuperclass {
 		declaredProperties.add(p);
 	}
 
-	public Class getMappedClass() {
-		return mappedClass;
+	public JavaTypeDescriptorMappedSuperclassImplementor getTypeDescriptor() {
+		return typeDescriptor;
 	}
 
+	/**
+	 * @deprecated (since 6.0) use {@link #getTypeDescriptor()} instead.
+	 */
+	@Deprecated
+	public Class getMappedClass() {
+		return typeDescriptor.getJavaTypeClass();
+	}
+
+	/**
+	 * @deprecated (since 6.0) with no real replacement because for MappedSuperclass the Class
+	 * is always known up front and passed to our ctor.  For now we delegate this to
+	 * {@link org.hibernate.type.descriptor.spi.java.managed.InitializationAccess#setJavaType(Class)}
+	 * via {@link #getTypeDescriptor()} -> {@link JavaTypeDescriptorManagedImplementor#getInitializationAccess()}
+	 * which may throw an error if it considers initialization complete
+	 */
+	@Deprecated
 	public void setMappedClass(Class mappedClass) {
-		this.mappedClass = mappedClass;
+		this.typeDescriptor.getInitializationAccess().setJavaType( mappedClass );
 	}
 
 	public Property getIdentifierProperty() {

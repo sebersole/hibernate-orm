@@ -126,6 +126,8 @@ public class MetadataBuildingProcess {
 				metadataCollector
 		);
 
+		options.getTypeConfiguration().scope( rootMetadataBuildingContext );
+
 		final IndexView jandexView = options.getJandexView();
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

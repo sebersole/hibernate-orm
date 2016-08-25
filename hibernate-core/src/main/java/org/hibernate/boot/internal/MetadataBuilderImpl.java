@@ -306,7 +306,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	@Override
 	public MetadataBuilder applyCacheRegionDefinition(CacheRegionDefinition cacheRegionDefinition) {
 		if ( options.cacheRegionDefinitions == null ) {
-			options.cacheRegionDefinitions = new ArrayList<CacheRegionDefinition>();
+			options.cacheRegionDefinitions = new ArrayList<>();
 		}
 		options.cacheRegionDefinitions.add( cacheRegionDefinition );
 		return this;
@@ -333,7 +333,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	@Override
 	public MetadataBuilder applySqlFunction(String functionName, SQLFunction function) {
 		if ( this.options.sqlFunctionMap == null ) {
-			this.options.sqlFunctionMap = new HashMap<String, SQLFunction>();
+			this.options.sqlFunctionMap = new HashMap<>();
 		}
 		this.options.sqlFunctionMap.put( functionName, function );
 		return this;
@@ -342,10 +342,15 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	@Override
 	public MetadataBuilder applyAuxiliaryDatabaseObject(AuxiliaryDatabaseObject auxiliaryDatabaseObject) {
 		if ( this.options.auxiliaryDatabaseObjectList == null ) {
-			this.options.auxiliaryDatabaseObjectList = new ArrayList<AuxiliaryDatabaseObject>();
+			this.options.auxiliaryDatabaseObjectList = new ArrayList<>();
 		}
 		this.options.auxiliaryDatabaseObjectList.add( auxiliaryDatabaseObject );
 		return this;
+	}
+
+	@Override
+	public ClassmateContext getClassmateContext() {
+		return options.getClassmateContext();
 	}
 
 	@Override
@@ -355,26 +360,26 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass) {
-		applyAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass ) );
+	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<?,?>> attributeConverterClass) {
+		applyAttributeConverter( AttributeConverterDefinition.from( getClassmateContext(), attributeConverterClass ) );
 		return this;
 	}
 
 	@Override
-	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass, boolean autoApply) {
-		applyAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass, autoApply ) );
+	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<?,?>> attributeConverterClass, boolean autoApply) {
+		applyAttributeConverter( AttributeConverterDefinition.from( getClassmateContext(), attributeConverterClass, autoApply ) );
 		return this;
 	}
 
 	@Override
 	public MetadataBuilder applyAttributeConverter(AttributeConverter attributeConverter) {
-		applyAttributeConverter( AttributeConverterDefinition.from( attributeConverter ) );
+		applyAttributeConverter( AttributeConverterDefinition.from( getClassmateContext(), attributeConverter ) );
 		return this;
 	}
 
 	@Override
 	public MetadataBuilder applyAttributeConverter(AttributeConverter attributeConverter, boolean autoApply) {
-		applyAttributeConverter( AttributeConverterDefinition.from( attributeConverter, autoApply ) );
+		applyAttributeConverter( AttributeConverterDefinition.from( getClassmateContext(), attributeConverter, autoApply ) );
 		return this;
 	}
 
@@ -539,6 +544,8 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 		private final TypeConfiguration typeConfiguration = new TypeConfiguration();
 		private final BasicTypeProducerRegistry typeInformationAliasRegistry = new BasicTypeProducerRegistryImpl( typeConfiguration );
+
+		private final ClassmateContext classmateContext = new ClassmateContext();
 
 		private IndexView jandexView;
 		private ClassLoader tempClassLoader;
@@ -733,7 +740,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			);
 			if ( sourceProcessOrderingSetting != null ) {
 				final String[] orderChoices = StringHelper.split( ",; ", sourceProcessOrderingSetting, false );
-				initialSelections.addAll( CollectionHelper.<MetadataSourceType>arrayList( orderChoices.length ) );
+				initialSelections.addAll( CollectionHelper.arrayList( orderChoices.length ) );
 				for ( String orderChoice : orderChoices ) {
 					initialSelections.add( MetadataSourceType.parsePrecedence( orderChoice ) );
 				}
@@ -790,6 +797,11 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		@Override
 		public BasicTypeProducerRegistry getBasicTypeProducerRegistry() {
 			return typeInformationAliasRegistry;
+		}
+
+		@Override
+		public ClassmateContext getClassmateContext() {
+			return classmateContext;
 		}
 
 		@Override

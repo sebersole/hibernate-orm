@@ -59,11 +59,11 @@ public interface JavaTypeDescriptor<T> extends Type<T>, Serializable {
 
 	/**
 	 * Obtain the "recommended" SQL type descriptor for this Java type.  The recommended
-	 * aspect comes from the JDBC spec (mostly).
+	 * aspect comes from the JDBC spec (mostly).  May return {@code null}
 	 *
 	 * @param context Contextual information
 	 *
-	 * @return The recommended SQL type descriptor
+	 * @return The recommended SQL type descriptor, or {@code null}
 	 */
 	SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context);
 

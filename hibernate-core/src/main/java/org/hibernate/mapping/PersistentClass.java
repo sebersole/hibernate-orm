@@ -28,6 +28,8 @@ import org.hibernate.internal.util.collections.JoinedIterator;
 import org.hibernate.internal.util.collections.SingletonIterator;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.sql.Alias;
+import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 
 /**
  * Mapping for an entity.
@@ -41,6 +43,7 @@ public abstract class PersistentClass implements AttributeContainer, Serializabl
 	public static final String NOT_NULL_DISCRIMINATOR_MAPPING = "not null";
 
 	private final MetadataBuildingContext metadataBuildingContext;
+	private final JavaTypeDescriptorEntityImplementor javaTypeDescriptor;
 
 	private String entityName;
 
@@ -90,8 +93,14 @@ public abstract class PersistentClass implements AttributeContainer, Serializabl
 	private Component declaredIdentifierMapper;
 	private OptimisticLockStyle optimisticLockStyle;
 
-	public PersistentClass(MetadataBuildingContext metadataBuildingContext) {
+
+	public PersistentClass(JavaTypeDescriptorEntityImplementor javaTypeDescriptor, MetadataBuildingContext metadataBuildingContext) {
+		this.javaTypeDescriptor = javaTypeDescriptor;
 		this.metadataBuildingContext = metadataBuildingContext;
+	}
+
+	public JavaTypeDescriptorEntityImplementor getJavaTypeDescriptor() {
+		return javaTypeDescriptor;
 	}
 
 	public ServiceRegistry getServiceRegistry() {

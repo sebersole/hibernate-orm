@@ -16,6 +16,14 @@ earlier versions, see any other pertinent migration guides as well.
 Additionally, `hibernate-envers` has been made part of `hibernate-core` and better integrated
 from an API perspective.
 
+
+== Things that (might) make sense in a boot-only ServiceRegistry
+
+* ClassmateContext
+* Jandex/HCANN access
+* BasicTypeProducerRegistry
+
+
 == Misc
 
 * removed `org.hibernate.type.TypeHelper` and `org.hibernate.type.TypeResolver`, as well as methods exposing

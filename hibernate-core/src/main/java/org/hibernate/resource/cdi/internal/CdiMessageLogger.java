@@ -6,7 +6,6 @@
  */
 package org.hibernate.resource.cdi.internal;
 
-import org.hibernate.resource.cdi.spi.AbstractManagedBeanRegistry;
 import org.hibernate.resource.cdi.spi.ManagedBeanRegistry;
 
 import org.jboss.logging.Logger;
@@ -53,7 +52,7 @@ public interface CdiMessageLogger {
 	@LogMessage( level = INFO )
 	@Message(
 			id = 10005003,
-			value = "No explicit CDI BeanManager reference [%s] was passed to Hibernate, " +
+			value = "No explicit CDI BeanManager reference was passed to Hibernate, " +
 					"but CDI is available on the Hibernate ClassLoader."
 	)
 	void noBeanManagerButCdiAvailable();

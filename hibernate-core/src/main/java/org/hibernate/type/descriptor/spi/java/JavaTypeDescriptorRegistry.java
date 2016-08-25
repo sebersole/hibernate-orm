@@ -10,15 +10,26 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.persistence.Entity;
+import javax.persistence.InheritanceType;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.metamodel.Type;
 
+import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
+import org.hibernate.annotations.common.reflection.XClass;
+import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.type.descriptor.internal.java.JavaTypeDescriptorBasicAdaptorImpl;
+import org.hibernate.type.descriptor.internal.java.managed.EntityDescriptor;
+import org.hibernate.type.descriptor.internal.java.managed.IdentifiableTypeDescriptor;
+import org.hibernate.type.descriptor.internal.java.managed.ManagedTypeDescriptor;
+import org.hibernate.type.descriptor.internal.java.managed.MappedSuperclassTypeDescriptor;
+import org.hibernate.type.descriptor.internal.java.managed.RootEntityDescriptor;
 import org.hibernate.type.descriptor.spi.MutabilityPlan;
-import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 import org.hibernate.type.descriptor.spi.java.basic.EnumJavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.java.basic.JavaTypeDescriptorBasicImplementor;
 import org.hibernate.type.descriptor.spi.java.basic.SerializableTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.managed.EntityHierarchy;
 import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEmbeddableImplementor;
 import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorMappedSuperclassImplementor;
@@ -35,7 +46,7 @@ import org.jboss.logging.Logger;
 public class JavaTypeDescriptorRegistry implements JavaTypeDescriptorBaseline.BaselineTarget {
 	private static final Logger log = Logger.getLogger( JavaTypeDescriptorRegistry.class );
 
-	private final TypeDescriptorRegistryAccess typeConfiguration;
+	private final TypeConfiguration typeConfiguration;
 	private final ConcurrentHashMap<String,JavaTypeDescriptor> descriptorsByName = new ConcurrentHashMap<>();
 
 	public JavaTypeDescriptorRegistry(TypeConfiguration typeConfiguration) {
@@ -155,22 +166,102 @@ public class JavaTypeDescriptorRegistry implements JavaTypeDescriptorBaseline.Ba
 	private void performInjections(JavaTypeDescriptor descriptor) {
 		if ( descriptor instanceof TypeConfigurationAware ) {
 			// would be nice to make the JavaTypeDescriptor for an entity, e.g., aware of the the TypeConfiguration
-			( (TypeConfigurationAware) descriptor ).setTypeConfiguration( typeConfiguration.getTypeConfiguration() );
+			( (TypeConfigurationAware) descriptor ).setTypeConfiguration( typeConfiguration );
 		}
 	}
 
 	private JavaTypeDescriptorEntityImplementor getEntityDescriptor(String typeName) {
+		throw new NotYetImplementedException();
+	}
 
+	public JavaTypeDescriptorEntityImplementor makeRootEntityDescriptor(
+			String typeName,
+			EntityHierarchy.InheritanceStyle inheritanceStyle,
+			EntityMode entityMode) {
+		if ( descriptorsByName.containsKey( typeName ) ) {
+			throw new IllegalStateException( "Root entity descriptor already registered under that name [" + typeName + "]." );
+		}
+		final RootEntityDescriptor descriptor = new RootEntityDescriptor( typeName, inheritanceStyle, entityMode );
+		performInjections( descriptor );
+		descriptorsByName.put( typeName, descriptor );
+		return descriptor;
+	}
+
+	public JavaTypeDescriptorEntityImplementor makeEntityDescriptor(
+			String typeName,
+			JavaTypeDescriptorEntityImplementor javaTypeDescriptor) {
+		if ( descriptorsByName.containsKey( typeName ) ) {
+			throw new IllegalStateException( "Entity descriptor already registered under that name [" + typeName + "]." );
+		}
+		final EntityDescriptor descriptor = new EntityDescriptor( typeName, javaTypeDescriptor.getEntityHierarchy(), null, (ManagedTypeDescriptor) javaTypeDescriptor );
+		performInjections( descriptor );
+		descriptorsByName.put( typeName, descriptor );
+		return descriptor;
 	}
 
 
-	private JavaTypeDescriptorMappedSuperclassImplementor getMappedSuperclassDescriptor(String typeName) {
+	/**
+	 * Legacy code here always worked on the Class for MappedSuperclass; continue that, for now...
+	 *
+	 * @param mappedSuperclassClass The Class reference to the Class annotated with MappedSuperclass
+	 *
+	 * @return The descriptor
+	 */
+	public JavaTypeDescriptorMappedSuperclassImplementor getMappedSuperclassDescriptor(Class mappedSuperclassClass) {
+		JavaTypeDescriptor descriptor = descriptorsByName.get( mappedSuperclassClass.getName() );
+		if ( descriptor == null ) {
+			// todo determine its super-type...
+			final IdentifiableTypeDescriptor superType = resolveSuperManagedTypeDescriptor( mappedSuperclassClass );
+			descriptor = new MappedSuperclassTypeDescriptor( mappedSuperclassClass, superType.getEntityHierarchy(), superType );
+			performInjections( descriptor );
+			descriptorsByName.put( mappedSuperclassClass.getName(), descriptor );
+		}
+		else {
+			if ( !JavaTypeDescriptorMappedSuperclassImplementor.class.isInstance( descriptor ) ) {
+				throw new HibernateException(
+						"Request for JavaTypeDescriptor for class [%s] as a MappedSuperclass " +
+								"encountered a previous registration [%s] that did not indicate MappedSuperclass"
+				);
+			}
+		}
 
+		return (JavaTypeDescriptorMappedSuperclassImplementor) descriptor;
+	}
+
+	private IdentifiableTypeDescriptor resolveSuperManagedTypeDescriptor(Class managedClassType) {
+		Class superType = managedClassType.getSuperclass();
+		while ( superType != null && !Object.class.equals( superType ) ) {
+			final XClass superTypeXClass = typeConfiguration.getTypeConfiguration()
+					.getMetadataBuildingContext()
+					.getBuildingOptions()
+					.getReflectionManager()
+					.toXClass( superType );
+
+			// NOTE - while we eventually want to support composite/embeddable inheritance, we
+			// 		currently do not.  So here we only deal with Entity/MappedSuperclass
+
+			if ( superTypeXClass.getAnnotation( Entity.class ) != null ) {
+				return (EntityDescriptor) getEntityDescriptor( superTypeXClass.getName() );
+			}
+			else if ( superTypeXClass.getAnnotation( MappedSuperclass.class ) != null ) {
+				return (MappedSuperclassTypeDescriptor) getMappedSuperclassDescriptor(
+						typeConfiguration.getTypeConfiguration()
+								.getMetadataBuildingContext()
+								.getBuildingOptions()
+								.getReflectionManager()
+								.toClass( superTypeXClass )
+				);
+			}
+
+			superType = superType.getSuperclass();
+		}
+
+		return null;
 	}
 
 
 	private JavaTypeDescriptorEmbeddableImplementor getEmbeddableDescriptor(String typeName) {
-
+		throw new NotYetImplementedException( "JavaTypeDescriptor support for @Embeddable not yet implemented" );
 	}
 
 

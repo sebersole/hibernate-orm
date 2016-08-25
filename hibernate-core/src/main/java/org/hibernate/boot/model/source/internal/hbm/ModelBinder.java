@@ -60,6 +60,7 @@ import org.hibernate.boot.model.source.spi.IdentifierSourceAggregatedComposite;
 import org.hibernate.boot.model.source.spi.IdentifierSourceNonAggregatedComposite;
 import org.hibernate.boot.model.source.spi.IdentifierSourceSimple;
 import org.hibernate.boot.model.source.spi.InLineViewSource;
+import org.hibernate.boot.model.source.spi.InheritanceType;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
 import org.hibernate.boot.model.source.spi.NaturalIdMutability;
 import org.hibernate.boot.model.source.spi.Orderable;
@@ -147,7 +148,10 @@ import org.hibernate.mapping.Value;
 import org.hibernate.tuple.GeneratedValueGeneration;
 import org.hibernate.tuple.GenerationTiming;
 import org.hibernate.type.ForeignKeyDirection;
+import org.hibernate.type.descriptor.internal.java.managed.RootEntityDescriptor;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.java.managed.EntityHierarchy;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -192,7 +196,16 @@ public class ModelBinder {
 	}
 
 	public void bindEntityHierarchy(EntityHierarchySourceImpl hierarchySource) {
-		final RootClass rootEntityDescriptor = new RootClass( metadataBuildingContext );
+		final RootEntityDescriptor javaTypeDescriptor = (RootEntityDescriptor) metadataBuildingContext.getMetadataCollector()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.makeRootEntityDescriptor(
+						hierarchySource.getRoot().getEntityNamingSource().getEntityName(),
+						interpretInheritanceStyle( hierarchySource.getHierarchyInheritanceType() ),
+						hierarchySource.getEntityMode()
+
+				);
+		final RootClass rootEntityDescriptor = new RootClass( javaTypeDescriptor, metadataBuildingContext );
 		bindRootEntity( hierarchySource, rootEntityDescriptor );
 		hierarchySource.getRoot()
 				.getLocalMetadataBuildingContext()
@@ -215,6 +228,20 @@ public class ModelBinder {
 			case UNION: {
 				bindUnionSubclassEntities( hierarchySource.getRoot(), rootEntityDescriptor );
 				break;
+			}
+		}
+	}
+
+	private EntityHierarchy.InheritanceStyle interpretInheritanceStyle(InheritanceType hierarchyInheritanceType) {
+		switch ( hierarchyInheritanceType ) {
+			case JOINED: {
+				return EntityHierarchy.InheritanceStyle.JOINED;
+			}
+			case UNION: {
+				return EntityHierarchy.InheritanceStyle.TABLE_PER_CLASS;
+			}
+			default: {
+				return EntityHierarchy.InheritanceStyle.SINGLE_TABLE;
 			}
 		}
 	}
@@ -523,7 +550,16 @@ public class ModelBinder {
 			AbstractEntitySourceImpl entitySource,
 			PersistentClass superEntityDescriptor) {
 		for ( IdentifiableTypeSource subType : entitySource.getSubTypes() ) {
-			final SingleTableSubclass subEntityDescriptor = new SingleTableSubclass( superEntityDescriptor, metadataBuildingContext );
+			final JavaTypeDescriptorEntityImplementor javaTypeDescriptor = metadataBuildingContext.getMetadataCollector()
+					.getTypeConfiguration()
+					.getJavaTypeDescriptorRegistry()
+					.makeEntityDescriptor(
+							entitySource.getEntityNamingSource().getEntityName(),
+							superEntityDescriptor.getJavaTypeDescriptor()
+					);
+			javaTypeDescriptor.getInitializationAccess().setSuperType( superEntityDescriptor.getJavaTypeDescriptor() );
+
+			final SingleTableSubclass subEntityDescriptor = new SingleTableSubclass( javaTypeDescriptor, superEntityDescriptor, metadataBuildingContext );
 			bindDiscriminatorSubclassEntity( (SubclassEntitySourceImpl) subType, subEntityDescriptor );
 			superEntityDescriptor.addSubclass( subEntityDescriptor );
 			entitySource.getLocalMetadataBuildingContext().getMetadataCollector().addEntityBinding( subEntityDescriptor );
@@ -581,7 +617,16 @@ public class ModelBinder {
 			AbstractEntitySourceImpl entitySource,
 			PersistentClass superEntityDescriptor) {
 		for ( IdentifiableTypeSource subType : entitySource.getSubTypes() ) {
-			final JoinedSubclass subEntityDescriptor = new JoinedSubclass( superEntityDescriptor, metadataBuildingContext );
+			final JavaTypeDescriptorEntityImplementor javaTypeDescriptor = metadataBuildingContext.getMetadataCollector()
+					.getTypeConfiguration()
+					.getJavaTypeDescriptorRegistry()
+					.makeEntityDescriptor(
+							entitySource.getEntityNamingSource().getEntityName(),
+							superEntityDescriptor.getJavaTypeDescriptor()
+					);
+			javaTypeDescriptor.getInitializationAccess().setSuperType( superEntityDescriptor.getJavaTypeDescriptor() );
+
+			final JoinedSubclass subEntityDescriptor = new JoinedSubclass( javaTypeDescriptor, superEntityDescriptor, metadataBuildingContext );
 			bindJoinedSubclassEntity( (JoinedSubclassEntitySourceImpl) subType, subEntityDescriptor );
 			superEntityDescriptor.addSubclass( subEntityDescriptor );
 			entitySource.getLocalMetadataBuildingContext().getMetadataCollector().addEntityBinding( subEntityDescriptor );
@@ -657,7 +702,16 @@ public class ModelBinder {
 			EntitySource entitySource,
 			PersistentClass superEntityDescriptor) {
 		for ( IdentifiableTypeSource subType : entitySource.getSubTypes() ) {
-			final UnionSubclass subEntityDescriptor = new UnionSubclass( superEntityDescriptor, metadataBuildingContext );
+			final JavaTypeDescriptorEntityImplementor javaTypeDescriptor = metadataBuildingContext.getMetadataCollector()
+					.getTypeConfiguration()
+					.getJavaTypeDescriptorRegistry()
+					.makeEntityDescriptor(
+							entitySource.getEntityNamingSource().getEntityName(),
+							superEntityDescriptor.getJavaTypeDescriptor()
+					);
+			javaTypeDescriptor.getInitializationAccess().setSuperType( superEntityDescriptor.getJavaTypeDescriptor() );
+
+			final UnionSubclass subEntityDescriptor = new UnionSubclass( javaTypeDescriptor, superEntityDescriptor, metadataBuildingContext );
 			bindUnionSubclassEntity( (SubclassEntitySourceImpl) subType, subEntityDescriptor );
 			superEntityDescriptor.addSubclass( subEntityDescriptor );
 			entitySource.getLocalMetadataBuildingContext().getMetadataCollector().addEntityBinding( subEntityDescriptor );

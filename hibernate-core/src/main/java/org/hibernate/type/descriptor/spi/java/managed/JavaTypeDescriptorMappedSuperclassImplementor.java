@@ -17,4 +17,7 @@ public interface JavaTypeDescriptorMappedSuperclassImplementor
 	default PersistenceType getPersistenceType() {
 		return PersistenceType.MAPPED_SUPERCLASS;
 	}
+
+	@Override
+	JavaTypeDescriptorIdentifiableImplementor getSupertype();
 }

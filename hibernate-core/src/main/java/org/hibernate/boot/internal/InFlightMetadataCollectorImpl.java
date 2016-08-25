@@ -106,10 +106,10 @@ import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.type.mapper.internal.AnyTypeImpl;
 import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsExplicitImpl;
 import org.hibernate.type.mapper.internal.any.DiscriminatorMappingsImplicitImpl;
+import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.mapper.spi.any.AnyType;
 import org.hibernate.type.mapper.spi.any.DiscriminatorMappings;
 import org.hibernate.type.mapper.spi.basic.BasicType;
-import org.hibernate.type.mapper.spi.Type;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.usertype.ParameterizedType;
 
@@ -130,7 +130,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	private final BasicTypeProducerRegistry basicTypeProducerRegistry;
 
 	private final AttributeConverterManager attributeConverterManager = new AttributeConverterManager();
-	private final ClassmateContext classmateContext = new ClassmateContext();
 
 	private final UUID uuid;
 	private final MutableIdentifierGeneratorFactory identifierGeneratorFactory;
@@ -337,7 +336,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	@Override
 	public ClassmateContext getClassmateContext() {
-		return classmateContext;
+		return options.getClassmateContext();
 	}
 
 	@Override
@@ -443,14 +442,14 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		attributeConverterManager.addConverter(
 				AttributeConverterDescriptorImpl.create(
 						definition,
-						classmateContext
+						getClassmateContext()
 				)
 		);
 	}
 
 	@Override
-	public void addAttributeConverter(Class<? extends AttributeConverter> converterClass) {
-		addAttributeConverter( AttributeConverterDefinition.from( converterClass ) );
+	public void addAttributeConverter(Class<? extends AttributeConverter<?,?>> converterClass) {
+		addAttributeConverter( AttributeConverterDefinition.from( getClassmateContext(), converterClass ) );
 	}
 
 	@Override
@@ -2284,7 +2283,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			);
 		}
 		finally {
-			classmateContext.release();
+			getClassmateContext().release();
 			basicTypeProducerRegistry.release();
 		}
 	}

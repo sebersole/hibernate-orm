@@ -10,6 +10,7 @@ import java.util.Iterator;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.spi.Mapping;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 
 /**
  * A subclass in a table-per-subclass mapping
@@ -19,8 +20,11 @@ public class JoinedSubclass extends Subclass implements TableOwner {
 	private Table table;
 	private KeyValue key;
 
-	public JoinedSubclass(PersistentClass superclass, MetadataBuildingContext metadataBuildingContext) {
-		super( superclass, metadataBuildingContext );
+	public JoinedSubclass(
+			JavaTypeDescriptorEntityImplementor javaTypeDescriptor,
+			PersistentClass superclass,
+			MetadataBuildingContext metadataBuildingContext) {
+		super( javaTypeDescriptor, superclass, metadataBuildingContext );
 	}
 
 	public Table getTable() {

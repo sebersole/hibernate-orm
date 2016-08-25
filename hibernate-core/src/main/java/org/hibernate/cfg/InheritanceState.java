@@ -24,6 +24,7 @@ import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.annotations.EntityBinder;
 import org.hibernate.mapping.PersistentClass;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorMappedSuperclassImplementor;
 
 /**
  * Some extra data to the inheritance position of a class.
@@ -305,14 +306,28 @@ public class InheritanceState {
 			//add MAppedSuperclass if not already there
 			mappedSuperclass = buildingContext.getMetadataCollector().getMappedSuperclass( type );
 			if ( mappedSuperclass == null ) {
-				mappedSuperclass = new org.hibernate.mapping.MappedSuperclass( parentSuperclass, superEntity );
-				mappedSuperclass.setMappedClass( type );
+				final JavaTypeDescriptorMappedSuperclassImplementor mappedSuperclassDescriptor = getMappedSuperClassDescriptor( type );
+				mappedSuperclass = new org.hibernate.mapping.MappedSuperclass(
+						mappedSuperclassDescriptor,
+						parentSuperclass,
+						superEntity,
+						buildingContext
+				);
 				buildingContext.getMetadataCollector().addMappedSuperclass( type, mappedSuperclass );
 			}
 		}
 		if ( mappedSuperclass != null ) {
 			persistentClass.setSuperMappedSuperclass( mappedSuperclass );
 		}
+	}
+
+	private JavaTypeDescriptorMappedSuperclassImplementor getMappedSuperClassDescriptor(Class<?> type) {
+		// todo - incorporate resolution of the MappedSuperclass's super-type
+		//		o.h.mapping models that relationship vey differently
+		return buildingContext.getMetadataCollector()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getMappedSuperclassDescriptor( type );
 	}
 
 	static final class ElementsToProcess {

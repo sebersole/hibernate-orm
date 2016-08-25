@@ -5,6 +5,7 @@
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package org.hibernate.mapping;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.internal.util.collections.JoinedIterator;
 import org.hibernate.internal.util.collections.SingletonIterator;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 
 /**
  * A sublass in a table-per-class-hierarchy mapping
@@ -27,8 +29,11 @@ public class Subclass extends PersistentClass {
 	private Class classPersisterClass;
 	private final int subclassId;
 	
-	public Subclass(PersistentClass superclass, MetadataBuildingContext metadataBuildingContext) {
-		super( metadataBuildingContext );
+	public Subclass(
+			JavaTypeDescriptorEntityImplementor javaTypeDescriptor,
+			PersistentClass superclass,
+			MetadataBuildingContext metadataBuildingContext) {
+		super( javaTypeDescriptor, metadataBuildingContext );
 		this.superclass = superclass;
 		this.subclassId = superclass.nextSubclassId();
 	}

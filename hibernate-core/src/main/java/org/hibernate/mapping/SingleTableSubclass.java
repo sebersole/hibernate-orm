@@ -12,14 +12,18 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.spi.Mapping;
 import org.hibernate.internal.util.collections.JoinedIterator;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 
 /**
  * @author Gavin King
  */
 public class SingleTableSubclass extends Subclass {
 
-	public SingleTableSubclass(PersistentClass superclass, MetadataBuildingContext metadataBuildingContext) {
-		super( superclass, metadataBuildingContext );
+	public SingleTableSubclass(
+			JavaTypeDescriptorEntityImplementor javaTypeDescriptor,
+			PersistentClass superclass,
+			MetadataBuildingContext metadataBuildingContext) {
+		super( javaTypeDescriptor, superclass, metadataBuildingContext );
 	}
 
 	@SuppressWarnings("unchecked")

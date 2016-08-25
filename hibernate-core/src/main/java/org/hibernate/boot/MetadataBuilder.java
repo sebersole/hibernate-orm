@@ -387,10 +387,8 @@ public interface MetadataBuilder {
 	 * @param attributeConverterClass The AttributeConverter class.
 	 *
 	 * @return {@code this} for method chaining
-	 *
-	 * @see org.hibernate.cfg.AttributeConverterDefinition#from(Class)
 	 */
-	MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass);
+	MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<?,?>> attributeConverterClass);
 
 	/**
 	 * Adds an AttributeConverter by its Class plus a boolean indicating whether to auto apply it.
@@ -399,11 +397,9 @@ public interface MetadataBuilder {
 	 * @param autoApply Should the AttributeConverter be auto applied to property types as specified
 	 * by its "entity attribute" parameterized type?
 	 *
-	 * @return {@code this} for method chaining
-	 *
-	 * @see org.hibernate.cfg.AttributeConverterDefinition#from(Class, boolean)
+	 * @return {@code this} for method chaining)
 	 */
-	MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass, boolean autoApply);
+	MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<?,?>> attributeConverterClass, boolean autoApply);
 
 	/**
 	 * Adds an AttributeConverter instance.
@@ -411,10 +407,8 @@ public interface MetadataBuilder {
 	 * @param attributeConverter The AttributeConverter instance.
 	 *
 	 * @return {@code this} for method chaining
-	 *
-	 * @see org.hibernate.cfg.AttributeConverterDefinition#from(AttributeConverter)
 	 */
-	MetadataBuilder applyAttributeConverter(AttributeConverter attributeConverter);
+	MetadataBuilder applyAttributeConverter(AttributeConverter<?,?> attributeConverter);
 
 	/**
 	 * Adds an AttributeConverter instance, explicitly indicating whether to auto-apply.
@@ -424,10 +418,8 @@ public interface MetadataBuilder {
 	 * by its "entity attribute" parameterized type?
 	 *
 	 * @return {@code this} for method chaining
-	 *
-	 * @see org.hibernate.cfg.AttributeConverterDefinition#from(AttributeConverter, boolean)
 	 */
-	MetadataBuilder applyAttributeConverter(AttributeConverter attributeConverter, boolean autoApply);
+	MetadataBuilder applyAttributeConverter(AttributeConverter<?,?> attributeConverter, boolean autoApply);
 
 	MetadataBuilder applyIdGenerationTypeInterpreter(IdGeneratorStrategyInterpreter interpreter);
 

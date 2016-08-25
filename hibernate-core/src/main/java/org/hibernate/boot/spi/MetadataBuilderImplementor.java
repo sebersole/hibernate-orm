@@ -7,6 +7,7 @@
 package org.hibernate.boot.spi;
 
 import org.hibernate.boot.MetadataBuilder;
+import org.hibernate.boot.internal.ClassmateContext;
 
 /**
  * Internal API for MetadataBuilder exposing the building options being collected.
@@ -14,6 +15,8 @@ import org.hibernate.boot.MetadataBuilder;
  * @author Steve Ebersole
  */
 public interface MetadataBuilderImplementor extends MetadataBuilder {
+	ClassmateContext getClassmateContext();
+
 	/**
 	 * Get the options being collected on this MetadataBuilder that will ultimately be used in
 	 * building the Metadata.
