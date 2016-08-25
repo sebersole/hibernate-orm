@@ -6,6 +6,7 @@
  */
 package org.hibernate.type.descriptor.internal.java.managed;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -19,9 +20,20 @@ import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SetAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
+import org.hibernate.HibernateException;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.type.descriptor.internal.java.managed.attribute.AttributeBuilderPluralStandardImpl;
+import org.hibernate.type.descriptor.internal.java.managed.attribute.AttributeBuilderSingularStandardImpl;
+import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.spi.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.spi.java.managed.AttributeBuilder;
+import org.hibernate.type.descriptor.spi.java.managed.AttributeBuilderPlural;
+import org.hibernate.type.descriptor.spi.java.managed.AttributeBuilderSingular;
+import org.hibernate.type.descriptor.spi.java.managed.AttributeDeclarer;
 import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorManagedImplementor;
-import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorManagedImplementor.InitializationAccess;
+import org.hibernate.type.descriptor.spi.java.managed.InitializationAccess;
+import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -29,20 +41,45 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public abstract class ManagedTypeDescriptor
-		implements JavaTypeDescriptorManagedImplementor, InitializationAccess {
+		implements JavaTypeDescriptorManagedImplementor, InitializationAccess, AttributeDeclarer {
 	private static final Logger log = Logger.getLogger( ManagedTypeDescriptor.class );
 
 	private final String typeName;
-	private Class javaType;
-	private final ManagedTypeDescriptor superType;
 
-	private final Map<String,Attribute> declaredAttributes = new HashMap<>();
+	private Class javaType;
+	private ManagedTypeDescriptor superType;
+
+	private Map<String,AttributeBuilder> declaredAttributeBuilders = new HashMap<>();
 
 	private boolean initialized;
+	private Map<String,Attribute> declaredAttributes;
 
-	public ManagedTypeDescriptor(String typeName, ManagedTypeDescriptor superType) {
+	public ManagedTypeDescriptor(String typeName) {
+		this( typeName, null, null );
+	}
+
+	public ManagedTypeDescriptor(String typeName, Class javaType, ManagedTypeDescriptor superType) {
 		this.typeName = typeName;
+		this.javaType = javaType;
 		this.superType = superType;
+	}
+
+	public ManagedTypeDescriptor(String typeName, Class javaType) {
+		this( typeName, javaType, null );
+	}
+
+	protected Map<String, AttributeBuilder> declaredAttributeBuilders() {
+		return declaredAttributeBuilders;
+	}
+
+	@Override
+	public Class getJavaTypeClass() {
+		return javaType;
+	}
+
+	@Override
+	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
+		return null;
 	}
 
 	@Override
@@ -52,6 +89,7 @@ public abstract class ManagedTypeDescriptor
 
 	@Override
 	public Set<Attribute> getDeclaredAttributes() {
+		errorIfUninitialized();
 		return CollectionHelper.asSet( declaredAttributes.values() );
 	}
 
@@ -67,6 +105,7 @@ public abstract class ManagedTypeDescriptor
 
 	@Override
 	public Attribute getDeclaredAttribute(String name) {
+		errorIfUninitialized();
 		Attribute attr = declaredAttributes.get( name );
 		checkNotNull( attr, name, Attribute.class );
 		return attr;
@@ -119,6 +158,7 @@ public abstract class ManagedTypeDescriptor
 			HashSet<T> collectionTarget,
 			Class<T> specificAttributeClass,
 			boolean includeSuper) {
+		errorIfUninitialized();
 		declaredAttributes.values()
 				.stream()
 				.filter( specificAttributeClass::isInstance )
@@ -144,6 +184,8 @@ public abstract class ManagedTypeDescriptor
 
 	@SuppressWarnings("unchecked")
 	public <T extends Attribute> T locateAttribute(String name, Class<T> expectedType, boolean checkSupertype) {
+		errorIfUninitialized();
+
 		Attribute attribute = declaredAttributes.get( name );
 		if ( attribute != null ) {
 			checkType( attribute, expectedType );
@@ -387,7 +429,77 @@ public abstract class ManagedTypeDescriptor
 		return mapAttribute;
 	}
 
+	@Override
+	public MutabilityPlan getMutabilityPlan() {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#getMutabilityPlan; the mapping type " +
+						"ought to implement this in terms of any @Immutable defined 'up' the hierarchy"
+		);
+	}
 
+	@Override
+	public Comparator getComparator() {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#getComparator; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public int extractHashCode(Object value) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#extractHashCode; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public boolean areEqual(Object one, Object another) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#areEqual; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public String extractLoggableRepresentation(Object value) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#extractLoggableRepresentation; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public String toString(Object value) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#toString; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public Object fromString(String string) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#fromString; the mapping type " +
+						"ought to implement this"
+		);
+	}
+
+	@Override
+	public Object unwrap(Object value, Class type, WrapperOptions options) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#unwrap; the mapping type " +
+						"ought to handle any needed unwrapping"
+		);
+	}
+
+	@Override
+	public Object wrap(Object value, WrapperOptions options) {
+		throw new UnsupportedOperationException(
+				"Unexpected call to ManagedTypeDescriptor#wrap; the mapping type " +
+						"ought to handle any needed wrapping"
+		);
+	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Initialization
@@ -398,15 +510,36 @@ public abstract class ManagedTypeDescriptor
 	}
 
 	@Override
+	public void complete() {
+		errorIfInitialized();
+
+		declaredAttributes = new HashMap<>();
+		for ( Map.Entry<String, AttributeBuilder> entry : declaredAttributeBuilders.entrySet() ) {
+			declaredAttributes.put(
+					entry.getKey(),
+					entry.getValue().build()
+			);
+		}
+	}
+
+	@Override
 	public InitializationAccess getInitializationAccess() {
-		errorIfLocked();
+		errorIfInitialized();
 		return this;
 	}
 
-	protected void errorIfLocked() {
+	protected void errorIfUninitialized() {
+		if ( !initialized ) {
+			throw new IllegalStateException(
+					"ManagedType [" + toString() + "] descriptor not yet fully initialized"
+			);
+		}
+	}
+
+	protected void errorIfInitialized() {
 		if ( initialized ) {
 			throw new IllegalStateException(
-					"ManagedType [" + toString() + "] was already initialized; illegal access to InitializationAccess"
+					"ManagedType [" + toString() + "] descriptor was already initialized; illegal access to InitializationAccess"
 			);
 		}
 	}
@@ -414,13 +547,61 @@ public abstract class ManagedTypeDescriptor
 
 	@Override
 	public void setJavaType(Class javaType) {
-		errorIfLocked();
+		errorIfInitialized();
+		log.debugf( "ManagedTypeDescriptor#setJavaType(%s) called; previous value : %s", javaType, this.javaType );
 		this.javaType = javaType;
 	}
 
 	@Override
-	public void addAttribute(Attribute attribute) {
-		errorIfLocked();
-		declaredAttributes.put( attribute.getName(), attribute );
+	public void setSuperType(JavaTypeDescriptorManagedImplementor superType) {
+		errorIfInitialized();
+		log.debugf( "ManagedTypeDescriptor#setSuperType(%s) called; previous value : %s", superType, this.superType );
+		this.superType = (ManagedTypeDescriptor) superType;
+	}
+
+	@Override
+	public AttributeBuilderSingular getSingularAttributeBuilder(String name) {
+		AttributeBuilder builder = declaredAttributeBuilders.get( name );
+		if ( builder != null ) {
+			if ( !AttributeBuilderSingular.class.isInstance( builder ) ) {
+				throw new HibernateException(
+						"Request for SingularAttribute builder named [" + name +
+								"] resolved to non-singular attribute builder : " +
+								builder
+				);
+			}
+		}
+		else {
+			builder = new AttributeBuilderSingularStandardImpl( this, name );
+			declaredAttributeBuilders.put( name, builder );
+		}
+
+		return (AttributeBuilderSingular) builder;
+	}
+
+	@Override
+	public AttributeBuilderPlural getPluralAttributeBuilder(String name) {
+		AttributeBuilder builder = declaredAttributeBuilders.get( name );
+		if ( builder != null ) {
+			if ( !AttributeBuilderPlural.class.isInstance( builder ) ) {
+				throw new HibernateException(
+						"Request for AttributeBuilderPlural builder named [" + name +
+								"] resolved to non-plural attribute builder : " +
+								builder
+				);
+			}
+		}
+		else {
+			builder = new AttributeBuilderPluralStandardImpl( this,name );
+			declaredAttributeBuilders.put( name, builder );
+		}
+
+		return (AttributeBuilderPlural) builder;
+	}
+
+	@Override
+	public void attributeBuilt(Attribute attribute) {
+		errorIfInitialized();
+		log.debugf( "ManagedTypeDescriptor[%s] attribute [%s] built : %s", getTypeName(), attribute.getName(), attribute );
 	}
 }

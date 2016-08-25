@@ -11,11 +11,14 @@ import javax.persistence.metamodel.IdentifiableType;
 /**
  * Internal extension contract for what JPA's IdentifiableType, which is
  * really just saying a ManagedType that may contain identifier and version
- * metadata: aka an EntityType or a MappedSuperclassType
+ * metadata: aka an EntityType or a MappedSuperclassType.
  *
  * @author Steve Ebersole
  */
 public interface JavaTypeDescriptorIdentifiableImplementor
 		extends JavaTypeDescriptorManagedImplementor, IdentifiableType {
-	IdentifierDescriptor getIdentifierDescriptor();
+	@Override
+	JavaTypeDescriptorIdentifiableImplementor getSupertype();
+
+	EntityHierarchy getEntityHierarchy();
 }

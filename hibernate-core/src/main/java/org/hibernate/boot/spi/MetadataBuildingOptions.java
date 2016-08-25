@@ -16,6 +16,7 @@ import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
+import org.hibernate.boot.internal.ClassmateContext;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
@@ -56,6 +57,8 @@ public interface MetadataBuildingOptions {
 	TypeConfiguration getTypeConfiguration();
 
 	BasicTypeProducerRegistry getBasicTypeProducerRegistry();
+
+	ClassmateContext getClassmateContext();
 
 	/**
 	 * Access to the Jandex index passed by call to

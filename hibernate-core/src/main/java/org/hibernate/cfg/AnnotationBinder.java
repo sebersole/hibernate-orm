@@ -74,6 +74,7 @@ import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
 import org.hibernate.EntityMode;
 import org.hibernate.FetchMode;
+import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
@@ -167,6 +168,9 @@ import org.hibernate.mapping.SingleTableSubclass;
 import org.hibernate.mapping.Subclass;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.UnionSubclass;
+import org.hibernate.type.descriptor.internal.java.managed.RootEntityDescriptor;
+import org.hibernate.type.descriptor.spi.java.managed.EntityHierarchy;
+import org.hibernate.type.descriptor.spi.java.managed.JavaTypeDescriptorEntityImplementor;
 import org.hibernate.type.mapper.spi.Type;
 
 import static org.hibernate.internal.CoreLogging.messageLogger;
@@ -1189,19 +1193,56 @@ public final class AnnotationBinder {
 			MetadataBuildingContext metadataBuildingContext) {
 		//we now know what kind of persistent entity it is
 		if ( !inheritanceState.hasParents() ) {
-			return new RootClass( metadataBuildingContext );
+			// AnnotationBinder inherently means EntityMode#POJO for now...
+			final JavaTypeDescriptorEntityImplementor javaTypeDescriptor = metadataBuildingContext.getMetadataCollector()
+					.getTypeConfiguration()
+					.getJavaTypeDescriptorRegistry()
+					.makeRootEntityDescriptor(
+							inheritanceState.getClazz().getName(),
+							interpretInherietcneStyle( inheritanceState.getType() ),
+							EntityMode.POJO
+					);
+			return new RootClass( (RootEntityDescriptor) javaTypeDescriptor, metadataBuildingContext );
 		}
-		else if ( InheritanceType.SINGLE_TABLE.equals( inheritanceState.getType() ) ) {
-			return new SingleTableSubclass( superEntity, metadataBuildingContext );
+
+		if ( superEntity == null ) {
+			throw new HibernateException( "Expecting passed superEntity (PersistentClass) to be non-null" );
+		}
+
+		final JavaTypeDescriptorEntityImplementor javaTypeDescriptor = metadataBuildingContext.getMetadataCollector()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.makeEntityDescriptor(
+						inheritanceState.getClazz().getName(),
+						superEntity.getJavaTypeDescriptor()
+				);
+		javaTypeDescriptor.getInitializationAccess().setSuperType( superEntity.getJavaTypeDescriptor() );
+
+		if ( InheritanceType.SINGLE_TABLE.equals( inheritanceState.getType() ) ) {
+			return new SingleTableSubclass( javaTypeDescriptor, superEntity, metadataBuildingContext );
 		}
 		else if ( InheritanceType.JOINED.equals( inheritanceState.getType() ) ) {
-			return new JoinedSubclass( superEntity, metadataBuildingContext );
+			return new JoinedSubclass( javaTypeDescriptor, superEntity, metadataBuildingContext );
 		}
 		else if ( InheritanceType.TABLE_PER_CLASS.equals( inheritanceState.getType() ) ) {
-			return new UnionSubclass( superEntity, metadataBuildingContext );
+			return new UnionSubclass( javaTypeDescriptor, superEntity, metadataBuildingContext );
 		}
 		else {
 			throw new AssertionFailure( "Unknown inheritance type: " + inheritanceState.getType() );
+		}
+	}
+
+	private static EntityHierarchy.InheritanceStyle interpretInherietcneStyle(InheritanceType type) {
+		switch ( type ) {
+			case JOINED: {
+				return EntityHierarchy.InheritanceStyle.JOINED;
+			}
+			case TABLE_PER_CLASS: {
+				return EntityHierarchy.InheritanceStyle.TABLE_PER_CLASS;
+			}
+			default: {
+				return EntityHierarchy.InheritanceStyle.SINGLE_TABLE;
+			}
 		}
 	}
 

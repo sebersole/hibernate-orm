@@ -18,6 +18,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.collections.SingletonIterator;
+import org.hibernate.type.descriptor.internal.java.managed.RootEntityDescriptor;
 
 /**
  * The root class of an inheritance hierarchy
@@ -52,8 +53,13 @@ public class RootClass extends PersistentClass implements TableOwner {
 	private Property declaredVersion;
 	private boolean cachingExplicitlyRequested;
 
-	public RootClass(MetadataBuildingContext metadataBuildingContext) {
-		super( metadataBuildingContext );
+	public RootClass(RootEntityDescriptor javaTypeDescriptor, MetadataBuildingContext metadataBuildingContext) {
+		super( javaTypeDescriptor, metadataBuildingContext );
+	}
+
+	@Override
+	public RootEntityDescriptor getJavaTypeDescriptor() {
+		return (RootEntityDescriptor) super.getJavaTypeDescriptor();
 	}
 
 	@Override

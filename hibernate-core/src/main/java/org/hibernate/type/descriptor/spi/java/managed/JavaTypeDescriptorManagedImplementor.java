@@ -6,7 +6,6 @@
  */
 package org.hibernate.type.descriptor.spi.java.managed;
 
-import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.ManagedType;
 
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
@@ -30,13 +29,7 @@ public interface JavaTypeDescriptorManagedImplementor extends JavaTypeDescriptor
 	 */
 	boolean isInitialized();
 
-
 	JavaTypeDescriptorManagedImplementor getSupertype();
 
 	InitializationAccess getInitializationAccess();
-
-	interface InitializationAccess {
-		void setJavaType(Class javaType);
-		void addAttribute(Attribute attribute);
-	}
 }

@@ -16,6 +16,9 @@ public class ClassmateContext {
 	private TypeResolver typeResolver = new TypeResolver();
 	private MemberResolver memberResolver = new MemberResolver( typeResolver );
 
+	public ClassmateContext() {
+	}
+
 	public TypeResolver getTypeResolver() {
 		if ( typeResolver == null ) {
 			throw new IllegalStateException( "Classmate context has been released" );
