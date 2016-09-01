@@ -23,6 +23,26 @@ from an API perspective.
 * Jandex/HCANN access
 * BasicTypeProducerRegistry
 
+At the moment this is being developed as `org.hibernate.boot.spi.BootstrapContext`.
+
+A general theme to remember is that there are certain things we need during the bootstrap process,
+but that we should unequivocally not hold reference to after:
+
+* ClassmateContext
+* BasicTypeProducerRegistry
+* Jandex IndexView
+* HCANN ReflectionManager, ClassLoaderDelegate, etc
+* JPA "temp ClassLoader" (and ClassLoaderAccess?)
+* Scanning / ArchiveDescriptor delegates
+* List<CacheRegionDefinition> (this is an exposed collector)
+* List<AttributeConverterDefinition>
+* List<AuxiliaryDatabaseObject>
+
+Some of these need to be exposed on the "BootstrapContext", some exposed on the
+MetadataBuilder/MetadataBuildingOptions.  Remember though that MetadataBuildingOptions portion
+of the MetadataBuilder/MetadataBuildingOptions combo is passed and held on the SessionFactory; so
+anything that we should not hold reference to after bootstrap should not be defined on this contract.
+
 
 == Misc
 
@@ -34,3 +54,11 @@ from an API perspective.
 	defined on the mapper Type and the JavaTypeDescriptor.  But really its the fact that its a VARCHAR that dictates
 	that a literal should be quoted, e.g.
 * Moved `org.hibernate.jpa.event.spi.jpa.ExtendedBeanManager` to `org.hibernate.resource.cdi.spi.ExtendedBeanManager`
+
+
+== todo
+
+* need to split AttributeConverterDescriptor from AttributeConverterDefinition.  The former is the "bootstrap view" of
+	an AttributeConverter, whereas the latter is the runtime view of it.  In the bootstrap view we want to minimize
+	access to the AttributeConverter instance (unless we were handed an instance).  Also AttributeConverterDescriptor
+	needs to define the shouldAutoApplyToXYZ methods whereas that would not be appropriate for the runtime view.

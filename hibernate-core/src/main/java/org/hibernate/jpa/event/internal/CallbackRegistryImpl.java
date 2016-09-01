@@ -4,15 +4,15 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.jpa.event.internal.jpa;
+package org.hibernate.jpa.event.internal;
 
 import java.util.HashMap;
 import javax.persistence.PersistenceException;
 
-import org.hibernate.jpa.event.spi.jpa.Callback;
-import org.hibernate.jpa.event.spi.jpa.CallbackRegistry;
-import org.hibernate.jpa.event.spi.jpa.CallbackType;
-import org.hibernate.jpa.event.spi.jpa.CallbackBuilder;
+import org.hibernate.jpa.event.spi.Callback;
+import org.hibernate.jpa.event.spi.CallbackRegistry;
+import org.hibernate.jpa.event.spi.CallbackType;
+import org.hibernate.jpa.event.spi.CallbackBuilder;
 
 /**
  * Keep track of all lifecycle callbacks and listeners for a given persistence unit
@@ -22,13 +22,13 @@ import org.hibernate.jpa.event.spi.jpa.CallbackBuilder;
  */
 @SuppressWarnings({"unchecked", "serial"})
 public class CallbackRegistryImpl implements CallbackRegistry, CallbackBuilder.CallbackRegistrar {
-	private HashMap<Class, Callback[]> preCreates = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> postCreates = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> preRemoves = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> postRemoves = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> preUpdates = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> postUpdates = new HashMap<Class, Callback[]>();
-	private HashMap<Class, Callback[]> postLoads = new HashMap<Class, Callback[]>();
+	private HashMap<Class, Callback[]> preCreates = new HashMap<>();
+	private HashMap<Class, Callback[]> postCreates = new HashMap<>();
+	private HashMap<Class, Callback[]> preRemoves = new HashMap<>();
+	private HashMap<Class, Callback[]> postRemoves = new HashMap<>();
+	private HashMap<Class, Callback[]> preUpdates = new HashMap<>();
+	private HashMap<Class, Callback[]> postUpdates = new HashMap<>();
+	private HashMap<Class, Callback[]> postLoads = new HashMap<>();
 
 	@Override
 	public boolean hasRegisteredCallbacks(Class entityClass, CallbackType callbackType) {

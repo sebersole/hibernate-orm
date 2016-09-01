@@ -15,7 +15,7 @@ import org.hibernate.type.converter.spi.AttributeConverterDefinition;
  * @author Steve Ebersole
  */
 public interface AttributeConverterDescriptor extends AttributeConverterDefinition {
-	public static final String EXPLICIT_TYPE_NAME_PREFIX = "converted::";
+	String EXPLICIT_TYPE_NAME_PREFIX = "converted::";
 
 	boolean shouldAutoApplyToAttribute(XProperty xProperty, MetadataBuildingContext context);
 	boolean shouldAutoApplyToCollectionElement(XProperty xProperty, MetadataBuildingContext context);
