@@ -18,11 +18,11 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
-import org.hibernate.sqm.domain.BasicType;
 import org.hibernate.type.descriptor.spi.TypeDescriptorRegistryAccess;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptorRegistry;
 import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.BasicType;
 import org.hibernate.type.mapper.spi.basic.BasicTypeRegistry;
 
 import static org.hibernate.internal.CoreLogging.messageLogger;
@@ -125,6 +125,28 @@ public class TypeConfiguration implements SessionFactoryObserver, TypeDescriptor
 	}
 
 	public BasicType resolveCastTargetType(String name) {
+		throw new NotYetImplementedException(  );
+	}
+
+	public Type manyToOne(Class clazz) {
+		assert clazz != null;
+		return manyToOne( clazz.getName() );
+	}
+
+	public Type manyToOne(String entityName) {
+		throw new NotYetImplementedException(  );
+	}
+
+	public Type manyToOne(Class clazz, boolean lazy) {
+		assert clazz != null;
+		return manyToOne( clazz.getName(), lazy );
+	}
+
+	public Type manyToOne(String entityName, boolean lazy) {
+		throw new NotYetImplementedException(  );
+	}
+
+	public Type heuristicType(String typename) {
 		throw new NotYetImplementedException(  );
 	}
 

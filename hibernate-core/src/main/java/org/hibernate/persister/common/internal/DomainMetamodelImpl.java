@@ -11,19 +11,19 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.metamodel.spi.SqmDomainMetamodelImplementor;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.collection.internal.ImprovedCollectionPersisterImpl;
 import org.hibernate.persister.collection.spi.ImprovedCollectionPersister;
 import org.hibernate.persister.entity.internal.ImprovedEntityPersisterImpl;
 import org.hibernate.persister.entity.spi.EntityPersister;
-import org.hibernate.sqm.domain.BasicType;
-import org.hibernate.sqm.domain.DomainMetamodel;
 import org.hibernate.type.descriptor.spi.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.sql.SqlTypeDescriptor;
+import org.hibernate.type.mapper.spi.basic.BasicType;
+import org.hibernate.type.mapper.spi.basic.TemporalType;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.mapper.spi.basic.BasicTypeParameters;
@@ -32,7 +32,7 @@ import org.hibernate.type.descriptor.spi.MutabilityPlan;
 /**
  * @author Steve Ebersole
  */
-public class DomainMetamodelImpl implements DomainMetamodel {
+public class DomainMetamodelImpl implements SqmDomainMetamodelImplementor {
 	private final DatabaseModel databaseModel  = new DatabaseModel();
 	private final SessionFactoryImplementor sessionFactory;
 
@@ -85,13 +85,14 @@ public class DomainMetamodelImpl implements DomainMetamodel {
 	}
 
 	@Override
-	public <T> org.hibernate.type.mapper.spi.basic.BasicType<T> getBasicType(Class<T> javaType) {
+	public <T> BasicType<T> getBasicType(Class<T> javaType) {
 		return getBasicType( javaType, null );
 	}
 
 	@Override
-	public <T> org.hibernate.type.mapper.spi.basic.BasicType<T> getBasicType(Class<T> javaType, TemporalType temporalType) {
-		return getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
+	@SuppressWarnings("unchecked")
+	public <T> TemporalType<T> getBasicType(Class<T> javaType, javax.persistence.TemporalType temporalType) {
+		return (TemporalType<T>) getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
 				new BasicTypeParameters<T>() {
 					@Override
 					public JavaTypeDescriptor<T> getJavaTypeDescriptor() {
@@ -119,7 +120,7 @@ public class DomainMetamodelImpl implements DomainMetamodel {
 					}
 
 					@Override
-					public TemporalType getTemporalPrecision() {
+					public javax.persistence.TemporalType getTemporalPrecision() {
 						return temporalType;
 					}
 				},

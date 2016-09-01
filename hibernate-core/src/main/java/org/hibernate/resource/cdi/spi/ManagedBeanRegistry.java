@@ -7,7 +7,6 @@
 package org.hibernate.resource.cdi.spi;
 
 import org.hibernate.service.Service;
-import org.hibernate.service.spi.Stoppable;
 
 /**
  * A registry for ManagedBean instances.  Responsible for managing the lifecycle.

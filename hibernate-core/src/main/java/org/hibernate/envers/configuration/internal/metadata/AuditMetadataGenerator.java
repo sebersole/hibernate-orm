@@ -10,10 +10,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.dom4j.Element;
 import org.hibernate.MappingException;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
-import org.hibernate.boot.spi.MetadataImplementor;
+import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.hibernate.envers.boot.spi.AuditMetadataBuildingOptions;
 import org.hibernate.envers.configuration.internal.metadata.reader.ClassAuditingData;
@@ -43,12 +42,15 @@ import org.hibernate.tuple.GenerationTiming;
 import org.hibernate.tuple.ValueGeneration;
 import org.hibernate.type.CollectionType;
 import org.hibernate.type.ComponentType;
-import org.hibernate.type.mapper.spi.basic.LongType;
 import org.hibernate.type.ManyToOneType;
 import org.hibernate.type.OneToOneType;
-import org.hibernate.type.mapper.spi.basic.TimestampType;
 import org.hibernate.type.mapper.spi.Type;
+import org.hibernate.type.mapper.spi.basic.LongType;
+import org.hibernate.type.mapper.spi.basic.TimestampType;
+
 import org.jboss.logging.Logger;
+
+import org.dom4j.Element;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -66,7 +68,7 @@ public final class AuditMetadataGenerator {
 			AuditMetadataGenerator.class.getName()
 	);
 
-	private final MetadataImplementor metadata;
+	private final InFlightMetadataCollector metadata;
 	private final ServiceRegistry serviceRegistry;
 	private final AuditMetadataBuildingOptions options;
 	private final Element revisionInfoRelationMapping;
@@ -93,7 +95,7 @@ public final class AuditMetadataGenerator {
 	private final Map<String, Map<Join, Element>> entitiesJoins;
 
 	public AuditMetadataGenerator(
-			MetadataImplementor metadata,
+			InFlightMetadataCollector metadata,
 			ServiceRegistry serviceRegistry,
 			AuditMetadataBuildingOptions options,
 			Element revisionInfoRelationMapping,
@@ -117,7 +119,7 @@ public final class AuditMetadataGenerator {
 		classLoaderService = serviceRegistry.getService( ClassLoaderService.class );
 	}
 
-	public MetadataImplementor getMetadata() {
+	public InFlightMetadataCollector getMetadata() {
 		return metadata;
 	}
 

@@ -36,8 +36,6 @@ import org.hibernate.boot.cfgxml.internal.ConfigLoader;
 import org.hibernate.boot.cfgxml.spi.CfgXmlAccessService;
 import org.hibernate.boot.cfgxml.spi.LoadedConfig;
 import org.hibernate.boot.cfgxml.spi.MappingReference;
-import org.hibernate.boot.internal.ClassmateContext;
-import org.hibernate.boot.model.TypeContributor;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.model.process.spi.MetadataBuildingProcess;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
@@ -66,7 +64,6 @@ import org.hibernate.jpa.boot.spi.IntegratorProvider;
 import org.hibernate.jpa.boot.spi.PersistenceUnitDescriptor;
 import org.hibernate.jpa.boot.spi.StrategyRegistrationProviderList;
 import org.hibernate.jpa.boot.spi.TypeContributorList;
-import org.hibernate.jpa.event.spi.JpaIntegrator;
 import org.hibernate.jpa.internal.util.LogHelper;
 import org.hibernate.jpa.internal.util.PersistenceUnitTransactionTypeHelper;
 import org.hibernate.jpa.spi.IdentifierGeneratorStrategyProvider;
@@ -225,6 +222,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 
 		this.managedResources = MetadataBuildingProcess.prepare(
 				metadataSources,
+				metamodelBuilder.getBootstrapContext(),
 				metamodelBuilder.getMetadataBuildingOptions()
 		);
 
@@ -330,8 +328,6 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 			ClassLoader providedClassLoader,
 			ClassLoaderService providedClassLoaderService) {
 		final BootstrapServiceRegistryBuilder bsrBuilder = new BootstrapServiceRegistryBuilder();
-
-		bsrBuilder.applyIntegrator( new JpaIntegrator() );
 
 		final IntegratorProvider integratorProvider = (IntegratorProvider) integrationSettings.get( INTEGRATOR_PROVIDER );
 		if ( integratorProvider != null ) {
@@ -741,7 +737,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 					}
 					attributeConverterDefinitions.add(
 							AttributeConverterDefinition.from(
-									metamodelBuilder.getClassmateContext(),
+									metamodelBuilder.getBootstrapContext().getClassmateContext(),
 									(Class<? extends AttributeConverter<?,?>>) cls
 							)
 					);
@@ -763,9 +759,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 		// add any explicit orm.xml references passed in
 		final List<String> explicitOrmXmlList = (List<String>) configurationValues.remove( AvailableSettings.XML_FILE_NAMES );
 		if ( explicitOrmXmlList != null ) {
-			for ( String ormXml : explicitOrmXmlList ) {
-				metadataSources.addResource( ormXml );
-			}
+			explicitOrmXmlList.forEach( metadataSources::addResource );
 		}
 
 		return attributeConverterDefinitions;
@@ -776,6 +770,8 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 			MergedSettings mergedSettings,
 			StandardServiceRegistry ssr,
 			List<AttributeConverterDefinition> attributeConverterDefinitions) {
+		( (MetadataBuilderImplementor) metamodelBuilder ).getBootstrapContext().markAsJpaBootstrap();
+
 		if ( persistenceUnit.getTempClassLoader() != null ) {
 			metamodelBuilder.applyTempClassLoader( persistenceUnit.getTempClassLoader() );
 		}
@@ -789,24 +785,18 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 		);
 
 		if ( mergedSettings.cacheRegionDefinitions != null ) {
-			for ( CacheRegionDefinition localCacheRegionDefinition : mergedSettings.cacheRegionDefinitions ) {
-				metamodelBuilder.applyCacheRegionDefinition( localCacheRegionDefinition );
-			}
+			mergedSettings.cacheRegionDefinitions.forEach( metamodelBuilder::applyCacheRegionDefinition );
 		}
 
 		final TypeContributorList typeContributorList = (TypeContributorList) configurationValues.remove(
 				TYPE_CONTRIBUTORS
 		);
 		if ( typeContributorList != null ) {
-			for ( TypeContributor typeContributor : typeContributorList.getTypeContributors() ) {
-				metamodelBuilder.applyTypes( typeContributor );
-			}
+			typeContributorList.getTypeContributors().forEach( metamodelBuilder::applyTypes );
 		}
 
 		if ( attributeConverterDefinitions != null ) {
-			for ( AttributeConverterDefinition attributeConverterDefinition : attributeConverterDefinitions ) {
-				metamodelBuilder.applyAttributeConverter( attributeConverterDefinition );
-			}
+			attributeConverterDefinitions.forEach( metamodelBuilder::applyAttributeConverter );
 		}
 	}
 
@@ -849,7 +839,11 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 
 	private MetadataImplementor metadata() {
 		if ( this.metadata == null ) {
-			this.metadata = MetadataBuildingProcess.complete( managedResources, metamodelBuilder.getMetadataBuildingOptions() );
+			this.metadata = MetadataBuildingProcess.complete(
+					managedResources,
+					metamodelBuilder.getBootstrapContext(),
+					metamodelBuilder.getMetadataBuildingOptions()
+			);
 		}
 		return metadata;
 	}
@@ -888,8 +882,6 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 	}
 
 	protected void populate(SessionFactoryBuilder sfBuilder, StandardServiceRegistry ssr) {
-		( ( SessionFactoryBuilderImplementor) sfBuilder ).markAsJpaBootstrap();
-
 		final StrategySelector strategySelector = ssr.getService( StrategySelector.class );
 
 //		// Locate and apply the requested SessionFactory-level interceptor (if one)
