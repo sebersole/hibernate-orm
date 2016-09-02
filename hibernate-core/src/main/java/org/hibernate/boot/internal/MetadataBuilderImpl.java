@@ -402,8 +402,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 	@Override
 	public MetadataImplementor build() {
-		CascadeStyles.initialize( bootstrapContext.isJpaBootstrap() );
-
 		final CfgXmlAccessService cfgXmlAccessService = options.serviceRegistry.getService( CfgXmlAccessService.class );
 		if ( cfgXmlAccessService.getAggregatedConfig() != null ) {
 			if ( cfgXmlAccessService.getAggregatedConfig().getMappingReferences() != null ) {
