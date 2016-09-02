@@ -110,7 +110,7 @@ public class MetadataBuildingProcess {
 			final ManagedResources managedResources,
 			final BootstrapContext bootstrapContext,
 			final MetadataBuildingOptions options) {
-		final InFlightMetadataCollectorImpl metadataCollector = new InFlightMetadataCollectorImpl( options );
+		final InFlightMetadataCollectorImpl metadataCollector = new InFlightMetadataCollectorImpl( bootstrapContext, options );
 		handleTypes( bootstrapContext, options );
 
 		for ( AttributeConverterDefinition attributeConverterDefinition : managedResources.getAttributeConverterDefinitions() ) {
