@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.jpa;
+package org.hibernate.query;
 
 import org.hibernate.type.mapper.spi.Type;
 
@@ -13,12 +13,31 @@ import org.hibernate.type.mapper.spi.Type;
  * parameter value/binding.
  *
  * @author Steve Ebersole
- *
- * @deprecated (since 6.0) use {@link org.hibernate.query.TypedParameterValue} instead.
  */
-@Deprecated
-public class TypedParameterValue extends org.hibernate.query.TypedParameterValue {
+public class TypedParameterValue {
+	private final Type type;
+	private final Object value;
+
 	public TypedParameterValue(Type type, Object value) {
-		super( type, value );
+		this.type = type;
+		this.value = value;
+	}
+
+	/**
+	 * The value to bind
+	 *
+	 * @return The value to be bound
+	 */
+	public Object getValue() {
+		return value;
+	}
+
+	/**
+	 * The specific Hibernate type to use to bind the value.
+	 *
+	 * @return The Hibernate type to use.
+	 */
+	public Type getType() {
+		return type;
 	}
 }
