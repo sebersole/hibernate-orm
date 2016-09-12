@@ -62,3 +62,9 @@ anything that we should not hold reference to after bootstrap should not be defi
 	an AttributeConverter, whereas the latter is the runtime view of it.  In the bootstrap view we want to minimize
 	access to the AttributeConverter instance (unless we were handed an instance).  Also AttributeConverterDescriptor
 	needs to define the shouldAutoApplyToXYZ methods whereas that would not be appropriate for the runtime view.
+* merge `org.hibernate.jpa.AvailableSettings` into `org.hibernate.cfg.AvailableSettings`
+* design appropriate "keys" into the various "query interpretation" caches based on SQM.
+* ideally (perf wise) we'd "build and collect" ParameterMetadata as we build the SQM.  The alternative is to
+ 	build the SQM and then walk it to "build and collect" ParameterMetadata (extra walk).  This would mean either:
+ 	** collecting/storing and exposing the parameters on the SqmStatement itself
+ 	** passing an "ExpressionVisitor" into the SQM interpreter.
