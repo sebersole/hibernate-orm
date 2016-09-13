@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.hibernate.query.Query;
 import org.hibernate.type.mapper.spi.Type;
 
 /**
