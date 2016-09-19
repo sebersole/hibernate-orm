@@ -9,9 +9,15 @@ package org.hibernate.query.criteria;
 import javax.persistence.criteria.CriteriaBuilder;
 
 /**
- * Hibernate extensions to the JPA CriteriaBuilder.  Currently there are no extensions; these are coming in 6.0
+ * Hibernate extensions to the JPA CriteriaBuilder.  Currently there are no extensions;
+ * these are coming in 6.0 - see https://hibernate.atlassian.net/browse/HHH-11115
  *
  * @author Steve Ebersole
  */
 public interface HibernateCriteriaBuilder extends CriteriaBuilder {
+	// in-flight ideas:
+	//		* operator corresponding to the new "matches" HQL operator
+	//		* match for our expanded dynamic-instantiation support
+	//		* ?generic support for SQL restrictions? - ala Restrictions.sqlRestriction
+	//		* port query-by-example support - org.hibernate.criterion.Example
 }
