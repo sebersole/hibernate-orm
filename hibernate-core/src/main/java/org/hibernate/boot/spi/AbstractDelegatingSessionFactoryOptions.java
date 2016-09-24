@@ -338,4 +338,9 @@ public class AbstractDelegatingSessionFactoryOptions implements SessionFactoryOp
 	public Class<? extends Interceptor> getStatelessInterceptorImplementor() {
 		return delegate.getStatelessInterceptorImplementor();
 	}
+
+	@Override
+	public Integer getNonJpaNativeQueryOrdinalParameterBase() {
+		return delegate.getNonJpaNativeQueryOrdinalParameterBase();
+	}
 }

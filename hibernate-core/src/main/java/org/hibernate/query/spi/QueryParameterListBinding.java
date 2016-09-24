@@ -10,7 +10,7 @@ import java.util.Collection;
 import javax.persistence.TemporalType;
 
 import org.hibernate.Incubating;
-import org.hibernate.query.internal.QueryParameterBindingsImpl;
+import org.hibernate.query.internal.old.QueryParameterBindingsImpl;
 import org.hibernate.type.mapper.spi.Type;
 
 /**

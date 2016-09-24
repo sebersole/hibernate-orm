@@ -83,6 +83,7 @@ import static org.hibernate.cfg.AvailableSettings.JTA_TRACK_BY_THREAD;
 import static org.hibernate.cfg.AvailableSettings.LOG_SESSION_METRICS;
 import static org.hibernate.cfg.AvailableSettings.MAX_FETCH_DEPTH;
 import static org.hibernate.cfg.AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLVER;
+import static org.hibernate.cfg.AvailableSettings.NATIVE_QUERY_ORDINAL_PARAMETER_BASE;
 import static org.hibernate.cfg.AvailableSettings.ORDER_INSERTS;
 import static org.hibernate.cfg.AvailableSettings.ORDER_UPDATES;
 import static org.hibernate.cfg.AvailableSettings.PREFER_USER_TRANSACTION;
@@ -350,6 +351,12 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	}
 
 	@Override
+	public SessionFactoryBuilder applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
+		this.options.applyNonJpaNativeQueryOrdinalParameterBase( base );
+		return this;
+	}
+
+	@Override
 	public SessionFactoryBuilder applySecondLevelCacheSupport(boolean enabled) {
 		this.options.secondLevelCacheEnabled = enabled;
 		return this;
@@ -552,6 +559,7 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		private Map querySubstitutions;
 		private boolean strictJpaQueryLanguageCompliance;
 		private boolean namedQueryStartupCheckingEnabled;
+		private Integer nonJpaNativeQueryOrdinalParameterBase;
 		private final boolean procedureParameterNullPassingEnabled;
 
 		// Caching
@@ -674,6 +682,9 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 			this.strictJpaQueryLanguageCompliance = cfgService.getSetting( JPAQL_STRICT_COMPLIANCE, BOOLEAN, false );
 			this.namedQueryStartupCheckingEnabled = cfgService.getSetting( QUERY_STARTUP_CHECKING, BOOLEAN, true );
 			this.procedureParameterNullPassingEnabled = cfgService.getSetting( PROCEDURE_NULL_PARAM_PASSING, BOOLEAN, false );
+			applyNonJpaNativeQueryOrdinalParameterBase(
+					ConfigurationHelper.getInteger( NATIVE_QUERY_ORDINAL_PARAMETER_BASE, cfgService.getSettings() )
+			);
 
 			this.secondLevelCacheEnabled = cfgService.getSetting( USE_SECOND_LEVEL_CACHE, BOOLEAN, true );
 			this.queryCacheEnabled = cfgService.getSetting( USE_QUERY_CACHE, BOOLEAN, false );
@@ -858,6 +869,13 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 			return PhysicalConnectionHandlingMode.interpret( effectiveAcquisitionMode, effectiveReleaseMode );
 		}
 
+		private void applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
+			if ( base != null && base != 0 && base != 1 ) {
+				throw new IllegalArgumentException( "Illegal value for ordinal parameter base [" + base + "]; should be null, 0 or 1" );
+			}
+			this.nonJpaNativeQueryOrdinalParameterBase = base;
+		}
+
 		@Override
 		public StandardServiceRegistry getServiceRegistry() {
 			return serviceRegistry;
@@ -1031,6 +1049,11 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		@Override
 		public boolean isProcedureParameterNullPassingEnabled() {
 			return procedureParameterNullPassingEnabled;
+		}
+
+		@Override
+		public Integer getNonJpaNativeQueryOrdinalParameterBase() {
+			return nonJpaNativeQueryOrdinalParameterBase;
 		}
 
 		@Override
@@ -1322,6 +1345,11 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	@Override
 	public boolean isProcedureParameterNullPassingEnabled() {
 		return options.isProcedureParameterNullPassingEnabled();
+	}
+
+	@Override
+	public Integer getNonJpaNativeQueryOrdinalParameterBase() {
+		return options.getNonJpaNativeQueryOrdinalParameterBase();
 	}
 
 	@Override

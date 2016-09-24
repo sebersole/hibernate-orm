@@ -112,6 +112,8 @@ public interface SessionFactoryOptionsState {
 
 	boolean isProcedureParameterNullPassingEnabled();
 
+	Integer getNonJpaNativeQueryOrdinalParameterBase();
+
 	boolean isSecondLevelCacheEnabled();
 
 	boolean isQueryCacheEnabled();
@@ -161,4 +163,5 @@ public interface SessionFactoryOptionsState {
 	Map<String, SQLFunction> getCustomSqlFunctionMap();
 
 	boolean isPreferUserTransaction();
+
 }

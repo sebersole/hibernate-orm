@@ -92,6 +92,7 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 	private final boolean strictJpaQueryLanguageCompliance;
 	private final boolean namedQueryStartupCheckingEnabled;
 	private final boolean procedureParameterNullPassingEnabled;
+	private final Integer nonJpaNativeQueryOrdinalParameterBase;
 
 	// Caching
 	private final boolean secondLevelCacheEnabled;
@@ -166,6 +167,7 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 		this.strictJpaQueryLanguageCompliance = state.isStrictJpaQueryLanguageCompliance();
 		this.namedQueryStartupCheckingEnabled = state.isNamedQueryStartupCheckingEnabled();
 		this.procedureParameterNullPassingEnabled = state.isProcedureParameterNullPassingEnabled();
+		this.nonJpaNativeQueryOrdinalParameterBase = state.getNonJpaNativeQueryOrdinalParameterBase();
 
 		this.secondLevelCacheEnabled = state.isSecondLevelCacheEnabled();
 		this.queryCacheEnabled = state.isQueryCacheEnabled();
@@ -481,5 +483,10 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 	@Override
 	public boolean isPreferUserTransaction() {
 		return preferUserTransaction;
+	}
+
+	@Override
+	public Integer getNonJpaNativeQueryOrdinalParameterBase() {
+		return nonJpaNativeQueryOrdinalParameterBase;
 	}
 }

@@ -20,7 +20,7 @@ import javax.persistence.criteria.ParameterExpression;
 
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.query.Query;
-import org.hibernate.query.internal.AbstractProducedQuery;
+import org.hibernate.query.internal.old.AbstractProducedQuery;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.type.mapper.spi.Type;
 
