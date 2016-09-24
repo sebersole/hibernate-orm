@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.hibernate.sql.sqm.convert.spi.JdbcOperationPlan;
 import org.hibernate.sql.sqm.convert.spi.NotYetImplementedException;
-import org.hibernate.sql.sqm.convert.spi.ParameterBinder;
+import org.hibernate.sql.spi.ParameterBinder;
 import org.hibernate.sql.sqm.convert.spi.QueryOptionBinder;
 
 
