@@ -343,4 +343,9 @@ public class AbstractDelegatingSessionFactoryOptions implements SessionFactoryOp
 	public Integer getNonJpaNativeQueryOrdinalParameterBase() {
 		return delegate.getNonJpaNativeQueryOrdinalParameterBase();
 	}
+
+	@Override
+	public boolean isUseOfJdbcNamedParametersEnabled() {
+		return delegate.isUseOfJdbcNamedParametersEnabled();
+	}
 }
