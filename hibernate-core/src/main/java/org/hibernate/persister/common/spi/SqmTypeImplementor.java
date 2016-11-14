@@ -11,6 +11,6 @@ import org.hibernate.type.mapper.spi.Type;
 /**
  * @author Steve Ebersole
  */
-public interface SqmTypeImplementor extends org.hibernate.sqm.domain.Type {
+public interface SqmTypeImplementor {
 	Type getOrmType();
 }
