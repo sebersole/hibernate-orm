@@ -1,7 +1,7 @@
 package org.hibernate.test.cache.infinispan.util;
 
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.RegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -27,9 +27,9 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 
 
 	public static class AfterInsert extends TestSynchronization {
-		private final EntityRegionAccessStrategy strategy;
+		private final EntityRegionAccess strategy;
 
-		public AfterInsert(EntityRegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, Object value, Object version) {
+		public AfterInsert(EntityRegionAccess strategy, SharedSessionContractImplementor session, Object key, Object value, Object version) {
 			super(session, key, value, version);
 			this.strategy = strategy;
 		}
@@ -41,10 +41,10 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 	}
 
 	public static class AfterUpdate extends TestSynchronization {
-		private final EntityRegionAccessStrategy strategy;
+		private final EntityRegionAccess strategy;
 		private final SoftLock lock;
 
-		public AfterUpdate(EntityRegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, Object value, Object version, SoftLock lock) {
+		public AfterUpdate(EntityRegionAccess strategy, SharedSessionContractImplementor session, Object key, Object value, Object version, SoftLock lock) {
 			super(session, key, value, version);
 			this.strategy = strategy;
 			this.lock = lock;
@@ -57,10 +57,10 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 	}
 
 	public static class UnlockItem extends TestSynchronization {
-		private final RegionAccessStrategy strategy;
+		private final RegionAccess strategy;
 		private final SoftLock lock;
 
-		public UnlockItem(RegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, SoftLock lock) {
+		public UnlockItem(RegionAccess strategy, SharedSessionContractImplementor session, Object key, SoftLock lock) {
 			super(session, key, null, null);
 			this.strategy = strategy;
 			this.lock = lock;

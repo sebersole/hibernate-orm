@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
 /**
@@ -22,20 +22,20 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
  */
 public class ConcurrentSecondLevelCacheStatisticsImpl extends CategorizedStatistics implements SecondLevelCacheStatistics {
 	private final transient Region region;
-	private final transient EntityRegionAccessStrategy entityRegionAccessStrategy;
-	private final transient CollectionRegionAccessStrategy collectionRegionAccessStrategy;
+	private final transient EntityRegionAccess entityRegionAccess;
+	private final transient CollectionRegionAccess collectionRegionAccess;
 	private AtomicLong hitCount = new AtomicLong();
 	private AtomicLong missCount = new AtomicLong();
 	private AtomicLong putCount = new AtomicLong();
 
 	ConcurrentSecondLevelCacheStatisticsImpl(
 			Region region,
-			EntityRegionAccessStrategy entityRegionAccessStrategy,
-			CollectionRegionAccessStrategy collectionRegionAccessStrategy) {
+			EntityRegionAccess entityRegionAccess,
+			CollectionRegionAccess collectionRegionAccess) {
 		super( region.getName() );
 		this.region = region;
-		this.entityRegionAccessStrategy = entityRegionAccessStrategy;
-		this.collectionRegionAccessStrategy = collectionRegionAccessStrategy;
+		this.entityRegionAccess = entityRegionAccess;
+		this.collectionRegionAccess = collectionRegionAccess;
 	}
 
 	public long getHitCount() {
@@ -67,11 +67,11 @@ public class ConcurrentSecondLevelCacheStatisticsImpl extends CategorizedStatist
 		for ( Object o : region.toMap().entrySet() ) {
 			Map.Entry me = (Map.Entry) o;
 			Object id;
-			if ( entityRegionAccessStrategy != null ) {
-				id = entityRegionAccessStrategy.getCacheKeyId( me.getKey() );
+			if ( entityRegionAccess != null ) {
+				id = entityRegionAccess.getCacheKeyId( me.getKey() );
 			}
-			else if ( collectionRegionAccessStrategy != null ) {
-				id = collectionRegionAccessStrategy.getCacheKeyId( me.getKey() );
+			else if ( collectionRegionAccess != null ) {
+				id = collectionRegionAccess.getCacheKeyId( me.getKey() );
 			}
 			else {
 				id = me.getKey();

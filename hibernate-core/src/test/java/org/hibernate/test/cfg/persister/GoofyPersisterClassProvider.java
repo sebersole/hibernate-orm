@@ -19,9 +19,9 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -49,7 +49,6 @@ import org.hibernate.persister.walking.spi.CollectionIndexDefinition;
 import org.hibernate.persister.walking.spi.EntityIdentifierDefinition;
 import org.hibernate.tuple.entity.EntityMetamodel;
 import org.hibernate.tuple.entity.EntityTuplizer;
-import org.hibernate.type.CollectionType;
 import org.hibernate.type.spi.Type;
 
 /**
@@ -70,8 +69,8 @@ public class GoofyPersisterClassProvider implements PersisterClassResolver {
 
 		public NoopEntityPersister(
 				final PersistentClass persistentClass,
-				final EntityRegionAccessStrategy cacheAccessStrategy,
-				final NaturalIdRegionAccessStrategy naturalIdRegionAccessStrategy,
+				final EntityRegionAccess cacheAccessStrategy,
+				final NaturalIdRegionAccess naturalIdRegionAccess,
 				final PersisterCreationContext creationContext) {
 			throw new GoofyException(NoopEntityPersister.class);
 		}
@@ -382,7 +381,7 @@ public class GoofyPersisterClassProvider implements PersisterClassResolver {
 		}
 
 		@Override
-		public EntityRegionAccessStrategy getCacheAccessStrategy() {
+		public EntityRegionAccess getCacheAccessStrategy() {
 			return null;
 		}
 		
@@ -392,7 +391,7 @@ public class GoofyPersisterClassProvider implements PersisterClassResolver {
 		}
 
 		@Override
-		public NaturalIdRegionAccessStrategy getNaturalIdCacheAccessStrategy() {
+		public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
 			return null;
 		}
 
@@ -611,7 +610,7 @@ public class GoofyPersisterClassProvider implements PersisterClassResolver {
 
 		public NoopCollectionPersister(
 				Collection collectionBinding,
-				CollectionRegionAccessStrategy cacheAccessStrategy,
+				CollectionRegionAccess cacheAccessStrategy,
 				PersisterCreationContext creationContext) {
 			throw new GoofyException(NoopCollectionPersister.class);
 		}
@@ -624,7 +623,7 @@ public class GoofyPersisterClassProvider implements PersisterClassResolver {
 			return false;  //To change body of implemented methods use File | Settings | File Templates.
 		}
 
-		public CollectionRegionAccessStrategy getCacheAccessStrategy() {
+		public CollectionRegionAccess getCacheAccessStrategy() {
 			return null;  //To change body of implemented methods use File | Settings | File Templates.
 		}
 

@@ -15,7 +15,7 @@ import org.hibernate.cache.infinispan.impl.BaseRegion;
 import org.hibernate.cache.infinispan.util.Caches;
 import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
+import org.hibernate.cache.spi.access.RegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S extends RegionAccessStrategy>
+public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S extends RegionAccess>
 		extends AbstractNonFunctionalTest {
 	protected final Logger log = Logger.getLogger(getClass());
 

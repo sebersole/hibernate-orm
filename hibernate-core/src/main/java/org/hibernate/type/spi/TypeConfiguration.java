@@ -38,8 +38,8 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
@@ -614,11 +614,11 @@ public class TypeConfiguration implements SqmDomainMetamodel, SessionFactoryObse
 		};
 
 		for ( final PersistentClass model : mappingMetadata.getEntityBindings() ) {
-			final EntityRegionAccessStrategy accessStrategy = getSessionFactory().getCache().determineEntityRegionAccessStrategy(
+			final EntityRegionAccess accessStrategy = getSessionFactory().getCache().determineEntityRegionAccessStrategy(
 					model
 			);
 
-			final NaturalIdRegionAccessStrategy naturalIdAccessStrategy = getSessionFactory().getCache().determineNaturalIdRegionAccessStrategy(
+			final NaturalIdRegionAccess naturalIdAccessStrategy = getSessionFactory().getCache().determineNaturalIdRegionAccessStrategy(
 					model
 			);
 

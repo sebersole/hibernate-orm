@@ -13,9 +13,9 @@ import org.hibernate.HibernateException;
 import org.hibernate.cache.spi.QueryCache;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.service.Service;
@@ -100,7 +100,7 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	EntityRegionAccessStrategy getEntityRegionAccess(String regionName);
+	EntityRegionAccess getEntityRegionAccess(String regionName);
 
 	/**
 	 * Find the "access strategy" for the named collection cache region.
@@ -109,7 +109,7 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	CollectionRegionAccessStrategy getCollectionRegionAccess(String regionName);
+	CollectionRegionAccess getCollectionRegionAccess(String regionName);
 
 	/**
 	 * Find the "access strategy" for the named natrual-id cache region.
@@ -118,11 +118,11 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	NaturalIdRegionAccessStrategy getNaturalIdCacheRegionAccessStrategy(String regionName);
+	NaturalIdRegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName);
 
-	EntityRegionAccessStrategy determineEntityRegionAccessStrategy(PersistentClass model);
+	EntityRegionAccess determineEntityRegionAccessStrategy(PersistentClass model);
 
-	NaturalIdRegionAccessStrategy determineNaturalIdRegionAccessStrategy(PersistentClass model);
+	NaturalIdRegionAccess determineNaturalIdRegionAccessStrategy(PersistentClass model);
 
-	CollectionRegionAccessStrategy determineCollectionRegionAccessStrategy(Collection model);
+	CollectionRegionAccess determineCollectionRegionAccessStrategy(Collection model);
 }

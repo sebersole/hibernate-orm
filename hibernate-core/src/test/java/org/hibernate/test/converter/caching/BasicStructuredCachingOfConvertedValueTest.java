@@ -15,7 +15,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.cache.CachingRegionFactory;
 import org.hibernate.testing.cache.EntityRegionImpl;
-import org.hibernate.testing.cache.ReadWriteEntityRegionAccessStrategy;
+import org.hibernate.testing.cache.ReadWriteEntityRegionAccess;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.junit.Test;
 
@@ -47,7 +47,7 @@ public class BasicStructuredCachingOfConvertedValueTest extends BaseNonConfigCor
 
 		{
 			final Object cachedItem = region.getDataMap().values().iterator().next();
-			final Map<String, ?> state = (Map) ( (ReadWriteEntityRegionAccessStrategy.Item) cachedItem ).getValue();
+			final Map<String, ?> state = (Map) ( (ReadWriteEntityRegionAccess.Item) cachedItem ).getValue();
 			// this is the point of the Jira.. that this "should be" the converted value
 			assertThat( state.get( "postalArea" ), instanceOf( PostalArea.class ) );
 		}
@@ -68,7 +68,7 @@ public class BasicStructuredCachingOfConvertedValueTest extends BaseNonConfigCor
 
 		{
 			final Object cachedItem = region.getDataMap().values().iterator().next();
-			final Map<String, ?> state = (Map) ( (ReadWriteEntityRegionAccessStrategy.Item) cachedItem ).getValue();
+			final Map<String, ?> state = (Map) ( (ReadWriteEntityRegionAccess.Item) cachedItem ).getValue();
 			// this is the point of the Jira.. that this "should be" the converted value
 			assertThat( state.get( "postalArea" ), instanceOf( PostalArea.class ) );
 		}

@@ -16,7 +16,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.cache.CachingRegionFactory;
 import org.hibernate.testing.cache.EntityRegionImpl;
-import org.hibernate.testing.cache.ReadWriteEntityRegionAccessStrategy;
+import org.hibernate.testing.cache.ReadWriteEntityRegionAccess;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class BasicUnstructuredCachingOfConvertedValueTest extends BaseNonConfigC
 
 		{
 			final Object cachedItem = region.getDataMap().values().iterator().next();
-			final StandardCacheEntryImpl state = (StandardCacheEntryImpl) ( (ReadWriteEntityRegionAccessStrategy.Item) cachedItem ).getValue();
+			final StandardCacheEntryImpl state = (StandardCacheEntryImpl) ( (ReadWriteEntityRegionAccess.Item) cachedItem ).getValue();
 			assertThat( state.getDisassembledState()[postalAreaAttributeIndex], instanceOf( PostalArea.class ) );
 		}
 
@@ -70,7 +70,7 @@ public class BasicUnstructuredCachingOfConvertedValueTest extends BaseNonConfigC
 
 		{
 			final Object cachedItem = region.getDataMap().values().iterator().next();
-			final StandardCacheEntryImpl state = (StandardCacheEntryImpl) ( (ReadWriteEntityRegionAccessStrategy.Item) cachedItem ).getValue();
+			final StandardCacheEntryImpl state = (StandardCacheEntryImpl) ( (ReadWriteEntityRegionAccess.Item) cachedItem ).getValue();
 			assertThat( state.getDisassembledState()[postalAreaAttributeIndex], instanceOf( PostalArea.class ) );
 		}
 

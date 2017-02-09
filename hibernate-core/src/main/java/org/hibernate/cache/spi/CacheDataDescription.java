@@ -8,6 +8,7 @@ package org.hibernate.cache.spi;
 
 import java.util.Comparator;
 
+import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.spi.Type;
 
 /**
@@ -16,22 +17,24 @@ import org.hibernate.type.spi.Type;
  * @author Steve Ebersole
  */
 public interface CacheDataDescription {
+	CacheKeysFactory getCacheKeysFactory();
+
 	/**
 	 * Is the data marked as being mutable?
 	 *
 	 * @return {@code true} if the data is mutable; {@code false} otherwise.
 	 */
-	public boolean isMutable();
+	boolean isMutable();
 
 	/**
 	 * Is the data to be cached considered versioned?
 	 *
 	 * If {@code true}, it is illegal for {@link #getVersionComparator} to return {@code null}
-	 * or an instance of {@link org.hibernate.type.descriptor.java.IncomparableComparator}.
+	 * or an instance of {@link IncomparableComparator}.
 	 *
 	 * @return {@code true} if the data is versioned; {@code false} otherwise.
 	 */
-	public boolean isVersioned();
+	boolean isVersioned();
 
 	/**
 	 * Get the comparator used to compare two different version values.  May return {@code null} <b>if</b>
@@ -39,7 +42,7 @@ public interface CacheDataDescription {
 	 *
 	 * @return The comparator for versions, or {@code null}
 	 */
-	public Comparator getVersionComparator();
+	Comparator getVersionComparator();
 
 	/**
 	 * @return Type of the key that will be used as the key in the cache, or {@code null} if the natural comparison

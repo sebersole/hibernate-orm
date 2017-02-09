@@ -25,7 +25,7 @@ import org.hibernate.QueryException;
 import org.hibernate.TransientObjectException;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.cache.spi.entry.StructuredCollectionCacheEntry;
 import org.hibernate.cache.spi.entry.StructuredMapCacheEntry;
@@ -244,7 +244,7 @@ public abstract class AbstractCollectionPersister<O,C,E> implements CollectionPe
 	private final IdentifierGenerator identifierGenerator;
 	private final PropertyMapping elementPropertyMapping;
 	private final EntityPersister elementPersister;
-	private final CollectionRegionAccessStrategy cacheAccessStrategy;
+	private final CollectionRegionAccess cacheAccessStrategy;
 	private final CollectionType collectionType;
 	private CollectionInitializer initializer;
 
@@ -278,7 +278,7 @@ public abstract class AbstractCollectionPersister<O,C,E> implements CollectionPe
 			Collection collectionBinding,
 			ManagedTypeImplementor source,
 			String propertyName,
-			CollectionRegionAccessStrategy cacheAccessStrategy,
+			CollectionRegionAccess cacheAccessStrategy,
 			PersisterCreationContext creationContext) throws MappingException, CacheException {
 		this.source = source;
 		this.propertyName = propertyName;
@@ -1169,7 +1169,7 @@ public abstract class AbstractCollectionPersister<O,C,E> implements CollectionPe
 			throws MappingException;
 
 	@Override
-	public CollectionRegionAccessStrategy getCacheAccessStrategy() {
+	public CollectionRegionAccess getCacheAccessStrategy() {
 		return cacheAccessStrategy;
 	}
 

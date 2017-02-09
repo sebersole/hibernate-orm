@@ -20,8 +20,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.engine.internal.MutableEntityEntryFactory;
@@ -97,8 +97,8 @@ public class PersisterClassProviderTest {
 		@SuppressWarnings( {"UnusedParameters"})
 		public GoofyProvider(
 				org.hibernate.mapping.PersistentClass persistentClass,
-				org.hibernate.cache.spi.access.EntityRegionAccessStrategy strategy,
-				NaturalIdRegionAccessStrategy naturalIdRegionAccessStrategy,
+				EntityRegionAccess strategy,
+				NaturalIdRegionAccess naturalIdRegionAccess,
 				PersisterCreationContext creationContext) {
 			throw new GoofyException();
 		}
@@ -274,7 +274,7 @@ public class PersisterClassProviderTest {
         }
 
         @Override
-        public NaturalIdRegionAccessStrategy getNaturalIdCacheAccessStrategy() {
+        public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
             return null;
         }
 
@@ -409,7 +409,7 @@ public class PersisterClassProviderTest {
 		}
 
 		@Override
-		public EntityRegionAccessStrategy getCacheAccessStrategy() {
+		public EntityRegionAccess getCacheAccessStrategy() {
 			return null;
 		}
 

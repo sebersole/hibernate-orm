@@ -6,17 +6,32 @@
  */
 package org.hibernate.cache.spi;
 
-import java.util.Map;
-
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.QueryResultRegionAccess;
+import org.hibernate.cache.spi.access.UpdateTimestampsRegionAccess;
 
 /**
  * Defines a contract for accessing a particular named region within the 
  * underlying cache implementation.
+ * <p/>
+ * Implementations are free to not support the mixing of "user model data"
+ * (such as {@link #buildEntityRegionAccess}, {@link #buildNaturalIdRegionAccess},
+ * {@link #buildCollectionAccess}) and "support data" (such as
+ * {@link #buildQueryResultRegionAccess} and {@link #buildUpdateTimestampsRegionAccess})
+ * within the same region.
+ * <p/>
+ * <b>However</b>, implementors <b>must</b> support mixing "user model data" access
+ * from the same region
  *
  * @author Steve Ebersole
  */
 public interface Region {
+	// todo (6.0) : and what about the other 6.0-todo entry about cache entry structuring, etc.  Does that have any bearing/impact here?
+
 	/**
 	 * Retrieve the name of this region.
 	 *
@@ -34,66 +49,48 @@ public interface Region {
 	void destroy() throws CacheException;
 
 	/**
-	 * Determine whether this region contains data for the given key.
-	 * <p/>
-	 * The semantic here is whether the cache contains data visible for the
-	 * current call context.  This should be viewed as a "best effort", meaning
-	 * blocking should be avoid if possible.
+	 * Build a EntityRegionAccess instance representing access to entity data stored in
+	 * this cache region using the given AccessType.
 	 *
-	 * @param key The cache key
+	 * @param accessType The type of access allowed to the cached data, in terms of
+	 * concurrency and consistency controls.
+	 * @param metadata Information about the entity we are storing/accessing data for
 	 *
-	 * @return True if the underlying cache contains corresponding data; false
-	 * otherwise.
+	 * @return The access delegate
 	 */
-	boolean contains(Object key);
+	EntityRegionAccess buildEntityRegionAccess(
+			AccessType accessType,
+			EntityCacheDataDescription metadata) throws CacheException;
 
 	/**
-	 * The number of bytes is this cache region currently consuming in memory.
+	 * Build a NaturalIdRegionAccess instance representing access to natural-id
+	 * data stored in this cache region using the given AccessType.
 	 *
-	 * @return The number of bytes consumed by this region; -1 if unknown or
-	 * unsupported.
+	 * @param accessType The type of access allowed to the cached data, in terms of
+	 * concurrency and consistency controls.
+	 * @param metadata Information about the natural-id we are storing/accessing data for
+	 *
+	 * @return The access delegate
 	 */
-	long getSizeInMemory();
+	NaturalIdRegionAccess buildNaturalIdRegionAccess(
+			AccessType accessType,
+			NaturalIdCacheDataDescription metadata) throws CacheException;
 
 	/**
-	 * The count of entries currently contained in the regions in-memory store.
+	 * Build a CollectionRegionAccess instance representing access to collection
+	 * data stored in this cache region using the given AccessType.
 	 *
-	 * @return The count of entries in memory; -1 if unknown or unsupported.
+	 * @param accessType The type of access allowed to the cached data, in terms of
+	 * concurrency and consistency controls.
+	 * @param metadata Information about the collection we are storing/accessing data for
+	 *
+	 * @return The access delegate
 	 */
-	long getElementCountInMemory();
+	CollectionRegionAccess buildCollectionAccess(
+			AccessType accessType,
+			CollectionCacheDataDescription metadata) throws CacheException;
 
-	/**
-	 * The count of entries currently contained in the regions disk store.
-	 *
-	 * @return The count of entries on disk; -1 if unknown or unsupported.
-	 */
-	long getElementCountOnDisk();
+	QueryResultRegionAccess buildQueryResultRegionAccess();
 
-	/**
-	 * Get the contents of this region as a map.
-	 * <p/>
-	 * Implementors which do not support this notion
-	 * should simply return an empty map.
-	 *
-	 * @return The content map.
-	 */
-	Map toMap();
-
-	/**
-	 * Get the next timestamp according to the underlying cache implementor.
-	 *
-	 * @todo Document the usages of this method so providers know exactly what is expected.
-	 *
-	 * @return The next timestamp
-	 */
-	long nextTimestamp();
-
-	/**
-	 * Get a timeout value.
-	 *
-	 * @todo Again, document the usages of this method so providers know exactly what is expected.
-	 *
-	 * @return The time out value
-	 */
-	int getTimeout();
+	UpdateTimestampsRegionAccess buildUpdateTimestampsRegionAccess();
 }

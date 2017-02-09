@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -31,7 +31,6 @@ import org.hibernate.persister.common.spi.TypeExporter;
 import org.hibernate.persister.embedded.spi.EmbeddedContainer;
 import org.hibernate.persister.entity.spi.EntityPersister;
 import org.hibernate.persister.spi.PersisterCreationContext;
-import org.hibernate.persister.walking.spi.CollectionDefinition;
 import org.hibernate.sql.ast.from.CollectionTableGroup;
 import org.hibernate.sql.ast.from.TableSpace;
 import org.hibernate.sql.convert.internal.FromClauseIndex;
@@ -68,7 +67,7 @@ import org.hibernate.type.spi.Type;
  *         String - The name of the collection's attribute relative to AttributeContainer
  *     </li>
  *     <li>
- *         {@link CollectionRegionAccessStrategy} - the second level caching strategy for this collection
+ *         {@link CollectionRegionAccess} - the second level caching strategy for this collection
  *     </li>
  *     <li>
  *         {@link PersisterCreationContext} - access to additional
@@ -87,7 +86,7 @@ public interface CollectionPersister<O,C,E>
 			Collection.class,
 			ManagedTypeImplementor.class,
 			String.class,
-			CollectionRegionAccessStrategy.class,
+			CollectionRegionAccess.class,
 			PersisterCreationContext.class
 	};
 
@@ -155,7 +154,7 @@ public interface CollectionPersister<O,C,E>
 	/**
 	 * Get the cache
 	 */
-	CollectionRegionAccessStrategy getCacheAccessStrategy();
+	CollectionRegionAccess getCacheAccessStrategy();
 	/**
 	 * Get the cache structure
 	 */

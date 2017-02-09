@@ -12,8 +12,8 @@ import javax.persistence.metamodel.Type;
 
 import org.hibernate.HibernateException;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
@@ -42,8 +42,8 @@ public abstract class AbstractEntityPersister<T>
 	private final SessionFactoryImplementor factory;
 
 	// needed temporarily between construction of the persister and its afterInitialization call
-	private final EntityRegionAccessStrategy cacheAccessStrategy;
-	private final NaturalIdRegionAccessStrategy naturalIdRegionAccessStrategy;
+	private final EntityRegionAccess cacheAccessStrategy;
+	private final NaturalIdRegionAccess naturalIdRegionAccess;
 
 	private final NavigableRole navigableRole;
 	private final BytecodeEnhancementMetadata bytecodeEnhancementMetadata;
@@ -52,15 +52,15 @@ public abstract class AbstractEntityPersister<T>
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityPersister(
 			PersistentClass persistentClass,
-			EntityRegionAccessStrategy cacheAccessStrategy,
-			NaturalIdRegionAccessStrategy naturalIdRegionAccessStrategy,
+			EntityRegionAccess cacheAccessStrategy,
+			NaturalIdRegionAccess naturalIdRegionAccess,
 			PersisterCreationContext creationContext) throws HibernateException {
 		super( resolveJavaTypeDescriptor( creationContext, persistentClass ) );
 
 		// moved up from AbstractEntityPersister ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		this.factory = creationContext.getSessionFactory();
 		this.cacheAccessStrategy = cacheAccessStrategy;
-		this.naturalIdRegionAccessStrategy = naturalIdRegionAccessStrategy;
+		this.naturalIdRegionAccess = naturalIdRegionAccess;
 
 		this.navigableRole = new NavigableRole( persistentClass.getEntityName() );
 		if ( persistentClass.hasPojoRepresentation() ) {
@@ -148,13 +148,13 @@ public abstract class AbstractEntityPersister<T>
 	}
 
 	@Override
-	public EntityRegionAccessStrategy getCacheAccessStrategy() {
+	public EntityRegionAccess getCacheAccessStrategy() {
 		return cacheAccessStrategy;
 	}
 
 	@Override
-	public NaturalIdRegionAccessStrategy getNaturalIdCacheAccessStrategy() {
-		return naturalIdRegionAccessStrategy;
+	public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
+		return naturalIdRegionAccess;
 	}
 
 	@Override

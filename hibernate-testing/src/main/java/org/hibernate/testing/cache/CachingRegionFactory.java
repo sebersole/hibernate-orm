@@ -6,19 +6,15 @@
  */
 package org.hibernate.testing.cache;
 
+import java.util.HashMap;
 import java.util.Properties;
 
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
-import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.CollectionRegion;
-import org.hibernate.cache.spi.EntityRegion;
-import org.hibernate.cache.spi.NaturalIdRegion;
-import org.hibernate.cache.spi.QueryResultsRegion;
+import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 
 import org.jboss.logging.Logger;
@@ -30,8 +26,12 @@ public class CachingRegionFactory implements RegionFactory {
 	private static final Logger LOG = Logger.getLogger( CachingRegionFactory.class.getName() );
 
 	public static String DEFAULT_ACCESSTYPE = "DefaultAccessType";
+	private static int TIMEOUT = Timestamper.ONE_MS * 60000;  //60s
 
+
+	// to support globally switching the CacheKeysFactory to use for testing
 	private final CacheKeysFactory cacheKeysFactory;
+	private final HashMap<String,RegionImpl> namedRegionMap = new HashMap<>();
 
 	private SessionFactoryOptions settings;
 	private Properties properties;
@@ -52,6 +52,10 @@ public class CachingRegionFactory implements RegionFactory {
 		LOG.warn( "CachingRegionFactory should be only used for testing." );
 		this.cacheKeysFactory = cacheKeysFactory;
 		this.properties = properties;
+	}
+
+	public SessionFactoryOptions getSettings() {
+		return settings;
 	}
 
 	public CacheKeysFactory getCacheKeysFactory() {
@@ -82,49 +86,26 @@ public class CachingRegionFactory implements RegionFactory {
 	}
 
 	@Override
+	public Region buildRegion(String regionName) {
+		final RegionImpl existing = namedRegionMap.get( regionName );
+		if ( existing != null ) {
+			return existing;
+		}
+
+		final RegionImpl region = new RegionImpl( regionName, cacheKeysFactory, this );
+		namedRegionMap.put( regionName, region );
+		return region;
+	}
+
+
+
+
+	@Override
 	public long nextTimestamp() {
 		return Timestamper.next();
 	}
 
-	@Override
-	public EntityRegion buildEntityRegion(String regionName, Properties properties, CacheDataDescription metadata)
-			throws CacheException {
-		return new EntityRegionImpl( this, regionName, metadata, settings );
-	}
-
-	@Override
-	public NaturalIdRegion buildNaturalIdRegion(String regionName, Properties properties, CacheDataDescription metadata)
-			throws CacheException {
-		return new NaturalIdRegionImpl( this, regionName, metadata, settings );
-	}
-
-	@Override
-	public CollectionRegion buildCollectionRegion(
-			String regionName,
-			Properties properties,
-			CacheDataDescription metadata) throws CacheException {
-		return new CollectionRegionImpl( this, regionName, metadata, settings );
-	}
-
-	@Override
-	public QueryResultsRegion buildQueryResultsRegion(String regionName, Properties properties) throws CacheException {
-		return new QueryResultsRegionImpl( this, regionName );
-	}
-
-	@Override
-	public TimestampsRegion buildTimestampsRegion(String regionName, Properties properties) throws CacheException {
-		return new TimestampsRegionImpl( this, regionName );
-	}
-
-	private static class QueryResultsRegionImpl extends BaseGeneralDataRegion implements QueryResultsRegion {
-		QueryResultsRegionImpl(CachingRegionFactory cachingRegionFactory, String name) {
-			super( cachingRegionFactory, name );
-		}
-	}
-
-	private static class TimestampsRegionImpl extends BaseGeneralDataRegion implements TimestampsRegion {
-		TimestampsRegionImpl(CachingRegionFactory cachingRegionFactory, String name) {
-			super( cachingRegionFactory, name );
-		}
+	public static int getTimeout() {
+		return TIMEOUT;
 	}
 }

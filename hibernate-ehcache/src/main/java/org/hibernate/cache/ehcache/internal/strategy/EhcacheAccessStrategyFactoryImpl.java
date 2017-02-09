@@ -11,9 +11,9 @@ import org.hibernate.cache.ehcache.internal.regions.EhcacheCollectionRegion;
 import org.hibernate.cache.ehcache.internal.regions.EhcacheEntityRegion;
 import org.hibernate.cache.ehcache.internal.regions.EhcacheNaturalIdRegion;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 
 import org.jboss.logging.Logger;
 
@@ -31,7 +31,7 @@ public class EhcacheAccessStrategyFactoryImpl implements EhcacheAccessStrategyFa
 	);
 
 	@Override
-	public EntityRegionAccessStrategy createEntityRegionAccessStrategy(
+	public EntityRegionAccess createEntityRegionAccessStrategy(
 			EhcacheEntityRegion entityRegion,
 			AccessType accessType) {
 		switch ( accessType ) {
@@ -63,7 +63,7 @@ public class EhcacheAccessStrategyFactoryImpl implements EhcacheAccessStrategyFa
 	}
 
 	@Override
-	public CollectionRegionAccessStrategy createCollectionRegionAccessStrategy(
+	public CollectionRegionAccess createCollectionRegionAccessStrategy(
 			EhcacheCollectionRegion collectionRegion,
 			AccessType accessType) {
 		switch ( accessType ) {
@@ -96,7 +96,7 @@ public class EhcacheAccessStrategyFactoryImpl implements EhcacheAccessStrategyFa
 	}
 
 	@Override
-	public NaturalIdRegionAccessStrategy createNaturalIdRegionAccessStrategy(
+	public NaturalIdRegionAccess createNaturalIdRegionAccessStrategy(
 			EhcacheNaturalIdRegion naturalIdRegion,
 			AccessType accessType) {
 		switch ( accessType ) {

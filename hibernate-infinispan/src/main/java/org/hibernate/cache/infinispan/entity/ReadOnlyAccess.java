@@ -9,7 +9,7 @@ package org.hibernate.cache.infinispan.entity;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.infinispan.access.AccessDelegate;
 import org.hibernate.cache.spi.EntityRegion;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -22,7 +22,7 @@ import org.hibernate.persister.entity.spi.EntityPersister;
  * @author Galder Zamarreño
  * @since 3.5
  */
-class ReadOnlyAccess implements EntityRegionAccessStrategy {
+class ReadOnlyAccess implements EntityRegionAccess {
 
 	protected final EntityRegionImpl region;
 	protected final AccessDelegate delegate;

@@ -14,7 +14,7 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.ehcache.internal.regions.EhcacheNaturalIdRegion;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.spi.NaturalIdRegion;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.spi.EntityPersister;
@@ -28,7 +28,7 @@ import org.hibernate.persister.entity.spi.EntityPersister;
  */
 public class TransactionalEhcacheNaturalIdRegionAccessStrategy
 		extends AbstractEhcacheAccessStrategy<EhcacheNaturalIdRegion>
-		implements NaturalIdRegionAccessStrategy {
+		implements NaturalIdRegionAccess {
 
 	private final Ehcache ehcache;
 

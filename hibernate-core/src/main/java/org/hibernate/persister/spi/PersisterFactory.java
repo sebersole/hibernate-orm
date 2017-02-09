@@ -7,9 +7,9 @@
 package org.hibernate.persister.spi;
 
 import org.hibernate.HibernateException;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Component;
 import org.hibernate.mapping.PersistentClass;
@@ -45,8 +45,8 @@ public interface PersisterFactory extends Service {
 	 */
 	EntityPersister createEntityPersister(
 			PersistentClass entityBinding,
-			EntityRegionAccessStrategy entityCacheAccessStrategy,
-			NaturalIdRegionAccessStrategy naturalIdCacheAccessStrategy,
+			EntityRegionAccess entityCacheAccessStrategy,
+			NaturalIdRegionAccess naturalIdCacheAccessStrategy,
 			PersisterCreationContext creationContext) throws HibernateException;
 
 	/**
@@ -68,7 +68,7 @@ public interface PersisterFactory extends Service {
 			Collection collectionBinding,
 			ManagedTypeImplementor source,
 			String localName,
-			CollectionRegionAccessStrategy cacheAccessStrategy,
+			CollectionRegionAccess cacheAccessStrategy,
 			PersisterCreationContext creationContext) throws HibernateException;
 
 	/**

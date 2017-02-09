@@ -14,6 +14,9 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
  * @author Gavin King
  */
 public interface CacheEntryStructure {
+
+	// todo (6.0) : see 6.0-todo doc items regarding cache-entry structuring...
+
 	/**
 	 * Convert the cache item into its "structured" form.  Perfectly valid to return the item as-is.
 	 *

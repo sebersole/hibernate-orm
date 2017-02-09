@@ -9,7 +9,7 @@ package org.hibernate.test.cache;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.cache.internal.CollectionCacheInvalidator;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -92,7 +92,7 @@ public class CollectionCacheEvictionTest extends BaseCoreFunctionalTestCase {
 		Session session = openSession();
 		SessionImplementor sessionImplementor = (SessionImplementor) session;
 
-		CollectionRegionAccessStrategy cache = persister.getCacheAccessStrategy();
+		CollectionRegionAccess cache = persister.getCacheAccessStrategy();
 		Object key = cache.generateCacheKey( 1, persister, sessionFactory(), session.getTenantIdentifier() );
 		Object cachedValue = cache.get( sessionImplementor, key, sessionImplementor.getTimestamp() );
 		assertNull( cachedValue );

@@ -20,7 +20,7 @@ import org.hibernate.cache.infinispan.access.NonTxInvalidationCacheAccessDelegat
 import org.hibernate.cache.infinispan.access.PutFromLoadValidator;
 import org.hibernate.cache.infinispan.access.TxInvalidationCacheAccessDelegate;
 import org.hibernate.cache.infinispan.collection.CollectionRegionImpl;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 import org.hibernate.test.cache.infinispan.AbstractRegionAccessStrategyTest;
@@ -48,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  * @since 3.5
  */
 public class CollectionRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<CollectionRegionImpl, CollectionRegionAccessStrategy> {
+		AbstractRegionAccessStrategyTest<CollectionRegionImpl, CollectionRegionAccess> {
 	protected static int testCount;
 
 	@Override
@@ -62,7 +62,7 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected CollectionRegionAccessStrategy getAccessStrategy(CollectionRegionImpl region) {
+	protected CollectionRegionAccess getAccessStrategy(CollectionRegionImpl region) {
 		return region.buildAccessStrategy( accessType );
 	}
 

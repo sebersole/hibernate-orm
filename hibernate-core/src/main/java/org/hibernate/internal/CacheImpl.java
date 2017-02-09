@@ -28,9 +28,9 @@ import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.UpdateTimestampsCache;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.engine.spi.CacheImplementor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.StringHelper;
@@ -56,9 +56,9 @@ public class CacheImpl implements CacheImplementor {
 
 	private final transient ConcurrentHashMap<String, Region> allRegionsMap = new ConcurrentHashMap<>();
 
-	private final transient ConcurrentHashMap<String, EntityRegionAccessStrategy> entityRegionAccessStrategyMap = new ConcurrentHashMap<>();
-	private final transient ConcurrentHashMap<String, CollectionRegionAccessStrategy> collectionRegionAccessStrategyMap = new ConcurrentHashMap<>();
-	private final transient ConcurrentHashMap<String, NaturalIdRegionAccessStrategy> naturalIdRegionAccessStrategyMap = new ConcurrentHashMap<>();
+	private final transient ConcurrentHashMap<String, EntityRegionAccess> entityRegionAccessStrategyMap = new ConcurrentHashMap<>();
+	private final transient ConcurrentHashMap<String, CollectionRegionAccess> collectionRegionAccessStrategyMap = new ConcurrentHashMap<>();
+	private final transient ConcurrentHashMap<String, NaturalIdRegionAccess> naturalIdRegionAccessStrategyMap = new ConcurrentHashMap<>();
 
 	private final transient UpdateTimestampsCache updateTimestampsCache;
 	private final transient QueryCache defaultQueryCache;
@@ -120,7 +120,7 @@ public class CacheImpl implements CacheImplementor {
 	public boolean containsEntity(String entityName, Serializable identifier) {
 		EntityPersister p = sessionFactory.getMetamodel().entityPersister( entityName );
 		if ( p.hasCache() ) {
-			EntityRegionAccessStrategy cache = p.getCacheAccessStrategy();
+			EntityRegionAccess cache = p.getCacheAccessStrategy();
 			Object key = cache.generateCacheKey( identifier, p, sessionFactory, null ); // have to assume non tenancy
 			return cache.getRegion().contains( key );
 		}
@@ -144,7 +144,7 @@ public class CacheImpl implements CacheImplementor {
 						MessageHelper.infoString( p, identifier, sessionFactory )
 				);
 			}
-			EntityRegionAccessStrategy cache = p.getCacheAccessStrategy();
+			EntityRegionAccess cache = p.getCacheAccessStrategy();
 			Object key = cache.generateCacheKey( identifier, p, sessionFactory, null ); // have to assume non tenancy
 			cache.evict( key );
 		}
@@ -196,7 +196,7 @@ public class CacheImpl implements CacheImplementor {
 	public boolean containsCollection(String role, Serializable ownerIdentifier) {
 		CollectionPersister p = sessionFactory.getMetamodel().collectionPersister( role );
 		if ( p.hasCache() ) {
-			CollectionRegionAccessStrategy cache = p.getCacheAccessStrategy();
+			CollectionRegionAccess cache = p.getCacheAccessStrategy();
 			Object key = cache.generateCacheKey( ownerIdentifier, p, sessionFactory, null ); // have to assume non tenancy
 			return cache.getRegion().contains( key );
 		}
@@ -215,7 +215,7 @@ public class CacheImpl implements CacheImplementor {
 						MessageHelper.collectionInfoString( p, ownerIdentifier, sessionFactory )
 				);
 			}
-			CollectionRegionAccessStrategy cache = p.getCacheAccessStrategy();
+			CollectionRegionAccess cache = p.getCacheAccessStrategy();
 			Object key = cache.generateCacheKey( ownerIdentifier, p, sessionFactory, null ); // have to assume non tenancy
 			cache.evict( key );
 		}
@@ -288,11 +288,11 @@ public class CacheImpl implements CacheImplementor {
 
 	@Override
 	public void close() {
-		for ( EntityRegionAccessStrategy access : entityRegionAccessStrategyMap.values() ) {
+		for ( EntityRegionAccess access : entityRegionAccessStrategyMap.values() ) {
 			access.getRegion().destroy();
 		}
 
-		for ( CollectionRegionAccessStrategy access : collectionRegionAccessStrategyMap.values() ) {
+		for ( CollectionRegionAccess access : collectionRegionAccessStrategyMap.values() ) {
 			access.getRegion().destroy();
 		}
 
@@ -367,17 +367,17 @@ public class CacheImpl implements CacheImplementor {
 	}
 
 	@Override
-	public EntityRegionAccessStrategy getEntityRegionAccess(String regionName) {
+	public EntityRegionAccess getEntityRegionAccess(String regionName) {
 		return entityRegionAccessStrategyMap.get( regionName );
 	}
 
 	@Override
-	public CollectionRegionAccessStrategy getCollectionRegionAccess(String regionName) {
+	public CollectionRegionAccess getCollectionRegionAccess(String regionName) {
 		return collectionRegionAccessStrategyMap.get( regionName );
 	}
 
 	@Override
-	public NaturalIdRegionAccessStrategy getNaturalIdCacheRegionAccessStrategy(String regionName) {
+	public NaturalIdRegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
 		return naturalIdRegionAccessStrategyMap.get( regionName );
 	}
 
@@ -429,9 +429,9 @@ public class CacheImpl implements CacheImplementor {
 	}
 
 	@Override
-	public EntityRegionAccessStrategy determineEntityRegionAccessStrategy(PersistentClass model) {
+	public EntityRegionAccess determineEntityRegionAccessStrategy(PersistentClass model) {
 		final String cacheRegionName = cacheRegionPrefix + model.getRootClass().getCacheRegionName();
-		EntityRegionAccessStrategy accessStrategy = entityRegionAccessStrategyMap.get( cacheRegionName );
+		EntityRegionAccess accessStrategy = entityRegionAccessStrategyMap.get( cacheRegionName );
 		if ( accessStrategy == null && settings.isSecondLevelCacheEnabled() ) {
 			final AccessType accessType = AccessType.fromExternalName( model.getCacheConcurrencyStrategy() );
 			if ( accessType != null ) {
@@ -450,8 +450,8 @@ public class CacheImpl implements CacheImplementor {
 
 
 	@Override
-	public NaturalIdRegionAccessStrategy determineNaturalIdRegionAccessStrategy(PersistentClass model) {
-		NaturalIdRegionAccessStrategy naturalIdAccessStrategy = null;
+	public NaturalIdRegionAccess determineNaturalIdRegionAccessStrategy(PersistentClass model) {
+		NaturalIdRegionAccess naturalIdAccessStrategy = null;
 		if ( model.hasNaturalId() && model.getNaturalIdCacheRegionName() != null ) {
 			final String naturalIdCacheRegionName = cacheRegionPrefix + model.getNaturalIdCacheRegionName();
 			naturalIdAccessStrategy = naturalIdRegionAccessStrategyMap.get( naturalIdCacheRegionName );
@@ -486,9 +486,9 @@ public class CacheImpl implements CacheImplementor {
 	}
 
 	@Override
-	public CollectionRegionAccessStrategy determineCollectionRegionAccessStrategy(Collection model) {
+	public CollectionRegionAccess determineCollectionRegionAccessStrategy(Collection model) {
 		final String cacheRegionName = cacheRegionPrefix + model.getCacheRegionName();
-		CollectionRegionAccessStrategy accessStrategy = collectionRegionAccessStrategyMap.get( cacheRegionName );
+		CollectionRegionAccess accessStrategy = collectionRegionAccessStrategyMap.get( cacheRegionName );
 		if ( accessStrategy == null && settings.isSecondLevelCacheEnabled()) {
 			final AccessType accessType = AccessType.fromExternalName(model.getCacheConcurrencyStrategy());
 			if (accessType != null) {

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
  * @since 3.5
  */
 public class EntityRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<EntityRegionImpl, EntityRegionAccessStrategy> {
+		AbstractRegionAccessStrategyTest<EntityRegionImpl, EntityRegionAccess> {
 	protected static int testCount;
 
 	@Override
@@ -47,7 +47,7 @@ public class EntityRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected EntityRegionAccessStrategy getAccessStrategy(EntityRegionImpl region) {
+	protected EntityRegionAccess getAccessStrategy(EntityRegionImpl region) {
 		return region.buildAccessStrategy( accessType );
 	}
 
@@ -226,7 +226,7 @@ public class EntityRegionAccessStrategyTest extends
 		assertEquals("Correct node2 value", expected, remoteAccessStrategy.get(s2, KEY, s2.getTimestamp()));
 	}
 
-	protected void doInsert(EntityRegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, String value, Object version) {
+	protected void doInsert(EntityRegionAccess strategy, SharedSessionContractImplementor session, Object key, String value, Object version) {
 		strategy.insert(session, key, value, null);
 		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(
 				new TestSynchronization.AfterInsert(strategy, session, key, value, version));
@@ -352,7 +352,7 @@ public class EntityRegionAccessStrategyTest extends
 		assertEquals("Correct node2 value", expected, remoteAccessStrategy.get(s4, KEY, s4.getTimestamp()));
 	}
 
-	protected void doUpdate(EntityRegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
+	protected void doUpdate(EntityRegionAccess strategy, SharedSessionContractImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
 		SoftLock softLock = strategy.lockItem(session, key, null);
 		strategy.update(session, key, value, null, null);
 		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(

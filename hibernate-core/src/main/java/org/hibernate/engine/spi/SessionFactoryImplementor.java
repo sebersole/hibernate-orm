@@ -18,20 +18,18 @@ import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
 import org.hibernate.MappingException;
-import org.hibernate.Metamodel;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
-import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.spi.QueryCache;
 import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.RegionAccess;
 import org.hibernate.cfg.Settings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.Dialect;
@@ -494,12 +492,12 @@ public interface SessionFactoryImplementor
 	 */
 	@Deprecated
 	default Region getSecondLevelCacheRegion(String regionName) {
-		final EntityRegionAccessStrategy entityRegionAccess = getCache().getEntityRegionAccess( regionName );
+		final EntityRegionAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
 		if ( entityRegionAccess != null ) {
 			return entityRegionAccess.getRegion();
 		}
 
-		final CollectionRegionAccessStrategy collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
+		final CollectionRegionAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
 		if ( collectionRegionAccess != null ) {
 			return collectionRegionAccess.getRegion();
 		}
@@ -520,13 +518,13 @@ public interface SessionFactoryImplementor
 	 * {@link CacheImplementor#determineCollectionRegionAccessStrategy} instead.
 	 */
 	@Deprecated
-	default RegionAccessStrategy getSecondLevelCacheRegionAccessStrategy(String regionName) {
-		final EntityRegionAccessStrategy entityRegionAccess = getCache().getEntityRegionAccess( regionName );
+	default RegionAccess getSecondLevelCacheRegionAccessStrategy(String regionName) {
+		final EntityRegionAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
 		if ( entityRegionAccess != null ) {
 			return entityRegionAccess;
 		}
 
-		final CollectionRegionAccessStrategy collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
+		final CollectionRegionAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
 		if ( collectionRegionAccess != null ) {
 			return collectionRegionAccess;
 		}
@@ -543,7 +541,7 @@ public interface SessionFactoryImplementor
 	 *
 	 * @deprecated (since 5.2) Use this factory's {@link #getCache()} ->
 	 * {@link CacheImplementor#getNaturalIdCacheRegionAccessStrategy(String)} ->
-	 * {@link NaturalIdRegionAccessStrategy#getRegion()} instead.
+	 * {@link NaturalIdRegionAccess#getRegion()} instead.
 	 */
 	@Deprecated
 	default Region getNaturalIdCacheRegion(String regionName) {
@@ -561,7 +559,7 @@ public interface SessionFactoryImplementor
 	 * {@link CacheImplementor#getNaturalIdCacheRegionAccessStrategy(String)} instead.
 	 */
 	@Deprecated
-	default RegionAccessStrategy getNaturalIdCacheRegionAccessStrategy(String regionName) {
+	default RegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
 		return getCache().getNaturalIdCacheRegionAccessStrategy( regionName );
 	}
 

@@ -19,8 +19,8 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.cache.spi.entry.StandardCacheEntryImpl;
@@ -66,8 +66,8 @@ public class CustomPersister implements EntityPersister {
 	@SuppressWarnings("UnusedParameters")
 	public CustomPersister(
 			PersistentClass model,
-			EntityRegionAccessStrategy cacheAccessStrategy,
-			NaturalIdRegionAccessStrategy naturalIdRegionAccessStrategy,
+			EntityRegionAccess cacheAccessStrategy,
+			NaturalIdRegionAccess naturalIdRegionAccess,
 			PersisterCreationContext creationContext) {
 		this.factory = creationContext.getSessionFactory();
 		this.entityMetamodel = new EntityMetamodel( model, this, factory );
@@ -472,7 +472,7 @@ public class CustomPersister implements EntityPersister {
 		return false;
 	}
 
-	public EntityRegionAccessStrategy getCacheAccessStrategy() {
+	public EntityRegionAccess getCacheAccessStrategy() {
 		return null;
 	}
 	
@@ -480,7 +480,7 @@ public class CustomPersister implements EntityPersister {
 		return false;
 	}
 
-	public NaturalIdRegionAccessStrategy getNaturalIdCacheAccessStrategy() {
+	public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
 		return null;
 	}
 

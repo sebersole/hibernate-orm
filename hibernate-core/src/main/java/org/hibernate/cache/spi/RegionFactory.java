@@ -13,6 +13,7 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.service.Service;
+import org.hibernate.service.spi.Stoppable;
 
 /**
  * Contract for building second level cache regions.
@@ -26,7 +27,11 @@ import org.hibernate.service.Service;
  *
  * @author Steve Ebersole
  */
-public interface RegionFactory extends Service {
+public interface RegionFactory extends Service, Stoppable {
+
+	// todo (6.0) : can #start be reduced to simply implementing Startable?
+	// 		Startable's #start method, however, defines no args.  Are the args here needed
+	// 		for any known implementors?  If so, any other way to pass them?  Initiator?
 
 	/**
 	 * Lifecycle callback to perform any necessary initialization of the
@@ -64,13 +69,6 @@ public interface RegionFactory extends Service {
 	}
 
 	/**
-	 * Lifecycle callback to perform any necessary cleanup of the underlying
-	 * cache implementation(s).  Called exactly once during
-	 * {@link org.hibernate.SessionFactory#close}.
-	 */
-	void stop();
-
-	/**
 	 * By default should we perform "minimal puts" when using this second
 	 * level cache implementation?
 	 *
@@ -80,12 +78,22 @@ public interface RegionFactory extends Service {
 	boolean isMinimalPutsEnabledByDefault();
 
 	/**
-	 * Get the default access type for {@link EntityRegion entity} and
-	 * {@link CollectionRegion collection} regions.
+	 * Get the default access type for any "user model" data
 	 *
 	 * @return This factory's default access type.
 	 */
 	AccessType getDefaultAccessType();
+
+	/**
+	 * Create a named Region instance.
+	 */
+	Region buildRegion(String regionName);
+
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// todo (6.0) : not sure these below are needed
+
 
 	/**
 	 * Generate a timestamp.
@@ -96,169 +104,4 @@ public interface RegionFactory extends Service {
 	 * @return The generated timestamp.
 	 */
 	long nextTimestamp();
-
-	/**
-	 * Build a cache region specialized for storing entity data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param properties Configuration properties.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 *
-	 * @deprecated (since 5.2) use the form taking Map instead
-	 */
-	@Deprecated
-	EntityRegion buildEntityRegion(String regionName, Properties properties, CacheDataDescription metadata)
-			throws CacheException;
-
-	/**
-	 * Build a cache region specialized for storing entity data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param configValues Available config values.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	default EntityRegion buildEntityRegion(String regionName, Map<String,Object> configValues, CacheDataDescription metadata)
-			throws CacheException {
-		final Properties properties = new Properties();
-		properties.putAll( configValues );
-		return buildEntityRegion( regionName, properties, metadata );
-	}
-
-	/**
-	 * Build a cache region specialized for storing NaturalId to Primary Key mappings.
-	 *
-	 * @param regionName The name of the region.
-	 * @param properties Configuration properties.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 *
-	 * @deprecated (since 5.2) use the form accepting a Map instead
-	 */
-	@Deprecated
-	NaturalIdRegion buildNaturalIdRegion(String regionName, Properties properties, CacheDataDescription metadata)
-			throws CacheException;
-
-	/**
-	 * Build a cache region specialized for storing NaturalId to Primary Key mappings.
-	 *
-	 * @param regionName The name of the region.
-	 * @param configValues Available config values.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	default NaturalIdRegion buildNaturalIdRegion(String regionName, Map<String,Object> configValues, CacheDataDescription metadata)
-			throws CacheException {
-		final Properties properties = new Properties();
-		properties.putAll( configValues );
-		return buildNaturalIdRegion( regionName, properties, metadata );
-	}
-
-	/**
-	 * Build a cache region specialized for storing collection data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param properties Configuration properties.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	CollectionRegion buildCollectionRegion(String regionName, Properties properties, CacheDataDescription metadata)
-			throws CacheException;
-
-	/**
-	 * Build a cache region specialized for storing collection data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param configValues Available config values.
-	 * @param metadata Information regarding the type of data to be cached
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	default CollectionRegion buildCollectionRegion(String regionName, Map<String,Object> configValues, CacheDataDescription metadata)
-			throws CacheException {
-		final Properties properties = new Properties();
-		properties.putAll( configValues );
-		return buildCollectionRegion( regionName, properties, metadata );
-	}
-
-	/**
-	 * Build a cache region specialized for storing query results.
-	 *
-	 * @param regionName The name of the region.
-	 * @param properties Configuration properties.
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 *
-	 * @deprecated (since 5.2) use the form taking Map instead
-	 */
-	@Deprecated
-	QueryResultsRegion buildQueryResultsRegion(String regionName, Properties properties) throws CacheException;
-
-	/**
-	 * Build a cache region specialized for storing query results.
-	 *
-	 * @param qualifyRegionName The qualified name of the region.
-	 * @param configValues Available config values.
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	default QueryResultsRegion buildQueryResultsRegion(String qualifyRegionName, Map<String,Object> configValues) {
-		final Properties properties = new Properties();
-		properties.putAll( configValues );
-		return buildQueryResultsRegion( qualifyRegionName, properties );
-	}
-
-	/**
-	 * Build a cache region specialized for storing update-timestamps data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param properties Configuration properties.
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 *
-	 * @deprecated (since 5.2) use the form taking Map
-	 */
-	@Deprecated
-	TimestampsRegion buildTimestampsRegion(String regionName, Properties properties) throws CacheException;
-
-	/**
-	 * Build a cache region specialized for storing update-timestamps data.
-	 *
-	 * @param regionName The name of the region.
-	 * @param configValues The available config values.
-	 *
-	 * @return The built region
-	 *
-	 * @throws CacheException Indicates problems building the region.
-	 */
-	default TimestampsRegion buildTimestampsRegion(String regionName, Map<String,Object> configValues) throws CacheException {
-		final Properties properties = new Properties();
-		properties.putAll( configValues );
-		return buildTimestampsRegion( regionName, properties );
-	}
-
 }

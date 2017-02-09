@@ -20,7 +20,7 @@ import org.hibernate.FetchMode;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
 import org.hibernate.cache.spi.entry.CollectionCacheEntry;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.criterion.DetachedCriteria;
@@ -101,7 +101,7 @@ public class DynamicFilterTest extends BaseNonConfigCoreFunctionalTestCase {
 		Hibernate.initialize( sp.getOrders() );
 		CollectionPersister persister = sessionFactory().getCollectionPersister( Salesperson.class.getName() + ".orders" );
 		assertTrue( "No cache for collection", persister.hasCache() );
-		CollectionRegionAccessStrategy cache = persister.getCacheAccessStrategy();
+		CollectionRegionAccess cache = persister.getCacheAccessStrategy();
 		Object cacheKey = cache.generateCacheKey(
 				testData.steveId,
 				persister,

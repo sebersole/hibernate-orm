@@ -18,8 +18,8 @@ import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.cache.spi.OptimisticCacheSource;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -32,7 +32,6 @@ import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.common.spi.Column;
-import org.hibernate.persister.common.spi.ManagedTypeImplementor;
 import org.hibernate.persister.common.spi.NavigableSource;
 import org.hibernate.persister.common.spi.Table;
 import org.hibernate.persister.embedded.spi.EmbeddedContainer;
@@ -84,10 +83,10 @@ public interface EntityPersister<T>
 	 *         to be handled by the persister
 	 *     </li>
 	 *     <li>
-	 *         {@link EntityRegionAccessStrategy} - the second level caching strategy for this entity
+	 *         {@link EntityRegionAccess} - the second level caching strategy for this entity
 	 *     </li>
 	 *     <li>
-	 *         {@link NaturalIdRegionAccessStrategy} - the second level caching strategy for the natural-id
+	 *         {@link NaturalIdRegionAccess} - the second level caching strategy for the natural-id
 	 *         defined for this entity, if one
 	 *     </li>
 	 *     <li>
@@ -98,8 +97,8 @@ public interface EntityPersister<T>
 	 */
 	Class[] STANDARD_CONSTRUCTOR_SIG = new Class[] {
 			PersistentClass.class,
-			EntityRegionAccessStrategy.class,
-			NaturalIdRegionAccessStrategy.class,
+			EntityRegionAccess.class,
+			NaturalIdRegionAccess.class,
 			PersisterCreationContext.class
 	};
 
@@ -624,7 +623,7 @@ public interface EntityPersister<T>
 	/**
 	 * Get the cache (optional operation)
 	 */
-	EntityRegionAccessStrategy getCacheAccessStrategy();
+	EntityRegionAccess getCacheAccessStrategy();
 	/**
 	 * Get the cache structure
 	 */
@@ -640,7 +639,7 @@ public interface EntityPersister<T>
 	/**
 	 * Get the NaturalId cache (optional operation)
 	 */
-	NaturalIdRegionAccessStrategy getNaturalIdCacheAccessStrategy();
+	NaturalIdRegionAccess getNaturalIdCacheAccessStrategy();
 
 	/**
 	 * Get the user-visible metadata for the class (optional operation)

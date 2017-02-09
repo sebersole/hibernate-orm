@@ -16,9 +16,9 @@ import org.hibernate.HibernateException;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
 import org.hibernate.action.spi.Executable;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
+import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -200,10 +200,10 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	}
 
 	private static class EntityCleanup implements Serializable {
-		private final EntityRegionAccessStrategy cacheAccess;
+		private final EntityRegionAccess cacheAccess;
 		private final SoftLock cacheLock;
 
-		private EntityCleanup(EntityRegionAccessStrategy cacheAccess) {
+		private EntityCleanup(EntityRegionAccess cacheAccess) {
 			this.cacheAccess = cacheAccess;
 			this.cacheLock = cacheAccess.lockRegion();
 			cacheAccess.removeAll();
@@ -215,10 +215,10 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	}
 
 	private static class CollectionCleanup implements Serializable {
-		private final CollectionRegionAccessStrategy cacheAccess;
+		private final CollectionRegionAccess cacheAccess;
 		private final SoftLock cacheLock;
 
-		private CollectionCleanup(CollectionRegionAccessStrategy cacheAccess) {
+		private CollectionCleanup(CollectionRegionAccess cacheAccess) {
 			this.cacheAccess = cacheAccess;
 			this.cacheLock = cacheAccess.lockRegion();
 			cacheAccess.removeAll();
@@ -230,10 +230,10 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	}
 
 	private static class NaturalIdCleanup implements Serializable {
-		private final NaturalIdRegionAccessStrategy naturalIdCacheAccessStrategy;
+		private final NaturalIdRegionAccess naturalIdCacheAccessStrategy;
 		private final SoftLock cacheLock;
 
-		public NaturalIdCleanup(NaturalIdRegionAccessStrategy naturalIdCacheAccessStrategy) {
+		public NaturalIdCleanup(NaturalIdRegionAccess naturalIdCacheAccessStrategy) {
 			this.naturalIdCacheAccessStrategy = naturalIdCacheAccessStrategy;
 			this.cacheLock = naturalIdCacheAccessStrategy.lockRegion();
 			naturalIdCacheAccessStrategy.removeAll();
