@@ -18,7 +18,11 @@ import org.hibernate.persister.entity.spi.EntityPersister;
  * the only viable source.
  *
  * @author Steve Ebersole
+ *
+ * @deprecated such concerns are handled via org.hibernate.cache.spi.RequestedCaching
+ * as Regions are built.  This contract is no longer needed, and is no longer used.
  */
+@Deprecated
 public interface OptimisticCacheSource {
 	/**
 	 * Is the data to be cached considered versioned?

@@ -10,7 +10,7 @@ package org.hibernate.cache.jcache.access;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.jcache.JCacheCollectionRegion;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
@@ -20,7 +20,7 @@ import org.hibernate.persister.collection.spi.CollectionPersister;
  */
 public class NonStrictCollectionRegionAccessStrategy
 		extends JCacheRegionAccessStrategy<JCacheCollectionRegion>
-		implements CollectionRegionAccess {
+		implements CollectionStorageAccess {
 
 	public NonStrictCollectionRegionAccessStrategy(JCacheCollectionRegion jCacheCollectionRegion) {
 		super( jCacheCollectionRegion );

@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.internal.Versioning;
 import org.hibernate.engine.spi.EntityEntry;
@@ -116,7 +116,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 					session
 			);
 			cacheEntry = persister.getCacheEntryStructure().structure( ce );
-			final EntityRegionAccess cache = persister.getCacheAccessStrategy();
+			final EntityStorageAccess cache = persister.getCacheAccessStrategy();
 			final Object ck = cache.generateCacheKey( id, persister, factory, session.getTenantIdentifier() );
 
 			final boolean put = cacheInsert( persister, ck );
@@ -211,7 +211,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 	public void doAfterTransactionCompletion(boolean success, SharedSessionContractImplementor session) throws HibernateException {
 		final EntityPersister persister = getPersister();
 		if ( success && isCachePutEnabled( persister, getSession() ) ) {
-			final EntityRegionAccess cache = persister.getCacheAccessStrategy();
+			final EntityStorageAccess cache = persister.getCacheAccessStrategy();
 			SessionFactoryImplementor sessionFactoryImplementor = session.getFactory();
 			final Object ck = cache.generateCacheKey( getId(), persister, sessionFactoryImplementor, session.getTenantIdentifier() );
 			final boolean put = cacheAfterInsert( cache, ck );
@@ -224,7 +224,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		postCommitInsert( success );
 	}
 
-	private boolean cacheAfterInsert(EntityRegionAccess cache, Object ck) {
+	private boolean cacheAfterInsert(EntityStorageAccess cache, Object ck) {
 		SharedSessionContractImplementor session = getSession();
 		final SessionEventListenerManager eventListenerManager = session.getEventListenerManager();
 		try {

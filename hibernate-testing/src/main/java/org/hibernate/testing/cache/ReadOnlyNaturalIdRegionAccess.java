@@ -8,7 +8,7 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.NaturalIdCacheDataDescription;
+import org.hibernate.cache.spi.RequestedNaturalIdCaching;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -16,11 +16,11 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @author Eric Dalquist
  */
 class ReadOnlyNaturalIdRegionAccess extends BaseNaturalIdRegionAccess {
-	ReadOnlyNaturalIdRegionAccess(
-			NaturalIdCacheDataDescription metadata,
-			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( metadata, cacheKeysFactory, region );
+	public ReadOnlyNaturalIdRegionAccess(
+			RequestedNaturalIdCaching requestedNaturalIdCaching,
+			CacheKeysFactory factoryToUse,
+			CacheableRegionImpl region) {
+		super( requestedNaturalIdCaching, factoryToUse, region );
 	}
 
 	@Override

@@ -271,7 +271,7 @@ public final class SessionImpl
 		applyProperties();
 
 		if ( TRACE_ENABLED ) {
-			log.tracef( "Opened Session [%s] at timestamp: %s", getSessionIdentifier(), getTimestamp() );
+			log.tracef( "Opened Session [%s] at timestamp: %s", getSessionIdentifier(), getTransactionStartTimestamp() );
 		}
 	}
 

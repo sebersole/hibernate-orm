@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
 /**
@@ -22,16 +22,16 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
  */
 public class ConcurrentSecondLevelCacheStatisticsImpl extends CategorizedStatistics implements SecondLevelCacheStatistics {
 	private final transient Region region;
-	private final transient EntityRegionAccess entityRegionAccess;
-	private final transient CollectionRegionAccess collectionRegionAccess;
+	private final transient EntityStorageAccess entityRegionAccess;
+	private final transient CollectionStorageAccess collectionRegionAccess;
 	private AtomicLong hitCount = new AtomicLong();
 	private AtomicLong missCount = new AtomicLong();
 	private AtomicLong putCount = new AtomicLong();
 
 	ConcurrentSecondLevelCacheStatisticsImpl(
 			Region region,
-			EntityRegionAccess entityRegionAccess,
-			CollectionRegionAccess collectionRegionAccess) {
+			EntityStorageAccess entityRegionAccess,
+			CollectionStorageAccess collectionRegionAccess) {
 		super( region.getName() );
 		this.region = region;
 		this.entityRegionAccess = entityRegionAccess;

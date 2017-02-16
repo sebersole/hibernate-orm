@@ -128,7 +128,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	private transient TransactionImplementor currentHibernateTransaction;
 	private transient TransactionCoordinator transactionCoordinator;
 	private transient Boolean useStreamForLobBinding;
-	private transient long timestamp;
+	private transient long currentTransactionStartTimestamp;
 
 	private transient Integer jdbcBatchSize;
 
@@ -137,7 +137,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	public AbstractSharedSessionContract(SessionFactoryImpl factory, SessionCreationOptions options) {
 		this.factory = factory;
 		this.sessionIdentifier = StandardRandomStrategy.INSTANCE.generateUUID( null );
-		this.timestamp = factory.getCache().getRegionFactory().nextTimestamp();
+		this.currentTransactionStartTimestamp = factory.getCache().getRegionFactory().nextTimestamp();
 
 		this.flushMode = options.getInitialSessionFlushMode();
 
@@ -271,7 +271,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 
 	@Override
 	public long getTimestamp() {
-		return timestamp;
+		return currentTransactionStartTimestamp;
 	}
 
 	@Override
@@ -411,7 +411,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		Transaction result = getTransaction();
 		result.begin();
 
-		this.timestamp = factory.getCache().getRegionFactory().nextTimestamp();
+		this.currentTransactionStartTimestamp = factory.getCache().getRegionFactory().nextTimestamp();
 
 		return result;
 	}

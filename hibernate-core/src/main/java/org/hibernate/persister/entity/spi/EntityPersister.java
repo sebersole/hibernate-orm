@@ -18,8 +18,8 @@ import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.cache.spi.OptimisticCacheSource;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -83,10 +83,10 @@ public interface EntityPersister<T>
 	 *         to be handled by the persister
 	 *     </li>
 	 *     <li>
-	 *         {@link EntityRegionAccess} - the second level caching strategy for this entity
+	 *         {@link EntityStorageAccess} - the second level caching strategy for this entity
 	 *     </li>
 	 *     <li>
-	 *         {@link NaturalIdRegionAccess} - the second level caching strategy for the natural-id
+	 *         {@link NaturalIdStorageAccess} - the second level caching strategy for the natural-id
 	 *         defined for this entity, if one
 	 *     </li>
 	 *     <li>
@@ -97,8 +97,8 @@ public interface EntityPersister<T>
 	 */
 	Class[] STANDARD_CONSTRUCTOR_SIG = new Class[] {
 			PersistentClass.class,
-			EntityRegionAccess.class,
-			NaturalIdRegionAccess.class,
+			EntityStorageAccess.class,
+			NaturalIdStorageAccess.class,
 			PersisterCreationContext.class
 	};
 
@@ -623,7 +623,7 @@ public interface EntityPersister<T>
 	/**
 	 * Get the cache (optional operation)
 	 */
-	EntityRegionAccess getCacheAccessStrategy();
+	EntityStorageAccess getCacheAccessStrategy();
 	/**
 	 * Get the cache structure
 	 */
@@ -639,7 +639,7 @@ public interface EntityPersister<T>
 	/**
 	 * Get the NaturalId cache (optional operation)
 	 */
-	NaturalIdRegionAccess getNaturalIdCacheAccessStrategy();
+	NaturalIdStorageAccess getNaturalIdCacheAccessStrategy();
 
 	/**
 	 * Get the user-visible metadata for the class (optional operation)

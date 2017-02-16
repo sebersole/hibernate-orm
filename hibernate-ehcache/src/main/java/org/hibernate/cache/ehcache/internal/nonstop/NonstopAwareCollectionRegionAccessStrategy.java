@@ -11,31 +11,31 @@ import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.spi.CollectionRegion;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
 
 /**
- * Implementation of {@link CollectionRegionAccess} that handles {@link NonStopCacheException} using
+ * Implementation of {@link CollectionStorageAccess} that handles {@link NonStopCacheException} using
  * {@link HibernateNonstopCacheExceptionHandler}
  *
  * @author Abhishek Sanoujam
  * @author Alex Snaps
  */
-public class NonstopAwareCollectionRegionAccessStrategy implements CollectionRegionAccess {
-	private final CollectionRegionAccess actualStrategy;
+public class NonstopAwareCollectionRegionAccessStrategy implements CollectionStorageAccess {
+	private final CollectionStorageAccess actualStrategy;
 	private final HibernateNonstopCacheExceptionHandler hibernateNonstopExceptionHandler;
 
 	/**
-	 * Constructor accepting the actual {@link CollectionRegionAccess} and the {@link HibernateNonstopCacheExceptionHandler}
+	 * Constructor accepting the actual {@link CollectionStorageAccess} and the {@link HibernateNonstopCacheExceptionHandler}
 	 *
 	 * @param actualStrategy The wrapped strategy
 	 * @param hibernateNonstopExceptionHandler The exception handler
 	 */
 	public NonstopAwareCollectionRegionAccessStrategy(
-			CollectionRegionAccess actualStrategy,
+			CollectionStorageAccess actualStrategy,
 			HibernateNonstopCacheExceptionHandler hibernateNonstopExceptionHandler) {
 		this.actualStrategy = actualStrategy;
 		this.hibernateNonstopExceptionHandler = hibernateNonstopExceptionHandler;

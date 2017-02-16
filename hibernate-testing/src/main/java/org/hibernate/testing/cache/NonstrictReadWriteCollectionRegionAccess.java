@@ -8,7 +8,7 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.CollectionCacheDataDescription;
+import org.hibernate.cache.spi.RequestedCollectionCaching;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -17,10 +17,10 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  */
 class NonstrictReadWriteCollectionRegionAccess extends BaseCollectionRegionAccess {
 	NonstrictReadWriteCollectionRegionAccess(
-			CollectionCacheDataDescription metadata,
+			RequestedCollectionCaching metadata,
 			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( cacheKeysFactory, region );
+			CacheableRegionImpl region) {
+		super( cacheKeysFactory, region, metadata.getCachedRole() );
 	}
 
 	@Override
@@ -31,5 +31,10 @@ class NonstrictReadWriteCollectionRegionAccess extends BaseCollectionRegionAcces
 	@Override
 	public void remove(SharedSessionContractImplementor session, Object key) throws CacheException {
 		evict( key );
+	}
+
+	@Override
+	public void removeAll() throws CacheException {
+		evictAll();
 	}
 }

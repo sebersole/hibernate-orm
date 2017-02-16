@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.HibernateException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.mapping.Any;
 import org.hibernate.mapping.Bag;
@@ -358,7 +358,7 @@ public class PersisterHelper {
 		final PersisterFactory persisterFactory = creationContext.getSessionFactory().getServiceRegistry().getService( PersisterFactory.class );
 
 			// todo : resolve cache access
-		final CollectionRegionAccess cachingAccess = null;
+		final CollectionStorageAccess cachingAccess = null;
 
 		// need PersisterCreationContext - we should always have access to that when building persisters, through finalized initialization
 		final CollectionPersister collectionPersister = persisterFactory.createCollectionPersister(

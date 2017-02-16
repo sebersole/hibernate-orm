@@ -11,8 +11,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.QueryException;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
@@ -128,8 +128,8 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 
 	public JoinedSubclassEntityPersister(
 			final PersistentClass persistentClass,
-			final EntityRegionAccess cacheAccessStrategy,
-			final NaturalIdRegionAccess naturalIdRegionAccess,
+			final EntityStorageAccess cacheAccessStrategy,
+			final NaturalIdStorageAccess naturalIdRegionAccess,
 			final PersisterCreationContext creationContext) throws HibernateException {
 
 		super( persistentClass, cacheAccessStrategy, naturalIdRegionAccess, creationContext );

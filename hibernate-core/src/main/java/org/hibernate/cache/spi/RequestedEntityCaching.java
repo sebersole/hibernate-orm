@@ -6,11 +6,15 @@
  */
 package org.hibernate.cache.spi;
 
+import org.hibernate.persister.common.NavigableRole;
+
 /**
- * Specialized CacheDataDescription for collection data
- *
  * @author Steve Ebersole
  */
-public interface CollectionCacheDataDescription extends CacheDataDescription {
-	String getRoleName();
+public interface RequestedEntityCaching extends RequestedCaching {
+	NavigableRole getRootEntityNavigableRole();
+
+	default String getRootEntityName() {
+		return getRootEntityNavigableRole().getFullPath();
+	}
 }

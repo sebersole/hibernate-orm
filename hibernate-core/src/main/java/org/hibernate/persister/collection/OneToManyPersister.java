@@ -15,7 +15,7 @@ import java.util.Set;
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.batch.internal.BasicBatchKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
@@ -64,7 +64,7 @@ public class OneToManyPersister extends AbstractCollectionPersister {
 
 	public OneToManyPersister(
 			Collection collectionBinding,
-			CollectionRegionAccess cacheAccessStrategy,
+			CollectionStorageAccess cacheAccessStrategy,
 			PersisterCreationContext creationContext) throws MappingException, CacheException {
 		super( collectionBinding, cacheAccessStrategy, creationContext );
 		cascadeDeleteEnabled = collectionBinding.getKey().isCascadeDeleteEnabled()

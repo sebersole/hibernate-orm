@@ -11,9 +11,9 @@ import org.hibernate.cache.ehcache.internal.regions.EhcacheEntityRegion;
 import org.hibernate.cache.ehcache.internal.regions.EhcacheNaturalIdRegion;
 import org.hibernate.cache.ehcache.internal.strategy.EhcacheAccessStrategyFactory;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 
 /**
  * Implementation of {@link org.hibernate.cache.ehcache.internal.strategy.EhcacheAccessStrategyFactory} that takes care of Nonstop cache exceptions using
@@ -36,7 +36,7 @@ public class NonstopAccessStrategyFactory implements EhcacheAccessStrategyFactor
 	}
 
 	@Override
-	public EntityRegionAccess createEntityRegionAccessStrategy(
+	public EntityStorageAccess createEntityRegionAccessStrategy(
 			EhcacheEntityRegion entityRegion,
 			AccessType accessType) {
 		return new NonstopAwareEntityRegionAccessStrategy(
@@ -46,7 +46,7 @@ public class NonstopAccessStrategyFactory implements EhcacheAccessStrategyFactor
 	}
 
 	@Override
-	public NaturalIdRegionAccess createNaturalIdRegionAccessStrategy(
+	public NaturalIdStorageAccess createNaturalIdRegionAccessStrategy(
 			EhcacheNaturalIdRegion naturalIdRegion,
 			AccessType accessType) {
 		return new NonstopAwareNaturalIdRegionAccessStrategy(
@@ -58,7 +58,7 @@ public class NonstopAccessStrategyFactory implements EhcacheAccessStrategyFactor
 	}
 
 	@Override
-	public CollectionRegionAccess createCollectionRegionAccessStrategy(
+	public CollectionStorageAccess createCollectionRegionAccessStrategy(
 			EhcacheCollectionRegion collectionRegion,
 			AccessType accessType) {
 		return new NonstopAwareCollectionRegionAccessStrategy(

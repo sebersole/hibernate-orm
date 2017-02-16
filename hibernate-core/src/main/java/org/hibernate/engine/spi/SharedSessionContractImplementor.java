@@ -146,9 +146,22 @@ public interface SharedSessionContractImplementor
 	void markForRollbackOnly();
 
 	/**
-	 * System time beforeQuery the start of the transaction
+	 * A system time {@link System#currentTimeMillis()} before the start of
+	 * the current transaction
+	 *
+	 * @deprecated (since 6.0) Renamed {@link #getTransactionStartTimestamp()}
+	 * to better suggest the intent of the method.
 	 */
+	@Deprecated
 	long getTimestamp();
+
+	/**
+	 * A system time {@link System#currentTimeMillis()} before the start of
+	 * the current transaction
+	 */
+	default long getTransactionStartTimestamp() {
+		return getTimestamp();
+	}
 
 	/**
 	 * Does this <tt>Session</tt> have an active Hibernate transaction

@@ -32,7 +32,7 @@ import org.hibernate.PersistentObjectException;
 import org.hibernate.TransientObjectException;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.loading.internal.LoadContexts;
@@ -1783,7 +1783,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				Object[] naturalIdValues,
 				Object[] previousNaturalIdValues,
 				CachedNaturalIdValueSource source) {
-			final NaturalIdRegionAccess naturalIdCacheAccessStrategy = persister.getNaturalIdCacheAccessStrategy();
+			final NaturalIdStorageAccess naturalIdCacheAccessStrategy = persister.getNaturalIdCacheAccessStrategy();
 			final Object naturalIdCacheKey = naturalIdCacheAccessStrategy.generateCacheKey( naturalIdValues, persister, session );
 
 			final SessionFactoryImplementor factory = session.getFactory();
@@ -1798,7 +1798,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 							session,
 							naturalIdCacheKey,
 							id,
-							session.getTimestamp(),
+							session.getTransactionStartTimestamp(),
 							null
 					);
 
@@ -1917,7 +1917,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 			//		2) should prefer session-cached values if any (requires interaction from removeLocalNaturalIdCrossReference
 
 			persister = locateProperPersister( persister );
-			final NaturalIdRegionAccess naturalIdCacheAccessStrategy = persister.getNaturalIdCacheAccessStrategy();
+			final NaturalIdStorageAccess naturalIdCacheAccessStrategy = persister.getNaturalIdCacheAccessStrategy();
 			final Object naturalIdCacheKey = naturalIdCacheAccessStrategy.generateCacheKey( naturalIdValues, persister, session );
 			naturalIdCacheAccessStrategy.evict( naturalIdCacheKey );
 

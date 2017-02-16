@@ -4,13 +4,12 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.cache.spi.access;
+package org.hibernate.cache.spi;
 
 /**
- * Common contract for accessing user model data (entity and collection data)
- * from the underlying Region
+ * A cache region dedicated to saving query result data
  *
  * @author Steve Ebersole
  */
-public interface UserModelRegionAccess extends RegionAccess {
+public interface QueryResultsRegion extends DirectAccessRegion {
 }

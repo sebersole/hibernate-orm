@@ -10,12 +10,12 @@ import java.io.Serializable;
 
 import org.hibernate.Cache;
 import org.hibernate.HibernateException;
-import org.hibernate.cache.spi.QueryCache;
+import org.hibernate.cache.spi.QueryResultsCache;
 import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.UpdateTimestampsRegion;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.service.Service;
@@ -33,49 +33,27 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	void close();
 
 	/**
-	 * Get query cache by <tt>region name</tt> or create a new one if none exist.
-	 * <p/>
-	 * If the region name is null, then default query cache region will be returned.
+	 * The underlying RegionFactory in use.
 	 *
-	 * @param regionName Query cache region name.
-	 * @return The {@code QueryCache} associated with the region name, or default query cache if the region name is <tt>null</tt>.
-	 * @throws HibernateException {@code HibernateException} maybe thrown when the creation of new QueryCache instance.
+	 * @return The {@code RegionFactory}
 	 */
-	QueryCache getQueryCache(String regionName) throws HibernateException;
+	RegionFactory getRegionFactory();
 
-	/**
-	 * Get the default {@code QueryCache}.
-	 *
-	 * @deprecated Use {@link #getDefaultQueryCache} instead.
-	 */
-	@Deprecated
-	default QueryCache getQueryCache() {
-		return getDefaultQueryCache();
-	}
-
-	/**
-	 * Get the default {@code QueryCache}.
-	 */
-	QueryCache getDefaultQueryCache();
+	QueryResultsCache getQueryResultsCache();
 
 	/**
 	 * Get {@code UpdateTimestampsCache} instance managed by the {@code SessionFactory}.
 	 */
-	UpdateTimestampsCache getUpdateTimestampsCache();
+	UpdateTimestampsRegion getUpdateTimestampsRegion();
 
 	/**
 	 * Clean up the default {@code QueryCache}.
 	 *
  	 * @throws HibernateException
 	 */
-	void evictQueries() throws HibernateException;
-
-	/**
-	 * The underlying RegionFactory in use.
-	 *
-	 * @return The {@code RegionFactory}
-	 */
-	RegionFactory getRegionFactory();
+	default void evictQueries() throws HibernateException {
+		getQueryResultsCache().evictAll();
+	}
 
 	/**
 	 * Applies any defined prefix, handling all {@code null} checks.
@@ -100,7 +78,7 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	EntityRegionAccess getEntityRegionAccess(String regionName);
+	EntityStorageAccess getEntityRegionAccess(String regionName);
 
 	/**
 	 * Find the "access strategy" for the named collection cache region.
@@ -109,7 +87,7 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	CollectionRegionAccess getCollectionRegionAccess(String regionName);
+	CollectionStorageAccess getCollectionRegionAccess(String regionName);
 
 	/**
 	 * Find the "access strategy" for the named natrual-id cache region.
@@ -118,11 +96,11 @@ public interface CacheImplementor extends Service, Cache, Serializable {
 	 *
 	 * @return That region's "access strategy"
 	 */
-	NaturalIdRegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName);
+	NaturalIdStorageAccess getNaturalIdCacheRegionAccessStrategy(String regionName);
 
-	EntityRegionAccess determineEntityRegionAccessStrategy(PersistentClass model);
+	EntityStorageAccess determineEntityRegionAccessStrategy(PersistentClass model);
 
-	NaturalIdRegionAccess determineNaturalIdRegionAccessStrategy(PersistentClass model);
+	NaturalIdStorageAccess determineNaturalIdRegionAccessStrategy(PersistentClass model);
 
-	CollectionRegionAccess determineCollectionRegionAccessStrategy(Collection model);
+	CollectionStorageAccess determineCollectionRegionAccessStrategy(Collection model);
 }

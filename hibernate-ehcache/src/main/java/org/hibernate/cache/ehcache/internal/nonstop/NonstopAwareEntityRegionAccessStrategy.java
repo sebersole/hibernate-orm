@@ -11,31 +11,31 @@ import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.spi.EntityRegion;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.spi.EntityPersister;
 
 /**
- * Implementation of {@link EntityRegionAccess} that handles {@link net.sf.ehcache.constructs.nonstop.NonStopCacheException} using
+ * Implementation of {@link EntityStorageAccess} that handles {@link net.sf.ehcache.constructs.nonstop.NonStopCacheException} using
  * {@link HibernateNonstopCacheExceptionHandler}
  *
  * @author Abhishek Sanoujam
  * @author Alex Snaps
  */
-public class NonstopAwareEntityRegionAccessStrategy implements EntityRegionAccess {
-	private final EntityRegionAccess actualStrategy;
+public class NonstopAwareEntityRegionAccessStrategy implements EntityStorageAccess {
+	private final EntityStorageAccess actualStrategy;
 	private final HibernateNonstopCacheExceptionHandler hibernateNonstopExceptionHandler;
 
 	/**
-	 * Constructor accepting the actual {@link EntityRegionAccess} and the {@link HibernateNonstopCacheExceptionHandler}
+	 * Constructor accepting the actual {@link EntityStorageAccess} and the {@link HibernateNonstopCacheExceptionHandler}
 	 *
 	 * @param actualStrategy The wrapped EntityRegionAccessStrategy
 	 * @param hibernateNonstopExceptionHandler The exception handler
 	 */
 	public NonstopAwareEntityRegionAccessStrategy(
-			EntityRegionAccess actualStrategy,
+			EntityStorageAccess actualStrategy,
 			HibernateNonstopCacheExceptionHandler hibernateNonstopExceptionHandler) {
 		this.actualStrategy = actualStrategy;
 		this.hibernateNonstopExceptionHandler = hibernateNonstopExceptionHandler;

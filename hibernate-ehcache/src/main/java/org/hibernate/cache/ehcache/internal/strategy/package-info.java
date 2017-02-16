@@ -6,6 +6,6 @@
  */
 
 /**
- * Defines {@link org.hibernate.cache.spi.access.RegionAccess} support for the Ehcache integration
+ * Defines {@link org.hibernate.cache.spi.access.StorageAccess} support for the Ehcache integration
  */
 package org.hibernate.cache.ehcache.internal.strategy;

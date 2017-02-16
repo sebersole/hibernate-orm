@@ -9,25 +9,26 @@ package org.hibernate.cache.internal;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.persistence.EntityNotFoundException;
 
 import org.hibernate.HibernateException;
 import org.hibernate.UnresolvableObjectException;
-import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.QueryCache;
+import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cache.spi.QueryKey;
+import org.hibernate.cache.spi.QueryResultsCache;
 import org.hibernate.cache.spi.QueryResultsRegion;
+import org.hibernate.cache.spi.RegionBuildingContext;
 import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.engine.spi.CacheImplementor;
+import org.hibernate.cache.spi.UpdateTimestampsRegion;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.type.spi.Type;
 import org.hibernate.type.TypeHelper;
+import org.hibernate.type.spi.Type;
 
 /**
  * The standard implementation of the Hibernate QueryCache interface.  This
@@ -38,102 +39,91 @@ import org.hibernate.type.TypeHelper;
  * @author Gavin King
  * @author Steve Ebersole
  */
-public class StandardQueryCache implements QueryCache {
-	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( StandardQueryCache.class );
-
-	// todo : split QueryResultsRegion and UpdateTimestampsCache used here - drop QueryCache contract
-	//		the "invalidation" handling is better moved to a dedicated contract, something like:
-
-	interface QueryCacheDataValidator {
-		boolean areCachedResultsValid(
-				UpdateTimestampsCache timestampsCache,
-				Set<Serializable> spaces,
-				Long timestamp,
-				SharedSessionContractImplementor session);
-	}
+public class QueryResultsCacheStandard implements QueryResultsCache, RegionBuildingContext {
+	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( QueryResultsCacheStandard.class );
 
 	private static final boolean DEBUGGING = LOG.isDebugEnabled();
 	private static final boolean TRACING = LOG.isTraceEnabled();
 
-	private final QueryResultsRegion cacheRegion;
-	private final UpdateTimestampsCache updateTimestampsCache;
+	private final SessionFactoryImplementor sessionFactory;
+	private final RegionFactory regionFactory;
+	private final String cacheRegionPrefix;
+	private final String defaultRegionName;
 
-	/**
-	 * Constructs a StandardQueryCache instance
-	 *
-	 * @param settings The SessionFactory settings.
-	 * @param props Any properties
-	 * @param updateTimestampsCache The update-timestamps cache to use.
-	 * @param regionName The base query cache region name
-	 */
-	public StandardQueryCache(
-			final SessionFactoryOptions settings,
-			final Properties props,
-			final UpdateTimestampsCache updateTimestampsCache,
-			final String regionName) {
-		String regionNameToUse = regionName;
-		if ( regionNameToUse == null ) {
-			regionNameToUse = StandardQueryCache.class.getName();
-		}
-		final String prefix = settings.getCacheRegionPrefix();
-		if ( prefix != null ) {
-			regionNameToUse = prefix + '.' + regionNameToUse;
-		}
-		LOG.startingQueryCache( regionNameToUse );
+	private final UpdateTimestampsRegion updateTimestampsRegion;
+	private final Map<String,QueryResultsRegion> queryResultsRegionMap;
 
-		this.cacheRegion = settings.getServiceRegistry().getService( RegionFactory.class ).buildQueryResultsRegion(
-				regionNameToUse,
-				props
-		);
-		this.updateTimestampsCache = updateTimestampsCache;
+	public QueryResultsCacheStandard(
+			SessionFactoryImplementor sessionFactory,
+			RegionFactory regionFactory,
+			UpdateTimestampsRegion updateTimestampsRegion) {
+		this.sessionFactory = sessionFactory;
+		this.regionFactory = regionFactory;
+		this.cacheRegionPrefix = sessionFactory.getSessionFactoryOptions().getCacheRegionPrefix();
+		this.defaultRegionName = resolveRegionName( getClass().getName() );
+		this.updateTimestampsRegion = updateTimestampsRegion;
+		this.queryResultsRegionMap = new ConcurrentHashMap<>();
 	}
 
-	public StandardQueryCache(QueryResultsRegion cacheRegion, CacheImplementor cacheManager) {
-		LOG.startingQueryCache( cacheRegion.getName() );
-		this.cacheRegion = cacheRegion;
-		this.updateTimestampsCache = cacheManager.getUpdateTimestampsCache();
-	}
+	private String resolveRegionName(String regionName) {
+		if ( regionName == null ) {
+			return defaultRegionName;
+		}
 
-	@Override
-	public QueryResultsRegion getRegion() {
-		return cacheRegion;
+		if ( cacheRegionPrefix == null ) {
+			return regionName;
+		}
+
+		return cacheRegionPrefix + '.' + regionName;
 	}
 
 	@Override
 	public void destroy() {
-		try {
-			cacheRegion.destroy();
-		}
-		catch ( Exception e ) {
-			LOG.unableToDestroyQueryCache( cacheRegion.getName(), e.getMessage() );
+		stop();
+	}
+
+	@Override
+	public void stop() {
+		for ( QueryResultsRegion queryResultsRegion : queryResultsRegionMap.values() ) {
+			try {
+				queryResultsRegion.stop();
+			}
+			catch (Exception e) {
+				LOG.unableToDestroyQueryCache( queryResultsRegion.getName(), e.getMessage() );
+			}
 		}
 	}
 
 	@Override
-	public void clear() throws CacheException {
-		cacheRegion.evictAll();
+	public void clear(String regionName) {
+		final QueryResultsRegion region = findRegion( regionName );
+
+	}
+
+	private QueryResultsRegion findRegion(String regionName) {
+		regionName = resolveRegionName( regionName );
+		return queryResultsRegionMap.get( regionName );
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked" })
 	public boolean put(
-			final QueryKey key,
-			final Type[] returnTypes,
-			final List result,
-			final boolean isNaturalKeyLookup,
-			final SharedSessionContractImplementor session) throws HibernateException {
-		if ( isNaturalKeyLookup && result.isEmpty() ) {
-			return false;
-		}
+			String regionName,
+			QueryKey key,
+			org.hibernate.type.Type[] returnTypes,
+			List result,
+			boolean isNaturalKeyLookup,
+			SharedSessionContractImplementor session) throws HibernateException {
+		final QueryResultsRegion region = findOrCreateRegion( regionName );
+
 		if ( DEBUGGING ) {
-			LOG.debugf( "Caching query results in region: %s; timestamp=%s", cacheRegion.getName(), session.getTimestamp() );
+			LOG.debugf( "Caching query results in region: %s; timestamp=%s", region.getName(), session.getTransactionStartTimestamp() );
 		}
 
 		final List cacheable = new ArrayList( result.size() + 1 );
 		if ( TRACING ) {
 			logCachedResultDetails( key, null, returnTypes, cacheable );
 		}
-		cacheable.add( session.getTimestamp() );
+		cacheable.add( session.getTransactionStartTimestamp() );
 
 		final boolean isSingleResult = returnTypes.length == 1;
 		for ( Object aResult : result ) {
@@ -148,7 +138,7 @@ public class StandardQueryCache implements QueryCache {
 
 		try {
 			session.getEventListenerManager().cachePutStart();
-			cacheRegion.put( session, key, cacheable );
+			region.put( session, key, cacheable );
 		}
 		finally {
 			session.getEventListenerManager().cachePutEnd();
@@ -157,16 +147,25 @@ public class StandardQueryCache implements QueryCache {
 		return true;
 	}
 
+	private QueryResultsRegion findOrCreateRegion(String regionName) {
+		final String regionNameToUse = resolveRegionName( regionName );
+		return queryResultsRegionMap.computeIfAbsent(
+				regionName, k -> regionFactory.buildQueryResultsRegion( regionNameToUse, this )
+		);
+	}
+
 	@Override
-	@SuppressWarnings({ "unchecked" })
 	public List get(
-			final QueryKey key,
-			final Type[] returnTypes,
-			final boolean isNaturalKeyLookup,
-			final Set<Serializable> spaces,
-			final SharedSessionContractImplementor session) throws HibernateException {
+			String regionName,
+			QueryKey key,
+			org.hibernate.type.Type[] returnTypes,
+			boolean isNaturalKeyLookup,
+			Set<Serializable> spaces,
+			SharedSessionContractImplementor session) throws HibernateException {
+		final QueryResultsRegion region = findRegion( regionName );
+
 		if ( DEBUGGING ) {
-			LOG.debugf( "Checking cached query results in region: %s", cacheRegion.getName() );
+			LOG.debugf( "Checking cached query results in region: %s", region.getName() );
 		}
 
 		final List cacheable = getCachedResults( key, session );
@@ -201,15 +200,24 @@ public class StandardQueryCache implements QueryCache {
 			}
 		}
 
-		return assembleCachedResult(key, cacheable, isNaturalKeyLookup, singleResult, returnTypes, session);
+		return assembleCachedResult(
+				region,
+				key,
+				cacheable,
+				isNaturalKeyLookup,
+				singleResult,
+				returnTypes,
+				session
+		);
 	}
 
 	private List assembleCachedResult(
-			final QueryKey key,
+			QueryResultsRegion queryResultsRegion,
+			final QueryKey queryResultsKey,
 			final List cacheable,
 			final boolean isNaturalKeyLookup,
 			boolean singleResult,
-			final Type[] returnTypes,
+			final org.hibernate.type.Type[] returnTypes,
 			final SharedSessionContractImplementor session) throws HibernateException {
 
 		try {
@@ -239,7 +247,7 @@ public class StandardQueryCache implements QueryCache {
 					if ( DEBUGGING ) {
 						LOG.debug( "Unable to reassemble cached natural-id query result" );
 					}
-					cacheRegion.evict( key );
+					queryResultsRegion.evict( queryResultsKey );
 
 					// EARLY EXIT !
 					return null;
@@ -249,11 +257,14 @@ public class StandardQueryCache implements QueryCache {
 		}
 	}
 
-	private List getCachedResults(QueryKey key, SharedSessionContractImplementor session) {
+	private List getCachedResults(
+			QueryResultsRegion queryResultsRegion,
+			QueryKey queryResultKey,
+			SharedSessionContractImplementor session) {
 		List cacheable = null;
 		try {
 			session.getEventListenerManager().cacheGetStart();
-			cacheable = (List) cacheRegion.get( session, key );
+			cacheable = (List) queryResultsRegion.get( session, queryResultKey );
 		}
 		finally {
 			session.getEventListenerManager().cacheGetEnd( cacheable != null );
@@ -266,12 +277,7 @@ public class StandardQueryCache implements QueryCache {
 		if ( DEBUGGING ) {
 			LOG.debugf( "Checking query spaces are up-to-date: %s", spaces );
 		}
-		return updateTimestampsCache.isUpToDate( spaces, timestamp, session );
-	}
-
-	@Override
-	public String toString() {
-		return "StandardQueryCache(" + cacheRegion.getName() + ')';
+		return updateTimestampsRegion.isUpToDate( spaces, timestamp, session );
 	}
 
 	private static void logCachedResultDetails(QueryKey key, Set querySpaces, Type[] returnTypes, List result) {
@@ -355,5 +361,20 @@ public class StandardQueryCache implements QueryCache {
 				}
 			}
 		}
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// RegionBuildingContext impl
+
+
+	@Override
+	public CacheKeysFactory getEnforcedCacheKeysFactory() {
+		return sessionFactory.getSessionFactoryOptions().getEnforcedCacheKeysFactory();
+	}
+
+	@Override
+	public SessionFactoryImplementor getSessionFactory() {
+		return sessionFactory;
 	}
 }

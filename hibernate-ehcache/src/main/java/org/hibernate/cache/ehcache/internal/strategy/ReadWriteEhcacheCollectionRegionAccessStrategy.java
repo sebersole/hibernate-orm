@@ -10,7 +10,7 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.ehcache.internal.regions.EhcacheCollectionRegion;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.spi.CollectionRegion;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
 
@@ -22,7 +22,7 @@ import org.hibernate.persister.collection.spi.CollectionPersister;
  */
 public class ReadWriteEhcacheCollectionRegionAccessStrategy
 		extends AbstractReadWriteEhcacheAccessStrategy<EhcacheCollectionRegion>
-		implements CollectionRegionAccess {
+		implements CollectionStorageAccess {
 
 	/**
 	 * Create a read/write access strategy accessing the given collection region.

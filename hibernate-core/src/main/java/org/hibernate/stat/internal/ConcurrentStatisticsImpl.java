@@ -11,9 +11,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.collections.ArrayHelper;
@@ -275,7 +275,7 @@ public class ConcurrentStatisticsImpl implements StatisticsImplementor, Service 
 				return null;
 			}
 
-			final NaturalIdRegionAccess accessStrategy = sessionFactory.getCache().getNaturalIdCacheRegionAccessStrategy( regionName );
+			final NaturalIdStorageAccess accessStrategy = sessionFactory.getCache().getNaturalIdCacheRegionAccessStrategy( regionName );
 			stat = new ConcurrentNaturalIdCacheStatisticsImpl( accessStrategy.getRegion(), accessStrategy );
 			ConcurrentNaturalIdCacheStatisticsImpl previous;
 			if ( ( previous = naturalIdCacheStatistics.putIfAbsent( regionName, stat ) ) != null ) {
@@ -300,8 +300,8 @@ public class ConcurrentStatisticsImpl implements StatisticsImplementor, Service 
 				return null;
 			}
 
-			final EntityRegionAccess entityRegionAccess = sessionFactory.getCache().getEntityRegionAccess( regionName );
-			final CollectionRegionAccess collectionRegionAccess = sessionFactory.getCache().getCollectionRegionAccess( regionName );
+			final EntityStorageAccess entityRegionAccess = sessionFactory.getCache().getEntityRegionAccess( regionName );
+			final CollectionStorageAccess collectionRegionAccess = sessionFactory.getCache().getCollectionRegionAccess( regionName );
 
 			if ( entityRegionAccess == null && collectionRegionAccess == null ) {
 				final Region region = sessionFactory.getCache().getQueryCache( regionName ).getRegion();

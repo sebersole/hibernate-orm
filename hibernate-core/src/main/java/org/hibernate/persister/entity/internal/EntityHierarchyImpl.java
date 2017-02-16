@@ -13,8 +13,8 @@ import java.util.List;
 import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.mapping.Component;
@@ -47,8 +47,8 @@ import org.hibernate.type.spi.BasicType;
 public class EntityHierarchyImpl implements EntityHierarchy {
 
 	private final EntityPersister rootEntityPersister;
-	private final EntityRegionAccess caching;
-	private final NaturalIdRegionAccess naturalIdCaching;
+	private final EntityStorageAccess caching;
+	private final NaturalIdStorageAccess naturalIdCaching;
 
 	private final InheritanceStrategy inheritanceStrategy;
 	private final EntityMode entityMode;
@@ -68,8 +68,8 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 			PersisterCreationContext creationContext,
 			EntityPersister rootEntityPersister,
 			RootClass rootEntityBinding,
-			EntityRegionAccess caching,
-			NaturalIdRegionAccess naturalIdCaching) {
+			EntityStorageAccess caching,
+			NaturalIdStorageAccess naturalIdCaching) {
 		this.rootEntityPersister = rootEntityPersister;
 		this.caching = caching;
 		this.naturalIdCaching = naturalIdCaching;
@@ -333,12 +333,12 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	}
 
 	@Override
-	public EntityRegionAccess getEntityRegionAccessStrategy() {
+	public EntityStorageAccess getEntityRegionAccessStrategy() {
 		return caching;
 	}
 
 	@Override
-	public NaturalIdRegionAccess getNaturalIdRegionAccessStrategy() {
+	public NaturalIdStorageAccess getNaturalIdRegionAccessStrategy() {
 		return naturalIdCaching;
 	}
 

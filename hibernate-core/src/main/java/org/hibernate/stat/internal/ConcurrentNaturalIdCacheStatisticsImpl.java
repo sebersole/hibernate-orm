@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.stat.NaturalIdCacheStatistics;
 
 /**
@@ -25,7 +25,7 @@ import org.hibernate.stat.NaturalIdCacheStatistics;
 public class ConcurrentNaturalIdCacheStatisticsImpl extends CategorizedStatistics implements NaturalIdCacheStatistics {
 	private static final long serialVersionUID = 1L;
 	private final transient Region region;
-	private final transient NaturalIdRegionAccess accessStrategy;
+	private final transient NaturalIdStorageAccess accessStrategy;
 	private final AtomicLong hitCount = new AtomicLong();
 	private final AtomicLong missCount = new AtomicLong();
 	private final AtomicLong putCount = new AtomicLong();
@@ -43,7 +43,7 @@ public class ConcurrentNaturalIdCacheStatisticsImpl extends CategorizedStatistic
 		this.writeLock = lock.writeLock();
 	}
 
-	ConcurrentNaturalIdCacheStatisticsImpl(Region region, NaturalIdRegionAccess accessStrategy) {
+	ConcurrentNaturalIdCacheStatisticsImpl(Region region, NaturalIdStorageAccess accessStrategy) {
 		super( region.getName() );
 		this.region = region;
 		this.accessStrategy = accessStrategy;

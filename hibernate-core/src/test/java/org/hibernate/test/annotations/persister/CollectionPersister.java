@@ -8,7 +8,7 @@ package org.hibernate.test.annotations.persister;
 
 import org.hibernate.MappingException;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.mapping.Collection;
 import org.hibernate.persister.collection.OneToManyPersister;
 import org.hibernate.persister.spi.PersisterCreationContext;
@@ -19,7 +19,7 @@ import org.hibernate.persister.spi.PersisterCreationContext;
 public class CollectionPersister extends OneToManyPersister {
 	public CollectionPersister(
 			Collection collectionBinding,
-			CollectionRegionAccess cacheAccessStrategy,
+			CollectionStorageAccess cacheAccessStrategy,
 			PersisterCreationContext creationContext) throws MappingException, CacheException {
 		super( collectionBinding, cacheAccessStrategy, creationContext );
 	}

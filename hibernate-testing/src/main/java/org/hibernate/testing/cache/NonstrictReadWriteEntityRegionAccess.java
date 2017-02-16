@@ -8,19 +8,19 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.EntityCacheDataDescription;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.persister.common.NavigableRole;
 
 /**
  * @author Strong Liu
  */
 class NonstrictReadWriteEntityRegionAccess extends BaseEntityRegionAccess {
 	public NonstrictReadWriteEntityRegionAccess(
-			EntityCacheDataDescription cacheDataDescription,
-			CacheKeysFactory forcedCacheKeysFactory,
-			RegionImpl region) {
-		super( cacheDataDescription, forcedCacheKeysFactory, region );
+			NavigableRole rootEntityNavigableRole,
+			CacheKeysFactory cacheKeysFactory,
+			CacheableRegionImpl region) {
+		super( rootEntityNavigableRole, cacheKeysFactory, region );
 	}
 
 	/**

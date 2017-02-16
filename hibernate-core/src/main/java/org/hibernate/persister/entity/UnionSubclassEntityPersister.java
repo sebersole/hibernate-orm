@@ -20,8 +20,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cfg.Settings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
@@ -70,8 +70,8 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 
 	public UnionSubclassEntityPersister(
 			final PersistentClass persistentClass,
-			final EntityRegionAccess cacheAccessStrategy,
-			final NaturalIdRegionAccess naturalIdRegionAccess,
+			final EntityStorageAccess cacheAccessStrategy,
+			final NaturalIdStorageAccess naturalIdRegionAccess,
 			final PersisterCreationContext creationContext) throws HibernateException {
 
 		super( persistentClass, cacheAccessStrategy, naturalIdRegionAccess, creationContext );

@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -67,7 +67,7 @@ import org.hibernate.type.spi.Type;
  *         String - The name of the collection's attribute relative to AttributeContainer
  *     </li>
  *     <li>
- *         {@link CollectionRegionAccess} - the second level caching strategy for this collection
+ *         {@link CollectionStorageAccess} - the second level caching strategy for this collection
  *     </li>
  *     <li>
  *         {@link PersisterCreationContext} - access to additional
@@ -86,7 +86,7 @@ public interface CollectionPersister<O,C,E>
 			Collection.class,
 			ManagedTypeImplementor.class,
 			String.class,
-			CollectionRegionAccess.class,
+			CollectionStorageAccess.class,
 			PersisterCreationContext.class
 	};
 
@@ -154,7 +154,7 @@ public interface CollectionPersister<O,C,E>
 	/**
 	 * Get the cache
 	 */
-	CollectionRegionAccess getCacheAccessStrategy();
+	CollectionStorageAccess getCacheAccessStrategy();
 	/**
 	 * Get the cache structure
 	 */

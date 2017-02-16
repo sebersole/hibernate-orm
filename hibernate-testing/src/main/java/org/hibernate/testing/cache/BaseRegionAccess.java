@@ -7,84 +7,76 @@
 package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.RegionAccess;
+import org.hibernate.cache.spi.CacheableRegion;
+import org.hibernate.cache.spi.access.CacheableStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.persister.common.NavigableRole;
 
 import org.jboss.logging.Logger;
 
 /**
  * @author Strong Liu
  */
-public abstract class BaseRegionAccess implements RegionAccess {
-	private static final Logger LOG = Logger.getLogger( BaseRegionAccess.class );
+public abstract class BaseRegionAccess implements CacheableStorageAccess {
+	private static final Logger log = Logger.getLogger( BaseRegionAccess.class );
 
-	private final RegionImpl region;
+	private final CacheableRegionImpl region;
+	private final NavigableRole navigableRole;
 
-	public BaseRegionAccess(RegionImpl region) {
+	public BaseRegionAccess(CacheableRegionImpl region, NavigableRole navigableRole) {
 		this.region = region;
+		this.navigableRole = navigableRole;
 	}
 
 	@Override
-	public Region getRegion() {
+	public CacheableRegion getRegion() {
 		return region;
 	}
 
-	protected RegionImpl getInternalRegion() {
+	protected CacheableRegionImpl getInternalRegion() {
 		return region;
+	}
+
+	@Override
+	public NavigableRole getAccessedNavigableRole() {
+		return navigableRole;
 	}
 
 	protected abstract boolean isDefaultMinimalPutOverride();
 
 	@Override
-	public Object get(SharedSessionContractImplementor session, Object key, long txTimestamp) throws CacheException {
+	public Object get(SharedSessionContractImplementor session, Object key) throws CacheException {
 		return getInternalRegion().get( session, key );
 	}
 
 	@Override
-	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, long txTimestamp, Object version) throws CacheException {
-		return putFromLoad(session, key, value, txTimestamp, version, isDefaultMinimalPutOverride() );
+	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, Object version) throws CacheException {
+		return putFromLoad(session, key, value, version, isDefaultMinimalPutOverride() );
 	}
 
 	@Override
-	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
+	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, Object version, boolean minimalPutOverride)
 			throws CacheException {
 
 		if ( key == null || value == null ) {
 			return false;
 		}
 		if ( minimalPutOverride && getInternalRegion().contains( key ) ) {
-			LOG.debugf( "Item already cached: %s", key );
+			log.debugf( "Item already cached: %s", key );
 			return false;
 		}
-		LOG.debugf( "Caching: %s", key );
+		log.debugf( "Caching: %s", key );
 		getInternalRegion().put( session, key, value );
 		return true;
 
 	}
 
-	/**
-	 * Region locks are not supported.
-	 *
-	 * @return <code>null</code>
-	 *
-	 * @see EntityRegionAccess#lockRegion()
-	 * @see CollectionRegionAccess#lockRegion()
-	 */
 	@Override
 	public SoftLock lockRegion() throws CacheException {
 		return null;
 	}
 
-	/**
-	 * Region locks are not supported - perform a cache clear as a precaution.
-	 *
-	 * @see EntityRegionAccess#unlockRegion(org.hibernate.cache.spi.access.SoftLock)
-	 * @see CollectionRegionAccess#unlockRegion(org.hibernate.cache.spi.access.SoftLock)
-	 */
 	@Override
 	public void unlockRegion(SoftLock lock) throws CacheException {
 		evictAll();
@@ -99,23 +91,10 @@ public abstract class BaseRegionAccess implements RegionAccess {
 	public void unlockItem(SharedSessionContractImplementor session, Object key, SoftLock lock) throws CacheException {
 	}
 
-
-	/**
-	 * A no-op since this is an asynchronous cache access strategy.
-	 *
-	 * @see RegionAccess#remove(SharedSessionContractImplementor, Object)
-	 */
 	@Override
 	public void remove(SharedSessionContractImplementor session, Object key) throws CacheException {
 	}
 
-	/**
-	 * Called to evict data from the entire region
-	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
-	 * @see EntityRegionAccess#removeAll()
-	 * @see CollectionRegionAccess#removeAll()
-	 */
 	@Override
 	public void removeAll() throws CacheException {
 		evictAll();

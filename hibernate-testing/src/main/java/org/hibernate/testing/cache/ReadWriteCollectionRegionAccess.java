@@ -6,31 +6,21 @@
  */
 package org.hibernate.testing.cache;
 
-import java.util.Comparator;
-
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.CollectionCacheDataDescription;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.RequestedCollectionCaching;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
 
 /**
  * @author Strong Liu
  */
-class ReadWriteCollectionRegionAccess extends AbstractReadWriteAccess implements CollectionRegionAccess {
-	private final CollectionCacheDataDescription cacheDataDescription;
-
-	ReadWriteCollectionRegionAccess(
-			CollectionCacheDataDescription cacheDataDescription,
-			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( cacheKeysFactory, region );
-		this.cacheDataDescription = cacheDataDescription;
-	}
-
-	@Override
-	Comparator getVersionComparator() {
-		return cacheDataDescription.getVersionComparator();
+class ReadWriteCollectionRegionAccess extends AbstractReadWriteAccess implements CollectionStorageAccess {
+	public ReadWriteCollectionRegionAccess(
+			RequestedCollectionCaching requestedCollectionCaching,
+			CacheKeysFactory factoryToUse,
+			CacheableRegionImpl region) {
+		super( region, requestedCollectionCaching, factoryToUse );
 	}
 
 	@Override

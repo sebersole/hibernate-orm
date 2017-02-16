@@ -21,7 +21,8 @@ import org.hibernate.boot.SchemaAutoTooling;
 import org.hibernate.boot.TempTableDdlTransactionHandling;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.spi.QueryCacheFactory;
+import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.QueryResultsCacheFactory;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.function.SQLFunction;
@@ -130,7 +131,9 @@ public interface SessionFactoryOptionsState {
 
 	boolean isQueryCacheEnabled();
 
-	QueryCacheFactory getQueryCacheFactory();
+	QueryResultsCacheFactory getQueryCacheFactory();
+
+	CacheKeysFactory getEnforcedCacheKeysFactory();
 
 	String getCacheRegionPrefix();
 

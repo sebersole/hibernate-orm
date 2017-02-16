@@ -6,21 +6,23 @@
  */
 package org.hibernate.cache.spi.access;
 
-
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.Region;
+import org.hibernate.cache.spi.CacheableRegion;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.persister.common.NavigableRole;
 
 /**
- * Base access strategy for all regions.
+ * Base contract for accessing an underlying storage for a cacheable in a transactionally
+ * ACID manner.
  *
+ * @author Steve Ebersole
  * @author Gail Badner
  */
-public interface RegionAccess {
+public interface StorageAccess {
 	/**
-	 * The Region this access comes from.
+	 * The CacheableRegion this access comes from.
 	 */
-	Region getRegion();
+	CacheableRegion getRegion();
 
 	/**
 	 * Forcibly evict an item from the cache immediately without regard for transaction
@@ -41,33 +43,37 @@ public interface RegionAccess {
 	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void evictAll() throws CacheException;
-
-
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// todo (6.0) : I think these others really ought to be moved to more specific contracts (namely UserModelRegionAccess)
+	/**
+	 * Get the {@link NavigableRole} of the Navigable whose data is being
+	 * accessed.
+	 */
+	NavigableRole getAccessedNavigableRole();
 
 	/**
 	 * Attempt to retrieve an object from the cache. Mainly used in attempting
 	 * to resolve entities/collections from the second level cache.
+	 * <p/>
+	 * Note, this method used to accept {@code long txTimestamp}.  But that information
+	 * is already available via {@link SharedSessionContractImplementor#getTransactionStartTimestamp()}
 	 *
 	 * @param session Current session.
 	 * @param key The key of the item to be retrieved.
-	 * @param txTimestamp a timestamp prior to the transaction start time
 	 *
 	 * @return the cached object or <tt>null</tt>
 	 *
 	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
-	Object get(SharedSessionContractImplementor session, Object key, long txTimestamp) throws CacheException;
+	Object get(SharedSessionContractImplementor session, Object key) throws CacheException;
 
 	/**
 	 * Attempt to cache an object, afterQuery loading from the database.
+	 * <p/>
+	 * Note, this method used to accept {@code long txTimestamp}.  But that information
+	 * is already available via {@link SharedSessionContractImplementor#getTransactionStartTimestamp()}
 	 *
 	 * @param session Current session.
 	 * @param key The item key
 	 * @param value The item
-	 * @param txTimestamp a timestamp prior to the transaction start time
 	 * @param version the item version number
 	 *
 	 * @return <tt>true</tt> if the object was successfully cached
@@ -78,17 +84,18 @@ public interface RegionAccess {
 			SharedSessionContractImplementor session,
 			Object key,
 			Object value,
-			long txTimestamp,
 			Object version) throws CacheException;
 
 	/**
 	 * Attempt to cache an object, afterQuery loading from the database, explicitly
 	 * specifying the minimalPut behavior.
+	 * <p/>
+	 * Note, this method used to accept {@code long txTimestamp}.  But that information
+	 * is already available via {@link SharedSessionContractImplementor#getTransactionStartTimestamp()}
 	 *
 	 * @param session Current session.
 	 * @param key The item key
 	 * @param value The item
-	 * @param txTimestamp a timestamp prior to the transaction start time
 	 * @param version the item version number
 	 * @param minimalPutOverride Explicit minimalPut flag
 	 *
@@ -100,7 +107,6 @@ public interface RegionAccess {
 			SharedSessionContractImplementor session,
 			Object key,
 			Object value,
-			long txTimestamp,
 			Object version,
 			boolean minimalPutOverride) throws CacheException;
 
@@ -118,7 +124,7 @@ public interface RegionAccess {
 	 *
 	 * @return A representation of our lock on the item; or null.
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	SoftLock lockItem(SharedSessionContractImplementor session, Object key, Object version) throws CacheException;
 
@@ -127,7 +133,7 @@ public interface RegionAccess {
 	 *
 	 * @return A representation of our lock on the item; or null.
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	SoftLock lockRegion() throws CacheException;
 
@@ -140,7 +146,7 @@ public interface RegionAccess {
 	 * @param key The item key
 	 * @param lock The lock previously obtained from {@link #lockItem}
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void unlockItem(SharedSessionContractImplementor session, Object key, SoftLock lock) throws CacheException;
 
@@ -150,7 +156,7 @@ public interface RegionAccess {
 	 *
 	 * @param lock The lock previously obtained from {@link #lockRegion}
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void unlockRegion(SoftLock lock) throws CacheException;
 
@@ -161,14 +167,14 @@ public interface RegionAccess {
 	 * @param session
 	 * @param key The key of the item to remove
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void remove(SharedSessionContractImplementor session, Object key) throws CacheException;
 
 	/**
 	 * Called to evict data from the entire region
 	 *
-	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void removeAll() throws CacheException;
 }

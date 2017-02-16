@@ -16,7 +16,7 @@ import org.hibernate.cache.jcache.access.ReadWriteEntityRegionAccessStrategy;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 
 /**
  * @author Alex Snaps
@@ -28,7 +28,7 @@ public class JCacheEntityRegion extends JCacheTransactionalDataRegion implements
 	}
 
 	@Override
-	public EntityRegionAccess buildAccessStrategy(AccessType accessType) throws CacheException {
+	public EntityStorageAccess buildAccessStrategy(AccessType accessType) throws CacheException {
 		throwIfAccessTypeUnsupported( accessType );
 		switch ( accessType ) {
 			case READ_ONLY:
@@ -44,7 +44,7 @@ public class JCacheEntityRegion extends JCacheTransactionalDataRegion implements
 		}
 	}
 
-	protected EntityRegionAccess createTransactionalEntityRegionAccessStrategy() {
+	protected EntityStorageAccess createTransactionalEntityRegionAccessStrategy() {
 		throw new UnsupportedOperationException("No org.hibernate.cache.spi.access.AccessType.TRANSACTIONAL support");
 	}
 }

@@ -6,7 +6,6 @@
  */
 package org.hibernate.cache.spi.access;
 
-import org.hibernate.cache.spi.CollectionRegion;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
 
@@ -17,13 +16,13 @@ import org.hibernate.persister.collection.spi.CollectionPersister;
  * {@link #lockItem} -> {@link #remove} -> {@link #unlockItem}
  * <p/>
  * There is another usage pattern that is used to invalidate entries
- * afterQuery performing "bulk" HQL/SQL operations:
+ * after performing "bulk" HQL/SQL operations:
  * {@link #lockRegion} -> {@link #removeAll} -> {@link #unlockRegion}
  *
  * @author Gavin King
  * @author Steve Ebersole
  */
-public interface CollectionRegionAccess extends UserModelRegionAccess {
+public interface CollectionStorageAccess extends StorageAccess {
 
 	/**
 	 * To create instances of CollectionCacheKey for this region, Hibernate will invoke this method

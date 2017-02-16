@@ -17,7 +17,8 @@ import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.NullPrecedence;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
-import org.hibernate.cache.spi.QueryCacheFactory;
+import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.QueryResultsCacheFactory;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
@@ -474,7 +475,18 @@ public interface SessionFactoryBuilder {
 	 *
 	 * @see org.hibernate.cfg.AvailableSettings#QUERY_CACHE_FACTORY
 	 */
-	SessionFactoryBuilder applyQueryCacheFactory(QueryCacheFactory factory);
+	SessionFactoryBuilder applyQueryCacheFactory(QueryResultsCacheFactory factory);
+
+	/**
+	 * Specifies a CacheKeysFactory L2 cache implementors should always use
+	 *
+	 * @param factory The CacheKeysFactory to use
+	 *
+	 * @return {@code this}, for method chaining
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#CACHE_KEYS_FACTORY
+	 */
+	SessionFactoryBuilder applyEnforcedCacheKeysFactory(CacheKeysFactory factory);
 
 	/**
 	 * Apply a prefix to prepended to all cache region names for this SessionFactory.

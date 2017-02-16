@@ -298,7 +298,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 
         if ( persister.hasCache() ) {
         	CacheEntry entry = (CacheEntry) persister.getCache()
-        			.get( event.getRequestedId(), source.getTimestamp() );
+        			.get( event.getRequestedId(), source.getTransactionStartTimestamp() );
             cachedState = entry==null ?
             		null :
             		entry.getState(); //TODO: half-assemble this stuff

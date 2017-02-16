@@ -8,7 +8,7 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.CollectionCacheDataDescription;
+import org.hibernate.cache.spi.RequestedCollectionCaching;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -16,9 +16,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  */
 class TransactionalCollectionRegionAccess extends BaseCollectionRegionAccess {
 	TransactionalCollectionRegionAccess(
-			CollectionCacheDataDescription metadata,
+			RequestedCollectionCaching metadata,
 			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
+			CacheableRegionImpl region) {
 		super( cacheKeysFactory, region );
 	}
 

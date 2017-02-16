@@ -10,7 +10,7 @@ package org.hibernate.cache.jcache.access;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.jcache.JCacheNaturalIdRegion;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.spi.EntityPersister;
@@ -20,7 +20,7 @@ import org.hibernate.persister.entity.spi.EntityPersister;
  */
 public class NonStrictNaturalIdRegionAccessStrategy
 		extends JCacheRegionAccessStrategy<JCacheNaturalIdRegion>
-		implements NaturalIdRegionAccess {
+		implements NaturalIdStorageAccess {
 
 	public NonStrictNaturalIdRegionAccessStrategy(JCacheNaturalIdRegion jCacheNaturalIdRegion) {
 		super( jCacheNaturalIdRegion );

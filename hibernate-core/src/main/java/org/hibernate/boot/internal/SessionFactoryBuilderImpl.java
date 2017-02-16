@@ -36,8 +36,9 @@ import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.boot.spi.SessionFactoryBuilderImplementor;
 import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.internal.StandardQueryCacheFactory;
-import org.hibernate.cache.spi.QueryCacheFactory;
+import org.hibernate.cache.internal.QueryResultsCacheFactoryStandard;
+import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.QueryResultsCacheFactory;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
@@ -72,6 +73,7 @@ import static org.hibernate.cfg.AvailableSettings.AUTO_EVICT_COLLECTION_CACHE;
 import static org.hibernate.cfg.AvailableSettings.AUTO_SESSION_EVENTS_LISTENER;
 import static org.hibernate.cfg.AvailableSettings.BATCH_FETCH_STYLE;
 import static org.hibernate.cfg.AvailableSettings.BATCH_VERSIONED_DATA;
+import static org.hibernate.cfg.AvailableSettings.CACHE_KEYS_FACTORY;
 import static org.hibernate.cfg.AvailableSettings.CACHE_REGION_PREFIX;
 import static org.hibernate.cfg.AvailableSettings.CHECK_NULLABILITY;
 import static org.hibernate.cfg.AvailableSettings.COLLECTION_JOIN_SUBQUERY;
@@ -383,8 +385,14 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	}
 
 	@Override
-	public SessionFactoryBuilder applyQueryCacheFactory(QueryCacheFactory factory) {
+	public SessionFactoryBuilder applyQueryCacheFactory(QueryResultsCacheFactory factory) {
 		this.options.queryCacheFactory = factory;
+		return this;
+	}
+
+	@Override
+	public SessionFactoryBuilder applyEnforcedCacheKeysFactory(CacheKeysFactory factory) {
+		this.options.enforcedCacheKeysFactory = factory;
 		return this;
 	}
 
@@ -603,7 +611,8 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		// Caching
 		private boolean secondLevelCacheEnabled;
 		private boolean queryCacheEnabled;
-		private QueryCacheFactory queryCacheFactory;
+		private QueryResultsCacheFactory queryCacheFactory;
+		private CacheKeysFactory enforcedCacheKeysFactory;
 		private String cacheRegionPrefix;
 		private boolean minimalPutsEnabled;
 		private boolean structuredCacheEntriesEnabled;
@@ -736,9 +745,13 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 			this.secondLevelCacheEnabled = cfgService.getSetting( USE_SECOND_LEVEL_CACHE, BOOLEAN, true );
 			this.queryCacheEnabled = cfgService.getSetting( USE_QUERY_CACHE, BOOLEAN, false );
 			this.queryCacheFactory = strategySelector.resolveDefaultableStrategy(
-					QueryCacheFactory.class,
+					QueryResultsCacheFactory.class,
 					configurationSettings.get( QUERY_CACHE_FACTORY ),
-					StandardQueryCacheFactory.INSTANCE
+					QueryResultsCacheFactoryStandard.INSTANCE
+			);
+			this.enforcedCacheKeysFactory = strategySelector.resolveStrategy(
+					CacheKeysFactory.class,
+					configurationSettings.get( CACHE_KEYS_FACTORY )
 			);
 			this.cacheRegionPrefix = ConfigurationHelper.extractPropertyValue(
 					CACHE_REGION_PREFIX,
@@ -1164,8 +1177,13 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		}
 
 		@Override
-		public QueryCacheFactory getQueryCacheFactory() {
+		public QueryResultsCacheFactory getQueryCacheFactory() {
 			return queryCacheFactory;
+		}
+
+		@Override
+		public CacheKeysFactory getEnforcedCacheKeysFactory() {
+			return enforcedCacheKeysFactory;
 		}
 
 		@Override
@@ -1492,8 +1510,13 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	}
 
 	@Override
-	public QueryCacheFactory getQueryCacheFactory() {
+	public QueryResultsCacheFactory getQueryCacheFactory() {
 		return options.getQueryCacheFactory();
+	}
+
+	@Override
+	public CacheKeysFactory getEnforcedCacheKeysFactory() {
+		return options.getEnforcedCacheKeysFactory();
 	}
 
 	@Override

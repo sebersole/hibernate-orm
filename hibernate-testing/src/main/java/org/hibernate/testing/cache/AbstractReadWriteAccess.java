@@ -14,7 +14,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.RequestedCaching;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.hibernate.cache.spi.access.StorageAccess;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 import org.jboss.logging.Logger;
@@ -22,10 +26,11 @@ import org.jboss.logging.Logger;
 /**
  * @author Strong Liu
  */
-public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
+public abstract class AbstractReadWriteAccess extends BaseRegionAccess implements StorageAccess {
 	private static final Logger LOG = Logger.getLogger( AbstractReadWriteAccess.class.getName() );
 
 	private final CacheKeysFactory cacheKeysFactory;
+	private final Comparator versionComparator;
 
 	private final UUID uuid = UUID.randomUUID();
 	private final AtomicLong nextLockId = new AtomicLong();
@@ -34,13 +39,66 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 	protected java.util.concurrent.locks.Lock readLock = reentrantReadWriteLock.readLock();
 	protected java.util.concurrent.locks.Lock writeLock = reentrantReadWriteLock.writeLock();
 
-	public AbstractReadWriteAccess(CacheKeysFactory cacheKeysFactory, RegionImpl region) {
-		super( region );
+	public AbstractReadWriteAccess(CacheableRegionImpl region, RequestedCaching requestedCaching, CacheKeysFactory cacheKeysFactory) {
+		super( region, requestedCaching.getCachedRole() );
 		this.cacheKeysFactory = cacheKeysFactory;
+		this.versionComparator = requestedCaching.isVersioned()
+				? requestedCaching.getVersionComparator()
+				: null;
 	}
 
 	public CacheKeysFactory getCacheKeysFactory() {
 		return cacheKeysFactory;
+	}
+
+	protected Comparator getVersionComparator() {
+		return versionComparator;
+	}
+
+
+	/**
+	 * Region locks are not supported.
+	 *
+	 * @return <code>null</code>
+	 *
+	 * @see EntityStorageAccess#lockRegion()
+	 * @see CollectionStorageAccess#lockRegion()
+	 */
+	@Override
+	public SoftLock lockRegion() throws CacheException {
+		return null;
+	}
+
+	/**
+	 * Region locks are not supported - perform a cache clear as a precaution.
+	 *
+	 * @see EntityStorageAccess#unlockRegion(org.hibernate.cache.spi.access.SoftLock)
+	 * @see CollectionStorageAccess#unlockRegion(org.hibernate.cache.spi.access.SoftLock)
+	 */
+	@Override
+	public void unlockRegion(SoftLock lock) throws CacheException {
+		evictAll();
+	}
+
+	/**
+	 * A no-op since this is an asynchronous cache access strategy.
+	 *
+	 * @see #remove(SharedSessionContractImplementor, Object)
+	 */
+	@Override
+	public void remove(SharedSessionContractImplementor session, Object key) throws CacheException {
+	}
+
+	/**
+	 * Called to evict data from the entire region
+	 *
+	 * @throws CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @see EntityStorageAccess#removeAll()
+	 * @see CollectionStorageAccess#removeAll()
+	 */
+	@Override
+	public void removeAll() throws CacheException {
+		evictAll();
 	}
 
 	/**
@@ -48,13 +106,13 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 	 * afterQuery the start of this transaction.
 	 */
 	@Override
-	public final Object get(SharedSessionContractImplementor session, Object key, long txTimestamp) throws CacheException {
+	public final Object get(SharedSessionContractImplementor session, Object key) throws CacheException {
 		LOG.debugf( "getting key[%s] from region[%s]", key, getInternalRegion().getName() );
 		try {
 			readLock.lock();
 			Lockable item = (Lockable) getInternalRegion().get( session, key );
 
-			boolean readable = item != null && item.isReadable( txTimestamp );
+			boolean readable = item != null && item.isReadable( session.getTransactionStartTimestamp() );
 			if ( readable ) {
 				LOG.debugf( "hit key[%s] in region[%s]", key, getInternalRegion().getName() );
 				return item.getValue();
@@ -74,7 +132,10 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 		}
 	}
 
-	abstract Comparator getVersionComparator();
+	@Override
+	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, Object version) throws CacheException {
+		return putFromLoad( session, key, value, version, isDefaultMinimalPutOverride() );
+	}
 
 	/**
 	 * Returns <code>false</code> and fails to put the value if there is an existing un-writeable item mapped to this
@@ -85,7 +146,6 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 			SharedSessionContractImplementor session,
 			Object key,
 			Object value,
-			long txTimestamp,
 			Object version,
 			boolean minimalPutOverride)
 			throws CacheException {
@@ -93,7 +153,7 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 			LOG.debugf( "putting key[%s] -> value[%s] into region[%s]", key, value, getInternalRegion().getName() );
 			writeLock.lock();
 			Lockable item = (Lockable) getInternalRegion().get( session, key );
-			boolean writeable = item == null || item.isWriteable( txTimestamp, version, getVersionComparator() );
+			boolean writeable = item == null || item.isWriteable( session.getTransactionStartTimestamp(), version, getVersionComparator() );
 			if ( writeable ) {
 				LOG.debugf(
 						"putting key[%s] -> value[%s] into region[%s] success",
@@ -130,7 +190,7 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 			writeLock.lock();
 			Lockable item = (Lockable) getInternalRegion().get( session, key );
 			// todo (6.0) - ? timeout?
-			long timeout = getInternalRegion().getRegionFactory().nextTimestamp() + getInternalRegion().getRegionFactory().getTimeout();
+			long timeout = getInternalRegion().getRegionFactory().nextTimestamp() + CachingRegionFactory.TIMEOUT;
 			final Lock lock = ( item == null ) ? new Lock( timeout, uuid, nextLockId(), version ) : item.lock(
 					timeout,
 					uuid,
@@ -185,7 +245,7 @@ public abstract class AbstractReadWriteAccess extends BaseRegionAccess {
 	protected void handleLockExpiry(SharedSessionContractImplementor session, Object key, Lockable lock) {
 		LOG.info( "Cached entry expired : " + key );
 
-		long ts = getInternalRegion().getRegionFactory().nextTimestamp() + getInternalRegion().getRegionFactory().getTimeout();
+		long ts = getInternalRegion().getRegionFactory().nextTimestamp() + CachingRegionFactory.TIMEOUT;
 		// create new lock that times out immediately
 		Lock newLock = new Lock( ts, uuid, nextLockId.getAndIncrement(), null );
 		newLock.unlock( ts );

@@ -12,6 +12,7 @@ import java.util.Properties;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.service.Service;
 import org.hibernate.service.spi.Stoppable;
 
@@ -86,22 +87,29 @@ public interface RegionFactory extends Service, Stoppable {
 
 	/**
 	 * Create a named Region instance.
+	 *
+	 * @param regionName The name of the Region to create.
+	 * @param regionNameMapping The user requested cacheable mappings for this Region
+	 * @param buildingContext Access to delegates useful in building the Region
 	 */
-	Region buildRegion(String regionName);
+	CacheableRegion buildCacheableRegion(
+			String regionName,
+			CacheableRegionNameMapping regionNameMapping,
+			RegionBuildingContext buildingContext);
 
 
+	QueryResultsRegion buildQueryResultsRegion(String regionName, RegionBuildingContext buildingContext);
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// todo (6.0) : not sure these below are needed
-
+	UpdateTimestampsRegion buildUpdateTimestampsRegion(RegionBuildingContext buildingContext);
 
 	/**
 	 * Generate a timestamp.
 	 * <p/>
+	 * Used by Session to generate its
+	 * {@link SharedSessionContractImplementor#getTransactionStartTimestamp()} value.
+	 * <p/>
 	 * This is generally used for cache content locking/unlocking purposes
 	 * depending upon the access-strategy being used.
-	 *
-	 * @return The generated timestamp.
 	 */
 	long nextTimestamp();
 }

@@ -26,10 +26,10 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.spi.QueryCache;
 import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
-import org.hibernate.cache.spi.access.RegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
+import org.hibernate.cache.spi.access.StorageAccess;
 import org.hibernate.cfg.Settings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.Dialect;
@@ -492,12 +492,12 @@ public interface SessionFactoryImplementor
 	 */
 	@Deprecated
 	default Region getSecondLevelCacheRegion(String regionName) {
-		final EntityRegionAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
+		final EntityStorageAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
 		if ( entityRegionAccess != null ) {
 			return entityRegionAccess.getRegion();
 		}
 
-		final CollectionRegionAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
+		final CollectionStorageAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
 		if ( collectionRegionAccess != null ) {
 			return collectionRegionAccess.getRegion();
 		}
@@ -518,13 +518,13 @@ public interface SessionFactoryImplementor
 	 * {@link CacheImplementor#determineCollectionRegionAccessStrategy} instead.
 	 */
 	@Deprecated
-	default RegionAccess getSecondLevelCacheRegionAccessStrategy(String regionName) {
-		final EntityRegionAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
+	default StorageAccess getSecondLevelCacheRegionAccessStrategy(String regionName) {
+		final EntityStorageAccess entityRegionAccess = getCache().getEntityRegionAccess( regionName );
 		if ( entityRegionAccess != null ) {
 			return entityRegionAccess;
 		}
 
-		final CollectionRegionAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
+		final CollectionStorageAccess collectionRegionAccess = getCache().getCollectionRegionAccess( regionName );
 		if ( collectionRegionAccess != null ) {
 			return collectionRegionAccess;
 		}
@@ -541,7 +541,7 @@ public interface SessionFactoryImplementor
 	 *
 	 * @deprecated (since 5.2) Use this factory's {@link #getCache()} ->
 	 * {@link CacheImplementor#getNaturalIdCacheRegionAccessStrategy(String)} ->
-	 * {@link NaturalIdRegionAccess#getRegion()} instead.
+	 * {@link NaturalIdStorageAccess#getRegion()} instead.
 	 */
 	@Deprecated
 	default Region getNaturalIdCacheRegion(String regionName) {
@@ -559,7 +559,7 @@ public interface SessionFactoryImplementor
 	 * {@link CacheImplementor#getNaturalIdCacheRegionAccessStrategy(String)} instead.
 	 */
 	@Deprecated
-	default RegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
+	default StorageAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
 		return getCache().getNaturalIdCacheRegionAccessStrategy( regionName );
 	}
 
@@ -603,11 +603,11 @@ public interface SessionFactoryImplementor
 	/**
 	 * Get the cache of table update timestamps
 	 *
-	 * @deprecated Use {@link CacheImplementor#getUpdateTimestampsCache()} instead
+	 * @deprecated Use {@link CacheImplementor#getUpdateTimestampsRegion()} instead
 	 */
 	@Deprecated
 	default UpdateTimestampsCache getUpdateTimestampsCache() {
-		return getCache().getUpdateTimestampsCache();
+		return getCache().getUpdateTimestampsRegion();
 	}
 
 }

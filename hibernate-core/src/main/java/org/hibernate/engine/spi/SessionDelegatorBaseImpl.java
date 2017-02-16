@@ -169,6 +169,11 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
+	public long getTransactionStartTimestamp() {
+		return delegate.getTransactionStartTimestamp();
+	}
+
+	@Override
 	public SessionFactoryImplementor getFactory() {
 		return delegate.getFactory();
 	}

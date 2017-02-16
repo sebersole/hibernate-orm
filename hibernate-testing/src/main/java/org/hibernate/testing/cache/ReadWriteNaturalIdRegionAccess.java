@@ -6,12 +6,10 @@
  */
 package org.hibernate.testing.cache;
 
-import java.util.Comparator;
-
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.NaturalIdCacheDataDescription;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.RequestedNaturalIdCaching;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.spi.EntityPersister;
@@ -19,15 +17,12 @@ import org.hibernate.persister.entity.spi.EntityPersister;
 /**
  * @author Eric Dalquist
  */
-class ReadWriteNaturalIdRegionAccess extends AbstractReadWriteAccess implements NaturalIdRegionAccess {
-	private final NaturalIdCacheDataDescription metadata;
-
-	ReadWriteNaturalIdRegionAccess(
-			NaturalIdCacheDataDescription metadata,
-			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( cacheKeysFactory, region );
-		this.metadata = metadata;
+class ReadWriteNaturalIdRegionAccess extends AbstractReadWriteAccess implements NaturalIdStorageAccess {
+	public ReadWriteNaturalIdRegionAccess(
+			RequestedNaturalIdCaching requestedNaturalIdCaching,
+			CacheKeysFactory factoryToUse,
+			CacheableRegionImpl region) {
+		super( region, requestedNaturalIdCaching, factoryToUse );
 	}
 
 	@Override
@@ -85,11 +80,6 @@ class ReadWriteNaturalIdRegionAccess extends AbstractReadWriteAccess implements 
 		finally {
 			writeLock.unlock();
 		}
-	}
-
-	@Override
-	Comparator getVersionComparator() {
-		return metadata.getVersionComparator();
 	}
 
 	@Override

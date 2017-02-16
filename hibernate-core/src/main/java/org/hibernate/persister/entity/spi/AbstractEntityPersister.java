@@ -12,8 +12,8 @@ import javax.persistence.metamodel.Type;
 
 import org.hibernate.HibernateException;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
@@ -42,8 +42,8 @@ public abstract class AbstractEntityPersister<T>
 	private final SessionFactoryImplementor factory;
 
 	// needed temporarily between construction of the persister and its afterInitialization call
-	private final EntityRegionAccess cacheAccessStrategy;
-	private final NaturalIdRegionAccess naturalIdRegionAccess;
+	private final EntityStorageAccess cacheAccessStrategy;
+	private final NaturalIdStorageAccess naturalIdRegionAccess;
 
 	private final NavigableRole navigableRole;
 	private final BytecodeEnhancementMetadata bytecodeEnhancementMetadata;
@@ -52,8 +52,8 @@ public abstract class AbstractEntityPersister<T>
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityPersister(
 			PersistentClass persistentClass,
-			EntityRegionAccess cacheAccessStrategy,
-			NaturalIdRegionAccess naturalIdRegionAccess,
+			EntityStorageAccess cacheAccessStrategy,
+			NaturalIdStorageAccess naturalIdRegionAccess,
 			PersisterCreationContext creationContext) throws HibernateException {
 		super( resolveJavaTypeDescriptor( creationContext, persistentClass ) );
 
@@ -148,12 +148,12 @@ public abstract class AbstractEntityPersister<T>
 	}
 
 	@Override
-	public EntityRegionAccess getCacheAccessStrategy() {
+	public EntityStorageAccess getCacheAccessStrategy() {
 		return cacheAccessStrategy;
 	}
 
 	@Override
-	public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
+	public NaturalIdStorageAccess getNaturalIdCacheAccessStrategy() {
 		return naturalIdRegionAccess;
 	}
 

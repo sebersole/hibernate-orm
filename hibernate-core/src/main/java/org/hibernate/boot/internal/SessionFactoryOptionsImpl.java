@@ -21,7 +21,8 @@ import org.hibernate.boot.SchemaAutoTooling;
 import org.hibernate.boot.TempTableDdlTransactionHandling;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.spi.QueryCacheFactory;
+import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.QueryResultsCacheFactory;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.function.SQLFunction;
@@ -105,7 +106,8 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 	// Caching
 	private final boolean secondLevelCacheEnabled;
 	private final boolean queryCacheEnabled;
-	private final QueryCacheFactory queryCacheFactory;
+	private final QueryResultsCacheFactory queryCacheFactory;
+	private final CacheKeysFactory enforcedCacheKeysFactory;
 	private final String cacheRegionPrefix;
 	private final boolean minimalPutsEnabled;
 	private final boolean structuredCacheEntriesEnabled;
@@ -187,8 +189,9 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 
 		this.secondLevelCacheEnabled = state.isSecondLevelCacheEnabled();
 		this.queryCacheEnabled = state.isQueryCacheEnabled();
-		this.queryCacheFactory = state.getQueryCacheFactory();
 		this.cacheRegionPrefix = state.getCacheRegionPrefix();
+		this.queryCacheFactory = state.getQueryCacheFactory();
+		this.enforcedCacheKeysFactory = state.getEnforcedCacheKeysFactory();
 		this.minimalPutsEnabled = state.isMinimalPutsEnabled();
 		this.structuredCacheEntriesEnabled = state.isStructuredCacheEntriesEnabled();
 		this.directReferenceCacheEntriesEnabled = state.isDirectReferenceCacheEntriesEnabled();
@@ -414,13 +417,18 @@ public class SessionFactoryOptionsImpl implements SessionFactoryOptions {
 	}
 
 	@Override
-	public QueryCacheFactory getQueryCacheFactory() {
+	public QueryResultsCacheFactory getQueryCacheFactory() {
 		return queryCacheFactory;
 	}
 
 	@Override
 	public String getCacheRegionPrefix() {
 		return cacheRegionPrefix;
+	}
+
+	@Override
+	public CacheKeysFactory getEnforcedCacheKeysFactory() {
+		return enforcedCacheKeysFactory;
 	}
 
 	@Override

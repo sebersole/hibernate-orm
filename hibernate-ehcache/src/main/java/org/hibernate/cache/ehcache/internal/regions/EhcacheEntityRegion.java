@@ -16,7 +16,7 @@ import org.hibernate.cache.ehcache.internal.strategy.EhcacheAccessStrategyFactor
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 
 /**
  * An entity region specific wrapper around an Ehcache instance.
@@ -48,7 +48,7 @@ public class EhcacheEntityRegion extends EhcacheTransactionalDataRegion implemen
 	}
 
 	@Override
-	public EntityRegionAccess buildAccessStrategy(AccessType accessType) throws CacheException {
+	public EntityStorageAccess buildAccessStrategy(AccessType accessType) throws CacheException {
 		return getAccessStrategyFactory().createEntityRegionAccessStrategy( this, accessType );
 	}
 }

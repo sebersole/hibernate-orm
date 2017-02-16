@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.hibernate.EntityMode;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.internal.CacheHelper;
 import org.hibernate.internal.CoreLogging;
@@ -217,7 +217,7 @@ public class BatchFetchQueue {
 	private boolean isCached(EntityKey entityKey, EntityPersister persister) {
 		final SharedSessionContractImplementor session = context.getSession();
 		if ( context.getSession().getCacheMode().isGetEnabled() && persister.hasCache() ) {
-			final EntityRegionAccess cache = persister.getCacheAccessStrategy();
+			final EntityStorageAccess cache = persister.getCacheAccessStrategy();
 			final Object key = cache.generateCacheKey(
 					entityKey.getIdentifier(),
 					persister,
@@ -333,7 +333,7 @@ public class BatchFetchQueue {
 	private boolean isCached(Serializable collectionKey, CollectionPersister persister) {
 		SharedSessionContractImplementor session = context.getSession();
 		if ( session.getCacheMode().isGetEnabled() && persister.hasCache() ) {
-			CollectionRegionAccess cache = persister.getCacheAccessStrategy();
+			CollectionStorageAccess cache = persister.getCacheAccessStrategy();
 			Object cacheKey = cache.generateCacheKey(
 					collectionKey,
 					persister,

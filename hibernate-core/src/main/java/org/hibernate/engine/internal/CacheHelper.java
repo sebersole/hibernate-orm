@@ -8,7 +8,7 @@ package org.hibernate.engine.internal;
 
 import java.io.Serializable;
 
-import org.hibernate.cache.spi.access.RegionAccess;
+import org.hibernate.cache.spi.access.StorageAccess;
 import org.hibernate.engine.spi.SessionEventListenerManager;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -24,12 +24,12 @@ public final class CacheHelper {
 	public static Serializable fromSharedCache(
 			SharedSessionContractImplementor session,
 			Object cacheKey,
-			RegionAccess cacheAccessStrategy) {
+			StorageAccess cacheAccessStrategy) {
 		final SessionEventListenerManager eventListenerManager = session.getEventListenerManager();
 		Serializable cachedValue = null;
 		eventListenerManager.cacheGetStart();
 		try {
-			cachedValue = (Serializable) cacheAccessStrategy.get( session, cacheKey, session.getTimestamp() );
+			cachedValue = (Serializable) cacheAccessStrategy.get( session, cacheKey, session.getTransactionStartTimestamp() );
 		}
 		finally {
 			eventListenerManager.cacheGetEnd( cachedValue != null );

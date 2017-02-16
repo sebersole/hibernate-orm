@@ -13,8 +13,12 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.Region;
+import org.hibernate.cache.spi.CacheableRegion;
+import org.hibernate.cache.spi.CacheableRegionNameMapping;
+import org.hibernate.cache.spi.QueryResultsRegion;
+import org.hibernate.cache.spi.RegionBuildingContext;
 import org.hibernate.cache.spi.RegionFactory;
+import org.hibernate.cache.spi.UpdateTimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 
 import org.jboss.logging.Logger;
@@ -26,12 +30,12 @@ public class CachingRegionFactory implements RegionFactory {
 	private static final Logger LOG = Logger.getLogger( CachingRegionFactory.class.getName() );
 
 	public static String DEFAULT_ACCESSTYPE = "DefaultAccessType";
-	private static int TIMEOUT = Timestamper.ONE_MS * 60000;  //60s
+	public static int TIMEOUT = Timestamper.ONE_MS * 60000;  //60s
 
 
 	// to support globally switching the CacheKeysFactory to use for testing
 	private final CacheKeysFactory cacheKeysFactory;
-	private final HashMap<String,RegionImpl> namedRegionMap = new HashMap<>();
+	private final HashMap<String,CacheableRegionImpl> namedRegionMap = new HashMap<>();
 
 	private SessionFactoryOptions settings;
 	private Properties properties;
@@ -85,27 +89,34 @@ public class CachingRegionFactory implements RegionFactory {
 		return AccessType.READ_WRITE;
 	}
 
+
 	@Override
-	public Region buildRegion(String regionName) {
-		final RegionImpl existing = namedRegionMap.get( regionName );
+	public CacheableRegion buildCacheableRegion(
+			String regionName,
+			CacheableRegionNameMapping regionNameMapping,
+			RegionBuildingContext buildingContext) {
+		final CacheableRegionImpl existing = namedRegionMap.get( regionName );
 		if ( existing != null ) {
 			return existing;
 		}
 
-		final RegionImpl region = new RegionImpl( regionName, cacheKeysFactory, this );
+		final CacheableRegionImpl region = new CacheableRegionImpl( this, regionName, regionNameMapping, buildingContext );
 		namedRegionMap.put( regionName, region );
 		return region;
 	}
 
+	@Override
+	public QueryResultsRegion buildQueryResultsRegion(String regionName, RegionBuildingContext buildingContext) {
+		return new QueryResultsRegionImpl( this, regionName );
+	}
 
-
+	@Override
+	public UpdateTimestampsRegion buildUpdateTimestampsRegion(RegionBuildingContext buildingContext) {
+		return new UpdateTimestampsRegionImpl( this );
+	}
 
 	@Override
 	public long nextTimestamp() {
 		return Timestamper.next();
-	}
-
-	public static int getTimeout() {
-		return TIMEOUT;
 	}
 }

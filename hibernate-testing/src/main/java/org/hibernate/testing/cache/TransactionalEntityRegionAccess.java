@@ -8,7 +8,7 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.EntityCacheDataDescription;
+import org.hibernate.cache.spi.RequestedEntityCaching;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -16,11 +16,11 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @author Strong Liu <stliu@hibernate.org>
  */
 class TransactionalEntityRegionAccess extends BaseEntityRegionAccess {
-	TransactionalEntityRegionAccess(
-			EntityCacheDataDescription metadata,
-			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( metadata, cacheKeysFactory, region );
+	public TransactionalEntityRegionAccess(
+			RequestedEntityCaching metadata,
+			CacheKeysFactory factoryToUse,
+			CacheableRegionImpl regionImpl) {
+		super( metadata.getRootEntityNavigableRole(), factoryToUse, regionImpl );
 	}
 
 	@Override

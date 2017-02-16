@@ -7,8 +7,8 @@
 package org.hibernate.persister.entity.spi;
 
 import org.hibernate.EntityMode;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.persister.spi.PersisterCreationContext;
@@ -37,8 +37,8 @@ public interface EntityHierarchy {
 	OptimisticLockStyle getOptimisticLockStyle();
 	TenantDiscrimination getTenantDiscrimination();
 
-	EntityRegionAccess getEntityRegionAccessStrategy();
-	NaturalIdRegionAccess getNaturalIdRegionAccessStrategy();
+	EntityStorageAccess getEntityRegionAccessStrategy();
+	NaturalIdStorageAccess getNaturalIdRegionAccessStrategy();
 
 	String getWhere();
 

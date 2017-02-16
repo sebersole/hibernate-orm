@@ -42,7 +42,7 @@ public class CalendarWithTemporalTimestampTest extends BaseEntityManagerFunction
 		} );
 		doInJPA( this::entityManagerFactory, entityManager -> {
 			DateEvent dateEvent = entityManager.createQuery( "from DateEvent", DateEvent.class ).getSingleResult();
-			//Assert.assertEquals( calendar, dateEvent.getTimestamp() );
+			//Assert.assertEquals( calendar, dateEvent.getTransactionStartTimestamp() );
 		} );
 	}
 

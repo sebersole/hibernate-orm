@@ -7,8 +7,8 @@
 package org.hibernate.cache.infinispan.access;
 
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -16,8 +16,8 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * Defines the strategy for access to entity or collection data in a Infinispan instance.
  * <p/>
  * The intent of this class is to encapsulate common code and serve as a delegate for
- * {@link EntityRegionAccess}
- * and {@link CollectionRegionAccess} implementations.
+ * {@link EntityStorageAccess}
+ * and {@link CollectionStorageAccess} implementations.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */

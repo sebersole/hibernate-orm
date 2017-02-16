@@ -12,7 +12,7 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.Namespace;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.cache.spi.entry.StructuredCollectionCacheEntry;
 import org.hibernate.cache.spi.entry.StructuredMapCacheEntry;
@@ -61,7 +61,7 @@ public abstract class AbstractCollectionPersister<O,C,E> implements CollectionPe
 	private final CollectionKey foreignKeyDescriptor;
 
 	// todo (6.0) - rework these per https://hibernate.atlassian.net/browse/HHH-11356
-	private final CollectionRegionAccess cacheAccessStrategy;
+	private final CollectionStorageAccess cacheAccessStrategy;
 
 	// todo (6.0) - rework this (and friend) per todo item...
 	//		* Redesign `org.hibernate.cache.spi.entry.CacheEntryStructure` and friends (with better names)
@@ -84,7 +84,7 @@ public abstract class AbstractCollectionPersister<O,C,E> implements CollectionPe
 			Collection collectionBinding,
 			ManagedTypeImplementor source,
 			String navigableName,
-			CollectionRegionAccess cacheAccessStrategy,
+			CollectionStorageAccess cacheAccessStrategy,
 			PersisterCreationContext creationContext) throws MappingException, CacheException {
 		this.sessionFactory = creationContext.getSessionFactory();
 		this.source = source;

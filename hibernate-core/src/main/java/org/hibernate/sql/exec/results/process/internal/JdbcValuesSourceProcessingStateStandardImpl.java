@@ -15,7 +15,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.internal.TwoPhaseLoad;
 import org.hibernate.engine.internal.Versioning;
@@ -275,7 +275,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 			final Object version = Versioning.getVersion( hydratedState, persister );
 			final CacheEntry entry = persister.buildCacheEntry( entity, hydratedState, version, session );
-			final EntityRegionAccess cache = persister.getCacheAccessStrategy();
+			final EntityStorageAccess cache = persister.getCacheAccessStrategy();
 			final Object cacheKey = cache.generateCacheKey( id, persister, factory, session.getTenantIdentifier() );
 
 			// explicit handling of caching for rows just inserted and then somehow forced to be read
@@ -301,7 +301,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 							session,
 							cacheKey,
 							persister.getCacheEntryStructure().structure( entry ),
-							session.getTimestamp(),
+							session.getTransactionStartTimestamp(),
 							version,
 							//useMinimalPuts( session, entityEntry )
 							false

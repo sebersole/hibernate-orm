@@ -7,8 +7,8 @@
 package org.hibernate.test.annotations.persister;
 
 import org.hibernate.HibernateException;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.persister.entity.SingleTableEntityPersister;
 import org.hibernate.persister.spi.PersisterCreationContext;
@@ -19,8 +19,8 @@ import org.hibernate.persister.spi.PersisterCreationContext;
 public class EntityPersister extends SingleTableEntityPersister {
 	public EntityPersister(
 			PersistentClass persistentClass,
-			EntityRegionAccess cache,
-			NaturalIdRegionAccess naturalIdRegionAccess,
+			EntityStorageAccess cache,
+			NaturalIdStorageAccess naturalIdRegionAccess,
 			PersisterCreationContext creationContext) throws HibernateException {
 		super( persistentClass, cache, naturalIdRegionAccess, creationContext );
 	}

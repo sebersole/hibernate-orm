@@ -7,18 +7,22 @@
 package org.hibernate.testing.cache;
 
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.collection.spi.CollectionPersister;
+import org.hibernate.persister.common.NavigableRole;
 
 /**
  * @author Strong Liu
  */
-class BaseCollectionRegionAccess extends BaseRegionAccess implements CollectionRegionAccess {
+abstract class BaseCollectionRegionAccess extends BaseRegionAccess implements CollectionStorageAccess {
 	private final CacheKeysFactory cacheKeysFactory;
 
-	public BaseCollectionRegionAccess(CacheKeysFactory cacheKeysFactory, RegionImpl region) {
-		super( region );
+	public BaseCollectionRegionAccess(
+			CacheKeysFactory cacheKeysFactory,
+			CacheableRegionImpl region,
+			NavigableRole cachedRole) {
+		super( region, cachedRole );
 		this.cacheKeysFactory = cacheKeysFactory;
 	}
 

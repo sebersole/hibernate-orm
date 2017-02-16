@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.cache.spi.access;
+package org.hibernate.cache.spi;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,22 +12,22 @@ import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.QueryKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.spi.Type;
+import org.hibernate.service.spi.Stoppable;
+import org.hibernate.type.Type;
 
 /**
- * Models access to query-result data.
+ * Manages caching query results as well as recognizing stale results.
  *
  * @author Steve Ebersole
  */
-public interface QueryResultRegionAccess extends NonUserModelRegionAccess {
+public interface QueryResultsCache extends Stoppable {
 	/**
 	 * Clear items from the query cache.
 	 *
 	 * @throws CacheException Indicates a problem delegating to the underlying cache.
 	 */
-	void clear() throws CacheException;
+	void clear(String region) throws CacheException;
 
 	/**
 	 * Put a result into the query cache.
@@ -43,6 +43,7 @@ public interface QueryResultRegionAccess extends NonUserModelRegionAccess {
 	 * @throws HibernateException Indicates a problem delegating to the underlying cache.
 	 */
 	boolean put(
+			String regionName,
 			QueryKey key,
 			Type[] returnTypes,
 			List result,
@@ -63,6 +64,7 @@ public interface QueryResultRegionAccess extends NonUserModelRegionAccess {
 	 * @throws HibernateException Indicates a problem delegating to the underlying cache.
 	 */
 	List get(
+			String regionName,
 			QueryKey key,
 			Type[] returnTypes,
 			boolean isNaturalKeyLookup,
@@ -71,6 +73,14 @@ public interface QueryResultRegionAccess extends NonUserModelRegionAccess {
 
 	/**
 	 * Destroy the cache.
+	 *
+	 * @deprecated (6.0) Use {@link #stop} instead
 	 */
+	@Deprecated
 	void destroy();
+
+	@Override
+	default void stop() {
+		destroy();
+	}
 }

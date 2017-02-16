@@ -8,17 +8,18 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.NaturalIdCacheDataDescription;
+import org.hibernate.cache.spi.RequestedNaturalIdCaching;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
  * @author Eric Dalquist
  */
 class TransactionalNaturalIdRegionAccess extends BaseNaturalIdRegionAccess {
-	TransactionalNaturalIdRegionAccess(
-			NaturalIdCacheDataDescription metadata,
-			CacheKeysFactory cacheKeysFactory, RegionImpl region) {
-		super( metadata, cacheKeysFactory, region );
+	public TransactionalNaturalIdRegionAccess(
+			RequestedNaturalIdCaching requestedNaturalIdCaching,
+			CacheKeysFactory factoryToUse,
+			CacheableRegionImpl region) {
+		super( requestedNaturalIdCaching, factoryToUse, region );
 	}
 
 	@Override

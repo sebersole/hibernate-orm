@@ -6,14 +6,14 @@
  */
 package org.hibernate.cache.spi;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+
 /**
- * Specialized CacheDataDescription for natural-id data.
- *
  * @author Steve Ebersole
  */
-public interface NaturalIdCacheDataDescription extends CacheDataDescription {
-	/**
-	 * The name of the entity this natural-id belongs to.
-	 */
-	String getEntityName();
+public interface QueryResultsCacheFactory {
+	QueryResultsCache createQueryResultsCache(
+			SessionFactoryImplementor sessionFactory,
+			RegionFactory regionFactory,
+			UpdateTimestampsRegion updateTimestampsRegion);
 }

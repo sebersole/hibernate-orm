@@ -39,8 +39,8 @@ import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeDescriptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
-import org.hibernate.cache.spi.access.NaturalIdRegionAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
+import org.hibernate.cache.spi.access.NaturalIdStorageAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.cache.spi.entry.ReferenceCacheEntryImpl;
@@ -158,8 +158,8 @@ public abstract class AbstractEntityPersister<T>
 	private final SessionFactoryImplementor factory;
 
 	// needed temporarily between construction of the persister and its afterInitialization call
-	private final EntityRegionAccess cacheAccessStrategy;
-	private final NaturalIdRegionAccess naturalIdRegionAccess;
+	private final EntityStorageAccess cacheAccessStrategy;
+	private final NaturalIdStorageAccess naturalIdRegionAccess;
 
 
 	private EntityHierarchy entityHierarchy;
@@ -521,8 +521,8 @@ public abstract class AbstractEntityPersister<T>
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityPersister(
 			PersistentClass persistentClass,
-			EntityRegionAccess cacheAccessStrategy,
-			NaturalIdRegionAccess naturalIdRegionAccess,
+			EntityStorageAccess cacheAccessStrategy,
+			NaturalIdStorageAccess naturalIdRegionAccess,
 			PersisterCreationContext creationContext) throws HibernateException {
 
 		// moved up from AbstractEntityPersister ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -999,7 +999,7 @@ public abstract class AbstractEntityPersister<T>
 		}
 
 		if ( session.getCacheMode().isGetEnabled() && hasCache() && isLazyPropertiesCacheable() ) {
-			final EntityRegionAccess cache = getCacheAccessStrategy();
+			final EntityStorageAccess cache = getCacheAccessStrategy();
 			final Object cacheKey = cache.generateCacheKey(id, this, session.getFactory(), session.getTenantIdentifier() );
 			final Object ce = CacheHelper.fromSharedCache( session, cacheKey, cache );
 			if ( ce != null ) {
@@ -4314,7 +4314,7 @@ public abstract class AbstractEntityPersister<T>
 		return cacheAccessStrategy != null;
 	}
 
-	public EntityRegionAccess getCacheAccessStrategy() {
+	public EntityStorageAccess getCacheAccessStrategy() {
 		return cacheAccessStrategy;
 	}
 
@@ -4332,7 +4332,7 @@ public abstract class AbstractEntityPersister<T>
 		return naturalIdRegionAccess != null;
 	}
 
-	public NaturalIdRegionAccess getNaturalIdCacheAccessStrategy() {
+	public NaturalIdStorageAccess getNaturalIdCacheAccessStrategy() {
 		return naturalIdRegionAccess;
 	}
 
@@ -4482,7 +4482,7 @@ public abstract class AbstractEntityPersister<T>
 
 		// check to see if it is in the second-level cache
 		if ( session.getCacheMode().isGetEnabled() && hasCache() ) {
-			final EntityRegionAccess cache = getCacheAccessStrategy();
+			final EntityStorageAccess cache = getCacheAccessStrategy();
 			final Object ck = cache.generateCacheKey( id, this, session.getFactory(), session.getTenantIdentifier() );
 			final Object ce = CacheHelper.fromSharedCache( session, ck, getCacheAccessStrategy() );
 			if ( ce != null ) {

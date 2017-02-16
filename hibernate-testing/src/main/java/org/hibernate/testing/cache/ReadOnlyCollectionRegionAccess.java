@@ -7,16 +7,16 @@
 package org.hibernate.testing.cache;
 
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.CollectionCacheDataDescription;
+import org.hibernate.cache.spi.RequestedCollectionCaching;
 
 /**
  * @author Strong Liu
  */
 class ReadOnlyCollectionRegionAccess extends BaseCollectionRegionAccess {
 	ReadOnlyCollectionRegionAccess(
-			CollectionCacheDataDescription metadata,
+			RequestedCollectionCaching metadata,
 			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
+			CacheableRegionImpl region) {
 		super( cacheKeysFactory, region );
 	}
 }

@@ -9,14 +9,14 @@ package org.hibernate.cache.jcache.access;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.jcache.JCacheTransactionalDataRegion;
-import org.hibernate.cache.spi.access.RegionAccess;
+import org.hibernate.cache.spi.access.StorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
  * @author Alex Snaps
  */
-abstract class JCacheRegionAccessStrategy<R extends JCacheTransactionalDataRegion> implements RegionAccess {
+abstract class JCacheRegionAccessStrategy<R extends JCacheTransactionalDataRegion> implements StorageAccess {
 
 	private final R region;
 

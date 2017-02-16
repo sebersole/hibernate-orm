@@ -8,7 +8,7 @@ package org.hibernate.testing.cache;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.EntityCacheDataDescription;
+import org.hibernate.cache.spi.RequestedEntityCaching;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -20,12 +20,11 @@ import org.jboss.logging.Logger;
 class ReadOnlyEntityRegionAccess extends BaseEntityRegionAccess {
 	private static final Logger LOG = Logger.getLogger( ReadOnlyEntityRegionAccess.class );
 
-
 	ReadOnlyEntityRegionAccess(
-			EntityCacheDataDescription cacheDataDescription,
+			RequestedEntityCaching metadata,
 			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( cacheDataDescription, cacheKeysFactory, region );
+			CacheableRegionImpl region) {
+		super( metadata.getRootEntityNavigableRole(), cacheKeysFactory, region );
 	}
 
 	/**

@@ -33,7 +33,7 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.spi.QueryCache;
 import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.UpdateTimestampsCache;
-import org.hibernate.cache.spi.access.RegionAccess;
+import org.hibernate.cache.spi.access.StorageAccess;
 import org.hibernate.cfg.Settings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.Dialect;
@@ -316,7 +316,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public RegionAccess getSecondLevelCacheRegionAccessStrategy(String regionName) {
+	public StorageAccess getSecondLevelCacheRegionAccessStrategy(String regionName) {
 		return delegate.getSecondLevelCacheRegionAccessStrategy( regionName );
 	}
 
@@ -326,7 +326,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public RegionAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
+	public StorageAccess getNaturalIdCacheRegionAccessStrategy(String regionName) {
 		return delegate.getNaturalIdCacheRegionAccessStrategy( regionName );
 	}
 

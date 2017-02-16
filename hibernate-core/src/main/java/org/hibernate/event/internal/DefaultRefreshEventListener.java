@@ -14,8 +14,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.PersistentObjectException;
 import org.hibernate.UnresolvableObjectException;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
-import org.hibernate.cache.spi.access.CollectionRegionAccess;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.access.CollectionStorageAccess;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.internal.Cascade;
 import org.hibernate.engine.internal.CascadePoint;
@@ -147,7 +147,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				// multiple actions queued during the same flush
 				previousVersion = persister.getVersion( object );
 			}
-			final EntityRegionAccess cache = persister.getCacheAccessStrategy();
+			final EntityStorageAccess cache = persister.getCacheAccessStrategy();
 			final Object ck = cache.generateCacheKey(
 					id,
 					persister,
@@ -196,7 +196,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			if ( type.getClassification().equals( Type.Classification.COLLECTION ) ) {
 				CollectionPersister collectionPersister = source.getFactory().getMetamodel().collectionPersister( ( (CollectionType) type ).getRole() );
 				if ( collectionPersister.hasCache() ) {
-					final CollectionRegionAccess cache = collectionPersister.getCacheAccessStrategy();
+					final CollectionStorageAccess cache = collectionPersister.getCacheAccessStrategy();
 					final Object ck = cache.generateCacheKey(
 						id,
 						collectionPersister,

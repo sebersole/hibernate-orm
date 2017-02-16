@@ -6,12 +6,10 @@
  */
 package org.hibernate.testing.cache;
 
-import java.util.Comparator;
-
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.EntityCacheDataDescription;
-import org.hibernate.cache.spi.access.EntityRegionAccess;
+import org.hibernate.cache.spi.RequestedEntityCaching;
+import org.hibernate.cache.spi.access.EntityStorageAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -22,16 +20,18 @@ import org.hibernate.persister.entity.spi.EntityPersister;
  */
 public class ReadWriteEntityRegionAccess
 		extends AbstractReadWriteAccess
-		implements EntityRegionAccess {
-
-	private final EntityCacheDataDescription cacheDataDescription;
+		implements EntityStorageAccess {
 
 	ReadWriteEntityRegionAccess(
-			EntityCacheDataDescription cacheDataDescription,
+			RequestedEntityCaching metadata,
 			CacheKeysFactory cacheKeysFactory,
-			RegionImpl region) {
-		super( cacheKeysFactory, region );
-		this.cacheDataDescription = cacheDataDescription;
+			CacheableRegionImpl region) {
+		super( region, metadata, cacheKeysFactory );
+	}
+
+	@Override
+	public boolean putFromLoad(SharedSessionContractImplementor session, Object key, Object value, Object version) throws CacheException {
+		return putFromLoad( session, key, value, version, isDefaultMinimalPutOverride() );
 	}
 
 	@Override
@@ -96,11 +96,6 @@ public class ReadWriteEntityRegionAccess
 	@Override
 	protected boolean isDefaultMinimalPutOverride() {
 		return getInternalRegion().getRegionFactory().getSettings().isMinimalPutsEnabled();
-	}
-
-	@Override
-	Comparator getVersionComparator() {
-		return cacheDataDescription.getVersionComparator();
 	}
 
 	@Override
