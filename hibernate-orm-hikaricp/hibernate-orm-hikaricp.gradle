@@ -7,7 +7,7 @@
 dependencies {
     compile project( ':hibernate-orm' )
     compile( libraries.hikaricp )
-    testCompile project( ':hibernate-testing' )
+    testCompile project( ':hibernate-orm-testing' )
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Java 9 ftw!

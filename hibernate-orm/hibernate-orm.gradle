@@ -70,7 +70,7 @@ dependencies {
     provided( libraries.ant )
     provided( "javax.enterprise:cdi-api:${cdiVersion}" )
 
-    testCompile( project(':hibernate-testing') )
+    testCompile( project(':hibernate-orm-testing') )
     testCompile( libraries.shrinkwrap_api )
     testCompile( libraries.shrinkwrap )
     testCompile( libraries.validation )

@@ -60,7 +60,7 @@ dependencies {
 	testCompile( project(':hibernate-orm-spatial') )
 	testCompile( project(path: ':hibernate-orm', configuration: 'tests') )
 
-	testCompile( project(':hibernate-testing') )
+	testCompile( project(':hibernate-orm-testing') )
 
 	testCompile( libraries.mockito )
 	testRuntime( libraries.h2 )

@@ -13,7 +13,7 @@ dependencies {
     provided( libraries.ant )
     provided( project( ':hibernate-jpamodelgen' ) )
 
-    testCompile( project( ':hibernate-testing' ) )
+    testCompile( project( ':hibernate-orm-testing' ) )
     testCompile( project( path: ':hibernate-orm', configuration: 'tests' ) )
     testRuntime( libraries.javassist )
     testRuntime( libraries.byteBuddy )

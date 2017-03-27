@@ -32,7 +32,7 @@ dependencies {
 
 
     testCompile(libraries.junit)
-    testCompile(project(':hibernate-testing'))
+    testCompile(project(':hibernate-orm-testing'))
     testCompile([group: 'commons-dbcp', name: 'commons-dbcp', version: '1.4'])
     testCompile(libraries.validation)
     testCompile(libraries.jandex)

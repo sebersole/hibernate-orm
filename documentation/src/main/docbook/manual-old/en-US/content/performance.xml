@@ -777,7 +777,7 @@ Customer customer = (Customer) session.get( Customer.class, customerId );
 
         <tbody>
           <row>
-            <entry>ConcurrentHashMap (only for testing purpose, in hibernate-testing module)</entry>
+            <entry>ConcurrentHashMap (only for testing purpose, in hibernate-orm-testing module)</entry>
 
             <entry><literal>org.hibernate.testing.cache.CachingRegionFactory</literal></entry>
 

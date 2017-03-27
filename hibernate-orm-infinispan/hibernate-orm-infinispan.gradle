@@ -19,7 +19,7 @@ dependencies {
     compile project( ':hibernate-orm' )
     compile( libraries.infinispan )
 
-    testCompile project( ':hibernate-testing' )
+    testCompile project( ':hibernate-orm-testing' )
     testCompile( libraries.infinispan_test )
     testCompile( libraries.jboss_common_core )
     testCompile( libraries.jnp_client )

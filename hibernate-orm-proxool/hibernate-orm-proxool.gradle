@@ -7,7 +7,7 @@
 dependencies {
     compile project( ':hibernate-orm' )
     compile( libraries.proxool )
-    testCompile project( ':hibernate-testing' )
+    testCompile project( ':hibernate-orm-testing' )
 }
 
 mavenPom {
