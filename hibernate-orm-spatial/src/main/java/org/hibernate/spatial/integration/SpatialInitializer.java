@@ -10,7 +10,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.spi.ServiceContributor;
 
 /**
- * Manages initialization of the hibernate-spatial integration
+ * Manages initialization of the hibernate-orm-spatial integration
  *
  * @author Karel Maesen, Geovise BVBA
  * @author Steve Ebersole

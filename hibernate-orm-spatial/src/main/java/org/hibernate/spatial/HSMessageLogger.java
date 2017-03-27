@@ -24,11 +24,11 @@ import static org.jboss.logging.Logger.Level.INFO;
 @ValidIdRange( min = 80000001, max = 80001000 )
 public interface HSMessageLogger extends BasicLogger {
 	@LogMessage(level = INFO)
-	@Message(value = "hibernate-spatial integration enabled : %s", id = 80000001)
+	@Message(value = "hibernate-orm-spatial integration enabled : %s", id = 80000001)
 	void spatialEnabled(boolean enabled);
 
 	@LogMessage(level = INFO)
-	@Message(value = "hibernate-spatial using Connection Finder for creating Oracle types : %s", id = 80000002)
+	@Message(value = "hibernate-orm-spatial using Connection Finder for creating Oracle types : %s", id = 80000002)
 	void connectionFinder(String className);
 
 }

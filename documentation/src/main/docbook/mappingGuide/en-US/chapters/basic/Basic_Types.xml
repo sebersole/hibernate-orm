@@ -391,7 +391,7 @@
             </para>
         </note>
 
-        <!-- todo : document added hibernate-spatial types -->
+        <!-- todo : document added hibernate-orm-spatial types -->
 
         <para>
             These mappings are managed by a service inside Hibernate called the

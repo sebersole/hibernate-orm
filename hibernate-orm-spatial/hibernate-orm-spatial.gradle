@@ -80,3 +80,7 @@ sourceSets.test.resources {
     setSrcDirs(['src/test/java', 'src/test/resources'])
 }
 
+def getArtifactIdForRelocation() {
+    'hibernate-spatial'
+}
+

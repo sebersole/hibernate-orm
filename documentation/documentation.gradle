@@ -57,7 +57,7 @@ dependencies {
 
 	testCompile( project(':hibernate-orm') )
 	testCompile( project(':hibernate-orm-ehcache') )
-	testCompile( project(':hibernate-spatial') )
+	testCompile( project(':hibernate-orm-spatial') )
 	testCompile( project(path: ':hibernate-orm', configuration: 'tests') )
 
 	testCompile( project(':hibernate-testing') )

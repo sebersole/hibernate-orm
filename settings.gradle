@@ -12,7 +12,7 @@ include 'hibernate-orm'
 include 'hibernate-orm-entitymanager'
 include 'hibernate-testing'
 include 'hibernate-orm-envers'
-include 'hibernate-spatial'
+include 'hibernate-orm-spatial'
 
 include 'hibernate-orm-java8'
 

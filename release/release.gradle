@@ -116,8 +116,8 @@ distributions {
 
             into( 'lib/spatial' ) {
                 from(
-                        ( parent.project( 'hibernate-spatial' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
-                                + parent.project( 'hibernate-spatial' ).configurations.runtime )
+                        ( parent.project( 'hibernate-orm-spatial' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
+                                + parent.project( 'hibernate-orm-spatial' ).configurations.runtime )
                                 - parent.project( 'hibernate-orm' ).configurations.runtime
                                 - parent.project( 'hibernate-orm' ).configurations.archives.allArtifacts.files
                 )
