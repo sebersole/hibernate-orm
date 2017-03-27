@@ -70,7 +70,7 @@ public class OsgiSessionFactoryService implements ServiceFactory {
 		// First, add the client bundle that's requesting the OSGi services.
 		osgiClassLoader.addBundle( requestingBundle );
 
-		// Then, automatically add hibernate-core.  These are needed to load resources
+		// Then, automatically add hibernate-orm.  These are needed to load resources
 		// contained in the core jar.
 		osgiClassLoader.addBundle( FrameworkUtil.getBundle(SessionFactory.class) );
 

@@ -42,7 +42,7 @@ dependencies {
 		karafVersion = '3.0.3'
 	}
 
-	compile( project( ':hibernate-core' ) )
+	compile( project( ':hibernate-orm' ) )
 	testCompile( project( ':hibernate-envers' ) )
 
 	// MUST use 4.3.1!  4.3.0 was compiled with "-target jsr14".
@@ -139,7 +139,7 @@ karafFeatures {
 			name = 'hibernate-orm'
 			description = 'Combines all Hibernate core dependencies and required modules into a single feature'
 			projects = [
-					rootProject.childProjects.'hibernate-core',
+					rootProject.childProjects.'hibernate-orm',
 					project
 			]
 			// According to Christian Schneider, these should not be needed
@@ -199,7 +199,7 @@ karafFeatures {
 			dependencyFeatureNames = ['hibernate-orm']
 			projects = [rootProject.childProjects.'hibernate-envers']
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-core'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm'
 				include = false
 			}
 			bundle {
@@ -229,7 +229,7 @@ karafFeatures {
 			dependencyFeatureNames = ['hibernate-orm']
 			projects = [rootProject.childProjects.'hibernate-infinispan']
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-core'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm'
 				include = false
 			}
 			bundle {
@@ -273,7 +273,7 @@ karafFeatures {
 			dependencyFeatureNames = ['hibernate-orm']
 			projects = [rootProject.childProjects.'hibernate-ehcache']
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-core'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm'
 				include = false
 			}
 			bundle {
@@ -383,9 +383,9 @@ tasks.test.dependsOn tasks.jar
 tasks.test.dependsOn tasks.generateDependsFile
 tasks.test.dependsOn tasks.generatePaxExamEnvironmentFile
 
-// we also need to make sure that hibernate-core, hibernate-entitymanager and hibernate-osgi
+// we also need to make sure that hibernate-orm, hibernate-entitymanager and hibernate-osgi
 // are published to maven-local before running tests
-tasks.test.dependsOn rootProject.childProjects.'hibernate-core'.tasks.publishToMavenLocal
+tasks.test.dependsOn rootProject.childProjects.'hibernate-orm'.tasks.publishToMavenLocal
 tasks.test.dependsOn rootProject.childProjects.'hibernate-envers'.tasks.publishToMavenLocal
 tasks.test.dependsOn tasks.publishToMavenLocal
 

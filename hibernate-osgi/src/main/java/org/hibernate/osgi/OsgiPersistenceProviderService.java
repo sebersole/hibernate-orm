@@ -43,7 +43,7 @@ public class OsgiPersistenceProviderService implements ServiceFactory {
 		// First, add the client bundle that's requesting the OSGi services.
 		osgiClassLoader.addBundle( requestingBundle );
 
-		// Then, automatically add hibernate-core and hibernate-entitymanager.  These are needed to load resources
+		// Then, automatically add hibernate-orm and hibernate-entitymanager.  These are needed to load resources
 		// contained in those jars, such as em's persistence.xml schemas.
 		osgiClassLoader.addBundle( FrameworkUtil.getBundle( SessionFactory.class ) );
 		osgiClassLoader.addBundle( FrameworkUtil.getBundle( HibernateEntityManagerFactory.class ) );

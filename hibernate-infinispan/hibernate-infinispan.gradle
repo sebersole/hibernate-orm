@@ -16,7 +16,7 @@ if ( project.hasProperty( 'overrideInfinispanVersionForTesting' ) ) {
 apply plugin: 'java'
 
 dependencies {
-    compile project( ':hibernate-core' )
+    compile project( ':hibernate-orm' )
     compile( libraries.infinispan )
 
     testCompile project( ':hibernate-testing' )

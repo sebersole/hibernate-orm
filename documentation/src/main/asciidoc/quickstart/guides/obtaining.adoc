@@ -5,7 +5,7 @@
 
 Hibernate's functionality is split into a number of modules/artifacts meant to isolate dependencies (modularity).
 
-hibernate-core:: The main (core) Hibernate module.  Defines its ORM features and APIs as well as the various integration SPIs.
+hibernate-orm:: The main (core) Hibernate module.  Defines its ORM features and APIs as well as the various integration SPIs.
 hibernate-envers:: Hibernate's historical entity versioning feature
 hibernate-spatial:: Hibernate's Spatial/GIS data-type support
 hibernate-osgi:: Hibernate support for running in OSGi containers.
@@ -26,7 +26,7 @@ The Hibernate team provides release bundles hosted on the SourceForge File Relea
 You can download releases of Hibernate, in your chosen format, from the list at
 https://sourceforge.net/projects/hibernate/files/hibernate-orm/.  The release bundle is structured as follows:
 
-* The `lib/required/` directory contains the `hibernate-core` jar and all of its dependencies.  All of these jars are
+* The `lib/required/` directory contains the `hibernate-orm` jar and all of its dependencies.  All of these jars are
 required to be available on your classpath no matter which features of Hibernate are being used.
 * The `lib/envers` directory contains the `hibernate-envers` jar and all of its dependencies (beyond those in
 `lib/required/` and `lib/jpa/`).

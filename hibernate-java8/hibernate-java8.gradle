@@ -1,10 +1,10 @@
 dependencies {
-    compile( project( ':hibernate-core' ) )
+    compile( project( ':hibernate-orm' ) )
 }
 
 mavenPom {
-    name = '(deprecated - use hibernate-core instead) Java8-specific Hibernate O/RM functionality'
-    description = '(deprecated - use hibernate-core instead) Support for Java8-specific features - mainly Java8 Date/Time (JSR 310)'
+    name = '(deprecated - use hibernate-orm instead) Java8-specific Hibernate O/RM functionality'
+    description = '(deprecated - use hibernate-orm instead) Support for Java8-specific features - mainly Java8 Date/Time (JSR 310)'
 }
 
 public String osgiDescription() {

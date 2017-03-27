@@ -20,7 +20,7 @@ mavenPom {
 }
 
 dependencies {
-    compile(project(':hibernate-core'))
+    compile(project(':hibernate-orm'))
 
     compile('org.postgresql:postgresql:9.4-1200-jdbc41')
     compile([group: 'org.geolatte', name: 'geolatte-geom', version: '1.0.6'])

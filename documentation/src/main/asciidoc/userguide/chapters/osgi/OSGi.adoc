@@ -15,7 +15,7 @@ Hibernate supports three types of configurations within OSGi.
 
 === hibernate-osgi
 
-Rather than embed OSGi capabilities into hibernate-core, and sub-modules, hibernate-osgi was created.
+Rather than embed OSGi capabilities into hibernate-orm, and sub-modules, hibernate-osgi was created.
 It's purposefully separated, isolating all OSGi dependencies.
 It provides an OSGi-specific `ClassLoader` (aggregates the container's `ClassLoader` with core and `EntityManager` `ClassLoader`s),
 JPA persistence provider, `SessionFactory`/`EntityManagerFactory` bootstrapping, entities/mappings scanner, and service management.

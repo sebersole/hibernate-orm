@@ -1,5 +1,5 @@
 dependencies {
-    compile project( ':hibernate-core' )
+    compile project( ':hibernate-orm' )
     compile( libraries.jcache )
 
     testCompile project( ':hibernate-testing' )

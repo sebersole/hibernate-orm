@@ -26,7 +26,7 @@ dependencies {
     compile( libraries.maven_artifact ) { transitive = false }
     compile( libraries.maven_plugin ) { transitive = false }
     compile( libraries.maven_plugin_tools ) { transitive = false }
-    compile( project(':hibernate-core') ) { transitive = false }
+    compile( project(':hibernate-orm') ) { transitive = false }
     compile( libraries.jpa ) { transitive = false }
     compile( libraries.javassist ) { transitive = false }
     compile( libraries.byteBuddy ) { transitive = false }
@@ -35,7 +35,7 @@ dependencies {
     runtime( libraries.maven_artifact )
     runtime( libraries.maven_plugin )
     runtime( libraries.maven_plugin_tools )
-    runtime( project(':hibernate-core') )
+    runtime( project(':hibernate-orm') )
     runtime( libraries.jpa )
     runtime( libraries.javassist )
     runtime( libraries.byteBuddy )
@@ -60,7 +60,7 @@ task processPluginXml(type: Copy) {
             + generateMavenDependency(libraries.javassist)\
             + generateMavenDependency(libraries.byteBuddy)\
             + generateMavenDependency(libraries.logging)\
-            + generateMavenDependency("org.hibernate:hibernate-core:" + project.version)])
+            + generateMavenDependency("org.hibernate:hibernate-orm:" + project.version)])
 }
 
 // TODO: There may be a way to do this directly with Gradle's Maven plugin, but it's still incubating

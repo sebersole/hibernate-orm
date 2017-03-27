@@ -57,7 +57,7 @@
         <title>hibernate-osgi</title>
 
         <para>
-            Rather than embed OSGi capabilities into hibernate-core, hibernate-entitymanager, and sub-modules,
+            Rather than embed OSGi capabilities into hibernate-orm, hibernate-entitymanager, and sub-modules,
             hibernate-osgi was created.  It's purposefully separated, isolating all OSGi dependencies.  It provides an
             OSGi-specific ClassLoader (aggregates the container's CL with core and entitymanager CLs), JPA persistence
             provider, SF/EMF bootstrapping, entities/mappings scanner, and service management.

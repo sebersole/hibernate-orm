@@ -1,6 +1,6 @@
 // keep dependencies for transitivity to consumers
 dependencies {
-	compile( project( ':hibernate-core' ) )
+	compile( project( ':hibernate-orm' ) )
 	compile( libraries.dom4j )
 	compile( libraries.commons_annotations )
 	compile( libraries.jpa )
@@ -10,8 +10,8 @@ dependencies {
 }
 
 mavenPom {
-	name = '(deprecated - use hibernate-core instead) Hibernate JPA Support'
-	description = '(deprecated - use hibernate-core instead) Hibernate O/RM implementation of the JPA specification'
+	name = '(deprecated - use hibernate-orm instead) Hibernate JPA Support'
+	description = '(deprecated - use hibernate-orm instead) Hibernate O/RM implementation of the JPA specification'
 }
 
 public String osgiDescription() {

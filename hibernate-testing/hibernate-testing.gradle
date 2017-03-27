@@ -5,7 +5,7 @@
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 dependencies {
-    compile project( ':hibernate-core' )
+    compile project( ':hibernate-orm' )
     compile( libraries.jta )
     compile( libraries.junit )
     compile( libraries.byteman )
@@ -23,7 +23,7 @@ sourceSets.test.resources {
     setSrcDirs( ['src/test/java'] )
 }
 
-// todo : Fold into hibernate-core and publish in separate publications
+// todo : Fold into hibernate-orm and publish in separate publications
 // 		once http://issues.gradle.org/browse/GRADLE-2966 is resolved;
 //		that will allow us to keep the same artifactId and publish the pom
 //		with proper dependencies
