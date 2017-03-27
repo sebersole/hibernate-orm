@@ -16,7 +16,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 import static org.jboss.logging.Logger.Level.INFO;
 
 /**
- * The jboss-logging {@link MessageLogger} for the hibernate-proxool module.  It reserves message ids ranging from
+ * The jboss-logging {@link MessageLogger} for the hibernate-orm-proxool module.  It reserves message ids ranging from
  * 30001 to 35000 inclusively.
  * <p/>
  * New messages must be added afterQuery the last message defined to ensure message codes are unique.

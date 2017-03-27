@@ -68,7 +68,7 @@ Any other settings prefixed with `c3p0.`:: Get passed to c3p0 as is. See http://
 
 [IMPORTANT]
 ====
-To use this integration, the application must include the hibernate-proxool module jar (as well as its dependencies) on the classpath.
+To use this integration, the application must include the hibernate-orm-proxool module jar (as well as its dependencies) on the classpath.
 ====
 
 Hibernate also provides support for applications to use http://proxool.sourceforge.net/[Proxool] connection pooling.

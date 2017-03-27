@@ -880,7 +880,7 @@ public interface AvailableSettings {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	/**
-	 * A setting prefix used to indicate settings that target the hibernate-proxool integration
+	 * A setting prefix used to indicate settings that target the hibernate-orm-proxool integration
 	 */
 	String PROXOOL_CONFIG_PREFIX = "hibernate.proxool";
 

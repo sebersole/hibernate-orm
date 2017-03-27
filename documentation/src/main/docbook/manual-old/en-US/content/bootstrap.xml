@@ -253,7 +253,7 @@
 
             <important>
                 <para>
-                    To use this integration, the application must include the hibernate-proxool
+                    To use this integration, the application must include the hibernate-orm-proxool
                     module jar (as well as its dependencies) on the classpath.
                 </para>
             </important>
