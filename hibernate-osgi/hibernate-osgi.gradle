@@ -43,7 +43,7 @@ dependencies {
 	}
 
 	compile( project( ':hibernate-orm' ) )
-	testCompile( project( ':hibernate-envers' ) )
+	testCompile( project( ':hibernate-orm-envers' ) )
 
 	// MUST use 4.3.1!  4.3.0 was compiled with "-target jsr14".
 	// http://blog.osgi.org/2012/10/43-companion-code-for-java-7.html
@@ -197,7 +197,7 @@ karafFeatures {
 			name = 'hibernate-envers'
 			description = 'Feature for easily adding Envers support to hibernate-orm'
 			dependencyFeatureNames = ['hibernate-orm']
-			projects = [rootProject.childProjects.'hibernate-envers']
+			projects = [rootProject.childProjects.'hibernate-orm-envers']
 			bundle {
 				match group: 'org.hibernate.orm', module: 'hibernate-orm'
 				include = false
@@ -386,7 +386,7 @@ tasks.test.dependsOn tasks.generatePaxExamEnvironmentFile
 // we also need to make sure that hibernate-orm, hibernate-orm-entitymanager and hibernate-osgi
 // are published to maven-local before running tests
 tasks.test.dependsOn rootProject.childProjects.'hibernate-orm'.tasks.publishToMavenLocal
-tasks.test.dependsOn rootProject.childProjects.'hibernate-envers'.tasks.publishToMavenLocal
+tasks.test.dependsOn rootProject.childProjects.'hibernate-orm-envers'.tasks.publishToMavenLocal
 tasks.test.dependsOn tasks.publishToMavenLocal
 
 publishing {

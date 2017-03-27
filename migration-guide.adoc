@@ -13,7 +13,7 @@ earlier versions, see any other pertinent migration guides as well.
 ** HQL/JPQL
 ** (JPA) criteria queries
 
-Additionally, `hibernate-envers` has been made part of `hibernate-orm` and better integrated
+Additionally, `hibernate-orm-envers` has been made part of `hibernate-orm` and better integrated
 from an API perspective.
 
 

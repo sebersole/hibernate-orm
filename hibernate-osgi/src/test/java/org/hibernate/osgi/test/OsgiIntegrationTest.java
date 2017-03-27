@@ -116,7 +116,7 @@ public class OsgiIntegrationTest {
 				when( debug ).useOptions( keepRuntimeFolder() ),
 				logLevel( LogLevelOption.LogLevel.INFO ),
 				features( featureXmlUrl( paxExamEnvironment ), "hibernate-orm" ),
-				features( featureXmlUrl( paxExamEnvironment ), "hibernate-envers" ),
+				features( featureXmlUrl( paxExamEnvironment ), "hibernate-orm-envers" ),
 				features( testingFeatureXmlUrl(), "hibernate-osgi-testing" )
 		);
 	}

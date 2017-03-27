@@ -92,7 +92,7 @@ public interface SessionFactoryImplementor
 	SessionBuilderImplementor withOptions();
 
 	/**
-	 * Get a non-transactional "current" session (used by hibernate-envers)
+	 * Get a non-transactional "current" session (used by hibernate-orm-envers)
 	 */
 	Session openTemporarySession() throws HibernateException;
 

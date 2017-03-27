@@ -65,7 +65,7 @@ dependencies {
     byteBuddy libraries.byteBuddy
 
     testCompile project( ":hibernate-orm" )
-    testCompile project( ":hibernate-envers" )
+    testCompile project( ":hibernate-orm-envers" )
     testCompile libraries.junit
     testCompile libraries.arquillian_junit_container
     testCompile libraries.arquillian_protocol_servlet
@@ -120,7 +120,7 @@ task createModulesZip(type: Zip, dependsOn: [copyAndExpandModuleXml]) {
 
     into( 'org/hibernate/' + slot ) {
         from parent.project( 'hibernate-orm' ).configurations.archives.allArtifacts.files
-        from parent.project( 'hibernate-envers' ).configurations.archives.allArtifacts.files
+        from parent.project( 'hibernate-orm-envers' ).configurations.archives.allArtifacts.files
 
         // also need Javassist's jar
         from configurations.javassist

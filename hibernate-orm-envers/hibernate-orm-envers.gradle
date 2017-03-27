@@ -106,7 +106,7 @@ tasks."matrix_mariadb" {
 }
 
 if ( JavaVersion.current().isJava9Compatible() ) {
-    logger.warn( '[WARN] Skipping Javassist-related tests for hibernate-envers due to Javassist JDK 9 incompatibility' )
+    logger.warn( '[WARN] Skipping Javassist-related tests for hibernate-orm-envers due to Javassist JDK 9 incompatibility' )
 
     // we need to exclude tests using Javassist enhancement, which does not properly support
     // Java 9 yet - https://issues.jboss.org/browse/JASSIST-261
@@ -116,4 +116,8 @@ if ( JavaVersion.current().isJava9Compatible() ) {
         exclude 'org/hibernate/envers/test/integration/components/dynamic/AuditedDynamicComponentTest.class'
         exclude 'org/hibernate/envers/test/integration/components/dynamic/AuditedDynamicComponentsAdvancedCasesTest.class'
     }
+}
+
+def getArtifactIdForRelocation(){
+    'hibernate-envers'
 }

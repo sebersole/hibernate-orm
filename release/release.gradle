@@ -129,8 +129,8 @@ distributions {
 
             into( 'lib/envers' ) {
                 from(
-                        ( parent.project( 'hibernate-envers' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
-                                + parent.project( 'hibernate-envers' ).configurations.runtime )
+                        ( parent.project( 'hibernate-orm-envers' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
+                                + parent.project( 'hibernate-orm-envers' ).configurations.runtime )
                                 - parent.project( 'hibernate-orm' ).configurations.runtime
                                 - parent.project( 'hibernate-orm' ).configurations.archives.allArtifacts.files
                 )

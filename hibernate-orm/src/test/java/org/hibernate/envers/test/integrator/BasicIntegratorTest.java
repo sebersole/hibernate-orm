@@ -19,7 +19,7 @@ import org.junit.Test;
  */
 public class BasicIntegratorTest {
 	/**
-	 * Tests that nothing crazy happens if the hibernate-envers jar happens
+	 * Tests that nothing crazy happens if the hibernate-orm-envers jar happens
 	 * to be on the classpath but we have no audited entities
 	 */
 	@Test

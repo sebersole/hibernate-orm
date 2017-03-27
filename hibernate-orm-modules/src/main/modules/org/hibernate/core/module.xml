@@ -8,7 +8,7 @@
 <module xmlns="urn:jboss:module:1.3" name="org.hibernate" slot="${slot}">
     <resources>
         <resource-root path="hibernate-orm-${version}.jar"/>
-        <resource-root path="hibernate-envers-${version}.jar"/>
+        <resource-root path="hibernate-orm-envers-${version}.jar"/>
         <resource-root path="javassist-${javassistVersion}.jar"/>
         <resource-root path="byte-buddy-${byteBuddyVersion}.jar"/>
     </resources>
