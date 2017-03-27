@@ -271,7 +271,7 @@ karafFeatures {
 			name = 'hibernate-ehcache'
 			description = 'Feature for easily adding Ehcache-based caching support to hibernate-orm'
 			dependencyFeatureNames = ['hibernate-orm']
-			projects = [rootProject.childProjects.'hibernate-ehcache']
+			projects = [rootProject.childProjects.'hibernate-orm-ehcache']
 			bundle {
 				match group: 'org.hibernate.orm', module: 'hibernate-orm'
 				include = false

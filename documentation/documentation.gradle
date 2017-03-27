@@ -56,7 +56,7 @@ dependencies {
 	testCompile( 'org.apache.commons:commons-lang3:3.4' )
 
 	testCompile( project(':hibernate-orm') )
-	testCompile( project(':hibernate-ehcache') )
+	testCompile( project(':hibernate-orm-ehcache') )
 	testCompile( project(':hibernate-spatial') )
 	testCompile( project(path: ':hibernate-orm', configuration: 'tests') )
 

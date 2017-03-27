@@ -574,13 +574,13 @@ This integration covers Ehcache 2.x, in order to use Ehcache 3.x as second level
 
 [NOTE]
 ====
-Use of the build-in integration for http://www.ehcache.org/[Ehcache] requires that the `hibernate-ehcache` module jar (and all of its dependencies) are on the classpath.
+Use of the build-in integration for http://www.ehcache.org/[Ehcache] requires that the `hibernate-orm-ehcache` module jar (and all of its dependencies) are on the classpath.
 ====
 
 [[caching-provider-ehcache-region-factory]]
 ==== RegionFactory
 
-The hibernate-ehcache module defines two specific region factories: `EhCacheRegionFactory` and `SingletonEhCacheRegionFactory`.
+The hibernate-orm-ehcache module defines two specific region factories: `EhCacheRegionFactory` and `SingletonEhCacheRegionFactory`.
 
 [[caching-provider-ehcache-region-factory-shared]]
 ===== `EhCacheRegionFactory`

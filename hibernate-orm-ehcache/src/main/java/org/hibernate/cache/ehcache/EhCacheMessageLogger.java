@@ -16,7 +16,7 @@ import org.jboss.logging.annotations.MessageLogger;
 import static org.jboss.logging.Logger.Level.WARN;
 
 /**
- * The jboss-logging {@link MessageLogger} for the hibernate-ehcache module.  It reserves message ids ranging from
+ * The jboss-logging {@link MessageLogger} for the hibernate-orm-ehcache module.  It reserves message ids ranging from
  * 20001 to 25000 inclusively.
  * <p/>
  * New messages must be added afterQuery the last message defined to ensure message codes are unique.

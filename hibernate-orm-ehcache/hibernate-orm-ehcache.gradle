@@ -49,3 +49,7 @@ def osgiDescription() {
 test {
     forkEvery 1
 }
+
+def getArtifactIdForRelocation(){
+    "hibernate-ehcache"
+}
