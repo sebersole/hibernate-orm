@@ -106,7 +106,7 @@ subprojects { subProject ->
 		return;
 	}
 
-	if ( subProject.name.startsWith( 'hibernate-orm-modules' ) ) {
+	if ( subProject.name.startsWith( 'hibernate-wildfly-modules' ) ) {
 		return;
 	}
 

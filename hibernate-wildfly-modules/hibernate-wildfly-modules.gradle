@@ -113,7 +113,7 @@ task copyAndExpandModuleXml(type: Copy) {
 }
 
 task createModulesZip(type: Zip, dependsOn: [copyAndExpandModuleXml]) {
-    baseName 'hibernate-orm-modules'
+    baseName 'hibernate-wildfly-modules'
     classifier artifactClassifier
 
     from moduleXmlStagingDir
@@ -155,7 +155,7 @@ build.dependsOn createModulesZip
 // tasks related to in-container (Arquillian + WF) testing
 
 if ( JavaVersion.current().isJava9Compatible() ) {
-    logger.lifecycle( "WARNING - Skipping hibernate-orm-modules tests for Java 9" )
+    logger.lifecycle( "WARNING - Skipping hibernate-wildfly-modules tests for Java 9" )
     // WildFly has problems booting in Java 9
     test.enabled = false
 }
@@ -181,6 +181,10 @@ test.dependsOn prepareWildFlyForTests
 
 processTestResources {
     expand( wildFlyInstallDir: wildFlyInstallDir, arquillianDeploymentExportDir: "${rootProject.buildDir.absolutePath}/arquillian-deployments" )
+}
+
+def getArtifactIdForRelocation() {
+    'hibernate-orm-modules'
 }
 
 
