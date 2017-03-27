@@ -111,3 +111,7 @@ task sourcesTestJar(type: Jar, dependsOn:classes) {
 
 artifacts.archives packageTests
 artifacts.archives sourcesTestJar
+
+def getArtifactIdForRelocation() {
+    'hibernate-infinispan'
+}

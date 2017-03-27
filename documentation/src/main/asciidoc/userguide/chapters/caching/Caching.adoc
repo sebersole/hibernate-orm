@@ -630,7 +630,7 @@ http://www.ehcache.org/documentation/2.8/integrations/hibernate#optional[Ehcache
 
 [NOTE]
 ====
-Use of the build-in integration for http://infinispan.org/[Infinispan] requires that the `hibernate-infinispan module` jar (and all of its dependencies) are on the classpath.
+Use of the build-in integration for http://infinispan.org/[Infinispan] requires that the `hibernate-orm-infinispan module` jar (and all of its dependencies) are on the classpath.
 ====
 
 Infinispan currently supports all cache concurrency modes, although not all combinations of configurations are compatible.
@@ -676,7 +676,7 @@ Tx3: read A = 1, B = 1 // reads after TX1 commit completes are consistent again
 [[caching-provider-infinispan-region-factory]]
 ==== RegionFactory
 
-The hibernate-infinispan module defines two specific providers: `infinispan` and  `infinispan-jndi`.
+The hibernate-orm-infinispan module defines two specific providers: `infinispan` and  `infinispan-jndi`.
 
 [[caching-provider-infinispan-region-factory-basic]]
 ===== `InfinispanRegionFactory`
@@ -722,7 +722,7 @@ For more information, please consult https://docs.jboss.org/author/display/WFLY9
 [[caching-provider-infinispan-config]]
 ==== Configuration properties
 
-Hibernate-infinispan module comes with default configuration in `infinispan-config.xml` that is suited for clustered use. If there's only single instance accessing the DB, you can use more performant `infinispan-config-local.xml` by setting the `hibernate.cache.infinispan.cfg` property. If you require further tuning of the cache, you can provide your own configuration. Caches that are not specified in the provided configuration will default to `infinispan-config.xml` (if the provided configuration uses clustering) or `infinispan-config-local.xml`. It is not possible to specify the configuration this way in WildFly.
+Hibernate-orm-infinispan module comes with default configuration in `infinispan-config.xml` that is suited for clustered use. If there's only single instance accessing the DB, you can use more performant `infinispan-config-local.xml` by setting the `hibernate.cache.infinispan.cfg` property. If you require further tuning of the cache, you can provide your own configuration. Caches that are not specified in the provided configuration will default to `infinispan-config.xml` (if the provided configuration uses clustering) or `infinispan-config-local.xml`. It is not possible to specify the configuration this way in WildFly.
 
 [[caching-provider-infinispan-config-example]]
 .Use custom Infinispan configuration

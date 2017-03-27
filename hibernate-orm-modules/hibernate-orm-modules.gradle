@@ -129,7 +129,7 @@ task createModulesZip(type: Zip, dependsOn: [copyAndExpandModuleXml]) {
     }
 
     into( 'org/hibernate/infinispan/' + slot ) {
-        from parent.project( 'hibernate-infinispan' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') && !file.name.endsWith('-tests.jar') }
+        from parent.project( 'hibernate-orm-infinispan' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') && !file.name.endsWith('-tests.jar') }
     }
 
     into( 'org/hibernate/jipijapa-hibernate5/' + slot ) {

@@ -935,7 +935,7 @@ public interface AvailableSettings {
 	 *     <li>FQN of a Class implementing {@link org.hibernate.cache.spi.CacheKeysFactory}</li>
 	 * </ul>
 	 *
-	 * @since 5.2 - note that currently this is only honored for hibernate-infinispan
+	 * @since 5.2 - note that currently this is only honored for hibernate-orm-infinispan
 	 */
 	String CACHE_KEYS_FACTORY = "hibernate.cache.keys_factory";
 

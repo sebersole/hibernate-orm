@@ -24,7 +24,7 @@ include 'hibernate-orm-hikaricp'
 
 include 'hibernate-jcache'
 include 'hibernate-orm-ehcache'
-include 'hibernate-infinispan'
+include 'hibernate-orm-infinispan'
 
 include 'hibernate-orm-modules'
 

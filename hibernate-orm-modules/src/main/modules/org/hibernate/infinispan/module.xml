@@ -12,7 +12,7 @@
     </properties>
 
     <resources>
-        <resource-root path="hibernate-infinispan-${version}.jar"/>
+        <resource-root path="hibernate-orm-infinispan-${version}.jar"/>
     </resources>
 
     <dependencies>

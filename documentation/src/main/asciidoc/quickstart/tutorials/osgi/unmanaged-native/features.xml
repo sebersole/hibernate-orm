@@ -70,7 +70,7 @@
     <!-- <bundle>mvn:org.hibernate.orm/hibernate-orm-c3p0/$version</bundle> -->
     <!-- <bundle>mvn:org.hibernate/hibernate-proxool/$version</bundle> -->
     <!-- <bundle>mvn:org.hibernate.orm/hibernate-orm-ehcache/$version</bundle> -->
-    <!-- <bundle>mvn:org.hibernate/hibernate-infinispan/$version</bundle> -->
+    <!-- <bundle>mvn:org.hibernate.orm/hibernate-orm-infinispan/$version</bundle> -->
     <bundle>mvn:org.hibernate/hibernate-osgi/$version</bundle>
 
     <bundle>mvn:org.hibernate.osgi/unmanaged-native/1.0.0</bundle>

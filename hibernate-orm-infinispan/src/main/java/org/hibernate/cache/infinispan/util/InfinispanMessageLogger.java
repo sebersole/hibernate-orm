@@ -22,7 +22,7 @@ import javax.transaction.SystemException;
 import static org.jboss.logging.Logger.Level.*;
 
 /**
- * The jboss-logging {@link MessageLogger} for the hibernate-infinispan module.  It reserves message ids ranging from
+ * The jboss-logging {@link MessageLogger} for the hibernate-orm-infinispan module.  It reserves message ids ranging from
  * 25001 to 30000 inclusively.
  *
  * @author Radim Vansa &ltrvansa@redhat.com&gt;
