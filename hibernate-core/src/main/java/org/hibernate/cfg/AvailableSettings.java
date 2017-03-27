@@ -839,7 +839,7 @@ public interface AvailableSettings {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	/**
-	 * A setting prefix used to indicate settings that target the hibernate-c3p0 integration
+	 * A setting prefix used to indicate settings that target the hibernate-orm-c3p0 integration
 	 */
 	String C3P0_CONFIG_PREFIX = "hibernate.c3p0";
 

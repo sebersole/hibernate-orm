@@ -67,7 +67,7 @@
     <bundle>mvn:org.hibernate/hibernate-core/$version</bundle>
     <!-- TODO: Shouldn't need this, but hibernate-osgi's activator is a catch-all for SF and EMF. -->
     <bundle>mvn:org.hibernate/hibernate-envers/$version</bundle>
-    <!-- <bundle>mvn:org.hibernate/hibernate-c3p0/$version</bundle> -->
+    <!-- <bundle>mvn:org.hibernate.org/hibernate-orm-c3p0/$version</bundle> -->
     <!-- <bundle>mvn:org.hibernate/hibernate-proxool/$version</bundle> -->
     <!-- <bundle>mvn:org.hibernate/hibernate-ehcache/$version</bundle> -->
     <!-- <bundle>mvn:org.hibernate/hibernate-infinispan/$version</bundle> -->

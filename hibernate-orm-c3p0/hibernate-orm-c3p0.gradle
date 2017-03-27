@@ -52,3 +52,7 @@ mavenPom {
 def osgiDescription() {
 	return mavenPom.description
 }
+
+def getArtifactIdForRelocation(){
+    "hibernate-cp30"
+}

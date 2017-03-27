@@ -20,7 +20,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 /**
- * The jboss-logging {@link MessageLogger} for the hibernate-c3p0 module.  It reserves message ids ranging from
+ * The jboss-logging {@link MessageLogger} for the hibernate-orm-c3p0 module.  It reserves message ids ranging from
  * 10001 to 15000 inclusively.
  * <p/>
  * New messages must be added afterQuery the last message defined to ensure message codes are unique.
