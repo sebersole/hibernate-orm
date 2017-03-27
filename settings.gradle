@@ -20,7 +20,7 @@ include 'hibernate-osgi'
 
 include 'hibernate-orm-c3p0'
 include 'hibernate-proxool'
-include 'hibernate-hikaricp'
+include 'hibernate-orm-hikaricp'
 
 include 'hibernate-jcache'
 include 'hibernate-orm-ehcache'

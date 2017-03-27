@@ -45,8 +45,12 @@ def osgiDescription() {
 }
 
 if ( JavaVersion.current().isJava9Compatible() ) {
-    logger.warn( '[WARN] Skipping all tests for hibernate-hikaricp due to Javassist JDK 9 incompatibility' )
+    logger.warn( '[WARN] Skipping all tests for hibernate-orm-hikaricp due to Javassist JDK 9 incompatibility' )
 
     // Hikari CP relies on Javassist which we know has issues with Java 9
     test.enabled = false
+}
+
+def getArtifactIdForRelocation(){
+    'hibernate-hikaricp'
 }
