@@ -8,7 +8,7 @@
 <persistence xmlns="http://java.sun.com/xml/ns/persistence"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     version="1.0">
-    <persistence-unit name="hibernate-osgi-test">
+    <persistence-unit name="hibernate-orm-osgi-test">
     	<class>org.hibernate.osgi.test.client.DataPoint</class>
         <class>org.hibernate.osgi.test.client.AuditedDataPoint</class>
     	<exclude-unlisted-classes>true</exclude-unlisted-classes>

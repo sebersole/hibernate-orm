@@ -138,13 +138,13 @@ distributions {
 
             into( 'lib/osgi' ) {
                 from(
-                        ( parent.project( 'hibernate-osgi' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
-                                + parent.project( 'hibernate-osgi' ).configurations.runtime )
+                        ( parent.project( 'hibernate-orm-osgi' ).configurations.archives.allArtifacts.files.filter{ file -> !file.name.endsWith('-sources.jar') }
+                                + parent.project( 'hibernate-orm-osgi' ).configurations.runtime )
                                 - parent.project( 'hibernate-orm' ).configurations.runtime
                                 - parent.project( 'hibernate-orm' ).configurations.archives.allArtifacts.files
                 )
                 from(
-                        parent.project( 'hibernate-osgi' ).extensions.karafFeatures.featuresXmlFile
+                        parent.project( 'hibernate-orm-osgi' ).extensions.karafFeatures.featuresXmlFile
                 )
             }
 

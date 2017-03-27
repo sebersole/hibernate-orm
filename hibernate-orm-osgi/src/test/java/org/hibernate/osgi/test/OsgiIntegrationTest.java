@@ -69,7 +69,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRunti
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 /**
- * Tests for hibernate-osgi running within a Karaf container via PaxExam.
+ * Tests for hibernate-orm-osgi running within a Karaf container via PaxExam.
  *
  * @author Steve Ebersole
  * @author Brett Meyer
@@ -117,7 +117,7 @@ public class OsgiIntegrationTest {
 				logLevel( LogLevelOption.LogLevel.INFO ),
 				features( featureXmlUrl( paxExamEnvironment ), "hibernate-orm" ),
 				features( featureXmlUrl( paxExamEnvironment ), "hibernate-orm-envers" ),
-				features( testingFeatureXmlUrl(), "hibernate-osgi-testing" )
+				features( testingFeatureXmlUrl(), "hibernate-orm-osgi-testing" )
 		);
 	}
 
@@ -206,7 +206,7 @@ public class OsgiIntegrationTest {
 	public void testJpa() throws Exception {
 		final ServiceReference serviceReference = bundleContext.getServiceReference( PersistenceProvider.class.getName() );
 		final PersistenceProvider persistenceProvider = (PersistenceProvider) bundleContext.getService( serviceReference );
-		final EntityManagerFactory emf = persistenceProvider.createEntityManagerFactory( "hibernate-osgi-test", null );
+		final EntityManagerFactory emf = persistenceProvider.createEntityManagerFactory( "hibernate-orm-osgi-test", null );
 
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
@@ -328,7 +328,7 @@ public class OsgiIntegrationTest {
 	public void testJpaEnvers() throws Exception {
 		final ServiceReference serviceReference = bundleContext.getServiceReference( PersistenceProvider.class.getName() );
 		final PersistenceProvider persistenceProvider = (PersistenceProvider) bundleContext.getService( serviceReference );
-		final EntityManagerFactory emf = persistenceProvider.createEntityManagerFactory( "hibernate-osgi-test", null );
+		final EntityManagerFactory emf = persistenceProvider.createEntityManagerFactory( "hibernate-orm-osgi-test", null );
 
 		final Integer adpId;
 

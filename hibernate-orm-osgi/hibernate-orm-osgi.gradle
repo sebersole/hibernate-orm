@@ -113,7 +113,7 @@ jar {
 
 
 task generateVersionFile {
-	File outputFileDir = project.file( "${buildDir}/classes/test/META-INF/hibernate-osgi/" )
+	File outputFileDir = project.file( "${buildDir}/classes/test/META-INF/hibernate-orm-osgi/" )
 	File outputFile = new File( outputFileDir, 'Version.txt' )
 
 	inputs.property( "version", project.version )
@@ -203,7 +203,7 @@ karafFeatures {
 				include = false
 			}
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-osgi'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm.osgi'
 				include = false
 			}
 			bundle {
@@ -233,7 +233,7 @@ karafFeatures {
 				include = false
 			}
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-osgi'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm-osgi'
 				include = false
 			}
 			bundle {
@@ -277,7 +277,7 @@ karafFeatures {
 				include = false
 			}
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-osgi'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm-osgi'
 				include = false
 			}
 			bundle {
@@ -334,7 +334,7 @@ task generateDependsFile {
 
 		FileOutputStream outputStream = new FileOutputStream( outputFile );
 		try {
-			properties.store( outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-osgi module" )
+			properties.store( outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-orm-osgi module" )
 		}
 		finally {
 			outputStream.close()
@@ -370,7 +370,7 @@ task generatePaxExamEnvironmentFile {
 
 		FileOutputStream outputStream = new FileOutputStream( outputFile );
 		try {
-			properties.store( outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-osgi module" )
+			properties.store( outputStream, "Generated from Gradle by Hibernate build for PaxExam testing of hibernate-orm-osgi module" )
 		}
 		finally {
 			outputStream.close()
@@ -383,7 +383,7 @@ tasks.test.dependsOn tasks.jar
 tasks.test.dependsOn tasks.generateDependsFile
 tasks.test.dependsOn tasks.generatePaxExamEnvironmentFile
 
-// we also need to make sure that hibernate-orm, hibernate-orm-entitymanager and hibernate-osgi
+// we also need to make sure that hibernate-orm, hibernate-orm-entitymanager and hibernate-orm-osgi
 // are published to maven-local before running tests
 tasks.test.dependsOn rootProject.childProjects.'hibernate-orm'.tasks.publishToMavenLocal
 tasks.test.dependsOn rootProject.childProjects.'hibernate-orm-envers'.tasks.publishToMavenLocal
@@ -403,4 +403,8 @@ publishing {
 if ( JavaVersion.current().isJava9Compatible() ) {
 	// Hikari CP relies on Javassist which we know has issues with Java 9
 	test.enabled = false
+}
+
+def getArtifactIdForRelocation() {
+	'hibernate-osgi'
 }
