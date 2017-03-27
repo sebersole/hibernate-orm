@@ -88,3 +88,7 @@ tasks.compileJava.dependsOn jaxb
 
 checkstyleMain.exclude '**/jaxb/**'
 
+def getArtifactIdForRelocation() {
+	'hibernate-jpamodelgen'
+}
+

@@ -1427,7 +1427,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.hibernate:hibernate-gradle-plugin:VERSION'
+        classpath 'org.hibernate.orm:hibernate-orm-gradle-plugin:VERSION'
     }
 }
 dependencies {

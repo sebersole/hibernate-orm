@@ -30,3 +30,7 @@ project.plugins.withType( JavaGradlePluginPlugin ) {
 	JavaGradlePluginDisablePublishing disablePublishing = new JavaGradlePluginDisablePublishing();
 	disablePublishing.disable();
 }
+
+def getArtifactIdForRelocation() {
+	'hibernate-gradle-plugin'
+}

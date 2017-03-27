@@ -51,7 +51,7 @@ dependencies {
 	asciidoclet 'org.asciidoctor:asciidoclet:0.+'
 
 	compile( libraries.jpa )
-	compile( project( ':hibernate-jpamodelgen' ) )
+	compile( project( ':hibernate-orm-jpamodelgen' ) )
 
 	testCompile( 'org.apache.commons:commons-lang3:3.4' )
 

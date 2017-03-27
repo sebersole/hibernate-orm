@@ -100,7 +100,7 @@ dependencies {
     testRuntime( libraries.javassist )
     testRuntime( libraries.byteBuddy )
 
-    testCompile( project( ':hibernate-jpamodelgen' ) )
+    testCompile( project( ':hibernate-orm-jpamodelgen' ) )
 
     testCompile libraries.arquillian_junit_container
     testCompile libraries.arquillian_protocol_servlet
