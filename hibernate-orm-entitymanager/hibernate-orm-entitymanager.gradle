@@ -30,3 +30,7 @@ sourcesJar {
 	manifest = null
 }
 
+def getArtifactIdForRelocation(){
+	"hibernate-entitymanager"
+}
+

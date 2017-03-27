@@ -24,7 +24,7 @@ public interface SessionBuilderImplementor<T extends SessionBuilder> extends Ses
 	 *
 	 * @return {@code this}, for method chaining
 	 *
-	 * @deprecated (since 5.2) since consolidating hibernate-entitymanager into hibernate-orm
+	 * @deprecated (since 5.2) since consolidating hibernate-orm-entitymanager into hibernate-orm
 	 * I believe this is no longer needed.
 	 */
 	@Deprecated

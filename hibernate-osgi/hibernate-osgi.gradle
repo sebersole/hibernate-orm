@@ -207,7 +207,7 @@ karafFeatures {
 				include = false
 			}
 			bundle {
-				match group: 'org.hibernate', module: 'hibernate-entitymanager'
+				match group: 'org.hibernate.orm', module: 'hibernate-orm-entitymanager'
 				include = false
 			}
 			bundle {
@@ -383,7 +383,7 @@ tasks.test.dependsOn tasks.jar
 tasks.test.dependsOn tasks.generateDependsFile
 tasks.test.dependsOn tasks.generatePaxExamEnvironmentFile
 
-// we also need to make sure that hibernate-orm, hibernate-entitymanager and hibernate-osgi
+// we also need to make sure that hibernate-orm, hibernate-orm-entitymanager and hibernate-osgi
 // are published to maven-local before running tests
 tasks.test.dependsOn rootProject.childProjects.'hibernate-orm'.tasks.publishToMavenLocal
 tasks.test.dependsOn rootProject.childProjects.'hibernate-envers'.tasks.publishToMavenLocal

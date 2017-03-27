@@ -57,7 +57,7 @@
         <title>hibernate-osgi</title>
 
         <para>
-            Rather than embed OSGi capabilities into hibernate-orm, hibernate-entitymanager, and sub-modules,
+            Rather than embed OSGi capabilities into hibernate-orm, hibernate-orm-entitymanager, and sub-modules,
             hibernate-osgi was created.  It's purposefully separated, isolating all OSGi dependencies.  It provides an
             OSGi-specific ClassLoader (aggregates the container's CL with core and entitymanager CLs), JPA persistence
             provider, SF/EMF bootstrapping, entities/mappings scanner, and service management.
@@ -149,7 +149,7 @@
         <title>Unmanaged JPA</title>
         
         <para>
-            Hibernate also supports the use of JPA through hibernate-entitymanager, unmanaged by the OSGi
+            Hibernate also supports the use of JPA through hibernate-orm-entitymanager, unmanaged by the OSGi
             container.  The client bundle is responsible for managing the EntityManagerFactory and EntityManagers.
         </para>
         

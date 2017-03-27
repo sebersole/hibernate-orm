@@ -17,7 +17,7 @@ import org.hibernate.resource.transaction.backend.jta.internal.synchronization.M
  *
  * @see SessionBuilderImplementor#owner
  *
- * @deprecated (since 5.2) since consolidating hibernate-entitymanager into hibernate-orm
+ * @deprecated (since 5.2) since consolidating hibernate-orm-entitymanager into hibernate-orm
  * I believe this is no longer needed.
  */
 @Deprecated

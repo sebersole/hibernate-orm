@@ -395,7 +395,7 @@ public final class SessionImpl
 
 		// todo : we want this check if usage is JPA, but not native Hibernate usage
 		if ( getSessionFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
-			// Original hibernate-entitymanager EM#close behavior
+			// Original hibernate-orm-entitymanager EM#close behavior
 			checkSessionFactoryOpen();
 			checkOpenOrWaitingForAutoClose();
 			if ( discardOnClose || !isTransactionInProgress() ) {

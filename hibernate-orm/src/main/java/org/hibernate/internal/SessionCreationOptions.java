@@ -54,7 +54,7 @@ public interface SessionCreationOptions {
 	 * @return The SessionOwner
 	 *
 	 * @deprecated (since 5,2) SessionOwner is no longer pertinent due to the
-	 * hibernate-entitymanager -> hibernate-orm consolidation
+	 * hibernate-orm-entitymanager -> hibernate-orm consolidation
 	 */
 	@Deprecated
 	SessionOwner getSessionOwner();
