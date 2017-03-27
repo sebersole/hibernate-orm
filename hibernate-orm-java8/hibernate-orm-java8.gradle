@@ -22,3 +22,7 @@ sourcesJar {
     // so make sure we dont use the OSGi one :)
     manifest = null
 }
+
+def getArtifactIdForRelocation() {
+    'hibernate-java8'
+}

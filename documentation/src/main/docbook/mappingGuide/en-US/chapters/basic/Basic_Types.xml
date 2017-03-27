@@ -321,7 +321,7 @@
 
 
         <table>
-            <title>BasicTypes added by hibernate-java8</title>
+            <title>BasicTypes added by hibernate-orm-java8</title>
             <tgroup cols="4">
                 <thead>
                     <row>
@@ -386,7 +386,7 @@
 
         <note>
             <para>
-                To use these hibernate-java8 types just add the hibernate-java8 jar to your classpath; Hibernate
+                To use these hibernate-orm-java8 types just add the hibernate-orm-java8 jar to your classpath; Hibernate
                 will take care of the rest.  See <xref linkend="basic-datetime"/>
             </para>
         </note>
