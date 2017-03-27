@@ -77,7 +77,7 @@ idea {
 		vcs = 'Git'
     }
     module {
-        name = "hibernate-orm"
+        name = "hibernate-orm-parent"
     }
 }
 
@@ -411,10 +411,12 @@ subprojects { subProject ->
 			}
 			relocationPom( MavenPublication ) {
 				groupId 'org.hibernate'
+				artifactId getArtifactIdForRelocation()
 
 				pom.withXml {
 					def relocation = asNode().appendNode( 'distributionManagement' ).appendNode( 'relocation' )
 					relocation.appendNode( 'groupId', group )
+					relocation.appendNode( 'artifactId', project.name)
 				}
 			}
 
@@ -437,6 +439,10 @@ subprojects { subProject ->
 	}
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+}
+
+def getArtifactIdForRelocation(){
+	name
 }
 
 task release(type: Task, dependsOn: 'release:release')
