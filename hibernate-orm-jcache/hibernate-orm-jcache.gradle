@@ -40,3 +40,7 @@ mavenPom {
 def osgiDescription() {
     return pomDescription()
 }
+
+def getArtifactIdForRelocation() {
+    'hibernate-jcache'
+}
