@@ -60,7 +60,7 @@ task processPluginXml(type: Copy) {
             + generateMavenDependency(libraries.javassist)\
             + generateMavenDependency(libraries.byteBuddy)\
             + generateMavenDependency(libraries.logging)\
-            + generateMavenDependency("org.hibernate:hibernate-orm:" + project.version)])
+            + generateMavenDependency("org.hibernate.orm:hibernate-orm:" + project.version)])
 }
 
 // TODO: There may be a way to do this directly with Gradle's Maven plugin, but it's still incubating
@@ -117,4 +117,8 @@ processResources.dependsOn processPluginXml
 mavenPom {
     name = 'Enhance Plugin of the Hibernate project for use with Maven build system.'
     description = 'Enhance Plugin of the Hibernate project for use with Maven build system.'
+}
+
+def getArtifactIdForRelocation() {
+    'hibernate-enhance-maven-plugin'
 }

@@ -9,7 +9,7 @@
   <name>Hibernate Enhance Maven Plugin</name>
   <description>Enhance Plugin of the Hibernate project for use with Maven build system.</description>
   <groupId>org.hibernate.orm.tooling</groupId>
-  <artifactId>hibernate-enhance-maven-plugin</artifactId>
+  <artifactId>hibernate-orm-enhance-maven-plugin</artifactId>
   <version>@version@</version>
   <goalPrefix>hibernate-enhance</goalPrefix>
   <mojos/>
