@@ -11,10 +11,10 @@ import java.util.Comparator;
 /**
  * @author Gail Badner
  */
-public final class RowVersionComparator implements Comparator<byte[]> {
-	public static RowVersionComparator INSTANCE = new RowVersionComparator();
+public final class PrimitiveByteArrayComparator implements Comparator<byte[]> {
+	public static PrimitiveByteArrayComparator INSTANCE = new PrimitiveByteArrayComparator();
 
-	private RowVersionComparator() {
+	private PrimitiveByteArrayComparator() {
 	}
 
 	@Override
