@@ -123,7 +123,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	private final ClassmateContext classmateContext = new ClassmateContext();
 
 	private final UUID uuid;
-	private final MutableIdentifierGeneratorFactory identifierGeneratorFactory;
 
 	private final Map<String,EntityMappingHierarchy> entityMappingHierarchies = new HashMap<>();
 	private final Map<String, PersistentClass> entityBindingMap = new HashMap<>();
@@ -171,9 +170,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		this.uuid = UUID.randomUUID();
 		this.options = options;
 
-		this.identifierGeneratorFactory = options.getServiceRegistry()
-				.getService( MutableIdentifierGeneratorFactory.class );
-
 		for ( Map.Entry<String, SqmFunctionTemplate> sqlFunctionEntry : bootstrapContext.getSqlFunctions()
 				.entrySet() ) {
 			if ( sqlFunctionMap == null ) {
@@ -219,20 +215,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public java.util.Collection<EntityMappingHierarchy> getEntityHierarchies() {
-		return entityMappingHierarchies.values();
-	}
-
-	@Override
-	public void addEntityMappingHierarchy(EntityMappingHierarchy entityMappingHierarchy) {
-		final String rootEntityName = entityMappingHierarchy.getRootType().getEntityName();
-		if ( entityMappingHierarchies.containsKey( rootEntityName ) ) {
-			throw new DuplicateMappingException( DuplicateMappingException.Type.ENTITY_HIERARCHY, rootEntityName );
-		}
-		this.entityMappingHierarchies.put( rootEntityName, entityMappingHierarchy );
-	}
-
-	@Override
 	public NamedQueryRepository buildNamedQueryRepository(SessionFactoryImplementor sessionFactory) {
 		throw new UnsupportedOperationException(
 				"#buildNamedQueryRepository should not be called on InFlightMetadataCollector" );
@@ -273,6 +255,25 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 						"we should better segment this in the API :)"
 		);
 	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Entity Hierarchy handling
+
+	@Override
+	public java.util.Collection<EntityMappingHierarchy> getEntityHierarchies() {
+		return entityMappingHierarchies.values();
+	}
+
+	@Override
+	public void addEntityMappingHierarchy(EntityMappingHierarchy entityMappingHierarchy) {
+		final String rootEntityName = entityMappingHierarchy.getRootType().getEntityName();
+		if ( entityMappingHierarchies.containsKey( rootEntityName ) ) {
+			throw new DuplicateMappingException( DuplicateMappingException.Type.ENTITY_HIERARCHY, rootEntityName );
+		}
+		this.entityMappingHierarchies.put( rootEntityName, entityMappingHierarchy );
+	}
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Entity handling
@@ -1962,7 +1963,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 					uuid,
 					options,
 					getBootstrapContext().getTypeConfiguration(),
-					identifierGeneratorFactory,
 					entityMappingHierarchies,
 					entityBindingMap,
 					mappedSuperClasses,
