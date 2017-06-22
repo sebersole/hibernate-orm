@@ -338,7 +338,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 					final String entityName = getImportedClassName( mappingFetch.getEntity() );
 					final EntityDescriptor owner = entityName == null
 							? null
-							: typeConfiguration.findEntityPersister( entityName );
+							: typeConfiguration.findEntityDescriptor( entityName );
 					if ( owner == null ) {
 						throw new HibernateException(
 								"Unable to resolve entity reference [" + mappingFetch.getEntity()
@@ -694,11 +694,11 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 
 	public Type getIdentifierType(String className) throws MappingException {
-		return getTypeConfiguration().findEntityPersister( className ).getIdentifierType();
+		return getTypeConfiguration().findEntityDescriptor( className ).getIdentifierType();
 	}
 
 	public String getIdentifierPropertyName(String className) throws MappingException {
-		return getTypeConfiguration().findEntityPersister( className ).getIdentifierPropertyName();
+		return getTypeConfiguration().findEntityDescriptor( className ).getIdentifierPropertyName();
 	}
 
 	/**

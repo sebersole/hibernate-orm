@@ -7,15 +7,12 @@
 package org.hibernate.id;
 
 import java.io.Serializable;
-import java.util.Properties;
 
-import org.hibernate.MappingException;
 import org.hibernate.Session;
 import org.hibernate.TransientObjectException;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.Type;
 
 /**
@@ -75,7 +72,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		// needs to be a Session for the #save and #contains calls below...
 		final Session session = ( Session ) sessionImplementor;
 
-		final EntityDescriptor persister = sessionImplementor.getFactory().getTypeConfiguration().findEntityPersister( entityName );
+		final EntityDescriptor persister = sessionImplementor.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
 		Object associatedObject = persister.getPropertyValue( object, propertyName );
 		if ( associatedObject == null ) {
 			throw new IdentifierGenerationException(
