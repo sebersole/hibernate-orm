@@ -17,6 +17,8 @@ import org.hibernate.sql.exec.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.exec.results.spi.SqlSelectionReader;
 import org.hibernate.sql.ast.tree.spi.select.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.ColumnDescriptor;
@@ -89,7 +91,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 			ResultSet resultSet,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			SqlSelection sqlSelection) throws SQLException {
-		return getColumnDescriptor().getSqlTypeDescriptor().getExtractor( getJavaTypeDescriptor() ).extract(
+		return getValueExtractor().extract(
 				resultSet,
 				sqlSelection.getJdbcResultSetIndex(),
 				jdbcValuesSourceProcessingState.getPersistenceContext()
@@ -101,7 +103,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			int jdbcParameterIndex) throws SQLException {
-		return getColumnDescriptor().getSqlTypeDescriptor().getExtractor( getJavaTypeDescriptor() ).extract(
+		return getValueExtractor().extract(
 				statement,
 				jdbcParameterIndex,
 				jdbcValuesSourceProcessingState.getPersistenceContext()
@@ -113,11 +115,20 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			String jdbcParameterName) throws SQLException {
-		return getColumnDescriptor().getSqlTypeDescriptor().getExtractor( getJavaTypeDescriptor() ).extract(
+		return getValueExtractor().extract(
 				statement,
 				jdbcParameterName,
 				jdbcValuesSourceProcessingState.getPersistenceContext()
 		);
 	}
 
+	@Override
+	public ValueBinder getValueBinder() {
+		return getColumnDescriptor().getSqlTypeDescriptor().getBinder( getJavaTypeDescriptor() );
+	}
+
+	@Override
+	public ValueExtractor<T> getValueExtractor() {
+		return getColumnDescriptor().getSqlTypeDescriptor().getExtractor( getJavaTypeDescriptor() );
+	}
 }
