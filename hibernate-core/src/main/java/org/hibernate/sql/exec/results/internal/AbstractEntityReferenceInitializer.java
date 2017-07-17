@@ -20,7 +20,6 @@ import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
-import org.hibernate.persister.entity.Loadable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.sql.ast.produce.result.spi.EntityReference;
 import org.hibernate.sql.exec.ExecutionException;
@@ -28,7 +27,6 @@ import org.hibernate.sql.exec.results.spi.EntityReferenceInitializer;
 import org.hibernate.sql.exec.results.spi.InitializerParent;
 import org.hibernate.sql.exec.results.spi.RowProcessingState;
 import org.hibernate.sql.exec.results.spi.SqlSelectionGroup;
-import org.hibernate.type.CollectionType;
 
 /**
  * @author Steve Ebersole
@@ -112,11 +110,11 @@ public abstract class AbstractEntityReferenceInitializer
 		concretePersister = resolveConcreteEntityPersister( rowProcessingState, persistenceContext );
 
 		//		1) resolve the value(s) into its identifier representation
-		final Object id = concretePersister.getEntityDescriptor().getIdentifierType().assemble(
-				(Serializable) identifierHydratedState,
-				persistenceContext,
-				null
-		);
+		final Object id = concretePersister.getEntityDescriptor()
+				.getIdentifierType()
+				.getJavaTypeDescriptor()
+				.getMutabilityPlan()
+				.assemble( (Serializable) identifierHydratedState );
 
 		//		2) build and register an EntityKey
 		this.entityKey = new EntityKey( (Serializable) id, concretePersister.getEntityDescriptor() );
@@ -191,7 +189,6 @@ public abstract class AbstractEntityReferenceInitializer
 
 			final Object hydratedValue;
 			if ( persistentAttribute instanceof PluralPersistentAttribute ) {
-				assert persistentAttribute.getOrmType() instanceof CollectionType;
 				hydratedValue = NOT_NULL_COLLECTION;
 			}
 			else {
@@ -270,8 +267,11 @@ public abstract class AbstractEntityReferenceInitializer
 				selectionGroup.getSqlSelections().get( 0 ).getValuesArrayPosition()
 		];
 
-		final Loadable legacyLoadable = (Loadable) persister.getEntityDescriptor();
-		final String result = legacyLoadable.getSubclassForDiscriminatorValue( discriminatorValue );
+		final EntityDescriptor legacyLoadable = persister.getEntityDescriptor();
+		final String result = legacyLoadable.getHierarchy()
+				.getDiscriminatorDescriptor()
+				.getDiscriminatorMappings()
+				.discriminatorValueToEntityName( discriminatorValue );
 
 		if ( result == null ) {
 			//woops we got an instance of another class hierarchy branch
@@ -282,11 +282,7 @@ public abstract class AbstractEntityReferenceInitializer
 			);
 		}
 
-
-		// Cannot do this until ImprovedEntityPersister is merged into EntityPersister
-		// 		todo : enabled this after ImprovedEntityPersister is merged into EntityPersister
-		//return persistenceContext.getFactory().getMetamodel().entityPersister( result );
-		return persister;
+		return persistenceContext.getFactory().getTypeConfiguration().resolveEntityDescriptor( result );
 	}
 
 	@Override
