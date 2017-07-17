@@ -20,7 +20,6 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	private FetchMode fetchMode;
 	protected String referencedPropertyName;
 	private String referencedEntityName;
-	private boolean embedded;
 	private boolean lazy = true;
 	protected boolean unwrapProxy;
 	protected boolean referenceToPrimaryKey = true;
@@ -67,10 +66,6 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 
 	public boolean isTypeSpecified() {
 		return referencedEntityName!=null;
-	}
-	
-	public Object accept(ValueVisitor visitor) {
-		return visitor.accept(this);
 	}
 
 	@Override

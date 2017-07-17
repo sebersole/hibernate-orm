@@ -8,24 +8,19 @@ package org.hibernate.mapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import javax.persistence.EnumType;
-import javax.persistence.TemporalType;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.BasicTypeResolverConvertibleSupport;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.config.spi.StandardConverters;
@@ -38,60 +33,46 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
-import org.hibernate.type.spi.BasicTypeParameters;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Any value that maps to columns.
  * @author Gavin King
  */
-public class SimpleValue implements KeyValue {
+public abstract class SimpleValue implements KeyValue {
 	private static final CoreMessageLogger log = CoreLogging.messageLogger( SimpleValue.class );
 
 	public static final String DEFAULT_ID_GEN_STRATEGY = "assigned";
 
+	protected final List<Selectable> columns = new ArrayList<>();
+	protected String typeName;
+	protected Properties typeParameters;
+	protected MappedTable table;
+	protected boolean cascadeDeleteEnabled;
+
 	private final MetadataBuildingContext buildingContext;
-
-	private final List<MappedColumn> columns = new ArrayList<>();
-
-	private final BasicTypeParametersImpl basicTypeParameters = new BasicTypeParametersImpl();
-
-	private String typeName;
-	private Properties typeParameters;
 
 	private Properties identifierGeneratorProperties;
 	private String identifierGeneratorStrategy = DEFAULT_ID_GEN_STRATEGY;
 	private String nullValue;
-	private MappedTable table;
 	private String foreignKeyName;
 	private String foreignKeyDefinition;
 	private boolean alternateUniqueKey;
-	private boolean cascadeDeleteEnabled;
 
-
-	public SimpleValue(MetadataBuildingContext buildingContext) {
-		this.buildingContext = buildingContext;
-	}
+	private IdentifierGenerator identifierGenerator;
 
 	public SimpleValue(MetadataBuildingContext buildingContext, MappedTable table) {
-		this( buildingContext );
+		this.buildingContext = buildingContext;
 		this.table = table;
 	}
 
 	@Override
 	public MetadataBuildingContext getMetadataBuildingContext() {
 		return buildingContext;
-	}
-
-	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return basicTypeParameters.getJavaTypeDescriptor();
 	}
 
 	/**
@@ -103,7 +84,7 @@ public class SimpleValue implements KeyValue {
 
 	@Override
 	public ServiceRegistry getServiceRegistry() {
-		return getBuildingContext().getMetadataCollector().getMetadataBuildingOptions().getServiceRegistry();
+		return buildingContext.getMetadataCollector().getMetadataBuildingOptions().getServiceRegistry();
 	}
 
 	@Override
@@ -116,15 +97,16 @@ public class SimpleValue implements KeyValue {
 	}
 
 	public void addColumn(Column column) {
-		if ( !columns.contains(column) ) {
-			columns.add(column);
+		if ( !columns.contains( column ) ) {
+			columns.add( column );
 		}
-		column.setSqlTypeDescriptor( getBasicTypeParameters().getSqlTypeDescriptor() );
 		if ( getTable() != null ) {
 			column.setTableName( getTable().getNameIdentifier() );
 		}
-		column.setTypeIndex( columns.size() - 1 );
+		setSqlTypeDescriptorResolver(column);
 	}
+
+	protected abstract void setSqlTypeDescriptorResolver(Column column);
 
 	public void addFormula(Formula formula) {
 		columns.add( formula );
@@ -153,15 +135,15 @@ public class SimpleValue implements KeyValue {
 	@Override
 	@Deprecated
 	public Iterator<Selectable> getColumnIterator() {
-		return columns.stream().map( column -> (Selectable) column ).collect( Collectors.toList() ).iterator();
+		return columns.iterator();
 	}
 
 	@Override
-	public List<MappedColumn> getMappedColumns() {
+	public List<Selectable> getMappedColumns() {
 		return Collections.unmodifiableList( columns );
 	}
 
-	public List<MappedColumn> getConstraintColumns() {
+	public List<Selectable> getConstraintColumns() {
 		return columns;
 	}
 
@@ -183,12 +165,10 @@ public class SimpleValue implements KeyValue {
 	@Override
 	public void createForeignKeyOfEntity(String entityName) {
 		if ( !hasFormula() && !"none".equals(getForeignKeyName())) {
-			ForeignKey fk = table.createForeignKey( getForeignKeyName(), getConstraintColumns(), entityName, getForeignKeyDefinition() );
+			final ForeignKey fk = table.createForeignKey( getForeignKeyName(), getConstraintColumns(), entityName, getForeignKeyDefinition() );
 			fk.setCascadeDeleteEnabled(cascadeDeleteEnabled);
 		}
 	}
-
-	private IdentifierGenerator identifierGenerator;
 
 	@Override
 	public IdentifierGenerator createIdentifierGenerator(
@@ -252,8 +232,7 @@ public class SimpleValue implements KeyValue {
 		}
 
 		// TODO : we should pass along all settings once "config lifecycle" is hashed out...
-		final ConfigurationService cs = buildingContext.getMetadataCollector().getMetadataBuildingOptions().getServiceRegistry()
-				.getService( ConfigurationService.class );
+		final ConfigurationService cs = getServiceRegistry().getService( ConfigurationService.class );
 
 		params.put(
 				AvailableSettings.PREFER_POOLED_VALUES_LO,
@@ -495,26 +474,24 @@ public class SimpleValue implements KeyValue {
 		}
 	}
 
-
 	public void setTypeUsingReflection(String className, String propertyName) throws MappingException {
 		// what to do here
-		throw new NotYetImplementedException(  );
-//		if ( basicTypeResolver == null ) {
-//			// for now throw an exception - not sure yet if this is valid
-//			//		it would mean (most likely) that annotation binding injected
-//			//		a BasicTypeResolver earlier and then calling this method (or
-//			//		something else calls it after).  Throw the exception for now
-//			//		because I want to see if this happens in reality.
-//			throw new NotYetImplementedException( "not yet sure this is a valid condition" );
-//		}
-//		basicTypeResolver = new BasicTypeResolverUsingReflection(
-//				buildingContext,
-//				attributeConverterDescriptor,
-//				className,
-//				propertyName,
-//				isLob,
-//				isNationalized
-//		);
+		if ( typeName != null ) {
+			// assume either (a) explicit type was specified or (b) determine was already performed
+			return;
+		}
+		if ( className == null ) {
+			throw new MappingException( "Attribute types for a dynamic entity must be explicitly specified: " + propertyName );
+		}
+		typeName = ReflectHelper.reflectedPropertyClass(
+				className,
+				propertyName,
+				getServiceRegistry().getService( ClassLoaderService.class )
+		).getName();
+		// todo : to fully support isNationalized here we need do the process hinted at above
+		// 		essentially, much of the logic from #buildAttributeConverterTypeAdapter wrt resolving
+		//		a (1) SqlTypeDescriptor, a (2) JavaTypeDescriptor and dynamically building a BasicType
+		// 		combining them.
 	}
 
 	public boolean isTypeSpecified() {
@@ -539,65 +516,20 @@ public class SimpleValue implements KeyValue {
 		return getClass().getName() + '(' + columns.toString() + ')';
 	}
 
-	public Object accept(ValueVisitor visitor) {
-		return visitor.accept(this);
-	}
-
 	public boolean[] getColumnInsertability() {
-		boolean[] result = new boolean[ getColumnSpan() ];
+		final boolean[] columnInsertability = new boolean[ getColumnSpan() ];
 		int i = 0;
-		Iterator iter = getColumnIterator();
-		while ( iter.hasNext() ) {
-			Selectable s = (Selectable) iter.next();
-			result[i++] = !s.isFormula();
+		for(Selectable column : columns){
+			columnInsertability[i++] = !column.isFormula();
 		}
-		return result;
+		return columnInsertability;
 	}
 
 	public boolean[] getColumnUpdateability() {
 		return getColumnInsertability();
 	}
 
-	@SuppressWarnings("unchecked")
-	public <J> BasicTypeParameters<J> getBasicTypeParameters() {
-		return basicTypeParameters;
-	}
-
-	private class BasicTypeParametersImpl implements BasicTypeParameters {
-		private BasicJavaDescriptor javaTypeDescriptor;
-		private SqlTypeDescriptor sqlTypeDescriptor;
-		private MutabilityPlan mutabilityPlan;
-		private Comparator comparator;
-		private TemporalType temporalPrecision;
-
-		@Override
-		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			return javaTypeDescriptor;
-		}
-
-		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			return sqlTypeDescriptor;
-		}
-
-		@Override
-		public AttributeConverterDefinition getAttributeConverterDefinition() {
-			return null;
-		}
-
-		@Override
-		public MutabilityPlan getMutabilityPlan() {
-			return mutabilityPlan;
-		}
-
-		@Override
-		public Comparator getComparator() {
-			return comparator;
-		}
-
-		@Override
-		public TemporalType getTemporalPrecision() {
-			return temporalPrecision;
-		}
+	public interface SqlTypeDescriptorResolver {
+		SqlTypeDescriptor resolveSqlTypeDescriptor();
 	}
 }

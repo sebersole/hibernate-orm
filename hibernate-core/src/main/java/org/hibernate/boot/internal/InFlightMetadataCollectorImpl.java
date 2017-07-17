@@ -46,7 +46,6 @@ import org.hibernate.boot.model.relational.MappedNamespace;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.source.internal.ImplicitColumnNamingSecondPass;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
-import org.hibernate.boot.model.type.spi.BasicTypeProducer;
 import org.hibernate.boot.spi.AttributeConverterAutoApplyHandler;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
@@ -332,13 +331,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> BasicType<T> basicType(String registrationKey) {
-		final BasicTypeProducer typeProducer = getBootstrapContext().getBasicTypeProducerRegistry()
-				.resolve( registrationKey );
-		if ( typeProducer == null ) {
-			return null;
-		}
-
-		return typeProducer.produceBasicType();
+		return getBootstrapContext().getTypeConfiguration().getBasicTypeRegistry().getBasicType( registrationKey );
 	}
 
 

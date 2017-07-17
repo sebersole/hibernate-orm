@@ -137,6 +137,7 @@ import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UnionSubclass;
 import org.hibernate.mapping.UniqueKey;
 import org.hibernate.mapping.Value;
+import org.hibernate.metamodel.model.domain.Representation;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.spi.NavigablePath;
 import org.hibernate.tuple.GeneratedValueGeneration;
@@ -692,7 +693,7 @@ public class ModelBinder {
 			RootClass rootEntityDescriptor) {
 		final IdentifierSourceSimple idSource = (IdentifierSourceSimple) hierarchySource.getIdentifierSource();
 
-		final SimpleValue idValue = new SimpleValue(
+		final BasicValue idValue = new BasicValue(
 				sourceDocument,
 				rootEntityDescriptor.getTable()
 		);
@@ -708,7 +709,7 @@ public class ModelBinder {
 		);
 
 		final String propertyName = idSource.getIdentifierAttributeSource().getName();
-		if ( propertyName == null || !rootEntityDescriptor.hasPojoRepresentation() ) {
+		if ( propertyName == null || rootEntityDescriptor.getExplicitRepresentation() != Representation.POJO ) {
 			if ( !idValue.isTypeSpecified() ) {
 				throw new MappingException(
 						"must specify an identifier type: " + rootEntityDescriptor.getEntityName(),
@@ -836,7 +837,7 @@ public class ModelBinder {
 		final IdentifierSourceAggregatedComposite identifierSource
 				= (IdentifierSourceAggregatedComposite) hierarchySource.getIdentifierSource();
 
-		final Component cid = new Component( mappingDocument.getMetadataCollector(), rootEntityDescriptor );
+		final Component cid = new Component( mappingDocument, rootEntityDescriptor );
 		cid.setKey( true );
 		rootEntityDescriptor.setIdentifier( cid );
 
@@ -884,7 +885,7 @@ public class ModelBinder {
 		final IdentifierSourceNonAggregatedComposite identifierSource
 				= (IdentifierSourceNonAggregatedComposite) hierarchySource.getIdentifierSource();
 
-		final Component cid = new Component( mappingDocument.getMetadataCollector(), rootEntityDescriptor );
+		final Component cid = new Component( mappingDocument, rootEntityDescriptor );
 		cid.setKey( true );
 		rootEntityDescriptor.setIdentifier( cid );
 
@@ -907,7 +908,7 @@ public class ModelBinder {
 			// we also need to bind the "id mapper".  ugh, terrible name.  Basically we need to
 			// create a virtual (embedded) composite for the non-aggregated attributes on the entity
 			// itself.
-			final Component mapper = new Component( mappingDocument.getMetadataCollector(), rootEntityDescriptor );
+			final Component mapper = new Component( mappingDocument, rootEntityDescriptor );
 			bindComponent(
 					mappingDocument,
 					hierarchySource.getRoot().getAttributeRoleBase().append( ID_MAPPER_PATH_PART ).getFullPath(),
@@ -956,7 +957,7 @@ public class ModelBinder {
 			rootEntityDescriptor.setEmbeddedIdentifier( cid.isEmbedded() );
 			if ( cid.isEmbedded() ) {
 				// todo : what is the implication of this?
-				cid.setDynamic( !rootEntityDescriptor.hasPojoRepresentation() );
+				cid.setDynamic( rootEntityDescriptor.getExplicitRepresentation() != Representation.POJO );
 				/*
 				 * Property prop = new Property(); prop.setName("id");
 				 * prop.setPropertyAccessorName("embedded"); prop.setValue(id);
@@ -990,7 +991,7 @@ public class ModelBinder {
 			RootClass rootEntityDescriptor) {
 		final VersionAttributeSource versionAttributeSource = hierarchySource.getVersionAttributeSource();
 
-		final SimpleValue versionValue = new SimpleValue(
+		final BasicValue versionValue = new BasicValue(
 				sourceDocument,
 				rootEntityDescriptor.getTable()
 		);
@@ -1051,7 +1052,7 @@ public class ModelBinder {
 			MappingDocument sourceDocument,
 			final EntityHierarchySourceImpl hierarchySource,
 			RootClass rootEntityDescriptor) {
-		final SimpleValue discriminatorValue = new SimpleValue(
+		final BasicValue discriminatorValue = new BasicValue(
 				sourceDocument,
 				rootEntityDescriptor.getTable()
 		);
@@ -1153,7 +1154,7 @@ public class ModelBinder {
 					final Property attribute = createBasicAttribute(
 							mappingDocument,
 							basicAttributeSource,
-							new SimpleValue( mappingDocument, table ),
+							new BasicValue( mappingDocument, table ),
 							entityDescriptor.getClassName()
 					);
 
@@ -1188,7 +1189,7 @@ public class ModelBinder {
 					final Property attribute = createEmbeddedAttribute(
 							mappingDocument,
 							(SingularAttributeSourceEmbedded) attributeSource,
-							new Component( mappingDocument.getMetadataCollector(), table, entityDescriptor ),
+							new Component( mappingDocument, table, entityDescriptor ),
 							entityDescriptor.getClassName()
 					);
 
@@ -1881,7 +1882,7 @@ public class ModelBinder {
 	private Property createBasicAttribute(
 			MappingDocument sourceDocument,
 			final SingularAttributeSourceBasic attributeSource,
-			SimpleValue value,
+			BasicValue value,
 			String containingClassName) {
 		final String attributeName = attributeSource.getName();
 
@@ -2534,7 +2535,7 @@ public class ModelBinder {
 		else if ( isVirtual ) {
 			// virtual (what used to be called embedded) is just a conceptual composition...
 			// <properties/> for example
-			if ( componentBinding.getOwner().hasPojoRepresentation() ) {
+			if ( componentBinding.getOwner().getExplicitRepresentation() == Representation.POJO ) {
 				log.debugf( "Binding virtual component [%s] to owner class [%s]", role, componentBinding.getOwner().getClassName() );
 				componentBinding.setComponentClassName( componentBinding.getOwner().getClassName() );
 			}
@@ -2549,7 +2550,7 @@ public class ModelBinder {
 				log.debugf( "Binding component [%s] to explicitly specified class", role, explicitComponentClassName );
 				componentBinding.setComponentClassName( explicitComponentClassName );
 			}
-			else if ( componentBinding.getOwner().hasPojoRepresentation() ) {
+			else if ( componentBinding.getOwner().getExplicitRepresentation() == Representation.POJO ) {
 				log.tracef( "Attempting to determine component class by reflection %s", role );
 				final Class reflectedComponentClass;
 				if ( StringHelper.isNotEmpty( containingClassName ) && StringHelper.isNotEmpty( propertyName ) ) {
@@ -2635,7 +2636,7 @@ public class ModelBinder {
 				attribute = createBasicAttribute(
 						sourceDocument,
 						(SingularAttributeSourceBasic) attributeSource,
-						new SimpleValue( sourceDocument, component.getTable() ),
+						new BasicValue( sourceDocument, component.getTable() ),
 						component.getComponentClassName()
 				);
 			}
@@ -2643,7 +2644,7 @@ public class ModelBinder {
 				attribute = createEmbeddedAttribute(
 						sourceDocument,
 						(SingularAttributeSourceEmbedded) attributeSource,
-						new Component( sourceDocument.getMetadataCollector(), component ),
+						new Component( sourceDocument, component ),
 						component.getComponentClassName()
 				);
 			}
@@ -2888,8 +2889,6 @@ public class ModelBinder {
 	private void registerSecondPass(SecondPass secondPass, MetadataBuildingContext context) {
 		context.getMetadataCollector().addSecondPass( secondPass );
 	}
-
-
 
 	public static final class DelayedPropertyReferenceHandlerImpl implements InFlightMetadataCollector.DelayedPropertyReferenceHandler {
 		public final String referencedEntityName;
@@ -3199,10 +3198,7 @@ public class ModelBinder {
 			final CollectionIdSource idSource = getPluralAttributeSource().getCollectionIdSource();
 			if ( idSource != null ) {
 				final IdentifierCollection idBagBinding = (IdentifierCollection) getCollectionBinding();
-				final SimpleValue idBinding = new SimpleValue(
-						mappingDocument,
-						idBagBinding.getCollectionTable()
-				);
+				final BasicValue idBinding = new BasicValue( mappingDocument, idBagBinding.getCollectionTable() );
 
 				bindSimpleValueType(
 						mappingDocument,
@@ -3241,18 +3237,14 @@ public class ModelBinder {
 			if ( getPluralAttributeSource().getElementSource() instanceof PluralAttributeElementSourceBasic ) {
 				final PluralAttributeElementSourceBasic elementSource =
 						(PluralAttributeElementSourceBasic) getPluralAttributeSource().getElementSource();
-				final SimpleValue elementBinding = new SimpleValue(
-						getMappingDocument(),
-						getCollectionBinding().getCollectionTable()
-				);
+				final BasicValue elementBinding = new BasicValue( getMappingDocument(),
+																  getCollectionBinding().getCollectionTable() );
 
 				bindSimpleValueType(
 						getMappingDocument(),
 						elementBinding,
-						new HbmBasicTypeResolverImpl(
-								getMappingDocument(),
-								elementSource.getExplicitHibernateTypeSource()
-						)
+						new HbmBasicTypeResolverImpl( getMappingDocument(),
+													  elementSource.getExplicitHibernateTypeSource() )
 				);
 
 				relationalObjectBinder.bindColumnsAndFormulas(
@@ -3275,10 +3267,7 @@ public class ModelBinder {
 			else if ( getPluralAttributeSource().getElementSource() instanceof PluralAttributeElementSourceEmbedded ) {
 				final PluralAttributeElementSourceEmbedded elementSource =
 						(PluralAttributeElementSourceEmbedded) getPluralAttributeSource().getElementSource();
-				final Component elementBinding = new Component(
-						getMappingDocument().getMetadataCollector(),
-						getCollectionBinding()
-				);
+				final Component elementBinding = new Component( getMappingDocument(), getCollectionBinding() );
 
 				final EmbeddableSource embeddableSource = elementSource.getEmbeddableSource();
 				bindComponent(
@@ -3571,22 +3560,14 @@ public class ModelBinder {
 
 		@Override
 		protected void bindCollectionIndex() {
-			bindListOrArrayIndex(
-					getMappingDocument(),
-					getPluralAttributeSource(),
-					getCollectionBinding()
-			);
+			bindListOrArrayIndex( getMappingDocument(), getPluralAttributeSource(), getCollectionBinding() );
 		}
 
 		@Override
 		protected void createBackReferences() {
 			super.createBackReferences();
 
-			createIndexBackRef(
-					getMappingDocument(),
-					getPluralAttributeSource(),
-					getCollectionBinding()
-			);
+			createIndexBackRef( getMappingDocument(), getPluralAttributeSource(), getCollectionBinding() );
 		}
 	}
 
@@ -3630,22 +3611,14 @@ public class ModelBinder {
 
 		@Override
 		protected void bindCollectionIndex() {
-			bindListOrArrayIndex(
-					getMappingDocument(),
-					getPluralAttributeSource(),
-					getCollectionBinding()
-			);
+			bindListOrArrayIndex( getMappingDocument(), getPluralAttributeSource(), getCollectionBinding() );
 		}
 
 		@Override
 		protected void createBackReferences() {
 			super.createBackReferences();
 
-			createIndexBackRef(
-					getMappingDocument(),
-					getPluralAttributeSource(),
-					getCollectionBinding()
-			);
+			createIndexBackRef( getMappingDocument(), getPluralAttributeSource(), getCollectionBinding() );
 		}
 	}
 
@@ -3656,10 +3629,7 @@ public class ModelBinder {
 		final PluralAttributeSequentialIndexSource indexSource =
 				(PluralAttributeSequentialIndexSource) attributeSource.getIndexSource();
 
-		final SimpleValue indexBinding = new SimpleValue(
-				mappingDocument,
-				collectionBinding.getCollectionTable()
-		);
+		final BasicValue indexBinding = new BasicValue( mappingDocument, collectionBinding.getCollectionTable() );
 
 		bindSimpleValueType(
 				mappingDocument,
@@ -3703,10 +3673,7 @@ public class ModelBinder {
 		if ( pluralAttributeSource.getIndexSource() instanceof PluralAttributeMapKeySourceBasic ) {
 			final PluralAttributeMapKeySourceBasic mapKeySource =
 					(PluralAttributeMapKeySourceBasic) pluralAttributeSource.getIndexSource();
-			final SimpleValue value = new SimpleValue(
-					mappingDocument,
-					collectionBinding.getCollectionTable()
-			);
+			final BasicValue value = new BasicValue( mappingDocument, collectionBinding.getCollectionTable() );
 			bindSimpleValueType(
 					mappingDocument,
 					value,
@@ -3739,10 +3706,7 @@ public class ModelBinder {
 		else if ( pluralAttributeSource.getIndexSource() instanceof PluralAttributeMapKeySourceEmbedded ) {
 			final PluralAttributeMapKeySourceEmbedded mapKeySource =
 					(PluralAttributeMapKeySourceEmbedded) pluralAttributeSource.getIndexSource();
-			final Component componentBinding = new Component(
-					mappingDocument.getMetadataCollector(),
-					collectionBinding
-			);
+			final Component componentBinding = new Component( mappingDocument, collectionBinding );
 			bindComponent(
 					mappingDocument,
 					mapKeySource.getEmbeddableSource(),
@@ -3793,10 +3757,7 @@ public class ModelBinder {
 		else if ( pluralAttributeSource.getIndexSource() instanceof PluralAttributeMapKeyManyToAnySource ) {
 			final PluralAttributeMapKeyManyToAnySource mapKeySource =
 					(PluralAttributeMapKeyManyToAnySource) pluralAttributeSource.getIndexSource();
-			final Any mapKeyBinding = new Any(
-					mappingDocument,
-					collectionBinding.getCollectionTable()
-			);
+			final Any mapKeyBinding = new Any( mappingDocument, collectionBinding.getCollectionTable() );
 			bindAny(
 					mappingDocument,
 					mapKeySource,

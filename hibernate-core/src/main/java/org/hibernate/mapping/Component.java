@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.domain.EmbeddedMapping;
 import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
@@ -23,12 +22,13 @@ import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.ExportableProducer;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
-import org.hibernate.boot.spi.InFlightMetadataCollector;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.CompositeNestedGeneratedValueGenerator;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.JoinedIterator;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.Representation;
@@ -36,7 +36,9 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
 import org.hibernate.property.access.spi.Setter;
+import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 
 /**
  * The mapping for a component, composite element,
@@ -45,7 +47,7 @@ import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
  * @author Gavin King
  * @author Steve Ebersole
  */
-public class Component extends SimpleValue implements EmbeddedValueMapping, EmbeddedMapping, PropertyContainer, MetaAttributable {
+public class Component extends SimpleValue implements EmbeddedValueMapping, PropertyContainer, MetaAttributable {
 	private List<PersistentAttributeMapping> properties = new ArrayList<>();
 	private String componentClassName;
 	private boolean embedded;
@@ -55,35 +57,37 @@ public class Component extends SimpleValue implements EmbeddedValueMapping, Embe
 	private Map metaAttributes;
 	private boolean isKey;
 	private String roleName;
+	private EmbeddableJavaDescriptor javaTypeDescriptor;
 
 	private Representation representation;
 	private Instantiator instantiator;
 
-	public Component(InFlightMetadataCollector metadata, PersistentClass owner) throws MappingException {
+	public Component(MetadataBuildingContext metadata, PersistentClass owner) throws MappingException {
 		this( metadata, owner.getTable(), owner );
 	}
 
-	public Component(InFlightMetadataCollector metadata, Component component) throws MappingException {
+	public Component(MetadataBuildingContext metadata, Component component) throws MappingException {
 		this( metadata, component.getTable(), component.getOwner() );
 	}
 
-	public Component(InFlightMetadataCollector metadata, Join join) throws MappingException {
+	public Component(MetadataBuildingContext metadata, Join join) throws MappingException {
 		this( metadata, join.getTable(), join.getPersistentClass() );
 	}
 
-	public Component(InFlightMetadataCollector metadata, Collection collection) throws MappingException {
+	public Component(MetadataBuildingContext metadata, Collection collection) throws MappingException {
 		this( metadata, collection.getCollectionTable(), collection.getOwner() );
 	}
 
-	public Component(InFlightMetadataCollector metadata, Table table, PersistentClass owner) throws MappingException {
-		super( metadata.getTypeConfiguration().getMetadataBuildingContext(), table );
+	public Component(MetadataBuildingContext metadata, Table table, PersistentClass owner) throws MappingException {
+		super( metadata, table );
 		this.owner = owner;
+		resolveJavaTypeDescriptor( metadata );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public EmbeddableJavaDescriptor getJavaTypeDescriptor() {
-		return (EmbeddableJavaDescriptor) super.getJavaTypeDescriptor();
+		return javaTypeDescriptor;
 	}
 
 	@Override
@@ -115,6 +119,11 @@ public class Component extends SimpleValue implements EmbeddedValueMapping, Embe
 
 	@Override
 	public void addColumn(Column column) {
+		throw new UnsupportedOperationException("Cant add a column to a component");
+	}
+
+	@Override
+	protected void setSqlTypeDescriptorResolver(Column column) {
 		throw new UnsupportedOperationException("Cant add a column to a component");
 	}
 
@@ -211,8 +220,7 @@ public class Component extends SimpleValue implements EmbeddedValueMapping, Embe
 	}
 
 	@Override
-	public void setTypeUsingReflection(String className, String propertyName)
-		throws MappingException {
+	public void setTypeUsingReflection(String className, String propertyName) throws MappingException {
 	}
 
 	@Override
@@ -266,15 +274,24 @@ public class Component extends SimpleValue implements EmbeddedValueMapping, Embe
 		}
 		return result;
 	}
-	
+
+	@Override
+	public java.util.List<Selectable> getMappedColumns() {
+		final java.util.List<Selectable> columns = new ArrayList<>();
+		for ( PersistentAttributeMapping p : properties ) {
+			columns.addAll( p.getValueMapping().getMappedColumns() );
+		}
+		return columns;
+	}
+
 	public boolean isKey() {
 		return isKey;
 	}
-	
+
 	public void setKey(boolean isKey) {
 		this.isKey = isKey;
 	}
-	
+
 	public boolean hasPojoRepresentation() {
 		return componentClassName != null;
 	}
@@ -504,13 +521,25 @@ public class Component extends SimpleValue implements EmbeddedValueMapping, Embe
 		return PersistenceType.EMBEDDABLE;
 	}
 
-	@Override
-	public EmbeddedValueMapping getValueMapping() {
-		return this;
-	}
+	private void resolveJavaTypeDescriptor(MetadataBuildingContext metadata) {
+		final JavaTypeDescriptorRegistry javaTypeDescriptorRegistry = metadata.getMetadataCollector()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry();
+		EmbeddableJavaDescriptor typeDescriptor = (EmbeddableJavaDescriptor) javaTypeDescriptorRegistry
+				.getDescriptor( componentClassName );
+		if ( typeDescriptor == null ) {
+			final Class javaType;
+			if ( StringHelper.isEmpty( componentClassName ) ) {
+				javaType = null;
+			}
+			else {
+				javaType = metadata.getBootstrapContext().getServiceRegistry().getService( ClassLoaderService.class )
+						.classForName( componentClassName );
+			}
 
-	@Override
-	public String getEmbeddableClassName() {
-		return componentClassName;
+			typeDescriptor = new EmbeddableJavaDescriptorImpl( componentClassName, javaType, null );
+			javaTypeDescriptorRegistry.addDescriptor( typeDescriptor );
+		}
+		javaTypeDescriptor = typeDescriptor;
 	}
 }

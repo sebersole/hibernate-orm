@@ -8,7 +8,6 @@ package org.hibernate.cfg.annotations;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import javax.persistence.Enumerated;
@@ -19,14 +18,11 @@ import javax.persistence.MapKeyTemporal;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
-import org.hibernate.MappingException;
 import org.hibernate.annotations.MapKeyType;
 import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.common.reflection.ClassLoadingException;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.model.TypeDefinition;
@@ -36,7 +32,6 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.AccessType;
 import org.hibernate.cfg.BasicTypeResolverConvertibleSupport;
 import org.hibernate.cfg.BasicTypeResolverSupport;
-import org.hibernate.cfg.BinderHelper;
 import org.hibernate.cfg.Ejb3Column;
 import org.hibernate.cfg.Ejb3JoinColumn;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -45,7 +40,7 @@ import org.hibernate.cfg.SetSimpleValueTypeSecondPass;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.mapping.SimpleValue;
+import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Table;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
@@ -59,13 +54,13 @@ import org.jboss.logging.Logger;
 /**
  * @author Emmanuel Bernard
  */
-public class SimpleValueBinder<T> {
+public class BasicValueBinder<T> {
 
 	// todo (6.0) : In light of how we want to build Types (specifically BasicTypes) moving forward this Class should undergo major changes
 	//		see the comments in #setType
 	//		but as always the "design" of these classes make it unclear exactly how to change it properly.
 
-	private static final CoreMessageLogger LOG = Logger.getMessageLogger( CoreMessageLogger.class, SimpleValueBinder.class.getName() );
+	private static final CoreMessageLogger LOG = Logger.getMessageLogger( CoreMessageLogger.class, BasicValueBinder.class.getName() );
 
 	public enum Kind {
 		ATTRIBUTE,
@@ -89,7 +84,6 @@ public class SimpleValueBinder<T> {
 	// BasicType info
 
 	private BasicJavaDescriptor<T> javaDescriptor;
-	private SqlTypeDescriptor sqlTypeDescriptor;
 	private AttributeConverterDescriptor converterDescriptor;
 	private boolean isVersion;
 	private boolean isNationalized;
@@ -98,7 +92,7 @@ public class SimpleValueBinder<T> {
 	private TemporalType temporalPrecision;
 
 	private BasicTypeResolver basicTypeResolver;
-	private SimpleValue simpleValue;
+	private BasicValue basicValue;
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,7 +117,7 @@ public class SimpleValueBinder<T> {
 	private Properties typeParameters = new Properties();
 
 
-	public SimpleValueBinder(Kind kind, MetadataBuildingContext buildingContext) {
+	public BasicValueBinder(Kind kind, MetadataBuildingContext buildingContext) {
 		assert kind != null;
 		assert  buildingContext != null;
 
@@ -141,8 +135,8 @@ public class SimpleValueBinder<T> {
 
 	public void setVersion(boolean isVersion) {
 		this.isVersion = isVersion;
-		if ( isVersion && simpleValue != null ) {
-			simpleValue.makeVersion();
+		if ( isVersion && basicValue != null ) {
+			basicValue.makeVersion();
 		}
 	}
 
@@ -377,22 +371,22 @@ public class SimpleValueBinder<T> {
 		Ejb3Column.checkPropertyConsistency( columns, propertyName );
 	}
 
-	public SimpleValue make() {
+	public BasicValue make() {
 
 		validate();
 		LOG.debugf( "building SimpleValue for %s", propertyName );
 		if ( table == null ) {
 			table = columns[0].getTable();
 		}
-		simpleValue = new SimpleValue( buildingContext, table );
+		basicValue = new BasicValue( buildingContext, table );
 		if ( isVersion ) {
-			simpleValue.makeVersion();
+			basicValue.makeVersion();
 		}
 		if ( isNationalized ) {
-			simpleValue.makeNationalized();
+			basicValue.makeNationalized();
 		}
 		if ( isLob ) {
-			simpleValue.makeLob();
+			basicValue.makeLob();
 		}
 
 		linkWithValue();
@@ -406,107 +400,108 @@ public class SimpleValueBinder<T> {
 			//We are already in second pass
 			fillSimpleValue();
 		}
-		return simpleValue;
+		return basicValue;
 	}
 
 	public void linkWithValue() {
 		if ( columns[0].isNameDeferred() && !buildingContext.getMetadataCollector().isInSecondPass() && referencedEntityName != null ) {
 			buildingContext.getMetadataCollector().addSecondPass(
 					new PkDrivenByDefaultMapsIdSecondPass(
-							referencedEntityName, (Ejb3JoinColumn[]) columns, simpleValue
+							referencedEntityName, (Ejb3JoinColumn[]) columns, basicValue
 					)
 			);
 		}
 		else {
 			for ( Ejb3Column column : columns ) {
-				column.linkWithValue( simpleValue );
+				column.linkWithValue( basicValue );
 			}
 		}
 	}
 
 	public void fillSimpleValue() {
 		LOG.debugf( "Starting fillSimpleValue for %s", propertyName );
+		basicValue.setBasicTypeResolver( basicTypeResolver );
 
-		final BasicTypeResolver resolver;
-
-		if ( converterDescriptor != null ) {
-			if ( ! BinderHelper.isEmptyAnnotationValue( explicitType ) ) {
-				throw new AnnotationException(
-						String.format(
-								"AttributeConverter and explicit Type cannot be applied to same attribute [%s.%s];" +
-										"remove @Type or specify @Convert(disableConversion = true)",
-								persistentClassName,
-								propertyName
-						)
-				);
-			}
-			LOG.debugf(
-					"Applying JPA AttributeConverter [%s] to [%s:%s]",
-					converterDescriptor,
-					persistentClassName,
-					propertyName
-			);
-
-			resolver = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().makeUnregisteredProducer();
-			simpleValue.setJpaAttributeConverterDescriptor( converterDescriptor );
-		}
-		else {
-			if ( !BinderHelper.isEmptyAnnotationValue( explicitType ) ) {
-				resolver = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().resolve( explicitType );
-			}
-			else {
-				BasicTypeResolver test = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().resolve( returnedClassName );
-				if ( test != null ) {
-					resolver = test;
-				}
-				else {
-					test = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().resolve( defaultType );
-
-					if ( test != null ) {
-						resolver = test;
-					}
-					else {
-						resolver = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().makeUnregisteredProducer();
-					}
-				}
-			}
-		}
-
-		simpleValue.setBasicTypeResolver( resolver );
-
-		if ( persistentClassName != null || converterDescriptor != null ) {
-			try {
-				simpleValue.setTypeUsingReflection( persistentClassName, propertyName );
-			}
-			catch (Exception e) {
-				throw new MappingException(
-						String.format(
-								Locale.ROOT,
-								"Unable to determine basic type mapping via reflection [%s -> %s]",
-								persistentClassName,
-								propertyName
-						),
-						e
-				);
-			}
-		}
-
-		if ( !simpleValue.isTypeSpecified() && isVersion() ) {
-			simpleValue.setTypeName( "integer" );
-		}
-
-		// HHH-5205
-		if ( timeStampVersionType != null ) {
-			simpleValue.setTypeName( timeStampVersionType );
-		}
-		
-//		if ( simpleValue.getTypeName() != null && simpleValue.getTypeName().length() > 0
-//				&& simpleValue.getBuildingContext().basicType( simpleValue.getTypeName() ) == null ) {
+//		if ( converterDescriptor != null ) {
+//			if ( ! BinderHelper.isEmptyAnnotationValue( explicitType ) ) {
+//				throw new AnnotationException(
+//						String.format(
+//								"AttributeConverter and explicit Type cannot be applied to same attribute [%s.%s];" +
+//										"remove @Type or specify @Convert(disableConversion = true)",
+//								persistentClassName,
+//								propertyName
+//						)
+//				);
+//			}
+//			LOG.debugf(
+//					"Applying JPA AttributeConverter [%s] to [%s:%s]",
+//					converterDescriptor,
+//					persistentClassName,
+//					propertyName
+//			);
+//
+//			basicTypeResolver = new
+//
+//			producer = buildingContext.getBootstrapContext().getBasicTypeResolverRegistry().makeUnregisteredProducer();
+//			((BasicValue)basicValue).setJpaAttributeConverterDescriptor( converterDescriptor );
+//		}
+//		else {
+//			if ( !BinderHelper.isEmptyAnnotationValue( explicitType ) ) {
+//				producer = buildingContext.getBootstrapContext().getBasicTypeProducerRegistry().resolve( explicitType );
+//			}
+//			else {
+//				BasicTypeProducer test = buildingContext.getBootstrapContext().getBasicTypeProducerRegistry().resolve( returnedClassName );
+//				if ( test != null ) {
+//					producer = test;
+//				}
+//				else {
+//					test = buildingContext.getBootstrapContext().getBasicTypeProducerRegistry().resolve( defaultType );
+//
+//					if ( test != null ) {
+//						producer = test;
+//					}
+//					else {
+//						producer = buildingContext.getBootstrapContext().getBasicTypeProducerRegistry().makeUnregisteredProducer();
+//					}
+//				}
+//			}
+//		}
+//
+//		basicValue.setBasicTypeResolver( resolver );
+//
+//		if ( persistentClassName != null || converterDescriptor != null ) {
 //			try {
-//				Class typeClass = buildingContext.getBootstrapContext().getClassLoaderAccess().classForName( simpleValue.getTypeName() );
+//				basicValue.setTypeUsingReflection( persistentClassName, propertyName );
+//			}
+//			catch (Exception e) {
+//				throw new MappingException(
+//						String.format(
+//								Locale.ROOT,
+//								"Unable to determine basic type mapping via reflection [%s -> %s]",
+//								persistentClassName,
+//								propertyName
+//						),
+//						e
+//				);
+//			}
+//		}
+//
+//		if ( !basicValue.isTypeSpecified() && isVersion() ) {
+//			basicValue.setTypeName( "integer" );
+//		}
+//
+//		// HHH-5205
+//		if ( timeStampVersionType != null ) {
+//			basicValue.setTypeName( timeStampVersionType );
+//		}
+		
+//		if ( basicValue.getTypeName() != null && basicValue.getTypeName().length() > 0
+//				&& basicValue.getBuildingContext().basicType( basicValue.getTypeName() ) == null ) {
+//			try {
+//				Class typeClass = buildingContext.getBootstrapContext().getClassLoaderAccess().classForName( basicValue.getTypeName() );
 //
 //				if ( typeClass != null && DynamicParameterizedType.class.isAssignableFrom( typeClass ) ) {
-//					Properties parameters = simpleValue.getTypeParameters();
+//					Properties parameters = basicValue.getTypeParameters();
 //					if ( parameters == null ) {
 //						parameters = new Properties();
 //					}
@@ -518,11 +513,11 @@ public class SimpleValueBinder<T> {
 //					parameters.put( DynamicParameterizedType.XPROPERTY, xproperty );
 //					parameters.put( DynamicParameterizedType.PROPERTY, xproperty.getName() );
 //					parameters.put( DynamicParameterizedType.ACCESS_TYPE, accessType.getType() );
-//					simpleValue.setTypeParameters( parameters );
+//					basicValue.setTypeParameters( parameters );
 //				}
 //			}
 //			catch (ClassLoadingException e) {
-//				throw new MappingException( "Could not determine type for: " + simpleValue.getTypeName(), e );
+//				throw new MappingException( "Could not determine type for: " + basicValue.getTypeName(), e );
 //			}
 //		}
 
@@ -538,6 +533,14 @@ public class SimpleValueBinder<T> {
 
 	public void setAccessType(AccessType accessType) {
 		this.accessType = accessType;
+	}
+
+	private static class BasicTypeResolverImpl implements BasicTypeResolver{
+
+		@Override
+		public <T> BasicType<T> resolveBasicType() {
+			return null;
+		}
 	}
 
 
@@ -576,8 +579,7 @@ public class SimpleValueBinder<T> {
 			}
 			else {
 				return buildingContext.getBootstrapContext().getTypeConfiguration()
-						.getBasicTypeRegistry()
-						.getBasicTypeForCast( name );
+						.getBasicTypeRegistry().getBasicType( name );
 			}
 		}
 	}

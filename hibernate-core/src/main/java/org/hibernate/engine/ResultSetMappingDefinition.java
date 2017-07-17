@@ -7,10 +7,6 @@
 package org.hibernate.engine;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
 
 /**
  * Keep a description of the resultset mapping
