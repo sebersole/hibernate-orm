@@ -229,6 +229,16 @@ public abstract class AbstractEntityDescriptor<T>
 	}
 
 	@Override
+	public Representation getRepresentation() {
+		return null;
+	}
+
+	@Override
+	public Instantiator getInstantiator() {
+		return instantiator;
+	}
+
+	@Override
 	public String getEntityName() {
 		return getJavaTypeDescriptor().getEntityName();
 	}
