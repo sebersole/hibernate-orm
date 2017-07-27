@@ -16,15 +16,21 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class CollectionJavaDescriptor extends AbstractBasicJavaDescriptor<Collection> {
-	/**
-	 * Singleton access
-	 */
-	public static final CollectionJavaDescriptor INSTANCE = new CollectionJavaDescriptor();
-
-	private CollectionJavaDescriptor() {
-		super( Collection.class );
+public abstract class CollectionJavaDescriptor<T> extends AbstractBasicJavaDescriptor<T> {
+		protected CollectionJavaDescriptor(Class<T> type) {
+		super( type );
 	}
+
+	@Override
+	public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public String toString(T value) {
+		return "{java.util.Collection}";
+	}
+
 
 	@Override
 	public String getTypeName() {
@@ -38,22 +44,12 @@ public class CollectionJavaDescriptor extends AbstractBasicJavaDescriptor<Collec
 	}
 
 	@Override
-	public String toString(Collection value) {
-		return "{java.util.Collection}";
-	}
-
-	@Override
-	public Collection fromString(String string) {
+	public <X> T wrap(X value, WrapperOptions options) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
-	public <X> X unwrap(Collection value, Class<X> type, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public <X> Collection wrap(X value, WrapperOptions options) {
+	public T fromString(String value) {
 		throw new UnsupportedOperationException(  );
 	}
 }

@@ -16,7 +16,7 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * @author Chris Cranford
  */
-public class SortedMapJavaDescriptor extends AbstractBasicJavaDescriptor<SortedMap> {
+public class SortedMapJavaDescriptor extends CollectionJavaDescriptor<SortedMap> {
 	/**
 	 * Singleton access
 	 */
