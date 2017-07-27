@@ -57,24 +57,4 @@ public class SortedMapJavaDescriptor extends CollectionJavaDescriptor<SortedMap>
 	public String extractLoggableRepresentation(SortedMap value) {
 		return "{sortedmap}";
 	}
-
-	@Override
-	public String toString(SortedMap value) {
-		return "{sortedmap}";
-	}
-
-	@Override
-	public SortedMap fromString(String value) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public <X> X unwrap(SortedMap value, Class<X> type, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public <X> SortedMap wrap(X value, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
 }

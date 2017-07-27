@@ -680,9 +680,4 @@ public abstract class Collection implements Fetchable, Value, Filterable {
 	public void setMappedByProperty(String mappedByProperty) {
 		this.mappedByProperty = mappedByProperty;
 	}
-
-	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return CollectionJavaDescriptor.INSTANCE;
-	}
 }
