@@ -20,7 +20,7 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.type.descriptor.java.internal.AnyTypeJavaDescriptor;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.descriptor.java.internal.AbstractCollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
@@ -54,7 +54,7 @@ public class HibernateTraversableResolver implements TraversableResolver {
 
 	private void addAssociationsToTheSetForOneProperty(String name, PersistentAttribute attribute) {
 		final org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor javaTypeDescriptor = attribute.getJavaTypeDescriptor();
-		if ( javaTypeDescriptor instanceof CollectionJavaDescriptor || javaTypeDescriptor instanceof EntityJavaDescriptor || javaTypeDescriptor instanceof AnyTypeJavaDescriptor ) {
+		if ( javaTypeDescriptor instanceof AbstractCollectionJavaDescriptor || javaTypeDescriptor instanceof EntityJavaDescriptor || javaTypeDescriptor instanceof AnyTypeJavaDescriptor ) {
 			associations.add( attribute.getNavigableRole().getFullPath() );
 		}
 		else if ( javaTypeDescriptor instanceof EmbeddableJavaDescriptor ) {

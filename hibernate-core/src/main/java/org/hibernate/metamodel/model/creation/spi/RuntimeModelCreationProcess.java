@@ -22,7 +22,6 @@ import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
-import org.hibernate.collection.spi.PersistentCollectionTuplizerFactory;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.internal.AbstractAttributeNodeContainer;
 import org.hibernate.graph.internal.AttributeNodeImpl;
@@ -352,11 +351,6 @@ public class RuntimeModelCreationProcess {
 		@Override
 		public InstantiatorFactory getInstantiatorFactory() {
 			return metadataBuildingContext.getBootstrapContext().getInstantiatorFactory();
-		}
-
-		@Override
-		public PersistentCollectionTuplizerFactory getPersistentCollectionTuplizerFactory() {
-			return metadataBuildingContext.getBootstrapContext().getPersistentCollectionTuplizerFactory();
 		}
 
 		@Override

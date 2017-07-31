@@ -18,7 +18,6 @@ import org.hibernate.boot.internal.ClassmateContext;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.AttributeConverterDefinition;
-import org.hibernate.collection.spi.PersistentCollectionTuplizerFactory;
 import org.hibernate.metamodel.model.domain.spi.InstantiatorFactory;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -48,8 +47,6 @@ public interface BootstrapContext {
 	void markAsJpaBootstrap();
 
 	InstantiatorFactory getInstantiatorFactory();
-
-	PersistentCollectionTuplizerFactory getPersistentCollectionTuplizerFactory();
 
 	/**
 	 * Access the temporary ClassLoader passed to us as defined by

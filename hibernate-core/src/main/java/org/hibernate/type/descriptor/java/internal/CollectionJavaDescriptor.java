@@ -8,48 +8,13 @@ package org.hibernate.type.descriptor.java.internal;
 
 import java.util.Collection;
 
-import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.collection.spi.PersistentCollectionTuplizer;
 
 /**
- * @author Steve Ebersole
+ * @author Andrea Boriero
  */
-public abstract class CollectionJavaDescriptor<T> extends AbstractBasicJavaDescriptor<T> {
-		protected CollectionJavaDescriptor(Class<T> type) {
-		super( type );
-	}
-
-	@Override
-	public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public String toString(T value) {
-		return "{java.util.Collection}";
-	}
-
-
-	@Override
-	public String getTypeName() {
-		return getJavaType().getName();
-	}
-
-	@Override
-	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
-		// none
-		return null;
-	}
-
-	@Override
-	public <X> T wrap(X value, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public T fromString(String value) {
-		throw new UnsupportedOperationException(  );
+public class CollectionJavaDescriptor extends AbstractCollectionJavaDescriptor<Collection> {
+	public CollectionJavaDescriptor(PersistentCollectionTuplizer tuplizer) {
+		super( Collection.class, tuplizer );
 	}
 }

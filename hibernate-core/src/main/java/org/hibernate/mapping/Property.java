@@ -37,6 +37,7 @@ import org.hibernate.property.access.spi.PropertyAccessStrategyResolver;
 import org.hibernate.property.access.spi.Setter;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tuple.ValueGeneration;
+import org.hibernate.type.descriptor.java.internal.AbstractCollectionJavaDescriptor;
 
 import static org.hibernate.metamodel.model.domain.internal.PersisterHelper.resolvePropertyAccess;
 
@@ -409,8 +410,8 @@ public class Property implements Serializable, PersistentAttributeMapping {
 			RuntimeModelCreationContext context) {
 		// todo (6.0) : allow to define a specific tuplizer on the collection mapping
 		//		for now use the default
-		final PersistentCollectionTuplizer tuplizer = context.getPersistentCollectionTuplizerFactory()
-				.getImplicitTuplizer( value.getJavaTypeDescriptor().getJavaType() );
+		final PersistentCollectionTuplizer tuplizer = ( (AbstractCollectionJavaDescriptor) value.getJavaTypeDescriptor() )
+				.getTuplizer();
 		return tuplizer.generatePluralPersistentAttribute(
 				container,
 				this,
