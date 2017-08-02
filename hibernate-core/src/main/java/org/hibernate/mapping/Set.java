@@ -10,6 +10,9 @@ import java.util.Iterator;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.OrderedSetTuplizer;
+import org.hibernate.collection.internal.SetTuplizer;
+import org.hibernate.collection.internal.SortedSetTuplizer;
 import org.hibernate.type.descriptor.java.internal.SetJavaDescriptor;
 import org.hibernate.type.descriptor.java.internal.SortedSetJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -76,8 +79,11 @@ public class Set extends Collection {
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
 		if ( isSorted() ) {
-			return SortedSetJavaDescriptor.INSTANCE;
+			return new SortedSetJavaDescriptor( new SortedSetTuplizer( getComparator() ) );
 		}
-		return SetJavaDescriptor.INSTANCE;
+		else if ( hasOrder() ) {
+			return new SetJavaDescriptor( new OrderedSetTuplizer() );
+		}
+		return new SetJavaDescriptor( new SetTuplizer() );
 	}
 }

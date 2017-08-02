@@ -7,6 +7,7 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * An <tt>IdentifierBag</tt> has a primary key consisting of
@@ -19,5 +20,11 @@ public class IdentifierBag extends IdentifierCollection {
 
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
-	}	
+	}
+
+
+	@Override
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return null;
+	}
 }

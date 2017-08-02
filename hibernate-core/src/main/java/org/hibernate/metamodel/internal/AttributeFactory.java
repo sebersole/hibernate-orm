@@ -38,7 +38,7 @@ import org.hibernate.property.access.internal.PropertyAccessMapImpl;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.NotYetImplementedException;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.descriptor.java.internal.AbstractCollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
@@ -652,7 +652,7 @@ public class AttributeFactory {
 		}
 
 		public boolean isPlural() {
-			return propertyMapping.getValueMapping().getJavaTypeDescriptor() instanceof CollectionJavaDescriptor;
+			return propertyMapping.getValueMapping().getJavaTypeDescriptor() instanceof AbstractCollectionJavaDescriptor;
 		}
 
 		public Property getPropertyMapping() {

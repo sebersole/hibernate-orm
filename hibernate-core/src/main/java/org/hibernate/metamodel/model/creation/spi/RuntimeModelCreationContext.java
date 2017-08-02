@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.creation.spi;
 
 import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.collection.spi.PersistentCollectionTuplizerFactory;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
@@ -40,8 +39,6 @@ public interface RuntimeModelCreationContext {
 	}
 
 	InstantiatorFactory getInstantiatorFactory();
-
-	PersistentCollectionTuplizerFactory getPersistentCollectionTuplizerFactory();
 
 	void registerEntityDescriptor(EntityDescriptor entityDescriptor);
 	void registerCollectionDescriptor(PersistentCollectionDescriptor collectionDescriptor);

@@ -63,12 +63,12 @@ public class JavaTypeDescriptorBaseline {
 		target.addBaselineDescriptor( UrlJavaDescriptor.INSTANCE );
 		target.addBaselineDescriptor( UUIDJavaDescriptor.INSTANCE );
 
-		target.addBaselineDescriptor( CollectionJavaDescriptor.INSTANCE );
-		target.addBaselineDescriptor( ListJavaDescriptor.INSTANCE );
-		target.addBaselineDescriptor( MapJavaDescriptor.INSTANCE );
-		target.addBaselineDescriptor( SetJavaDescriptor.INSTANCE );
-		target.addBaselineDescriptor( SortedMapJavaDescriptor.INSTANCE );
-		target.addBaselineDescriptor( SortedSetJavaDescriptor.INSTANCE );
+//		target.addBaselineDescriptor( CollectionJavaDescriptor.INSTANCE );
+//		target.addBaselineDescriptor( ListJavaDescriptor.INSTANCE );
+//		target.addBaselineDescriptor( MapJavaDescriptor.INSTANCE );
+//		target.addBaselineDescriptor( LinkedHashSetJavaDescriptor.INSTANCE );
+//		target.addBaselineDescriptor( SortedMapJavaDescriptorAbstract.INSTANCE );
+//		target.addBaselineDescriptor( SortedSetJavaDescriptor.INSTANCE );
 
 	}
 }

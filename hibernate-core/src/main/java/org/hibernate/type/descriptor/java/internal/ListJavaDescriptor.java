@@ -8,62 +8,28 @@ package org.hibernate.type.descriptor.java.internal;
 
 import java.util.List;
 
-import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.collection.spi.PersistentCollectionTuplizer;
 
 /**
  * @author Steve Ebersole
  */
-public class ListJavaDescriptor extends AbstractBasicJavaDescriptor<List> {
-	/**
-	 * Singleton access
-	 */
-	public static final ListJavaDescriptor INSTANCE = new ListJavaDescriptor();
-
-	private ListJavaDescriptor() {
-		super( List.class );
+public class ListJavaDescriptor extends AbstractCollectionJavaDescriptor<List> {
+	protected ListJavaDescriptor(PersistentCollectionTuplizer tuplizer) {
+		super( List.class, tuplizer );
 	}
 
 	@Override
-	public Class<List> getJavaType() {
+	public Class<List> 	getJavaType() {
 		return List.class;
 	}
 
 	@Override
-	public String getTypeName() {
-		return getJavaType().getName();
-	}
-
-	@Override
-	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
-		// none
-		return null;
-	}
-
-	@Override
 	public String extractLoggableRepresentation(List value) {
-		return "{list}";
+		return "{java.util.list}";
 	}
 
 	@Override
 	public String toString(List value) {
-		return "{list}";
-	}
-
-	@Override
-	public List fromString(String string) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public <X> X unwrap(List value, Class<X> type, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public <X> List wrap(X value, WrapperOptions options) {
-		throw new UnsupportedOperationException(  );
+		return "{List}";
 	}
 }

@@ -19,8 +19,6 @@ import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.internal.FilterConfiguration;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Mapping for a collection. Subclasses specialize to particular collection styles.
@@ -679,10 +677,5 @@ public abstract class Collection implements Fetchable, Value, Filterable {
 
 	public void setMappedByProperty(String mappedByProperty) {
 		this.mappedByProperty = mappedByProperty;
-	}
-
-	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return CollectionJavaDescriptor.INSTANCE;
 	}
 }

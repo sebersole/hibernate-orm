@@ -9,7 +9,7 @@ package org.hibernate.mapping;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.descriptor.java.internal.MapJavaDescriptor;
-import org.hibernate.type.descriptor.java.internal.SortedMapJavaDescriptor;
+import org.hibernate.type.descriptor.java.internal.SortedMapJavaDescriptorAbstract;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -40,7 +40,7 @@ public class Map extends IndexedCollection {
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
 		if ( isSorted() ) {
-			return SortedMapJavaDescriptor.INSTANCE;
+			return SortedMapJavaDescriptorAbstract.INSTANCE;
 		}
 		return MapJavaDescriptor.INSTANCE;
 	}

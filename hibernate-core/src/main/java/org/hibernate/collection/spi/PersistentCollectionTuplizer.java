@@ -34,7 +34,7 @@ public interface PersistentCollectionTuplizer<T extends PersistentCollection> {
 
 	<E> Class<E> getCollectionJavaType();
 
-	Class<PersistentCollection> getPersistentCollectionJavaType();
+	Class<T> getPersistentCollectionJavaType();
 
 	default Object indexOf(Object collection, Object element) {
 		throw new UnsupportedOperationException( "generic collections don't have indexes" );

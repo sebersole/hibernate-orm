@@ -30,9 +30,7 @@ public class OneToMany implements Value {
 
 	private String referencedEntityName;
 	private PersistentClass associatedClass;
-	private boolean embedded;
 	private boolean ignoreNotFound;
-	private JavaTypeDescriptor javaTypeDescriptor;
 
 	public OneToMany(MetadataBuildingContext buildingContext, PersistentClass owner) throws MappingException {
 		this.buildingContext = buildingContext;
@@ -167,10 +165,6 @@ public class OneToMany implements Value {
 
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return javaTypeDescriptor;
-	}
-
-	public void setJavaTypeDescriptor(JavaTypeDescriptor javaTypeDescriptor) {
-		this.javaTypeDescriptor = javaTypeDescriptor;
+		return associatedClass.getIdentifier().getJavaTypeDescriptor();
 	}
 }
