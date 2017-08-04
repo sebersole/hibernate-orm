@@ -37,7 +37,6 @@ import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.EntityQueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 
 /**
  * Builds an entity-based QueryResult for a NativeQuery

@@ -218,5 +218,9 @@ public class EmbeddedTypeDescriptorImpl<T>
 		return null;
 	}
 
+	@Override
+	public boolean[] getPropertyNullability() {
+		return new boolean[0];
+	}
 
 }

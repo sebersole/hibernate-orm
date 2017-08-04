@@ -590,7 +590,7 @@ public abstract class AbstractEntityDescriptor<T>
 			SqlSelectionResolver sqlSelectionResolver,
 			QueryResultCreationContext creationContext) {
 		return new EntityQueryResultImpl(
-				(EntityReference) selectedExpression,
+				(EntityValuedNavigable) selectedExpression,
 				resultVariable,
 				buildSqlSelectionGroupMap( creationContext, selectedExpression ),
 				selectedExpression.getNavigablePath(),

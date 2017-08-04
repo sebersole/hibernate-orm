@@ -61,6 +61,7 @@ import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.query.Query;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
+import org.hibernate.query.sql.spi.QueryResultBuilder;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
@@ -731,7 +732,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
 	protected void resultClassChecking(Class resultType, NamedSQLQueryDefinition namedQueryDefinition) {
-		final NativeSQLQueryReturn[] queryReturns;
+		final List<QueryResultBuilder> queryReturns;
 		if ( namedQueryDefinition.getQueryResultBuilders() != null ) {
 			queryReturns = namedQueryDefinition.getQueryResultBuilders();
 		}
@@ -743,11 +744,11 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			throw new AssertionFailure( "Unsupported named query model. Please report the bug in Hibernate EntityManager");
 		}
 
-		if ( queryReturns.length > 1 ) {
+		if ( queryReturns.size() > 1 ) {
 			throw new IllegalArgumentException( "Cannot create TypedQuery for query with more than one return" );
 		}
 
-		final NativeSQLQueryReturn nativeSQLQueryReturn = queryReturns[0];
+		final QueryResultBuilder nativeSQLQueryReturn = queryReturns.get(0);
 
 		if ( nativeSQLQueryReturn instanceof NativeSQLQueryRootReturn ) {
 			final Class<?> actualReturnedClass;

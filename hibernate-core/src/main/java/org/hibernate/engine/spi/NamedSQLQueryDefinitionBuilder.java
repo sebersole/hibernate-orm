@@ -14,9 +14,10 @@ import java.util.Map;
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
+import org.hibernate.query.sql.spi.QueryResultBuilder;
 
 public class NamedSQLQueryDefinitionBuilder extends NamedQueryDefinitionBuilder {
-	private NativeSQLQueryReturn[] queryReturns;
+	private List<QueryResultBuilder> queryReturns = new ArrayList<>(  );
 	private Collection<String> querySpaces;
 	private boolean callable;
 	private String resultSetRef;
@@ -28,18 +29,8 @@ public class NamedSQLQueryDefinitionBuilder extends NamedQueryDefinitionBuilder 
 		super( name );
 	}
 
-	public NamedSQLQueryDefinitionBuilder setQueryReturns(NativeSQLQueryReturn[] queryReturns) {
-		this.queryReturns = queryReturns;
-		return this;
-	}
-
-	public NamedSQLQueryDefinitionBuilder setQueryReturns(List<NativeSQLQueryReturn> queryReturns) {
-		if ( queryReturns != null ) {
-			this.queryReturns = queryReturns.toArray( new NativeSQLQueryReturn[ queryReturns.size() ] );
-		}
-		else {
-			this.queryReturns = null;
-		}
+	public NamedSQLQueryDefinitionBuilder setQueryReturns(List<QueryResultBuilder> queryReturns) {
+		this.queryReturns = queryReturns ;
 		return this;
 	}
 
