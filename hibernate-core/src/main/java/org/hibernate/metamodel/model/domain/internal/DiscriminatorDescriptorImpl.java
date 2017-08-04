@@ -21,10 +21,14 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlSelectionGroup;
 import org.hibernate.sql.results.spi.SqlSelectionResolver;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -89,6 +93,16 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	@Override
 	public String getAttributeName() {
 		return NAVIGABLE_NAME;
+	}
+
+	@Override
+	public PropertyAccess getPropertyAccess() {
+		return null;
+	}
+
+	@Override
+	public SqlSelectionGroup resolveSqlSelectionGroup(QueryResultCreationContext resolutionContext) {
+		return null;
 	}
 
 	@Override
@@ -179,5 +193,15 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	@Override
 	public BasicType<J> getBasicType() {
 		return basicType;
+	}
+
+	@Override
+	public ValueBinder getValueBinder() {
+		return basicType.getValueBinder();
+	}
+
+	@Override
+	public ValueExtractor getValueExtractor() {
+		return basicType.getValueExtractor();
 	}
 }

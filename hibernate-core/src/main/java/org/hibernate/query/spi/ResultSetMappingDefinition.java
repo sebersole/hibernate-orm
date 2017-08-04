@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.query.sql.spi.QueryResultBuilder;
-import org.hibernate.query.sql.spi.ReturnableResultNodeImplementor;
 
 /**
  * Keep a description of the {@link javax.persistence.SqlResultSetMapping}
