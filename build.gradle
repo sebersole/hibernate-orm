@@ -67,6 +67,8 @@ ext {
 	hibernateFullVersion = hibernateTargetVersion
 	hibernateMajorMinorVersion = versionComponents[0] + '.' + versionComponents[1]
 	hibernateMajorVersion = versionComponents[0]
+
+	db = project.findProperty('db') ?: 'h2'
 }
 
 idea {
@@ -171,16 +173,13 @@ subprojects { subProject ->
 		// 6.6 gave me some NPE problems from within checkstyle...
 		checkstyle 'com.puppycrawl.tools:checkstyle:6.5'
 
-		if ( project.hasProperty( 'db' ) ) {
-			final String db = project.property( 'db' )
-			if ( 'oracle'.equals( db )) {
-				testRuntime( libraries.oracle ) {
-					exclude group: 'com.oracle.jdbc', module: 'xmlparserv2'
-				}
+		if ( 'oracle'.equals( rootProject.db ) ) {
+			testRuntime( libraries.oracle ) {
+				exclude group: 'com.oracle.jdbc', module: 'xmlparserv2'
 			}
-			else if ( 'db2'.equals( db ) ) {
-				testRuntime( libraries.db2 )
-			}
+		}
+		else if ( 'db2'.equals( rootProject.db ) ) {
+			testRuntime( libraries.db2 )
 		}
 	}
 
@@ -245,10 +244,7 @@ subprojects { subProject ->
 		task.systemProperties['hibernate.test.validatefailureexpected'] = true
 		task.systemProperties += System.properties.findAll { it.key.startsWith( "hibernate.") }
 
-		if ( project.hasProperty( 'db' ) ) {
-			// be sure we pass it along to the tests
-			task.systemProperties['db'] = project.property( 'db' )
-		}
+		task.systemProperties['db'] = rootProject.db;
 
 // uncomment to help identify pauses in test executions : where they occur
 //		task.beforeTest { descriptor ->
