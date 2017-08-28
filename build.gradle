@@ -68,7 +68,12 @@ ext {
 	hibernateMajorMinorVersion = versionComponents[0] + '.' + versionComponents[1]
 	hibernateMajorVersion = versionComponents[0]
 
-	db = project.findProperty('db') ?: 'h2'
+	implicitTestDb = 'h2'
+
+	// #findProject (IIUC) is supposed to find sys-props as well, but
+	//		I had trouble with that working sometimes hence the explicit
+	//		reading of sys-props
+	db = project.findProperty('db') ?: System.properties.get('db') ?: implicitTestDb
 }
 
 idea {

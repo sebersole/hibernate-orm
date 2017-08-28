@@ -120,13 +120,15 @@ public class CustomRunner extends BlockJUnit4ClassRunner {
 
 		final String requestedDb = System.getProperty( "db" );
 		if ( requestedDb == null ) {
-			return superBlock;
+			log.debugf( "Found no test DB override - assuming h2" );
 		}
+
+		final String effectiveDb = requestedDb != null ? requestedDb : "h2";
 
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				final Properties overridden = overrideSettings( requestedDb );
+				final Properties overridden = overrideSettings( effectiveDb );
 
 				try {
 					superBlock.evaluate();
