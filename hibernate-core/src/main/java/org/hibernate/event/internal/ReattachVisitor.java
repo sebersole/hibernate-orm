@@ -102,7 +102,7 @@ public abstract class ReattachVisitor extends ProxyVisitor {
 		if ( collectionDescriptor.getCollectionType().useLHSPrimaryKey() ) {
 			return ownerIdentifier;
 		}
-		return (Serializable) collectionDescriptor.getOwnerEntityPersister().getPropertyValue(
+		return (Serializable) collectionDescriptor.getOwnerEntityDescriptor().getPropertyValue(
 				owner,
 				collectionDescriptor.getCollectionType().getLHSPropertyName()
 		);
