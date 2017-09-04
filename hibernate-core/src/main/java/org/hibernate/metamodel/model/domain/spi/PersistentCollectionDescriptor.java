@@ -213,6 +213,11 @@ public interface PersistentCollectionDescriptor<O,C,E>
 		return getIndexDescriptor() == null ? null : getIndexDescriptor().getJavaTypeDescriptor();
 	}
 
+	/**
+	 * Get the owning entity descriptor associated with the collection.
+	 */
+	EntityDescriptor getOwnerEntityDescriptor();
+
 	// consider whether we want to keep any of this legacy stuff
 
 //	/**

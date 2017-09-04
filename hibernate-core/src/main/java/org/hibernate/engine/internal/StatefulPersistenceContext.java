@@ -727,9 +727,9 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		//		1) collection key
 		//		2) collection owner key
 		// these 2 are not always the same.  Same is true in the case of ToOne associations with property-ref...
-		final EntityDescriptor ownerPersister = collectionPersister.getOwnerEntityPersister();
+		final EntityDescriptor ownerPersister = collectionPersister.getOwnerEntityDescriptor();
 		if ( ownerPersister.getIdentifierType().getJavaTypeDescriptor().getJavaType().isInstance( key ) ) {
-			return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityPersister() ) );
+			return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityDescriptor() ) );
 		}
 
 		// we have a property-ref type mapping for the collection key.  But that could show up a few ways here...
@@ -781,7 +781,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		}
 
 		// as a last resort this is what the old code did...
-		return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityPersister() ) );
+		return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityDescriptor() ) );
 	}
 
 	@Override

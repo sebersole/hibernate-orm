@@ -74,7 +74,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	//				.. add "structured data" to the cache.
 	private final CacheEntryStructure cacheEntryStructure;
 
-
+	private EntityDescriptor ownerEntityDescriptor;
 	private CollectionIdentifier idDescriptor;
 	private CollectionElement elementDescriptor;
 	private CollectionIndex indexDescriptor;
@@ -158,8 +158,17 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			idDescriptor = null;
 		}
 
+		this.ownerEntityDescriptor = sessionFactory.getTypeConfiguration().findEntityDescriptor(
+				collectionBinding.getOwnerEntityName()
+		);
+
 		this.indexDescriptor = resolveIndexDescriptor( this, collectionBinding, creationContext );
 		this.elementDescriptor = resolveElementDescriptor( this, collectionBinding, separateCollectionTable, creationContext );
+	}
+
+	@Override
+	public EntityDescriptor getOwnerEntityDescriptor() {
+		return this.ownerEntityDescriptor;
 	}
 
 	@SuppressWarnings("unchecked")
