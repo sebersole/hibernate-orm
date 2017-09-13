@@ -29,6 +29,6 @@ public interface SqmAliasedNode extends SqmTypedNode {
 
 	@Override
 	default JavaTypeDescriptor getJavaTypeDescriptor() {
-		return getSelectableNode().getProducedJavaTypeDescriptor();
+		return getSelectableNode().getJavaTypeDescriptor();
 	}
 }

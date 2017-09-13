@@ -165,7 +165,6 @@ public class SqmSelectToSqlAstConverter
 //		final QueryResultProducer resultProducer = (QueryResultProducer) sqmSelection.getSelectableNode().accept( this );
 
 		final QueryResult queryResult = resultProducer.createQueryResult(
-				this,
 				sqmSelection.getAlias(),
 				this
 		);
