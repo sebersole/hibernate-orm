@@ -63,9 +63,4 @@ public class SelfRenderingSqmFunction implements SqlAstFunctionProducer {
 	public Expression convertToSqlAst(SqmToSqlAstConverter walker) {
 		return new SelfRenderingFunctionSqlAstExpression( this, walker );
 	}
-
-	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return impliedResultType.getJavaTypeDescriptor();
-	}
 }
