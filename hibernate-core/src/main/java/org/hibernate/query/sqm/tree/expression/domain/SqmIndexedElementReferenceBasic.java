@@ -24,15 +24,15 @@ public class SqmIndexedElementReferenceBasic
 	}
 
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		return getPluralAttributeBinding().getReferencedNavigable()
-				.getPersistentCollectionMetadata()
-				.getElementDescriptor()
-				.createQueryResult( expression, resultVariable, creationContext );
-	}
+//	@Override
+//	@SuppressWarnings("unchecked")
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		return getPluralAttributeBinding().getReferencedNavigable()
+//				.getPersistentCollectionMetadata()
+//				.getElementDescriptor()
+//				.createQueryResult( expression, resultVariable, creationContext );
+//	}
 }

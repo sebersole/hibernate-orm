@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.sqm.tree.internal;
 
-import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 
@@ -29,10 +28,5 @@ public class SqmSelectStatementImpl extends AbstractSqmStatement implements SqmS
 			throw new IllegalStateException( "SqmQuerySpec was already defined for select-statement" );
 		}
 		this.querySpec = querySpec;
-	}
-
-	@Override
-	public <T> T accept(SemanticQueryWalker<T> walker) {
-		return walker.visitSelectStatement( this );
 	}
 }

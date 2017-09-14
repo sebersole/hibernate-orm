@@ -12,6 +12,7 @@ import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Represents the ENTRY() function for obtaining the map entries from a {@code Map}-typed association.
@@ -51,11 +52,16 @@ public class SqmMapEntryBinding implements SqmExpression {
 	}
 
 	@Override
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		throw new UnsupportedOperationException( "At the moment, selection of Map.Entry for persistent plural attribute is not supported" );
-		// todo (6.0) : could be supported though - consider adding support
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return attributeBinding.getJavaTypeDescriptor();
 	}
+
+//	@Override
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		throw new UnsupportedOperationException( "At the moment, selection of Map.Entry for persistent plural attribute is not supported" );
+//		// todo (6.0) : could be supported though - consider adding support
+//	}
 }

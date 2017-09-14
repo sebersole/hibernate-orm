@@ -16,6 +16,5 @@ import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
  * @author Gail Badner
  */
 public interface ScalarQueryResult extends QueryResult {
-	@Override
 	BasicValuedExpressableType getType();
 }

@@ -51,9 +51,4 @@ public class SqmUpdateStatementImpl extends AbstractSqmStatement implements SqmU
 				whereClause
 		);
 	}
-
-	@Override
-	public <T> T accept(SemanticQueryWalker<T> walker) {
-		return walker.visitUpdateStatement( this );
-	}
 }

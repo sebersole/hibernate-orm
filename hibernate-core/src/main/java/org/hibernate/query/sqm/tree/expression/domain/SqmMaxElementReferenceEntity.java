@@ -66,11 +66,11 @@ public class SqmMaxElementReferenceEntity
 		throw new NotYetImplementedException(  );
 	}
 
-	@Override
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		return getReferencedNavigable().createQueryResult( expression, resultVariable, creationContext );
-	}
+//	@Override
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		return getReferencedNavigable().createQueryResult( expression, resultVariable, creationContext );
+//	}
 }

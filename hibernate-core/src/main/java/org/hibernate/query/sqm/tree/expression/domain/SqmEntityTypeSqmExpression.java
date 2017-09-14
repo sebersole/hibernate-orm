@@ -12,6 +12,7 @@ import org.hibernate.query.sqm.tree.expression.SqmExpression;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Expression representing the type of an entity-valued expression.
@@ -51,11 +52,16 @@ public class SqmEntityTypeSqmExpression implements SqmExpression {
 	}
 
 	@Override
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		throw new UnsupportedOperationException( "At the moment, selection of an entity's type as a QUeryResult is not supported" );
-		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return binding.getJavaTypeDescriptor();
 	}
+
+//	@Override
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		throw new UnsupportedOperationException( "At the moment, selection of an entity's type as a QUeryResult is not supported" );
+//		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
+//	}
 }
