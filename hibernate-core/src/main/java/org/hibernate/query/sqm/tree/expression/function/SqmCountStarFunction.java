@@ -10,6 +10,8 @@ import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
+import org.hibernate.type.descriptor.java.internal.IntegerJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -35,6 +37,11 @@ public class SqmCountStarFunction extends AbstractSqmAggregateFunction {
 	}
 
 	public static SqmExpression STAR = new SqmExpression() {
+		@Override
+		public JavaTypeDescriptor getJavaTypeDescriptor() {
+			return IntegerJavaDescriptor.INSTANCE;
+		}
+
 		@Override
 		public BasicValuedExpressableType getExpressableType() {
 			throw new UnsupportedOperationException( "Illegal attempt to visit * as argument of count(*)" );
