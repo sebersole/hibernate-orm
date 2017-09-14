@@ -98,13 +98,13 @@ public class SqmEntityIdentifierReferenceComposite
 		return getJavaTypeDescriptor().getJavaType();
 	}
 
-	@Override
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		return new CompositeQueryResultImpl( resultVariable, navigable );
-	}
+//	@Override
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		return new CompositeQueryResultImpl( resultVariable, navigable );
+//	}
 
 
 	@Override

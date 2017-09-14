@@ -16,7 +16,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
  *
  * @author Steve Ebersole
  */
-public interface SqmExpression extends SqmSelectableNode, SqmTypedNode {
+public interface SqmExpression extends SqmSelectableNode {
 	/**
 	 * Obtain reference to the expression's ExpressableType
 	 *

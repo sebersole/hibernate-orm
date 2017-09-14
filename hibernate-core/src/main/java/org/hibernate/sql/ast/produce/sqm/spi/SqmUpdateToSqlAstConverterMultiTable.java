@@ -25,6 +25,7 @@ import org.hibernate.sql.ast.produce.ConversionException;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -205,6 +206,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 				currentAssignmentContext.injectTableReference( tableReference );
 			}
 
+
 			return tableReference;
 		}
 
@@ -226,6 +228,11 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		@Override
 		public void render(SqlAppender sqlAppender, SqlAstWalker walker) {
 
+		}
+
+		@Override
+		public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
+			return entityTableGroup.qualify( sqlSelectable );
 		}
 	}
 

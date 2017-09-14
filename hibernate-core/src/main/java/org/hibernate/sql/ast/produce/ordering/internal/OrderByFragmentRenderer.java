@@ -97,11 +97,6 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	}
 
 	@Override
-	public void visitColumnReferenceExpression(ColumnReference columnReference) {
-		visitColumnReference( columnReference );
-	}
-
-	@Override
 	public void visitAssignment(Assignment assignment) {
 		throw new SyntaxException( "Encountered unexpected assignment clause" );
 	}

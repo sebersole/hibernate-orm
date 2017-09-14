@@ -46,16 +46,6 @@ public class PluralAttributeIndexReference implements NavigableReference {
 	}
 
 	@Override
-	public CollectionIndex getType() {
-		return getNavigable();
-	}
-
-	@Override
-	public void accept(SqlAstWalker walker) {
-		walker.visitPluralAttributeIndex( this );
-	}
-
-	@Override
 	public NavigablePath getNavigablePath() {
 		return navigablePath;
 	}

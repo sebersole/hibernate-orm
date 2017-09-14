@@ -14,6 +14,5 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
  * @author Steve Ebersole
  */
 public interface PluralAttributeQueryResult extends PluralAttributeMappingNode, QueryResult {
-	@Override
 	PluralPersistentAttribute getType();
 }

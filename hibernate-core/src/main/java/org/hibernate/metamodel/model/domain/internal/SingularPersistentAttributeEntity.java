@@ -192,14 +192,6 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
-	public SqmNavigableReference createSqmExpression(
-			SqmFrom sourceSqmFrom,
-			SqmReferenceCreationContext creationContext) {
-		return new SqmSingularAttributeReferenceEntity(  );
-		return null;
-	}
-
-	@Override
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,

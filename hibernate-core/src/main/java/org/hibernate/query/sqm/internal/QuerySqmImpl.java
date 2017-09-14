@@ -282,7 +282,10 @@ public class QuerySqmImpl<R> extends AbstractQuery<R> implements HandlerExecutio
 	}
 
 	private SelectQueryPlan<R> buildSelectQueryPlan() {
-		final SqmSelectStatement[] concreteSqmStatements = QuerySplitter.split( (SqmSelectStatement) getSqmStatement() );
+		final SqmSelectStatement[] concreteSqmStatements = QuerySplitter.split(
+				(SqmSelectStatement) getSqmStatement(),
+				getSessionFactory()
+		);
 		if ( concreteSqmStatements.length > 1 ) {
 			return buildAggregatedSelectQueryPlan( concreteSqmStatements );
 		}

@@ -12,6 +12,5 @@ import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
  * @author Steve Ebersole
  */
 public interface CompositeQueryResult extends CompositeMappingNode, QueryResult {
-	@Override
 	EmbeddedValueExpressableType getType();
 }

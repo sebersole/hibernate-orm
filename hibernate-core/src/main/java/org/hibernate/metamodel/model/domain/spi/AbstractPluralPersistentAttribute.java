@@ -14,7 +14,7 @@ import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.NotYetImplementedException;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionQualifier;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
 import org.hibernate.sql.results.internal.PluralAttributeQueryResultImpl;
 import org.hibernate.sql.results.spi.Fetch;
@@ -146,16 +146,13 @@ public class AbstractPluralPersistentAttribute<O,C,E>
 
 	@Override
 	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			NavigableReference navigableReference, String resultVariable, QueryResultCreationContext creationContext) {
 		return new PluralAttributeQueryResultImpl(
 				this,
 				resultVariable,
 				creationContext
 		);
 	}
-
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Fetchable

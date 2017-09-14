@@ -45,12 +45,12 @@ public class SqmSingularAttributeReferenceEmbedded
 		return walker.visitEmbeddableValuedSingularAttribute( this );
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		return getReferencedNavigable().createQueryResult( expression, resultVariable, creationContext );
-	}
+//	@Override
+//	@SuppressWarnings("unchecked")
+//	public QueryResult createQueryResult(
+//			Expression expression,
+//			String resultVariable,
+//			QueryResultCreationContext creationContext) {
+//		return getReferencedNavigable().createQueryResult( expression, resultVariable, creationContext );
+//	}
 }

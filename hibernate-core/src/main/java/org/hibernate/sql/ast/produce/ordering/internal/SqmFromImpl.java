@@ -84,6 +84,11 @@ public class SqmFromImpl implements SqmFrom {
 		);
 	}
 
+	@Override
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return navRef.getJavaTypeDescriptor();
+	}
+
 	private class SqmNavigableReferenceImpl extends AbstractSqmNavigableReference {
 
 		@Override

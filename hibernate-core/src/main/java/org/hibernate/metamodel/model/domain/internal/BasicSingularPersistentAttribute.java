@@ -22,6 +22,7 @@ import org.hibernate.sql.NotYetImplementedException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -76,19 +77,17 @@ public class BasicSingularPersistentAttribute<O,J>
 
 	@Override
 	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			NavigableReference navigableReference, String resultVariable, QueryResultCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(
 						creationContext.getSqlSelectionResolver().resolveSqlExpression(
-								creationContext.currentColumnReferenceSource(),
+								navigableReference.getSqlExpressionQualifier(),
 								boundColumn
 						)
 				),
 				getType()
-	  	);
+		);
 	}
 
 	@Override

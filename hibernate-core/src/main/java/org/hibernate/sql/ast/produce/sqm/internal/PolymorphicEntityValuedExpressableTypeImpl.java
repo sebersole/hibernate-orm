@@ -18,9 +18,12 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlSelectionGroup;
+import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -139,15 +142,13 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements Polymorphi
 	}
 
 	@Override
-	public EntityJavaDescriptor<T> getJavaTypeDescriptor() {
-		return javaType;
+	public SqlSelectionGroup resolveSqlSelectionGroup(
+			SqlExpressionQualifier qualifier, SqlSelectionGroupResolutionContext resolutionContext) {
+		return null;
 	}
 
 	@Override
-	public QueryResult createQueryResult(
-			Expression expression,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		throw new HibernateException( "Cannot create QueryResult from polymorphic entity reference" );
+	public EntityJavaDescriptor<T> getJavaTypeDescriptor() {
+		return javaType;
 	}
 }
