@@ -250,6 +250,7 @@ public class BasicValueBinder<T> {
 							buildingContext,
 							this.converterDescriptor,
 							navigableXProperty,
+							navigableXClass,
 							isLob,
 							isNationalized
 					);
@@ -810,7 +811,6 @@ public class BasicValueBinder<T> {
 
 	private class BasicTypeResolverCollectionElementImpl
 			extends BasicTypeResolverConvertibleSupport {
-		private final XProperty attributeDescriptor;
 		private final boolean isLob;
 		private final boolean isNationalized;
 
@@ -818,17 +818,17 @@ public class BasicValueBinder<T> {
 				MetadataBuildingContext buildingContext,
 				AttributeConverterDescriptor converterDescriptor,
 				XProperty attributeDescriptor,
+				XClass elementJavaType,
 				boolean isLob,
 				boolean isNationalized) {
 			super( buildingContext, converterDescriptor );
 
-			this.attributeDescriptor = attributeDescriptor;
 			this.isLob = isLob;
 			this.isNationalized = isNationalized;
 
 			final Class javaType = buildingContext.getBootstrapContext()
 					.getReflectionManager()
-					.toClass( attributeDescriptor.getType() );
+					.toClass( elementJavaType );
 			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
