@@ -38,8 +38,8 @@ public class DialectFilterExtension implements ExecutionCondition {
 		}
 
 		final Object testInstance = context.getRequiredTestInstance();
-		final ExtensionContext.Store store = context.getStore( SessionFactoryScopeExtension.NAMESPACE );
-		final SessionFactoryScope sfScope = (SessionFactoryScope) store.get( testInstance );
+		final ExtensionContext.Store store = context.getStore( SessionFactoryScopeExtension.namespace( testInstance ) );
+		final SessionFactoryScope sfScope = (SessionFactoryScope) store.get( SessionFactoryScopeExtension.SESSION_FACTORY_KEY );
 		if ( sfScope == null ) {
 			throw new RuntimeException( "Could not locate SessionFactoryScope in JUnit ExtensionContext" );
 		}

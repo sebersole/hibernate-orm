@@ -18,11 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * Composite annotation for functional tests that
  * require a functioning SessionFactory.
  *
- * @apiNote Logically this should also include
- * `@TestInstance( TestInstance.Lifecycle.PER_CLASS )`
- * but that annotation is not conveyed (is that the
- * right word?  its not applied to the thing using this annotation).
- * Test classes should apply that themselves.
+ * @apiNote In most cases, users will want to also
+ * apply `@TestInstance( TestInstance.Lifecycle.PER_CLASS )`
+ * to only have one session factory created for the whole test class
+ * instead of one per method, so as to avoid performance issues.
  *
  * @see SessionFactoryScopeExtension
  * @see DialectFilterExtension
@@ -35,7 +34,5 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith( SessionFactoryScopeExtension.class )
 @ExtendWith( DialectFilterExtension.class )
 @ExtendWith( FailureExpectedExtension.class )
-// as noted above, this particular annotation is not conveyed
-@TestInstance( TestInstance.Lifecycle.PER_CLASS )
 public @interface FunctionalSessionFactoryTesting {
 }
