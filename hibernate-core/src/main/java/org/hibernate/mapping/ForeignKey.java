@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.hibernate.MappingException;
-import org.hibernate.dialect.Dialect;
+import org.hibernate.boot.model.relational.MappedTable;
 
 /**
  * A foreign key constraint
@@ -19,7 +19,7 @@ import org.hibernate.dialect.Dialect;
  * @author Gavin King
  */
 public class ForeignKey extends Constraint {
-	private Table referencedTable;
+	private MappedTable referencedTable;
 	private String referencedEntityName;
 	private String keyDefinition;
 	private boolean cascadeDeleteEnabled;
@@ -47,53 +47,8 @@ public class ForeignKey extends Constraint {
 		}
 	}
 
-	public String sqlConstraintString(
-			Dialect dialect,
-			String constraintName,
-			String defaultCatalog,
-			String defaultSchema) {
-		String[] columnNames = new String[getColumnSpan()];
-		String[] referencedColumnNames = new String[getColumnSpan()];
 
-		final Iterator<Column> referencedColumnItr;
-		if ( isReferenceToPrimaryKey() ) {
-			referencedColumnItr = referencedTable.getPrimaryKey().getColumnIterator();
-		}
-		else {
-			referencedColumnItr = referencedColumns.iterator();
-		}
-
-		Iterator columnItr = getColumnIterator();
-		int i = 0;
-		while ( columnItr.hasNext() ) {
-			columnNames[i] = ( (Column) columnItr.next() ).getName().render( dialect );
-			referencedColumnNames[i] = referencedColumnItr.next().getName().render( dialect );
-			i++;
-		}
-
-		final String result = keyDefinition != null ?
-				dialect.getAddForeignKeyConstraintString(
-						constraintName,
-						keyDefinition
-				) :
-				dialect.getAddForeignKeyConstraintString(
-						constraintName,
-						columnNames,
-						referencedTable.getQualifiedName(
-								dialect,
-								defaultCatalog,
-								defaultSchema
-						),
-						referencedColumnNames,
-						isReferenceToPrimaryKey()
-				);
-		
-		return cascadeDeleteEnabled && dialect.supportsCascadeDelete()
-				? result + " on delete cascade"
-				: result;
-	}
-
-	public Table getReferencedTable() {
+	public MappedTable getReferencedTable() {
 		return referencedTable;
 	}
 
@@ -107,9 +62,7 @@ public class ForeignKey extends Constraint {
 		}
 	}
 
-	public void setReferencedTable(Table referencedTable) throws MappingException {
-		//if( isReferenceToPrimaryKey() ) alignColumns(referencedTable); // TODO: possibly remove to allow more piecemal building of a foreignkey.  
-
+	public void setReferencedTable(MappedTable referencedTable) throws MappingException {
 		this.referencedTable = referencedTable;
 	}
 
@@ -124,12 +77,12 @@ public class ForeignKey extends Constraint {
 		}
 	}
 
-	private void alignColumns(Table referencedTable) {
+	private void alignColumns(MappedTable referencedTable) {
 		final int referencedPkColumnSpan = referencedTable.getPrimaryKey().getColumnSpan();
 		if ( referencedPkColumnSpan != getColumnSpan() ) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "Foreign key (" ).append( getName() ).append( ":" )
-					.append( getTable().getName() )
+					.append( getMappedTable().getName() )
 					.append( " [" );
 			appendColumns( sb, getColumnIterator() );
 			sb.append( "])" )
@@ -164,20 +117,6 @@ public class ForeignKey extends Constraint {
 	public void setKeyDefinition(String keyDefinition) {
 		this.keyDefinition = keyDefinition;
 	}
-	
-	public String sqlDropString(Dialect dialect, String defaultCatalog, String defaultSchema) {
-		final StringBuilder buf = new StringBuilder( "alter table " );
-		buf.append( getTable().getQualifiedName( dialect, defaultCatalog, defaultSchema ) );
-		buf.append( dialect.getDropForeignKeyString() );
-		if ( dialect.supportsIfExistsBeforeConstraintName() ) {
-			buf.append( "if exists " );
-		}
-		buf.append( dialect.quote( getName() ) );
-		if ( dialect.supportsIfExistsAfterConstraintName() ) {
-			buf.append( " if exists" );
-		}
-		return buf.toString();
-	}
 
 	public boolean isCascadeDeleteEnabled() {
 		return cascadeDeleteEnabled;
@@ -189,7 +128,7 @@ public class ForeignKey extends Constraint {
 
 	public boolean isPhysicalConstraint() {
 		return referencedTable.isPhysicalTable()
-				&& getTable().isPhysicalTable()
+				&& getMappedTable().isPhysicalTable()
 				&& !referencedTable.hasDenormalizedTables();
 	}
 
@@ -225,7 +164,7 @@ public class ForeignKey extends Constraint {
 	public String toString() {
 		if ( !isReferenceToPrimaryKey() ) {
 			return getClass().getName()
-					+ '(' + getTable().getName() + getColumns()
+					+ '(' + getMappedTable().getName() + getColumns()
 					+ " ref-columns:" + '(' + getReferencedColumns() + ") as " + getName() + ")";
 		}
 		else {
