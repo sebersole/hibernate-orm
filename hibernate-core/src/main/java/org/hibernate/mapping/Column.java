@@ -123,15 +123,6 @@ public class Column implements MappedColumn, Serializable, Cloneable {
 		return unique;
 	}
 
-//	@Override
-//	public int hashCode() {
-//		//used also for generation of FK names!
-//		return isQuoted() ?
-//				name.hashCode() :
-//				name.getText().toLowerCase( Locale.ROOT ).hashCode();
-//	}
-
-
 	@Override
 	public int hashCode() {
 		return Objects.hash( tableName, name );

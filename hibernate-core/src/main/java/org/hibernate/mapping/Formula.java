@@ -23,10 +23,8 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  * @author Gavin King
  */
 public class Formula implements MappedColumn, Serializable {
-	private static int formulaUniqueInteger;
 
 	private String formula;
-	private BasicValue value;
 	private SqlTypeDescriptor sqlTypeDescriptor;
 
 	public Formula(String formula) {
