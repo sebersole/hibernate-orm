@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.internal.Formatter;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -32,7 +32,7 @@ public class IndividuallySchemaMigratorImpl extends AbstractSchemaMigrator {
 
 	public IndividuallySchemaMigratorImpl(
 			HibernateSchemaManagementTool tool,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaFilter schemaFilter) {
 		super( tool, databaseModel, schemaFilter );
 	}

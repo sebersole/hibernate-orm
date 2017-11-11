@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.Collection;
 
-import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
 /**
@@ -21,10 +20,4 @@ public interface DatabaseModel {
 	Namespace getDefaultNamespace();
 
 	JdbcEnvironment getJdbcEnvironment();
-
-	Collection<AuxiliaryDatabaseObject> getAuxiliaryDatabaseObjects();
-
-	Collection<InitCommand> getInitCommands();
-
-	void addInitCommand(InitCommand initCommand);
 }

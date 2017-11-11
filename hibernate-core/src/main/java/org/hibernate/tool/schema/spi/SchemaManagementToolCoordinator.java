@@ -13,7 +13,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.config.spi.ConfigurationService;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.Action;
 import org.hibernate.tool.schema.SourceType;
@@ -50,6 +50,14 @@ public class SchemaManagementToolCoordinator {
 			final ServiceRegistry serviceRegistry,
 			final Map configurationValues,
 			DelayedDropRegistry delayedDropRegistry) {
+		process( Helper.buildDatabaseModel( metadata ), serviceRegistry, configurationValues, delayedDropRegistry );
+	}
+
+	public static void process(
+			final DataBaseModelExtended databaseModel,
+			final ServiceRegistry serviceRegistry,
+			final Map configurationValues,
+			DelayedDropRegistry delayedDropRegistry) {
 		final ActionGrouping actions = ActionGrouping.interpret( configurationValues );
 
 		if ( actions.getDatabaseAction() == Action.NONE && actions.getScriptAction() == Action.NONE ) {
@@ -69,7 +77,6 @@ public class SchemaManagementToolCoordinator {
 						ExceptionHandlerLoggedImpl.INSTANCE
 		);
 
-		final DatabaseModel databaseModel = Helper.buildDatabaseModel( metadata );
 		performScriptAction( actions.getScriptAction(), databaseModel, tool, serviceRegistry, executionOptions );
 		performDatabaseAction( actions.getDatabaseAction(), databaseModel, tool, serviceRegistry, executionOptions );
 
@@ -112,7 +119,7 @@ public class SchemaManagementToolCoordinator {
 	@SuppressWarnings("unchecked")
 	private static void performDatabaseAction(
 			final Action action,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaManagementTool tool,
 			ServiceRegistry serviceRegistry,
 			final ExecutionOptions executionOptions) {
@@ -229,7 +236,7 @@ public class SchemaManagementToolCoordinator {
 	@SuppressWarnings("unchecked")
 	private static void performScriptAction(
 			Action scriptAction,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaManagementTool tool,
 			ServiceRegistry serviceRegistry,
 			ExecutionOptions executionOptions) {

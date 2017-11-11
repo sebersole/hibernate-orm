@@ -28,6 +28,7 @@ import org.hibernate.mapping.MappedPrimaryKey;
 import org.hibernate.metamodel.model.creation.spi.DatabaseObjectResolver;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
+import org.hibernate.metamodel.model.relational.internal.DataBaseModelExtendedImpl;
 import org.hibernate.metamodel.model.relational.internal.DatabaseModelImpl;
 import org.hibernate.metamodel.model.relational.internal.InflightTable;
 import org.hibernate.metamodel.model.relational.internal.NamespaceImpl;
@@ -56,7 +57,7 @@ public class RuntimeDatabaseModelProducer {
 		this.identifierGeneratorFactory = serviceRegistry.getService( MutableIdentifierGeneratorFactory.class );
 	}
 
-	public DatabaseModel produceDatabaseModel(Database database, DatabaseObjectResolver dbObjectResolver, Callback callback) {
+	public DataBaseModelExtended produceDatabaseModel(Database database, DatabaseObjectResolver dbObjectResolver, Callback callback) {
 		return new Process( callback, dbObjectResolver, database ).execute();
 	}
 
@@ -74,9 +75,10 @@ public class RuntimeDatabaseModelProducer {
 			this.bootDatabaseModel = bootDatabaseModel;
 		}
 
-		private DatabaseModel execute() {
+		private DataBaseModelExtended execute() {
 			final DatabaseModelImpl runtimeDatabaseModel = new DatabaseModelImpl( bootDatabaseModel.getJdbcEnvironment() );
-			generateDefaultNamespace(runtimeDatabaseModel);
+			generateDefaultNamespace( runtimeDatabaseModel );
+
 			for ( MappedNamespace bootModelNamespace : bootDatabaseModel.getNamespaces() ) {
 				final NamespaceImpl runtimeModelNamespace = generateNamespace(
 						runtimeDatabaseModel,
@@ -88,16 +90,19 @@ public class RuntimeDatabaseModelProducer {
 			}
 
 			processForeignKeys( bootDatabaseModel, runtimeDatabaseModel );
+
+			final DataBaseModelExtendedImpl dataBaseModelExtended = new DataBaseModelExtendedImpl( runtimeDatabaseModel );
+
 			for ( MappedAuxiliaryDatabaseObject mappedAuxiliaryDatabaseObject : bootDatabaseModel.getAuxiliaryDatabaseObjects() ) {
-				runtimeDatabaseModel.addAuxiliaryDatabaseObject( mappedAuxiliaryDatabaseObject.generateRuntimeAuxiliaryDatabaseObject(
+				dataBaseModelExtended.addAuxiliaryDatabaseObject( mappedAuxiliaryDatabaseObject.generateRuntimeAuxiliaryDatabaseObject(
 						bootDatabaseModel.getJdbcEnvironment().getDialect() ) );
 			}
 
 			for ( InitCommand command : bootDatabaseModel.getInitCommands() ) {
-				runtimeDatabaseModel.addInitCommand( command );
+				dataBaseModelExtended.addInitCommand( command );
 			}
 
-			return runtimeDatabaseModel;
+			return dataBaseModelExtended;
 		}
 
 		private NamespaceImpl generateNamespace(

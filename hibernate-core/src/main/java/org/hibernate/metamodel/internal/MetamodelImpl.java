@@ -19,6 +19,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -33,6 +34,7 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class MetamodelImpl implements MetamodelImplementor, Serializable {
 	private final SessionFactoryImplementor sessionFactory;
 	private final TypeConfiguration typeConfiguration;
+	private final DatabaseModel databaseModel;
 
 	private final Map<ManagedJavaDescriptor<?>, MappedSuperclassDescriptor<?>> jpaMappedSuperclassTypeMap = new ConcurrentHashMap<>();
 
@@ -41,9 +43,18 @@ public class MetamodelImpl implements MetamodelImplementor, Serializable {
 	 *
 	 * @param typeConfiguration The TypeConfiguration to use for this Metamodel
 	 */
-	public MetamodelImpl(SessionFactoryImplementor sessionFactory, TypeConfiguration typeConfiguration) {
+	public MetamodelImpl(
+			SessionFactoryImplementor sessionFactory,
+			TypeConfiguration typeConfiguration,
+			DatabaseModel databaseModel) {
 		this.sessionFactory = sessionFactory;
 		this.typeConfiguration = typeConfiguration;
+		this.databaseModel = databaseModel;
+	}
+
+	@Override
+	public DatabaseModel getDatabaseModel(){
+		return databaseModel;
 	}
 
 	@Override

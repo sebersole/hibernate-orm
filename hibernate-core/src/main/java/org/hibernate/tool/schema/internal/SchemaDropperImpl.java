@@ -27,7 +27,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.AuxiliaryDatabaseObject;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.Exportable;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
@@ -68,17 +68,17 @@ public class SchemaDropperImpl implements SchemaDropper {
 
 	private final HibernateSchemaManagementTool tool;
 	private final SchemaFilter schemaFilter;
-	private final DatabaseModel databaseModel;
+	private final DataBaseModelExtended databaseModel;
 	private final JdbcServices jdbcServices;
 
 
-	public SchemaDropperImpl(HibernateSchemaManagementTool tool, DatabaseModel databaseModel) {
+	public SchemaDropperImpl(HibernateSchemaManagementTool tool, DataBaseModelExtended databaseModel) {
 		this( tool, databaseModel, DefaultSchemaFilter.INSTANCE );
 	}
 
 	public SchemaDropperImpl(
 			HibernateSchemaManagementTool tool,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaFilter schemaFilter) {
 		this.tool = tool;
 		this.schemaFilter = schemaFilter;
@@ -87,11 +87,11 @@ public class SchemaDropperImpl implements SchemaDropper {
 
 	}
 
-	public SchemaDropperImpl(DatabaseModel databaseModel, ServiceRegistry serviceRegistry) {
+	public SchemaDropperImpl(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry) {
 		this( databaseModel, serviceRegistry, DefaultSchemaFilter.INSTANCE );
 	}
 
-	public SchemaDropperImpl(DatabaseModel databaseModel, ServiceRegistry serviceRegistry, SchemaFilter schemaFilter) {
+	public SchemaDropperImpl(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry, SchemaFilter schemaFilter) {
 		SchemaManagementTool smt = serviceRegistry.getService( SchemaManagementTool.class );
 		if ( smt == null || !HibernateSchemaManagementTool.class.isInstance( smt ) ) {
 			smt = new HibernateSchemaManagementTool();

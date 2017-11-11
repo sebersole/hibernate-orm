@@ -20,6 +20,7 @@ import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.hibernate.engine.jdbc.spi.SqlStatementLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.resource.transaction.spi.DdlTransactionIsolator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
@@ -64,17 +65,17 @@ public class HibernateSchemaManagementTool implements SchemaManagementTool, Serv
 	}
 
 	@Override
-	public SchemaCreator getSchemaCreator(DatabaseModel databaseModel, Map options) {
+	public SchemaCreator getSchemaCreator(DataBaseModelExtended databaseModel, Map options) {
 		return new SchemaCreatorImpl( this, databaseModel, getSchemaFilterProvider( options ).getCreateFilter() );
 	}
 
 	@Override
-	public SchemaDropper getSchemaDropper(DatabaseModel databaseModel, Map options) {
+	public SchemaDropper getSchemaDropper(DataBaseModelExtended databaseModel, Map options) {
 		return new SchemaDropperImpl( this, databaseModel, getSchemaFilterProvider( options ).getDropFilter() );
 	}
 
 	@Override
-	public SchemaMigrator getSchemaMigrator(DatabaseModel databaseModel, Map options) {
+	public SchemaMigrator getSchemaMigrator(DataBaseModelExtended databaseModel, Map options) {
 		if ( determineJdbcMetadaAccessStrategy( options ) == JdbcMetadaAccessStrategy.GROUPED ) {
 			return new GroupedSchemaMigratorImpl(
 					this,
@@ -92,7 +93,7 @@ public class HibernateSchemaManagementTool implements SchemaManagementTool, Serv
 	}
 
 	@Override
-	public SchemaValidator getSchemaValidator(DatabaseModel databaseModel, Map options) {
+	public SchemaValidator getSchemaValidator(DataBaseModelExtended databaseModel, Map options) {
 		if ( determineJdbcMetadaAccessStrategy( options ) == JdbcMetadaAccessStrategy.GROUPED ) {
 			return new GroupedSchemaValidatorImpl(
 					this,

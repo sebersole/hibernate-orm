@@ -20,6 +20,7 @@ import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.metamodel.model.creation.spi.DatabaseObjectResolutionContextImpl;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
@@ -146,7 +147,7 @@ public class Helper {
 		}
 	}
 
-	public static DatabaseModel buildDatabaseModel(MetadataImplementor metadata) {
+	public static DataBaseModelExtended buildDatabaseModel(MetadataImplementor metadata) {
 		final DatabaseObjectResolutionContextImpl dbObjectResolver = new DatabaseObjectResolutionContextImpl();
 		final BootstrapContext bootstrapContext = metadata.getTypeConfiguration()
 				.getMetadataBuildingContext()

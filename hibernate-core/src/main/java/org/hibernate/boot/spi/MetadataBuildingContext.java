@@ -26,6 +26,7 @@ public interface MetadataBuildingContext {
 	BootstrapContext getBootstrapContext();
 
 	TypeDefinition resolveTypeDefinition(String typeName);
+
 	void addTypeDefinition(TypeDefinition typeDefinition);
 
 	/**

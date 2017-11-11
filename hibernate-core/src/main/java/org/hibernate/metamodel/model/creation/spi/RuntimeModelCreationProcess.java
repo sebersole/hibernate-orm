@@ -39,6 +39,7 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
+import org.hibernate.metamodel.internal.MetamodelImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
@@ -46,8 +47,10 @@ import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -87,14 +90,14 @@ public class RuntimeModelCreationProcess {
 		this.descriptorFactory = sessionFactory.getServiceRegistry().getService( RuntimeModelDescriptorFactory.class );
 	}
 
-	public void execute() {
+	public MetamodelImplementor execute() {
 		final InFlightMetadataCollector mappingMetadata = metadataBuildingContext.getMetadataCollector();
 
 		// todo (7.0) : better design where all FKs are created b4 we enter here
 		generateBootModelForeignKeys( mappingMetadata );
 
 		final DatabaseObjectResolutionContextImpl dbObjectResolver = new DatabaseObjectResolutionContextImpl();
-		final DatabaseModel databaseModel = new RuntimeDatabaseModelProducer( metadataBuildingContext.getBootstrapContext() )
+		final DataBaseModelExtended databaseModel = new RuntimeDatabaseModelProducer( metadataBuildingContext.getBootstrapContext() )
 				.produceDatabaseModel(
 				mappingMetadata.getDatabase(),
 				dbObjectResolver,
@@ -107,7 +110,7 @@ public class RuntimeModelCreationProcess {
 
 		final RuntimeModelCreationContext creationContext = new RuntimeModelCreationContextImpl(
 				mappingMetadata,
-				databaseModel,
+				databaseModel.getDataBaseModel(),
 				jpaMetaModelPopulationSetting,
 				dbObjectResolver
 		);
@@ -193,6 +196,13 @@ public class RuntimeModelCreationProcess {
 						.stream()
 						.map( DomainDataRegionConfigImpl.Builder::build )
 						.collect( Collectors.toSet() )
+		);
+
+		sessionFactory.processSchemaManagementToolCoordinator( databaseModel );
+		return new MetamodelImpl(
+				sessionFactory,
+				sessionFactory.getTypeConfiguration(),
+				databaseModel.getDataBaseModel()
 		);
 	}
 

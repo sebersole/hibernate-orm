@@ -7,7 +7,7 @@
 package org.hibernate.tool.schema.internal;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -26,7 +26,7 @@ public class IndividuallySchemaValidatorImpl extends AbstractSchemaValidator {
 
 	public IndividuallySchemaValidatorImpl(
 			HibernateSchemaManagementTool tool,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaFilter validateFilter) {
 		super( tool, databaseModel, validateFilter );
 	}

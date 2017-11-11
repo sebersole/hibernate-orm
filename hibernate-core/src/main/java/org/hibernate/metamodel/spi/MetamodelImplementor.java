@@ -15,6 +15,7 @@ import org.hibernate.Metamodel;
 import org.hibernate.internal.util.collections.streams.StreamUtils;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -25,11 +26,8 @@ import org.hibernate.type.spi.TypeConfiguration;
  * accessible via {@link #getTypeConfiguration()}
  */
 public interface MetamodelImplementor extends Metamodel {
-	// todo (6.0) : would be awesome to expose the runtime database model here
-	//		however that has some drawbacks that we need to discuss, namely
-	//		that DatabaseModel holds state that we do not need beyond
-	//		schema-management tooling - init-commands and aux-db-objects
 
+	DatabaseModel getDatabaseModel();
 	/**
 	 * Close the Metamodel
 	 */

@@ -30,6 +30,7 @@ import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.log.DeprecationLogger;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.TargetType;
@@ -51,14 +52,14 @@ public class SchemaUpdate {
 
 	private final List<Exception> exceptions = new ArrayList<>();
 
-	private final DatabaseModel databaseModel;
+	private final DataBaseModelExtended databaseModel;
 	private final ServiceRegistry serviceRegistry;
 
 	private String outputFile;
 	private String delimiter;
 	private boolean format;
 
-	public SchemaUpdate(DatabaseModel databaseModel, ServiceRegistry serviceRegistry) {
+	public SchemaUpdate(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry) {
 		this.databaseModel = databaseModel;
 		this.serviceRegistry = serviceRegistry;
 	}
