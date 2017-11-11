@@ -28,7 +28,7 @@ import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.log.DeprecationLogger;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.internal.ExceptionHandlerHaltImpl;
 import org.hibernate.tool.schema.internal.Helper;
@@ -45,10 +45,10 @@ import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
 public class SchemaValidator {
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( SchemaValidator.class );
 
-	protected final DatabaseModel databaseModel;
+	protected final DataBaseModelExtended databaseModel;
 	protected final ServiceRegistry serviceRegistry;
 
-	public SchemaValidator(DatabaseModel databaseModel, ServiceRegistry serviceRegistry) {
+	public SchemaValidator(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry) {
 		this.databaseModel = databaseModel;
 		this.serviceRegistry = serviceRegistry;
 	}

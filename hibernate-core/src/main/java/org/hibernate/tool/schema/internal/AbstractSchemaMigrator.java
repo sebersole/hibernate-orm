@@ -19,6 +19,7 @@ import org.hibernate.engine.jdbc.internal.Formatter;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.AuxiliaryDatabaseObject;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.Exportable;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
@@ -60,12 +61,12 @@ public abstract class AbstractSchemaMigrator implements SchemaMigrator {
 
 	protected final HibernateSchemaManagementTool tool;
 	protected final SchemaFilter schemaFilter;
-	protected final DatabaseModel databaseModel;
+	protected final DataBaseModelExtended databaseModel;
 	protected final JdbcServices jdbcServices;
 
 	public AbstractSchemaMigrator(
 			HibernateSchemaManagementTool tool,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaFilter schemaFilter) {
 		this.tool = tool;
 		this.databaseModel = databaseModel;

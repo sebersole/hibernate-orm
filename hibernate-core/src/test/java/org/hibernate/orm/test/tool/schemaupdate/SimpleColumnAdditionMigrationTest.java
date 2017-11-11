@@ -10,6 +10,7 @@ import java.util.EnumSet;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.spi.MetadataImplementor;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.orm.test.tool.BaseSchemaUnitTestCase;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
@@ -45,7 +46,7 @@ public class SimpleColumnAdditionMigrationTest extends BaseSchemaUnitTestCase {
 			assertEquals( 0, schemaUpdate.getExceptions().size() );
 		} );
 
-		final DatabaseModel v2DatabaseModel = createDatabaseModel( RESOURCE_2 );
+		final DataBaseModelExtended v2DatabaseModel = createDatabaseModel( RESOURCE_2 );
 		final SchemaUpdate v2schemaUpdate = new SchemaUpdate( v2DatabaseModel, getStandardServiceRegistry() );
 		v2schemaUpdate.execute( EnumSet.of( TargetType.DATABASE, TargetType.STDOUT ) );
 		assertEquals( 0, v2schemaUpdate.getExceptions().size() );
@@ -53,7 +54,7 @@ public class SimpleColumnAdditionMigrationTest extends BaseSchemaUnitTestCase {
 		new SchemaExport( v2DatabaseModel, getStandardServiceRegistry() ).drop( EnumSet.of( TargetType.DATABASE ) );
 	}
 
-	private DatabaseModel createDatabaseModel(String resource1) {
+	private DataBaseModelExtended createDatabaseModel(String resource1) {
 		final MetadataImplementor v1metadata = (MetadataImplementor) new MetadataSources( getStandardServiceRegistry() )
 				.addResource( resource1 )
 				.buildMetadata();

@@ -35,6 +35,7 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.util.collections.streams.StreamUtils;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.spi.QueryEngine;
@@ -427,4 +428,6 @@ public interface SessionFactoryImplementor
 	}
 
 	EntityGraph findEntityGraphByName(String name);
+
+	void processSchemaManagementToolCoordinator(DataBaseModelExtended dataBaseModel);
 }

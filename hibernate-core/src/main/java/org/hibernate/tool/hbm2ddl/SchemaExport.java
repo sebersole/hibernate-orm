@@ -31,7 +31,7 @@ import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.log.DeprecationLogger;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.schema.SourceType;
 import org.hibernate.tool.schema.TargetType;
@@ -60,10 +60,10 @@ import org.hibernate.tool.schema.spi.TargetDescriptor;
 public class SchemaExport {
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( SchemaExport.class );
 
-	private final DatabaseModel databaseModel;
+	private final DataBaseModelExtended databaseModel;
 	private final ServiceRegistry serviceRegistry;
 
-	public SchemaExport(DatabaseModel databaseModel, ServiceRegistry serviceRegistry) {
+	public SchemaExport(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry) {
 		this.databaseModel = databaseModel;
 		this.serviceRegistry = serviceRegistry;
 	}

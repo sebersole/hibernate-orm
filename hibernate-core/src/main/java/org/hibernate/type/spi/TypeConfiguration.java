@@ -43,6 +43,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmLiteral;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -51,7 +52,6 @@ import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpres
 import org.hibernate.sql.ast.produce.sqm.internal.PolymorphicEntityValuedExpressableTypeImpl;
 import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.java.spi.MappedSuperclassJavaDescriptor;
@@ -490,7 +490,7 @@ public class TypeConfiguration implements SessionFactoryObserver {
 		return scope.getSessionFactory();
 	}
 
-	public void scope(SessionFactoryImplementor factory, BootstrapContext bootstrapContext) {
+	public MetamodelImplementor scope(SessionFactoryImplementor factory, BootstrapContext bootstrapContext) {
 		log.debugf( "Scoping TypeConfiguration [%s] to SessionFactory [%s]", this, factory );
 
 		for ( Map.Entry<String, String> importEntry : scope.metadataBuildingContext.getMetadataCollector().getImports().entrySet() ) {
@@ -504,7 +504,7 @@ public class TypeConfiguration implements SessionFactoryObserver {
 		scope.setSessionFactory( factory );
 		factory.addObserver( this );
 
-		new RuntimeModelCreationProcess( factory, bootstrapContext, getMetadataBuildingContext() ).execute();
+		return new RuntimeModelCreationProcess( factory, bootstrapContext, getMetadataBuildingContext() ).execute();
 	}
 
 	@Override

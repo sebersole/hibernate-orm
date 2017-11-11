@@ -42,6 +42,7 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.spi.NamedQueryRepository;
@@ -225,6 +226,11 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	@Override
 	public EntityGraph findEntityGraphByName(String name) {
 		return delegate.findEntityGraphByName( name );
+	}
+
+	@Override
+	public void processSchemaManagementToolCoordinator(DataBaseModelExtended dataBaseModel) {
+		delegate.processSchemaManagementToolCoordinator( dataBaseModel );
 	}
 
 	@Override

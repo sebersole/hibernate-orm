@@ -9,7 +9,7 @@ package org.hibernate.tool.schema.internal;
 import java.util.Locale;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
@@ -35,12 +35,12 @@ public abstract class AbstractSchemaValidator implements SchemaValidator {
 	private static final Logger log = Logger.getLogger( AbstractSchemaValidator.class );
 
 	protected final HibernateSchemaManagementTool tool;
-	protected final DatabaseModel databaseModel;
+	protected final DataBaseModelExtended databaseModel;
 	protected final SchemaFilter schemaFilter;
 
 	public AbstractSchemaValidator(
 			HibernateSchemaManagementTool tool,
-			DatabaseModel databaseModel,
+			DataBaseModelExtended databaseModel,
 			SchemaFilter validateFilter) {
 		this.tool = tool;
 		this.databaseModel = databaseModel;

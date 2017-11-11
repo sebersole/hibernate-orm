@@ -24,6 +24,7 @@ import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.orm.test.util.DdlTransactionIsolatorTestingImpl;
 import org.hibernate.resource.transaction.spi.DdlTransactionIsolator;
@@ -63,7 +64,7 @@ public abstract class BaseSchemaUnitTestCase
 	protected static final String[] NO_MAPPINGS = new String[0];
 
 	private StandardServiceRegistry standardServiceRegistry;
-	private DatabaseModel databaseModel;
+	private DataBaseModelExtended databaseModel;
 	private MetadataImplementor metadata;
 
 	private File output;
@@ -135,7 +136,7 @@ public abstract class BaseSchemaUnitTestCase
 		return schemaScope;
 	}
 
-	public DatabaseModel getDatabaseModel() {
+	public DataBaseModelExtended getDatabaseModel() {
 		return databaseModel;
 	}
 
@@ -282,12 +283,12 @@ public abstract class BaseSchemaUnitTestCase
 	}
 
 	public class SchemaScopeImpl implements SchemaScope {
-		private final DatabaseModel databaseModel;
+		private final DataBaseModelExtended databaseModel;
 		private final StandardServiceRegistry standardServiceRegistry;
 		private final boolean dropSchemaAfterTest;
 
 		public SchemaScopeImpl(
-				DatabaseModel databaseModel,
+				DataBaseModelExtended databaseModel,
 				StandardServiceRegistry standardServiceRegistry, boolean dropSchemaAfterTest) {
 			this.databaseModel = databaseModel;
 			this.standardServiceRegistry = standardServiceRegistry;

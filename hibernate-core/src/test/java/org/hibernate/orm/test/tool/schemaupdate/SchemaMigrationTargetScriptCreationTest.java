@@ -20,6 +20,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cfg.Environment;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.service.ServiceRegistry;
@@ -72,7 +73,7 @@ public class SchemaMigrationTargetScriptCreationTest extends SessionFactoryBased
 					.buildMetadata();
 			metadata.validate();
 
-			DatabaseModel databaseModel = Helper.buildDatabaseModel( metadata );
+			DataBaseModelExtended databaseModel = Helper.buildDatabaseModel( metadata );
 
 			new SchemaExport( databaseModel, serviceRegistry ).drop( EnumSet.of(
 					TargetType.DATABASE,

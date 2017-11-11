@@ -17,7 +17,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.orm.test.util.DdlTransactionIsolatorTestingImpl;
 import org.hibernate.resource.transaction.spi.DdlTransactionIsolator;
 import org.hibernate.tool.schema.extract.internal.DatabaseInformationImpl;
@@ -89,7 +89,7 @@ public class TestExtraPhysicalTableTypes {
 
 	private InformationExtractorJdbcDatabaseMetaDataImplTest buildInformationExtractorJdbcDatabaseMetaDataImplTest()
 			throws SQLException {
-		final DatabaseModel databaseModel = Helper.buildDatabaseModel( metadata );
+		final DataBaseModelExtended databaseModel = Helper.buildDatabaseModel( metadata );
 		final ConnectionProvider connectionProvider = ssr.getService( ConnectionProvider.class );
 		final DatabaseInformation dbInfo = new DatabaseInformationImpl(
 				ssr,

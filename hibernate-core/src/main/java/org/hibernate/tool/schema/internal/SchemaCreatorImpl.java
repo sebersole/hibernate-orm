@@ -31,6 +31,7 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.metamodel.model.relational.spi.AuxiliaryDatabaseObject;
+import org.hibernate.metamodel.model.relational.spi.DataBaseModelExtended;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.Exportable;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
@@ -76,24 +77,24 @@ public class SchemaCreatorImpl implements SchemaCreator {
 	public static final String DEFAULT_IMPORT_FILE = "/import.sql";
 
 	private final HibernateSchemaManagementTool tool;
-	private final DatabaseModel databaseModel;
+	private final DataBaseModelExtended databaseModel;
 	private final SchemaFilter schemaFilter;
 
-	public SchemaCreatorImpl(HibernateSchemaManagementTool tool, DatabaseModel databaseModel) {
+	public SchemaCreatorImpl(HibernateSchemaManagementTool tool, DataBaseModelExtended databaseModel) {
 		this( tool, databaseModel, DefaultSchemaFilter.INSTANCE );
 	}
 
-	public SchemaCreatorImpl(HibernateSchemaManagementTool tool, DatabaseModel databaseModel, SchemaFilter schemaFilter) {
+	public SchemaCreatorImpl(HibernateSchemaManagementTool tool, DataBaseModelExtended databaseModel, SchemaFilter schemaFilter) {
 		this.tool = tool;
 		this.databaseModel = databaseModel;
 		this.schemaFilter = schemaFilter;
 	}
 
-	public SchemaCreatorImpl(DatabaseModel databaseModel, ServiceRegistry serviceRegistry) {
+	public SchemaCreatorImpl(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry) {
 		this( databaseModel, serviceRegistry, DefaultSchemaFilter.INSTANCE );
 	}
 
-	public SchemaCreatorImpl(DatabaseModel databaseModel, ServiceRegistry serviceRegistry, SchemaFilter schemaFilter) {
+	public SchemaCreatorImpl(DataBaseModelExtended databaseModel, ServiceRegistry serviceRegistry, SchemaFilter schemaFilter) {
 		SchemaManagementTool smt = serviceRegistry.getService( SchemaManagementTool.class );
 		if ( smt == null || !HibernateSchemaManagementTool.class.isInstance( smt ) ) {
 			smt = new HibernateSchemaManagementTool();
