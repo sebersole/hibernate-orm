@@ -140,7 +140,7 @@ public class IdTableHelper {
 		final IdTableCreationWork work = new IdTableCreationWork();
 
 		if ( transactionality != IdTableManagementTransactionality.NONE ) {
-			log.debugf( "IdTableManagementTransactionality#%s was requested but not supported, skipping transactionality" );
+			log.debugf( "IdTableManagementTransactionality#%s was requested but not supported, skipping transactionality" , transactionality);
 		}
 
 		// simply execute the work using a Connection obtained from JdbcConnectionAccess
@@ -190,7 +190,7 @@ public class IdTableHelper {
 
 	public void dropIdTable(JdbcConnectionAccess jdbcConnectionAccess) {
 		if ( transactionality != IdTableManagementTransactionality.NONE ) {
-			log.debugf( "IdTableManagementTransactionality#%s was requested but not supported, skipping transactionality" );
+			log.debugf( "IdTableManagementTransactionality#%s was requested but not supported, skipping transactionality", transactionality );
 		}
 
 		final IdTableDropWork work = new IdTableDropWork();

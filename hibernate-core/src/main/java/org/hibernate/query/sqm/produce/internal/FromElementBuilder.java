@@ -61,11 +61,13 @@ public class FromElementBuilder {
 			String alias) {
 		if ( alias == null ) {
 			alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for root entity reference [%s]",
-					alias,
-					entityBinding.getEntityName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for root entity reference [%s]",
+						alias,
+						entityBinding.getEntityName()
+				);
+			}
 		}
 		final SqmRoot root = new SqmRoot(
 				fromElementSpace,
@@ -90,11 +92,13 @@ public class FromElementBuilder {
 			String alias) {
 		if ( alias == null ) {
 			alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for cross joined entity reference [%s]",
-					alias,
-					entityToJoin.getEntityName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for cross joined entity reference [%s]",
+						alias,
+						entityToJoin.getEntityName()
+				);
+			}
 		}
 
 		final SqmCrossJoin join = new SqmCrossJoin(
@@ -116,11 +120,13 @@ public class FromElementBuilder {
 			SqmJoinType joinType) {
 		if ( alias == null ) {
 			alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for entity join [%s]",
-					alias,
-					entityToJoin.getEntityName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for entity join [%s]",
+						alias,
+						entityToJoin.getEntityName()
+				);
+			}
 		}
 
 		final SqmEntityJoin join = new SqmEntityJoin(
@@ -159,12 +165,14 @@ public class FromElementBuilder {
 
 		if ( alias == null ) {
 			alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for attribute join [%s.%s]",
-					alias,
-					attributeBinding.getSourceReference().getExportedFromElement().getIdentificationVariable(),
-					attributeBinding.getReferencedNavigable().getAttributeName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for attribute join [%s.%s]",
+						alias,
+						attributeBinding.getSourceReference().getExportedFromElement().getIdentificationVariable(),
+						attributeBinding.getReferencedNavigable().getAttributeName()
+				);
+			}
 		}
 
 		SqmAttributeJoin join = null;

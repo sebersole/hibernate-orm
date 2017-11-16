@@ -77,12 +77,14 @@ public class SqmDynamicInstantiation
 		if ( instantiationTarget.getNature() == LIST ) {
 			// really should not have an alias...
 			if ( argument.getAlias() != null ) {
-				log.debugf(
-						"Argument [%s] for dynamic List instantiation declared an 'injection alias' [%s] " +
-								"but such aliases are ignored for dynamic List instantiations",
-						argument.getSelectableNode().asLoggableText(),
-						argument.getAlias()
-				);
+				if ( log.isDebugEnabled() ) {
+					log.debugf(
+							"Argument [%s] for dynamic List instantiation declared an 'injection alias' [%s] " +
+									"but such aliases are ignored for dynamic List instantiations",
+							argument.getSelectableNode().asLoggableText(),
+							argument.getAlias()
+					);
+				}
 			}
 		}
 		else if ( instantiationTarget.getNature() == MAP ) {

@@ -87,7 +87,7 @@ public class QuerySpecProcessingStateStandardImpl extends AbstractQuerySpecProce
 
 		if ( found == null ) {
 			if ( getContainingQueryState() != null ) {
-				log.debugf( "Unable to resolve unqualified attribute [%s] in local SqmFromClause; checking containingQueryState" );
+				log.debugf( "Unable to resolve unqualified attribute [%s] in local SqmFromClause; checking containingQueryState", name );
 				found = getContainingQueryState().findNavigableBindingExposingAttribute( name );
 			}
 		}

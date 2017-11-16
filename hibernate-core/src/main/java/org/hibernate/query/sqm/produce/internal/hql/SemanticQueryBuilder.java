@@ -745,11 +745,13 @@ public class SemanticQueryBuilder extends HqlParserBaseVisitor implements SqmNav
 		String alias = interpretIdentificationVariable( rootEntityContext.identificationVariableDef() );
 		if ( alias == null ) {
 			alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for DML root entity reference [%s]",
-					alias,
-					entityReference.getEntityName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for DML root entity reference [%s]",
+						alias,
+						entityReference.getEntityName()
+				);
+			}
 		}
 		final SqmRoot root = new SqmRoot( null, parsingContext.makeUniqueIdentifier(), alias, entityReference );
 		parsingContext.registerFromElementByUniqueId( root );
@@ -842,11 +844,13 @@ public class SemanticQueryBuilder extends HqlParserBaseVisitor implements SqmNav
 			}
 
 			String alias = parsingContext.getImplicitAliasGenerator().buildUniqueImplicitAlias();
-			log.debugf(
-					"Generated implicit alias [%s] for INSERT target [%s]",
-					alias,
-					entityReference.getEntityName()
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Generated implicit alias [%s] for INSERT target [%s]",
+						alias,
+						entityReference.getEntityName()
+				);
+			}
 
 			SqmRoot root = new SqmRoot( null, parsingContext.makeUniqueIdentifier(), alias, entityReference );
 			parsingContext.registerFromElementByUniqueId( root );
