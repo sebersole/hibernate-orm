@@ -15,7 +15,7 @@ import javax.persistence.EntityManagerFactory;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.envers.internal.AuditReaderFactory;
-import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaBuilder;
 import org.hibernate.stat.Statistics;
 
 /**
@@ -43,7 +43,7 @@ public interface SessionFactory extends EntityManagerFactory, AuditReaderFactory
 	SessionFactoryOptions getSessionFactoryOptions();
 
 	@Override
-	HibernateCriteriaBuilder getCriteriaBuilder();
+	JpaCriteriaBuilder getCriteriaBuilder();
 
 	@Override
 	Metamodel getMetamodel();

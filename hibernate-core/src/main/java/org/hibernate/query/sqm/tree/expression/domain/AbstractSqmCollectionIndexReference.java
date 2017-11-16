@@ -97,6 +97,11 @@ public abstract class AbstractSqmCollectionIndexReference
 	}
 
 	@Override
+	public void setIdentificationVariable(String identificationVariable) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 		// for most index classifications, there is none
 		return null;

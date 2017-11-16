@@ -39,6 +39,8 @@ public interface TableGroupInfo {
 	 */
 	String getIdentificationVariable();
 
+	void setIdentificationVariable(String identificationVariable);
+
 	/**
 	 * The specific entity subclass to be used (for filtering).
 	 */

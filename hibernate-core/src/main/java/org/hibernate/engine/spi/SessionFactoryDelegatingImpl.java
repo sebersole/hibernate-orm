@@ -43,7 +43,7 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
-import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaBuilder;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.spi.QueryEngine;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
@@ -368,7 +368,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public HibernateCriteriaBuilder getCriteriaBuilder() {
+	public JpaCriteriaBuilder getCriteriaBuilder() {
 		return delegate.getCriteriaBuilder();
 	}
 

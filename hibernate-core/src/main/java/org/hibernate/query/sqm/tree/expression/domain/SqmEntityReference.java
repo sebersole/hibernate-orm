@@ -121,6 +121,11 @@ public class SqmEntityReference extends AbstractSqmNavigableReference
 	}
 
 	@Override
+	public void setIdentificationVariable(String identificationVariable) {
+		exportedFromElement.setIdentificationVariable( identificationVariable );
+	}
+
+	@Override
 	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 		return exportedFromElement.getIntrinsicSubclassEntityMetadata();
 	}

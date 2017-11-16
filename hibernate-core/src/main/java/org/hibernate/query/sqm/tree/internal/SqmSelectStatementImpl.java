@@ -18,6 +18,10 @@ public class SqmSelectStatementImpl extends AbstractSqmStatement implements SqmS
 	public SqmSelectStatementImpl() {
 	}
 
+	public SqmSelectStatementImpl(SqmQuerySpec sqmQuerySpec) {
+		this.querySpec = sqmQuerySpec;
+	}
+
 	@Override
 	public SqmQuerySpec getQuerySpec() {
 		return querySpec;

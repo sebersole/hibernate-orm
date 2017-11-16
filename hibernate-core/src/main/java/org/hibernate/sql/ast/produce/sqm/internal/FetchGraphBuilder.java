@@ -165,6 +165,11 @@ public class FetchGraphBuilder {
 							}
 
 							@Override
+							public void setIdentificationVariable(String identificationVariable) {
+								throw new UnsupportedOperationException();
+							}
+
+							@Override
 							public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 								return null;
 							}

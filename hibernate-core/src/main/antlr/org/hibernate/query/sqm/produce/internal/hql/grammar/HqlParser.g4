@@ -310,7 +310,7 @@ predicate
 	| expression (NOT)? IN inList							# InPredicate
 	| expression (NOT)? BETWEEN expression AND expression	# BetweenPredicate
 	| expression (NOT)? LIKE expression (likeEscape)?		# LikePredicate
-	| MEMBER OF path										# MemberOfPredicate
+	| expression MEMBER (OF)? path							# MemberOfPredicate
 	;
 
 inList

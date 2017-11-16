@@ -1351,6 +1351,7 @@ public class SemanticQueryBuilder extends HqlParserBaseVisitor implements SqmNav
 
 	@Override
 	public SqmPredicate visitMemberOfPredicate(HqlParser.MemberOfPredicateContext ctx) {
+		final SqmExpression lhs = (SqmExpression) ctx.expression().accept( this );
 		final SqmNavigableReference pathResolution = (SqmNavigableReference) ctx.path().accept( this );
 		if ( pathResolution == null ) {
 			throw new SemanticException( "Could not resolve path [" + ctx.path().getText() + "] as a plural attribute reference" );
@@ -1360,7 +1361,8 @@ public class SemanticQueryBuilder extends HqlParserBaseVisitor implements SqmNav
 			throw new SemanticException( "Path argument to MEMBER OF must be a plural attribute" );
 		}
 
-		return new MemberOfSqmPredicate( (SqmPluralAttributeReference) pathResolution );
+
+		return new MemberOfSqmPredicate( lhs, (SqmPluralAttributeReference) pathResolution );
 	}
 
 	@Override

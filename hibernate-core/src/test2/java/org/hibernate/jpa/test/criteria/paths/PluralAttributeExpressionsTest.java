@@ -21,7 +21,7 @@ import org.hibernate.jpa.test.metamodel.MapEntity;
 import org.hibernate.jpa.test.metamodel.MapEntityLocal;
 import org.hibernate.jpa.test.metamodel.MapEntity_;
 import org.hibernate.jpa.test.metamodel.Translation;
-import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaBuilder;
 
 import org.hibernate.testing.FailureExpected;
 import org.hibernate.testing.TestForIssue;
@@ -58,7 +58,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@Test
 	public void testCollectionIsEmptyCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<Address> criteria = cb.createQuery( Address.class );
 			final Root<Address> root = criteria.from( Address.class);
@@ -84,7 +84,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@FailureExpected( jiraKey = "HHH-6686")
 	public void testElementMapIsEmptyCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<MapEntity> criteria = cb.createQuery( MapEntity.class );
 			final Root<MapEntity> root = criteria.from( MapEntity.class);
@@ -108,7 +108,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@TestForIssue( jiraKey = "HHH-11225" )
 	public void testEntityMapIsEmptyCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<Article> criteria = cb.createQuery( Article.class );
 			final Root<Article> root = criteria.from( Article.class);
@@ -134,7 +134,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@Test
 	public void testCollectionSizeCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<Address> criteria = cb.createQuery( Address.class );
 			final Root<Address> root = criteria.from( Address.class);
@@ -158,7 +158,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@TestForIssue( jiraKey = "HHH-11225" )
 	public void testElementMapSizeCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<MapEntity> criteria = cb.createQuery( MapEntity.class );
 			final Root<MapEntity> root = criteria.from( MapEntity.class);
@@ -182,7 +182,7 @@ public class PluralAttributeExpressionsTest extends AbstractMetamodelSpecificTes
 	@TestForIssue( jiraKey = "HHH-11225" )
 	public void testEntityMapSizeCriteria() {
 		doInJPA( this::entityManagerFactory, entityManager -> {
-			final HibernateCriteriaBuilder cb = (HibernateCriteriaBuilder) entityManager.getCriteriaBuilder();
+			final JpaCriteriaBuilder cb = (JpaCriteriaBuilder) entityManager.getCriteriaBuilder();
 
 			final CriteriaQuery<Article> criteria = cb.createQuery( Article.class );
 			final Root<Article> root = criteria.from( Article.class);
