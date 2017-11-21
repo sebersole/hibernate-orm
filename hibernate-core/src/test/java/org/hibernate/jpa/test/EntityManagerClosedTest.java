@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import org.hibernate.testing.TestForIssue;
 import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -34,6 +35,23 @@ public class EntityManagerClosedTest extends BaseEntityManagerFunctionalTestCase
 
 	@Test
 	@TestForIssue( jiraKey = "HHH-12110")
+	public void testGetMetamodelWithTransaction () {
+		EntityManager em = getOrCreateEntityManager();
+		em.getTransaction().begin();
+		em.close();
+		try {
+			em.getMetamodel();
+			fail( "should have thrown IllegalStateException" );
+		}
+		catch (IllegalStateException ex) {
+			// expected
+			// make sure transaction is set for rollback
+			assertTrue( em.getTransaction().getRollbackOnly() );
+		}
+	}
+
+	@Test
+	@TestForIssue( jiraKey = "HHH-12110")
 	public void testGetCriteriaBuilder() {
 		EntityManager em = getOrCreateEntityManager();
 		em.close();
@@ -43,6 +61,23 @@ public class EntityManagerClosedTest extends BaseEntityManagerFunctionalTestCase
 		}
 		catch (IllegalStateException ex) {
 			// expected
+		}
+	}
+
+	@Test
+	@TestForIssue( jiraKey = "HHH-12110")
+	public void testGetCriteriaBuilderWithTransaction() {
+		EntityManager em = getOrCreateEntityManager();
+		em.getTransaction().begin();
+		em.close();
+		try {
+			em.getCriteriaBuilder();
+			fail( "should have thrown IllegalStateException" );
+		}
+		catch (IllegalStateException ex) {
+			// expected
+			// make sure transaction is set for rollback
+			assertTrue( em.getTransaction().getRollbackOnly() );
 		}
 	}
 
@@ -62,6 +97,23 @@ public class EntityManagerClosedTest extends BaseEntityManagerFunctionalTestCase
 
 	@Test
 	@TestForIssue( jiraKey = "HHH-12110")
+	public void testGetEntityManagerFactoryWithTransaction() {
+		EntityManager em = getOrCreateEntityManager();
+		em.getTransaction().begin();
+		em.close();
+		try {
+			em.getEntityManagerFactory();
+			fail( "should have thrown IllegalStateException" );
+		}
+		catch (IllegalStateException ex) {
+			// expected
+			// make sure transaction is set for rollback
+			assertTrue( em.getTransaction().getRollbackOnly() );
+		}
+	}
+
+	@Test
+	@TestForIssue( jiraKey = "HHH-12110")
 	public void testCreateNamedQuery() {
 		EntityManager em = getOrCreateEntityManager();
 		em.close();
@@ -71,6 +123,23 @@ public class EntityManagerClosedTest extends BaseEntityManagerFunctionalTestCase
 		}
 		catch (IllegalStateException ex) {
 			// expected
+		}
+	}
+
+	@Test
+	@TestForIssue( jiraKey = "HHH-12110")
+	public void testCreateNamedQueryWithTransaction() {
+		EntityManager em = getOrCreateEntityManager();
+		em.getTransaction().begin();
+		em.close();
+		try {
+			em.createNamedQuery( "abc" );
+			fail( "should have thrown IllegalStateException" );
+		}
+		catch (IllegalStateException ex) {
+			// expected
+			// make sure transaction is set for rollback
+			assertTrue( em.getTransaction().getRollbackOnly() );
 		}
 	}
 }
