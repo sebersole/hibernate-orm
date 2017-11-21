@@ -3810,16 +3810,19 @@ public final class SessionImpl
 
 	@Override
 	public SessionFactoryImplementor getEntityManagerFactory() {
+		checkOpen();
 		return getFactory();
 	}
 
 	@Override
 	public CriteriaBuilder getCriteriaBuilder() {
+		checkOpen();
 		return getFactory().getCriteriaBuilder();
 	}
 
 	@Override
 	public MetamodelImplementor getMetamodel() {
+		checkOpen();
 		return getFactory().getMetamodel();
 	}
 
