@@ -22,6 +22,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.relational.Database;
+import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.boot.model.relational.Namespace;
 import org.hibernate.boot.model.relational.QualifiedName;
 import org.hibernate.boot.model.relational.QualifiedNameParser;
@@ -529,6 +530,10 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 		return "insert into " + renderedTableName + " (" + segmentColumnName + ", " + valueColumnName + ") " + " values (?,?)";
 	}
 
+	protected InitCommand generateInsertInitCommand(){
+		return new InitCommand( "insert into " + renderedTableName + " (" + segmentColumnName + ", " + valueColumnName + ") " + " values ('" + segmentValue + "'," + initialValue + ")" );
+	}
+
 	private IntegralDataTypeHolder makeValue() {
 		return IdentifierGeneratorHelper.getIntegralDataTypeHolder( identifierType.getReturnedClass() );
 	}
@@ -718,10 +723,10 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 				table.getQualifiedTableName(),
 				dialect
 		);
+		table.addInitCommand( generateInsertInitCommand() );
 
 		this.selectQuery = buildSelectQuery( dialect );
 		this.updateQuery = buildUpdateQuery();
 		this.insertQuery = buildInsertQuery();
-
 	}
 }
