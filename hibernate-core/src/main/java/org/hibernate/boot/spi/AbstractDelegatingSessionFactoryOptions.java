@@ -25,6 +25,7 @@ import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
+import org.hibernate.jpa.JpaCompliance;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.criteria.LiteralHandlingMode;
@@ -393,5 +394,10 @@ public class AbstractDelegatingSessionFactoryOptions implements SessionFactoryOp
 	@Override
 	public boolean jdbcStyleParamsZeroBased() {
 		return delegate.jdbcStyleParamsZeroBased();
+	}
+
+	@Override
+	public JpaCompliance getJpaCompliance() {
+		return delegate.getJpaCompliance();
 	}
 }

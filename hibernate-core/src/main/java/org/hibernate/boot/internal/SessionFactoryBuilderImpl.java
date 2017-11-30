@@ -50,6 +50,8 @@ import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.jpa.JpaCompliance;
+import org.hibernate.jpa.spi.JpaComplianceImpl;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.criteria.LiteralHandlingMode;
@@ -495,6 +497,30 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	}
 
 	@Override
+	public SessionFactoryBuilder enableJpaQueryCompliance(boolean enabled) {
+		this.options.jpaCompliance.setQueryCompliance( enabled );
+		return this;
+	}
+
+	@Override
+	public SessionFactoryBuilder enableJpaTransactionCompliance(boolean enabled) {
+		this.options.jpaCompliance.setTransactionCompliance( enabled );
+		return this;
+	}
+
+	@Override
+	public SessionFactoryBuilder enableJpaListCompliance(boolean enabled) {
+		this.options.jpaCompliance.setListCompliance( enabled );
+		return this;
+	}
+
+	@Override
+	public SessionFactoryBuilder enableJpaClosedCompliance(boolean enabled) {
+		this.options.jpaCompliance.setClosedCompliance( enabled );
+		return this;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends SessionFactoryBuilder> T unwrap(Class<T> type) {
 		return (T) this;
@@ -626,6 +652,8 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		private LiteralHandlingMode criteriaLiteralHandlingMode;
 
 		private Map<String, SQLFunction> sqlFunctions;
+
+		private JpaComplianceImpl jpaCompliance;
 
 		public SessionFactoryOptionsStateStandardImpl(StandardServiceRegistry serviceRegistry) {
 			this.serviceRegistry = serviceRegistry;
@@ -846,6 +874,9 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 					configurationSettings,
 					false
 			);
+
+			// added the boolean parameter in case we want to define some form of "all" as discussed
+			this.jpaCompliance = new JpaComplianceImpl( configurationSettings, false );
 		}
 
 		private static Interceptor determineInterceptor(Map configurationSettings, StrategySelector strategySelector) {
@@ -983,6 +1014,7 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		public boolean isAllowOutOfTransactionUpdateOperations() {
 			return allowOutOfTransactionUpdateOperations;
 		}
+
 
 		@Override
 		public boolean isReleaseResourcesOnCloseEnabled() {
@@ -1296,6 +1328,11 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		public boolean jdbcStyleParamsZeroBased() {
 			return this.jdbcStyleParamsZeroBased;
 		}
+
+		@Override
+		public JpaCompliance getJpaCompliance() {
+			return jpaCompliance;
+		}
 	}
 
 	@Override
@@ -1324,6 +1361,11 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	@Override
 	public boolean isReleaseResourcesOnCloseEnabled(){
 		return options.releaseResourcesOnCloseEnabled;
+	}
+
+	@Override
+	public JpaCompliance getJpaCompliance() {
+		return options.jpaCompliance;
 	}
 
 	@Override
