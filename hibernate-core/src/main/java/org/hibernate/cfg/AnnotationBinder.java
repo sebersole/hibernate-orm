@@ -3335,9 +3335,13 @@ public final class AnnotationBinder {
 		TableGenerators tableGenerators = annElt.getAnnotation( TableGenerators.class );
 		if ( tableGenerators != null ) {
 			for ( TableGenerator tableGenerator : tableGenerators.value() ) {
+				IdentifierGeneratorDefinition idGenerator = buildIdGenerator(
+						tableGenerator,
+						context
+				);
 				generators.put(
-						buildIdGenerator( tableGenerator, context ).getName(),
-						buildIdGenerator( tableGenerator, context )
+						idGenerator.getName(),
+						idGenerator
 				);
 			}
 		}
@@ -3345,9 +3349,13 @@ public final class AnnotationBinder {
 		SequenceGenerators sequenceGenerators = annElt.getAnnotation( SequenceGenerators.class );
 		if ( sequenceGenerators != null ) {
 			for ( SequenceGenerator sequenceGenerator : sequenceGenerators.value() ) {
+				IdentifierGeneratorDefinition idGenerator = buildIdGenerator(
+						sequenceGenerator,
+						context
+				);
 				generators.put(
-						buildIdGenerator( sequenceGenerator, context ).getName(),
-						buildIdGenerator( sequenceGenerator, context )
+						idGenerator.getName(),
+						idGenerator
 				);
 			}
 		}
