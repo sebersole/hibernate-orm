@@ -50,6 +50,11 @@ public class SqmPluralAttributeReference
 	}
 
 	@Override
+	public void setIdentificationVariable(String identificationVariable) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 		throw new NotYetImplementedException(  );
 	}

@@ -452,7 +452,10 @@ public class QuerySplitter {
 			final SqmAttributeReference attributeReferenceCopy = resolveAttributeReference( predicate.getPluralAttributeReference() );
 			// NOTE : no type check b4 cast as it is assumed that the initial SQM producer
 			//		already verified that the path resolves to a plural attribute
-			return new MemberOfSqmPredicate( (SqmPluralAttributeReference) attributeReferenceCopy );
+			return new MemberOfSqmPredicate(
+					(SqmExpression) predicate.getExpression().accept( this ),
+					(SqmPluralAttributeReference) attributeReferenceCopy
+			);
 		}
 
 //		private DomainReferenceBinding resolveDomainReferenceBinding(DomainReferenceBinding binding) {

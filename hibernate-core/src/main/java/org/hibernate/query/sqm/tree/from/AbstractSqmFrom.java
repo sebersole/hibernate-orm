@@ -17,7 +17,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 public abstract class AbstractSqmFrom implements SqmFrom {
 	private final SqmFromElementSpace fromElementSpace;
 	private final String uid;
-	private final String alias;
+	private String alias;
 	private final SqmNavigableReference binding;
 	private final EntityDescriptor subclassIndicator;
 
@@ -57,6 +57,10 @@ public abstract class AbstractSqmFrom implements SqmFrom {
 	@Override
 	public String getIdentificationVariable() {
 		return alias;
+	}
+
+	public void setIdentificationVariable(String identificationVariable) {
+		this.alias = identificationVariable;
 	}
 
 	@Override

@@ -86,6 +86,11 @@ public abstract class AbstractSqmCollectionElementReference extends AbstractSqmN
 	}
 
 	@Override
+	public void setIdentificationVariable(String identificationVariable) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 		// for most element classifications, there is none
 		return null;

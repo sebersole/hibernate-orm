@@ -28,7 +28,7 @@ public class SqmAttributeJoin
 
 	private final SqmFrom lhs;
 	private final SqmAttributeReference attributeBinding;
-	private final boolean fetched;
+	private boolean fetched;
 
 	private SqmPredicate onClausePredicate;
 
@@ -67,6 +67,10 @@ public class SqmAttributeJoin
 	@Override
 	public SqmNavigableReference getNavigableReference() {
 		return getAttributeReference();
+	}
+
+	public void setFetched(boolean fetched) {
+		this.fetched = fetched;
 	}
 
 	public boolean isFetched() {

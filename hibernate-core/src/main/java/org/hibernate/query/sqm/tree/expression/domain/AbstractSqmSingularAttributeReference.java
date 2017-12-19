@@ -38,6 +38,11 @@ public abstract class AbstractSqmSingularAttributeReference
 	}
 
 	@Override
+	public void setIdentificationVariable(String identificationVariable) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 		return getExportedFromElement().getIntrinsicSubclassEntityMetadata();
 	}

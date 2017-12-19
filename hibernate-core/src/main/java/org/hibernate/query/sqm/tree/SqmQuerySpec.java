@@ -20,13 +20,21 @@ import org.hibernate.query.sqm.tree.predicate.SqmWhereClauseContainer;
  * @author Steve Ebersole
  */
 public class SqmQuerySpec implements SqmFromClauseContainer, SqmWhereClauseContainer {
-	private final SqmFromClause fromClause;
-	private final SqmSelectClause selectClause;
-	private final SqmWhereClause whereClause;
-	private final SqmOrderByClause orderByClause;
-	private final SqmLimitOffsetClause limitOffsetClause;
+	private SqmFromClause fromClause;
+	private SqmSelectClause selectClause;
+	private SqmWhereClause whereClause;
+	private SqmOrderByClause orderByClause;
+	private SqmLimitOffsetClause limitOffsetClause;
 
 	// todo : group-by + having
+
+	public SqmQuerySpec() {
+		this.fromClause = new SqmFromClause();
+		this.selectClause = new SqmSelectClause( false );
+		this.whereClause = new SqmWhereClause(  );
+		this.orderByClause = new SqmOrderByClause();
+		this.limitOffsetClause = new SqmLimitOffsetClause();
+	}
 
 	public SqmQuerySpec(
 			SqmFromClause fromClause,
@@ -45,20 +53,40 @@ public class SqmQuerySpec implements SqmFromClauseContainer, SqmWhereClauseConta
 		return selectClause;
 	}
 
+	public void setSelectClause(SqmSelectClause selectClause) {
+		this.selectClause = selectClause;
+	}
+
 	@Override
 	public SqmFromClause getFromClause() {
 		return fromClause;
+	}
+
+	public void setFromClause(SqmFromClause fromClause) {
+		this.fromClause = fromClause;
 	}
 
 	public SqmWhereClause getWhereClause() {
 		return whereClause;
 	}
 
+	public void setWhereClause(SqmWhereClause whereClause) {
+		this.whereClause = whereClause;
+	}
+
 	public SqmOrderByClause getOrderByClause() {
 		return orderByClause;
 	}
 
+	public void setOrderByClause(SqmOrderByClause orderByClause) {
+		this.orderByClause = orderByClause;
+	}
+
 	public SqmLimitOffsetClause getLimitOffsetClause() {
 		return limitOffsetClause;
+	}
+
+	public void setLimitOffsetClause(SqmLimitOffsetClause limitOffsetClause) {
+		this.limitOffsetClause = limitOffsetClause;
 	}
 }

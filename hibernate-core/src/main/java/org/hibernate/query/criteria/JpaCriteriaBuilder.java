@@ -7,6 +7,7 @@
 package org.hibernate.query.criteria;
 
 import java.util.Map;
+import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
@@ -18,7 +19,7 @@ import org.hibernate.SessionFactory;
  *
  * @author Steve Ebersole
  */
-public interface HibernateCriteriaBuilder extends CriteriaBuilder {
+public interface JpaCriteriaBuilder extends CriteriaBuilder {
 
 	SessionFactory getSessionFactory();
 
@@ -30,7 +31,9 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	//		* port query-by-example support - org.hibernate.criterion.Example
 	// todo (6.0) : consider these ^^
 
-	Predicate wrap(Expression<Boolean> expression);
+	JpaPredicate wrap(Expression<Boolean> expression);
+
+	<X> JpaExpression<X> cast(Expression<?> expression, Class<X> type);
 
 	/**
 	 * Create a predicate that tests whether a Map is empty.
@@ -44,7 +47,7 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	 *
 	 * @return is-empty predicate
 	 */
-	<M extends Map<?,?>> Predicate isMapEmpty(Expression<M> mapExpression);
+	<M extends Map<?,?>> JpaPredicate isMapEmpty(Expression<M> mapExpression);
 
 	/**
 	 * Create a predicate that tests whether a Map is
@@ -58,7 +61,7 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	 *
 	 * @return is-not-empty predicate
 	 */
-	<M extends Map<?,?>> Predicate isMapNotEmpty(Expression<M> mapExpression);
+	<M extends Map<?,?>> JpaPredicate isMapNotEmpty(Expression<M> mapExpression);
 
 	/**
 	 * Create an expression that tests the size of a map.
@@ -71,7 +74,7 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	 *
 	 * @return size expression
 	 */
-	<M extends Map<?,?>> Expression<Integer> mapSize(Expression<M> mapExpression);
+	<M extends Map<?,?>> JpaExpression<Integer> mapSize(Expression<M> mapExpression);
 
 	/**
 	 * Create an expression that tests the size of a map.
@@ -80,26 +83,26 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	 *
 	 * @return size expression
 	 */
-	<M extends Map<?,?>> Expression<Integer> mapSize(M map);
+	<M extends Map<?,?>> JpaExpression<Integer> mapSize(M map);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Co-variant overrides
 
-//	@Override
-//	JpaCriteriaQuery<Object> createQuery();
-//
-//	@Override
-//	<T> JpaCriteriaQuery<T> createQuery(Class<T> resultClass);
-//
-//	@Override
-//	JpaCriteriaQuery<Tuple> createTupleQuery();
-//
-//	@Override
-//	<T> CriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
-//
-//	@Override
-//	<T> CriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
+	@Override
+	JpaCriteriaQuery<Object> createQuery();
+
+	@Override
+	<T> JpaCriteriaQuery<T> createQuery(Class<T> resultClass);
+
+	@Override
+	JpaCriteriaQuery<Tuple> createTupleQuery();
+
+	@Override
+	<T> JpaCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
+
+	@Override
+	<T> JpaCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
 //
 //	@Override
 //	<Y> JpaCompoundSelection<Y> construct(Class<Y> resultClass, Selection<?>[] selections);
@@ -179,11 +182,11 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 //	@Override
 //	JpaPredicateImplementor isFalse(Expression<Boolean> x);
 //
-//	@Override
-//	JpaPredicateImplementor isNull(Expression<?> x);
-//
-//	@Override
-//	JpaPredicateImplementor isNotNull(Expression<?> x);
+	@Override
+	JpaPredicate isNull(Expression<?> x);
+
+	@Override
+	JpaPredicate isNotNull(Expression<?> x);
 //
 //	@Override
 //	JpaPredicateImplementor equal(Expression<?> x, Expression<?> y);
@@ -473,14 +476,14 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 //	@Override
 //	JpaExpressionImplementor<Time> currentTime();
 //
-//	@Override
-//	<T> JpaInImplementor<T> in(Expression<? extends T> expression);
-//
-//	@SuppressWarnings("unchecked")
-//	<T> JpaInImplementor<T> in(Expression<? extends T> expression, Expression<? extends T>... values);
-//
-//	@SuppressWarnings("unchecked")
-//	<T> JpaInImplementor<T> in(Expression<? extends T> expression, T... values);
+	@Override
+	<T> JpaIn<T> in(Expression<? extends T> expression);
+
+	@SuppressWarnings("unchecked")
+	<T> JpaIn<T> in(Expression<? extends T> expression, Expression<? extends T>... values);
+
+	@SuppressWarnings("unchecked")
+	<T> JpaIn<T> in(Expression<? extends T> expression, T... values);
 //
 //	@Override
 //	<Y> JpaCoalesce<Y> coalesce(Expression<? extends Y> x, Expression<? extends Y> y);

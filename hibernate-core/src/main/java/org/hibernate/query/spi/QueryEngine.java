@@ -11,7 +11,7 @@ import java.util.Map;
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaBuilder;
 import org.hibernate.query.internal.QueryInterpretationsImpl;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.produce.internal.SemanticQueryProducerImpl;
@@ -28,7 +28,7 @@ public class QueryEngine {
 	private final SessionFactoryImplementor sessionFactory;
 
 	private final NamedQueryRepository namedQueryRepository;
-	private final HibernateCriteriaBuilder criteriaBuilder;
+	private final JpaCriteriaBuilder criteriaBuilder;
 	private final SemanticQueryProducer semanticQueryProducer;
 	private final QueryInterpretations queryInterpretations;
 	private final SqmFunctionRegistry sqmFunctionRegistry;
@@ -72,7 +72,7 @@ public class QueryEngine {
 		return namedQueryRepository;
 	}
 
-	public HibernateCriteriaBuilder getCriteriaBuilder() {
+	public JpaCriteriaBuilder getCriteriaBuilder() {
 		return criteriaBuilder;
 	}
 
