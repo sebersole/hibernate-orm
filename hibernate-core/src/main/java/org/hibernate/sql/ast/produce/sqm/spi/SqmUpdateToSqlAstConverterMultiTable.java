@@ -266,16 +266,17 @@ public class SqmUpdateToSqlAstConverterMultiTable
 	}
 
 	private static class AssignmentContext {
-		private final String assignmentText;
+		private final SqmAssignment sqmAssignment;
 		private boolean processingStateField;
 
 		private TableReference stateFieldTableReference;
 
 		private AssignmentContext(SqmAssignment assignment) {
-			this.assignmentText = assignment.getStateField().asLoggableText() + " = " +
-					assignment.getValue().asLoggableText();
+			this.sqmAssignment = assignment;
 
-			log.debugf( "Initializing AssignmentContext [%s]", assignmentText );
+			if ( log.isDebugEnabled() ) {
+				log.debugf( "Initializing AssignmentContext [%s]", assignmentAsLoggableText() );
+			}
 		}
 
 		private void injectTableReference(TableReference tableReference) {
@@ -290,7 +291,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 			else {
 				// `stateFieldTableReference != null` already validated during `endStateFieldProcessing`
 				if ( !stateFieldTableReference.equals( tableReference ) ) {
-					throw new SqlTreeException( "Assignment as part of multi-table update query referenced multiple tables [" + assignmentText + "]" );
+					throw new SqlTreeException( "Assignment as part of multi-table update query referenced multiple tables [" + assignmentAsLoggableText() + "]" );
 				}
 				this.stateFieldTableReference = tableReference;
 			}
@@ -302,6 +303,10 @@ public class SqmUpdateToSqlAstConverterMultiTable
 			}
 
 			processingStateField = false;
+		}
+
+		private String assignmentAsLoggableText() {
+			return sqmAssignment.getStateField().asLoggableText() + " = " + sqmAssignment.getValue().asLoggableText();
 		}
 	}
 }

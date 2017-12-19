@@ -136,12 +136,14 @@ public class PathResolverBasicImpl extends AbstractNavigableBindingResolver {
 			EntityValuedExpressableType intrinsicSubclassIndicator) {
 		final Navigable navigable = resolveNavigable( sourceBinding, terminalName );
 		if ( shouldRenderTerminalAttributeBindingAsJoin() && isJoinable( navigable ) ) {
-			log.debugf(
-					"Resolved terminal navigable-binding [%s.%s ->%s] as navigable-join",
-					sourceBinding.asLoggableText(),
-					terminalName,
-					navigable
-			);
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Resolved terminal navigable-binding [%s.%s ->%s] as navigable-join",
+						sourceBinding.asLoggableText(),
+						terminalName,
+						navigable
+				);
+			}
 			return buildAttributeJoin(
 					// see note in #resolveTreatedTerminal regarding cast
 					sourceBinding,
@@ -150,13 +152,14 @@ public class PathResolverBasicImpl extends AbstractNavigableBindingResolver {
 			);
 		}
 		else {
-			log.debugf(
-					"Resolved terminal navigable-binding [%s.%s ->%s] as navigable-reference",
-					sourceBinding.asLoggableText(),
-					terminalName,
-					navigable
-			);
-
+			if ( log.isDebugEnabled() ) {
+				log.debugf(
+						"Resolved terminal navigable-binding [%s.%s ->%s] as navigable-reference",
+						sourceBinding.asLoggableText(),
+						terminalName,
+						navigable
+				);
+			}
 			// todo (6.0) : we should probably force these to forcefully resolve the join.
 			return context().getParsingContext().findOrCreateNavigableReference(
 					sourceBinding,
@@ -179,10 +182,12 @@ public class PathResolverBasicImpl extends AbstractNavigableBindingResolver {
 	}
 
 	protected SqmNavigableReference resolveFromElementAliasAsTerminal(SqmFromExporter exporter) {
-		log.debugf(
-				"Resolved terminal as from-element alias : %s",
-				exporter.getExportedFromElement().getIdentificationVariable()
-		);
+		if ( log.isDebugEnabled() ) {
+			log.debugf(
+					"Resolved terminal as from-element alias : %s",
+					exporter.getExportedFromElement().getIdentificationVariable()
+			);
+		}
 		return exporter.getExportedFromElement().getNavigableReference();
 	}
 
