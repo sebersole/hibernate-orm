@@ -29,14 +29,12 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolver;
 import org.hibernate.engine.jndi.JndiException;
 import org.hibernate.engine.jndi.JndiNameException;
-import org.hibernate.engine.loading.internal.CollectionLoadContext;
-import org.hibernate.engine.loading.internal.EntityLoadContext;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.IntegralDataTypeHolder;
-import org.hibernate.type.BasicType;
-import org.hibernate.type.SerializationException;
+import org.hibernate.query.spi.QueryMessageLogger;
 import org.hibernate.type.Type;
+import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
@@ -306,13 +304,13 @@ public interface CoreMessageLogger extends BasicLogger {
 			+ " to unsafe use of the session): %s", id = 99)
 	void failed(Throwable throwable);
 
-	@LogMessage(level = WARN)
-	@Message(value = "Fail-safe cleanup (collections) : %s", id = 100)
-	void failSafeCollectionsCleanup(CollectionLoadContext collectionLoadContext);
-
-	@LogMessage(level = WARN)
-	@Message(value = "Fail-safe cleanup (entities) : %s", id = 101)
-	void failSafeEntitiesCleanup(EntityLoadContext entityLoadContext);
+//	@LogMessage(level = WARN)
+//	@Message(value = "Fail-safe cleanup (collections) : %s", id = 100)
+//	void failSafeCollectionsCleanup(CollectionLoadContext collectionLoadContext);
+//
+//	@LogMessage(level = WARN)
+//	@Message(value = "Fail-safe cleanup (entities) : %s", id = 101)
+//	void failSafeEntitiesCleanup(EntityLoadContext entityLoadContext);
 
 	@LogMessage(level = INFO)
 	@Message(value = "Fetching database metadata", id = 102)
@@ -536,7 +534,10 @@ public interface CoreMessageLogger extends BasicLogger {
 			id = 175)
 	void missingEntityAnnotation(String className);
 
-
+	/**
+	 * @deprecated Use {@link QueryMessageLogger#namedQueryError} instead.
+	 */
+	@Deprecated
 	@LogMessage(level = ERROR)
 	@Message(value = "Error in named query: %s", id = 177)
 	void namedQueryError(
@@ -1038,9 +1039,7 @@ public interface CoreMessageLogger extends BasicLogger {
 
 	@LogMessage(level = WARN)
 	@Message(value = "Could not deserialize cache file: %s : %s", id = 307)
-	void unableToDeserializeCache(
-			String path,
-			SerializationException error);
+	void unableToDeserializeCache(String path, Exception error);
 
 	@LogMessage(level = WARN)
 	@Message(value = "Unable to destroy cache: %s", id = 308)
@@ -1741,7 +1740,7 @@ public interface CoreMessageLogger extends BasicLogger {
 	void startingDelayedSchemaDrop();
 
 	@LogMessage(level = ERROR)
-	@Message(value = "Unsuccessful: %s", id = 478)
+	@Message(value = "Unsuccessful attempt to execute schema management command: %s", id = 478)
 	void unsuccessfulSchemaManagementCommand(String command);
 
 	@Message(
@@ -1844,4 +1843,12 @@ public interface CoreMessageLogger extends BasicLogger {
 	@LogMessage(level = WARN)
 	@Message(value = "The increment size of the [%s] sequence is set to [%d] in the entity mapping while the associated database sequence increment size is [%d]. The database sequence increment size will take precedence to avoid identifier allocation conflicts.", id = 497)
 	void sequenceIncrementSizeMismatch(String sequenceName, int incrementSize, int databaseIncrementSize);
+
+	@LogMessage(level = WARN)
+	@Message(
+			id = 498,
+			value = "Attempt to use NativeQuery to perform execution of a CallableStatement which is no longer supported.  " +
+					"Use `org.hibernate.procedure.ProcedureCall` or `javax.persistence.StoredProcedureQuery` instead"
+	)
+	void warnNativeQueryAsCallable();
 }

@@ -13,14 +13,11 @@ import java.util.Collections;
 import java.util.List;
 import javax.persistence.Embedded;
 
-import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.method.MethodList;
 import org.hibernate.bytecode.enhance.spi.EnhancerConstants;
 import org.hibernate.engine.spi.CompositeOwner;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;

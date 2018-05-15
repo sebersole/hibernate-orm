@@ -6,16 +6,14 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Objects;
+
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.engine.spi.Mapping;
 import org.hibernate.internal.util.ReflectHelper;
-import org.hibernate.type.Type;
-
-import java.util.Objects;
 
 /**
  * A simple-point association (ie. a reference to another entity).
@@ -31,15 +29,11 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	protected boolean unwrapProxy;
 	protected boolean referenceToPrimaryKey = true;
 
-	/**
-	 * @deprecated Use {@link ToOne#ToOne(MetadataBuildingContext, Table)} instead.
-	 */
-	@Deprecated
-	protected ToOne(MetadataImplementor metadata, Table table) {
-		super( metadata, table );
+	protected ToOne(MetadataBuildingContext buildingContext, Table table) {
+		super( buildingContext, table );
 	}
 
-	protected ToOne(MetadataBuildingContext buildingContext, Table table) {
+	protected ToOne(MetadataBuildingContext buildingContext, MappedTable table) {
 		super( buildingContext, table );
 	}
 
@@ -51,8 +45,7 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 		this.fetchMode=fetchMode;
 	}
 
-	public abstract void createForeignKey() throws MappingException;
-	public abstract Type getType() throws MappingException;
+	public abstract ForeignKey createForeignKey() throws MappingException;
 
 	public String getReferencedPropertyName() {
 		return referencedPropertyName;
@@ -83,7 +76,7 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	@Override
 	public void setTypeUsingReflection(String className, String propertyName) throws MappingException {
 		if (referencedEntityName == null) {
-			final ClassLoaderService cls = getMetadata().getMetadataBuildingOptions()
+			final ClassLoaderService cls  = getMetadataBuildingContext().getBootstrapContext()
 					.getServiceRegistry()
 					.getService( ClassLoaderService.class );
 			referencedEntityName = ReflectHelper.reflectedPropertyClass( className, propertyName, cls ).getName();
@@ -93,9 +86,10 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	public boolean isTypeSpecified() {
 		return referencedEntityName!=null;
 	}
-	
-	public Object accept(ValueVisitor visitor) {
-		return visitor.accept(this);
+
+	@Override
+	public boolean isSame(Value other) {
+		return other instanceof ToOne && isSame( (ToOne) other );
 	}
 
 	@Override
@@ -110,11 +104,12 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 				&& embedded == other.embedded;
 	}
 
-	public boolean isValid(Mapping mapping) throws MappingException {
-		if (referencedEntityName==null) {
+	@Override
+	public boolean isValid() throws MappingException {
+		if ( referencedEntityName == null ) {
 			throw new MappingException("association must specify the referenced entity");
 		}
-		return super.isValid( mapping );
+		return super.isValid( );
 	}
 
 	public boolean isLazy() {
@@ -140,5 +135,4 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	public void setReferenceToPrimaryKey(boolean referenceToPrimaryKey) {
 		this.referenceToPrimaryKey = referenceToPrimaryKey;
 	}
-	
 }

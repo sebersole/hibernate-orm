@@ -6,7 +6,6 @@
  */
 package org.hibernate.tool.schema.extract.internal;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
