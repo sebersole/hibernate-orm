@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.AssertionFailure;
@@ -25,7 +26,7 @@ import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.scan.spi.Scanner;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
-import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
+import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
@@ -38,6 +39,11 @@ import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.jpa.internal.MutableJpaComplianceImpl;
 import org.hibernate.jpa.spi.MutableJpaCompliance;
+import org.hibernate.cfg.NotYetImplementedException;
+import org.hibernate.cfg.annotations.reflection.JPAMetadataProvider;
+import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.engine.config.spi.ConfigurationService;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
@@ -46,6 +52,9 @@ import org.jboss.logging.Logger;
 import static org.hibernate.internal.log.DeprecationLogger.DEPRECATION_LOGGER;
 
 /**
+ * Standard implementation of the BootstrapContext copntract.
+ *
+ * @author Steve Ebersole
  * @author Andrea Boriero
  */
 public class BootstrapContextImpl implements BootstrapContext {
@@ -72,17 +81,20 @@ public class BootstrapContextImpl implements BootstrapContext {
 
 	private IndexView jandexView;
 
-	private HashMap<String,SQLFunction> sqlFunctionMap;
-	private ArrayList<AuxiliaryDatabaseObject> auxiliaryDatabaseObjectList;
+	private HashMap<String,SqmFunctionTemplate> sqlFunctionMap;
+	private ArrayList<MappedAuxiliaryDatabaseObject> auxiliaryDatabaseObjectList;
 	private HashMap<Class,AttributeConverterInfo> attributeConverterInfoMap;
 	private ArrayList<CacheRegionDefinition> cacheRegionDefinitions;
 
 	public BootstrapContextImpl(
 			StandardServiceRegistry serviceRegistry,
+			ClassmateContext classmateContext,
 			MetadataBuildingOptions metadataBuildingOptions) {
 		this.serviceRegistry = serviceRegistry;
-		this.classmateContext = new ClassmateContext();
+		this.classmateContext = classmateContext;
 		this.metadataBuildingOptions = metadataBuildingOptions;
+
+		this.typeConfiguration = new TypeConfiguration();
 
 		final ClassLoaderService classLoaderService = serviceRegistry.getService( ClassLoaderService.class );
 		this.classLoaderAccess = new ClassLoaderAccessImpl( classLoaderService );
@@ -90,6 +102,8 @@ public class BootstrapContextImpl implements BootstrapContext {
 
 		final StrategySelector strategySelector = serviceRegistry.getService( StrategySelector.class );
 		final ConfigurationService configService = serviceRegistry.getService( ConfigurationService.class );
+
+		// this.jandexView = (IndexView) configService.getSettings().get( AvailableSettings.JANDEX_INDEX );
 
 		this.jpaCompliance = new MutableJpaComplianceImpl( configService.getSettings(), false );
 		this.scanOptions = new StandardScanOptions(
@@ -127,12 +141,53 @@ public class BootstrapContextImpl implements BootstrapContext {
 		return typeConfiguration;
 	}
 
+	private JavaReflectionManager generateHcannReflectionManager() {
+		final JavaReflectionManager reflectionManager = new JavaReflectionManager();
+		reflectionManager.setMetadataProvider( new JPAMetadataProvider( this ) );
+		reflectionManager.injectClassLoaderDelegate( generateHcannClassLoaderDelegate() );
+		return reflectionManager;
+	}
+
+	private ClassLoaderDelegate generateHcannClassLoaderDelegate() {
+		//	class loading here needs to be drastically different for 7.0
+		//		but luckily 7.0 will do away with HCANN use and be easier to
+		//		implement this.
+		//
+		// todo (6.0) : *if possible* make similar change in 6.0
+		// 		possibly using the JPA temp class loader or create our own "throw awy" ClassLoader;
+		//		the trouble there is that we eventually need to load the Class into the real
+		//		ClassLoader prior to use
+
+		final ClassLoaderService classLoaderService = getServiceRegistry().getService( ClassLoaderService.class );
+
+		return new ClassLoaderDelegate() {
+			@Override
+			public <T> Class<T> classForName(String className) throws ClassLoadingException {
+				try {
+					return classLoaderService.classForName( className );
+				}
+				catch (org.hibernate.boot.registry.classloading.spi.ClassLoadingException e) {
+					return StandardClassLoaderDelegateImpl.INSTANCE.classForName( className );
+				}
+			}
+		};
+	}
+
+	@Override
+	public StandardServiceRegistry getServiceRegistry() {
+		return serviceRegistry;
+	}
+
 	@Override
 	public MetadataBuildingOptions getMetadataBuildingOptions() {
 		return metadataBuildingOptions;
 	}
 
 	@Override
+	public PersistentCollectionRepresentationResolver getCollectionRepresentationResolver() {
+		return metadataBuildingOptions.getPersistentCollectionRepresentationResolver();
+	}
+
 	public boolean isJpaBootstrap() {
 		return isJpaBootstrap;
 	}
@@ -188,12 +243,12 @@ public class BootstrapContextImpl implements BootstrapContext {
 	}
 
 	@Override
-	public Map<String, SQLFunction> getSqlFunctions() {
+	public Map<String, SqmFunctionTemplate> getSqlFunctions() {
 		return sqlFunctionMap == null ? Collections.emptyMap() : sqlFunctionMap;
 	}
 
 	@Override
-	public Collection<AuxiliaryDatabaseObject> getAuxiliaryDatabaseObjectList() {
+	public Collection<MappedAuxiliaryDatabaseObject> getAuxiliaryDatabaseObjectList() {
 		return auxiliaryDatabaseObjectList == null ? Collections.emptyList() : auxiliaryDatabaseObjectList;
 	}
 
@@ -237,9 +292,9 @@ public class BootstrapContextImpl implements BootstrapContext {
 		}
 	}
 
+
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Mutations
-
 
 	public void addAttributeConverterInfo(AttributeConverterInfo info) {
 		if ( this.attributeConverterInfoMap == null ) {
@@ -288,14 +343,14 @@ public class BootstrapContextImpl implements BootstrapContext {
 		this.jandexView = jandexView;
 	}
 
-	public void addSqlFunction(String functionName, SQLFunction function) {
+	public void addSqlFunction(String functionName, SqmFunctionTemplate function) {
 		if ( this.sqlFunctionMap == null ) {
 			this.sqlFunctionMap = new HashMap<>();
 		}
 		this.sqlFunctionMap.put( functionName, function );
 	}
 
-	public void addAuxiliaryDatabaseObject(AuxiliaryDatabaseObject auxiliaryDatabaseObject) {
+	public void addAuxiliaryDatabaseObject(MappedAuxiliaryDatabaseObject auxiliaryDatabaseObject) {
 		if ( this.auxiliaryDatabaseObjectList == null ) {
 			this.auxiliaryDatabaseObjectList = new ArrayList<>();
 		}

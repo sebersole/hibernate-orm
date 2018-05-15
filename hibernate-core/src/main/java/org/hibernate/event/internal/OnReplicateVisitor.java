@@ -10,10 +10,9 @@ import java.io.Serializable;
 
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.event.spi.EventSource;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.type.CollectionType;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 
 /**
  * When an entity is passed to replicate(), and there is an existing row, we must
@@ -36,25 +35,28 @@ public class OnReplicateVisitor extends ReattachVisitor {
 	}
 
 	@Override
-	public Object processCollection(Object collection, CollectionType type) throws HibernateException {
-		if ( collection == CollectionType.UNFETCHED_COLLECTION ) {
+	public Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+		if ( collection == PersistentCollectionDescriptor.UNFETCHED_COLLECTION ) {
 			return null;
 		}
 
 		final EventSource session = getSession();
-		final CollectionPersister persister = session.getFactory().getMetamodel().collectionPersister( type.getRole() );
+
+		final PersistentCollectionDescriptor descriptor = session.getFactory()
+				.getTypeConfiguration()
+				.findCollectionDescriptor( attributeCollection.getNavigableName() );
 
 		if ( isUpdate ) {
-			removeCollection( persister, extractCollectionKeyFromOwner( persister ), session );
+			removeCollection( descriptor, extractCollectionKeyFromOwner( descriptor ), session );
 		}
 		if ( collection != null && collection instanceof PersistentCollection ) {
 			final PersistentCollection wrapper = (PersistentCollection) collection;
-			wrapper.setCurrentSession( (SessionImplementor) session );
+			wrapper.setCurrentSession( session );
 			if ( wrapper.wasInitialized() ) {
-				session.getPersistenceContext().addNewCollection( persister, wrapper );
+				session.getPersistenceContext().addNewCollection( descriptor, wrapper );
 			}
 			else {
-				reattachCollection( wrapper, type );
+				reattachCollection( wrapper, descriptor.getNavigableRole() );
 			}
 		}
 		else {

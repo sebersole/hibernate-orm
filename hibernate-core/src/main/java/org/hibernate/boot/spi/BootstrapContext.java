@@ -16,6 +16,11 @@ import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.internal.ClassmateContext;
+import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.cfg.AttributeConverterDefinition;
+import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.dialect.function.SQLFunction;
@@ -47,6 +52,8 @@ public interface BootstrapContext {
 	 * the assumed value.  We only need to call this to mark that as true.
 	 */
 	void markAsJpaBootstrap();
+
+	PersistentCollectionRepresentationResolver getCollectionRepresentationResolver();
 
 	/**
 	 * Access the temporary ClassLoader passed to us as defined by
@@ -121,6 +128,14 @@ public interface BootstrapContext {
 	 */
 	IndexView getJandexView();
 
+
+//	/**
+//	 * Obtain the selected strategy for resolving members identifying persistent attributes
+//	 *
+//	 * @return The select resolver strategy
+//	 */
+//	PersistentAttributeMemberResolver getPersistentAttributeMemberResolver();
+
 	/**
 	 * Access to any SQL functions explicitly registered with the MetadataBuilder.  This
 	 * does not include Dialect defined functions, etc.
@@ -129,7 +144,7 @@ public interface BootstrapContext {
 	 *
 	 * @return The SQLFunctions registered through MetadataBuilder
 	 */
-	Map<String,SQLFunction> getSqlFunctions();
+	Map<String,SqmFunctionTemplate> getSqlFunctions();
 
 	/**
 	 * Access to any AuxiliaryDatabaseObject explicitly registered with the MetadataBuilder.  This
@@ -139,7 +154,7 @@ public interface BootstrapContext {
 	 *
 	 * @return The AuxiliaryDatabaseObject registered through MetadataBuilder
 	 */
-	Collection<AuxiliaryDatabaseObject> getAuxiliaryDatabaseObjectList();
+	Collection<MappedAuxiliaryDatabaseObject> getAuxiliaryDatabaseObjectList();
 
 	/**
 	 * Access to collected AttributeConverter definitions.

@@ -247,6 +247,18 @@ public final class Environment implements AvailableSettings {
 	}
 
 	/**
+	 * @deprecated (since 6.0) : currently definition of the BytecodeProvider to
+	 * use is a ClassLoader-wide setting.  Starting in 7.0 access to BytecodeProvider
+	 * will be scoped to a {@link org.hibernate.type.spi.TypeConfiguration},
+	 * allowing different SessionFactory's used in the same ClassLoader space
+	 * will be able to use different BytecodeProvider impls
+	 */
+	@Deprecated
+	public static BytecodeProvider getBytecodeProvider() {
+		return BYTECODE_PROVIDER_INSTANCE;
+	}
+
+	/**
 	 * This will be removed soon; currently just returns false as no known JVM exibits this bug
 	 * and is also able to run this version of Hibernate ORM.
 	 * @deprecated removed as unneccessary
@@ -342,6 +354,7 @@ public final class Environment implements AvailableSettings {
 		return ConnectionProviderInitiator.toIsolationNiceName( isolation );
 	}
 
+	// todo (6.0) : make
 
 	public static final String BYTECODE_PROVIDER_NAME_JAVASSIST = "javassist";
 	public static final String BYTECODE_PROVIDER_NAME_BYTEBUDDY = "bytebuddy";

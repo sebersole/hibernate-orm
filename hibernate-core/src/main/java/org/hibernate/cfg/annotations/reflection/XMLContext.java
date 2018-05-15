@@ -12,13 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.AccessType;
-import javax.persistence.AttributeConverter;
 
 import org.hibernate.AnnotationException;
 import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.ClassLoaderAccess;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
@@ -36,7 +35,7 @@ import org.dom4j.Element;
 public class XMLContext implements Serializable {
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( XMLContext.class );
 
-	private final ClassLoaderAccess classLoaderAccess;
+	private final BootstrapContext bootstrapContext;
 
 	private Default globalDefaults;
 	private Map<String, Element> classOverriding = new HashMap<>();
@@ -49,8 +48,8 @@ public class XMLContext implements Serializable {
 	 * @deprecated Use {@link XMLContext#XMLContext(BootstrapContext)} instead.
 	 */
 	@Deprecated
-	public XMLContext(ClassLoaderAccess classLoaderAccess) {
-		this.classLoaderAccess = classLoaderAccess;
+	public XMLContext(BootstrapContext bootstrapContext) {
+		this.bootstrapContext = bootstrapContext;
 	}
 
 	public XMLContext(BootstrapContext bootstrapContext) {

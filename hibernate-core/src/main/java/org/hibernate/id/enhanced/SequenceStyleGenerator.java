@@ -11,10 +11,10 @@ import java.util.Properties;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.naming.Identifier;
+import org.hibernate.naming.Identifier;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.boot.model.relational.QualifiedName;
-import org.hibernate.boot.model.relational.QualifiedNameParser;
+import org.hibernate.naming.spi.QualifiedName;
+import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.config.spi.ConfigurationService;
@@ -29,7 +29,7 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -188,7 +188,7 @@ public class SequenceStyleGenerator
 	// state ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	private DatabaseStructure databaseStructure;
 	private Optimizer optimizer;
-	private Type identifierType;
+	private JavaTypeDescriptor identifierType;
 
 	/**
 	 * Getter for property 'databaseStructure'.
@@ -213,7 +213,7 @@ public class SequenceStyleGenerator
 	 *
 	 * @return Value for property 'identifierType'.
 	 */
-	public Type getIdentifierType() {
+	public JavaTypeDescriptor getIdentifierType() {
 		return identifierType;
 	}
 
@@ -222,11 +222,11 @@ public class SequenceStyleGenerator
 	// Configurable implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	@Override
-	public void configure(Type type, Properties params, ServiceRegistry serviceRegistry) throws MappingException {
+	public void configure(JavaTypeDescriptor javaTypeDescriptor, Properties params, ServiceRegistry serviceRegistry) throws MappingException {
 		final JdbcEnvironment jdbcEnvironment = serviceRegistry.getService( JdbcEnvironment.class );
 		final Dialect dialect = jdbcEnvironment.getDialect();
 
-		this.identifierType = type;
+		this.identifierType = javaTypeDescriptor;
 		boolean forceTableUse = ConfigurationHelper.getBoolean( FORCE_TBL_PARAM, params, false );
 
 		final QualifiedName sequenceName = determineSequenceName( params, dialect, jdbcEnvironment, serviceRegistry );
@@ -245,7 +245,7 @@ public class SequenceStyleGenerator
 		}
 
 		this.databaseStructure = buildDatabaseStructure(
-				type,
+				javaTypeDescriptor,
 				params,
 				jdbcEnvironment,
 				forceTableUse,
@@ -255,7 +255,7 @@ public class SequenceStyleGenerator
 		);
 		this.optimizer = OptimizerFactory.buildOptimizer(
 				optimizationStrategy,
-				identifierType.getReturnedClass(),
+				identifierType.getJavaType(),
 				incrementSize,
 				ConfigurationHelper.getInt( INITIAL_PARAM, params, -1 )
 		);
@@ -424,7 +424,7 @@ public class SequenceStyleGenerator
 	/**
 	 * Build the database structure.
 	 *
-	 * @param type The Hibernate type of the identifier property
+	 * @param javaTypeDescriptor The java type descriptor of the identifier property
 	 * @param params The params supplied in the generator config (plus some standard useful extras).
 	 * @param jdbcEnvironment The JDBC environment in which the sequence will be used.
 	 * @param forceTableUse Should a table be used even if the dialect supports sequences?
@@ -436,7 +436,7 @@ public class SequenceStyleGenerator
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected DatabaseStructure buildDatabaseStructure(
-			Type type,
+			JavaTypeDescriptor javaTypeDescriptor,
 			Properties params,
 			JdbcEnvironment jdbcEnvironment,
 			boolean forceTableUse,
@@ -445,33 +445,46 @@ public class SequenceStyleGenerator
 			int incrementSize) {
 		final boolean useSequence = jdbcEnvironment.getDialect().supportsSequences() && !forceTableUse;
 		if ( useSequence ) {
-			return buildSequenceStructure( type, params, jdbcEnvironment, sequenceName, initialValue, incrementSize );
+			return buildSequenceStructure( javaTypeDescriptor, params, jdbcEnvironment, sequenceName, initialValue, incrementSize );
 		}
 		else {
-			return buildTableStructure( type, params, jdbcEnvironment, sequenceName, initialValue, incrementSize );
+			return buildTableStructure( javaTypeDescriptor, params, jdbcEnvironment, sequenceName, initialValue, incrementSize );
 		}
 	}
 
 	protected DatabaseStructure buildSequenceStructure(
-			Type type,
+			JavaTypeDescriptor javaTypeDescriptor,
 			Properties params,
 			JdbcEnvironment jdbcEnvironment,
 			QualifiedName sequenceName,
 			int initialValue,
 			int incrementSize) {
-		return new SequenceStructure( jdbcEnvironment, sequenceName, initialValue, incrementSize, type.getReturnedClass() );
+		return new SequenceStructure(
+				jdbcEnvironment,
+				sequenceName,
+				initialValue,
+				incrementSize,
+				javaTypeDescriptor.getJavaType()
+		);
 	}
 
 	@SuppressWarnings("WeakerAccess")
 	protected DatabaseStructure buildTableStructure(
-			Type type,
+			JavaTypeDescriptor javaTypeDescriptor,
 			Properties params,
 			JdbcEnvironment jdbcEnvironment,
 			QualifiedName sequenceName,
 			int initialValue,
 			int incrementSize) {
 		final Identifier valueColumnName = determineValueColumnName( params, jdbcEnvironment );
-		return new TableStructure( jdbcEnvironment, sequenceName, valueColumnName, initialValue, incrementSize, type.getReturnedClass() );
+		return new TableStructure(
+				jdbcEnvironment,
+				sequenceName,
+				valueColumnName,
+				initialValue,
+				incrementSize,
+				javaTypeDescriptor.getJavaType()
+		);
 	}
 
 

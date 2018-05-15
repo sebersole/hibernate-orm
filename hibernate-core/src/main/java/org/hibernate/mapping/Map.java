@@ -8,8 +8,8 @@ package org.hibernate.mapping;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.CollectionType;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A map has a primary key consisting of
@@ -21,36 +21,17 @@ public class Map extends IndexedCollection {
 	 * @deprecated Use {@link Map#Map(MetadataBuildingContext, PersistentClass)} instead.
 	 */
 	@Deprecated
-	public Map(MetadataImplementor metadata, PersistentClass owner) {
-		super( metadata, owner );
+	public Map(MetadataBuildingContext context, PersistentClass owner) {
+		super( context, owner );
 	}
 
 	public Map(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 	}
-	
+
 	public boolean isMap() {
 		return true;
 	}
-
-	public CollectionType getDefaultCollectionType() {
-		if ( isSorted() ) {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.sortedMap( getRole(), getReferencedPropertyName(), getComparator() );
-		}
-		else if ( hasOrder() ) {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.orderedMap( getRole(), getReferencedPropertyName() );
-		}
-		else {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.map( getRole(), getReferencedPropertyName() );
-		}
-	}
-
 
 	public void createAllKeys() throws MappingException {
 		super.createAllKeys();
@@ -61,5 +42,10 @@ public class Map extends IndexedCollection {
 
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return null;
 	}
 }

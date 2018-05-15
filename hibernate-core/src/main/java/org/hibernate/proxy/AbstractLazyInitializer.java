@@ -16,10 +16,11 @@ import org.hibernate.TransientObjectException;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.SessionFactoryRegistry;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.internal.SessionFactoryRegistry;
-import org.hibernate.persister.entity.EntityPersister;
 
 /**
  * Convenience base class for lazy initialization handlers.  Centralizes the basic plumbing of doing lazy
@@ -122,8 +123,8 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 				session = s;
 				if ( readOnlyBeforeAttachedToSession == null ) {
 					// use the default read-only/modifiable setting
-					final EntityPersister persister = s.getFactory().getEntityPersister( entityName );
-					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !persister.isMutable() );
+					final EntityDescriptor entityPersister = s.getFactory().getEntityPersister( entityName );
+					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !entityPersister.getJavaTypeDescriptor().getMutabilityPlan().isMutable() );
 				}
 				else {
 					// use the read-only/modifiable setting indicated during deserialization
@@ -325,8 +326,8 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 		errorIfReadOnlySettingNotAvailable();
 		// only update if readOnly is different from current setting
 		if ( this.readOnly != readOnly ) {
-			final EntityPersister persister = session.getFactory().getEntityPersister( entityName );
-			if ( !persister.isMutable() && !readOnly ) {
+			final EntityDescriptor entityDescriptor = session.getFactory().getEntityPersister( entityName );
+			if ( !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() && !readOnly ) {
 				throw new IllegalStateException( "cannot make proxies [" + entityName + "#" + id + "] for immutable entities modifiable" );
 			}
 			this.readOnly = readOnly;

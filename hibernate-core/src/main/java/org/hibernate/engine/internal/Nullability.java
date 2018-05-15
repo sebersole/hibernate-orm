@@ -7,6 +7,8 @@
 package org.hibernate.engine.internal;
 
 import java.util.Iterator;
+import java.util.List;
+import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 
 import org.hibernate.HibernateException;
 import org.hibernate.PropertyValueException;
@@ -15,11 +17,16 @@ import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadingActions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
-import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.type.CollectionType;
-import org.hibernate.type.CompositeType;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
+import org.hibernate.metamodel.model.domain.spi.CollectionElement;
+import org.hibernate.metamodel.model.domain.spi.CollectionElementEmbedded;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.type.EntityType;
-import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.internal.AnyTypeJavaDescriptor;
 
 /**
  * Implements the algorithm for validating property values for illegal null values
@@ -40,10 +47,10 @@ public final class Nullability {
 		this.checkNullability = session.getFactory().getSessionFactoryOptions().isCheckNullability();
 	}
 	/**
-	 * Check nullability of the class persister properties
+	 * Check nullability of the class entityDescriptor properties
 	 *
 	 * @param values entity properties
-	 * @param persister class persister
+	 * @param entityDescriptor class entity descriptor
 	 * @param isUpdate whether it is intended to be updated or saved
 	 *
 	 * @throws PropertyValueException Break the nullability of one property
@@ -51,7 +58,7 @@ public final class Nullability {
 	 */
 	public void checkNullability(
 			final Object[] values,
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final boolean isUpdate) {
 		checkNullability( values, persister, isUpdate ? NullabilityCheckType.UPDATE : NullabilityCheckType.CREATE );
 	}
@@ -66,7 +73,6 @@ public final class Nullability {
 			final Object[] values,
 			final EntityPersister persister,
 			final NullabilityCheckType checkType) {
-
 		/*
 		 * Typically when Bean Validation is on, we don't want to validate null values
 		 * at the Hibernate Core level. Hence the checkNullability setting.
@@ -90,11 +96,11 @@ public final class Nullability {
 			  * sure a limitation.
 			  */
 
-			final boolean[] nullability = persister.getPropertyNullability();
+			final boolean[] nullability = entityDescriptor.getPropertyNullability();
 			final boolean[] checkability = checkType == NullabilityCheckType.CREATE
-					? persister.getPropertyInsertability()
-					: persister.getPropertyUpdateability();
-			final Type[] propertyTypes = persister.getPropertyTypes();
+					? entityDescriptor.getPropertyInsertability()
+					: entityDescriptor.getPropertyUpdateability();
+			final List<PersistentAttribute> persistentAttributes = entityDescriptor.getPersistentAttributes();
 
 			for ( int i = 0; i < values.length; i++ ) {
 
@@ -104,19 +110,22 @@ public final class Nullability {
 						//check basic level one nullablilty
 						throw new PropertyValueException(
 								"not-null property references a null or transient value",
-								persister.getEntityName(),
-								persister.getPropertyNames()[i]
+								entityDescriptor.getEntityName(),
+								entityDescriptor.getPropertyNames()[i]
 							);
 
 					}
 					else if ( value != null ) {
 						//values is not null and is checkable, we'll look deeper
-						final String breakProperties = checkSubElementsNullability( propertyTypes[i], value );
+						final String breakProperties = checkSubElementsNullability(
+								persistentAttributes.get( i ),
+								value
+						);
 						if ( breakProperties != null ) {
 							throw new PropertyValueException(
 								"not-null property references a null or transient value",
-								persister.getEntityName(),
-								buildPropertyPath( persister.getPropertyNames()[i], breakProperties )
+								entityDescriptor.getEntityName(),
+								buildPropertyPath( entityDescriptor.getPropertyNames()[i], breakProperties )
 							);
 						}
 
@@ -131,30 +140,36 @@ public final class Nullability {
 	 * check sub elements-nullability. Returns property path that break
 	 * nullability or null if none
 	 *
-	 * @param propertyType type to check
+	 * @param attribute the attribute to check
 	 * @param value value to check
 	 *
 	 * @return property path
 	 * @throws HibernateException error while getting subcomponent values
 	 */
-	private String checkSubElementsNullability(Type propertyType, Object value) throws HibernateException {
-		if ( propertyType.isComponentType() ) {
-			return checkComponentNullability( value, (CompositeType) propertyType );
+	private String checkSubElementsNullability(PersistentAttribute attribute, Object value) throws HibernateException {
+		final PersistentAttributeType persistentAttributeType = attribute.getPersistentAttributeType();
+		if ( persistentAttributeType == PersistentAttributeType.EMBEDDED ) {
+			return checkComponentNullability(
+					value,
+					( (SingularPersistentAttributeEmbedded) attribute ).getEmbeddedDescriptor()
+			);
 		}
 
-		if ( propertyType.isCollectionType() ) {
+		if ( persistentAttributeType == PersistentAttributeType.ELEMENT_COLLECTION ) {
 			// persistent collections may have components
-			final CollectionType collectionType = (CollectionType) propertyType;
-			final Type collectionElementType = collectionType.getElementType( session.getFactory() );
+			final PersistentCollectionDescriptor collectionDescriptor = ( (PluralAttributeCollection) attribute ).getPersistentCollectionDescriptor();
+			final CollectionElement elementDescriptor = collectionDescriptor.getElementDescriptor();
 
-			if ( collectionElementType.isComponentType() ) {
+			if ( elementDescriptor.getClassification() == CollectionElement.ElementClassification.EMBEDDABLE ) {
 				// check for all components values in the collection
-				final CompositeType componentType = (CompositeType) collectionElementType;
-				final Iterator itr = CascadingActions.getLoadedElementsIterator( session, collectionType, value );
+				final Iterator itr = CascadingActions.getLoadedElementsIterator( session, collectionDescriptor, value );
 				while ( itr.hasNext() ) {
 					final Object compositeElement = itr.next();
 					if ( compositeElement != null ) {
-						return checkComponentNullability( compositeElement, componentType );
+						return checkComponentNullability(
+								compositeElement,
+								( (CollectionElementEmbedded) collectionDescriptor ).getEmbeddedDescriptor()
+						);
 					}
 				}
 			}
@@ -168,12 +183,12 @@ public final class Nullability {
 	 * nullability or null if none
 	 *
 	 * @param value component properties
-	 * @param compositeType component not-nullable type
+	 * @param embeddedTypeDescriptor component Descriptor
 	 *
 	 * @return property path
 	 * @throws HibernateException error while getting subcomponent values
 	 */
-	private String checkComponentNullability(Object value, CompositeType compositeType) throws HibernateException {
+	private String checkComponentNullability(Object value, EmbeddedTypeDescriptor embeddedTypeDescriptor) throws HibernateException {
 		// IMPL NOTE : we currently skip checking "any" and "many to any" mappings.
 		//
 		// This is not the best solution.  But atm there is a mismatch between AnyType#getPropertyNullability
@@ -183,24 +198,25 @@ public final class Nullability {
 		//
 		// The more correct fix would be to cascade saves of the many-to-any elements before the Nullability checking
 
-		if ( compositeType.isAnyType() ) {
+		if ( embeddedTypeDescriptor.getJavaTypeDescriptor() instanceof AnyTypeJavaDescriptor ) {
 			return null;
 		}
 
-		final boolean[] nullability = compositeType.getPropertyNullability();
+		final boolean[] nullability = embeddedTypeDescriptor.getPropertyNullability();
 		if ( nullability != null ) {
 			//do the test
-			final Object[] subValues = compositeType.getPropertyValues( value, session );
-			final Type[] propertyTypes = compositeType.getSubtypes();
-			for ( int i = 0; i < subValues.length; i++ ) {
-				final Object subValue = subValues[i];
-				if ( !nullability[i] && subValue==null ) {
-					return compositeType.getPropertyNames()[i];
+			final Object[] propertyValues = embeddedTypeDescriptor.getPropertyValues( value );
+			final List<PersistentAttribute> persistentAttributes = embeddedTypeDescriptor.getPersistentAttributes();
+			for ( int i = 0; i < propertyValues.length; i++ ) {
+				final Object propertyValue = propertyValues[i];
+				if ( !nullability[i] && propertyValue == null ) {
+					return ( persistentAttributes.get( i ) ).getAttributeName();
 				}
-				else if ( subValue != null ) {
-					final String breakProperties = checkSubElementsNullability( propertyTypes[i], subValue );
+				else if ( propertyValue != null ) {
+					final PersistentAttribute attribute = persistentAttributes.get( i );
+					final String breakProperties = checkSubElementsNullability( attribute, propertyValue );
 					if ( breakProperties != null ) {
-						return buildPropertyPath( compositeType.getPropertyNames()[i], breakProperties );
+						return buildPropertyPath( attribute.getAttributeName(), breakProperties );
 					}
 				}
 			}

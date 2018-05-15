@@ -7,15 +7,18 @@
 package org.hibernate.mapping;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.EntityType;
+import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * A one-to-one association mapping
@@ -29,18 +32,20 @@ public class OneToOne extends ToOne {
 	private String propertyName;
 	private String entityName;
 
+
 	/**
-	 * @deprecated Use {@link OneToOne#OneToOne(MetadataBuildingContext, Table, PersistentClass)} instead.
+	 *
+	 * @deprecated since 6.0, use {@link #OneToOne(MetadataBuildingContext, MappedTable, PersistentClass)} instead
 	 */
 	@Deprecated
-	public OneToOne(MetadataImplementor metadata, Table table, PersistentClass owner) throws MappingException {
+	public OneToOne(MetadataBuildingContext metadata, Table table, PersistentClass owner) throws MappingException {
 		super( metadata, table );
 		this.identifier = owner.getKey();
 		this.entityName = owner.getEntityName();
 	}
 
-	public OneToOne(MetadataBuildingContext buildingContext, Table table, PersistentClass owner) throws MappingException {
-		super( buildingContext, table );
+	public OneToOne(MetadataBuildingContext metadata, MappedTable table, PersistentClass owner) throws MappingException {
+		super( metadata, table );
 		this.identifier = owner.getKey();
 		this.entityName = owner.getEntityName();
 	}
@@ -60,47 +65,71 @@ public class OneToOne extends ToOne {
 	public void setEntityName(String propertyName) {
 		this.entityName = entityName==null ? null : entityName.intern();
 	}
-	
-	public Type getType() throws MappingException {
-		if ( getColumnIterator().hasNext() ) {
-			return getMetadata().getTypeResolver().getTypeFactory().specialOneToOne(
-					getReferencedEntityName(), 
-					foreignKeyType,
-					referenceToPrimaryKey, 
-					referencedPropertyName,
-					isLazy(),
-					isUnwrapProxy(),
-					entityName,
-					propertyName
-			);
+
+	private ForeignKey foreignKey;
+
+	@Override
+	public ForeignKey getForeignKey() {
+		return foreignKey;
+	}
+
+	public ForeignKey createForeignKey() throws MappingException {
+		if ( constrained ) {
+			this.foreignKey = createForeignKeyOfEntity( getReferencedEntityName() );
+			if ( this.referencedPropertyName == null ) {
+				foreignKey.disableCreation();
+			}
 		}
-		else {
-			return getMetadata().getTypeResolver().getTypeFactory().oneToOne(
-					getReferencedEntityName(), 
-					foreignKeyType,
-					referenceToPrimaryKey, 
-					referencedPropertyName,
-					isLazy(),
-					isUnwrapProxy(),
-					entityName,
-					propertyName
-			);
+
+		return foreignKey;
+	}
+
+	@Override
+	protected void setTypeDescriptorResolver(Column column) {
+		column.setTypeDescriptorResolver( new OneToOneTypeDescriptorResolverImpl( columns.size() - 1 ) );
+	}
+
+	public class OneToOneTypeDescriptorResolverImpl implements TypeDescriptorResolver {
+
+		private int index;
+
+		public OneToOneTypeDescriptorResolverImpl(int index) {
+			this.index = index;
+		}
+
+		@Override
+		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
+			final List<MappedColumn> mappedColumns = getMappedColumns();
+			if ( mappedColumns.size() == 0 ) {
+				throw new IllegalStateException( "No SqlType code to resolve for " + entityName );
+
+			}
+			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
+					.getMetadataCollector()
+					.getEntityBinding( getReferencedEntityName() );
+
+			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
+				return ( (Column) referencedPersistentClass.getIdentifier()
+						.getMappedColumns()
+						.get( index ) ).getSqlTypeDescriptor();
+			}
+			else {
+				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
+						getReferencedPropertyName() );
+				return ( (Column) referencedProperty.getValue()
+						.getMappedColumns().get( index ) ).getSqlTypeDescriptor();
+			}
+		}
+
+		@Override
+		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
+			return getJavaTypeMapping().resolveJavaTypeDescriptor();
 		}
 	}
 
-	public void createForeignKey() throws MappingException {
-		if ( constrained && referencedPropertyName==null) {
-			//TODO: handle the case of a foreign key to something other than the pk
-			createForeignKeyOfEntity( ( (EntityType) getType() ).getAssociatedEntityName() );
-		}
-	}
-
-	public java.util.List getConstraintColumns() {
-		ArrayList list = new ArrayList();
-		Iterator iter = identifier.getColumnIterator();
-		while ( iter.hasNext() ) {
-			list.add( iter.next() );
-		}
+	public java.util.List<Selectable> getConstraintColumns() {
+		final ArrayList<Selectable> list = new ArrayList();
+		identifier.getMappedColumns().forEach( o -> list.add( (Selectable) o ) );
 		return list;
 	}
 	/**
@@ -172,5 +201,21 @@ public class OneToOne extends ToOne {
 				&& Objects.equals( entityName, other.entityName )
 				&& constrained == other.constrained;
 	}
-	
+
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
+				.getMetadataCollector()
+				.getEntityBinding( getReferencedEntityName() );
+
+		if ( referenceToPrimaryKey || referencedPropertyName == null ) {
+			return referencedPersistentClass.getIdentifier().getJavaTypeMapping();
+		}
+		else {
+			return referencedPersistentClass.getReferencedProperty( getReferencedPropertyName() )
+					.getValue()
+					.getJavaTypeMapping();
+		}
+	}
 }

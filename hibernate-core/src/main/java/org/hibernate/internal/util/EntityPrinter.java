@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.type.Type;
 
 /**
@@ -38,7 +38,7 @@ public final class EntityPrinter {
 	 * @return the entity rendered to a string
 	 */
 	public String toString(String entityName, Object entity) throws HibernateException {
-		EntityPersister entityPersister = factory.getEntityPersister( entityName );
+		EntityDescriptor entityPersister = factory.getEntityPersister( entityName );
 
 		if ( entityPersister == null ) {
 			return entity.getClass().getName();
@@ -46,12 +46,11 @@ public final class EntityPrinter {
 
 		Map<String, String> result = new HashMap<String, String>();
 
-		if ( entityPersister.hasIdentifierProperty() ) {
+		if ( entityPersister.getIdentifierDescriptor() != null ) {
 			result.put(
 					entityPersister.getIdentifierPropertyName(),
 					entityPersister.getIdentifierType().toLoggableString(
-							entityPersister.getIdentifier( entity ),
-							factory
+							entityPersister.getIdentifier( entity )
 					)
 			);
 		}
@@ -63,7 +62,7 @@ public final class EntityPrinter {
 			if ( !names[i].startsWith( "_" ) ) {
 				String strValue = values[i] == LazyPropertyInitializer.UNFETCHED_PROPERTY ?
 						values[i].toString() :
-						types[i].toLoggableString( values[i], factory );
+						types[i].toLoggableString( values[i] );
 				result.put( names[i], strValue );
 			}
 		}
@@ -74,7 +73,7 @@ public final class EntityPrinter {
 		StringBuilder buffer = new StringBuilder();
 		for ( int i = 0; i < types.length; i++ ) {
 			if ( types[i] != null ) {
-				buffer.append( types[i].toLoggableString( values[i], factory ) ).append( ", " );
+				buffer.append( types[i].toLoggableString( values[i] ) ).append( ", " );
 			}
 		}
 		return buffer.toString();
@@ -85,8 +84,7 @@ public final class EntityPrinter {
 		for ( Map.Entry<String, TypedValue> entry : namedTypedValues.entrySet() ) {
 			result.put(
 					entry.getKey(), entry.getValue().getType().toLoggableString(
-							entry.getValue().getValue(),
-							factory
+							entry.getValue().getValue()
 					)
 			);
 		}

@@ -121,7 +121,7 @@ public final class CollectionHelper {
 	 */
 	public static <K, V> ConcurrentHashMap<K, V> concurrentMap(int expectedNumberOfElements, float loadFactor) {
 		final int size = expectedNumberOfElements + 1 + (int) ( expectedNumberOfElements * loadFactor );
-		return new ConcurrentHashMap<K, V>( size, loadFactor );
+		return new ConcurrentHashMap<>( size, loadFactor );
 	}
 
 	public static <T> ArrayList<T> arrayList(int anticipatedSize) {
@@ -163,5 +163,15 @@ public final class CollectionHelper {
 		final Map<X, Y> copy = mapOfSize( map.size() + 1 );
 		copy.putAll( map );
 		return copy;
+	}
+
+	public static <T> Set<T> asSet(Collection<T> values) {
+		if ( Set.class.isInstance( values ) ) {
+			return (Set<T>) values;
+		}
+
+		final HashSet<T> set = new HashSet<>();
+		set.addAll( values );
+		return set;
 	}
 }

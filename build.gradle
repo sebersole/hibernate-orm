@@ -25,6 +25,7 @@ buildscript {
 		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.2'
 		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
 		classpath 'de.thetaphi:forbiddenapis:2.5'
+		classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.1'
 	}
 }
 
@@ -46,6 +47,11 @@ allprojects {
 	buildDir = "target"
 
 	apply from: rootProject.file( 'gradle/base-information.gradle' )
+
+// todo (6.0) : move to `gradle/java-module.gradle`
+// apply plugin: 'org.junit.platform.gradle.plugin'
+// ?
+// apply plugin: org.hibernate.build.HibernateBuildPlugin
 }
 
 

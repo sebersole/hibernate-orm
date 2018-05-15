@@ -8,6 +8,7 @@ package org.hibernate.event.internal;
 
 import java.io.Serializable;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
@@ -23,17 +24,18 @@ import org.hibernate.engine.internal.CascadePoint;
 import org.hibernate.engine.spi.CascadingActions;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.event.spi.RefreshEvent;
 import org.hibernate.event.spi.RefreshEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
-import org.hibernate.type.CollectionType;
-import org.hibernate.type.CompositeType;
-import org.hibernate.type.Type;
 
 /**
  * Defines the default refresh event listener used by hibernate for refreshing entities
@@ -78,7 +80,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		}
 
 		final EntityEntry e = source.getPersistenceContext().getEntry( object );
-		final EntityPersister persister;
+		final EntityDescriptor persister;
 		final Serializable id;
 
 		if ( e == null ) {
@@ -139,7 +141,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		if ( e != null ) {
 			final EntityKey key = source.generateEntityKey( id, persister );
 			source.getPersistenceContext().removeEntity( key );
-			if ( persister.hasCollections() ) {
+			if ( persister.getHierarchy().getMutabilityPlan().isMutable() ) {
 				new EvictVisitor( source, object ).process( object, persister );
 			}
 		}
@@ -152,22 +154,23 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				// multiple actions queued during the same flush
 				previousVersion = persister.getVersion( object );
 			}
-			final EntityDataAccess cache = persister.getCacheAccessStrategy();
-			final Object ck = cache.generateCacheKey(
+			final EntityDataAccess cacheAccess = persister.getCacheAccessStrategy();
+			final Object ck = cacheAccess.generateCacheKey(
 					id,
-					persister,
+					persister.getHierarchy(),
 					source.getFactory(),
 					source.getTenantIdentifier()
 			);
 			final SoftLock lock = cache.lockItem( source, ck, previousVersion );
-			cache.remove( source, ck );
 			source.getActionQueue().registerProcess( (success, session) -> cache.unlockItem( session, ck, lock ) );
+			cache.remove( source, ck );
 		}
 
 		evictCachedCollections( persister, id, source );
 
-		String previousFetchProfile = source.getLoadQueryInfluencers().getInternalFetchProfile();
-		source.getLoadQueryInfluencers().setInternalFetchProfile( "refresh" );
+		final InternalFetchProfileType previouslyEnabledInternalFetchProfileType =
+				source.getLoadQueryInfluencers().getEnabledInternalFetchProfileType();
+		source.getLoadQueryInfluencers().setEnabledInternalFetchProfileType( InternalFetchProfileType.REFRESH );
 
 
 		// Handle the requested lock-mode (if one) in relation to the entry's (if one) current lock-mode
@@ -214,7 +217,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 
 			// Keep the same read-only/modifiable setting for the entity that it had before refreshing;
 			// If it was transient, then set it to the default for the source.
-			if ( !persister.isMutable() ) {
+			if ( !persister.getHierarchy().getMutabilityPlan().isMutable() ) {
 				// this is probably redundant; it should already be read-only
 				source.setReadOnly( result, true );
 			}
@@ -222,37 +225,37 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				source.setReadOnly( result, ( e == null ? source.isDefaultReadOnly() : e.isReadOnly() ) );
 			}
 		}
-		source.getLoadQueryInfluencers().setInternalFetchProfile( previousFetchProfile );
 
 		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
-
 	}
 
-	private void evictCachedCollections(EntityPersister persister, Serializable id, EventSource source) {
-		evictCachedCollections( persister.getPropertyTypes(), id, source );
+	private void evictCachedCollections(EntityDescriptor entityDescriptor, Serializable id, EventSource source) {
+		evictCachedCollections( entityDescriptor.getPersistentAttributes(), id, source );
 	}
 
-	private void evictCachedCollections(Type[] types, Serializable id, EventSource source)
+	@SuppressWarnings("unchecked")
+	private void evictCachedCollections(List<PersistentAttribute> persistentAttributes, Serializable id, EventSource source)
 			throws HibernateException {
-		for ( Type type : types ) {
-			if ( type.isCollectionType() ) {
-				CollectionPersister collectionPersister = source.getFactory().getMetamodel().collectionPersister( ( (CollectionType) type ).getRole() );
-				if ( collectionPersister.hasCache() ) {
-					final CollectionDataAccess cache = collectionPersister.getCacheAccessStrategy();
+		for ( PersistentAttribute attribute : persistentAttributes ) {
+			if ( PluralPersistentAttribute.class.isInstance( attribute ) ) {
+				final PersistentCollectionDescriptor collectionDescriptor = ( (PluralPersistentAttribute) attribute ).getPersistentCollectionDescriptor();
+
+				if ( collectionDescriptor.hasCache() ) {
+					final CollectionDataAccess cache = collectionDescriptor.getCacheAccessStrategy();
 					final Object ck = cache.generateCacheKey(
-						id,
-						collectionPersister,
-						source.getFactory(),
-						source.getTenantIdentifier()
+							id,
+							collectionDescriptor,
+							source.getFactory(),
+							source.getTenantIdentifier()
 					);
 					final SoftLock lock = cache.lockItem( source, ck, null );
-					cache.remove( source, ck );
 					source.getActionQueue().registerProcess( (success, session) -> cache.unlockItem( session, ck, lock ) );
+					cache.remove( source, ck );
 				}
 			}
-			else if ( type.isComponentType() ) {
-				CompositeType actype = (CompositeType) type;
-				evictCachedCollections( actype.getSubtypes(), id, source );
+			else if ( EmbeddedValuedNavigable.class.isInstance( attribute ) ) {
+				EmbeddedValuedNavigable composite = (EmbeddedValuedNavigable) attribute;
+				evictCachedCollections( composite.getEmbeddedDescriptor().getPersistentAttributes(), id, source );
 			}
 		}
 	}

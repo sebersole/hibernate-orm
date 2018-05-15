@@ -7,7 +7,7 @@
 package org.hibernate.event.spi;
 
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * An event that occurs before a collection is removed
@@ -16,7 +16,7 @@ import org.hibernate.persister.collection.CollectionPersister;
  */
 public class PreCollectionRemoveEvent extends AbstractCollectionEvent {
 
-	public PreCollectionRemoveEvent(CollectionPersister collectionPersister,
+	public PreCollectionRemoveEvent(PersistentCollectionDescriptor collectionPersister,
 									PersistentCollection collection,
 									EventSource source,
 									Object loadedOwner) {

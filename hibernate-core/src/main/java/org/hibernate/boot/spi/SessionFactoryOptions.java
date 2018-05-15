@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 
 import org.hibernate.ConnectionReleaseMode;
 import org.hibernate.CustomEntityDirtinessStrategy;
-import org.hibernate.EntityMode;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
@@ -25,17 +24,14 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
-import org.hibernate.dialect.function.SQLFunction;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
-import org.hibernate.jpa.spi.JpaCompliance;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
+import org.hibernate.query.QueryLiteralRendering;
+import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.ImmutableEntityUpdateQueryHandlingMode;
-import org.hibernate.query.criteria.LiteralHandlingMode;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
-import org.hibernate.tuple.entity.EntityTuplizerFactory;
 
 /**
  * Aggregator of special options used to build the SessionFactory.
@@ -147,15 +143,11 @@ public interface SessionFactoryOptions {
 
 	boolean isIdentifierRollbackEnabled();
 
-	EntityMode getDefaultEntityMode();
-
-	EntityTuplizerFactory getEntityTuplizerFactory();
-
 	boolean isCheckNullability();
 
 	boolean isInitializeLazyStateOutsideTransactionsEnabled();
 
-	MultiTableBulkIdStrategy getMultiTableBulkIdStrategy();
+	IdTableStrategy getIdTableStrategy();
 
 	TempTableDdlTransactionHandling getTempTableDdlTransactionHandling();
 
@@ -249,12 +241,30 @@ public interface SessionFactoryOptions {
 	 */
 	EntityNotFoundDelegate getEntityNotFoundDelegate();
 
-	Map<String, SQLFunction> getCustomSqlFunctionMap();
+	SqmFunctionRegistry getSqmFunctionRegistry();
 
 	void setCheckNullability(boolean enabled);
 
+	/**
+	 * For transaction management in JTA, should we prefer to use
+	 * {@link javax.transaction.UserTransaction} as opposed to
+	 * {@link javax.transaction.Transaction}?
+	 *
+	 * @return {@code true} indicates we should prefer to use
+	 * {@link javax.transaction.UserTransaction}; {@code false} indicates we
+	 * should prefer {@link javax.transaction.Transaction}.
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#PREFER_USER_TRANSACTION
+	 */
 	boolean isPreferUserTransaction();
 
+	/**
+	 * For parameters defined as part of {@link org.hibernate.procedure.ProcedureCall}
+	 * or {@link javax.persistence.StoredProcedureQuery} how should we treat {@code null}
+	 * bindings?
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#PROCEDURE_NULL_PARAM_PASSING
+	 */
 	boolean isProcedureParameterNullPassingEnabled();
 
 	boolean isCollectionJoinSubqueryRewriteEnabled();
@@ -264,6 +274,44 @@ public interface SessionFactoryOptions {
 	boolean isReleaseResourcesOnCloseEnabled();
 
 	TimeZone getJdbcTimeZone();
+
+	/**
+	 * See {@link org.hibernate.cfg.AvailableSettings#NATIVE_QUERY_ORDINAL_PARAMETER_BASE} and
+	 * {@link org.hibernate.boot.SessionFactoryBuilder#applyNonJpaNativeQueryOrdinalParameterBase(Integer)} for details.
+	 *
+	 * @return The base integer for ordinal parameters
+	 *
+	 * @since 6.0
+	 */
+	Integer getNonJpaNativeQueryOrdinalParameterBase();
+
+	/**
+	 * Controls whether Hibernate should try to map named parameter names
+	 * specified in a {@link org.hibernate.procedure.ProcedureCall} or
+	 * {@link javax.persistence.StoredProcedureQuery} to named parameters in
+	 * the JDBC {@link java.sql.CallableStatement}.
+	 * <p/>
+	 * As JPA is defined, the use of named parameters is essentially of dubious
+	 * value since by spec the parameters have to be defined in the order they are
+	 * defined in the procedure/function declaration - we can always bind them
+	 * positionally.  The whole idea of named parameters for CallableStatement
+	 * is the ability to bind these in any order, but since we unequivocally
+	 * know the order anyway binding them via name really gains nothing.
+	 * <p/>
+	 * If this is {@code true}, we still need to make sure the Dialect supports
+	 * named binding.  Setting this to {@code false} simply circumvents that
+	 * check and always performs positional binding.
+	 *
+	 * @return {@code true} indicates we should try to use {@link java.sql.CallableStatement}
+	 * named parameters, if the Dialect says it is supported; {@code false}
+	 * indicates that we should never try to use {@link java.sql.CallableStatement}
+	 * named parameters, regardless of what the Dialect says.
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#CALLABLE_NAMED_PARAMS_ENABLED
+	 */
+	boolean isUseOfJdbcNamedParametersEnabled();
+
+	QueryLiteralRendering getQueryLiteralRendering();
 
 	default boolean isQueryParametersValidationEnabled(){
 		return isJpaBootstrap();

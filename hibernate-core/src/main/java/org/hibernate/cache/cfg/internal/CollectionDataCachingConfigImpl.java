@@ -10,9 +10,7 @@ import java.util.Comparator;
 
 import org.hibernate.cache.cfg.spi.CollectionDataCachingConfig;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.mapping.Collection;
-import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.type.VersionType;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -20,8 +18,7 @@ import org.hibernate.type.VersionType;
 public class CollectionDataCachingConfigImpl
 		extends AbstractDomainDataCachingConfig
 		implements CollectionDataCachingConfig {
-	private final Collection collectionDescriptor;
-	private final NavigableRole navigableRole;
+	private final PersistentCollectionDescriptor collectionDescriptor;
 
 	public CollectionDataCachingConfigImpl(
 			Collection collectionDescriptor,
@@ -29,6 +26,11 @@ public class CollectionDataCachingConfigImpl
 		super( accessType );
 		this.collectionDescriptor = collectionDescriptor;
 		this.navigableRole = new NavigableRole( collectionDescriptor.getRole() );
+	}
+
+	@Override
+	public PersistentCollectionDescriptor getCollectionDescriptor() {
+		return collectionDescriptor;
 	}
 
 	@Override
@@ -51,6 +53,6 @@ public class CollectionDataCachingConfigImpl
 
 	@Override
 	public NavigableRole getNavigableRole() {
-		return navigableRole;
+		return collectionDescriptor.getNavigableRole();
 	}
 }

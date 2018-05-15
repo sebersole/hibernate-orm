@@ -17,7 +17,7 @@ import javax.persistence.criteria.CriteriaUpdate;
 
 import org.hibernate.jdbc.ReturningWork;
 import org.hibernate.jdbc.Work;
-import org.hibernate.jpa.HibernateEntityManager;
+import org.hibernate.query.Query;
 import org.hibernate.stat.SessionStatistics;
 
 /**
@@ -81,7 +81,7 @@ import org.hibernate.stat.SessionStatistics;
  * @author Gavin King
  * @author Steve Ebersole
  */
-public interface Session extends SharedSessionContract, EntityManager, HibernateEntityManager, AutoCloseable, Closeable {
+public interface Session extends SharedSessionContract, EntityManager, AutoCloseable, Closeable {
 	/**
 	 * Obtain a {@link Session} builder with the ability to grab certain information from this session.
 	 *
@@ -232,6 +232,7 @@ public interface Session extends SharedSessionContract, EntityManager, Hibernate
 	 *
 	 * To override this session's read-only/modifiable setting for entities
 	 * and proxies loaded by a Query:
+	 *
 	 * @see Query#setReadOnly(boolean)
 	 *
 	 * @param readOnly true, the default for loaded entities/proxies is read-only;
@@ -674,21 +675,6 @@ public interface Session extends SharedSessionContract, EntityManager, Hibernate
 	LockMode getCurrentLockMode(Object object);
 
 	/**
-	 * Create a {@link Query} instance for the given collection and filter string.  Contains an implicit {@code FROM}
-	 * element named {@code this} which refers to the defined table for the collection elements, as well as an implicit
-	 * {@code WHERE} restriction for this particular collection instance's key value.
-	 *
-	 * @param collection a persistent collection
-	 * @param queryString a Hibernate query fragment.
-	 *
-	 * @return The query instance for manipulation and execution
-	 *
-	 * @deprecated (since 5.3) with no real replacement.
-	 */
-	@Deprecated
-	org.hibernate.Query createFilter(Object collection, String queryString);
-
-	/**
 	 * Completely clear the session. Evict all loaded instances and cancel all pending
 	 * saves, updates and deletions. Do not close open iterators or instances of
 	 * <tt>ScrollableResults</tt>.
@@ -1037,15 +1023,6 @@ public interface Session extends SharedSessionContract, EntityManager, Hibernate
 	 * @see org.hibernate.engine.profile.FetchProfile for discussion of this feature
 	 */
 	void disableFetchProfile(String name) throws UnknownProfileException;
-
-	/**
-	 * Convenience access to the {@link TypeHelper} associated with this session's {@link SessionFactory}.
-	 * <p/>
-	 * Equivalent to calling {@link #getSessionFactory()}.{@link SessionFactory#getTypeHelper getTypeHelper()}
-	 *
-	 * @return The {@link TypeHelper} associated with this session's {@link SessionFactory}
-	 */
-	TypeHelper getTypeHelper();
 
 	/**
 	 * Retrieve this session's helper/delegate for creating LOB instances.

@@ -12,8 +12,8 @@ import java.lang.reflect.Method;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.MarkerObject;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.proxy.AbstractLazyInitializer;
-import org.hibernate.type.CompositeType;
 
 /**
  * Lazy initializer for POJOs
@@ -28,7 +28,7 @@ public abstract class BasicLazyInitializer extends AbstractLazyInitializer {
 	protected final Method getIdentifierMethod;
 	protected final Method setIdentifierMethod;
 	protected final boolean overridesEquals;
-	protected final CompositeType componentIdType;
+	protected final EmbeddedTypeDescriptor<?> componentIdType;
 
 	private Object replacement;
 
@@ -38,7 +38,7 @@ public abstract class BasicLazyInitializer extends AbstractLazyInitializer {
 			Serializable id,
 			Method getIdentifierMethod,
 			Method setIdentifierMethod,
-			CompositeType componentIdType,
+			EmbeddedTypeDescriptor componentIdType,
 			SharedSessionContractImplementor session,
 			boolean overridesEquals) {
 		super( entityName, id, session );
@@ -80,8 +80,8 @@ public abstract class BasicLazyInitializer extends AbstractLazyInitializer {
 			}
 		}
 
-		//if it is a property of an embedded component, invoke on the "identifier"
-		if ( componentIdType != null && componentIdType.isMethodOf( method ) ) {
+		// if it is a property of an embedded component, invoke on the "identifier"
+		if ( componentIdType != null && componentIdType.getJavaType() != null && method.getDeclaringClass().isInstance( getIdentifier() ) ) {
 			return method.invoke( getIdentifier(), args );
 		}
 
@@ -95,7 +95,7 @@ public abstract class BasicLazyInitializer extends AbstractLazyInitializer {
 		if ( isUninitialized() && session != null && session.isOpen() ) {
 			final EntityKey key = session.generateEntityKey(
 					getIdentifier(),
-					session.getFactory().getMetamodel().entityPersister( getEntityName() )
+					session.getFactory().getTypeConfiguration().findEntityDescriptor( getEntityName() )
 			);
 			final Object entity = session.getPersistenceContext().getEntity( key );
 			if ( entity != null ) {

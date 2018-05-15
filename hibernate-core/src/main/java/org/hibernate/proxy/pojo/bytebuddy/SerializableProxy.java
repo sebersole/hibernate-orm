@@ -9,9 +9,9 @@ package org.hibernate.proxy.pojo.bytebuddy;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
+import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.proxy.AbstractSerializableProxy;
 import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.type.CompositeType;
 
 public final class SerializableProxy extends AbstractSerializableProxy {
 	private final Class persistentClass;
@@ -24,7 +24,7 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 	private final Class identifierSetterMethodClass;
 	private final Class[] identifierSetterMethodParams;
 
-	private final CompositeType componentIdType;
+	private final EmbeddedTypeDescriptor componentIdType;
 
 	public SerializableProxy(
 			String entityName,
@@ -34,7 +34,7 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 			Boolean readOnly,
 			Method getIdentifierMethod,
 			Method setIdentifierMethod,
-			CompositeType componentIdType) {
+			EmbeddedTypeDescriptor componentIdType) {
 		super( entityName, id, readOnly );
 		this.persistentClass = persistentClass;
 		this.interfaces = interfaces;
@@ -99,7 +99,7 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 		return identifierSetterMethodParams;
 	}
 
-	protected CompositeType getComponentIdType() {
+	protected EmbeddedTypeDescriptor getComponentIdType() {
 		return componentIdType;
 	}
 

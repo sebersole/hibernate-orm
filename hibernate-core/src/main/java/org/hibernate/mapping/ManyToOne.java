@@ -6,14 +6,13 @@
  */
 package org.hibernate.mapping;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
+import org.hibernate.HibernateError;
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.EntityType;
 import org.hibernate.type.Type;
 
 /**
@@ -25,72 +24,118 @@ public class ManyToOne extends ToOne {
 	private boolean isLogicalOneToOne;
 
 	/**
-	 * @deprecated Use {@link ManyToOne#ManyToOne(MetadataBuildingContext, Table)} instead.
+	 * @deprecated since 6.0, use {@link #ManyToOne(MetadataBuildingContext, MappedTable)}
 	 */
 	@Deprecated
-	public ManyToOne(MetadataImplementor metadata, Table table) {
+	public ManyToOne(MetadataBuildingContext metadata, Table table) {
 		super( metadata, table );
 	}
 
-	public ManyToOne(MetadataBuildingContext buildingContext, Table table) {
-		super( buildingContext, table );
+	public ManyToOne(MetadataBuildingContext metadata, MappedTable table) {
+		super( metadata, table );
 	}
 
-	public Type getType() throws MappingException {
-		return getMetadata().getTypeResolver().getTypeFactory().manyToOne(
-				getReferencedEntityName(),
-				referenceToPrimaryKey, 
-				getReferencedPropertyName(),
-				getPropertyName(),
-				isLazy(),
-				isUnwrapProxy(),
-				isIgnoreNotFound(),
-				isLogicalOneToOne
-		);
+	@Override
+	protected void setTypeDescriptorResolver(Column column) {
+		column.setTypeDescriptorResolver( new ManyToOneTypeDescriptorResolver( columns.size() - 1 ) );
 	}
 
-	public void createForeignKey() throws MappingException {
-		// the case of a foreign key to something other than the pk is handled in createPropertyRefConstraints
-		if (referencedPropertyName==null && !hasFormula() ) {
-			createForeignKeyOfEntity( ( (EntityType) getType() ).getAssociatedEntityName() );
-		} 
-	}
+	public class ManyToOneTypeDescriptorResolver implements TypeDescriptorResolver {
+		private int index;
 
-	public void createPropertyRefConstraints(Map persistentClasses) {
-		if (referencedPropertyName!=null) {
-			PersistentClass pc = (PersistentClass) persistentClasses.get(getReferencedEntityName() );
-			
-			Property property = pc.getReferencedProperty( getReferencedPropertyName() );
-			
-			if (property==null) {
-				throw new MappingException(
-						"Could not find property " + 
-						getReferencedPropertyName() + 
-						" on " + 
-						getReferencedEntityName() 
-					);
-			} 
+		public ManyToOneTypeDescriptorResolver(int index) {
+			this.index = index;
+		}
+
+		@Override
+		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
+			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
+					.getMetadataCollector()
+					.getEntityBinding( getReferencedEntityName() );
+			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
+				return ( (Column) referencedPersistentClass.getIdentifier()
+						.getMappedColumns()
+						.get( index ) ).getSqlTypeDescriptor();
+			}
 			else {
-				// todo : if "none" another option is to create the ForeignKey object still	but to set its #disableCreation flag
-				if ( !hasFormula() && !"none".equals( getForeignKeyName() ) ) {
-					java.util.List refColumns = new ArrayList();
-					Iterator iter = property.getColumnIterator();
-					while ( iter.hasNext() ) {
-						Column col = (Column) iter.next();
-						refColumns.add( col );
-					}
-					
-					ForeignKey fk = getTable().createForeignKey( 
-							getForeignKeyName(), 
-							getConstraintColumns(), 
-							( (EntityType) getType() ).getAssociatedEntityName(), 
-							getForeignKeyDefinition(), 
-							refColumns
-					);
-					fk.setCascadeDeleteEnabled(isCascadeDeleteEnabled() );
+				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
+						getReferencedPropertyName() );
+				return ( (Column) referencedProperty.getValue()
+						.getMappedColumns()
+						.get( index ) ).getSqlTypeDescriptor();
+			}
+		}
+
+		@Override
+		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
+			return getJavaTypeMapping().resolveJavaTypeDescriptor();
+		}
+	}
+
+	private ForeignKey foreignKey;
+
+	@Override
+	public ForeignKey getForeignKey() {
+		return foreignKey;
+	}
+
+	public ForeignKey createForeignKey() throws MappingException {
+		if ( foreignKey == null ) {
+			// the case of a foreign key to something other than the pk is handled in createPropertyRefConstraints
+			if ( referencedPropertyName == null ) {
+				foreignKey = (ForeignKey) getMappedTable().createForeignKey(
+						getForeignKeyName(),
+						getConstraintColumns(),
+						getReferencedEntityName(),
+						getForeignKeyDefinition(),
+						null
+				);
+				if ( hasFormula() ) {
+					foreignKey.disableCreation();
 				}
 			}
 		}
+
+		return foreignKey;
+	}
+
+	public ForeignKey createPropertyRefConstraints(Map persistentClasses) {
+		if ( foreignKey != null ) {
+			return foreignKey;
+		}
+
+		if ( referencedPropertyName == null ) {
+			throw new HibernateError( "#createForeignKey should have created ForeignKey, but none was found" );
+		}
+
+		final PersistentClass pc = (PersistentClass) persistentClasses.get( getReferencedEntityName() );
+		final Property property = pc.getReferencedProperty( getReferencedPropertyName() );
+
+		if ( property == null ) {
+			throw new MappingException(
+					String.format(
+							Locale.ROOT,
+							"Could not find property `%s` on `%s : cannot create foreign-key (selectable mappings)",
+							getReferencedPropertyName(),
+							getReferencedEntityName()
+					)
+			);
+		}
+
+		ForeignKey fk = (ForeignKey) getMappedTable().createForeignKey(
+				getForeignKeyName(),
+				getConstraintColumns(),
+				getReferencedEntityName(),
+				getForeignKeyDefinition(),
+				property.getMappedColumns()
+		);
+		fk.setCascadeDeleteEnabled( isCascadeDeleteEnabled() );
+
+		if ( !hasFormula() && !"none".equals( getForeignKeyName() ) ) {
+			fk.disableCreation();
+		}
+
+		return fk;
 	}
 	
 	public Object accept(ValueVisitor visitor) {
@@ -111,5 +156,21 @@ public class ManyToOne extends ToOne {
 
 	public boolean isLogicalOneToOne() {
 		return isLogicalOneToOne;
+	}
+
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
+				.getMetadataCollector()
+				.getEntityBinding( getReferencedEntityName() );
+		if ( referenceToPrimaryKey || referencedPropertyName == null ) {
+			return referencedPersistentClass.getIdentifier().getJavaTypeMapping();
+		}
+		else {
+			return referencedPersistentClass.getReferencedProperty( getReferencedPropertyName() )
+					.getValue()
+					.getJavaTypeMapping();
+		}
 	}
 }

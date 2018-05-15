@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -21,31 +20,20 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.LazyInitializationException;
 import org.hibernate.Session;
+import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.spi.CollectionEntry;
-import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.engine.spi.Status;
-import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.internal.util.collections.EmptyIterator;
-import org.hibernate.internal.util.collections.IdentitySet;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.pretty.MessageHelper;
-import org.hibernate.type.CompositeType;
-import org.hibernate.type.IntegerType;
-import org.hibernate.type.LongType;
-import org.hibernate.type.PostgresUUIDType;
-import org.hibernate.type.StringType;
-import org.hibernate.type.Type;
-import org.hibernate.type.UUIDBinaryType;
-import org.hibernate.type.UUIDCharType;
+import org.hibernate.NotYetImplementedFor6Exception;
 
 /**
  * Base class implementing {@link org.hibernate.collection.spi.PersistentCollection}
@@ -56,6 +44,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( AbstractPersistentCollection.class );
 
 	private transient SharedSessionContractImplementor session;
+
 	private boolean isTempSession = false;
 	private boolean initialized;
 	private transient List<DelayedOperation> operationQueue;
@@ -64,7 +53,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	private Object owner;
 	private int cachedSize = -1;
 
-	private String role;
+	private NavigableRole role;
 	private Serializable key;
 	// collections detect changes made via their public interface and mark
 	// themselves as dirty as a performance optimization
@@ -87,8 +76,8 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	}
 
 	@Override
-	public final String getRole() {
-		return role;
+	public PersistentCollectionDescriptor getCollectionMetadata() {
+		return null;
 	}
 
 	@Override
@@ -156,7 +145,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 								final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
 
 								if ( entry != null ) {
-									final CollectionPersister persister = entry.getLoadedPersister();
+									final PersistentCollectionDescriptor persister = entry.getLoadedPersistentCollectionDescriptor();
 									if ( persister.isExtraLazy() ) {
 										if ( hasQueuedOperations() ) {
 											session.flush();
@@ -188,7 +177,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	 *
 	 * @param <T> The java type of the return for this LazyInitializationWork
 	 */
-	public static interface LazyInitializationWork<T> {
+	public interface LazyInitializationWork<T> {
 		/**
 		 * Do the represented work and return the result.
 		 *
@@ -245,7 +234,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 			}
 
 			session.getPersistenceContext().addUninitializedDetachedCollection(
-					session.getFactory().getCollectionPersister( getRole() ),
+					session.getFactory().getTypeConfiguration().findCollectionDescriptor( getRole() ),
 					this
 			);
 		}
@@ -292,7 +281,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 						@Override
 						public Boolean doWork() {
 							final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-							final CollectionPersister persister = entry.getLoadedPersister();
+							final PersistentCollectionDescriptor persister = entry.getLoadedPersistentCollectionDescriptor();
 							if ( persister.isExtraLazy() ) {
 								if ( hasQueuedOperations() ) {
 									session.flush();
@@ -320,7 +309,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 						@Override
 						public Boolean doWork() {
 							final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-							final CollectionPersister persister = entry.getLoadedPersister();
+							final PersistentCollectionDescriptor persister = entry.getLoadedPersistentCollectionDescriptor();
 							if ( persister.isExtraLazy() ) {
 								if ( hasQueuedOperations() ) {
 									session.flush();
@@ -352,7 +341,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 				@Override
 				public Object doWork() {
 					final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-					final CollectionPersister persister = entry.getLoadedPersister();
+					final PersistentCollectionDescriptor persister = entry.getLoadedPersistentCollectionDescriptor();
 					isExtraLazy = persister.isExtraLazy();
 					if ( isExtraLazy ) {
 						if ( hasQueuedOperations() ) {
@@ -441,7 +430,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	@SuppressWarnings({"JavaDoc"})
 	protected boolean isInverseCollection() {
 		final CollectionEntry ce = session.getPersistenceContext().getCollectionEntry( this );
-		return ce != null && ce.getLoadedPersister().isInverse();
+		return ce != null && ce.getLoadedPersistentCollectionDescriptor().isInverse();
 	}
 
 	/**
@@ -453,8 +442,8 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 		final CollectionEntry ce = session.getPersistenceContext().getCollectionEntry( this );
 		return ce != null
 				&&
-				ce.getLoadedPersister().isInverse() &&
-				!ce.getLoadedPersister().hasOrphanDelete();
+				ce.getLoadedPersistentCollectionDescriptor().isInverse() &&
+				!ce.getLoadedPersistentCollectionDescriptor().hasOrphanDelete();
 	}
 
 	/**
@@ -465,8 +454,8 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	protected boolean isInverseOneToManyOrNoOrphanDelete() {
 		final CollectionEntry ce = session.getPersistenceContext().getCollectionEntry( this );
 		return ce != null
-				&& ce.getLoadedPersister().isInverse()
-				&& ( ce.getLoadedPersister().isOneToMany() || !ce.getLoadedPersister().hasOrphanDelete() );
+				&& ce.getLoadedPersistentCollectionDescriptor().isInverse()
+				&& ( ce.getLoadedPersistentCollectionDescriptor().isOneToMany() || !ce.getLoadedPersistentCollectionDescriptor().hasOrphanDelete() );
 	}
 
 	/**
@@ -488,7 +477,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	 * @param copyCache - mapping from entity in the process of being
 	 *                    merged to managed copy.
 	 */
-	public final void replaceQueuedOperationValues(CollectionPersister persister, Map copyCache) {
+	public final void replaceQueuedOperationValues(PersistentCollectionDescriptor persister, Map copyCache) {
 		for ( DelayedOperation operation : operationQueue ) {
 			if ( ValueDelayedOperation.class.isInstance( operation ) ) {
 				( (ValueDelayedOperation) operation ).replace( persister, copyCache );
@@ -507,7 +496,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	}
 
 	@Override
-	public void setSnapshot(Serializable key, String role, Serializable snapshot) {
+	public void setSnapshot(Serializable key, NavigableRole role, Serializable snapshot) {
 		this.key = key;
 		this.role = role;
 		this.storedSnapshot = snapshot;
@@ -634,13 +623,17 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 		}
 	}
 
+	private PersistentCollectionDescriptor collectionMetadata;
+
 	@Override
 	public final boolean setCurrentSession(SharedSessionContractImplementor session) throws HibernateException {
 		if ( session == this.session ) {
+			assert collectionMetadata != null;
 			return false;
 		}
 		else {
 			if ( this.session != null ) {
+				assert collectionMetadata != null;
 				final String msg = generateUnexpectedSessionStateMessage( session );
 				if ( isConnectedToSession() ) {
 					throw new HibernateException(
@@ -650,6 +643,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 				else {
 					LOG.logUnexpectedSessionInCollectionNotConnected( msg );
 					this.session = session;
+					this.collectionMetadata = session.getFactory().getTypeConfiguration().findCollectionDescriptor( getRole() );
 					return true;
 				}
 			}
@@ -669,19 +663,19 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 		// be consistent with the CollectionEntry in this.session (as long as this.session doesn't
 		// change it). Don't access the CollectionEntry in this.session because that could result
 		// in multi-threaded access to this.session.
-		final String roleCurrent = role;
+		final NavigableRole roleCurrent = role;
 		final Serializable keyCurrent = key;
 
 		final StringBuilder sb = new StringBuilder( "Collection : " );
 		if ( roleCurrent != null ) {
-			sb.append( MessageHelper.collectionInfoString( roleCurrent, keyCurrent ) );
+			sb.append( MessageHelper.collectionInfoString( roleCurrent.getFullPath(), keyCurrent ) );
 		}
 		else {
 			final CollectionEntry ce = session.getPersistenceContext().getCollectionEntry( this );
 			if ( ce != null ) {
 				sb.append(
 						MessageHelper.collectionInfoString(
-								ce.getLoadedPersister(),
+								ce.getLoadedPersistentCollectionDescriptor(),
 								this,
 								ce.getLoadedKey(),
 								session
@@ -701,7 +695,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	}
 
 	@Override
-	public boolean needsRecreate(CollectionPersister persister) {
+	public boolean needsRecreate(PersistentCollectionDescriptor persister) {
 		// Workaround for situations like HHH-7072.  If the collection element is a component that consists entirely
 		// of nullable properties, we currently have to forcefully recreate the entire collection.  See the use
 		// of hasNotNullableColumns in the AbstractCollectionPersister constructor for more info.  In order to delete
@@ -713,18 +707,20 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 		// Selecting a type used in where part of update statement
 		// (must match condidion in org.hibernate.persister.collection.BasicCollectionPersister.doUpdateRows).
 		// See HHH-9474
-		Type whereType;
-		if ( persister.hasIndex() ) {
-			whereType = persister.getIndexType();
-		}
-		else {
-			whereType = persister.getElementType();
-		}
-		if ( whereType instanceof CompositeType ) {
-			CompositeType componentIndexType = (CompositeType) whereType;
-			return !componentIndexType.hasNotNullProperty();
-		}
-		return false;
+
+		throw new NotYetImplementedException(  );
+//		Type whereType;
+//		if ( persister.hasIndex() ) {
+//			whereType = persister.getIndexType();
+//		}
+//		else {
+//			whereType = (Type) persister.getElementType();
+//		}
+//		if ( whereType instanceof EmbeddedType ) {
+//			EmbeddedType componentIndexType = (EmbeddedType) whereType;
+//			return !componentIndexType.hasNotNullProperty();
+//		}
+//		return false;
 	}
 
 	@Override
@@ -806,11 +802,11 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	}
 
 	@Override
-	public void preInsert(CollectionPersister persister) throws HibernateException {
+	public void preInsert(PersistentCollectionDescriptor persister) throws HibernateException {
 	}
 
 	@Override
-	public void afterRowInsert(CollectionPersister persister, Object entry, int i) throws HibernateException {
+	public void afterRowInsert(PersistentCollectionDescriptor persister, Object entry, int i) throws HibernateException {
 	}
 
 	@Override
@@ -1147,7 +1143,7 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 	}
 
 	protected interface ValueDelayedOperation extends DelayedOperation {
-		void replace(CollectionPersister collectionPersister, Map copyCache);
+		void replace(PersistentCollectionDescriptor collectionPersister, Map copyCache);
 	}
 
 	protected abstract class AbstractValueDelayedOperation implements ValueDelayedOperation {
@@ -1159,15 +1155,17 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 			this.orphan = orphan;
 		}
 
-		public void replace(CollectionPersister persister, Map copyCache) {
-			if ( addedValue != null ) {
-				addedValue = getReplacement( persister.getElementType(), addedValue, copyCache );
-			}
+		public void replace(PersistentCollectionDescriptor persister, Map copyCache) {
+			throw new NotYetImplementedFor6Exception(  );
+//			if ( addedValue != null ) {
+//				addedValue = getReplacement( (Type) persister.getElementType(), addedValue, copyCache );
+//			}
 		}
 
-		protected final Object getReplacement(Type type, Object current, Map copyCache) {
-			return type.replace( current, null, session, owner, copyCache );
-		}
+//		protected final Object getReplacement(Type type, Object current, Map copyCache) {
+//			throw new org.hibernate.sql.NotYetImplementedException(  );
+//			return type.replace( current, null, session, owner, copyCache );
+//		}
 
 		@Override
 		public final Object getAddedInstance() {
@@ -1192,64 +1190,66 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 			String entityName,
 			SharedSessionContractImplementor session) throws HibernateException {
 
-		// short-circuit(s)
-		if ( currentElements.size() == 0 ) {
-			// no new elements, the old list contains only Orphans
-			return oldElements;
-		}
-		if ( oldElements.size() == 0 ) {
-			// no old elements, so no Orphans neither
-			return oldElements;
-		}
+		throw new NotYetImplementedFor6Exception(  );
 
-		final EntityPersister entityPersister = session.getFactory().getEntityPersister( entityName );
-		final Type idType = entityPersister.getIdentifierType();
-		final boolean useIdDirect = mayUseIdDirect( idType );
-
-		// create the collection holding the Orphans
-		final Collection res = new ArrayList();
-
-		// collect EntityIdentifier(s) of the *current* elements - add them into a HashSet for fast access
-		final java.util.Set currentIds = new HashSet();
-		final java.util.Set currentSaving = new IdentitySet();
-		for ( Object current : currentElements ) {
-			if ( current != null && ForeignKeys.isNotTransient( entityName, current, null, session ) ) {
-				final EntityEntry ee = session.getPersistenceContext().getEntry( current );
-				if ( ee != null && ee.getStatus() == Status.SAVING ) {
-					currentSaving.add( current );
-				}
-				else {
-					final Serializable currentId = ForeignKeys.getEntityIdentifierIfNotUnsaved(
-							entityName,
-							current,
-							session
-					);
-					currentIds.add( useIdDirect ? currentId : new TypedValue( idType, currentId ) );
-				}
-			}
-		}
-
-		// iterate over the *old* list
-		for ( Object old : oldElements ) {
-			if ( !currentSaving.contains( old ) ) {
-				final Serializable oldId = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, old, session );
-				if ( !currentIds.contains( useIdDirect ? oldId : new TypedValue( idType, oldId ) ) ) {
-					res.add( old );
-				}
-			}
-		}
-
-		return res;
+//		// short-circuit(s)
+//		if ( currentElements.size() == 0 ) {
+//			// no new elements, the old list contains only Orphans
+//			return oldElements;
+//		}
+//		if ( oldElements.size() == 0 ) {
+//			// no old elements, so no Orphans neither
+//			return oldElements;
+//		}
+//
+//		final EntityTypeImplementor entityPersister = session.getFactory().getEntityDescriptor( entityName );
+//		final Type idType = entityPersister.getIdentifierType();
+//		final boolean useIdDirect = mayUseIdDirect( idType );
+//
+//		// create the collection holding the Orphans
+//		final Collection res = new ArrayList();
+//
+//		// collect EntityIdentifier(s) of the *current* elements - add them into a HashSet for fast access
+//		final java.util.Set currentIds = new HashSet();
+//		final java.util.Set currentSaving = new IdentitySet();
+//		for ( Object current : currentElements ) {
+//			if ( current != null && ForeignKeys.isNotTransient( entityName, current, null, session ) ) {
+//				final EntityEntry ee = session.getPersistenceContext().getEntry( current );
+//				if ( ee != null && ee.getStatus() == Status.SAVING ) {
+//					currentSaving.add( current );
+//				}
+//				else {
+//					final Serializable currentId = ForeignKeys.getEntityIdentifierIfNotUnsaved(
+//							entityName,
+//							current,
+//							session
+//					);
+//					currentIds.add( useIdDirect ? currentId : new TypedValue( idType, currentId ) );
+//				}
+//			}
+//		}
+//
+//		// iterate over the *old* list
+//		for ( Object old : oldElements ) {
+//			if ( !currentSaving.contains( old ) ) {
+//				final Serializable oldId = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, old, session );
+//				if ( !currentIds.contains( useIdDirect ? oldId : new TypedValue( idType, oldId ) ) ) {
+//					res.add( old );
+//				}
+//			}
+//		}
+//
+//		return res;
 	}
-
-	private static boolean mayUseIdDirect(Type idType) {
-		return idType == StringType.INSTANCE
-			|| idType == IntegerType.INSTANCE
-			|| idType == LongType.INSTANCE
-			|| idType == UUIDBinaryType.INSTANCE
-			|| idType == UUIDCharType.INSTANCE
-			|| idType == PostgresUUIDType.INSTANCE;
-	}
+//
+//	private static boolean mayUseIdDirect(Type idType) {
+//		return idType == StandardSpiBasicTypes.STRING
+//			|| idType == StandardSpiBasicTypes.INTEGER
+//			|| idType == StandardSpiBasicTypes.LONG
+//			|| idType == StandardSpiBasicTypes.UUID_BINARY
+//			|| idType == StandardSpiBasicTypes.UUID_CHAR
+//			|| idType == PostgresUUIDType.INSTANCE;
+//	}
 
 	/**
 	 * Removes entity entries that have an equal identifier with the incoming entity instance
@@ -1264,22 +1264,21 @@ public abstract class AbstractPersistentCollection implements Serializable, Pers
 			Object entityInstance,
 			String entityName,
 			SharedSessionContractImplementor session) {
-
-		if ( entityInstance != null && ForeignKeys.isNotTransient( entityName, entityInstance, null, session ) ) {
-			final EntityPersister entityPersister = session.getFactory().getEntityPersister( entityName );
-			final Type idType = entityPersister.getIdentifierType();
-
-			final Serializable idOfCurrent = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, entityInstance, session );
-			final Iterator itr = list.iterator();
-			while ( itr.hasNext() ) {
-				final Serializable idOfOld = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, itr.next(), session );
-				if ( idType.isEqual( idOfCurrent, idOfOld, session.getFactory() ) ) {
-					itr.remove();
-					break;
-				}
-			}
-
-		}
+		throw new NotYetImplementedFor6Exception(  );
+//		if ( entityInstance != null && ForeignKeys.isNotTransient( entityName, entityInstance, null, session ) ) {
+//			final EntityTypeImplementor entityPersister = session.getFactory().getEntityDescriptor( entityName );
+//			final Type idType = entityPersister.getIdentifierType();
+//
+//			final Serializable idOfCurrent = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, entityInstance, session );
+//			final Iterator itr = list.iterator();
+//			while ( itr.hasNext() ) {
+//				final Serializable idOfOld = ForeignKeys.getEntityIdentifierIfNotUnsaved( entityName, itr.next(), session );
+//				if ( idType.isEqual( idOfCurrent, idOfOld, session.getFactory() ) ) {
+//					itr.remove();
+//					break;
+//				}
+//			}
+//		}
 	}
 
 	@Override

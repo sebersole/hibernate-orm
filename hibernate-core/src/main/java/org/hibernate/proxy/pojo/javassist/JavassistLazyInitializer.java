@@ -15,8 +15,8 @@ import javassist.util.proxy.MethodHandler;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.proxy.pojo.BasicLazyInitializer;
-import org.hibernate.type.CompositeType;
 
 import static org.hibernate.internal.CoreLogging.messageLogger;
 
@@ -39,7 +39,7 @@ public class JavassistLazyInitializer extends BasicLazyInitializer implements Me
 			Serializable id,
 			Method getIdentifierMethod,
 			Method setIdentifierMethod,
-			CompositeType componentIdType,
+			EmbeddedTypeDescriptor componentIdType,
 			SharedSessionContractImplementor session,
 			boolean overridesEquals) {
 		super( entityName, persistentClass, id, getIdentifierMethod, setIdentifierMethod, componentIdType, session, overridesEquals );

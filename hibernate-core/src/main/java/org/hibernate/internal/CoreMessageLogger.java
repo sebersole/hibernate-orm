@@ -34,8 +34,9 @@ import org.hibernate.engine.loading.internal.EntityLoadContext;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.IntegralDataTypeHolder;
-import org.hibernate.type.BasicType;
-import org.hibernate.type.SerializationException;
+import org.hibernate.procedure.ProcedureCall;
+import org.hibernate.query.spi.QueryMessageLogger;
+import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.Type;
 
 import org.jboss.logging.BasicLogger;
@@ -533,7 +534,10 @@ public interface CoreMessageLogger extends BasicLogger {
 			id = 175)
 	void missingEntityAnnotation(String className);
 
-
+	/**
+	 * @deprecated Use {@link QueryMessageLogger#namedQueryError} instead.
+	 */
+	@Deprecated
 	@LogMessage(level = ERROR)
 	@Message(value = "Error in named query: %s", id = 177)
 	void namedQueryError(
@@ -1035,9 +1039,7 @@ public interface CoreMessageLogger extends BasicLogger {
 
 	@LogMessage(level = WARN)
 	@Message(value = "Could not deserialize cache file: %s : %s", id = 307)
-	void unableToDeserializeCache(
-			String path,
-			SerializationException error);
+	void unableToDeserializeCache(String path, Exception error);
 
 	@LogMessage(level = WARN)
 	@Message(value = "Unable to destroy cache: %s", id = 308)
@@ -1744,7 +1746,7 @@ public interface CoreMessageLogger extends BasicLogger {
 	void startingDelayedSchemaDrop();
 
 	@LogMessage(level = ERROR)
-	@Message(value = "Unsuccessful: %s", id = 478)
+	@Message(value = "Unsuccessful attempt to execute schema management command: %s", id = 478)
 	void unsuccessfulSchemaManagementCommand(String command);
 
 	@Message(
@@ -1807,4 +1809,12 @@ public interface CoreMessageLogger extends BasicLogger {
 			id = 487)
 	void immutableEntityUpdateQuery(String sourceQuery, String querySpaces);
 
+
+	@LogMessage(level = WARN)
+	@Message(
+			id = 488,
+			value = "Attempt to use NativeQuery to perform execution of a CallableStatement which is no longer supported.  " +
+					"Use `org.hibernate.procedure.ProcedureCall` or `javax.persistence.StoredProcedureQuery` instead"
+	)
+	void warnNativeQueryAsCallable();
 }

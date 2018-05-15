@@ -16,7 +16,7 @@ import org.hibernate.event.spi.ResolveNaturalIdEvent;
 import org.hibernate.event.spi.ResolveNaturalIdEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
 /**
@@ -52,7 +52,7 @@ public class DefaultResolveNaturalIdEventListener
 	 * @return The loaded entity, or null.
 	 */
 	protected Serializable resolveNaturalId(final ResolveNaturalIdEvent event) {
-		final EntityPersister persister = event.getEntityPersister();
+		final EntityDescriptor persister = event.getEntityDescriptor();
 
 		final boolean traceEnabled = LOG.isTraceEnabled();
 		if ( traceEnabled ) {
@@ -92,7 +92,7 @@ public class DefaultResolveNaturalIdEventListener
 	 */
 	protected Serializable resolveFromCache(final ResolveNaturalIdEvent event) {
 		return event.getSession().getPersistenceContext().getNaturalIdHelper().findCachedNaturalIdResolution(
-				event.getEntityPersister(),
+				event.getEntityDescriptor(),
 				event.getOrderedNaturalIdValues()
 		);
 	}
@@ -113,7 +113,7 @@ public class DefaultResolveNaturalIdEventListener
 			startTime = System.nanoTime();
 		}
 		
-		final Serializable pk = event.getEntityPersister().loadEntityIdByNaturalId(
+		final Serializable pk = event.getEntityDescriptor().loadEntityIdByNaturalId(
 				event.getOrderedNaturalIdValues(),
 				event.getLockOptions(),
 				event.getSession()
@@ -124,14 +124,13 @@ public class DefaultResolveNaturalIdEventListener
 			final long milliseconds = TimeUnit.MILLISECONDS.convert( endTime - startTime, TimeUnit.NANOSECONDS );
 			factory.getStatistics().naturalIdQueryExecuted(
 					event.getEntityPersister().getRootEntityName(),
-					milliseconds
-			);
+					milliseconds );
 		}
 		
 		//PK can be null if the entity doesn't exist
 		if (pk != null) {
 			event.getSession().getPersistenceContext().getNaturalIdHelper().cacheNaturalIdCrossReferenceFromLoad(
-					event.getEntityPersister(),
+					event.getEntityDescriptor(),
 					pk,
 					event.getOrderedNaturalIdValues()
 			);

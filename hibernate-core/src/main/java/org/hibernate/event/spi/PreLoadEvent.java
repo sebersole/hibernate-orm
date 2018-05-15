@@ -8,7 +8,7 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.secure.spi.PermissionCheckEntityInformation;
 
 /**
@@ -20,10 +20,17 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 	private Object entity;
 	private Object[] state;
 	private Serializable id;
-	private EntityPersister persister;
+	private EntityDescriptor descriptor;
 
 	public PreLoadEvent(EventSource session) {
-		super(session);
+		super( session );
+	}
+
+	public void reset() {
+		entity = null;
+		state = null;
+		id = null;
+		descriptor = null;
 	}
 
 	@Override
@@ -34,9 +41,17 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 	public Serializable getId() {
 		return id;
 	}
-	
-	public EntityPersister getPersister() {
-		return persister;
+
+	/**
+	 *
+	 * @deprecated use {@link #getDescriptor()}
+	 */
+	public EntityDescriptor getPersister() {
+		return descriptor;
+	}
+
+	public EntityDescriptor getDescriptor() {
+		return descriptor;
 	}
 	
 	public Object[] getState() {
@@ -52,9 +67,19 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 		this.id = id;
 		return this;
 	}
-	
-	public PreLoadEvent setPersister(EntityPersister persister) {
-		this.persister = persister;
+
+	/**
+	 *
+	 * @deprecated use {@link #setDescriptor(EntityDescriptor)}
+	 */
+	@Deprecated
+	public PreLoadEvent setPersister(EntityDescriptor descriptor) {
+		this.descriptor = descriptor;
+		return this;
+	}
+
+	public PreLoadEvent setDescriptor(EntityDescriptor descriptor) {
+		this.descriptor = descriptor;
 		return this;
 	}
 	
@@ -65,7 +90,7 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 
 	@Override
 	public String getEntityName() {
-		return persister.getEntityName();
+		return descriptor.getEntityName();
 	}
 
 	@Override

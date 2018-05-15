@@ -16,11 +16,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.loader.CollectionAliases;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -37,11 +36,26 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 			PersistentArrayHolder.class.getName()
 	);
 
+	private PersistentCollectionDescriptor descriptor;
+
+	private Serializable key;
 	protected Object array;
 
 	//just to help out during the load (ugly, i know)
-	private transient Class elementClass;
 	private transient java.util.List tempList;
+
+	/**
+	 * Constructs a PersistentCollection instance for holding an array.
+	 *
+	 * @param session The session
+	 * @param descriptor The descriptor for the array
+	 */
+	public PersistentArrayHolder(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor) {
+		super( session );
+		this.descriptor = descriptor;
+	}
 
 	/**
 	 * Constructs a PersistentCollection instance for holding an array.
@@ -49,35 +63,38 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	 * @param session The session
 	 * @param array The array (the persistent "collection").
 	 */
-	public PersistentArrayHolder(SharedSessionContractImplementor session, Object array) {
-		super( session );
+	public PersistentArrayHolder(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			Object array) {
+		this( session, descriptor );
+		setArray( (Object[]) array );
+	}
+
+	private void setArray(Object[] array) {
 		this.array = array;
 		setInitialized();
 	}
 
-	/**
-	 * Constructs a PersistentCollection instance for holding an array.
-	 *
-	 * @param session The session
-	 * @param persister The persister for the array
-	 */
-	public PersistentArrayHolder(SharedSessionContractImplementor session, CollectionPersister persister) {
-		super( session );
-		elementClass = persister.getElementClass();
+	public PersistentArrayHolder(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			Serializable key) {
+		this( session, descriptor );
+		this.key = key;
 	}
 
 
-
 	@Override
-	public Serializable getSnapshot(CollectionPersister persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
 //		final int length = (array==null) ? tempList.size() : Array.getLength( array );
 		final int length = Array.getLength( array );
-		final Serializable result = (Serializable) Array.newInstance( persister.getElementClass(), length );
+		final Serializable result = (Serializable) Array.newInstance( persister.getElementDescriptor().getJavaType(), length );
 		for ( int i=0; i<length; i++ ) {
 //			final Object elt = (array==null) ? tempList.get( i ) : Array.get( array, i );
 			final Object elt = Array.get( array, i );
 			try {
-				Array.set( result, i, persister.getElementType().deepCopy( elt, persister.getFactory() ) );
+				Array.set( result, i, persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( elt ) );
 			}
 			catch (IllegalArgumentException iae) {
 				LOG.invalidArrayElementType( iae.getMessage() );
@@ -115,19 +132,20 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	}
 
 	@Override
-	public boolean equalsSnapshot(CollectionPersister persister) throws HibernateException {
-		final Type elementType = persister.getElementType();
-		final Serializable snapshot = getSnapshot();
-		final int xlen = Array.getLength( snapshot );
-		if ( xlen!= Array.getLength( array ) ) {
-			return false;
-		}
-		for ( int i=0; i<xlen; i++) {
-			if ( elementType.isDirty( Array.get( snapshot, i ), Array.get( array, i ), getSession() ) ) {
-				return false;
-			}
-		}
-		return true;
+	public boolean equalsSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+		throw new NotYetImplementedFor6Exception(  );
+//		final Type elementType = getElementType( persister );
+//		final Serializable snapshot = getSnapshot();
+//		final int xlen = Array.getLength( snapshot );
+//		if ( xlen!= Array.getLength( array ) ) {
+//			return false;
+//		}
+//		for ( int i=0; i<xlen; i++) {
+//			if ( elementType.isDirty( Array.get( snapshot, i ), Array.get( array, i ), getSession() ) ) {
+//				return false;
+//			}
+//		}
+//		return true;
 	}
 
 	/**
@@ -152,20 +170,20 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object readFrom(ResultSet rs, CollectionPersister persister, CollectionAliases descriptor, Object owner)
-	throws HibernateException, SQLException {
-		final Object element = persister.readElement( rs, owner, descriptor.getSuffixedElementAliases(), getSession() );
-		final int index = (Integer) persister.readIndex( rs, descriptor.getSuffixedIndexAliases(), getSession() );
-		for ( int i = tempList.size(); i<=index; i++) {
-			tempList.add( i, null );
-		}
-		tempList.set( index, element );
-		return element;
+	public Object readFrom(ResultSet rs, PersistentCollectionDescriptor persister, Object owner) throws SQLException {
+		throw new NotYetImplementedFor6Exception(  );
+//		final Object element = persister.readElement( rs, owner, getSession() );
+//		final int index = (Integer) persister.readIndex( rs, getSession() );
+//		for ( int i = tempList.size(); i<=index; i++) {
+//			tempList.add( i, null );
+//		}
+//		tempList.set( index, element );
+//		return element;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator entries(CollectionPersister persister) {
+	public Iterator entries(PersistentCollectionDescriptor persister) {
 		return elements();
 	}
 
@@ -178,7 +196,11 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	@Override
 	public boolean endRead() {
 		setInitialized();
-		array = Array.newInstance( elementClass, tempList.size() );
+
+		array = Array.newInstance(
+				descriptor.getElementDescriptor().getJavaType(),
+				tempList.size()
+		);
 		for ( int i=0; i<tempList.size(); i++ ) {
 			Array.set( array, i, tempList.get( i ) );
 		}
@@ -187,7 +209,7 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	}
 
 	@Override
-	public void beforeInitialize(CollectionPersister persister, int anticipatedSize) {
+	public void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize) {
 		//if (tempList==null) throw new UnsupportedOperationException("Can't lazily initialize arrays");
 	}
 
@@ -197,22 +219,21 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	}
 
 	@Override
-	public void initializeFromCache(CollectionPersister persister, Serializable disassembled, Object owner)
-			throws HibernateException {
+	public void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner) {
 		final Serializable[] cached = (Serializable[]) disassembled;
-		array = Array.newInstance( persister.getElementClass(), cached.length );
+		array = Array.newInstance( persister.getElementDescriptor().getJavaType(), cached.length );
 
 		for ( int i=0; i<cached.length; i++ ) {
-			Array.set( array, i, persister.getElementType().assemble( cached[i], getSession(), owner ) );
+			Array.set( array, i, persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( cached[i] ) );
 		}
 	}
 
 	@Override
-	public Serializable disassemble(CollectionPersister persister) throws HibernateException {
+	public Serializable disassemble(PersistentCollectionDescriptor persister) throws HibernateException {
 		final int length = Array.getLength( array );
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = persister.getElementType().disassemble( Array.get( array,i ), getSession(), null );
+			result[i] = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( Array.get( array,i ) );
 		}
 
 		return result;
@@ -224,7 +245,7 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	}
 
 	@Override
-	public Iterator getDeletes(CollectionPersister persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
 		final java.util.List<Integer> deletes = new ArrayList<>();
 		final Serializable sn = getSnapshot();
 		final int snSize = Array.getLength( sn );
@@ -248,22 +269,23 @@ public class PersistentArrayHolder extends AbstractPersistentCollection {
 	}
 
 	@Override
-	public boolean needsInserting(Object entry, int i, Type elemType) throws HibernateException {
+	public boolean needsInserting(Object entry, int i) throws HibernateException {
 		final Serializable sn = getSnapshot();
 		return Array.get( array, i ) != null && ( i >= Array.getLength( sn ) || Array.get( sn, i ) == null );
 	}
 
 	@Override
-	public boolean needsUpdating(Object entry, int i, Type elemType) throws HibernateException {
-		final Serializable sn = getSnapshot();
-		return i < Array.getLength( sn )
-				&& Array.get( sn, i ) != null
-				&& Array.get( array, i ) != null
-				&& elemType.isDirty( Array.get( array, i ), Array.get( sn, i ), getSession() );
+	public boolean needsUpdating(Object entry, int i) throws HibernateException {
+		throw new NotYetImplementedFor6Exception(  );
+//		final Serializable sn = getSnapshot();
+//		return i < Array.getLength( sn )
+//				&& Array.get( sn, i ) != null
+//				&& Array.get( array, i ) != null
+//				&& elemType.isDirty( Array.get( array, i ), Array.get( sn, i ), getSession() );
 	}
 
 	@Override
-	public Object getIndex(Object entry, int i, CollectionPersister persister) {
+	public Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister) {
 		return i;
 	}
 

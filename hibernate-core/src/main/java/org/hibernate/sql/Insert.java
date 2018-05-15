@@ -5,12 +5,14 @@
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package org.hibernate.sql;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.type.LiteralType;
+import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * An SQL <tt>INSERT</tt> statement
@@ -18,7 +20,8 @@ import org.hibernate.type.LiteralType;
  * @author Gavin King
  */
 public class Insert {
-	private Dialect dialect;
+	final private Dialect dialect;
+
 	private String tableName;
 	private String comment;
 	private Map columns = new LinkedHashMap();
@@ -70,8 +73,8 @@ public class Insert {
 		return this;
 	}
 
-	public Insert addColumn(String columnName, Object value, LiteralType type) throws Exception {
-		return addColumn( columnName, type.objectToSQLString(value, dialect) );
+	public Insert addColumn(String columnName, Object value, Type type) throws Exception {
+		return addColumn( columnName, ( (JavaTypeDescriptor) type.getJavaTypeDescriptor() ).toString( value ) );
 	}
 
 	public Insert addIdentityColumn(String columnName) {

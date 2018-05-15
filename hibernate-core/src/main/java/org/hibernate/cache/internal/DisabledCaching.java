@@ -21,6 +21,8 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * CacheImplementor implementation for disabled caching
@@ -223,6 +225,9 @@ public class DisabledCaching implements CacheImplementor {
 		return (T) this;
 	}
 
+	/**
+	 * @todo (6.0) : why?
+	 */
 	@Override
 	public Set<NaturalIdDataAccess> getNaturalIdAccessesInRegion(String regionName) {
 		return Collections.emptySet();

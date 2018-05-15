@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.CacheMode;
-import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.entry.CollectionCacheEntry;
+import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.CollectionKey;
@@ -27,9 +27,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.collection.QueryableCollection;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
 /**
@@ -90,12 +90,11 @@ public class CollectionLoadContext {
 	 *
 	 * @return The loading collection (see discussion above).
 	 */
-	public PersistentCollection getLoadingCollection(final CollectionPersister persister, final Serializable key) {
-		final EntityMode em = persister.getOwnerEntityPersister().getEntityMetamodel().getEntityMode();
-		final CollectionKey collectionKey = new CollectionKey( persister, key, em );
+	public PersistentCollection getLoadingCollection(final PersistentCollectionDescriptor persister, final Serializable key) {
+		final CollectionKey collectionKey = new CollectionKey( persister, key );
 		if ( LOG.isTraceEnabled() ) {
 			LOG.tracev( "Starting attempt to find loading collection [{0}]",
-					MessageHelper.collectionInfoString( persister.getRole(), key ) );
+					MessageHelper.collectionInfoString( persister.getNavigableRole().getFullPath(), key ) );
 		}
 		final LoadingCollectionEntry loadingCollectionEntry = loadContexts.locateLoadingCollectionEntry( collectionKey );
 		if ( loadingCollectionEntry == null ) {
@@ -121,8 +120,11 @@ public class CollectionLoadContext {
 				}
 				// create one
 				LOG.tracev( "Instantiating new collection [key={0}, rs={1}]", key, resultSet );
-				collection = persister.getCollectionType().instantiate(
-						loadContexts.getPersistenceContext().getSession(), persister, key );
+				collection = persister.instantiateWrapper(
+						loadContexts.getPersistenceContext().getSession(),
+						persister,
+						key
+				);
 			}
 			collection.beforeInitialize( persister, -1 );
 			collection.beginRead();
@@ -147,7 +149,7 @@ public class CollectionLoadContext {
 	 *
 	 * @param persister The persister for which to complete loading.
 	 */
-	public void endLoadingCollections(CollectionPersister persister) {
+	public void endLoadingCollections(PersistentCollectionDescriptor persister) {
 		final SharedSessionContractImplementor session = getLoadContext().getPersistenceContext().getSession();
 		if ( !loadContexts.hasLoadingCollectionEntries()
 				&& localLoadingCollectionKeys.isEmpty() ) {
@@ -175,11 +177,7 @@ public class CollectionLoadContext {
 				matches.add( lce );
 				if ( lce.getCollection().getOwner() == null ) {
 					session.getPersistenceContext().addUnownedCollection(
-							new CollectionKey(
-									persister,
-									lce.getKey(),
-									persister.getOwnerEntityPersister().getEntityMetamodel().getEntityMode()
-							),
+							new CollectionKey( persister, lce.getKey() ),
 							lce.getCollection()
 					);
 				}
@@ -203,18 +201,18 @@ public class CollectionLoadContext {
 		}
 	}
 
-	private void endLoadingCollections(CollectionPersister persister, List<LoadingCollectionEntry> matchedCollectionEntries) {
+	private void endLoadingCollections(PersistentCollectionDescriptor persister, List<LoadingCollectionEntry> matchedCollectionEntries) {
 		final boolean debugEnabled = LOG.isDebugEnabled();
 		if ( matchedCollectionEntries == null ) {
 			if ( debugEnabled ) {
-				LOG.debugf( "No collections were found in result set for role: %s", persister.getRole() );
+				LOG.debugf( "No collections were found in result set for role: %s", persister.getNavigableRole().getFullPath() );
 			}
 			return;
 		}
 
 		final int count = matchedCollectionEntries.size();
 		if ( debugEnabled ) {
-			LOG.debugf( "%s collections were found in result set for role: %s", count, persister.getRole() );
+			LOG.debugf( "%s collections were found in result set for role: %s", count, persister.getNavigableRole().getFullPath() );
 		}
 
 		for ( LoadingCollectionEntry matchedCollectionEntry : matchedCollectionEntries ) {
@@ -222,18 +220,18 @@ public class CollectionLoadContext {
 		}
 
 		if ( debugEnabled ) {
-			LOG.debugf( "%s collections initialized for role: %s", count, persister.getRole() );
+			LOG.debugf( "%s collections initialized for role: %s", count, persister.getNavigableRole().getFullPath() );
 		}
 	}
 
-	private void endLoadingCollection(LoadingCollectionEntry lce, CollectionPersister persister) {
+	private void endLoadingCollection(LoadingCollectionEntry lce, PersistentCollectionDescriptor persister) {
 		LOG.tracev( "Ending loading collection [{0}]", lce );
 		final SharedSessionContractImplementor session = getLoadContext().getPersistenceContext().getSession();
 
 		// warning: can cause a recursive calls! (proxy initialization)
 		final boolean hasNoQueuedAdds = lce.getCollection().endRead();
 
-		if ( persister.getCollectionType().hasHolder() ) {
+		if ( persister.getCollectionClassification() == CollectionClassification.ARRAY ) {
 			getLoadContext().getPersistenceContext().addCollectionHolder( lce.getCollection() );
 		}
 
@@ -249,16 +247,17 @@ public class CollectionLoadContext {
 		}
 
 
-		// add to cache if:
-		boolean addToCache =
-				// there were no queued additions
-				hasNoQueuedAdds
-				// and the role has a cache
-				&& persister.hasCache()
-				// and this is not a forced initialization during flush
-				&& session.getCacheMode().isPutEnabled() && !ce.isDoremove();
-		if ( addToCache ) {
-			addCollectionToCache( lce, persister );
+		// optionally add to cache...
+		if ( session.getCacheMode().isPutEnabled() ) {
+			// there were no queued additions
+			if ( hasNoQueuedAdds ) {
+				if ( !ce.isDoremove() ) {
+					final CollectionDataAccess cacheAccess = persister.getCacheAccess();
+					if ( cacheAccess != null ) {
+						addCollectionToCache( lce, persister );
+					}
+				}
+			}
 		}
 
 		if ( LOG.isDebugEnabled() ) {
@@ -268,7 +267,7 @@ public class CollectionLoadContext {
 			);
 		}
 		if ( session.getFactory().getStatistics().isStatisticsEnabled() ) {
-			session.getFactory().getStatistics().loadCollection( persister.getRole() );
+			session.getFactory().getStatistics().loadCollection( persister.getNavigableRole().getFullPath() );
 		}
 	}
 
@@ -278,7 +277,7 @@ public class CollectionLoadContext {
 	 * @param lce The entry representing the collection to add
 	 * @param persister The persister
 	 */
-	private void addCollectionToCache(LoadingCollectionEntry lce, CollectionPersister persister) {
+	private void addCollectionToCache(LoadingCollectionEntry lce, PersistentCollectionDescriptor persister) {
 		final SharedSessionContractImplementor session = getLoadContext().getPersistenceContext().getSession();
 		final SessionFactoryImplementor factory = session.getFactory();
 
@@ -300,7 +299,7 @@ public class CollectionLoadContext {
 		}
 
 		final Object version;
-		if ( persister.isVersioned() ) {
+		if ( persister.getDescribedAttribute().isIncludedInOptimisticLocking() ) {
 			Object collectionOwner = getLoadContext().getPersistenceContext().getCollectionOwner( lce.getKey(), persister );
 			if ( collectionOwner == null ) {
 				// generally speaking this would be caused by the collection key being defined by a property-ref, thus
@@ -311,7 +310,8 @@ public class CollectionLoadContext {
 				if ( lce.getCollection() != null ) {
 					final Object linkedOwner = lce.getCollection().getOwner();
 					if ( linkedOwner != null ) {
-						final Serializable ownerKey = persister.getOwnerEntityPersister().getIdentifier( linkedOwner, session );
+						final EntityDescriptor entityOwnerDescriptor = persister.findEntityOwnerDescriptor();
+						final Serializable ownerKey = entityOwnerDescriptor.getIdentifier( linkedOwner, session );
 						collectionOwner = getLoadContext().getPersistenceContext().getCollectionOwner( ownerKey, persister );
 					}
 				}
@@ -339,10 +339,10 @@ public class CollectionLoadContext {
 		);
 
 		boolean isPutFromLoad = true;
-		if ( persister.getElementType().isAssociationType() ) {
+		if ( EntityValuedNavigable.class.isInstance( persister.getElementDescriptor() ) ) {
+			EntityDescriptor elementEntityDescriptor = ( (EntityValuedNavigable) persister.getElementDescriptor() ).getEntityDescriptor();
 			for ( Serializable id : entry.getState() ) {
-				EntityPersister entityPersister = ( (QueryableCollection) persister ).getElementPersister();
-				if ( session.getPersistenceContext().wasInsertedDuringTransaction( entityPersister, id ) ) {
+				if ( session.getPersistenceContext().wasInsertedDuringTransaction( elementEntityDescriptor, id ) ) {
 					isPutFromLoad = false;
 					break;
 				}
@@ -364,7 +364,7 @@ public class CollectionLoadContext {
 				if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 					factory.getStatistics().collectionCachePut(
 							persister.getNavigableRole(),
-							persister.getCacheAccessStrategy().getRegion().getName()
+							persister.getCacheAccess().getRegion().getName()
 					);
 				}
 			}

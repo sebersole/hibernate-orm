@@ -25,7 +25,6 @@ public interface SessionFactoryServiceRegistryFactory extends Service {
 	 * @param sessionFactory The (still being built) session factory.  Generally this is useful
 	 * for grabbing a reference for later use.  However, care should be taken when invoking on
 	 * the session factory until after it has been fully initialized.
-	 * @param sessionFactoryOptions The build options.
 	 * @param bootstrapContext The (still active) BootstrapContext.
 	 * @param sessionFactoryOptions The build options.
 	 *

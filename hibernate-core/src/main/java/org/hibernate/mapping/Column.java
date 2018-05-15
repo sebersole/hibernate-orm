@@ -9,13 +9,18 @@ package org.hibernate.mapping;
 import java.io.Serializable;
 import java.util.Locale;
 
-import org.hibernate.HibernateException;
-import org.hibernate.MappingException;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect.function.SQLFunctionRegistry;
-import org.hibernate.engine.spi.Mapping;
-import org.hibernate.internal.util.StringHelper;
+import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
+import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
+import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
+import org.hibernate.metamodel.model.relational.spi.Size;
+import org.hibernate.naming.Identifier;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.sql.Template;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+
+import static org.hibernate.mapping.SimpleValue.TypeDescriptorResolver;
 
 /**
  * A column of a relational database table
@@ -23,121 +28,85 @@ import org.hibernate.sql.Template;
  * @author Gavin King
  */
 public class Column implements Selectable, Serializable, Cloneable {
+	private Identifier tableName;
+	private Identifier name;
 
-	public static final int DEFAULT_LENGTH = 255;
-	public static final int DEFAULT_PRECISION = 19;
-	public static final int DEFAULT_SCALE = 2;
+	private SqlTypeDescriptor sqlTypeDescriptor;
+	private TypeDescriptorResolver typeDescriptorResolver;
 
-	private int length = DEFAULT_LENGTH;
-	private int precision = DEFAULT_PRECISION;
-	private int scale = DEFAULT_SCALE;
-	private Value value;
-	private int typeIndex;
-	private String name;
+	private String sqlType;
+
+	private int uniqueInteger;
+
+	private boolean quoted;
+
+	private Long length;
+	private Integer precision;
+	private Integer scale;
+
 	private boolean nullable = true;
 	private boolean unique;
-	private String sqlType;
-	private Integer sqlTypeCode;
-	private boolean quoted;
-	int uniqueInteger;
 	private String checkConstraint;
 	private String comment;
 	private String defaultValue;
 	private String customWrite;
 	private String customRead;
 
-	public Column() {
+	public Column(String columnName, boolean isUnique) {
+		this( Identifier.toIdentifier( columnName ), isUnique );
 	}
 
-	public Column(String columnName) {
+	public Column(Identifier tableName, String columnName, boolean isUnique) {
+		this( Identifier.toIdentifier( columnName ), isUnique );
+		this.tableName = tableName;
+	}
+
+	public Column(Identifier columnName, boolean isUnique) {
 		setName( columnName );
+		setUnique( isUnique );
 	}
 
-	public int getLength() {
-		return length;
-	}
-
-	public void setLength(int length) {
-		this.length = length;
-	}
-
-	public Value getValue() {
-		return value;
-	}
-
-	public void setValue(Value value) {
-		this.value = value;
-	}
-
-	public String getName() {
+	public Identifier getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		if (
-				StringHelper.isNotEmpty( name ) &&
-						Dialect.QUOTE.indexOf( name.charAt( 0 ) ) > -1 //TODO: deprecated, remove eventually
-				) {
-			quoted = true;
-			this.name = name.substring( 1, name.length() - 1 );
-		}
-		else {
-			this.name = name;
+	public Identifier getTableName(){
+		return tableName;
+	}
+
+	public Long getLength() {
+		return length;
+	}
+
+	public void setLength(Long length) {
+		this.length = length;
+	}
+
+	public void setTableName(Identifier tableName) {
+		this.tableName = tableName;
+	}
+
+	public void setName(Identifier columnName) {
+		this.name = columnName;
+		if ( columnName != null ) {
+			this.quoted = columnName.isQuoted();
 		}
 	}
 
-	/**
-	 * returns quoted name as it would be in the mapping file.
-	 */
+	public int getUniqueInteger() {
+		return uniqueInteger;
+	}
+
+	public void setUniqueInteger(int uniqueInteger) {
+		this.uniqueInteger = uniqueInteger;
+	}
+
 	public String getQuotedName() {
-		return quoted ?
-				"`" + name + "`" :
-				name;
+		return name.render();
 	}
 
 	public String getQuotedName(Dialect d) {
-		return quoted ?
-				d.openQuote() + name + d.closeQuote() :
-				name;
-	}
-
-	@Override
-	public String getAlias(Dialect dialect) {
-		final int lastLetter = StringHelper.lastIndexOfLetter( name );
-		final String suffix = Integer.toString( uniqueInteger ) + '_';
-
-		String alias = name;
-		if ( lastLetter == -1 ) {
-			alias = "column";
-		}
-		else if ( name.length() > lastLetter + 1 ) {
-			alias = name.substring( 0, lastLetter + 1 );
-		}
-
-		boolean useRawName = name.length() + suffix.length() <= dialect.getMaxAliasLength()
-				&& !quoted && !name.toLowerCase( Locale.ROOT ).equals( "rowid" );
-		if ( !useRawName ) {
-			if ( suffix.length() >= dialect.getMaxAliasLength() ) {
-				throw new MappingException(
-						String.format(
-								"Unique suffix [%s] length must be less than maximum [%d]",
-								suffix, dialect.getMaxAliasLength()
-						)
-				);
-			}
-			if ( alias.length() + suffix.length() > dialect.getMaxAliasLength() ) {
-				alias = alias.substring( 0, dialect.getMaxAliasLength() - suffix.length() );
-			}
-		}
-		return alias + suffix;
-	}
-
-	/**
-	 * Generate a column alias that is unique across multiple tables
-	 */
-	@Override
-	public String getAlias(Dialect dialect, Table table) {
-		return getAlias( dialect ) + table.getUniqueInteger() + '_';
+		return name.render( d );
 	}
 
 	public boolean isNullable() {
@@ -148,24 +117,13 @@ public class Column implements Selectable, Serializable, Cloneable {
 		this.nullable = nullable;
 	}
 
-	public int getTypeIndex() {
-		return typeIndex;
-	}
-
-	public void setTypeIndex(int typeIndex) {
-		this.typeIndex = typeIndex;
-	}
-
 	public boolean isUnique() {
 		return unique;
 	}
 
 	@Override
 	public int hashCode() {
-		//used also for generation of FK names!
-		return isQuoted() ?
-				name.hashCode() :
-				name.toLowerCase( Locale.ROOT ).hashCode();
+		return tableName.hashCode() + name.hashCode();
 	}
 
 	@Override
@@ -182,55 +140,7 @@ public class Column implements Selectable, Serializable, Cloneable {
 			return true;
 		}
 
-		return isQuoted() ?
-				name.equals( column.name ) :
-				name.equalsIgnoreCase( column.name );
-	}
-
-	public int getSqlTypeCode(Mapping mapping) throws MappingException {
-		org.hibernate.type.Type type = getValue().getType();
-		try {
-			int sqlTypeCode = type.sqlTypes( mapping )[getTypeIndex()];
-			if ( getSqlTypeCode() != null && getSqlTypeCode() != sqlTypeCode ) {
-				throw new MappingException( "SQLType code's does not match. mapped as " + sqlTypeCode + " but is " + getSqlTypeCode() );
-			}
-			return sqlTypeCode;
-		}
-		catch (Exception e) {
-			throw new MappingException(
-					"Could not determine type for column " +
-							name +
-							" of type " +
-							type.getClass().getName() +
-							": " +
-							e.getClass().getName(),
-					e
-			);
-		}
-	}
-
-	/**
-	 * Returns the underlying columns sqltypecode.
-	 * If null, it is because the sqltype code is unknown.
-	 * <p/>
-	 * Use #getSqlTypeCode(Mapping) to retrieve the sqltypecode used
-	 * for the columns associated Value/Type.
-	 *
-	 * @return sqlTypeCode if it is set, otherwise null.
-	 */
-	public Integer getSqlTypeCode() {
-		return sqlTypeCode;
-	}
-
-	public void setSqlTypeCode(Integer typeCode) {
-		sqlTypeCode = typeCode;
-	}
-
-	public String getSqlType(Dialect dialect, Mapping mapping) throws HibernateException {
-		if ( sqlType == null ) {
-			sqlType = dialect.getTypeName( getSqlTypeCode( mapping ), getLength(), getPrecision(), getScale() );
-		}
-		return sqlType;
+		return tableName.equals( column.tableName ) && name.equals( column.name );
 	}
 
 	public String getSqlType() {
@@ -241,7 +151,7 @@ public class Column implements Selectable, Serializable, Cloneable {
 		this.sqlType = sqlType;
 	}
 
-	public void setUnique(boolean unique) {
+	private void setUnique(boolean unique) {
 		this.unique = unique;
 	}
 
@@ -251,7 +161,12 @@ public class Column implements Selectable, Serializable, Cloneable {
 
 	@Override
 	public String toString() {
-		return getClass().getName() + '(' + getName() + ')';
+		return String.format(
+				Locale.ROOT,
+				"Boot-model (Physical)Column : %s.%s",
+				getTableName(),
+				getName()
+		);
 	}
 
 	public String getCheckConstraint() {
@@ -262,16 +177,12 @@ public class Column implements Selectable, Serializable, Cloneable {
 		this.checkConstraint = checkConstraint;
 	}
 
-	public boolean hasCheckConstraint() {
-		return checkConstraint != null;
-	}
-
 	@Override
-	public String getTemplate(Dialect dialect, SQLFunctionRegistry functionRegistry) {
+	public String getTemplate(Dialect dialect, SqmFunctionRegistry functionRegistry) {
 		return hasCustomRead()
 				// see note in renderTransformerReadFragment wrt access to SessionFactory
 				? Template.renderTransformerReadFragment( customRead, getQuotedName( dialect ) )
-				: Template.TEMPLATE + '.' + getQuotedName( dialect );
+				: Template.TEMPLATE + '.' + name.render( dialect );
 	}
 
 	public boolean hasCustomRead() {
@@ -279,7 +190,7 @@ public class Column implements Selectable, Serializable, Cloneable {
 	}
 
 	public String getReadExpr(Dialect dialect) {
-		return hasCustomRead() ? customRead : getQuotedName( dialect );
+		return hasCustomRead() ? customRead : name.render( dialect );
 	}
 
 	public String getWriteExpr() {
@@ -292,28 +203,88 @@ public class Column implements Selectable, Serializable, Cloneable {
 	}
 
 	@Override
-	public String getText(Dialect d) {
-		return getQuotedName( d );
+	public String getText(Dialect dialect) {
+		return name.render(dialect);
 	}
 
 	@Override
 	public String getText() {
-		return getName();
+		return name.getText();
 	}
 
-	public int getPrecision() {
+	@Override
+	public SqlTypeDescriptor getSqlTypeDescriptor() {
+		if ( sqlTypeDescriptor == null ) {
+			sqlTypeDescriptor = typeDescriptorResolver.resolveSqlTypeDescriptor();
+		}
+		return sqlTypeDescriptor;
+	}
+
+	protected JavaTypeDescriptor getJavaTypeDescriptor() {
+		return typeDescriptorResolver.resolveJavaTypeDescriptor();
+	}
+
+	public void setTypeDescriptorResolver(TypeDescriptorResolver typeDescriptorResolver) {
+		this.typeDescriptorResolver = typeDescriptorResolver;
+	}
+
+	@Override
+	public org.hibernate.metamodel.model.relational.spi.PhysicalColumn generateRuntimeColumn(
+			org.hibernate.metamodel.model.relational.spi.Table runtimeTable,
+			PhysicalNamingStrategy namingStrategy,
+			JdbcEnvironment jdbcEnvironment) {
+
+		final Identifier physicalName = namingStrategy.toPhysicalColumnName(
+				getName(),
+				jdbcEnvironment
+		);
+
+		final Dialect dialect = jdbcEnvironment.getDialect();
+		Size size = new Size.Builder().setLength( getLength() )
+				.setPrecision( getPrecision() )
+				.setScale( getScale() )
+				.build();
+		if ( size.getLength() == null
+				&& size.getScale() == null && size.getPrecision() == null ) {
+			size = dialect.getDefaultSizeStrategy().resolveDefaultSize(
+					getSqlTypeDescriptor(),
+					getJavaTypeDescriptor()
+			);
+		}
+
+		String columnSqlType = getSqlType();
+		if ( columnSqlType == null ) {
+			columnSqlType = dialect.getTypeName( getSqlTypeDescriptor().getJdbcTypeCode(), size );
+		}
+
+		final PhysicalColumn column = new PhysicalColumn(
+				runtimeTable,
+				physicalName,
+				getSqlTypeDescriptor(),
+				getDefaultValue(),
+				columnSqlType,
+				isNullable(),
+				isUnique(),
+				getComment()
+		);
+		column.setSize(	size );
+		column.setCheckConstraint( getCheckConstraint() );
+		return column;
+	}
+
+	public Integer getPrecision() {
 		return precision;
 	}
 
-	public void setPrecision(int scale) {
+	public void setPrecision(Integer scale) {
 		this.precision = scale;
 	}
 
-	public int getScale() {
+	public Integer getScale() {
 		return scale;
 	}
 
-	public void setScale(int scale) {
+	public void setScale(Integer scale) {
 		this.scale = scale;
 	}
 
@@ -350,7 +321,7 @@ public class Column implements Selectable, Serializable, Cloneable {
 	}
 
 	public String getCanonicalName() {
-		return quoted ? name : name.toLowerCase( Locale.ROOT );
+		return name.getCanonicalName();
 	}
 
 	/**
@@ -358,23 +329,20 @@ public class Column implements Selectable, Serializable, Cloneable {
 	 */
 	@Override
 	public Column clone() {
-		Column copy = new Column();
+		Column copy = new Column( name, unique );
+		copy.setTableName( tableName );
 		copy.setLength( length );
 		copy.setScale( scale );
-		copy.setValue( value );
-		copy.setTypeIndex( typeIndex );
-		copy.setName( getQuotedName() );
 		copy.setNullable( nullable );
 		copy.setPrecision( precision );
-		copy.setUnique( unique );
 		copy.setSqlType( sqlType );
-		copy.setSqlTypeCode( sqlTypeCode );
-		copy.uniqueInteger = uniqueInteger; //usually useless
+		copy.setUniqueInteger( uniqueInteger ); //usually useless
 		copy.setCheckConstraint( checkConstraint );
 		copy.setComment( comment );
 		copy.setDefaultValue( defaultValue );
 		copy.setCustomRead( customRead );
 		copy.setCustomWrite( customWrite );
+		copy.setTypeDescriptorResolver( typeDescriptorResolver );
 		return copy;
 	}
 

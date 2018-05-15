@@ -16,9 +16,8 @@ import java.util.TreeMap;
 
 import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.collection.BasicCollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * A persistent wrapper for a <tt>java.util.SortedMap</tt>. Underlying
@@ -42,8 +41,10 @@ public class PersistentSortedMap extends PersistentMap implements SortedMap {
 	 *
 	 * @param session The session
 	 */
-	public PersistentSortedMap(SharedSessionContractImplementor session) {
-		super( session );
+	public PersistentSortedMap(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor) {
+		super( session, descriptor );
 	}
 
 	/**
@@ -52,17 +53,23 @@ public class PersistentSortedMap extends PersistentMap implements SortedMap {
 	 * @param session The session
 	 * @param map The underlying map data
 	 */
-	public PersistentSortedMap(SharedSessionContractImplementor session, SortedMap map) {
-		super( session, map );
+	public PersistentSortedMap(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			SortedMap map) {
+		super( session, descriptor );
 		comparator = map.comparator();
 	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})
-	protected Serializable snapshot(BasicCollectionPersister persister, EntityMode entityMode) throws HibernateException {
+	protected Serializable snapshot(PersistentCollectionDescriptor persister, EntityMode entityMode) throws HibernateException {
 		final TreeMap clonedMap = new TreeMap( comparator );
 		for ( Object o : map.entrySet() ) {
 			final Entry e = (Entry) o;
-			clonedMap.put( e.getKey(), persister.getElementType().deepCopy( e.getValue(), persister.getFactory() ) );
+			clonedMap.put(
+					e.getKey(),
+					persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( e.getValue() )
+			);
 		}
 		return clonedMap;
 	}

@@ -7,8 +7,7 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.CollectionType;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * An <tt>IdentifierBag</tt> has a primary key consisting of
@@ -19,18 +18,12 @@ public class IdentifierBag extends IdentifierCollection {
 	 * @deprecated User {@link IdentifierBag#IdentifierBag(MetadataBuildingContext, PersistentClass)} instead.
 	 */
 	@Deprecated
-	public IdentifierBag(MetadataImplementor metadata, PersistentClass owner) {
-		super( metadata, owner );
-	}
-
 	public IdentifierBag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 	}
 
-	public CollectionType getDefaultCollectionType() {
-		return getMetadata().getTypeResolver()
-				.getTypeFactory()
-				.idbag( getRole(), getReferencedPropertyName() );
+	public IdentifierBag(MetadataBuildingContext buildingContext, PersistentClass owner) {
+		super( buildingContext, owner );
 	}
 
 	public Object accept(ValueVisitor visitor) {

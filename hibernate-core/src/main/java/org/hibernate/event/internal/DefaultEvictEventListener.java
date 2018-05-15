@@ -20,7 +20,7 @@ import org.hibernate.event.spi.EvictEvent;
 import org.hibernate.event.spi.EvictEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -59,7 +59,7 @@ public class DefaultEvictEventListener implements EvictEventListener {
 				throw new IllegalArgumentException( "Could not determine identifier of proxy passed to evict()" );
 			}
 
-			final EntityPersister persister = source.getFactory().getEntityPersister( li.getEntityName() );
+			final EntityDescriptor persister = source.getFactory().getEntityPersister( li.getEntityName() );
 			final EntityKey key = source.generateEntityKey( id, persister );
 			persistenceContext.removeProxy( key );
 
@@ -81,7 +81,7 @@ public class DefaultEvictEventListener implements EvictEventListener {
 				// see if the passed object is even an entity, and if not throw an exception
 				// 		this is different than legacy Hibernate behavior, but what JPA 2.1 is calling for
 				//		with EntityManager.detach
-				EntityPersister persister = null;
+				EntityDescriptor persister = null;
 				final String entityName = persistenceContext.getSession().guessEntityName( object );
 				if ( entityName != null ) {
 					try {
@@ -100,25 +100,25 @@ public class DefaultEvictEventListener implements EvictEventListener {
 	protected void doEvict(
 			final Object object,
 			final EntityKey key,
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final EventSource session)
 			throws HibernateException {
 
 		if ( LOG.isTraceEnabled() ) {
-			LOG.tracev( "Evicting {0}", MessageHelper.infoString( persister ) );
+			LOG.tracev( "Evicting {0}", MessageHelper.infoString( entityDescriptor ) );
 		}
 
-		if ( persister.hasNaturalIdentifier() ) {
+		if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() != null ) {
 			session.getPersistenceContext().getNaturalIdHelper().handleEviction(
 					object,
-					persister,
+					entityDescriptor,
 					key.getIdentifier()
 			);
 		}
 
 		// remove all collections for the entity from the session-level cache
-		if ( persister.hasCollections() ) {
-			new EvictVisitor( session, object ).process( object, persister );
+		if ( entityDescriptor.hasCollections() ) {
+			new EvictVisitor( session, object ).process( object, entityDescriptor );
 		}
 
 		// remove any snapshot, not really for memory management purposes, but
@@ -126,10 +126,10 @@ public class DefaultEvictEventListener implements EvictEventListener {
 		// EntityEntry to take precedence
 		// This is now handled by removeEntity()
 		//session.getPersistenceContext().removeDatabaseSnapshot(key);
-		
+
 		session.getPersistenceContext().removeEntity( key );
 		session.getPersistenceContext().removeEntry( object );
 
-		Cascade.cascade( CascadingActions.EVICT, CascadePoint.AFTER_EVICT, session, persister, object );
+		Cascade.cascade( CascadingActions.EVICT, CascadePoint.AFTER_EVICT, session, entityDescriptor, object );
 	}
 }

@@ -13,9 +13,8 @@ import java.util.TreeMap;
 
 import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.collection.BasicCollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * A persistent wrapper for a <tt>java.util.SortedSet</tt>. Underlying
@@ -28,38 +27,25 @@ public class PersistentSortedSet extends PersistentSet implements SortedSet {
 	protected Comparator comparator;
 
 	/**
-	 * Constructs a PersistentSortedSet.  This form needed for SOAP libraries, etc
-	 */
-	@SuppressWarnings("UnusedDeclaration")
-	public PersistentSortedSet() {
-	}
-
-	/**
-	 * Constructs a PersistentSortedSet
-	 *
-	 * @param session The session
-	 */
-	public PersistentSortedSet(SharedSessionContractImplementor session) {
-		super( session );
-	}
-
-	/**
 	 * Constructs a PersistentSortedSet
 	 *
 	 * @param session The session
 	 * @param set The underlying set data
 	 */
-	public PersistentSortedSet(SharedSessionContractImplementor session, SortedSet set) {
-		super( session, set );
+	public PersistentSortedSet(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			SortedSet set) {
+		super( session, descriptor, set );
 		comparator = set.comparator();
 	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})
-	protected Serializable snapshot(BasicCollectionPersister persister, EntityMode entityMode)
+	protected Serializable snapshot(PersistentCollectionDescriptor persister, EntityMode entityMode)
 			throws HibernateException {
 		final TreeMap clonedSet = new TreeMap( comparator );
 		for ( Object setElement : set ) {
-			final Object copy = persister.getElementType().deepCopy( setElement, persister.getFactory() );
+			final Object copy = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( setElement );
 			clonedSet.put( copy, copy );
 		}
 		return clonedSet;

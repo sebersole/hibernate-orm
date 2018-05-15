@@ -16,7 +16,9 @@ import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.jpa.event.spi.CallbackRegistry;
+import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * We do 2 things here:<ul>
@@ -48,8 +50,8 @@ public class DefaultPostLoadEventListener implements PostLoadEventListener, Call
 
 		final LockMode lockMode = entry.getLockMode();
 		if ( LockMode.PESSIMISTIC_FORCE_INCREMENT.equals( lockMode ) ) {
-			final EntityPersister persister = entry.getPersister();
-			final Object nextVersion = persister.forceVersionIncrement(
+			final EntityDescriptor descriptor = entry.getDescriptor();
+			final Object nextVersion = descriptor.forceVersionIncrement(
 					entry.getId(),
 					entry.getVersion(),
 					event.getSession()
@@ -65,7 +67,7 @@ public class DefaultPostLoadEventListener implements PostLoadEventListener, Call
 			event.getSession().getActionQueue().registerProcess( verifyVersion );
 		}
 
-		if ( event.getPersister().implementsLifecycle() ) {
+		if ( event.getDescriptor().implementsLifecycle() ) {
 			//log.debug( "calling onLoad()" );
 			( (Lifecycle) event.getEntity() ).onLoad( event.getSession(), event.getId() );
 		}

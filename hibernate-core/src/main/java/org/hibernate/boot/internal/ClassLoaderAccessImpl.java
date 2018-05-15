@@ -98,6 +98,10 @@ public class ClassLoaderAccessImpl implements ClassLoaderAccess {
 		return classLoaderService.locateResource( resourceName );
 	}
 
+	public ClassLoader getJpaTempClassLoader() {
+		return jpaTempClassLoader;
+	}
+
 	public void release() {
 	}
 }

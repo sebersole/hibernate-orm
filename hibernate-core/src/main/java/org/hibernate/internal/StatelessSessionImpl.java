@@ -8,19 +8,13 @@ package org.hibernate.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import javax.transaction.SystemException;
 
 import org.hibernate.CacheMode;
-import org.hibernate.Criteria;
 import org.hibernate.EntityMode;
 import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
-import org.hibernate.MappingException;
-import org.hibernate.ScrollMode;
 import org.hibernate.SessionException;
 import org.hibernate.StatelessSession;
 import org.hibernate.UnresolvableObjectException;
@@ -28,24 +22,17 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.internal.StatefulPersistenceContext;
 import org.hibernate.engine.internal.Versioning;
-import org.hibernate.engine.query.spi.HQLQueryPlan;
-import org.hibernate.engine.query.spi.NativeSQLQueryPlan;
-import org.hibernate.engine.query.spi.sql.NativeSQLQuerySpecification;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.PersistenceContext;
-import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.id.IdentifierGeneratorHelper;
-import org.hibernate.loader.criteria.CriteriaLoader;
-import org.hibernate.loader.custom.CustomLoader;
-import org.hibernate.loader.custom.CustomQuery;
-import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.persister.entity.OuterJoinLoadable;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.query.spi.ScrollableResultsImplementor;
 
 /**
  * @author Gavin King
@@ -90,14 +77,16 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public Serializable insert(String entityName, Object entity) {
 		checkOpen();
-		EntityPersister persister = getEntityPersister( entityName, entity );
-		Serializable id = persister.getIdentifierGenerator().generate( this, entity );
+
+		EntityDescriptor persister = getEntityPersister( entityName, entity );
+		Serializable id = persister.getIdentifierDescriptor().getIdentifierValueGenerator().generate( this, entity );
 		Object[] state = persister.getPropertyValues( entity );
-		if ( persister.isVersioned() ) {
+
+		final VersionDescriptor versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+		if ( versionDescriptor != null ) {
 			boolean substitute = Versioning.seedVersion(
 					state,
-					persister.getVersionProperty(),
-					persister.getVersionType(),
+					versionDescriptor,
 					this
 			);
 			if ( substitute ) {
@@ -126,7 +115,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public void delete(String entityName, Object entity) {
 		checkOpen();
-		EntityPersister persister = getEntityPersister( entityName, entity );
+		EntityDescriptor persister = getEntityPersister( entityName, entity );
 		Serializable id = persister.getIdentifier( entity, this );
 		Object version = persister.getVersion( entity );
 		persister.delete( id, version, entity, this );
@@ -144,13 +133,15 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public void update(String entityName, Object entity) {
 		checkOpen();
-		EntityPersister persister = getEntityPersister( entityName, entity );
+		EntityDescriptor persister = getEntityPersister( entityName, entity );
 		Serializable id = persister.getIdentifier( entity, this );
 		Object[] state = persister.getPropertyValues( entity );
 		Object oldVersion;
-		if ( persister.isVersioned() ) {
+		final VersionDescriptor<Object, Object> versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+		if ( versionDescriptor != null ) {
 			oldVersion = persister.getVersion( entity );
-			Object newVersion = Versioning.increment( oldVersion, persister.getVersionType(), this );
+			final VersionSupport versionSupport = versionDescriptor.getVersionSupport();
+			Object newVersion = Versioning.increment( oldVersion, versionSupport, this );
 			Versioning.setVersion( state, newVersion, persister );
 			persister.setPropertyValues( entity, state );
 		}
@@ -182,7 +173,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	public Object get(String entityName, Serializable id, LockMode lockMode) {
 		checkOpen();
 
-		Object result = getFactory().getMetamodel().entityPersister( entityName )
+		Object result = getFactory().getTypeConfiguration().findEntityDescriptor( entityName )
 				.load( id, null, getNullSafeLockMode( lockMode ), this );
 		if ( temporaryPersistenceContext.isLoadFinished() ) {
 			temporaryPersistenceContext.clear();
@@ -207,7 +198,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 	@Override
 	public void refresh(String entityName, Object entity, LockMode lockMode) {
-		final EntityPersister persister = this.getEntityPersister( entityName, entity );
+		final EntityDescriptor persister = this.getEntityPersister( entityName, entity );
 		final Serializable id = persister.getIdentifier( entity, this );
 		if ( LOG.isTraceEnabled() ) {
 			LOG.tracev( "Refreshing transient {0}", MessageHelper.infoString( persister, id, this.getFactory() ) );
@@ -234,16 +225,17 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 				cacheAccess.evict( ck );
 			}
 		}
+		final LoadQueryInfluencers.InternalFetchProfileType previouslyEnabledInternalFetchProfileType =getLoadQueryInfluencers().getEnabledInternalFetchProfileType();
+		getLoadQueryInfluencers().setEnabledInternalFetchProfileType( LoadQueryInfluencers.InternalFetchProfileType.REFRESH );
 
-		String previousFetchProfile = this.getLoadQueryInfluencers().getInternalFetchProfile();
-		Object result = null;
+		finalObject result ;
 		try {
-			this.getLoadQueryInfluencers().setInternalFetchProfile( "refresh" );
 			result = persister.load( id, entity, getNullSafeLockMode( lockMode ), this );
 		}
 		finally {
-			this.getLoadQueryInfluencers().setInternalFetchProfile( previousFetchProfile );
+			getLoadQueryInfluencers().setEnabledInternalFetchProfileType( previouslyEnabledInternalFetchProfileType );
 		}
+
 		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
 	}
 
@@ -265,7 +257,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			String entityName,
 			Serializable id) throws HibernateException {
 		checkOpen();
-		return getFactory().getMetamodel().entityPersister( entityName ).instantiate( id, this );
+		return getFactory().getTypeConfiguration().findEntityDescriptor( entityName ).instantiate( id, this );
 	}
 
 	@Override
@@ -275,7 +267,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			boolean eager,
 			boolean nullable) throws HibernateException {
 		checkOpen();
-		EntityPersister persister = getFactory().getMetamodel().entityPersister( entityName );
+		EntityDescriptor persister = getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
 		// first, try to load it from the temp PC associated to this SS
 		Object loaded = temporaryPersistenceContext.getEntity( generateEntityKey( id, persister ) );
 		if ( loaded != null ) {
@@ -290,23 +282,6 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 		}
 		// otherwise immediately materialize it
 		return get( entityName, id );
-	}
-
-	@Override
-	public Iterator iterate(String query, QueryParameters queryParameters) throws HibernateException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterator iterateFilter(Object collection, String filter, QueryParameters queryParameters)
-			throws HibernateException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public List listFilter(Object collection, String filter, QueryParameters queryParameters)
-			throws HibernateException {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -351,24 +326,6 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	}
 
 	@Override
-	public int executeUpdate(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpen();
-		queryParameters.validateParameters();
-		HQLQueryPlan plan = getQueryPlan( query, false );
-		boolean success = false;
-		int result = 0;
-		try {
-			result = plan.performExecuteUpdate( queryParameters, this );
-			success = true;
-		}
-		finally {
-			afterOperation( success );
-		}
-		temporaryPersistenceContext.clear();
-		return result;
-	}
-
-	@Override
 	public CacheMode getCacheMode() {
 		return CacheMode.IGNORE;
 	}
@@ -410,14 +367,14 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	}
 
 	@Override
-	public EntityPersister getEntityPersister(String entityName, Object object)
+	public EntityDescriptor getEntityPersister(String entityName, Object object)
 			throws HibernateException {
 		checkOpen();
 		if ( entityName == null ) {
-			return getFactory().getMetamodel().entityPersister( guessEntityName( object ) );
+			return getFactory().getTypeConfiguration().findEntityDescriptor( guessEntityName( object ) );
 		}
 		else {
-			return getFactory().getMetamodel().entityPersister( entityName ).getSubclassEntityPersister( object, getFactory() );
+			return getFactory().getTypeConfiguration().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
 		}
 	}
 
@@ -461,150 +418,10 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 	//TODO: COPY/PASTE FROM SessionImpl, pull up!
 
-	@Override
-	public List list(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpen();
-		queryParameters.validateParameters();
-		HQLQueryPlan plan = getQueryPlan( query, false );
-		boolean success = false;
-		List results = Collections.EMPTY_LIST;
-		try {
-			results = plan.performList( queryParameters, this );
-			success = true;
-		}
-		finally {
-			afterOperation( success );
-		}
-		temporaryPersistenceContext.clear();
-		return results;
-	}
-
 	public void afterOperation(boolean success) {
 		if ( !isTransactionInProgress() ) {
 			getJdbcCoordinator().afterTransaction();
 		}
-	}
-
-	@Override
-	public Criteria createCriteria(Class persistentClass, String alias) {
-		checkOpen();
-		return new CriteriaImpl( persistentClass.getName(), alias, this );
-	}
-
-	@Override
-	public Criteria createCriteria(String entityName, String alias) {
-		checkOpen();
-		return new CriteriaImpl( entityName, alias, this );
-	}
-
-	@Override
-	public Criteria createCriteria(Class persistentClass) {
-		checkOpen();
-		return new CriteriaImpl( persistentClass.getName(), this );
-	}
-
-	@Override
-	public Criteria createCriteria(String entityName) {
-		checkOpen();
-		return new CriteriaImpl( entityName, this );
-	}
-
-	@Override
-	public ScrollableResultsImplementor scroll(Criteria criteria, ScrollMode scrollMode) {
-		// TODO: Is this guaranteed to always be CriteriaImpl?
-		CriteriaImpl criteriaImpl = (CriteriaImpl) criteria;
-
-		checkOpen();
-		String entityName = criteriaImpl.getEntityOrClassName();
-		CriteriaLoader loader = new CriteriaLoader(
-				getOuterJoinLoadable( entityName ),
-				getFactory(),
-				criteriaImpl,
-				entityName,
-				getLoadQueryInfluencers()
-		);
-		return loader.scroll( this, scrollMode );
-	}
-
-	@Override
-	@SuppressWarnings({"unchecked"})
-	public List list(Criteria criteria) throws HibernateException {
-		// TODO: Is this guaranteed to always be CriteriaImpl?
-		CriteriaImpl criteriaImpl = (CriteriaImpl) criteria;
-
-		checkOpen();
-		String[] implementors = getFactory().getMetamodel().getImplementors( criteriaImpl.getEntityOrClassName() );
-		int size = implementors.length;
-
-		CriteriaLoader[] loaders = new CriteriaLoader[size];
-		for ( int i = 0; i < size; i++ ) {
-			loaders[i] = new CriteriaLoader(
-					getOuterJoinLoadable( implementors[i] ),
-					getFactory(),
-					criteriaImpl,
-					implementors[i],
-					getLoadQueryInfluencers()
-			);
-		}
-
-
-		List results = Collections.EMPTY_LIST;
-		boolean success = false;
-		try {
-			for ( int i = 0; i < size; i++ ) {
-				final List currentResults = loaders[i].list( this );
-				currentResults.addAll( results );
-				results = currentResults;
-			}
-			success = true;
-		}
-		finally {
-			afterOperation( success );
-		}
-		temporaryPersistenceContext.clear();
-		return results;
-	}
-
-	private OuterJoinLoadable getOuterJoinLoadable(String entityName) throws MappingException {
-		EntityPersister persister = getFactory().getMetamodel().entityPersister( entityName );
-		if ( !( persister instanceof OuterJoinLoadable ) ) {
-			throw new MappingException( "class persister is not OuterJoinLoadable: " + entityName );
-		}
-		return (OuterJoinLoadable) persister;
-	}
-
-	@Override
-	public List listCustomQuery(CustomQuery customQuery, QueryParameters queryParameters)
-			throws HibernateException {
-		checkOpen();
-		CustomLoader loader = new CustomLoader( customQuery, getFactory() );
-
-		boolean success = false;
-		List results;
-		try {
-			results = loader.list( this, queryParameters );
-			success = true;
-		}
-		finally {
-			afterOperation( success );
-		}
-		temporaryPersistenceContext.clear();
-		return results;
-	}
-
-	@Override
-	public ScrollableResultsImplementor scrollCustomQuery(CustomQuery customQuery, QueryParameters queryParameters)
-			throws HibernateException {
-		checkOpen();
-		CustomLoader loader = new CustomLoader( customQuery, getFactory() );
-		return loader.scroll( queryParameters, this );
-	}
-
-	@Override
-	public ScrollableResultsImplementor scroll(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpen();
-		HQLQueryPlan plan = getQueryPlan( query, false );
-		return plan.performScroll( queryParameters, this );
 	}
 
 	@Override
@@ -619,27 +436,6 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public LoadQueryInfluencers getLoadQueryInfluencers() {
 		return NO_INFLUENCERS;
-	}
-
-	@Override
-	public int executeNativeUpdate(
-			NativeSQLQuerySpecification nativeSQLQuerySpecification,
-			QueryParameters queryParameters) throws HibernateException {
-		checkOpen();
-		queryParameters.validateParameters();
-		NativeSQLQueryPlan plan = getNativeQueryPlan( nativeSQLQuerySpecification );
-
-		boolean success = false;
-		int result = 0;
-		try {
-			result = plan.performExecuteUpdate( queryParameters, this );
-			success = true;
-		}
-		finally {
-			afterOperation( success );
-		}
-		temporaryPersistenceContext.clear();
-		return result;
 	}
 
 	@Override

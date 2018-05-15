@@ -8,7 +8,7 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * Occurs after an an entity instance is fully loaded.
@@ -18,18 +18,33 @@ import org.hibernate.persister.entity.EntityPersister;
 public class PostLoadEvent extends AbstractEvent {
 	private Object entity;
 	private Serializable id;
-	private EntityPersister persister;
+	private EntityDescriptor descriptor;
 
 	public PostLoadEvent(EventSource session) {
 		super(session);
 	}
 
+	public void reset() {
+		entity = null;
+		id = null;
+		descriptor = null;
+	}
+
 	public Object getEntity() {
 		return entity;
 	}
-	
-	public EntityPersister getPersister() {
-		return persister;
+
+	/**
+	 *
+	 * @deprecated use {@link #getDescriptor()}
+	 */
+	@Deprecated
+	public EntityDescriptor getPersister() {
+		return descriptor;
+	}
+
+	public EntityDescriptor getDescriptor() {
+		return descriptor;
 	}
 	
 	public Serializable getId() {
@@ -46,9 +61,18 @@ public class PostLoadEvent extends AbstractEvent {
 		return this;
 	}
 
-	public PostLoadEvent setPersister(EntityPersister persister) {
-		this.persister = persister;
+	/**
+	 *
+	 * @deprecated use {@link #setDescriptor(EntityDescriptor)}
+	 */
+	@Deprecated
+	public PostLoadEvent setPersister(EntityDescriptor persister) {
+		this.descriptor = persister;
 		return this;
 	}
-	
+
+	public PostLoadEvent setDescriptor(EntityDescriptor descriptor){
+		this.descriptor = descriptor;
+		return this;
+	}
 }

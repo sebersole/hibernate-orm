@@ -10,19 +10,22 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.hibernate.boot.model.domain.MappedTableJoin;
+import org.hibernate.boot.model.relational.MappedPrimaryKey;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.sql.Alias;
 
 /**
  * @author Gavin King
  */
-public class Join implements AttributeContainer, Serializable {
+public class Join implements AttributeContainer, Serializable, MappedTableJoin {
 
 	private static final Alias PK_ALIAS = new Alias(15, "PK");
 
 	private ArrayList properties = new ArrayList();
 	private ArrayList declaredProperties = new ArrayList();
-	private Table table;
+	private MappedTable table;
 	private KeyValue key;
 	private PersistentClass persistentClass;
 	private boolean sequentialSelect;
@@ -63,11 +66,20 @@ public class Join implements AttributeContainer, Serializable {
 		return properties.iterator();
 	}
 
+	/**
+	 * @deprecated since 6.0, use {@link #getMappedTable()}.
+	 */
+	@Deprecated
 	public Table getTable() {
-		return table;
+		return (Table) getMappedTable();
 	}
-	public void setTable(Table table) {
+
+	public void setTable(MappedTable table) {
 		this.table = table;
+	}
+
+	public MappedTable getMappedTable() {
+		return table;
 	}
 
 	public KeyValue getKey() {
@@ -85,17 +97,23 @@ public class Join implements AttributeContainer, Serializable {
 		this.persistentClass = persistentClass;
 	}
 
+	private ForeignKey joinMapping;
 	public void createForeignKey() {
-		getKey().createForeignKeyOfEntity( persistentClass.getEntityName() );
+		joinMapping = getKey().createForeignKeyOfEntity( persistentClass.getEntityName() );
+	}
+
+	@Override
+	public ForeignKey getJoinMapping() {
+		return joinMapping;
 	}
 
 	public void createPrimaryKey() {
 		//Primary key constraint
-		PrimaryKey pk = new PrimaryKey( table );
+		MappedPrimaryKey pk = new PrimaryKey( table );
 		pk.setName( PK_ALIAS.toAliasString( table.getName() ) );
 		table.setPrimaryKey(pk);
 
-		pk.addColumns( getKey().getColumnIterator() );
+		pk.addColumns( getKey().getMappedColumns() );
 	}
 
 	public int getPropertySpan() {

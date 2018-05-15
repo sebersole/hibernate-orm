@@ -9,7 +9,6 @@ package org.hibernate.boot.internal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.persistence.AttributeConverter;
 import javax.persistence.SharedCacheMode;
@@ -37,16 +36,17 @@ import org.hibernate.boot.model.convert.internal.InstanceBasedConverterDescripto
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl;
+import org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
 import org.hibernate.boot.model.process.spi.MetadataBuildingProcess;
-import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
+import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
-import org.hibernate.boot.spi.BasicTypeRegistration;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.JpaOrmXmlPersistenceUnitDefaultAware;
 import org.hibernate.boot.spi.MappingDefaults;
@@ -61,21 +61,27 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.MetadataSourceType;
-import org.hibernate.dialect.function.SQLFunction;
+import org.hibernate.collection.internal.PersistentCollectionRepresentationResolverImpl;
+import org.hibernate.collection.spi.PersistentCollectionRepresentation;
+import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.metamodel.model.domain.internal.StandardManagedTypeRepresentationResolver;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
+import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.AbstractStandardBasicType;
-import org.hibernate.type.BasicType;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.usertype.CompositeUserType;
-import org.hibernate.usertype.UserType;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
 
@@ -90,7 +96,11 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	private final MetadataBuildingOptionsImpl options;
 
 	public MetadataBuilderImpl(MetadataSources sources) {
-		this( sources, getStandardServiceRegistry( sources.getServiceRegistry() ) );
+		this(
+				sources,
+				getStandardServiceRegistry( sources.getServiceRegistry() )
+		,
+				new ClassmateContext());
 	}
 
 	private static StandardServiceRegistry getStandardServiceRegistry(ServiceRegistry serviceRegistry) {
@@ -118,12 +128,10 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 	}
 
-	public MetadataBuilderImpl(MetadataSources sources, StandardServiceRegistry serviceRegistry) {
+	public MetadataBuilderImpl(MetadataSources sources, StandardServiceRegistry serviceRegistry, ClassmateContext classmateContext) {
 		this.sources = sources;
 		this.options = new MetadataBuildingOptionsImpl( serviceRegistry );
-		this.bootstrapContext = new BootstrapContextImpl( serviceRegistry, options );
-		//this is needed only fro implementig deprecated method
-		options.setBootstrapContext( bootstrapContext );
+		this.bootstrapContext = new BootstrapContextImpl( serviceRegistry, classmateContext, options );
 
 		for ( MetadataSourcesContributor contributor :
 				sources.getServiceRegistry()
@@ -203,7 +211,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 	@Override
 	public MetadataBuilder applyScanEnvironment(ScanEnvironment scanEnvironment) {
-		this.bootstrapContext.injectScanEnvironment( scanEnvironment );
+		this.bootstrapContext.injectScanEnvironment( scanEnvironment);
 		return this;
 	}
 
@@ -215,7 +223,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 	@Override
 	public MetadataBuilder applyArchiveDescriptorFactory(ArchiveDescriptorFactory factory) {
-		this.bootstrapContext.injectArchiveDescriptorFactory( factory );
+		this.bootstrapContext.injectArchiveDescriptorFactory( factory);
 		return this;
 	}
 
@@ -244,26 +252,8 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyBasicType(BasicType type) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type ) );
-		return this;
-	}
-
-	@Override
-	public MetadataBuilder applyBasicType(BasicType type, String... keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
-		return this;
-	}
-
-	@Override
-	public MetadataBuilder applyBasicType(UserType type, String... keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
-		return this;
-	}
-
-	@Override
-	public MetadataBuilder applyBasicType(CompositeUserType type, String... keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
+	public MetadataBuilder applyBasicType(org.hibernate.type.spi.BasicType type) {
+		bootstrapContext.getTypeConfiguration().getBasicTypeRegistry().register( type );
 		return this;
 	}
 
@@ -274,23 +264,24 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public void contributeType(BasicType type) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type ) );
+	public void contributeJavaTypeDescriptor(JavaTypeDescriptor descriptor) {
+		this.bootstrapContext.getTypeConfiguration().getJavaTypeDescriptorRegistry().addDescriptor( descriptor );
 	}
 
 	@Override
-	public void contributeType(BasicType type, String... keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
+	public void contributeSqlTypeDescriptor(SqlTypeDescriptor descriptor) {
+		this.bootstrapContext.getTypeConfiguration().getSqlTypeDescriptorRegistry().addDescriptor( descriptor );
 	}
 
 	@Override
-	public void contributeType(UserType type, String[] keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
+	public void contributeType(org.hibernate.type.spi.BasicType type) {
+		// register the BasicType with the BasicTypeRegistry
+		this.bootstrapContext.getTypeConfiguration().getBasicTypeRegistry().register( type );
 	}
 
 	@Override
-	public void contributeType(CompositeUserType type, String[] keys) {
-		options.basicTypeRegistrations.add( new BasicTypeRegistration( type, keys ) );
+	public TypeConfiguration getTypeConfiguration() {
+		return bootstrapContext.getTypeConfiguration();
 	}
 
 	@Override
@@ -332,13 +323,13 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applySqlFunction(String functionName, SQLFunction function) {
+	public MetadataBuilder applySqlFunction(String functionName, SqmFunctionTemplate function) {
 		this.bootstrapContext.addSqlFunction( functionName, function );
 		return this;
 	}
 
 	@Override
-	public MetadataBuilder applyAuxiliaryDatabaseObject(AuxiliaryDatabaseObject auxiliaryDatabaseObject) {
+	public MetadataBuilder applyAuxiliaryDatabaseObject(MappedAuxiliaryDatabaseObject auxiliaryDatabaseObject) {
 		this.bootstrapContext.addAuxiliaryDatabaseObject( auxiliaryDatabaseObject );
 		return this;
 	}
@@ -451,6 +442,18 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	@Override
 	public MetadataBuilder applyIdGenerationTypeInterpreter(IdGeneratorStrategyInterpreter interpreter) {
 		this.options.idGenerationTypeInterpreter.addInterpreterDelegate( interpreter );
+		return this;
+	}
+
+	@Override
+	public MetadataBuilder applyRepresentationStrategySelector(ManagedTypeRepresentationResolver resolver) {
+		this.options.managedTypeRepresentationResolver = resolver;
+		return this;
+	}
+
+	@Override
+	public MetadataBuilder applyRepresentationStrategySelector(PersistentCollectionRepresentationResolver resolver) {
+		this.options.collectionRepresentationResolver = resolver;
 		return this;
 	}
 
@@ -614,6 +617,8 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		private ArrayList<MetadataSourceType> sourceProcessOrdering;
 
 		private IdGeneratorInterpreterImpl idGenerationTypeInterpreter = new IdGeneratorInterpreterImpl();
+		private ManagedTypeRepresentationResolver managedTypeRepresentationResolver;
+		private PersistentCollectionRepresentationResolver collectionRepresentationResolver;
 
 		private String schemaCharset;
 
@@ -647,42 +652,36 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 			this.sharedCacheMode = configService.getSetting(
 					"javax.persistence.sharedCache.mode",
-					new ConfigurationService.Converter<SharedCacheMode>() {
-						@Override
-						public SharedCacheMode convert(Object value) {
-							if ( value == null ) {
-								return null;
-							}
-
-							if ( SharedCacheMode.class.isInstance( value ) ) {
-								return (SharedCacheMode) value;
-							}
-
-							return SharedCacheMode.valueOf( value.toString() );
+					value -> {
+						if ( value == null ) {
+							return null;
 						}
+
+						if ( SharedCacheMode.class.isInstance( value ) ) {
+							return (SharedCacheMode) value;
+						}
+
+						return SharedCacheMode.valueOf( value.toString() );
 					},
 					SharedCacheMode.UNSPECIFIED
 			);
 
 			this.defaultCacheAccessType = configService.getSetting(
 					AvailableSettings.DEFAULT_CACHE_CONCURRENCY_STRATEGY,
-					new ConfigurationService.Converter<AccessType>() {
-						@Override
-						public AccessType convert(Object value) {
-							if ( value == null ) {
-								return null;
-							}
-
-							if ( CacheConcurrencyStrategy.class.isInstance( value ) ) {
-								return ( (CacheConcurrencyStrategy) value ).toAccessType();
-							}
-
-							if ( AccessType.class.isInstance( value ) ) {
-								return (AccessType) value;
-							}
-
-							return AccessType.fromExternalName( value.toString() );
+					value -> {
+						if ( value == null ) {
+							return null;
 						}
+
+						if ( CacheConcurrencyStrategy.class.isInstance( value ) ) {
+							return ( (CacheConcurrencyStrategy) value ).toAccessType();
+						}
+
+						if ( AccessType.class.isInstance( value ) ) {
+							return (AccessType) value;
+						}
+
+						return AccessType.fromExternalName( value.toString() );
 					},
 					// by default, see if the defined RegionFactory (if one) defines a default
 					serviceRegistry.getService( RegionFactory.class ) == null
@@ -718,6 +717,9 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			);
 
 			this.sourceProcessOrdering = resolveInitialSourceProcessOrdering( configService );
+
+			this.managedTypeRepresentationResolver = StandardManagedTypeRepresentationResolver.INSTANCE;
+			this.collectionRepresentationResolver = new PersistentCollectionRepresentationResolverImpl();
 
 			final boolean useNewIdentifierGenerators = configService.getSetting(
 					AvailableSettings.USE_NEW_ID_GENERATOR_MAPPINGS,
@@ -774,46 +776,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		@Override
 		public MappingDefaults getMappingDefaults() {
 			return mappingDefaults;
-		}
-
-		@Override
-		public List<BasicTypeRegistration> getBasicTypeRegistrations() {
-			return basicTypeRegistrations;
-		}
-
-		@Override
-		public ReflectionManager getReflectionManager() {
-			return bootstrapContext.getReflectionManager();
-		}
-
-		@Override
-		public IndexView getJandexView() {
-			return bootstrapContext.getJandexView();
-		}
-
-		@Override
-		public ScanOptions getScanOptions() {
-			return bootstrapContext.getScanOptions();
-		}
-
-		@Override
-		public ScanEnvironment getScanEnvironment() {
-			return bootstrapContext.getScanEnvironment();
-		}
-
-		@Override
-		public Object getScanner() {
-			return bootstrapContext.getScanner();
-		}
-
-		@Override
-		public ArchiveDescriptorFactory getArchiveDescriptorFactory() {
-			return bootstrapContext.getArchiveDescriptorFactory();
-		}
-
-		@Override
-		public ClassLoader getTempClassLoader() {
-			return bootstrapContext.getJpaTempClassLoader();
 		}
 
 		@Override
@@ -882,13 +844,13 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		@Override
-		public Map<String, SQLFunction> getSqlFunctions() {
-			return bootstrapContext.getSqlFunctions();
+		public ManagedTypeRepresentationResolver getManagedTypeRepresentationResolver() {
+			return managedTypeRepresentationResolver;
 		}
 
 		@Override
-		public List<AuxiliaryDatabaseObject> getAuxiliaryDatabaseObjectList() {
-			return new ArrayList<>( bootstrapContext.getAuxiliaryDatabaseObjectList());
+		public PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver() {
+			return collectionRepresentationResolver;
 		}
 
 		@Override

@@ -7,135 +7,138 @@
 package org.hibernate.metamodel.spi;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.persistence.EntityGraph;
 
 import org.hibernate.EntityNameResolver;
-import org.hibernate.MappingException;
 import org.hibernate.Metamodel;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.internal.util.collections.streams.StreamUtils;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
- * @author Steve Ebersole
+ * An SPI extension to the JPA {@link javax.persistence.metamodel.Metamodel}
+ * via ({@link org.hibernate.Metamodel}
+ *
+ * @apiNote Most of that functionality has been moved to {@link TypeConfiguration} instead,
+ * accessible via {@link #getTypeConfiguration()}
  */
 public interface MetamodelImplementor extends Metamodel {
-	/**
-	 * Access to the TypeConfiguration in effect for this SessionFactory/Metamodel
-	 *
-	 * @return Access to the TypeConfiguration
-	 */
-	TypeConfiguration getTypeConfiguration();
-
-	@Override
-	SessionFactoryImplementor getSessionFactory();
-
-	Collection<EntityNameResolver> getEntityNameResolvers();
+	// todo (6.0) : would be awesome to expose the runtime database model here
+	//		however that has some drawbacks that we need to discuss, namely
+	//		that DatabaseModel holds state that we do not need beyond
+	//		schema-management tooling - init-commands and aux-db-objects
 
 	/**
-	 * Locate an EntityPersister by the entity class.  The passed Class might refer to either
-	 * the entity name directly, or it might name a proxy interface for the entity.  This
-	 * method accounts for both, preferring the direct named entity name.
-	 *
-	 * @param byClass The concrete Class or proxy interface for the entity to locate the persister for.
-	 *
-	 * @return The located EntityPersister, never {@code null}
-	 *
-	 * @throws org.hibernate.UnknownEntityTypeException If a matching EntityPersister cannot be located
+	 * Close the Metamodel
 	 */
-	EntityPersister locateEntityPersister(Class byClass);
-
-	/**
-	 * Locate the entity persister by name.
-	 *
-	 * @param byName The entity name
-	 *
-	 * @return The located EntityPersister, never {@code null}
-	 *
-	 * @throws org.hibernate.UnknownEntityTypeException If a matching EntityPersister cannot be located
-	 */
-	EntityPersister locateEntityPersister(String byName);
-
-	/**
-	 * Locate the persister for an entity by the entity class.
-	 *
-	 * @param entityClass The entity class
-	 *
-	 * @return The entity persister
-	 *
-	 * @throws MappingException Indicates persister for that class could not be found.
-	 */
-	EntityPersister entityPersister(Class entityClass);
-
-	/**
-	 * Locate the persister for an entity by the entity-name
-	 *
-	 * @param entityName The name of the entity for which to retrieve the persister.
-	 *
-	 * @return The persister
-	 *
-	 * @throws MappingException Indicates persister could not be found with that name.
-	 */
-	EntityPersister entityPersister(String entityName);
-
-	/**
-	 * Get all entity persisters as a Map, which entity name its the key and the persister is the value.
-	 *
-	 * @return The Map contains all entity persisters.
-	 */
-	Map<String,EntityPersister> entityPersisters();
-
-	/**
-	 * Get the persister object for a collection role.
-	 *
-	 * @param role The role of the collection for which to retrieve the persister.
-	 *
-	 * @return The persister
-	 *
-	 * @throws MappingException Indicates persister could not be found with that role.
-	 */
-	CollectionPersister collectionPersister(String role);
-
-	/**
-	 * Get all collection persisters as a Map, which collection role as the key and the persister is the value.
-	 *
-	 * @return The Map contains all collection persisters.
-	 */
-	Map<String,CollectionPersister> collectionPersisters();
-
-	/**
-	 * Retrieves a set of all the collection roles in which the given entity is a participant, as either an
-	 * index or an element.
-	 *
-	 * @param entityName The entity name for which to get the collection roles.
-	 *
-	 * @return set of all the collection roles in which the given entityName participates.
-	 */
-	Set<String> getCollectionRolesByEntityParticipant(String entityName);
-
-	/**
-	 * Get the names of all entities known to this Metamodel
-	 *
-	 * @return All of the entity names
-	 */
-	String[] getAllEntityNames();
-
-	/**
-	 * Get the names of all collections known to this Metamodel
-	 *
-	 * @return All of the entity names
-	 */
-	String[] getAllCollectionRoles();
-
-	<T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph);
-
-	<T> EntityGraph<T> findEntityGraphByName(String name);
-
-	<T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass);
-
 	void close();
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityNameResolvers()}
+	 */
+	@Deprecated
+	default Collection<EntityNameResolver> getEntityNameResolvers() {
+		return getTypeConfiguration().getEntityNameResolvers();
+	}
+
+	/**
+	 * Get all entity persisters as a Map, keyed by the entity-name.
+	 *
+	 * @return The (unmodifiable) map of all entity persisters
+	 *
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityDescriptorMap()}
+	 * instead
+	 */
+	@Deprecated
+	default Map<String,EntityDescriptor<?>> getEntityPersisterMap() {
+		return getTypeConfiguration().getEntityDescriptorMap();
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityDescriptorMap()}
+	 * instead
+	 */
+	@Deprecated
+	default Map<String,EntityDescriptor<?>> entityPersisters() {
+		return getTypeConfiguration().getEntityDescriptorMap();
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityDescriptorMap()}
+	 * instead to access the keys
+	 */
+	@Deprecated
+	default String[] getAllEntityNames() {
+		return getTypeConfiguration().getEntityDescriptorMap().keySet().stream().collect( StreamUtils.toStringArray() );
+	}
+
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityNameResolvers()}
+	 */
+	@Deprecated
+	default <T> EntityDescriptor<? extends T> locateEntityPersister(Class<T> byClass) {
+		return getTypeConfiguration().resolveEntityDescriptor( byClass );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getEntityNameResolvers()}
+	 */
+	@Deprecated
+	default <T> EntityDescriptor<T> locateEntityPersister(String byName) {
+		return getTypeConfiguration().resolveEntityDescriptor( byName );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#findEntityDescriptor(Class)}
+	 */
+	@Deprecated
+	default <T> EntityDescriptor<? extends T> entityPersister(Class<T> entityClass) {
+		return getTypeConfiguration().findEntityDescriptor( entityClass );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#findEntityDescriptor(String)}
+	 */
+	@Deprecated
+	default <T> EntityDescriptor<? extends T> entityPersister(String entityName) {
+		return getTypeConfiguration().findEntityDescriptor( entityName );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getCollectionDescriptorMap}
+	 */
+	@Deprecated
+	default Map<String,PersistentCollectionDescriptor<?,?,?>> collectionPersisters() {
+		return getTypeConfiguration().getCollectionDescriptorMap();
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getCollectionRolesByEntityParticipant}
+	 */
+	@Deprecated
+	default Set<String> getCollectionRolesByEntityParticipant(String entityName) {
+		return getTypeConfiguration().getCollectionRolesByEntityParticipant( entityName );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#findCollectionDescriptor}
+	 */
+	@Deprecated
+	default PersistentCollectionDescriptor<?,?,?> collectionPersister(String role) {
+		return getTypeConfiguration().findCollectionDescriptor( role );
+	}
+
+	/**
+	 * @deprecated (6.0) Use {@link #getTypeConfiguration()} -> {@link TypeConfiguration#getCollectionDescriptorMap()}
+	 * and collect the Map keys whcih are the entity names
+	 */
+	@Deprecated
+	default String[] getAllCollectionRoles() {
+		return getTypeConfiguration().getCollectionDescriptorMap().keySet().stream().collect( StreamUtils.toStringArray() );
+	}
+
 }

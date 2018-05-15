@@ -16,10 +16,9 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.loader.CollectionAliases;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * A persistent wrapper for a <tt>java.util.List</tt>. Underlying
@@ -29,22 +28,10 @@ import org.hibernate.type.Type;
  * @author Gavin King
  */
 public class PersistentList extends AbstractPersistentCollection implements List {
-	protected List list;
+	private PersistentCollectionDescriptor descriptor;
+	private Object key;
 
-	/**
-	 * Constructs a PersistentList.  This form needed for SOAP libraries, etc
-	 */
-	public PersistentList() {
-	}
-
-	/**
-	 * Constructs a PersistentList.
-	 *
-	 * @param session The session
-	 */
-	public PersistentList(SharedSessionContractImplementor session) {
-		super( session );
-	}
+	private List list;
 
 	/**
 	 * Constructs a PersistentList.
@@ -52,19 +39,44 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	 * @param session The session
 	 * @param list The raw list
 	 */
-	public PersistentList(SharedSessionContractImplementor session, List list) {
+	public PersistentList(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			List list) {
 		super( session );
-		this.list = list;
-		setInitialized();
+		this.descriptor = descriptor;
+		setList( list );
 		setDirectlyAccessible( true );
 	}
 
+	private void setList(List list) {
+		this.list = list;
+		setInitialized();
+	}
+
+	public PersistentList(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			Serializable key) {
+		super( session );
+		this.descriptor = descriptor;
+		this.key = key;
+	}
+
+	protected List list() {
+		return list;
+	}
+
+
+
+
+
 	@Override
 	@SuppressWarnings( {"unchecked"})
-	public Serializable getSnapshot(CollectionPersister persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
 		final ArrayList clonedList = new ArrayList( list.size() );
 		for ( Object element : list ) {
-			final Object deepCopy = persister.getElementType().deepCopy( element, persister.getFactory() );
+			final Object deepCopy = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( element );
 			clonedList.add( deepCopy );
 		}
 		return clonedList;
@@ -77,8 +89,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public boolean equalsSnapshot(CollectionPersister persister) throws HibernateException {
-		final Type elementType = persister.getElementType();
+	public boolean equalsSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
 		final List sn = (List) getSnapshot();
 		if ( sn.size()!=this.list.size() ) {
 			return false;
@@ -86,7 +97,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 		final Iterator itr = list.iterator();
 		final Iterator snapshotItr = sn.iterator();
 		while ( itr.hasNext() ) {
-			if ( elementType.isDirty( itr.next(), snapshotItr.next(), getSession() ) ) {
+			if ( persister.isDirty( itr.next(), snapshotItr.next(), getSession() ) ) {
 				return false;
 			}
 		}
@@ -99,8 +110,8 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public void beforeInitialize(CollectionPersister persister, int anticipatedSize) {
-		this.list = (List) persister.getCollectionType().instantiate( anticipatedSize );
+	public void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize) {
+		this.list = (List) persister.instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -371,52 +382,52 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object readFrom(ResultSet rs, CollectionPersister persister, CollectionAliases descriptor, Object owner)
-			throws HibernateException, SQLException {
-		final Object element = persister.readElement( rs, owner, descriptor.getSuffixedElementAliases(), getSession() ) ;
-		final int index = (Integer) persister.readIndex( rs, descriptor.getSuffixedIndexAliases(), getSession() );
-
-		//pad with nulls from the current last element up to the new index
-		for ( int i = list.size(); i<=index; i++) {
-			list.add( i, null );
-		}
-
-		list.set( index, element );
-		return element;
+	public Object readFrom(ResultSet rs, PersistentCollectionDescriptor persister, Object owner) throws SQLException {
+		throw new NotYetImplementedFor6Exception(  );
+//		final Object element = persister.readElement( rs, owner, descriptor.getSuffixedElementAliases(), getSession() ) ;
+//		final int index = (Integer) persister.readIndex( rs, descriptor.getSuffixedIndexAliases(), getSession() );
+//
+//		//pad with nulls from the current last element up to the new index
+//		for ( int i = list.size(); i<=index; i++) {
+//			list.add( i, null );
+//		}
+//
+//		list.set( index, element );
+//		return element;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator entries(CollectionPersister persister) {
+	public Iterator entries(PersistentCollectionDescriptor persister) {
 		return list.iterator();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void initializeFromCache(CollectionPersister persister, Serializable disassembled, Object owner)
+	public void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner)
 			throws HibernateException {
 		final Serializable[] array = (Serializable[]) disassembled;
 		final int size = array.length;
 		beforeInitialize( persister, size );
 		for ( Serializable arrayElement : array ) {
-			list.add( persister.getElementType().assemble( arrayElement, getSession(), owner ) );
+			list.add( persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement ) );
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Serializable disassemble(CollectionPersister persister) throws HibernateException {
+	public Serializable disassemble(PersistentCollectionDescriptor persister) throws HibernateException {
 		final int length = list.size();
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = persister.getElementType().disassemble( list.get( i ), getSession(), null );
+			result[i] = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( list.get( i ) );
 		}
 		return result;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(CollectionPersister persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
 		final List deletes = new ArrayList();
 		final List sn = (List) getSnapshot();
 		int end;
@@ -440,22 +451,22 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public boolean needsInserting(Object entry, int i, Type elemType) throws HibernateException {
+	public boolean needsInserting(Object entry, int i) throws HibernateException {
 		final List sn = (List) getSnapshot();
 		return list.get( i ) != null && ( i >= sn.size() || sn.get( i ) == null );
 	}
 
 	@Override
-	public boolean needsUpdating(Object entry, int i, Type elemType) throws HibernateException {
+	public boolean needsUpdating(Object entry, int i) throws HibernateException {
 		final List sn = (List) getSnapshot();
 		return i < sn.size()
 				&& sn.get( i ) != null
 				&& list.get( i ) != null
-				&& elemType.isDirty( list.get( i ), sn.get( i ), getSession() );
+				&& getCollectionMetadata().isDirty( list.get( i ), sn.get( i ), getSession() );
 	}
 
 	@Override
-	public Object getIndex(Object entry, int i, CollectionPersister persister) {
+	public Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister) {
 		return i;
 	}
 

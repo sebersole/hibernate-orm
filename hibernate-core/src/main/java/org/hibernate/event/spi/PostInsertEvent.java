@@ -8,7 +8,7 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * Occurs after inserting an item in the datastore
@@ -17,7 +17,7 @@ import org.hibernate.persister.entity.EntityPersister;
  */
 public class PostInsertEvent extends AbstractEvent {
 	private Object entity;
-	private EntityPersister persister;
+	private EntityDescriptor persister;
 	private Object[] state;
 	private Serializable id;
 	
@@ -25,7 +25,7 @@ public class PostInsertEvent extends AbstractEvent {
 			Object entity, 
 			Serializable id,
 			Object[] state,
-			EntityPersister persister,
+			EntityDescriptor persister,
 			EventSource source
 	) {
 		super(source);
@@ -41,7 +41,7 @@ public class PostInsertEvent extends AbstractEvent {
 	public Serializable getId() {
 		return id;
 	}
-	public EntityPersister getPersister() {
+	public EntityDescriptor getPersister() {
 		return persister;
 	}
 	public Object[] getState() {

@@ -8,11 +8,15 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+
 /**
  * Called after updating the datastore
  * 
  * @author Gavin King
  */
 public interface PostUpdateEventListener extends Serializable, PostActionEventListener {
-	void onPostUpdate(PostUpdateEvent event);
+	public void onPostUpdate(PostUpdateEvent event);
+
+	public boolean requiresPostCommitHanding(EntityDescriptor persister);
 }

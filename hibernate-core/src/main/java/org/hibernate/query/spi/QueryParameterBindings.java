@@ -1,38 +1,74 @@
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
 package org.hibernate.query.spi;
 
 import java.util.Map;
 
 import org.hibernate.Incubating;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.engine.spi.TypedValue;
+import org.hibernate.cache.spi.QueryKey;
 import org.hibernate.query.QueryParameter;
-import org.hibernate.type.Type;
+import org.hibernate.NotYetImplementedFor6Exception;
 
 /**
+ * Manages all the parameter bindings for a particular query.
+ *
  * @author Steve Ebersole
  */
 @Incubating
 public interface QueryParameterBindings {
+	/**
+	 * Has binding been done for the given parameter.  Handles
+	 * cases where we do not (yet) have a binding object as well
+	 * by simply returning false.
+	 *
+	 * @param parameter The parameter to check for a binding
+	 *
+	 * @return {@code true} if its value has been bound; {@code false}
+	 * otherwise.
+	 */
 	boolean isBound(QueryParameter parameter);
 
+	/**
+	 * Access to the binding via QueryParameter reference
+	 *
+	 * @param parameter The QueryParameter reference
+	 *
+	 * @return The binding, or {@code null} if not yet bound
+	 */
 	<T> QueryParameterBinding<T> getBinding(QueryParameter<T> parameter);
+
+	/**
+	 * Access to the binding via name
+	 *
+	 * @param name The parameter name
+	 *
+	 * @return The binding, or {@code null} if not yet bound
+	 */
 	<T> QueryParameterBinding<T> getBinding(String name);
-	<T> QueryParameterBinding<T> getBinding(int position);
 
-	void verifyParametersBound(boolean callable);
-	String expandListValuedParameters(String queryString, SharedSessionContractImplementor producer);
+	/**
+	 * Access to the binding via position
+	 *
+	 * @param position The parameter position
+	 *
+	 * @return The binding, or {@code null} if not yet bound
+	 */
+	<T> QueryParameterBinding getBinding(int position);
 
-	<T> QueryParameterListBinding<T> getQueryParameterListBinding(QueryParameter<T> parameter);
-	<T> QueryParameterListBinding<T> getQueryParameterListBinding(String name);
-	<T> QueryParameterListBinding<T> getQueryParameterListBinding(int position);
+	/**
+	 * Validate the bindings.  Called just before execution
+	 */
+	void validate();
 
-	Type[] collectPositionalBindTypes();
-	Object[] collectPositionalBindValues();
-	Map<String,TypedValue> collectNamedParameterBindings();
+	/**
+	 * Generate a "memento" for these parameter bindings that can be used
+	 * in creating a {@link org.hibernate.cache.spi.QueryKey}
+	 */
+	default QueryKey.ParameterBindingsMemento generateQueryKeyMemento() {
+		throw new NotYetImplementedFor6Exception(  );
+	}
 }

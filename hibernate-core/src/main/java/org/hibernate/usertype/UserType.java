@@ -15,6 +15,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.boot.model.JavaTypeDescriptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.spi.TypeConfiguration;
+import org.hibernate.type.Type;
 
 /**
  * This interface should be implemented by user-defined "types".
@@ -45,8 +46,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * incompatible changes to classes or interfaces in that
  * package.
  *
- * @see CompositeUserType for more complex cases
- * @see org.hibernate.type.Type
+ * @see Type
  * @author Gavin King
  */
 public interface UserType {

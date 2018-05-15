@@ -23,6 +23,7 @@ import org.hibernate.engine.spi.CascadingAction;
 import org.hibernate.engine.spi.CascadingActions;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.engine.spi.SelfDirtinessTracker;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -32,12 +33,14 @@ import org.hibernate.event.spi.MergeEvent;
 import org.hibernate.event.spi.MergeEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.TypeHelper;
+import org.hibernate.type.internal.TypeHelper;
 
 /**
  * Defines the default copy event listener used by hibernate for copying entities
@@ -144,10 +147,10 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 				// entity to be merged...
 				EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 				if ( entry == null ) {
-					EntityPersister persister = source.getEntityPersister( event.getEntityName(), entity );
-					Serializable id = persister.getIdentifier( entity, source );
+					EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+					Serializable id = entityDescriptor.getIdentifier( entity, source );
 					if ( id != null ) {
-						final EntityKey key = source.generateEntityKey( id, persister );
+						final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 						final Object managedEntity = source.getPersistenceContext().getEntity( key );
 						entry = source.getPersistenceContext().getEntry( managedEntity );
 						if ( entry != null ) {
@@ -195,12 +198,12 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
-		final EntityPersister persister = source.getEntityPersister( event.getEntityName(), entity );
+		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
 
 		( (MergeContext) copyCache ).put( entity, entity, true );  //before cascade!
 
-		cascadeOnMerge( source, persister, entity, copyCache );
-		copyValues( persister, entity, entity, source, copyCache );
+		cascadeOnMerge( source, entityDescriptor, entity, copyCache );
+		copyValues( entityDescriptor, entity, entity, source, copyCache );
 
 		event.setResult( entity );
 	}
@@ -213,31 +216,31 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final EventSource source = event.getSession();
 
 		final String entityName = event.getEntityName();
-		final EntityPersister persister = source.getEntityPersister( entityName, entity );
+		final EntityDescriptor entityDescriptor = source.getEntityPersister( entityName, entity );
 
-		final Serializable id = persister.hasIdentifierProperty() ?
-				persister.getIdentifier( entity, source ) :
+		final Serializable id = EntityIdentifierSimple.class.isInstance( entityDescriptor.getHierarchy().getIdentifierDescriptor() ) ?
+				entityDescriptor.getIdentifier( entity, source ) :
 				null;
 		if ( copyCache.containsKey( entity ) ) {
-			persister.setIdentifier( copyCache.get( entity ), id, source );
+			entityDescriptor.setIdentifier( copyCache.get( entity ), id, source );
 		}
 		else {
-			( (MergeContext) copyCache ).put( entity, source.instantiate( persister, id ), true ); //before cascade!
+			( (MergeContext) copyCache ).put( entity, source.instantiate( entityDescriptor, id ), true ); //before cascade!
 		}
 		final Object copy = copyCache.get( entity );
 
 		// cascade first, so that all unsaved objects get their
 		// copy created before we actually copy
-		//cascadeOnMerge(event, persister, entity, copyCache, Cascades.CASCADE_BEFORE_MERGE);
-		super.cascadeBeforeSave( source, persister, entity, copyCache );
-		copyValues( persister, entity, copy, source, copyCache, ForeignKeyDirection.FROM_PARENT );
+		//cascadeOnMerge(event, entityDescriptor, entity, copyCache, Cascades.CASCADE_BEFORE_MERGE);
+		super.cascadeBeforeSave( source, entityDescriptor, entity, copyCache );
+		copyValues( entityDescriptor, entity, copy, source, copyCache, ForeignKeyDirection.FROM_PARENT );
 
 		saveTransientEntity( copy, entityName, event.getRequestedId(), source, copyCache );
 
 		// cascade first, so that all unsaved objects get their
 		// copy created before we actually copy
-		super.cascadeAfterSave( source, persister, entity, copyCache );
-		copyValues( persister, entity, copy, source, copyCache, ForeignKeyDirection.TO_PARENT );
+		super.cascadeAfterSave( source, entityDescriptor, entity, copyCache );
+		copyValues( entityDescriptor, entity, copy, source, copyCache, ForeignKeyDirection.TO_PARENT );
 
 		event.setResult( copy );
 	}
@@ -266,29 +269,36 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
 
-		final EntityPersister persister = source.getEntityPersister( event.getEntityName(), entity );
-		final String entityName = persister.getEntityName();
+		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+		final String entityName = entityDescriptor.getEntityName();
 
 		Serializable id = event.getRequestedId();
 		if ( id == null ) {
-			id = persister.getIdentifier( entity, source );
+			id = entityDescriptor.getIdentifier( entity, source );
 		}
 		else {
 			// check that entity id = requestedId
-			Serializable entityId = persister.getIdentifier( entity, source );
-			if ( !persister.getIdentifierType().isEqual( id, entityId, source.getFactory() ) ) {
+			Serializable entityId = entityDescriptor.getIdentifier( entity, source );
+			if ( !entityDescriptor.getIdentifierType().getJavaTypeDescriptor().areEqual( id, entityId ) ) {
 				throw new HibernateException( "merge requested with id not matching id of passed entity" );
 			}
 		}
 
-		String previousFetchProfile = source.getLoadQueryInfluencers().getInternalFetchProfile();
-		source.getLoadQueryInfluencers().setInternalFetchProfile( "merge" );
-		//we must clone embedded composite identifiers, or
-		//we will get back the same instance that we pass in
-		final Serializable clonedIdentifier = (Serializable) persister.getIdentifierType()
-				.deepCopy( id, source.getFactory() );
-		final Object result = source.get( entityName, clonedIdentifier );
-		source.getLoadQueryInfluencers().setInternalFetchProfile( previousFetchProfile );
+		final InternalFetchProfileType previouslyEnabledInternalFetchProfileType =
+				source.getLoadQueryInfluencers().getEnabledInternalFetchProfileType();
+
+		final Object result;
+		try {
+			source.getLoadQueryInfluencers().setEnabledInternalFetchProfileType( InternalFetchProfileType.MERGE );
+			//we must clone embedded composite identifiers, or
+			//we will get back the same instance that we pass in
+			final Serializable clonedIdentifier = (Serializable) entityDescriptor.getIdentifierType().getJavaTypeDescriptor()
+					.getMutabilityPlan().deepCopy( id );
+			result = source.get( entityName, clonedIdentifier );
+		}
+		finally {
+			source.getLoadQueryInfluencers().setEnabledInternalFetchProfileType( previouslyEnabledInternalFetchProfileType );
+		}
 
 		if ( result == null ) {
 			//TODO: we should throw an exception if we really *know* for sure
@@ -314,27 +324,28 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 						entityName
 				);
 			}
-			else if ( isVersionChanged( entity, source, persister, target ) ) {
+			else if ( isVersionChanged( entity, source, entityDescriptor, target ) ) {
 				if ( source.getFactory().getStatistics().isStatisticsEnabled() ) {
-					source.getFactory().getStatistics().optimisticFailure( entityName );
+					source.getFactory().getStatistics()
+							.optimisticFailure( entityName );
 				}
 				throw new StaleObjectStateException( entityName, id );
 			}
 
 			// cascade first, so that all unsaved objects get their
 			// copy created before we actually copy
-			cascadeOnMerge( source, persister, entity, copyCache );
-			copyValues( persister, entity, target, source, copyCache );
+			cascadeOnMerge( source, entityDescriptor, entity, copyCache );
+			copyValues( entityDescriptor, entity, target, source, copyCache );
 
 			//copyValues works by reflection, so explicitly mark the entity instance dirty
-			markInterceptorDirty( entity, target, persister );
+			markInterceptorDirty( entity, target, entityDescriptor );
 
 			event.setResult( result );
 		}
 
 	}
 
-	private void markInterceptorDirty(final Object entity, final Object target, EntityPersister persister) {
+	private void markInterceptorDirty(final Object entity, final Object target, EntityDescriptor entityDescriptor) {
 		// for enhanced entities, copy over the dirty attributes
 		if ( entity instanceof SelfDirtinessTracker && target instanceof SelfDirtinessTracker ) {
 			// clear, because setting the embedded attributes dirties them
@@ -346,10 +357,12 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		}
 	}
 
-	private boolean isVersionChanged(Object entity, EventSource source, EntityPersister persister, Object target) {
-		if ( !persister.isVersioned() ) {
+	private boolean isVersionChanged(Object entity, EventSource source, EntityDescriptor entityDescriptor, Object target) {
+		if ( entityDescriptor.getHierarchy().getVersionDescriptor() == null ) {
+			// not versioned, obviously the version did not change :)
 			return false;
 		}
+
 		// for merging of versioned entities, we consider the version having
 		// been changed only when:
 		// 1) the two version values are different;
@@ -360,22 +373,22 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		// an entity to be merged during the same transaction
 		// (though during a seperate operation) in which it was
 		// originally persisted/saved
-		boolean changed = !persister.getVersionType().isSame(
-				persister.getVersion( target ),
-				persister.getVersion( entity )
+		boolean changed = !EqualsHelper.equals(
+				entityDescriptor.getVersion( target ),
+				entityDescriptor.getVersion( entity )
 		);
 
 		// TODO : perhaps we should additionally require that the incoming entity
 		// version be equivalent to the defined unsaved-value?
-		return changed && existsInDatabase( target, source, persister );
+		return changed && existsInDatabase( target, source, entityDescriptor );
 	}
 
-	private boolean existsInDatabase(Object entity, EventSource source, EntityPersister persister) {
+	private boolean existsInDatabase(Object entity, EventSource source, EntityDescriptor entityDescriptor) {
 		EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 		if ( entry == null ) {
-			Serializable id = persister.getIdentifier( entity, source );
+			Serializable id = entityDescriptor.getIdentifier( entity, source );
 			if ( id != null ) {
-				final EntityKey key = source.generateEntityKey( id, persister );
+				final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 				final Object managedEntity = source.getPersistenceContext().getEntity( key );
 				entry = source.getPersistenceContext().getEntry( managedEntity );
 			}
@@ -385,25 +398,25 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	}
 
 	protected void copyValues(
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final Object entity,
 			final Object target,
 			final SessionImplementor source,
 			final Map copyCache) {
 		final Object[] copiedValues = TypeHelper.replace(
-				persister.getPropertyValues( entity ),
-				persister.getPropertyValues( target ),
-				persister.getPropertyTypes(),
-				source,
+				entityDescriptor,
+				entity,
 				target,
-				copyCache
+				copyCache,
+				target,
+				source
 		);
 
-		persister.setPropertyValues( target, copiedValues );
+		entityDescriptor.setPropertyValues( target, copiedValues );
 	}
 
 	protected void copyValues(
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final Object entity,
 			final Object target,
 			final SessionImplementor source,
@@ -417,41 +430,41 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 			// replacement to associations types (value types were already replaced
 			// during the first pass)
 			copiedValues = TypeHelper.replaceAssociations(
-					persister.getPropertyValues( entity ),
-					persister.getPropertyValues( target ),
-					persister.getPropertyTypes(),
-					source,
+					entityDescriptor,
+					entity,
 					target,
 					copyCache,
-					foreignKeyDirection
+					target,
+					foreignKeyDirection,
+					source
 			);
 		}
 		else {
 			copiedValues = TypeHelper.replace(
-					persister.getPropertyValues( entity ),
-					persister.getPropertyValues( target ),
-					persister.getPropertyTypes(),
-					source,
+					entityDescriptor,
+					entity,
 					target,
 					copyCache,
-					foreignKeyDirection
+					target,
+					foreignKeyDirection,
+					source
 			);
 		}
 
-		persister.setPropertyValues( target, copiedValues );
+		entityDescriptor.setPropertyValues( target, copiedValues );
 	}
 
 	/**
 	 * Perform any cascades needed as part of this copy event.
 	 *
 	 * @param source The merge event being processed.
-	 * @param persister The persister of the entity being copied.
+	 * @param entityDescriptor The entityDescriptor of the entity being copied.
 	 * @param entity The entity being copied.
 	 * @param copyCache A cache of already copied instance.
 	 */
 	protected void cascadeOnMerge(
 			final EventSource source,
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final Object entity,
 			final Map copyCache
 	) {
@@ -461,7 +474,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 					getCascadeAction(),
 					CascadePoint.BEFORE_MERGE,
 					source,
-					persister,
+					entityDescriptor,
 					entity,
 					copyCache
 			);
@@ -486,7 +499,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeAfterSave(EventSource source, EntityPersister persister, Object entity, Object anything)
+	protected void cascadeAfterSave(EventSource source, EntityDescriptor entityDescriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 
@@ -494,7 +507,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeBeforeSave(EventSource source, EntityPersister persister, Object entity, Object anything)
+	protected void cascadeBeforeSave(EventSource source, EntityDescriptor entityDescriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 }

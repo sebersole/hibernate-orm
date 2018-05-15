@@ -7,7 +7,7 @@
 package org.hibernate.event.spi;
 
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * An event that occurs before a collection is recreated
@@ -17,7 +17,7 @@ import org.hibernate.persister.collection.CollectionPersister;
 public class PreCollectionRecreateEvent extends AbstractCollectionEvent {
 
 	public PreCollectionRecreateEvent(
-			CollectionPersister collectionPersister,
+			PersistentCollectionDescriptor collectionPersister,
 			PersistentCollection collection,
 			EventSource source) {
 		super(

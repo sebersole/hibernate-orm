@@ -14,9 +14,8 @@ import java.util.Iterator;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.loader.CollectionAliases;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * Persistent collections are treated as value objects by Hibernate.
@@ -46,6 +45,8 @@ import org.hibernate.type.Type;
  * @author Gavin King
  */
 public interface PersistentCollection {
+	PersistentCollectionDescriptor getCollectionMetadata();
+
 	/**
 	 * Get the owning entity. Note that the owner is only
 	 * set during the flush cycle, and when a new collection
@@ -76,7 +77,7 @@ public interface PersistentCollection {
 	 * @param role The collection role
 	 * @param snapshot The snapshot state
 	 */
-	void setSnapshot(Serializable key, String role, Serializable snapshot);
+	void setSnapshot(Serializable key, NavigableRole role, Serializable snapshot);
 
 	/**
 	 * After flushing, clear any "queued" additions, since the
@@ -146,7 +147,7 @@ public interface PersistentCollection {
 	 * @param disassembled The disassembled cached state
 	 * @param owner The collection owner
 	 */
-	void initializeFromCache(CollectionPersister persister, Serializable disassembled, Object owner);
+	void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner);
 
 	/**
 	 * Iterate all collection entries, during update of the database
@@ -155,14 +156,13 @@ public interface PersistentCollection {
 	 *
 	 * @return The iterator
 	 */
-	Iterator entries(CollectionPersister persister);
+	Iterator entries(PersistentCollectionDescriptor persister);
 
 	/**
 	 * Read a row from the JDBC result set
 	 *
 	 * @param rs The JDBC ResultSet
 	 * @param role The collection role
-	 * @param descriptor The aliases used for the columns making up the collection
 	 * @param owner The collection owner
 	 *
 	 * @return The read object
@@ -170,8 +170,7 @@ public interface PersistentCollection {
 	 * @throws HibernateException Generally indicates a problem resolving data read from the ResultSet
 	 * @throws SQLException Indicates a problem accessing the ResultSet
 	 */
-	Object readFrom(ResultSet rs, CollectionPersister role, CollectionAliases descriptor, Object owner)
-			throws HibernateException, SQLException;
+	Object readFrom(ResultSet rs, PersistentCollectionDescriptor role, Object owner) throws SQLException;
 
 	/**
 	 * Get the identifier of the given collection entry.  This refers to the collection identifier, not the
@@ -194,7 +193,7 @@ public interface PersistentCollection {
 	 *
 	 * @return The index value
 	 */
-	Object getIndex(Object entry, int i, CollectionPersister persister);
+	Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister);
 	
 	/**
 	 * Get the value of the given collection entry.  Generally the given entry parameter value will just be returned.
@@ -223,7 +222,7 @@ public interface PersistentCollection {
 	 * @param persister The underlying collection persister.
 	 * @param anticipatedSize The anticipated size of the collection after initialization is complete.
 	 */
-	void beforeInitialize(CollectionPersister persister, int anticipatedSize);
+	void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize);
 
 	/**
 	 * Does the current state exactly match the snapshot?
@@ -233,7 +232,7 @@ public interface PersistentCollection {
 	 * @return {@code true} if the current state and the snapshot state match.
 	 *
 	 */
-	boolean equalsSnapshot(CollectionPersister persister);
+	boolean equalsSnapshot(PersistentCollectionDescriptor persister);
 
 	/**
 	 * Is the snapshot empty?
@@ -251,7 +250,7 @@ public interface PersistentCollection {
 	 *
 	 * @return The disassembled state
 	 */
-	Serializable disassemble(CollectionPersister persister) ;
+	Serializable disassemble(PersistentCollectionDescriptor persister) ;
 
 	/**
 	 * Do we need to completely recreate this collection when it changes?
@@ -260,7 +259,7 @@ public interface PersistentCollection {
 	 *
 	 * @return {@code true} if a change requires a recreate.
 	 */
-	boolean needsRecreate(CollectionPersister persister);
+	boolean needsRecreate(PersistentCollectionDescriptor persister);
 
 	/**
 	 * Return a new snapshot of the current state of the collection
@@ -269,7 +268,7 @@ public interface PersistentCollection {
 	 *
 	 * @return The snapshot
 	 */
-	Serializable getSnapshot(CollectionPersister persister);
+	Serializable getSnapshot(PersistentCollectionDescriptor persister);
 
 	/**
 	 * To be called internally by the session, forcing immediate initialization.
@@ -291,22 +290,20 @@ public interface PersistentCollection {
 	 *
 	 * @param entry The collection element to check
 	 * @param i The index (for indexed collections)
-	 * @param elemType The type for the element
 	 *
 	 * @return {@code true} if the element needs inserting
 	 */
-	boolean needsInserting(Object entry, int i, Type elemType);
+	boolean needsInserting(Object entry, int i);
 
 	/**
 	 * Do we need to update this element?
 	 *
 	 * @param entry The collection element to check
 	 * @param i The index (for indexed collections)
-	 * @param elemType The type for the element
 	 *
 	 * @return {@code true} if the element needs updating
 	 */
-	boolean needsUpdating(Object entry, int i, Type elemType);
+	boolean needsUpdating(Object entry, int i);
 
 	/**
 	 * Can each element in the collection be mapped unequivocally to a single row in the database?  Generally
@@ -324,7 +321,7 @@ public interface PersistentCollection {
 	 *
 	 * @return An iterator over the elements to delete
 	 */
-	Iterator getDeletes(CollectionPersister persister, boolean indexIsFormula);
+	Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula);
 
 	/**
 	 * Is this the wrapper for the given collection instance?
@@ -377,7 +374,9 @@ public interface PersistentCollection {
 	 *
 	 * @return the collection role name
 	 */
-	String getRole();
+	default String getRole() {
+		return getCollectionMetadata().getNavigableRole().getFullPath();
+	}
 	
 	/**
 	 * Is the collection unreferenced?
@@ -424,7 +423,7 @@ public interface PersistentCollection {
 	 *
 	 * @param persister The collection persister
 	 */
-	void preInsert(CollectionPersister persister);
+	void preInsert(PersistentCollectionDescriptor persister);
 
 	/**
 	 * Called after inserting a row, to fetch the natively generated id
@@ -433,7 +432,7 @@ public interface PersistentCollection {
 	 * @param entry The collection element just inserted
 	 * @param i The element position/index
 	 */
-	void afterRowInsert(CollectionPersister persister, Object entry, int i);
+	void afterRowInsert(PersistentCollectionDescriptor persister, Object entry, int i);
 
 	/**
 	 * get all "orphaned" elements

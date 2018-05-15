@@ -25,7 +25,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.property.access.internal.PropertyAccessStrategyMixedImpl;
 import org.hibernate.property.access.spi.Getter;
-import org.hibernate.type.PrimitiveType;
+import org.hibernate.type.descriptor.java.spi.Primitive;
 import org.hibernate.type.Type;
 
 /**
@@ -323,9 +323,9 @@ public final class ReflectHelper {
 			if ( params.length == types.length ) {
 				boolean found = true;
 				for ( int j = 0; j < params.length; j++ ) {
-					final boolean ok = types[j] == null || params[j].isAssignableFrom( types[j].getReturnedClass() ) || (
-							types[j] instanceof PrimitiveType &&
-									params[j] == ( (PrimitiveType) types[j] ).getPrimitiveClass()
+					final boolean ok = types[j] == null || params[j].isAssignableFrom( types[j].getJavaTypeDescriptor().getJavaType() ) || (
+							types[j] instanceof Primitive &&
+									params[j] == ( (Primitive) types[j].getJavaTypeDescriptor() ).getPrimitiveClass()
 					);
 					if ( !ok ) {
 						found = false;

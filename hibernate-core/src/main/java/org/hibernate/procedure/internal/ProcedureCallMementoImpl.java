@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Set;
 import javax.persistence.ParameterMode;
 
-import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
 import org.hibernate.procedure.spi.ParameterStrategy;
-import org.hibernate.type.Type;
+import org.hibernate.sql.results.spi.RowReader;
 
 /**
  * Implementation of ProcedureCallMemento
@@ -26,11 +26,11 @@ import org.hibernate.type.Type;
  */
 public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 	private final String procedureName;
-	private final NativeSQLQueryReturn[] queryReturns;
 
 	private final ParameterStrategy parameterStrategy;
 	private final List<ParameterMemento> parameterDeclarations;
 
+	private final RowReader rowReader;
 	private final Set<String> synchronizedQuerySpaces;
 
 	private final Map<String, Object> hintsMap;
@@ -39,7 +39,6 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 	 * Constructs a ProcedureCallImpl
 	 *
 	 * @param procedureName The name of the procedure to be called
-	 * @param queryReturns The result mappings
 	 * @param parameterStrategy Are parameters named or positional?
 	 * @param parameterDeclarations The parameters registrations
 	 * @param synchronizedQuerySpaces Any query spaces to synchronize on execution
@@ -47,15 +46,15 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 	 */
 	public ProcedureCallMementoImpl(
 			String procedureName,
-			NativeSQLQueryReturn[] queryReturns,
 			ParameterStrategy parameterStrategy,
 			List<ParameterMemento> parameterDeclarations,
+			RowReader rowReader,
 			Set<String> synchronizedQuerySpaces,
 			Map<String, Object> hintsMap) {
 		this.procedureName = procedureName;
-		this.queryReturns = queryReturns;
 		this.parameterStrategy = parameterStrategy;
 		this.parameterDeclarations = parameterDeclarations;
+		this.rowReader = rowReader;
 		this.synchronizedQuerySpaces = synchronizedQuerySpaces;
 		this.hintsMap = hintsMap;
 	}
@@ -67,10 +66,6 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 
 	public String getProcedureName() {
 		return procedureName;
-	}
-
-	public NativeSQLQueryReturn[] getQueryReturns() {
-		return queryReturns;
 	}
 
 	public ParameterStrategy getParameterStrategy() {
@@ -90,6 +85,10 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 		return hintsMap;
 	}
 
+	public <R> RowReader<R> getRowReader() {
+		return rowReader;
+	}
+
 	/**
 	 * A "disconnected" copy of the metadata for a parameter, that can be used in ProcedureCallMementoImpl.
 	 */
@@ -98,7 +97,7 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 		private final String name;
 		private final ParameterMode mode;
 		private final Class type;
-		private final Type hibernateType;
+		private final AllowableParameterType hibernateType;
 		private final boolean passNulls;
 
 		/**
@@ -116,7 +115,7 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 				String name,
 				ParameterMode mode,
 				Class type,
-				Type hibernateType,
+				AllowableParameterType hibernateType,
 				boolean passNulls) {
 			this.position = position;
 			this.name = name;
@@ -142,7 +141,7 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 			return type;
 		}
 
-		public Type getHibernateType() {
+		public AllowableParameterType getHibernateType() {
 			return hibernateType;
 		}
 
@@ -158,14 +157,18 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 		 * @return The memento
 		 */
 		public static ParameterMemento fromRegistration(ParameterRegistrationImplementor registration) {
-			return new ParameterMemento(
-					registration.getPosition(),
-					registration.getName(),
-					registration.getMode(),
-					registration.getParameterType(),
-					registration.getHibernateType(),
-					registration.isPassNullsEnabled()
-			);
+			return registration.toMemento();
+//	^^ 6.0
+
+//	vv 5.3
+//			return new ParameterMemento(
+//					registration.getPosition(),
+//					registration.getName(),
+//					registration.getMode(),
+//					registration.getParameterType(),
+//					registration.getHibernateType(),
+//					registration.isPassNullsEnabled()
+//			);
 		}
 
 	}

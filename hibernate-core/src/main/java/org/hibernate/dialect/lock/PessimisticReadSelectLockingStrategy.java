@@ -17,7 +17,9 @@ import org.hibernate.LockOptions;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.entity.Lockable;
+import org.hibernate.internal.util.StringHelper;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.SimpleSelect;
 
@@ -58,12 +60,18 @@ public class PessimisticReadSelectLockingStrategy extends AbstractSelectLockingS
 			try {
 				final PreparedStatement st = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql );
 				try {
-					getLockable().getIdentifierType().nullSafeSet( st, id, 1, session );
-					if ( getLockable().isVersioned() ) {
-						getLockable().getVersionType().nullSafeSet(
+					final AllowableParameterType identifierParameterType = (AllowableParameterType) getLockable().getHierarchy()
+							.getIdentifierDescriptor();
+					identifierParameterType.getValueBinder().bind( st, id, 1, session );
+
+					if ( StringHelper.isNotEmpty( getLockable().getVersionColumnName() ) ) {
+						getLockable().getHierarchy()
+								.getVersionDescriptor()
+								.getBasicType()
+								.getValueBinder().bind(
 								st,
 								version,
-								getLockable().getIdentifierType().getColumnSpan( factory ) + 1,
+								identifierParameterType.getNumberOfJdbcParametersToBind() + 1,
 								session
 						);
 					}
@@ -109,7 +117,7 @@ public class PessimisticReadSelectLockingStrategy extends AbstractSelectLockingS
 				.setTableName( getLockable().getRootTableName() )
 				.addColumn( getLockable().getRootTableIdentifierColumnNames()[0] )
 				.addCondition( getLockable().getRootTableIdentifierColumnNames(), "=?" );
-		if ( getLockable().isVersioned() ) {
+		if ( StringHelper.isNotEmpty( getLockable().getVersionColumnName() ) ) {
 			select.addCondition( getLockable().getVersionColumnName(), "=?" );
 		}
 		if ( factory.getSessionFactoryOptions().isCommentsEnabled() ) {

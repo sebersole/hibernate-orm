@@ -20,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
+import java.sql.NClob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
@@ -42,13 +44,6 @@ import org.hibernate.ScrollMode;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.dialect.function.AnsiTrimFunction;
-import org.hibernate.dialect.function.NoArgSQLFunction;
-import org.hibernate.dialect.function.SQLFunctionTemplate;
-import org.hibernate.dialect.function.StandardSQLFunction;
-import org.hibernate.dialect.function.VarArgsSQLFunction;
-import org.hibernate.dialect.identity.HANAIdentityColumnSupport;
-import org.hibernate.dialect.identity.IdentityColumnSupport;
 import org.hibernate.dialect.pagination.AbstractLimitHandler;
 import org.hibernate.dialect.pagination.LimitHandler;
 import org.hibernate.dialect.pagination.LimitHelper;
@@ -72,34 +67,26 @@ import org.hibernate.exception.LockAcquisitionException;
 import org.hibernate.exception.LockTimeoutException;
 import org.hibernate.exception.SQLGrammarException;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;
-import org.hibernate.internal.CoreLogging;
-import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.JdbcExceptionHelper;
-import org.hibernate.mapping.Table;
-import org.hibernate.procedure.internal.StandardCallableStatementSupport;
-import org.hibernate.procedure.spi.CallableStatementSupport;
-import org.hibernate.service.ServiceRegistry;
-import org.hibernate.tool.schema.internal.StandardTableExporter;
+import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTempTableExporter;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTemporaryTableStrategy;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
+import org.hibernate.query.sqm.produce.function.spi.AnsiTrimFunctionTemplate;
+import org.hibernate.query.sqm.produce.function.spi.ConcatFunctionTemplate;
 import org.hibernate.tool.schema.spi.Exporter;
-import org.hibernate.type.StandardBasicTypes;
-import org.hibernate.type.descriptor.ValueBinder;
-import org.hibernate.type.descriptor.ValueExtractor;
-import org.hibernate.type.descriptor.WrapperOptions;
-import org.hibernate.type.descriptor.java.DataHelper;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.BasicBinder;
-import org.hibernate.type.descriptor.sql.BasicExtractor;
-import org.hibernate.type.descriptor.sql.BitTypeDescriptor;
-import org.hibernate.type.descriptor.sql.BlobTypeDescriptor;
-import org.hibernate.type.descriptor.sql.BooleanTypeDescriptor;
-import org.hibernate.type.descriptor.sql.CharTypeDescriptor;
-import org.hibernate.type.descriptor.sql.ClobTypeDescriptor;
-import org.hibernate.type.descriptor.sql.NCharTypeDescriptor;
-import org.hibernate.type.descriptor.sql.NClobTypeDescriptor;
-import org.hibernate.type.descriptor.sql.NVarcharTypeDescriptor;
-import org.hibernate.type.descriptor.sql.SmallIntTypeDescriptor;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
-import org.hibernate.type.descriptor.sql.VarcharTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.sql.spi.BasicBinder;
+import org.hibernate.type.descriptor.sql.spi.BitSqlDescriptor;
+import org.hibernate.type.descriptor.sql.spi.ClobSqlDescriptor;
+import org.hibernate.type.descriptor.sql.spi.NClobSqlDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SmallIntSqlDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * An abstract base class for HANA dialects. <br/>
@@ -419,7 +406,7 @@ public abstract class AbstractHANADialect extends Dialect {
 	// using non-contexual lob creation and HANA then closes our StringReader.
 	// see test case LobLocatorTest
 
-	private static class HANAClobTypeDescriptor extends ClobTypeDescriptor {
+	private static class HANAClobTypeDescriptor extends ClobSqlDescriptor {
 
 		/** serial version uid. */
 		private static final long serialVersionUID = -379042275442752102L;
@@ -430,6 +417,11 @@ public abstract class AbstractHANADialect extends Dialect {
 		public HANAClobTypeDescriptor(int maxLobPrefetchSize, boolean useUnicodeStringTypes) {
 			this.maxLobPrefetchSize = maxLobPrefetchSize;
 			this.useUnicodeStringTypes = useUnicodeStringTypes;
+		}
+
+		@Override
+		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( Clob.class );
 		}
 
 		@Override
@@ -515,8 +507,8 @@ public abstract class AbstractHANADialect extends Dialect {
 		}
 	}
 
+	// todo (6.0)
 	private static class HANANClobTypeDescriptor extends NClobTypeDescriptor {
-
 		/** serial version uid. */
 		private static final long serialVersionUID = 5651116091681647859L;
 
@@ -525,6 +517,7 @@ public abstract class AbstractHANADialect extends Dialect {
 		public HANANClobTypeDescriptor(int maxLobPrefetchSize) {
 			this.maxLobPrefetchSize = maxLobPrefetchSize;
 		}
+
 
 		@Override
 		public <X> BasicBinder<X> getNClobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
@@ -780,131 +773,10 @@ public abstract class AbstractHANADialect extends Dialect {
 		registerColumnType( Types.BIT, "smallint" );
 		registerColumnType( Types.TINYINT, "smallint" );
 
-		registerHibernateType( Types.NCLOB, StandardBasicTypes.MATERIALIZED_NCLOB.getName() );
-		registerHibernateType( Types.CLOB, StandardBasicTypes.MATERIALIZED_CLOB.getName() );
-		registerHibernateType( Types.BLOB, StandardBasicTypes.MATERIALIZED_BLOB.getName() );
-		registerHibernateType( Types.NVARCHAR, StandardBasicTypes.STRING.getName() );
-
-		registerFunction( "to_date", new StandardSQLFunction( "to_date", StandardBasicTypes.DATE ) );
-		registerFunction( "to_seconddate", new StandardSQLFunction( "to_seconddate", StandardBasicTypes.TIMESTAMP ) );
-		registerFunction( "to_time", new StandardSQLFunction( "to_time", StandardBasicTypes.TIME ) );
-		registerFunction( "to_timestamp", new StandardSQLFunction( "to_timestamp", StandardBasicTypes.TIMESTAMP ) );
-
-		registerFunction( "current_date", new NoArgSQLFunction( "current_date", StandardBasicTypes.DATE, false ) );
-		registerFunction( "current_time", new NoArgSQLFunction( "current_time", StandardBasicTypes.TIME, false ) );
-		registerFunction( "current_timestamp",
-				new NoArgSQLFunction( "current_timestamp", StandardBasicTypes.TIMESTAMP, false ) );
-		registerFunction( "current_utcdate", new NoArgSQLFunction( "current_utcdate", StandardBasicTypes.DATE, false ) );
-		registerFunction( "current_utctime", new NoArgSQLFunction( "current_utctime", StandardBasicTypes.TIME, false ) );
-		registerFunction( "current_utctimestamp",
-				new NoArgSQLFunction( "current_utctimestamp", StandardBasicTypes.TIMESTAMP, false ) );
-
-		registerFunction( "add_days", new StandardSQLFunction( "add_days" ) );
-		registerFunction( "add_months", new StandardSQLFunction( "add_months" ) );
-		registerFunction( "add_seconds", new StandardSQLFunction( "add_seconds" ) );
-		registerFunction( "add_years", new StandardSQLFunction( "add_years" ) );
-		registerFunction( "dayname", new StandardSQLFunction( "dayname", StandardBasicTypes.STRING ) );
-		registerFunction( "dayofmonth", new StandardSQLFunction( "dayofmonth", StandardBasicTypes.INTEGER ) );
-		registerFunction( "dayofyear", new StandardSQLFunction( "dayofyear", StandardBasicTypes.INTEGER ) );
-		registerFunction( "days_between", new StandardSQLFunction( "days_between", StandardBasicTypes.INTEGER ) );
-		registerFunction( "hour", new StandardSQLFunction( "hour", StandardBasicTypes.INTEGER ) );
-		registerFunction( "isoweek", new StandardSQLFunction( "isoweek", StandardBasicTypes.STRING ) );
-		registerFunction( "last_day", new StandardSQLFunction( "last_day", StandardBasicTypes.DATE ) );
-		registerFunction( "localtoutc", new StandardSQLFunction( "localtoutc", StandardBasicTypes.TIMESTAMP ) );
-		registerFunction( "minute", new StandardSQLFunction( "minute", StandardBasicTypes.INTEGER ) );
-		registerFunction( "month", new StandardSQLFunction( "month", StandardBasicTypes.INTEGER ) );
-		registerFunction( "monthname", new StandardSQLFunction( "monthname", StandardBasicTypes.STRING ) );
-		registerFunction( "next_day", new StandardSQLFunction( "next_day", StandardBasicTypes.DATE ) );
-		registerFunction( "now", new NoArgSQLFunction( "now", StandardBasicTypes.TIMESTAMP, true ) );
-		registerFunction( "quarter", new StandardSQLFunction( "quarter", StandardBasicTypes.STRING ) );
-		registerFunction( "second", new StandardSQLFunction( "second", StandardBasicTypes.INTEGER ) );
-		registerFunction( "seconds_between", new StandardSQLFunction( "seconds_between", StandardBasicTypes.LONG ) );
-		registerFunction( "week", new StandardSQLFunction( "week", StandardBasicTypes.INTEGER ) );
-		registerFunction( "weekday", new StandardSQLFunction( "weekday", StandardBasicTypes.INTEGER ) );
-		registerFunction( "year", new StandardSQLFunction( "year", StandardBasicTypes.INTEGER ) );
-		registerFunction( "utctolocal", new StandardSQLFunction( "utctolocal", StandardBasicTypes.TIMESTAMP ) );
-
-		registerFunction( "to_bigint", new StandardSQLFunction( "to_bigint", StandardBasicTypes.LONG ) );
-		registerFunction( "to_binary", new StandardSQLFunction( "to_binary", StandardBasicTypes.BINARY ) );
-		registerFunction( "to_decimal", new StandardSQLFunction( "to_decimal", StandardBasicTypes.BIG_DECIMAL ) );
-		registerFunction( "to_double", new StandardSQLFunction( "to_double", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "to_int", new StandardSQLFunction( "to_int", StandardBasicTypes.INTEGER ) );
-		registerFunction( "to_integer", new StandardSQLFunction( "to_integer", StandardBasicTypes.INTEGER ) );
-		registerFunction( "to_real", new StandardSQLFunction( "to_real", StandardBasicTypes.FLOAT ) );
-		registerFunction( "to_smalldecimal", new StandardSQLFunction( "to_smalldecimal", StandardBasicTypes.BIG_DECIMAL ) );
-		registerFunction( "to_smallint", new StandardSQLFunction( "to_smallint", StandardBasicTypes.SHORT ) );
-		registerFunction( "to_tinyint", new StandardSQLFunction( "to_tinyint", StandardBasicTypes.BYTE ) );
-
-		registerFunction( "abs", new StandardSQLFunction( "abs" ) );
-		registerFunction( "acos", new StandardSQLFunction( "acos", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "asin", new StandardSQLFunction( "asin", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "atan2", new StandardSQLFunction( "atan", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "bin2hex", new StandardSQLFunction( "bin2hex", StandardBasicTypes.STRING ) );
-		registerFunction( "bitand", new StandardSQLFunction( "bitand", StandardBasicTypes.LONG ) );
-		registerFunction( "ceil", new StandardSQLFunction( "ceil" ) );
-		registerFunction( "cos", new StandardSQLFunction( "cos", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "cosh", new StandardSQLFunction( "cosh", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "cot", new StandardSQLFunction( "cos", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "exp", new StandardSQLFunction( "exp", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "floor", new StandardSQLFunction( "floor" ) );
-		registerFunction( "greatest", new StandardSQLFunction( "greatest" ) );
-		registerFunction( "hex2bin", new StandardSQLFunction( "hex2bin", StandardBasicTypes.BINARY ) );
-		registerFunction( "least", new StandardSQLFunction( "least" ) );
-		registerFunction( "ln", new StandardSQLFunction( "ln", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "log", new StandardSQLFunction( "ln", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "power", new StandardSQLFunction( "power" ) );
-		registerFunction( "round", new StandardSQLFunction( "round" ) );
-		registerFunction( "mod", new StandardSQLFunction( "mod", StandardBasicTypes.INTEGER ) );
-		registerFunction( "sign", new StandardSQLFunction( "sign", StandardBasicTypes.INTEGER ) );
-		registerFunction( "sin", new StandardSQLFunction( "sin", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "sinh", new StandardSQLFunction( "sinh", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "sqrt", new StandardSQLFunction( "sqrt", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "tan", new StandardSQLFunction( "tan", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "tanh", new StandardSQLFunction( "tanh", StandardBasicTypes.DOUBLE ) );
-		registerFunction( "uminus", new StandardSQLFunction( "uminus" ) );
-
-		registerFunction( "to_alphanum", new StandardSQLFunction( "to_alphanum", StandardBasicTypes.STRING ) );
-		registerFunction( "to_nvarchar", new StandardSQLFunction( "to_nvarchar", StandardBasicTypes.STRING ) );
-		registerFunction( "to_varchar", new StandardSQLFunction( "to_varchar", StandardBasicTypes.STRING ) );
-
-		registerFunction( "ascii", new StandardSQLFunction( "ascii", StandardBasicTypes.INTEGER ) );
-		registerFunction( "char", new StandardSQLFunction( "char", StandardBasicTypes.CHARACTER ) );
-		registerFunction( "concat", new VarArgsSQLFunction( StandardBasicTypes.STRING, "(", "||", ")" ) );
-		registerFunction( "lcase", new StandardSQLFunction( "lcase", StandardBasicTypes.STRING ) );
-		registerFunction( "left", new StandardSQLFunction( "left", StandardBasicTypes.STRING ) );
-		registerFunction( "length", new StandardSQLFunction( "length", StandardBasicTypes.INTEGER ) );
-		registerFunction( "locate", new SQLFunctionTemplate( StandardBasicTypes.INTEGER, "locate(?2, ?1, ?3)" ) );
-		registerFunction( "lpad", new StandardSQLFunction( "lpad", StandardBasicTypes.STRING ) );
-		registerFunction( "ltrim", new StandardSQLFunction( "ltrim", StandardBasicTypes.STRING ) );
-		registerFunction( "nchar", new StandardSQLFunction( "nchar", StandardBasicTypes.STRING ) );
-		registerFunction( "replace", new StandardSQLFunction( "replace", StandardBasicTypes.STRING ) );
-		registerFunction( "right", new StandardSQLFunction( "right", StandardBasicTypes.STRING ) );
-		registerFunction( "rpad", new StandardSQLFunction( "rpad", StandardBasicTypes.STRING ) );
-		registerFunction( "rtrim", new StandardSQLFunction( "rtrim", StandardBasicTypes.STRING ) );
-		registerFunction( "substr_after", new StandardSQLFunction( "substr_after", StandardBasicTypes.STRING ) );
-		registerFunction( "substr_before", new StandardSQLFunction( "substr_before", StandardBasicTypes.STRING ) );
-		registerFunction( "substring", new StandardSQLFunction( "substring", StandardBasicTypes.STRING ) );
-		registerFunction( "trim", new AnsiTrimFunction() );
-		registerFunction( "ucase", new StandardSQLFunction( "ucase", StandardBasicTypes.STRING ) );
-		registerFunction( "unicode", new StandardSQLFunction( "unicode", StandardBasicTypes.INTEGER ) );
-		registerFunction( "bit_length", new SQLFunctionTemplate( StandardBasicTypes.INTEGER, "length(to_binary(?1))*8" ) );
-
-		registerFunction( "to_blob", new StandardSQLFunction( "to_blob", StandardBasicTypes.BLOB ) );
-		registerFunction( "to_clob", new StandardSQLFunction( "to_clob", StandardBasicTypes.CLOB ) );
-		registerFunction( "to_nclob", new StandardSQLFunction( "to_nclob", StandardBasicTypes.NCLOB ) );
-
-		registerFunction( "coalesce", new StandardSQLFunction( "coalesce" ) );
-		registerFunction( "current_connection",
-				new NoArgSQLFunction( "current_connection", StandardBasicTypes.INTEGER, false ) );
-		registerFunction( "current_schema", new NoArgSQLFunction( "current_schema", StandardBasicTypes.STRING, false ) );
-		registerFunction( "current_user", new NoArgSQLFunction( "current_user", StandardBasicTypes.STRING, false ) );
-		registerFunction( "grouping_id", new VarArgsSQLFunction( StandardBasicTypes.INTEGER, "(", ",", ")" ) );
-		registerFunction( "ifnull", new StandardSQLFunction( "ifnull" ) );
-		registerFunction( "map", new StandardSQLFunction( "map" ) );
-		registerFunction( "nullif", new StandardSQLFunction( "nullif" ) );
-		registerFunction( "session_context", new StandardSQLFunction( "session_context" ) );
-		registerFunction( "session_user", new NoArgSQLFunction( "session_user", StandardBasicTypes.STRING, false ) );
-		registerFunction( "sysuuid", new NoArgSQLFunction( "sysuuid", StandardBasicTypes.STRING, false ) );
+		registerHibernateType( Types.BLOB, StandardSpiBasicTypes.BLOB.getJavaTypeDescriptor().getTypeName() );
+		registerHibernateType( Types.CLOB, StandardSpiBasicTypes.CLOB.getJavaTypeDescriptor().getTypeName() );
+		registerHibernateType( Types.NCLOB, StandardSpiBasicTypes.NCLOB.getJavaTypeDescriptor().getTypeName() );
+		registerHibernateType( Types.NVARCHAR, StandardSpiBasicTypes.STRING.getJavaTypeDescriptor().getTypeName() );
 
 		registerHanaKeywords();
 
@@ -914,6 +786,136 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		// getGeneratedKeys() is not supported by the HANA JDBC driver
 		getDefaultProperties().setProperty( AvailableSettings.USE_GET_GENERATED_KEYS, "false" );
+	}
+
+	@Override
+	public void initializeFunctionRegistry(SqmFunctionRegistry registry) {
+		super.initializeFunctionRegistry( registry );
+		registry.registerNamed( "to_date", StandardSpiBasicTypes.DATE );
+		registry.registerNamed( "to_seconddate", StandardSpiBasicTypes.TIMESTAMP );
+		registry.registerNamed( "to_time", StandardSpiBasicTypes.TIME );
+		registry.registerNamed( "to_timestamp", StandardSpiBasicTypes.TIMESTAMP );
+
+		registry.registerNoArgs( "current_date", StandardSpiBasicTypes.DATE );
+		registry.registerNoArgs( "current_time", StandardSpiBasicTypes.TIME );
+		registry.registerNoArgs( "current_timestamp", StandardSpiBasicTypes.TIMESTAMP );
+		registry.registerNoArgs( "current_utcdate", StandardSpiBasicTypes.DATE );
+		registry.registerNoArgs( "current_utctime", StandardSpiBasicTypes.TIME );
+		registry.registerNoArgs( "current_utctimestamp", StandardSpiBasicTypes.TIMESTAMP );
+
+		registry.registerNamed( "add_days" );
+		registry.registerNamed( "add_months" );
+		registry.registerNamed( "add_seconds" );
+		registry.registerNamed( "add_years" );
+		registry.registerNamed( "dayname", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "dayofmonth", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "dayofyear", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "days_between", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "hour", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "isoweek", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "last_day", StandardSpiBasicTypes.DATE );
+		registry.registerNamed( "localtoutc", StandardSpiBasicTypes.TIMESTAMP );
+		registry.registerNamed( "minute", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "month", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "monthname", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "next_day", StandardSpiBasicTypes.DATE );
+		registry.registerNoArgs( "now", StandardSpiBasicTypes.TIMESTAMP );
+		registry.registerNamed( "quarter", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "second", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "seconds_between", StandardSpiBasicTypes.LONG );
+		registry.registerNamed( "week", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "weekday", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "year", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "utctolocal", StandardSpiBasicTypes.TIMESTAMP );
+
+
+		registry.registerNamed( "to_bigint", StandardSpiBasicTypes.LONG );
+		registry.registerNamed( "to_binary", StandardSpiBasicTypes.BINARY );
+		registry.registerNamed( "to_decimal", StandardSpiBasicTypes.BIG_DECIMAL );
+		registry.registerNamed( "to_double", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "to_int", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "to_integer", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "to_real", StandardSpiBasicTypes.FLOAT );
+		registry.registerNamed( "to_smalldecimal", StandardSpiBasicTypes.BIG_DECIMAL );
+		registry.registerNamed( "to_smallint", StandardSpiBasicTypes.SHORT );
+		registry.registerNamed( "to_tinyint", StandardSpiBasicTypes.BYTE );
+
+		registry.registerNamed( "abs" );
+		registry.registerNamed( "acos", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "asin", StandardSpiBasicTypes.DOUBLE );
+		registry.namedTemplateBuilder( "atan2", "atan" )
+				.setInvariantType( StandardSpiBasicTypes.DOUBLE )
+				.register();
+		registry.registerNamed( "bin2hex", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "bitand", StandardSpiBasicTypes.LONG );
+		registry.registerNamed( "ceil" );
+		registry.registerNamed( "cos", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "cosh", StandardSpiBasicTypes.DOUBLE );
+		registry.namedTemplateBuilder( "cot", "cos" )
+				.setInvariantType( StandardSpiBasicTypes.DOUBLE )
+				.register();
+		registry.registerNamed( "exp", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "floor" );
+		registry.registerNamed( "greatest" );
+		registry.registerNamed( "hex2bin", StandardSpiBasicTypes.BINARY );
+		registry.registerNamed( "least" );
+		registry.registerNamed( "ln", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "log", StandardSpiBasicTypes.DOUBLE );
+		registry.namedTemplateBuilder( "log", "ln" )
+				.setInvariantType( StandardSpiBasicTypes.DOUBLE )
+				.register();
+		registry.registerNamed( "power" );
+		registry.registerNamed( "round" );
+		registry.registerNamed( "mod", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "sign", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "sin", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "sinh", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "sqrt", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "tan", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "tanh", StandardSpiBasicTypes.DOUBLE );
+		registry.registerNamed( "uminus" );
+
+		registry.registerNamed( "to_alphanum", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "to_nvarchar", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "to_varchar", StandardSpiBasicTypes.STRING );
+
+		registry.registerNamed( "ascii", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "char", StandardSpiBasicTypes.CHARACTER );
+		registry.register( "concat", ConcatFunctionTemplate.INSTANCE );
+		registry.registerNamed( "lcase", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "left", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "length", StandardSpiBasicTypes.LONG );
+		registry.registerNamed( "locate", StandardSpiBasicTypes.INTEGER );
+		registry.registerNamed( "lpad", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "ltrim", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "nchar", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "replace", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "right", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "rpad", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "rtrim", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "substr_after", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "substr_before", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "substring", StandardSpiBasicTypes.STRING );
+		registry.register( "trim", AnsiTrimFunctionTemplate.INSTANCE );
+		registry.registerNamed( "ucase", StandardSpiBasicTypes.STRING );
+		registry.registerNamed( "unicode", StandardSpiBasicTypes.INTEGER );
+		registry.registerPattern( "bit_length", "length(to_binary(?1))*8", StandardSpiBasicTypes.INTEGER );
+
+		registry.registerNamed( "to_blob", StandardSpiBasicTypes.BLOB );
+		registry.registerNamed( "to_clob", StandardSpiBasicTypes.CLOB );
+		registry.registerNamed( "to_nclob", StandardSpiBasicTypes.NCLOB );
+
+		registry.registerNamed( "coalesce" );
+		registry.registerNoArgs( "current_connection", StandardSpiBasicTypes.INTEGER );
+		registry.registerNoArgs( "current_schema", StandardSpiBasicTypes.STRING );
+		registry.registerNoArgs( "current_user", StandardSpiBasicTypes.STRING );
+		registry.registerVarArgs( "grouping_id", StandardSpiBasicTypes.INTEGER, "(", ",", ")" );
+		registry.registerNamed( "ifnull" );
+		registry.registerNamed( "map" );
+		registry.registerNamed( "nullif" );
+		registry.registerNamed( "session_context" );
+		registry.registerNoArgs( "session_user", StandardSpiBasicTypes.STRING );
+		registry.registerNoArgs( "sysuuid", StandardSpiBasicTypes.STRING );
 	}
 
 	@Override
@@ -1024,6 +1026,16 @@ public abstract class AbstractHANADialect extends Dialect {
 	}
 
 	@Override
+	public IdTableStrategy getDefaultIdTableStrategy() {
+		return new GlobalTemporaryTableStrategy( getIdTableExporter() );
+	}
+
+	@Override
+	protected Exporter<IdTable> getIdTableExporter() {
+		return new GlobalTempTableExporter();
+	}
+
+	@Override
 	public String getCurrentTimestampSelectString() {
 		return "select current_timestamp from sys.dummy";
 	}
@@ -1105,23 +1117,31 @@ public abstract class AbstractHANADialect extends Dialect {
 	@Override
 	protected SqlTypeDescriptor getSqlTypeDescriptorOverride(final int sqlCode) {
 		switch ( sqlCode ) {
-			case Types.CLOB:
-				return this.clobTypeDescriptor;
-			case Types.NCLOB:
-				return this.nClobTypeDescriptor;
-			case Types.BLOB:
-				return this.blobTypeDescriptor;
-			case Types.TINYINT:
+			case Types.BOOLEAN: {
+				return this.useLegacyBooleanType ? BitSqlDescriptor.INSTANCE : BooleanSqlDescriptor.INSTANCE;
+			}
+			case Types.CHAR: {
+				return this.useUnicodeStringTypes ? NCharTypeDescriptor.INSTANCE : CharTypeDescriptor.INSTANCE;
+			}
+			case Types.VARCHAR: {
+				return this.useUnicodeStringTypes ? NVarcharTypeDescriptor.INSTANCE : VarcharTypeDescriptor.INSTANCE;
+			}
+			case Types.TINYINT: {
 				// tinyint is unsigned on HANA
 				return SmallIntTypeDescriptor.INSTANCE;
-			case Types.BOOLEAN:
-				return this.useLegacyBooleanType ? BitTypeDescriptor.INSTANCE : BooleanTypeDescriptor.INSTANCE;
-			case Types.VARCHAR:
-				return this.useUnicodeStringTypes ? NVarcharTypeDescriptor.INSTANCE : VarcharTypeDescriptor.INSTANCE;
-			case Types.CHAR:
-				return this.useUnicodeStringTypes ? NCharTypeDescriptor.INSTANCE : CharTypeDescriptor.INSTANCE;
-			default:
+			}
+			case Types.BLOB: {
+				return this.blobTypeDescriptor;
+			}
+			case Types.CLOB: {
+				return this.clobTypeDescriptor;
+			}
+			case Types.NCLOB {
+				return this.nClobTypeDescriptor;
+			}
+			default: {
 				return super.getSqlTypeDescriptorOverride( sqlCode );
+			}
 		}
 	}
 

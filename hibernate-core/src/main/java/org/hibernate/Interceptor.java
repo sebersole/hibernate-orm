@@ -9,7 +9,8 @@ package org.hibernate;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.model.domain.RepresentationMode;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * Allows user code to inspect and/or change property values.
@@ -47,13 +48,18 @@ public interface Interceptor {
 	 * @param id The identifier value being loaded
 	 * @param state The entity state (which will be pushed into the entity instance)
 	 * @param propertyNames The names of the entity properties, corresponding to the <tt>state</tt>.
-	 * @param types The types of the entity properties, corresponding to the <tt>state</tt>.
+	 * @param javaTypeDescriptors The {@link JavaTypeDescriptor} of the entity properties, corresponding to the <tt>state</tt>.
 	 *
 	 * @return {@code true} if the user modified the <tt>state</tt> in any way.
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	boolean onLoad(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) throws CallbackException;
+	boolean onLoad(
+			Object entity,
+			Serializable id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
 
 	/**
 	 * Called when an object is detected to be dirty, during a flush. The interceptor may modify the detected
@@ -70,7 +76,7 @@ public interface Interceptor {
 	 * @param currentState The entity's current state
 	 * @param previousState The entity's previous (load time) state.
 	 * @param propertyNames The names of the entity properties
-	 * @param types The types of the entity properties
+	 * @param javaTypeDescriptors The {@link JavaTypeDescriptor} of the entity properties
 	 *
 	 * @return {@code true} if the user modified the <tt>currentState</tt> in any way.
 	 *
@@ -82,7 +88,7 @@ public interface Interceptor {
 			Object[] currentState,
 			Object[] previousState,
 			String[] propertyNames,
-			Type[] types) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
 
 	/**
 	 * Called before an object is saved. The interceptor may modify the <tt>state</tt>, which will be used for
@@ -92,13 +98,18 @@ public interface Interceptor {
 	 * @param id The identifier of the entity
 	 * @param state The state of the entity which will be inserted
 	 * @param propertyNames The names of the entity properties.
-	 * @param types The types of the entity properties
+	 * @param javaTypeDescriptors The {@link JavaTypeDescriptor} of the entity properties
 	 *
 	 * @return <tt>true</tt> if the user modified the <tt>state</tt> in any way.
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) throws CallbackException;
+	boolean onSave(
+			Object entity,
+			Serializable id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
 
 	/**
 	 *  Called before an object is deleted. It is not recommended that the interceptor modify the <tt>state</tt>.
@@ -107,11 +118,16 @@ public interface Interceptor {
 	 * @param id The identifier of the entity
 	 * @param state The state of the entity
 	 * @param propertyNames The names of the entity properties.
-	 * @param types The types of the entity properties
+	 * @param javaTypeDescriptors The {@link JavaTypeDescriptor}  of the entity
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) throws CallbackException;
+	void onDelete(
+			Object entity,
+			Serializable id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
 
 	/**
 	 * Called before a collection is (re)created.
@@ -189,7 +205,7 @@ public interface Interceptor {
 	 * @param currentState The current entity state as taken from the entity instance
 	 * @param previousState The state of the entity when it was last synchronized (generally when it was loaded)
 	 * @param propertyNames The names of the entity properties.
-	 * @param types The types of the entity properties
+	 * @param javaTypeDescriptors The {@link JavaTypeDescriptor} of the entity properties
 	 *
 	 * @return array of dirty property indices or {@code null} to indicate Hibernate should perform default behaviour
 	 *
@@ -201,21 +217,42 @@ public interface Interceptor {
 			Object[] currentState,
 			Object[] previousState,
 			String[] propertyNames,
-			Type[] types);
+			JavaTypeDescriptor[] javaTypeDescriptors);
+
 	/**
 	 * Instantiate the entity class. Return <tt>null</tt> to indicate that Hibernate should use
 	 * the default constructor of the class. The identifier property of the returned instance
 	 * should be initialized with the given identifier.
 	 *
 	 * @param entityName the name of the entity
-	 * @param entityMode The type of entity instance to be returned.
+	 * @param entityMode The domain model representation (pojo, map, etc)
+	 * @param id the identifier of the new instance
+	 *
+	 * @return an instance of the class, or <tt>null</tt> to choose default behaviour
+	 *
+	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
+	 *
+	 * @deprecated (since 6.0) Use {@link #instantiate(String, RepresentationMode, Serializable)} instead
+	 */
+	@Deprecated
+	Object instantiate(String entityName, EntityMode entityMode, Serializable id) throws CallbackException;
+
+	/**
+	 * Instantiate the entity class. Return <tt>null</tt> to indicate that Hibernate should use
+	 * the default constructor of the class. The identifier property of the returned instance
+	 * should be initialized with the given identifier.
+	 *
+	 * @param entityName the name of the entity
+	 * @param modelRepresentation The domain model representation (pojo, map, etc)
 	 * @param id the identifier of the new instance
 	 *
 	 * @return an instance of the class, or <tt>null</tt> to choose default behaviour
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	Object instantiate(String entityName, EntityMode entityMode, Serializable id) throws CallbackException;
+	default Object instantiate(String entityName, RepresentationMode modelRepresentation, Serializable id) throws CallbackException {
+		return instantiate( entityName, EntityMode.fromRepresentation( modelRepresentation ), id );
+	}
 
 	/**
 	 * Get the entity name for a persistent or transient instance.

@@ -12,9 +12,9 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.type.Type;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * MessageHelper methods for rendering log messages relating to managed
@@ -64,25 +64,25 @@ public final class MessageHelper {
 	/**
 	 * Generate an info message string relating to a particular entity.
 	 *
-	 * @param persister The persister for the entity
+	 * @param entityDescriptor The entityDescriptor for the entity
 	 * @param id The entity id value
 	 * @param factory The session factory - Could be null!
 	 * @return An info string, in the form [FooBar#1]
 	 */
 	public static String infoString(
-			EntityPersister persister,
+			EntityDescriptor entityDescriptor,
 			Object id, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		Type idType;
-		if( persister == null ) {
+		JavaTypeDescriptor idJavaTypeDescriptor;
+		if( entityDescriptor == null ) {
 			s.append( "<null EntityPersister>" );
-			idType = null;
+			idJavaTypeDescriptor = null;
 		}
 		else {
-			s.append( persister.getEntityName() );
-			idType = persister.getIdentifierType();
+			s.append( entityDescriptor.getEntityName() );
+			idJavaTypeDescriptor = entityDescriptor.getIdentifierDescriptor().getJavaTypeDescriptor();
 		}
 		s.append( '#' );
 
@@ -90,12 +90,12 @@ public final class MessageHelper {
 			s.append( "<null>" );
 		}
 		else {
-			if ( idType == null ) {
+			if ( idJavaTypeDescriptor == null ) {
 				s.append( id );
 			}
 			else {
 				if ( factory != null ) {
-					s.append( idType.toLoggableString( id, factory ) );
+					s.append( idJavaTypeDescriptor.extractLoggableRepresentation( id ) );
 				}
 				else {
 					s.append( "<not loggable>" );
@@ -111,24 +111,24 @@ public final class MessageHelper {
 	/**
 	 * Generate an info message string relating to a particular entity,.
 	 *
-	 * @param persister The persister for the entity
+	 * @param entityDescriptor The entityDescriptor for the entity
 	 * @param id The entity id value
-	 * @param identifierType The entity identifier type mapping
+	 * @param identifierJavaTypeDescriptor The entity identifier JavaTypeDescriptor
 	 * @param factory The session factory
 	 * @return An info string, in the form [FooBar#1]
 	 */
 	public static String infoString(
-			EntityPersister persister, 
+			EntityDescriptor entityDescriptor,
 			Object id, 
-			Type identifierType,
+			JavaTypeDescriptor identifierJavaTypeDescriptor,
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if( persister == null ) {
+		if( entityDescriptor == null ) {
 			s.append( "<null EntityPersister>" );
 		}
 		else {
-			s.append( persister.getEntityName() );
+			s.append( entityDescriptor.getEntityName() );
 		}
 		s.append( '#' );
 
@@ -136,7 +136,7 @@ public final class MessageHelper {
 			s.append( "<null>" );
 		}
 		else {
-			s.append( identifierType.toLoggableString( id, factory ) );
+			s.append( identifierJavaTypeDescriptor.extractLoggableRepresentation( id ) );
 		}
 		s.append( ']' );
 
@@ -146,25 +146,27 @@ public final class MessageHelper {
 	/**
 	 * Generate an info message string relating to a series of entities.
 	 *
-	 * @param persister The persister for the entities
+	 * @param entityDescriptor The entityDescriptor for the entities
 	 * @param ids The entity id values
 	 * @param factory The session factory
 	 * @return An info string, in the form [FooBar#<1,2,3>]
 	 */
 	public static String infoString(
-			EntityPersister persister, 
+			EntityDescriptor entityDescriptor,
 			Serializable[] ids, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if( persister == null ) {
+		if( entityDescriptor == null ) {
 			s.append( "<null EntityPersister>" );
 		}
 		else {
-			s.append( persister.getEntityName() );
+			s.append( entityDescriptor.getEntityName() );
 			s.append( "#<" );
 			for ( int i=0; i<ids.length; i++ ) {
-				s.append( persister.getIdentifierType().toLoggableString( ids[i], factory ) );
+				s.append( entityDescriptor.getIdentifierDescriptor()
+								  .getJavaTypeDescriptor()
+								  .extractLoggableRepresentation( ids[i] ) );
 				if ( i < ids.length-1 ) {
 					s.append( ", " );
 				}
@@ -183,7 +185,7 @@ public final class MessageHelper {
 	 * @param persister The persister.
 	 * @return An info string, in the form [FooBar]
 	 */
-	public static String infoString(EntityPersister persister) {
+	public static String infoString(EntityDescriptor persister) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
 		if ( persister == null ) {
@@ -231,34 +233,34 @@ public final class MessageHelper {
 	 * collection.  Attempts to intelligently handle property-refs issues
 	 * where the collection key is not the same as the owner key.
 	 *
-	 * @param persister The persister for the collection
+	 * @param collectionDescriptor The PersistentCollectionDescriptor for the collection
 	 * @param collection The collection itself
 	 * @param collectionKey The collection key
 	 * @param session The session
 	 * @return An info string, in the form [Foo.bars#1]
 	 */
 	public static String collectionInfoString( 
-			CollectionPersister persister,
+			PersistentCollectionDescriptor collectionDescriptor,
 			PersistentCollection collection,
 			Serializable collectionKey,
 			SharedSessionContractImplementor session ) {
 		
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if ( persister == null ) {
+		if ( collectionDescriptor == null ) {
 			s.append( "<unreferenced>" );
 		}
 		else {
-			s.append( persister.getRole() );
+			s.append( collectionDescriptor.getNavigableRole().getFullPath() );
 			s.append( '#' );
-			
-			Type ownerIdentifierType = persister.getOwnerEntityPersister()
-					.getIdentifierType();
+
+			JavaTypeDescriptor ownerIdentifierJavaTypeDescriptor = collectionDescriptor.getCollectionKeyDescriptor()
+					.getJavaTypeDescriptor();
 			Serializable ownerKey;
 			// TODO: Is it redundant to attempt to use the collectionKey,
 			// or is always using the owner id sufficient?
 			if ( collectionKey.getClass().isAssignableFrom( 
-					ownerIdentifierType.getReturnedClass() ) ) {
+					ownerIdentifierJavaTypeDescriptor.getJavaType() ) ) {
 				ownerKey = collectionKey;
 			}
 			else {
@@ -266,8 +268,7 @@ public final class MessageHelper {
 				EntityEntry entry = collectionOwner == null ? null : session.getPersistenceContext().getEntry(collectionOwner);
 				ownerKey = entry == null ? null : entry.getId();
 			}
-			s.append( ownerIdentifierType.toLoggableString( 
-					ownerKey, session.getFactory() ) );
+			s.append( ownerIdentifierJavaTypeDescriptor.extractLoggableRepresentation( ownerKey ) );
 		}
 		s.append( ']' );
 
@@ -278,25 +279,25 @@ public final class MessageHelper {
 	 * Generate an info message string relating to a series of managed
 	 * collections.
 	 *
-	 * @param persister The persister for the collections
+	 * @param collectionDescriptor The PersistentCollectionDescriptor for the collections
 	 * @param ids The id values of the owners
 	 * @param factory The session factory
 	 * @return An info string, in the form [Foo.bars#<1,2,3>]
 	 */
 	public static String collectionInfoString(
-			CollectionPersister persister, 
+			PersistentCollectionDescriptor collectionDescriptor,
 			Serializable[] ids, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if ( persister == null ) {
+		if ( collectionDescriptor == null ) {
 			s.append( "<unreferenced>" );
 		}
 		else {
-			s.append( persister.getRole() );
+			s.append( collectionDescriptor.getNavigableRole().getFullPath() );
 			s.append( "#<" );
 			for ( int i = 0; i < ids.length; i++ ) {
-				addIdToCollectionInfoString( persister, ids[i], factory, s );
+				addIdToCollectionInfoString( collectionDescriptor, ids[i], factory, s );
 				if ( i < ids.length-1 ) {
 					s.append( ", " );
 				}
@@ -311,29 +312,29 @@ public final class MessageHelper {
 	 * Generate an info message string relating to a particular managed
 	 * collection.
 	 *
-	 * @param persister The persister for the collection
+	 * @param collectionDescriptor The PersistentCollectionDescriptor for the collection
 	 * @param id The id value of the owner
 	 * @param factory The session factory
 	 * @return An info string, in the form [Foo.bars#1]
 	 */
 	public static String collectionInfoString(
-			CollectionPersister persister, 
+			PersistentCollectionDescriptor collectionDescriptor,
 			Serializable id, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if ( persister == null ) {
+		if ( collectionDescriptor == null ) {
 			s.append( "<unreferenced>" );
 		}
 		else {
-			s.append( persister.getRole() );
+			s.append( collectionDescriptor.getNavigableRole().getFullPath() );
 			s.append( '#' );
 
 			if ( id == null ) {
 				s.append( "<null>" );
 			}
 			else {
-				addIdToCollectionInfoString( persister, id, factory, s );
+				addIdToCollectionInfoString( collectionDescriptor, id, factory, s );
 			}
 		}
 		s.append( ']' );
@@ -342,7 +343,7 @@ public final class MessageHelper {
 	}
 	
 	private static void addIdToCollectionInfoString(
-			CollectionPersister persister,
+			PersistentCollectionDescriptor collectionDescriptor,
 			Serializable id,
 			SessionFactoryImplementor factory,
 			StringBuilder s ) {
@@ -353,11 +354,11 @@ public final class MessageHelper {
 		// Also need to check that the expected identifier type matches
 		// the given ID.  Due to property-ref keys, the collection key
 		// may not be the owner key.
-		Type ownerIdentifierType = persister.getOwnerEntityPersister()
-				.getIdentifierType();
+		JavaTypeDescriptor ownerIdentifierJavaTypeDescriptor = collectionDescriptor.getCollectionKeyDescriptor()
+				.getJavaTypeDescriptor();
 		if ( id.getClass().isAssignableFrom( 
-				ownerIdentifierType.getReturnedClass() ) ) {
-			s.append( ownerIdentifierType.toLoggableString( id, factory ) );
+				ownerIdentifierJavaTypeDescriptor.getJavaType() ) ) {
+			s.append( ownerIdentifierJavaTypeDescriptor.extractLoggableRepresentation( id ) );
 		}
 		else {
 			// TODO: This is a crappy backup if a property-ref is used.

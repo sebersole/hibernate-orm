@@ -7,112 +7,39 @@
 package org.hibernate.procedure.internal;
 
 import javax.persistence.ParameterMode;
-import javax.persistence.TemporalType;
-
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ParameterBind;
-import org.hibernate.query.internal.BindingTypeHelper;
-import org.hibernate.query.procedure.internal.ProcedureParamBindings;
-import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
-import org.hibernate.type.Type;
-
-import org.jboss.logging.Logger;
+import org.hibernate.procedure.spi.ParameterBindImplementor;
+import org.hibernate.query.QueryParameter;
+import org.hibernate.query.internal.QueryParameterBindingImpl;
+import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 
 /**
  * Implementation of the {@link ParameterBind} contract.
  *
  * @author Steve Ebersole
  */
-public class ParameterBindImpl<T> implements ParameterBind<T> {
-	private static final Logger log = Logger.getLogger( ParameterBindImpl.class );
-
-	private final ProcedureParameterImplementor procedureParameter;
-	private final ProcedureParamBindings procedureParamBindings;
-
-	private boolean isBound;
-
-	private T value;
-	private Type hibernateType;
-
-	private TemporalType explicitTemporalType;
+public class ParameterBindImpl<T> extends QueryParameterBindingImpl<T> implements ParameterBindImplementor<T> {
+	public ParameterBindImpl(
+			QueryParameter<T> queryParameter,
+			QueryParameterBindingTypeResolver typeResolver) {
+		super( queryParameter, typeResolver );
+	}
 
 	public ParameterBindImpl(
-			ProcedureParameterImplementor procedureParameter,
-			ProcedureParamBindings procedureParamBindings) {
-		this.procedureParameter = procedureParameter;
-		this.procedureParamBindings = procedureParamBindings;
-
-		this.hibernateType = procedureParameter.getHibernateType();
+			AllowableParameterType bindType,
+			QueryParameter<T> queryParameter,
+			QueryParameterBindingTypeResolver typeResolver) {
+		super( bindType, queryParameter, typeResolver );
 	}
 
 	@Override
 	public T getValue() {
-		return value;
+		return super.getBindValue();
 	}
 
 	@Override
-	public TemporalType getExplicitTemporalType() {
-		return explicitTemporalType;
-	}
-
-	@Override
-	public boolean isBound() {
-		return isBound;
-	}
-
-	@Override
-	public void setBindValue(T value) {
-		internalSetValue( value );
-
-		if ( value != null && hibernateType == null ) {
-			hibernateType = procedureParamBindings.getProcedureCall()
-					.getSession()
-					.getFactory()
-					.getTypeResolver()
-					.heuristicType( value.getClass().getName() );
-			log.debugf( "Using heuristic type [%s] based on bind value [%s] as `bindType`", hibernateType, value );
-		}
-	}
-
-	private void internalSetValue(T value) {
-		if ( procedureParameter.getMode() != ParameterMode.IN && procedureParameter.getMode() != ParameterMode.INOUT ) {
-			throw new IllegalStateException( "Can only bind values for IN/INOUT parameters : " + procedureParameter );
-		}
-
-		if ( procedureParameter.getParameterType() != null ) {
-			if ( !procedureParameter.getParameterType().isInstance( value ) ) {
-				throw new IllegalArgumentException( "Bind value [" + value + "] was not of specified type [" + procedureParameter.getParameterType() );
-			}
-		}
-
-		this.value = value;
-		this.isBound = true;
-	}
-
-	@Override
-	public void setBindValue(T value, Type clarifiedType) {
-		internalSetValue( value );
-		this.hibernateType = clarifiedType;
-		log.debugf( "Using explicit type [%s] as `bindType`", hibernateType, value );
-	}
-
-	@Override
-	public void setBindValue(T value, TemporalType clarifiedTemporalType) {
-		internalSetValue( value );
-		this.hibernateType = BindingTypeHelper.INSTANCE.determineTypeForTemporalType( clarifiedTemporalType, hibernateType, value );
-		this.explicitTemporalType = clarifiedTemporalType;
-		log.debugf( "Using type [%s] (based on TemporalType [%s] as `bindType`", hibernateType, clarifiedTemporalType );
-	}
-
-	@Override
-	public T getBindValue() {
-		if ( !isBound ) {
-			throw new IllegalStateException( "Value not yet bound" );
-		}
-		return value;
-	}
-
-	@Override
-	public Type getBindType() {
-		return hibernateType;
+	public AllowableParameterType<T> getBindType() {
+		return super.getBindType();
 	}
 }

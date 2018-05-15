@@ -6,37 +6,42 @@
  */
 package org.hibernate.mapping;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.List;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.engine.spi.Mapping;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.relational.ForeignKeyExporter;
+import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.EntityType;
-import org.hibernate.type.Type;
 
 /**
  * A mapping for a one-to-many association
  *
  * @author Gavin King
  */
-public class OneToMany implements Value {
-	private final MetadataImplementor metadata;
-	private final Table referencingTable;
+public class OneToMany implements ForeignKeyExporter, Value {
+	private final MetadataBuildingContext buildingContext;
+	private final MappedTable referencingTable;
 
 	private String referencedEntityName;
 	private PersistentClass associatedClass;
 	private boolean ignoreNotFound;
+	private JavaTypeMapping javaTypeMapping;
 
 	/**
 	 * @deprecated Use {@link OneToMany#OneToMany(MetadataBuildingContext, PersistentClass)} instead.
 	 */
 	@Deprecated
-	public OneToMany(MetadataImplementor metadata, PersistentClass owner) throws MappingException {
-		this.metadata = metadata;
+	public OneToMany(MetadataBuildingContext buildingContext, PersistentClass owner) throws MappingException {
+		this.buildingContext = buildingContext;
 		this.referencingTable = ( owner == null ) ? null : owner.getTable();
 	}
 
@@ -47,19 +52,7 @@ public class OneToMany implements Value {
 
 	@Override
 	public ServiceRegistry getServiceRegistry() {
-		return metadata.getMetadataBuildingOptions().getServiceRegistry();
-	}
-
-	private EntityType getEntityType() {
-		return metadata.getTypeResolver().getTypeFactory().manyToOne(
-				getReferencedEntityName(),
-				true,
-				null,
-				false,
-				false,
-				isIgnoreNotFound(),
-				false
-		);
+		return buildingContext.getBuildingOptions().getServiceRegistry();
 	}
 
 	public PersistentClass getAssociatedClass() {
@@ -73,37 +66,51 @@ public class OneToMany implements Value {
 		this.associatedClass = associatedClass;
 	}
 
-	public void createForeignKey() {
-		// no foreign key element of for a one-to-many
-	}
-
+	@Override
 	public Iterator<Selectable> getColumnIterator() {
-		return associatedClass.getKey().getColumnIterator();
+		return associatedClass.getKey().getMappedColumns().iterator();
 	}
 
+	@Override
 	public int getColumnSpan() {
 		return associatedClass.getKey().getColumnSpan();
 	}
 
+	@Override
 	public FetchMode getFetchMode() {
 		return FetchMode.JOIN;
 	}
 
+	@Override
+	public MetadataBuildingContext getMetadataBuildingContext() {
+		return  buildingContext;
+	}
+
 	/**
 	 * Table of the owner entity (the "one" side)
+	 * @deprecated since 6.0, use {@link #getMappedTable()}
 	 */
+	@Deprecated
 	public Table getTable() {
+		return (Table) referencingTable;
+	}
+
+	@Override
+	public MappedTable getMappedTable() {
 		return referencingTable;
 	}
 
-	public Type getType() {
-		return getEntityType();
+	@Override
+	public List<MappedColumn> getMappedColumns() {
+		return Collections.unmodifiableList( new ArrayList<>( referencingTable.getMappedColumns() ) );
 	}
 
+	@Override
 	public boolean isNullable() {
 		return false;
 	}
 
+	@Override
 	public boolean isSimpleValue() {
 		return false;
 	}
@@ -112,11 +119,13 @@ public class OneToMany implements Value {
 		return false;
 	}
 
+	@Override
 	public boolean hasFormula() {
 		return false;
 	}
 
-	public boolean isValid(Mapping mapping) throws MappingException {
+	@Override
+	public boolean isValid() throws MappingException {
 		if ( referencedEntityName == null ) {
 			throw new MappingException( "one to many association must specify the referenced entity" );
 		}
@@ -134,9 +143,11 @@ public class OneToMany implements Value {
 		this.referencedEntityName = referencedEntityName == null ? null : referencedEntityName.intern();
 	}
 
+	@Override
 	public void setTypeUsingReflection(String className, String propertyName) {
 	}
 
+	@Override
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept( this );
 	}
@@ -152,6 +163,7 @@ public class OneToMany implements Value {
 				&& Objects.equals( associatedClass, other.associatedClass );
 	}
 
+	@Override
 	public boolean[] getColumnInsertability() {
 		//TODO: we could just return all false...
 		throw new UnsupportedOperationException();
@@ -170,4 +182,12 @@ public class OneToMany implements Value {
 		this.ignoreNotFound = ignoreNotFound;
 	}
 
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
+	}
+
+	public void setJavaTypeMapping(JavaTypeMapping javaTypeMapping) {
+		this.javaTypeMapping = javaTypeMapping;
+	}
 }

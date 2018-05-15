@@ -6,15 +6,22 @@
  */
 package org.hibernate.procedure;
 
-import javax.persistence.ParameterMode;
 import javax.persistence.TemporalType;
 
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.procedure.ProcedureParameter;
+import org.hibernate.boot.spi.SessionFactoryOptions;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.QueryParameter;
 import org.hibernate.type.Type;
 
 /**
  * Describes a registered procedure/function parameter.
+ * <p/>
+ * Conceptually this contract groups together the notion of a
+ * {@link QueryParameter} and, depending on that parameter's mode
+ * ({@link QueryParameter#getMode()}), the related binding (for IN/INOUT
+ * parameters).
  *
  * @author Steve Ebersole
  */
@@ -55,18 +62,19 @@ public interface ParameterRegistration<T> extends ProcedureParameter<T> {
 	 * argument, its default value will not be used.  So effectively this setting controls
 	 * whether the NULL should be interpreted as "pass the NULL" or as "apply the argument default".
 	 * <p/>
-	 * The (global) default this setting is defined by {@link org.hibernate.cfg.AvailableSettings#PROCEDURE_NULL_PARAM_PASSING}
+	 * The (global) default this setting is defined by {@link SessionFactoryOptions#isProcedureParameterNullPassingEnabled()}
 	 *
 	 * @param enabled {@code true} indicates that the NULL should be passed; {@code false} indicates it should not.
 	 */
 	void enablePassingNulls(boolean enabled);
 
 	/**
-	 * Set the Hibernate mapping type for this parameter.
+	 * Set the Hibernate Type associated with this parameter.  Affects
+	 * the return from {@link #getHibernateType()}.
 	 *
-	 * @param type The Hibernate mapping type.
+	 * @param type The AllowableParameterType .
 	 */
-	void setHibernateType(Type type);
+	void setHibernateType(AllowableParameterType type);
 
 	/**
 	 * Retrieve the binding associated with this parameter.  The binding is only relevant for INPUT parameters.  Can
@@ -94,4 +102,18 @@ public interface ParameterRegistration<T> extends ProcedureParameter<T> {
 	 * @param explicitTemporalType An explicitly supplied TemporalType.
 	 */
 	void bindValue(T value, TemporalType explicitTemporalType);
+
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Deprecations
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #getParameterType()} instead as
+	 * ParameterRegistration now extends {@link QueryParameter}.
+	 */
+	@Deprecated
+	default Class<T> getType() {
+		return getParameterType();
+	}
 }

@@ -7,33 +7,33 @@
 package org.hibernate.mapping;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect.function.SQLFunctionRegistry;
+import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
+import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.sql.Template;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * A formula is a derived column value
  * @author Gavin King
  */
 public class Formula implements Selectable, Serializable {
-	private static int formulaUniqueInteger;
 
 	private String formula;
-	private int uniqueInteger;
-
-	public Formula() {
-		uniqueInteger = formulaUniqueInteger++;
-	}
+	private SqlTypeDescriptor sqlTypeDescriptor;
 
 	public Formula(String formula) {
-		this();
 		this.formula = formula;
 	}
 
 	@Override
-	public String getTemplate(Dialect dialect, SQLFunctionRegistry functionRegistry) {
+	public String getTemplate(Dialect dialect, SqmFunctionRegistry functionRegistry) {
 		String template = Template.renderWhereStringTemplate(formula, dialect, functionRegistry);
 		return StringHelper.replace( template, "{alias}", Template.TEMPLATE );
 	}
@@ -49,13 +49,20 @@ public class Formula implements Selectable, Serializable {
 	}
 
 	@Override
-	public String getAlias(Dialect dialect) {
-		return "formula" + Integer.toString(uniqueInteger) + '_';
+	public SqlTypeDescriptor getSqlTypeDescriptor() {
+		return sqlTypeDescriptor;
+	}
+
+	public void setSqlTypeDescriptor(SqlTypeDescriptor sqlTypeDescriptor) {
+		this.sqlTypeDescriptor = sqlTypeDescriptor;
 	}
 
 	@Override
-	public String getAlias(Dialect dialect, Table table) {
-		return getAlias(dialect);
+	public Column generateRuntimeColumn(
+			org.hibernate.metamodel.model.relational.spi.Table runtimeTable,
+			PhysicalNamingStrategy namingStrategy,
+			JdbcEnvironment jdbcEnvironment) {
+		return new DerivedColumn( runtimeTable, formula, sqlTypeDescriptor );
 	}
 
 	public String getFormula() {
@@ -69,6 +76,24 @@ public class Formula implements Selectable, Serializable {
 	@Override
 	public boolean isFormula() {
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		Formula formula1 = (Formula) o;
+		return Objects.equals( formula, formula1.formula );
+	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash( formula );
 	}
 
 	@Override

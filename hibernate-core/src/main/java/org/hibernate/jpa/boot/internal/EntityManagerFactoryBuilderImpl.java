@@ -24,7 +24,6 @@ import javax.persistence.PersistenceException;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
 
-
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
 import org.hibernate.boot.CacheRegionDefinition;
@@ -77,7 +76,7 @@ import org.hibernate.secure.spi.GrantedPermission;
 import org.hibernate.secure.spi.JaccPermissionDeclarations;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.spi.ServiceRegistryImplementor;
-import org.hibernate.tool.schema.spi.DelayedDropRegistryNotAvailableImpl;
+import org.hibernate.tool.schema.internal.Helper;
 import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
 
 import org.jboss.jandex.Index;
@@ -388,7 +387,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 					bsrBuilder.applyClassLoader( (ClassLoader) classLoadersSetting );
 				}
 			}
-                        
+
 			//configurationValues not assigned yet, using directly the properties of the PU
 			Properties puProperties = persistenceUnit.getProperties();
 			if( puProperties != null ) {
@@ -749,7 +748,12 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 					if ( attributeConverterDefinitions == null ) {
 						attributeConverterDefinitions = new ArrayList<>();
 					}
-					attributeConverterDefinitions.add( AttributeConverterDefinition.from( (Class<? extends AttributeConverter>) cls ) );
+					attributeConverterDefinitions.add(
+							AttributeConverterDefinition.from(
+									metamodelBuilder.getBootstrapContext().getClassmateContext(),
+									cls
+							)
+					);
 				}
 				else {
 					metadataSources.addAnnotatedClass( cls );
@@ -866,7 +870,9 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 			populate( sfBuilder, standardServiceRegistry );
 
 			SchemaManagementToolCoordinator.process(
-					metadata, standardServiceRegistry, configurationValues, DelayedDropRegistryNotAvailableImpl.INSTANCE
+					Helper.buildDatabaseModel( metadata ),
+					standardServiceRegistry,
+					action -> {}
 			);
 		}
 		catch (Exception e) {
@@ -891,7 +897,6 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 	}
 
 	protected void populate(SessionFactoryBuilder sfBuilder, StandardServiceRegistry ssr) {
-
 		final StrategySelector strategySelector = ssr.getService( StrategySelector.class );
 
 //		// Locate and apply the requested SessionFactory-level interceptor (if one)

@@ -9,38 +9,50 @@ package org.hibernate.mapping;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
-import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.relational.Exportable;
 import org.hibernate.boot.model.relational.InitCommand;
-import org.hibernate.boot.model.relational.Namespace;
-import org.hibernate.boot.model.relational.QualifiedTableName;
+import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.model.relational.MappedForeignKey;
+import org.hibernate.boot.model.relational.MappedIndex;
+import org.hibernate.boot.model.relational.MappedNamespace;
+import org.hibernate.boot.model.relational.MappedPrimaryKey;
+import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.model.relational.MappedUniqueKey;
+import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.env.spi.QualifiedObjectNameFormatter;
-import org.hibernate.engine.spi.Mapping;
-import org.hibernate.tool.hbm2ddl.ColumnMetadata;
-import org.hibernate.tool.hbm2ddl.TableMetadata;
-import org.hibernate.tool.schema.extract.spi.ColumnInformation;
-import org.hibernate.tool.schema.extract.spi.TableInformation;
+import org.hibernate.id.factory.IdentifierGeneratorFactory;
+import org.hibernate.metamodel.model.relational.internal.InflightTable;
+import org.hibernate.metamodel.model.relational.spi.DerivedTable;
+import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
+import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
+import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
+import org.hibernate.metamodel.model.relational.spi.PrimaryKey;
+import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
+import org.hibernate.naming.Identifier;
+import org.hibernate.naming.QualifiedTableName;
 
 import org.jboss.logging.Logger;
 
 /**
  * A relational table
  *
- * @author Gavin King
+ * @author Gavin KingF
  */
 @SuppressWarnings("unchecked")
-public class Table implements RelationalModel, Serializable, Exportable {
+public class Table implements MappedTable<Column>, Serializable {
 	private static final Logger log = Logger.getLogger( Table.class );
 
 	private Identifier catalog;
@@ -50,14 +62,14 @@ public class Table implements RelationalModel, Serializable, Exportable {
 	/**
 	 * contains all columns, including the primary key
 	 */
-	private Map columns = new LinkedHashMap();
+	private Map<String, Column> columns = new LinkedHashMap();
 	private KeyValue idValue;
-	private PrimaryKey primaryKey;
-	private Map<ForeignKeyKey, ForeignKey> foreignKeys = new LinkedHashMap<ForeignKeyKey, ForeignKey>();
-	private Map<String, Index> indexes = new LinkedHashMap<String, Index>();
-	private Map<String,UniqueKey> uniqueKeys = new LinkedHashMap<String,UniqueKey>();
+	private MappedPrimaryKey primaryKey;
+	private Map<ForeignKeyKey, MappedForeignKey> foreignKeyMap = new LinkedHashMap<>();
+	private Map<String, MappedIndex> indexes = new LinkedHashMap<>();
+	private Map<String, MappedUniqueKey> uniqueKeys = new LinkedHashMap<>();
 	private int uniqueInteger;
-	private List<String> checkConstraints = new ArrayList<String>();
+	private List<String> checkConstraints = new ArrayList<>();
 	private String rowId;
 	private String subselect;
 	private boolean isAbstract;
@@ -74,37 +86,37 @@ public class Table implements RelationalModel, Serializable, Exportable {
 	}
 
 	public Table(
-			Namespace namespace,
-			Identifier physicalTableName,
+			MappedNamespace namespace,
+			Identifier tableName,
 			boolean isAbstract) {
-		this.catalog = namespace.getPhysicalName().getCatalog();
-		this.schema = namespace.getPhysicalName().getSchema();
-		this.name = physicalTableName;
+		this.name = tableName;
+		this.catalog = namespace.getCatalogName();
+		this.schema = namespace.getSchemaName();
 		this.isAbstract = isAbstract;
 	}
 
 	public Table(
 			Identifier catalog,
 			Identifier schema,
-			Identifier physicalTableName,
+			Identifier tableName,
 			boolean isAbstract) {
 		this.catalog = catalog;
 		this.schema = schema;
-		this.name = physicalTableName;
+		this.name = tableName;
 		this.isAbstract = isAbstract;
 	}
 
-	public Table(Namespace namespace, Identifier physicalTableName, String subselect, boolean isAbstract) {
-		this.catalog = namespace.getPhysicalName().getCatalog();
-		this.schema = namespace.getPhysicalName().getSchema();
-		this.name = physicalTableName;
+	public Table(MappedNamespace namespace, Identifier tableName, String subselect, boolean isAbstract) {
+		this.catalog = namespace.getCatalogName();
+		this.schema = namespace.getSchemaName();
+		this.name = tableName;
 		this.subselect = subselect;
 		this.isAbstract = isAbstract;
 	}
 
-	public Table(Namespace namespace, String subselect, boolean isAbstract) {
-		this.catalog = namespace.getPhysicalName().getCatalog();
-		this.schema = namespace.getPhysicalName().getSchema();
+	public Table(MappedNamespace namespace, String subselect, boolean isAbstract) {
+		this.catalog = namespace.getCatalogName();
+		this.schema = namespace.getSchemaName();
 		this.subselect = subselect;
 		this.isAbstract = isAbstract;
 	}
@@ -144,26 +156,32 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return qualifiedName.append( table ).toString();
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = Identifier.toIdentifier( name );
 	}
 
+	@Override
 	public String getName() {
 		return name == null ? null : name.getText();
 	}
 
+	@Override
 	public Identifier getNameIdentifier() {
 		return name;
 	}
 
+	@Override
 	public String getQuotedName() {
 		return name == null ? null : name.toString();
 	}
 
+	@Override
 	public String getQuotedName(Dialect dialect) {
 		return name == null ? null : name.render( dialect );
 	}
 
+	@Override
 	public QualifiedTableName getQualifiedTableName() {
 		return name == null ? null : new QualifiedTableName( catalog, schema, name );
 	}
@@ -183,68 +201,58 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		this.schema = Identifier.toIdentifier( schema );
 	}
 
+	@Override
 	public String getSchema() {
 		return schema == null ? null : schema.getText();
-	}
-
-	public String getQuotedSchema() {
-		return schema == null ? null : schema.toString();
 	}
 
 	public String getQuotedSchema(Dialect dialect) {
 		return schema == null ? null : schema.render( dialect );
 	}
 
-	public boolean isSchemaQuoted() {
-		return schema != null && schema.isQuoted();
-	}
-
 	public void setCatalog(String catalog) {
 		this.catalog = Identifier.toIdentifier( catalog );
 	}
 
+	@Override
 	public String getCatalog() {
 		return catalog == null ? null : catalog.getText();
-	}
-
-	public String getQuotedCatalog() {
-		return catalog == null ? null : catalog.render();
 	}
 
 	public String getQuotedCatalog(Dialect dialect) {
 		return catalog == null ? null : catalog.render( dialect );
 	}
 
-	public boolean isCatalogQuoted() {
-		return catalog != null && catalog.isQuoted();
-	}
-
 	/**
 	 * Return the column which is identified by column provided as argument.
 	 *
 	 * @param column column with atleast a name.
+	 *
 	 * @return the underlying column or null if not inside this table. Note: the instance *can* be different than the input parameter, but the name will be the same.
 	 */
+	@Override
 	public Column getColumn(Column column) {
 		if ( column == null ) {
 			return null;
 		}
 
-		Column myColumn = (Column) columns.get( column.getCanonicalName() );
+		Column myColumn = columns.get( column.getCanonicalName() );
 
 		return column.equals( myColumn ) ?
 				myColumn :
 				null;
 	}
 
+	@Override
 	public Column getColumn(Identifier name) {
 		if ( name == null ) {
 			return null;
 		}
 
-		return (Column) columns.get( name.getCanonicalName() );
+		return columns.get( name.getCanonicalName() );
 	}
 
+	@Override
 	public Column getColumn(int n) {
 		Iterator iter = columns.values().iterator();
 		for ( int i = 0; i < n - 1; i++ ) {
@@ -253,6 +261,7 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return (Column) iter.next();
 	}
 
+	@Override
 	public void addColumn(Column column) {
 		Column old = getColumn( column );
 		if ( old == null ) {
@@ -269,10 +278,16 @@ public class Table implements RelationalModel, Serializable, Exportable {
 				}
 			}
 			this.columns.put( column.getCanonicalName(), column );
-			column.uniqueInteger = this.columns.size();
+			column.setUniqueInteger( this.columns.size() );
 		}
 		else {
-			column.uniqueInteger = old.uniqueInteger;
+			column.setUniqueInteger( old.getUniqueInteger() );
+		}
+
+		if ( column.isUnique() ) {
+			final ArrayList<Column> cols = new ArrayList<>();
+			cols.add( column );
+			createUniqueKey( cols );
 		}
 	}
 
@@ -280,29 +295,51 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return columns.size();
 	}
 
+	/**
+	 * @deprecated since 6.0, use {@link #getMappedColumns()} instead.
+	 */
 	public Iterator getColumnIterator() {
 		return columns.values().iterator();
 	}
 
-	public Iterator<Index> getIndexIterator() {
+	/**
+	 * @deprecated since 6.0, use {@link #getIndexes()} instead.
+	 */
+	public Iterator<MappedIndex> getIndexIterator() {
 		return indexes.values().iterator();
 	}
 
+	@Override
+	public java.util.Collection<MappedIndex> getIndexes(){
+		return indexes.values();
+	}
+
+	public Map<ForeignKeyKey, MappedForeignKey> getForeignKeyMap() {
+		return Collections.unmodifiableMap( foreignKeyMap );
+	}
+
+	/**
+	 * @deprecated since 6.0, use {@link #getForeignKeys()} instead.
+	 */
 	public Iterator getForeignKeyIterator() {
-		return foreignKeys.values().iterator();
+		return foreignKeyMap.values().iterator();
 	}
 
-	public Map<ForeignKeyKey, ForeignKey> getForeignKeys() {
-		return Collections.unmodifiableMap( foreignKeys );
+	public java.util.Collection<MappedForeignKey> getForeignKeys() {
+		return Collections.unmodifiableCollection( foreignKeyMap.values() );
 	}
 
-	public Iterator<UniqueKey> getUniqueKeyIterator() {
-		return getUniqueKeys().values().iterator();
+	/**
+	 * @deprecated since 6.0, use {@link #getUniqueKeys()} instead.
+	 */
+	public Iterator<MappedUniqueKey> getUniqueKeyIterator() {
+		return getUniqueKeys().iterator();
 	}
 
-	Map<String, UniqueKey> getUniqueKeys() {
+	@Override
+	public java.util.Collection<MappedUniqueKey> getUniqueKeys() {
 		cleanseUniqueKeyMapIfNeeded();
-		return uniqueKeys;
+		return uniqueKeys.values();
 	}
 
 	private int sizeOfUniqueKeyMapOnLastCleanse;
@@ -332,21 +369,21 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		}
 		else if ( uniqueKeys.size() == 1 ) {
 			// we have to worry about condition 2 above, but not condition 1
-			final Map.Entry<String,UniqueKey> uniqueKeyEntry = uniqueKeys.entrySet().iterator().next();
+			final Map.Entry<String, MappedUniqueKey> uniqueKeyEntry = uniqueKeys.entrySet().iterator().next();
 			if ( isSameAsPrimaryKeyColumns( uniqueKeyEntry.getValue() ) ) {
 				uniqueKeys.remove( uniqueKeyEntry.getKey() );
 			}
 		}
 		else {
 			// we have to check both conditions 1 and 2
-			final Iterator<Map.Entry<String,UniqueKey>> uniqueKeyEntries = uniqueKeys.entrySet().iterator();
+			final Iterator<Map.Entry<String, MappedUniqueKey>> uniqueKeyEntries = uniqueKeys.entrySet().iterator();
 			while ( uniqueKeyEntries.hasNext() ) {
-				final Map.Entry<String,UniqueKey> uniqueKeyEntry = uniqueKeyEntries.next();
-				final UniqueKey uniqueKey = uniqueKeyEntry.getValue();
+				final Map.Entry<String, MappedUniqueKey> uniqueKeyEntry = uniqueKeyEntries.next();
+				final MappedUniqueKey uniqueKey = uniqueKeyEntry.getValue();
 				boolean removeIt = false;
 
 				// condition 1 : check against other unique keys
-				for ( UniqueKey otherUniqueKey : uniqueKeys.values() ) {
+				for ( MappedUniqueKey otherUniqueKey : uniqueKeys.values() ) {
 					// make sure its not the same unique key
 					if ( uniqueKeyEntry.getValue() == otherUniqueKey ) {
 						continue;
@@ -372,8 +409,8 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		}
 	}
 
-	private boolean isSameAsPrimaryKeyColumns(UniqueKey uniqueKey) {
-		if ( primaryKey == null || ! primaryKey.columnIterator().hasNext() ) {
+	private boolean isSameAsPrimaryKeyColumns(MappedUniqueKey uniqueKey) {
+		if ( primaryKey == null || !primaryKey.getColumns().isEmpty() ) {
 			// happens for many-to-many tables
 			return false;
 		}
@@ -385,22 +422,22 @@ public class Table implements RelationalModel, Serializable, Exportable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((catalog == null) ? 0 : catalog.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((schema == null) ? 0 : schema.hashCode());
+		result = prime * result + ( ( catalog == null ) ? 0 : catalog.hashCode() );
+		result = prime * result + ( ( name == null ) ? 0 : name.hashCode() );
+		result = prime * result + ( ( schema == null ) ? 0 : schema.hashCode() );
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object object) {
-		return object instanceof Table && equals((Table) object);
+		return object instanceof Table && equals( (Table) object );
 	}
 
 	public boolean equals(Table table) {
-		if (null == table) {
+		if ( null == table ) {
 			return false;
 		}
-		if (this == table) {
+		if ( this == table ) {
 			return true;
 		}
 
@@ -408,243 +445,25 @@ public class Table implements RelationalModel, Serializable, Exportable {
 				&& Identifier.areEqual( schema, table.schema )
 				&& Identifier.areEqual( catalog, table.catalog );
 	}
-	
-	public void validateColumns(Dialect dialect, Mapping mapping, TableMetadata tableInfo) {
-		Iterator iter = getColumnIterator();
-		while ( iter.hasNext() ) {
-			Column col = (Column) iter.next();
-
-			ColumnMetadata columnInfo = tableInfo.getColumnMetadata( col.getName() );
-
-			if ( columnInfo == null ) {
-				throw new HibernateException( "Missing column: " + col.getName() + " in " + Table.qualify( tableInfo.getCatalog(), tableInfo.getSchema(), tableInfo.getName()));
-			}
-			else {
-				final boolean typesMatch = col.getSqlType( dialect, mapping ).toLowerCase(Locale.ROOT)
-						.startsWith( columnInfo.getTypeName().toLowerCase(Locale.ROOT) )
-						|| columnInfo.getTypeCode() == col.getSqlTypeCode( mapping );
-				if ( !typesMatch ) {
-					throw new HibernateException(
-							"Wrong column type in " +
-							Table.qualify( tableInfo.getCatalog(), tableInfo.getSchema(), tableInfo.getName()) +
-							" for column " + col.getName() +
-							". Found: " + columnInfo.getTypeName().toLowerCase(Locale.ROOT) +
-							", expected: " + col.getSqlType( dialect, mapping )
-					);
-				}
-			}
-		}
-
-	}
-
-	public Iterator sqlAlterStrings(
-			Dialect dialect,
-			Metadata metadata,
-			TableInformation tableInfo,
-			String defaultCatalog,
-			String defaultSchema) throws HibernateException {
-		
-		final JdbcEnvironment jdbcEnvironment = metadata.getDatabase().getJdbcEnvironment();
-
-		Identifier quotedCatalog = catalog != null && catalog.isQuoted() ?
-				new Identifier( tableInfo.getName().getCatalogName().getText(), true ) :
-				tableInfo.getName().getCatalogName();
-
-		Identifier quotedSchema = schema != null && schema.isQuoted() ?
-				new Identifier( tableInfo.getName().getSchemaName().getText(), true ) :
-				tableInfo.getName().getSchemaName();
-
-		Identifier quotedTable = name != null &&  name.isQuoted() ?
-				new Identifier( tableInfo.getName().getObjectName().getText(), true ) :
-				tableInfo.getName().getObjectName();
-
-		final String tableName = jdbcEnvironment.getQualifiedObjectNameFormatter().format(
-				new QualifiedTableName(
-					quotedCatalog,
-					quotedSchema,
-					quotedTable
-				),
-				dialect
-		);
-
-		StringBuilder root = new StringBuilder( dialect.getAlterTableString( tableName ) )
-				.append( ' ' )
-				.append( dialect.getAddColumnString() );
-
-		Iterator iter = getColumnIterator();
-		List results = new ArrayList();
-		
-		while ( iter.hasNext() ) {
-			final Column column = (Column) iter.next();
-			final ColumnInformation columnInfo = tableInfo.getColumn( Identifier.toIdentifier( column.getName(), column.isQuoted() ) );
-
-			if ( columnInfo == null ) {
-				// the column doesnt exist at all.
-				StringBuilder alter = new StringBuilder( root.toString() )
-						.append( ' ' )
-						.append( column.getQuotedName( dialect ) )
-						.append( ' ' )
-						.append( column.getSqlType( dialect, metadata ) );
-
-				String defaultValue = column.getDefaultValue();
-				if ( defaultValue != null ) {
-					alter.append( " default " ).append( defaultValue );
-				}
-
-				if ( column.isNullable() ) {
-					alter.append( dialect.getNullColumnString() );
-				}
-				else {
-					alter.append( " not null" );
-				}
-
-				if ( column.isUnique() ) {
-					String keyName = Constraint.generateName( "UK_", this, column );
-					UniqueKey uk = getOrCreateUniqueKey( keyName );
-					uk.addColumn( column );
-					alter.append( dialect.getUniqueDelegate()
-							.getColumnDefinitionUniquenessFragment( column ) );
-				}
-
-				if ( column.hasCheckConstraint() && dialect.supportsColumnCheck() ) {
-					alter.append( " check(" )
-							.append( column.getCheckConstraint() )
-							.append( ")" );
-				}
-
-				String columnComment = column.getComment();
-				if ( columnComment != null ) {
-					alter.append( dialect.getColumnComment( columnComment ) );
-				}
-
-				alter.append( dialect.getAddColumnSuffixString() );
-
-				results.add( alter.toString() );
-			}
-
-		}
-
-		if ( results.isEmpty() ) {
-			log.debugf( "No alter strings for table : %s", getQuotedName() );
-		}
-
-		return results.iterator();
-	}
 
 	public boolean hasPrimaryKey() {
 		return getPrimaryKey() != null;
 	}
 
-	public String sqlCreateString(Dialect dialect, Mapping p, String defaultCatalog, String defaultSchema) {
-		StringBuilder buf = new StringBuilder( hasPrimaryKey() ? dialect.getCreateTableString() : dialect.getCreateMultisetTableString() )
-				.append( ' ' )
-				.append( getQualifiedName( dialect, defaultCatalog, defaultSchema ) )
-				.append( " (" );
-
-		boolean identityColumn = idValue != null && idValue.isIdentityColumn( p.getIdentifierGeneratorFactory(), dialect );
-
-		// Try to find out the name of the primary key to create it as identity if the IdentityGenerator is used
-		String pkname = null;
-		if ( hasPrimaryKey() && identityColumn ) {
-			pkname = ( (Column) getPrimaryKey().getColumnIterator().next() ).getQuotedName( dialect );
-		}
-
-		Iterator iter = getColumnIterator();
-		while ( iter.hasNext() ) {
-			Column col = (Column) iter.next();
-
-			buf.append( col.getQuotedName( dialect ) )
-					.append( ' ' );
-
-			if ( identityColumn && col.getQuotedName( dialect ).equals( pkname ) ) {
-				// to support dialects that have their own identity data type
-				if ( dialect.getIdentityColumnSupport().hasDataTypeInIdentityColumn() ) {
-					buf.append( col.getSqlType( dialect, p ) );
-				}
-				buf.append( ' ' )
-						.append( dialect.getIdentityColumnSupport().getIdentityColumnString( col.getSqlTypeCode( p ) ) );
-			}
-			else {
-
-				buf.append( col.getSqlType( dialect, p ) );
-
-				String defaultValue = col.getDefaultValue();
-				if ( defaultValue != null ) {
-					buf.append( " default " ).append( defaultValue );
-				}
-
-				if ( col.isNullable() ) {
-					buf.append( dialect.getNullColumnString() );
-				}
-				else {
-					buf.append( " not null" );
-				}
-
-			}
-			
-			if ( col.isUnique() ) {
-				String keyName = Constraint.generateName( "UK_", this, col );
-				UniqueKey uk = getOrCreateUniqueKey( keyName );
-				uk.addColumn( col );
-				buf.append( dialect.getUniqueDelegate()
-						.getColumnDefinitionUniquenessFragment( col ) );
-			}
-				
-			if ( col.hasCheckConstraint() && dialect.supportsColumnCheck() ) {
-				buf.append( " check (" )
-						.append( col.getCheckConstraint() )
-						.append( ")" );
-			}
-
-			String columnComment = col.getComment();
-			if ( columnComment != null ) {
-				buf.append( dialect.getColumnComment( columnComment ) );
-			}
-
-			if ( iter.hasNext() ) {
-				buf.append( ", " );
-			}
-
-		}
-		if ( hasPrimaryKey() ) {
-			buf.append( ", " )
-					.append( getPrimaryKey().sqlConstraintString( dialect ) );
-		}
-
-		buf.append( dialect.getUniqueDelegate().getTableCreationUniqueConstraintsFragment( this ) );
-
-		if ( dialect.supportsTableCheck() ) {
-			for ( String checkConstraint : checkConstraints ) {
-				buf.append( ", check (" )
-						.append( checkConstraint )
-						.append( ')' );
-			}
-		}
-
-		buf.append( ')' );
-
-		if ( comment != null ) {
-			buf.append( dialect.getTableComment( comment ) );
-		}
-
-		return buf.append( dialect.getTableTypeString() ).toString();
-	}
-
-	public String sqlDropString(Dialect dialect, String defaultCatalog, String defaultSchema) {
-		return dialect.getDropTableString( getQualifiedName( dialect, defaultCatalog, defaultSchema ) );
-	}
-
-	public PrimaryKey getPrimaryKey() {
+	@Override
+	public MappedPrimaryKey getPrimaryKey() {
 		return primaryKey;
 	}
 
-	public void setPrimaryKey(PrimaryKey primaryKey) {
+	@Override
+	public void setPrimaryKey(MappedPrimaryKey primaryKey) {
 		this.primaryKey = primaryKey;
 	}
 
-	public Index getOrCreateIndex(String indexName) {
+	@Override
+	public MappedIndex getOrCreateIndex(String indexName) {
 
-		Index index =  indexes.get( indexName );
+		MappedIndex index = indexes.get( indexName );
 
 		if ( index == null ) {
 			index = new Index();
@@ -656,59 +475,58 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return index;
 	}
 
-	public Index getIndex(String indexName) {
-		return  indexes.get( indexName );
+	public MappedIndex getIndex(String indexName) {
+		return indexes.get( indexName );
 	}
 
-	public Index addIndex(Index index) {
-		Index current =  indexes.get( index.getName() );
-		if ( current != null ) {
-			throw new MappingException( "Index " + index.getName() + " already exists!" );
-		}
-		indexes.put( index.getName(), index );
-		return index;
-	}
-
-	public UniqueKey addUniqueKey(UniqueKey uniqueKey) {
-		UniqueKey current = uniqueKeys.get( uniqueKey.getName() );
+	public void addUniqueKey(MappedUniqueKey uniqueKey) {
+		MappedUniqueKey current = uniqueKeys.get( uniqueKey.getName() );
 		if ( current != null ) {
 			throw new MappingException( "UniqueKey " + uniqueKey.getName() + " already exists!" );
 		}
 		uniqueKeys.put( uniqueKey.getName(), uniqueKey );
-		return uniqueKey;
 	}
 
-	public UniqueKey createUniqueKey(List keyColumns) {
+	@Override
+	public MappedUniqueKey createUniqueKey(List<Column> keyColumns) {
 		String keyName = Constraint.generateName( "UK_", this, keyColumns );
-		UniqueKey uk = getOrCreateUniqueKey( keyName );
-		uk.addColumns( keyColumns.iterator() );
+		MappedUniqueKey uk = getOrCreateUniqueKey( keyName );
+		uk.addColumns( keyColumns );
 		return uk;
 	}
 
-	public UniqueKey getUniqueKey(String keyName) {
+	public MappedUniqueKey getUniqueKey(String keyName) {
 		return uniqueKeys.get( keyName );
 	}
 
-	public UniqueKey getOrCreateUniqueKey(String keyName) {
-		UniqueKey uk = uniqueKeys.get( keyName );
+	@Override
+	public MappedUniqueKey getOrCreateUniqueKey(String keyName) {
+		MappedUniqueKey uk = uniqueKeys.get( keyName );
 
 		if ( uk == null ) {
 			uk = new UniqueKey();
 			uk.setName( keyName );
-			uk.setTable( this );
+			uk.setMappedTable( this );
 			uniqueKeys.put( keyName, uk );
 		}
 		return uk;
 	}
 
+	@Override
 	public void createForeignKeys() {
 	}
 
-	public ForeignKey createForeignKey(String keyName, List keyColumns, String referencedEntityName, String keyDefinition) {
+	@Override
+	public MappedForeignKey createForeignKey(
+			String keyName,
+			List keyColumns,
+			String referencedEntityName,
+			String keyDefinition) {
 		return createForeignKey( keyName, keyColumns, referencedEntityName, keyDefinition, null );
 	}
 
-	public ForeignKey createForeignKey(
+	@Override
+	public MappedForeignKey createForeignKey(
 			String keyName,
 			List keyColumns,
 			String referencedEntityName,
@@ -716,22 +534,22 @@ public class Table implements RelationalModel, Serializable, Exportable {
 			List referencedColumns) {
 		final ForeignKeyKey key = new ForeignKeyKey( keyColumns, referencedEntityName, referencedColumns );
 
-		ForeignKey fk = foreignKeys.get( key );
+		MappedForeignKey fk = (ForeignKey) foreignKeyMap.get( key );
 		if ( fk == null ) {
 			fk = new ForeignKey();
-			fk.setTable( this );
+			fk.setMappedTable( this );
 			fk.setReferencedEntityName( referencedEntityName );
-			fk.setKeyDefinition(keyDefinition);
-			fk.addColumns( keyColumns.iterator() );
+			fk.setKeyDefinition( keyDefinition );
+			fk.addColumns( keyColumns );
 			if ( referencedColumns != null ) {
-				fk.addReferencedColumns( referencedColumns.iterator() );
+				fk.addReferencedColumns( referencedColumns );
 			}
 
 			// NOTE : if the name is null, we will generate an implicit name during second pass processing
 			// after we know the referenced table name (which might not be resolved yet).
 			fk.setName( keyName );
 
-			foreignKeys.put( key, fk );
+			foreignKeyMap.put( key, fk );
 		}
 
 		if ( keyName != null ) {
@@ -741,10 +559,10 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return fk;
 	}
 
-
 	// This must be done outside of Table, rather than statically, to ensure
 	// deterministic alias names.  See HHH-2448.
-	public void setUniqueInteger( int uniqueInteger ) {
+	@Override
+	public void setUniqueInteger(int uniqueInteger) {
 		this.uniqueInteger = uniqueInteger;
 	}
 
@@ -756,22 +574,27 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		this.idValue = idValue;
 	}
 
+	@Override
 	public KeyValue getIdentifierValue() {
 		return idValue;
 	}
 
+	@Override
 	public void addCheckConstraint(String constraint) {
 		checkConstraints.add( constraint );
 	}
 
+	@Override
 	public boolean containsColumn(Column column) {
-		return columns.containsValue( column );
+		return columns.containsKey( column.getCanonicalName() );
 	}
 
+	@Override
 	public String getRowId() {
 		return rowId;
 	}
 
+	@Override
 	public void setRowId(String rowId) {
 		this.rowId = rowId;
 	}
@@ -789,14 +612,22 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return buf.toString();
 	}
 
+	@Override
+	public String toLoggableString() {
+		return toString();
+	}
+
+	@Override
 	public String getSubselect() {
 		return subselect;
 	}
 
+	@Override
 	public void setSubselect(String subselect) {
 		this.subselect = subselect;
 	}
 
+	@Override
 	public boolean isSubselect() {
 		return subselect != null;
 	}
@@ -809,66 +640,53 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		return hasDenormalizedTables;
 	}
 
-	void setHasDenormalizedTables() {
+	@Override
+	public void setHasDenormalizedTables() {
 		hasDenormalizedTables = true;
 	}
 
+	@Override
 	public void setAbstract(boolean isAbstract) {
 		this.isAbstract = isAbstract;
 	}
 
+	@Override
 	public boolean isAbstract() {
 		return isAbstract;
 	}
 
+	@Override
 	public boolean isPhysicalTable() {
 		return !isSubselect() && !isAbstractUnionTable();
 	}
 
+	@Override
 	public String getComment() {
 		return comment;
 	}
 
+	@Override
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
 
+	/**
+	 * @deprecated since 6.0, use {@link #getCheckConstraints()}.
+	 */
+	@Deprecated
 	public Iterator<String> getCheckConstraintsIterator() {
 		return checkConstraints.iterator();
 	}
 
-	public Iterator sqlCommentStrings(Dialect dialect, String defaultCatalog, String defaultSchema) {
-		List comments = new ArrayList();
-		if ( dialect.supportsCommentOn() ) {
-			String tableName = getQualifiedName( dialect, defaultCatalog, defaultSchema );
-			if ( comment != null ) {
-				comments.add( "comment on table " + tableName + " is '" + comment + "'" );
-			}
-			Iterator iter = getColumnIterator();
-			while ( iter.hasNext() ) {
-				Column column = (Column) iter.next();
-				String columnComment = column.getComment();
-				if ( columnComment != null ) {
-					comments.add( "comment on column " + tableName + '.' + column.getQuotedName( dialect ) + " is '" + columnComment + "'" );
-				}
-			}
-		}
-		return comments.iterator();
+	@Override
+	public List<String> getCheckConstraints() {
+		return Collections.unmodifiableList( checkConstraints );
 	}
 
 	@Override
-	public String getExportIdentifier() {
-		return Table.qualify(
-				render( catalog ),
-				render( schema ),
-				name.render()
-		);
+	public boolean isExportable() {
+		return isPhysicalTable();
 	}
-
-	private String render(Identifier identifier) {
-		return identifier == null ? null : identifier.render();
-	}
-
 
 	public static class ForeignKeyKey implements Serializable {
 		String referencedClassName;
@@ -907,13 +725,15 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		}
 	}
 
+	@Override
 	public void addInitCommand(InitCommand command) {
 		if ( initCommands == null ) {
-			initCommands = new ArrayList<InitCommand>();
+			initCommands = new ArrayList<>();
 		}
 		initCommands.add( command );
 	}
 
+	@Override
 	public List<InitCommand> getInitCommands() {
 		if ( initCommands == null ) {
 			return Collections.emptyList();
@@ -921,5 +741,115 @@ public class Table implements RelationalModel, Serializable, Exportable {
 		else {
 			return Collections.unmodifiableList( initCommands );
 		}
+	}
+
+	@Override
+	public Set<Column> getMappedColumns() {
+		return Collections.unmodifiableSet( new HashSet<>( columns.values() ) );
+	}
+
+	@Override
+	public String getUid() {
+		// todo (6.0) what makes snese to impl this??
+		throw new NotYetImplementedException();
+	}
+
+	@Override
+	public InflightTable generateRuntimeTable(
+			PhysicalNamingStrategy namingStrategy,
+			JdbcEnvironment jdbcEnvironment,
+			IdentifierGeneratorFactory identifierGeneratorFactory,
+			RuntimeDatabaseModelProducer.Callback callback) {
+
+		InflightTable runtimeTable;
+		if ( getSubselect() != null ) {
+			runtimeTable = new DerivedTable( getSubselect(), isAbstract() );
+		}
+		else {
+			runtimeTable = createRuntimePhysicalTable( namingStrategy, jdbcEnvironment, identifierGeneratorFactory );
+		}
+
+		addColumnsToInflightTable( runtimeTable, namingStrategy, jdbcEnvironment, callback );
+		callback.tableBuilt( this, runtimeTable );
+		return runtimeTable;
+	}
+
+	private void addColumnsToInflightTable(
+			InflightTable runtimeTable,
+			PhysicalNamingStrategy namingStrategy,
+			JdbcEnvironment jdbcEnvironment,
+			RuntimeDatabaseModelProducer.Callback callback) {
+		final Map<MappedColumn, org.hibernate.metamodel.model.relational.spi.Column> tableColumnXref = new HashMap<>();
+
+		for ( MappedColumn mappedColumn : getMappedColumns() ) {
+			final org.hibernate.metamodel.model.relational.spi.Column column = mappedColumn.generateRuntimeColumn(
+					runtimeTable,
+					namingStrategy,
+					jdbcEnvironment
+			);
+			runtimeTable.addColumn( column );
+			callback.columnBuilt( mappedColumn, column );
+			tableColumnXref.put( mappedColumn, column );
+		}
+
+		if ( getPrimaryKey() != null ) {
+			PrimaryKey runtimeTablePrimaryKey = new PrimaryKey( runtimeTable );
+			for ( Column mappedColumn : getPrimaryKey().getColumns() ) {
+				final org.hibernate.metamodel.model.relational.spi.Column column = tableColumnXref.get( mappedColumn );
+				if ( !PhysicalColumn.class.isInstance( column ) ) {
+					throw new MappingException( "FK column must be a physical column" );
+				}
+				runtimeTablePrimaryKey.addColumn( (PhysicalColumn) column );
+				runtimeTable.addPrimaryKey( runtimeTablePrimaryKey );
+			}
+			callback.primaryKeyBuilt( primaryKey, runtimeTable.getPrimaryKey() );
+		}
+		getUniqueKeys().forEach( bootUk -> {
+			final org.hibernate.metamodel.model.relational.spi.UniqueKey runtimeUk = runtimeTable.createUniqueKey(
+					bootUk.getName() );
+			for ( Column mappedColumn : bootUk.getColumns() ) {
+				final org.hibernate.metamodel.model.relational.spi.Column column = tableColumnXref.get( mappedColumn );
+				if ( !PhysicalColumn.class.isInstance( column ) ) {
+					throw new MappingException( "UK column must be a physical column" );
+				}
+				runtimeUk.addColumn( (PhysicalColumn) column, bootUk.getColumnOrderMap().get( column ) );
+			}
+			callback.uniqueKeyBuilt( bootUk, runtimeUk );
+		} );
+	}
+
+	private InflightTable createRuntimePhysicalTable(
+			PhysicalNamingStrategy namingStrategy,
+			JdbcEnvironment jdbcEnvironment,
+			IdentifierGeneratorFactory identifierGeneratorFactory) {
+		final PhysicalTable runtimeTable = new PhysicalTable(
+				catalog,
+				schema,
+				name,
+				isAbstract(),
+				getComment(),
+				namingStrategy,
+				jdbcEnvironment
+		);
+
+		if ( primaryKey != null && getIdentifierValue() != null
+				&& getIdentifierValue().isIdentityColumn( identifierGeneratorFactory ) ) {
+			runtimeTable.setPrimaryKeyIdentity( true );
+		}
+
+		runtimeTable.setCheckConstraints( getCheckConstraints() );
+
+		for ( MappedIndex index : getIndexes() ) {
+			runtimeTable.addIndex( ( (Index) index ).generateRuntimeIndex(
+					runtimeTable,
+					namingStrategy,
+					jdbcEnvironment
+			) );
+		}
+
+		for ( InitCommand initCommand : getInitCommands() ) {
+			runtimeTable.addInitCommand( initCommand );
+		}
+		return runtimeTable;
 	}
 }

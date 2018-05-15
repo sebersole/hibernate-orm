@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.AttributeConverter;
 
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.archive.internal.StandardArchiveDescriptorFactory;
@@ -32,7 +31,6 @@ import org.hibernate.boot.jaxb.SourceType;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.ClassLoaderAccess;
-import org.hibernate.boot.spi.MetadataBuildingOptions;
 import org.hibernate.boot.spi.XmlMappingBinderAccess;
 import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.service.ServiceRegistry;
@@ -232,8 +230,8 @@ public class ScanningCoordinator {
 				// converter classes are safe to load because we never enhance them,
 				// and notice we use the ClassLoaderService specifically, not the temp ClassLoader (if any)
 				managedResources.addAttributeConverterDefinition(
-						AttributeConverterDefinition.from(
-								classLoaderService.<AttributeConverter>classForName( classDescriptor.getName() )
+						AttributeConverterDefinition.from(options.getClassmateContext(),
+														  classLoaderService.classForName( classDescriptor.getName() )
 						)
 				);
 			}
@@ -276,4 +274,5 @@ public class ScanningCoordinator {
 			);
 		}
 	}
+
 }

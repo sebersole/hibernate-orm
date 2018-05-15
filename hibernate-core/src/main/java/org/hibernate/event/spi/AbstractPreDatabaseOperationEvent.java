@@ -8,7 +8,7 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.secure.spi.PermissionCheckEntityInformation;
 
 /**
@@ -22,7 +22,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 
 	private final Object entity;
 	private final Serializable id;
-	private final EntityPersister persister;
+	private final EntityDescriptor persister;
 
 	/**
 	 * Constructs an event containing the pertinent information.
@@ -36,7 +36,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 			EventSource source,
 			Object entity,
 			Serializable id,
-			EntityPersister persister) {
+			EntityDescriptor persister) {
 		super( source );
 		this.entity = entity;
 		this.id = id;
@@ -67,7 +67,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 	 *
 	 * @return The entity persister.
 	 */
-	public EntityPersister getPersister() {
+	public EntityDescriptor getPersister() {
 		return persister;
 	}
 
@@ -76,7 +76,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 	 * originated.
 	 * <p/>
 	 * Some of the pre-* events had previous exposed the event source using
-	 * getSource() because they had not originally extended from
+	 * getContainer() because they had not originally extended from
 	 * {@link AbstractEvent}.
 	 *
 	 * @return Value for property 'source'.

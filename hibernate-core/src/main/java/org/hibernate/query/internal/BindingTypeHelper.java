@@ -1,9 +1,10 @@
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
+
 package org.hibernate.query.internal;
 
 import java.time.Instant;
@@ -13,16 +14,10 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import javax.persistence.TemporalType;
 
-import org.hibernate.type.BasicType;
-import org.hibernate.type.CalendarDateType;
-import org.hibernate.type.CalendarTimeType;
-import org.hibernate.type.CalendarType;
-import org.hibernate.type.InstantType;
-import org.hibernate.type.OffsetDateTimeType;
-import org.hibernate.type.OffsetTimeType;
-import org.hibernate.type.TimestampType;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
 import org.hibernate.type.Type;
-import org.hibernate.type.ZonedDateTimeType;
 
 /**
  * @author Steve Ebersole
@@ -36,7 +31,7 @@ public class BindingTypeHelper {
 	private BindingTypeHelper() {
 	}
 
-	public BasicType determineTypeForTemporalType(TemporalType temporalType, Type baseType, Object bindValue) {
+	public BasicType determineTypeForTemporalType(TemporalType temporalType, AllowableParameterType baseType, Object bindValue) {
 		// todo : for 6.0 make TemporalType part of org.hibernate.type.descriptor.java.JdbcRecommendedSqlTypeMappingContext
 		//		then we can just ask the org.hibernate.type.basic.BasicTypeFactory to handle this based on its registry
 		//
@@ -61,7 +56,7 @@ public class BindingTypeHelper {
 			javaType = bindValue.getClass();
 		}
 		else if ( baseType != null ) {
-			javaType = baseType.getReturnedClass();
+			javaType = baseType.getJavaTypeDescriptor().getJavaType();
 		}
 		else {
 			javaType = java.sql.Timestamp.class;
@@ -83,78 +78,78 @@ public class BindingTypeHelper {
 		}
 	}
 
-	public BasicType resolveTimestampTemporalTypeVariant(Class javaType, Type baseType) {
+	public BasicType resolveTimestampTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
 		// prefer to use any Type already known - interprets TIMESTAMP as "no narrowing"
 		if ( baseType != null && baseType instanceof BasicType ) {
 			return (BasicType) baseType;
 		}
 
 		if ( Calendar.class.isAssignableFrom( javaType ) ) {
-			return CalendarType.INSTANCE;
+			return StandardSpiBasicTypes.CALENDAR;
 		}
 
 		if ( java.util.Date.class.isAssignableFrom( javaType ) ) {
-			return TimestampType.INSTANCE;
+			return StandardSpiBasicTypes.TIMESTAMP;
 		}
 
 		if ( Instant.class.isAssignableFrom( javaType ) ) {
-			return InstantType.INSTANCE;
+			return StandardSpiBasicTypes.INSTANT;
 		}
 
 		if ( OffsetDateTime.class.isAssignableFrom( javaType ) ) {
-			return OffsetDateTimeType.INSTANCE;
+			return StandardSpiBasicTypes.OFFSET_DATE_TIME;
 		}
 
 		if ( ZonedDateTime.class.isAssignableFrom( javaType ) ) {
-			return ZonedDateTimeType.INSTANCE;
+			return StandardSpiBasicTypes.ZONED_DATE_TIME;
 		}
 
 		if ( OffsetTime.class.isAssignableFrom( javaType ) ) {
-			return OffsetTimeType.INSTANCE;
+			return StandardSpiBasicTypes.OFFSET_TIME;
 		}
 
 		throw new IllegalArgumentException( "Unsure how to handle given Java type [" + javaType.getName() + "] as TemporalType#TIMESTAMP" );
 	}
 
 	@SuppressWarnings("unchecked")
-	public BasicType resolveDateTemporalTypeVariant(Class javaType, Type baseType) {
+	public BasicType resolveDateTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
 		// prefer to use any Type already known
 		if ( baseType != null && baseType instanceof BasicType ) {
-			if ( baseType.getReturnedClass().isAssignableFrom( javaType ) ) {
+			if ( baseType.getJavaTypeDescriptor().getJavaType().isAssignableFrom( javaType ) ) {
 				return (BasicType) baseType;
 			}
 		}
 
 		if ( Calendar.class.isAssignableFrom( javaType ) ) {
-			return CalendarDateType.INSTANCE;
+			return StandardSpiBasicTypes.CALENDAR_DATE;
 		}
 
 		if ( java.util.Date.class.isAssignableFrom( javaType ) ) {
-			return TimestampType.INSTANCE;
+			return StandardSpiBasicTypes.TIMESTAMP;
 		}
 
 		if ( Instant.class.isAssignableFrom( javaType ) ) {
-			return OffsetDateTimeType.INSTANCE;
+			return StandardSpiBasicTypes.OFFSET_DATE_TIME;
 		}
 
 		if ( OffsetDateTime.class.isAssignableFrom( javaType ) ) {
-			return OffsetDateTimeType.INSTANCE;
+			return StandardSpiBasicTypes.OFFSET_DATE_TIME;
 		}
 
 		if ( ZonedDateTime.class.isAssignableFrom( javaType ) ) {
-			return ZonedDateTimeType.INSTANCE;
+			return StandardSpiBasicTypes.ZONED_DATE_TIME;
 		}
 
 		throw new IllegalArgumentException( "Unsure how to handle given Java type [" + javaType.getName() + "] as TemporalType#DATE" );
 	}
 
-	public BasicType resolveTimeTemporalTypeVariant(Class javaType, Type baseType) {
+	public BasicType resolveTimeTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
 		if ( Calendar.class.isAssignableFrom( javaType ) ) {
-			return CalendarTimeType.INSTANCE;
+			return StandardSpiBasicTypes.CALENDAR_TIME;
 		}
 
 		if ( java.util.Date.class.isAssignableFrom( javaType ) ) {
-			return TimestampType.INSTANCE;
+			return StandardSpiBasicTypes.TIMESTAMP;
 		}
 
 		throw new IllegalArgumentException( "Unsure how to handle given Java type [" + javaType.getName() + "] as TemporalType#TIME" );

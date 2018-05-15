@@ -25,11 +25,10 @@ import org.hibernate.engine.jdbc.internal.JdbcServicesInitiator;
 import org.hibernate.engine.jndi.internal.JndiServiceInitiator;
 import org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator;
 import org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformResolverInitiator;
-import org.hibernate.hql.internal.QueryTranslatorFactoryInitiator;
 import org.hibernate.id.factory.internal.MutableIdentifierGeneratorFactoryInitiator;
 import org.hibernate.jmx.internal.JmxServiceInitiator;
-import org.hibernate.persister.internal.PersisterClassResolverInitiator;
-import org.hibernate.persister.internal.PersisterFactoryInitiator;
+import org.hibernate.metamodel.model.creation.internal.PersisterClassResolverInitiator;
+import org.hibernate.metamodel.model.creation.internal.RuntimeModelDescriptorFactoryServiceInitiator;
 import org.hibernate.property.access.internal.PropertyAccessStrategyResolverInitiator;
 import org.hibernate.resource.beans.spi.ManagedBeanRegistryInitiator;
 import org.hibernate.resource.transaction.internal.TransactionCoordinatorBuilderInitiator;
@@ -63,7 +62,7 @@ public final class StandardServiceInitiators {
 		serviceInitiators.add( JmxServiceInitiator.INSTANCE );
 
 		serviceInitiators.add( PersisterClassResolverInitiator.INSTANCE );
-		serviceInitiators.add( PersisterFactoryInitiator.INSTANCE );
+		serviceInitiators.add( RuntimeModelDescriptorFactoryServiceInitiator.INSTANCE );
 
 		serviceInitiators.add( ConnectionProviderInitiator.INSTANCE );
 		serviceInitiators.add( MultiTenantConnectionProviderInitiator.INSTANCE );
@@ -73,7 +72,6 @@ public final class StandardServiceInitiators {
 		serviceInitiators.add( JdbcServicesInitiator.INSTANCE );
 		serviceInitiators.add( RefCursorSupportInitiator.INSTANCE );
 
-		serviceInitiators.add( QueryTranslatorFactoryInitiator.INSTANCE );
 		serviceInitiators.add( MutableIdentifierGeneratorFactoryInitiator.INSTANCE);
 
 		serviceInitiators.add( JtaPlatformResolverInitiator.INSTANCE );

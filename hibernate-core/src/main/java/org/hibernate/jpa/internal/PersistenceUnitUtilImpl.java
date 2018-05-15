@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.ManagedEntity;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.jpa.internal.util.PersistenceUtilHelper;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.proxy.HibernateProxy;
 
 import org.jboss.logging.Logger;
@@ -93,9 +93,9 @@ public class PersistenceUnitUtilImpl implements PersistenceUnitUtil, Serializabl
 
 	private Object getIdentifierFromPersister(Object entity) {
 		Class<?> entityClass = Hibernate.getClass( entity );
-		final EntityPersister persister;
+		final EntityDescriptor persister;
 		try {
-			persister = sessionFactory.getMetamodel().entityPersister( entityClass );
+			persister = sessionFactory.getTypeConfiguration().findEntityDescriptor( entityClass );
 			if ( persister == null ) {
 				throw new IllegalArgumentException( entityClass.getName() + " is not an entity" );
 			}

@@ -8,7 +8,7 @@ package org.hibernate.procedure;
 
 import javax.persistence.TemporalType;
 
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 
 /**
  * Describes an input value binding for any IN/INOUT parameters.
@@ -21,11 +21,18 @@ public interface ParameterBind<T> extends QueryParameterBinding<T> {
 	 */
 	T getValue();
 
+	AllowableParameterType<T> getBindType();
+
 	/**
 	 * If {@code <T>} represents a DATE/TIME type value, JPA usually allows specifying the particular parts of
 	 * the DATE/TIME value to be bound.  This value represents the particular part the user requested to be bound.
 	 *
 	 * @return The explicitly supplied TemporalType.
+	 *
+	 * @deprecated (since 6.0) No longer supported
 	 */
-	TemporalType getExplicitTemporalType();
+	@Deprecated
+	default TemporalType getExplicitTemporalType() {
+		return null;
+	}
 }

@@ -6,18 +6,18 @@
  */
 package org.hibernate.boot.internal;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -35,6 +35,7 @@ import org.hibernate.annotations.common.util.StringHelper;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
+import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.TypeDefinition;
 import org.hibernate.boot.model.convert.internal.AttributeConverterManager;
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
@@ -44,13 +45,22 @@ import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.ImplicitForeignKeyNameSource;
 import org.hibernate.boot.model.naming.ImplicitIndexNameSource;
 import org.hibernate.boot.model.naming.ImplicitUniqueKeyNameSource;
-import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
+import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
+import org.hibernate.boot.model.query.spi.NamedNativeQueryDefinition;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.ExportableProducer;
-import org.hibernate.boot.model.relational.Namespace;
+import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
+import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.model.relational.MappedForeignKey;
+import org.hibernate.boot.model.relational.MappedIndex;
+import org.hibernate.boot.model.relational.MappedNamespace;
+import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.model.relational.MappedUniqueKey;
+import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.boot.model.relational.QualifiedTableName;
 import org.hibernate.boot.model.source.internal.ImplicitColumnNamingSecondPass;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -76,17 +86,14 @@ import org.hibernate.cfg.UniqueConstraintHolder;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
 import org.hibernate.cfg.annotations.NamedProcedureCallDefinition;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect.function.SQLFunction;
-import org.hibernate.engine.ResultSetMappingDefinition;
 import org.hibernate.engine.spi.FilterDefinition;
-import org.hibernate.engine.spi.NamedQueryDefinition;
-import org.hibernate.engine.spi.NamedSQLQueryDefinition;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.envers.boot.internal.AuditMetadataBuilderImpl;
+import org.hibernate.envers.boot.spi.AuditMetadataBuilderImplementor;
 import org.hibernate.id.IdentifierGenerator;
-import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Column;
@@ -94,7 +101,6 @@ import org.hibernate.mapping.DenormalizedTable;
 import org.hibernate.mapping.FetchProfile;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.IdentifierCollection;
-import org.hibernate.mapping.Index;
 import org.hibernate.mapping.Join;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.MappedSuperclass;
@@ -104,14 +110,15 @@ import org.hibernate.mapping.RootClass;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.mapping.Table;
 import org.hibernate.mapping.UniqueKey;
+import org.hibernate.naming.Identifier;
 import org.hibernate.query.spi.NamedQueryRepository;
-import org.hibernate.type.Type;
-import org.hibernate.type.TypeResolver;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
+import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * The implementation of the in-flight Metadata collector contract.
- *
+ * <p>
  * The usage expectation is that this class is used until all Metadata info is
  * collected and then {@link #buildMetadataInstance} is called to generate
  * the complete (and immutable) Metadata object.
@@ -127,19 +134,19 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	private final AttributeConverterManager attributeConverterManager = new AttributeConverterManager();
 
 	private final UUID uuid;
-	private final MutableIdentifierGeneratorFactory identifierGeneratorFactory;
 
-	private final Map<String,PersistentClass> entityBindingMap = new HashMap<>();
-	private final Map<String,Collection> collectionBindingMap = new HashMap<>();
+	private final Map<String,EntityMappingHierarchy> entityMappingHierarchies = new HashMap<>();
+	private final Map<String, PersistentClass> entityBindingMap = new HashMap<>();
+	private final Map<String, Collection> collectionBindingMap = new HashMap<>();
 
-	private final Map<String, TypeDefinition> typeDefinitionMap = new HashMap<>();
 	private final Map<String, FilterDefinition> filterDefinitionMap = new HashMap<>();
+	private final Map<String, TypeDefinition> typeDefinitionMap = new HashMap<>();
 	private final Map<String, String> imports = new HashMap<>();
 
 	private Database database;
 
-	private final Map<String, NamedQueryDefinition> namedQueryMap = new HashMap<>();
-	private final Map<String, NamedSQLQueryDefinition> namedNativeQueryMap = new HashMap<>();
+	private final Map<String, NamedHqlQueryDefinition> namedHqlQueryMap = new HashMap<>();
+	private final Map<String, NamedNativeQueryDefinition> namedNativeQueryMap = new HashMap<>();
 	private final Map<String, NamedProcedureCallDefinition> namedProcedureCallMap = new HashMap<>();
 	private final Map<String, ResultSetMappingDefinition> sqlResultSetMappingMap = new HashMap<>();
 
@@ -149,7 +156,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	private final Map<String, Builder> regionConfigBuilders = new ConcurrentHashMap<>();
 
-	private Map<String, SQLFunction> sqlFunctionMap;
+	private Map<String, SqmFunctionTemplate> sqlFunctionMap;
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// All the annotation-processing-specific state :(
@@ -165,8 +172,10 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	private Map<String, String> mappedByResolver;
 	private Map<String, String> propertyRefResolver;
 	private Set<DelayedPropertyReferenceHandler> delayedPropertyReferenceHandlers;
-	private Map<Table, List<UniqueConstraintHolder>> uniqueConstraintHoldersByTable;
-	private Map<Table, List<JPAIndexHolder>> jpaIndexHoldersByTable;
+	private Map<MappedTable, List<UniqueConstraintHolder>> uniqueConstraintHoldersByTable;
+	private Map<MappedTable, List<JPAIndexHolder>> jpaIndexHoldersByTable;
+
+	private AuditMetadataBuilderImpl auditMetadataBuilder;
 
 	public InFlightMetadataCollectorImpl(
 			BootstrapContext bootstrapContext,
@@ -175,10 +184,9 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		this.uuid = UUID.randomUUID();
 		this.options = options;
 
-		this.identifierGeneratorFactory = options.getServiceRegistry()
-				.getService( MutableIdentifierGeneratorFactory.class );
 
-		for ( Map.Entry<String, SQLFunction> sqlFunctionEntry : bootstrapContext.getSqlFunctions().entrySet() ) {
+
+		for ( Map.Entry<String, SqmFunctionTemplate> sqlFunctionEntry : bootstrapContext.getSqlFunctions().entrySet() ) {
 			if ( sqlFunctionMap == null ) {
 				// we need this to be a ConcurrentHashMap for the one we ultimately pass along to the SF
 				// but is this the reference that gets passed along?
@@ -188,6 +196,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 
 		bootstrapContext.getAuxiliaryDatabaseObjectList().forEach( getDatabase()::addAuxiliaryDatabaseObject );
+
+		this.auditMetadataBuilder = new AuditMetadataBuilderImpl( this );
 	}
 
 	@Override
@@ -207,19 +217,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	@Override
 	public TypeConfiguration getTypeConfiguration() {
-		return bootstrapContext.getTypeConfiguration();
-	}
-
-	/**
-	 * Retrieve the {@link Type} resolver associated with this factory.
-	 *
-	 * @return The type resolver
-	 *
-	 * @deprecated (since 5.3) No replacement, access to and handling of Types will be much different in 6.0
-	 */
-	@Deprecated
-	public TypeResolver getTypeResolver() {
-		return bootstrapContext.getTypeConfiguration().getTypeResolver();
+		return getBootstrapContext().getTypeConfiguration();
 	}
 
 	@Override
@@ -232,12 +230,13 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public NamedQueryRepository buildNamedQueryRepository(SessionFactoryImpl sessionFactory) {
-		throw new UnsupportedOperationException( "#buildNamedQueryRepository should not be called on InFlightMetadataCollector" );
+	public NamedQueryRepository buildNamedQueryRepository(SessionFactoryImplementor sessionFactory) {
+		throw new UnsupportedOperationException(
+				"#buildNamedQueryRepository should not be called on InFlightMetadataCollector" );
 	}
 
 	@Override
-	public Map<String, SQLFunction> getSqlFunctionMap() {
+	public Map<String, SqmFunctionTemplate> getSqlFunctionMap() {
 		return sqlFunctionMap;
 	}
 
@@ -252,8 +251,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public IdentifierGeneratorFactory getIdentifierGeneratorFactory() {
-		return identifierGeneratorFactory;
+	public AuditMetadataBuilderImplementor getAuditMetadataBuilder() {
+		return auditMetadataBuilder;
 	}
 
 	@Override
@@ -271,6 +270,25 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 						"we should better segment this in the API :)"
 		);
 	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Entity Hierarchy handling
+
+	@Override
+	public java.util.Collection<EntityMappingHierarchy> getEntityHierarchies() {
+		return entityMappingHierarchies.values();
+	}
+
+	@Override
+	public void addEntityMappingHierarchy(EntityMappingHierarchy entityMappingHierarchy) {
+		final String rootEntityName = entityMappingHierarchy.getRootType().getName();
+		if ( entityMappingHierarchies.containsKey( rootEntityName ) ) {
+			throw new DuplicateMappingException( DuplicateMappingException.Type.ENTITY_HIERARCHY, rootEntityName );
+		}
+		this.entityMappingHierarchies.put( rootEntityName, entityMappingHierarchy );
+	}
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Entity handling
@@ -355,39 +373,29 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// Hibernate Type handling
 
 	@Override
-	public TypeDefinition getTypeDefinition(String registrationKey) {
-		return typeDefinitionMap.get( registrationKey );
+	@SuppressWarnings("unchecked")
+	public <T> BasicType<T> basicType(String registrationKey) {
+		return getBootstrapContext().getTypeConfiguration().getBasicTypeRegistry().getBasicType( registrationKey );
 	}
 
-	@Override
-	public void addTypeDefinition(TypeDefinition typeDefinition) {
-		if ( typeDefinition == null ) {
-			throw new IllegalArgumentException( "Type definition is null" );
-		}
 
-		// Need to register both by name and registration keys.
-		if ( !StringHelper.isEmpty( typeDefinition.getName() ) ) {
-			addTypeDefinition( typeDefinition.getName(), typeDefinition );
-		}
+	// todo : can a Properties be wrapped in unmodifiable in any way?
+	private final static Properties EMPTY_PROPERTIES = new Properties();
 
-		if ( typeDefinition.getRegistrationKeys() != null ) {
-			for ( String registrationKey : typeDefinition.getRegistrationKeys() ) {
-				addTypeDefinition( registrationKey, typeDefinition );
-			}
+	private static Properties asProperties(Map parameters) {
+		if ( parameters instanceof Properties ) {
+			return (Properties) parameters;
+		}
+		else if ( CollectionHelper.isNotEmpty( parameters ) ) {
+			final Properties properties = new Properties();
+			properties.putAll( parameters );
+			return properties;
+		}
+		else {
+			return EMPTY_PROPERTIES;
 		}
 	}
 
-	private void addTypeDefinition(String registrationKey, TypeDefinition typeDefinition) {
-		final TypeDefinition previous = typeDefinitionMap.put(
-				registrationKey, typeDefinition );
-		if ( previous != null ) {
-			log.debugf(
-					"Duplicate typedef name [%s] now -> %s",
-					registrationKey,
-					typeDefinition.getTypeImplementorClass().getName()
-			);
-		}
-	}
 
 	@Override
 	public ClassmateContext getClassmateContext() {
@@ -432,7 +440,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	@Override
 	public void addFilterDefinition(FilterDefinition filterDefinition) {
 		if ( filterDefinition == null || filterDefinition.getFilterName() == null ) {
-			throw new IllegalArgumentException( "Filter definition object or name is null: "  + filterDefinition );
+			throw new IllegalArgumentException( "Filter definition object or name is null: " + filterDefinition );
 		}
 		filterDefinitionMap.put( filterDefinition.getFilterName(), filterDefinition );
 	}
@@ -476,8 +484,13 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	@Override
 	public java.util.Collection<Table> collectTableMappings() {
-		ArrayList<Table> tables = new ArrayList<>();
-		for ( Namespace namespace : getDatabase().getNamespaces() ) {
+		return collectMappedTableMappings().stream().map( Table.class::cast ).collect( Collectors.toList() );
+	}
+
+	@Override
+	public java.util.Collection<MappedTable> collectMappedTableMappings() {
+		ArrayList<MappedTable> tables = new ArrayList<>();
+		for ( MappedNamespace namespace : getDatabase().getNamespaces() ) {
 			tables.addAll( namespace.getTables() );
 		}
 		return tables;
@@ -510,7 +523,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Named EntityGraph handling
 
@@ -538,20 +550,21 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Named query handling
 
-	public NamedQueryDefinition getNamedQueryDefinition(String name) {
+	@Override
+	public NamedHqlQueryDefinition getNamedHqlQueryDefinition(String name) {
 		if ( name == null ) {
 			throw new IllegalArgumentException( "null is not a valid query name" );
 		}
-		return namedQueryMap.get( name );
+		return namedHqlQueryMap.get( name );
 	}
 
 	@Override
-	public java.util.Collection<NamedQueryDefinition> getNamedQueryDefinitions() {
-		return namedQueryMap.values();
+	public java.util.Collection<NamedHqlQueryDefinition> getNamedHqlQueryDefinitions() {
+		return namedHqlQueryMap.values();
 	}
 
 	@Override
-	public void addNamedQuery(NamedQueryDefinition def) {
+	public void addNamedHqlQuery(NamedHqlQueryDefinition def) {
 		if ( def == null ) {
 			throw new IllegalArgumentException( "Named query definition is null" );
 		}
@@ -563,23 +576,23 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return;
 		}
 
-		applyNamedQuery( def.getName(), def );
+		applyNamedHqlQuery( def.getName(), def );
 	}
 
-	private void applyNamedQuery(String name, NamedQueryDefinition query) {
+	private void applyNamedHqlQuery(String name, NamedHqlQueryDefinition query) {
 		checkQueryName( name );
-		namedQueryMap.put( name.intern(), query );
+		namedHqlQueryMap.put( name.intern(), query );
 	}
 
 	private void checkQueryName(String name) throws DuplicateMappingException {
-		if ( namedQueryMap.containsKey( name ) || namedNativeQueryMap.containsKey( name ) ) {
+		if ( namedHqlQueryMap.containsKey( name ) || namedNativeQueryMap.containsKey( name ) ) {
 			throw new DuplicateMappingException( DuplicateMappingException.Type.QUERY, name );
 		}
 	}
 
 	@Override
-	public void addDefaultQuery(NamedQueryDefinition queryDefinition) {
-		applyNamedQuery( queryDefinition.getName(), queryDefinition );
+	public void addDefaultNamedHqlQuery(NamedHqlQueryDefinition queryDefinition) {
+		applyNamedHqlQuery( queryDefinition.getName(), queryDefinition );
 		defaultNamedQueryNames.add( queryDefinition.getName() );
 	}
 
@@ -587,17 +600,17 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// Named native-query handling
 
 	@Override
-	public NamedSQLQueryDefinition getNamedNativeQueryDefinition(String name) {
+	public NamedNativeQueryDefinition getNamedNativeQueryDefinition(String name) {
 		return namedNativeQueryMap.get( name );
 	}
 
 	@Override
-	public java.util.Collection<NamedSQLQueryDefinition> getNamedNativeQueryDefinitions() {
+	public java.util.Collection<NamedNativeQueryDefinition> getNamedNativeQueryDefinitions() {
 		return namedNativeQueryMap.values();
 	}
 
 	@Override
-	public void addNamedNativeQuery(NamedSQLQueryDefinition def) {
+	public void addNamedNativeQuery(NamedNativeQueryDefinition def) {
 		if ( def == null ) {
 			throw new IllegalArgumentException( "Named native query definition object is null" );
 		}
@@ -612,13 +625,13 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		applyNamedNativeQuery( def.getName(), def );
 	}
 
-	private void applyNamedNativeQuery(String name, NamedSQLQueryDefinition query) {
+	private void applyNamedNativeQuery(String name, NamedNativeQueryDefinition query) {
 		checkQueryName( name );
 		namedNativeQueryMap.put( name.intern(), query );
 	}
 
 	@Override
-	public void addDefaultNamedNativeQuery(NamedSQLQueryDefinition query) {
+	public void addDefaultNamedNativeQuery(NamedNativeQueryDefinition query) {
 		applyNamedNativeQuery( query.getName(), query );
 		defaultNamedNativeQueryNames.add( query.getName() );
 	}
@@ -671,21 +684,21 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public void addResultSetMapping(ResultSetMappingDefinition resultSetMappingDefinition) {
-		if ( resultSetMappingDefinition == null ) {
+	public void addResultSetMapping(ResultSetMappingDefinition resultSetMapping) {
+		if ( resultSetMapping == null ) {
 			throw new IllegalArgumentException( "Result-set mapping was null" );
 		}
 
-		final String name = resultSetMappingDefinition.getName();
+		final String name = resultSetMapping.getName();
 		if ( name == null ) {
-			throw new IllegalArgumentException( "Result-set mapping name is null: " + resultSetMappingDefinition );
+			throw new IllegalArgumentException( "Result-set mapping name is null: " + resultSetMapping );
 		}
 
 		if ( defaultSqlResultSetMappingNames.contains( name ) ) {
 			return;
 		}
 
-		applyResultSetMapping( resultSetMappingDefinition );
+		applyResultSetMapping( resultSetMapping );
 	}
 
 	public void applyResultSetMapping(ResultSetMappingDefinition resultSetMappingDefinition) {
@@ -716,7 +729,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// imports
 
 	@Override
-	public Map<String,String> getImports() {
+	public Map<String, String> getImports() {
 		return imports;
 	}
 
@@ -737,13 +750,13 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// Table handling
 
 	@Override
-	public Table addTable(
+	public MappedTable addTable(
 			String schemaName,
 			String catalogName,
 			String name,
 			String subselectFragment,
 			boolean isAbstract) {
-		final Namespace namespace = getDatabase().locateNamespace(
+		final MappedNamespace namespace = getDatabase().locateNamespace(
 				getDatabase().toIdentifier( catalogName ),
 				getDatabase().toIdentifier( schemaName )
 		);
@@ -762,7 +775,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return new Table( namespace, logicalName, subselectFragment, isAbstract );
 		}
 		else {
-			Table table = namespace.locateTable( logicalName );
+			MappedTable table = namespace.locateTable( logicalName );
 			if ( table != null ) {
 				if ( !isAbstract ) {
 					table.setAbstract( false );
@@ -774,14 +787,14 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public Table addDenormalizedTable(
+	public MappedTable addDenormalizedTable(
 			String schemaName,
 			String catalogName,
 			String name,
 			boolean isAbstract,
 			String subselectFragment,
-			Table includedTable) throws DuplicateMappingException {
-		final Namespace namespace = getDatabase().locateNamespace(
+			MappedTable includedTable) throws DuplicateMappingException {
+		final MappedNamespace namespace = getDatabase().locateNamespace(
 				getDatabase().toIdentifier( catalogName ),
 				getDatabase().toIdentifier( schemaName )
 		);
@@ -800,7 +813,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return new DenormalizedTable( namespace, logicalName, subselectFragment, isAbstract, includedTable );
 		}
 		else {
-			Table table = namespace.locateTable( logicalName );
+			MappedTable table = namespace.locateTable( logicalName );
 			if ( table != null ) {
 				throw new DuplicateMappingException( DuplicateMappingException.Type.TABLE, logicalName.toString() );
 			}
@@ -812,259 +825,12 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Mapping impl
-
 	@Override
-	public org.hibernate.type.Type getIdentifierType(String entityName) throws MappingException {
-		final PersistentClass pc = entityBindingMap.get( entityName );
-		if ( pc == null ) {
-			throw new MappingException( "persistent class not known: " + entityName );
-		}
-		return pc.getIdentifier().getType();
-	}
-
-	@Override
-	public String getIdentifierPropertyName(String entityName) throws MappingException {
-		final PersistentClass pc = entityBindingMap.get( entityName );
-		if ( pc == null ) {
-			throw new MappingException( "persistent class not known: " + entityName );
-		}
-		if ( !pc.hasIdentifierProperty() ) {
-			return null;
-		}
-		return pc.getIdentifierProperty().getName();
-	}
-
-	@Override
-	public org.hibernate.type.Type getReferencedPropertyType(String entityName, String propertyName) throws MappingException {
-		final PersistentClass pc = entityBindingMap.get( entityName );
-		if ( pc == null ) {
-			throw new MappingException( "persistent class not known: " + entityName );
-		}
-		Property prop = pc.getReferencedProperty( propertyName );
-		if ( prop == null ) {
-			throw new MappingException(
-					"property not known: " +
-							entityName + '.' + propertyName
-			);
-		}
-		return prop.getType();
-	}
-
-
-	private Map<Identifier,Identifier> logicalToPhysicalTableNameMap = new HashMap<>();
-	private Map<Identifier,Identifier> physicalToLogicalTableNameMap = new HashMap<>();
-
-	@Override
-	public void addTableNameBinding(Identifier logicalName, Table table) {
-		logicalToPhysicalTableNameMap.put( logicalName, table.getNameIdentifier() );
-		physicalToLogicalTableNameMap.put( table.getNameIdentifier(), logicalName );
-	}
-
-	@Override
-	public void addTableNameBinding(String schema, String catalog, String logicalName, String realTableName, Table denormalizedSuperTable) {
-		final Identifier logicalNameIdentifier = getDatabase().toIdentifier( logicalName );
-		final Identifier physicalNameIdentifier = getDatabase().toIdentifier( realTableName );
-
-		logicalToPhysicalTableNameMap.put( logicalNameIdentifier, physicalNameIdentifier );
-		physicalToLogicalTableNameMap.put( physicalNameIdentifier, logicalNameIdentifier );
-	}
-
-	@Override
-	public String getLogicalTableName(Table ownerTable) {
-		final Identifier logicalName = physicalToLogicalTableNameMap.get( ownerTable.getNameIdentifier() );
-		if ( logicalName == null ) {
-			throw new MappingException( "Unable to find physical table: " + ownerTable.getName() );
-		}
-		return logicalName.render();
-	}
-
-	@Override
-	public String getPhysicalTableName(Identifier logicalName) {
-		final Identifier physicalName = logicalToPhysicalTableNameMap.get( logicalName );
-		return physicalName == null ? null : physicalName.render();
-	}
-
-	@Override
-	public String getPhysicalTableName(String logicalName) {
-		return getPhysicalTableName( getDatabase().toIdentifier( logicalName ) );
-	}
-
-	/**
-	 * Internal struct used to maintain xref between physical and logical column
-	 * names for a table.  Mainly this is used to ensure that the defined NamingStrategy
-	 * is not creating duplicate column names.
-	 */
-	private class TableColumnNameBinding implements Serializable {
-		private final String tableName;
-		private Map<Identifier, String> logicalToPhysical = new HashMap<>();
-		private Map<String, Identifier> physicalToLogical = new HashMap<>();
-
-		private TableColumnNameBinding(String tableName) {
-			this.tableName = tableName;
-		}
-
-		public void addBinding(Identifier logicalName, Column physicalColumn) {
-			final String physicalNameString = physicalColumn.getQuotedName( getDatabase().getJdbcEnvironment().getDialect() );
-
-			bindLogicalToPhysical( logicalName, physicalNameString );
-			bindPhysicalToLogical( logicalName, physicalNameString );
-		}
-
-		private void bindLogicalToPhysical(Identifier logicalName, String physicalName) throws DuplicateMappingException {
-			final String existingPhysicalNameMapping = logicalToPhysical.put( logicalName, physicalName );
-			if ( existingPhysicalNameMapping != null ) {
-				final boolean areSame = logicalName.isQuoted()
-						? physicalName.equals( existingPhysicalNameMapping )
-						: physicalName.equalsIgnoreCase( existingPhysicalNameMapping );
-				if ( !areSame ) {
-					throw new DuplicateMappingException(
-							String.format(
-									Locale.ENGLISH,
-									"Table [%s] contains logical column name [%s] referring to multiple physical " +
-											"column names: [%s], [%s]",
-									tableName,
-									logicalName,
-									existingPhysicalNameMapping,
-									physicalName
-							),
-							DuplicateMappingException.Type.COLUMN_BINDING,
-							tableName + "." + logicalName
-					);
-				}
-			}
-		}
-
-		private void bindPhysicalToLogical(Identifier logicalName, String physicalName) throws DuplicateMappingException {
-			final Identifier existingLogicalName = physicalToLogical.put( physicalName, logicalName );
-			if ( existingLogicalName != null && ! existingLogicalName.equals( logicalName ) ) {
-				throw new DuplicateMappingException(
-						String.format(
-								Locale.ENGLISH,
-								"Table [%s] contains physical column name [%s] referred to by multiple physical " +
-										"column names: [%s], [%s]",
-								tableName,
-								physicalName,
-								logicalName,
-								existingLogicalName
-						),
-						DuplicateMappingException.Type.COLUMN_BINDING,
-						tableName + "." + physicalName
-				);
-			}
-		}
-	}
-
-	private Map<Table,TableColumnNameBinding> columnNameBindingByTableMap;
-
-	@Override
-	public void addColumnNameBinding(Table table, String logicalName, Column column) throws DuplicateMappingException {
-		addColumnNameBinding( table, getDatabase().toIdentifier( logicalName ), column );
-	}
-
-	@Override
-	public void addColumnNameBinding(Table table, Identifier logicalName, Column column) throws DuplicateMappingException {
-		TableColumnNameBinding binding = null;
-
-		if ( columnNameBindingByTableMap == null ) {
-			columnNameBindingByTableMap = new HashMap<>();
-		}
-		else {
-			binding = columnNameBindingByTableMap.get( table );
-		}
-
-		if ( binding == null ) {
-			binding = new TableColumnNameBinding( table.getName() );
-			columnNameBindingByTableMap.put( table, binding );
-		}
-
-		binding.addBinding( logicalName, column );
-	}
-
-	@Override
-	public String getPhysicalColumnName(Table table, String logicalName) throws MappingException {
-		return getPhysicalColumnName( table, getDatabase().toIdentifier( logicalName ) );
-	}
-
-	@Override
-	public String getPhysicalColumnName(Table table, Identifier logicalName) throws MappingException {
-		if ( logicalName == null ) {
-			throw new MappingException( "Logical column name cannot be null" );
-		}
-
-		Table currentTable = table;
-		String physicalName = null;
-
-		while ( currentTable != null ) {
-			final TableColumnNameBinding binding = columnNameBindingByTableMap.get( currentTable );
-			if ( binding != null ) {
-				physicalName = binding.logicalToPhysical.get( logicalName );
-				if ( physicalName != null ) {
-					break;
-				}
-			}
-
-			if ( DenormalizedTable.class.isInstance( currentTable ) ) {
-				currentTable = ( (DenormalizedTable) currentTable ).getIncludedTable();
-			}
-			else {
-				currentTable = null;
-			}
-		}
-
-		if ( physicalName == null ) {
-			throw new MappingException(
-					"Unable to find column with logical name " + logicalName.render() + " in table " + table.getName()
-			);
-		}
-		return physicalName;
-	}
-
-	@Override
-	public String getLogicalColumnName(Table table, String physicalName) throws MappingException {
-		return getLogicalColumnName( table, getDatabase().toIdentifier( physicalName ) );
-	}
-
-
-	@Override
-	public String getLogicalColumnName(Table table, Identifier physicalName) throws MappingException {
-		final String physicalNameString = physicalName.render( getDatabase().getJdbcEnvironment().getDialect() );
-		Identifier logicalName = null;
-
-		Table currentTable = table;
-		while ( currentTable != null ) {
-			final TableColumnNameBinding binding = columnNameBindingByTableMap.get( currentTable );
-
-			if ( binding != null ) {
-				logicalName = binding.physicalToLogical.get( physicalNameString );
-				if ( logicalName != null ) {
-					break;
-				}
-			}
-
-			if ( DenormalizedTable.class.isInstance( currentTable ) ) {
-				currentTable = ( (DenormalizedTable) currentTable ).getIncludedTable();
-			}
-			else {
-				currentTable = null;
-			}
-		}
-
-		if ( logicalName == null ) {
-			throw new MappingException(
-					"Unable to find column with physical name " + physicalNameString + " in table " + table.getName()
-			);
-		}
-		return logicalName.render();
-	}
-
-	@Override
-	public void addAuxiliaryDatabaseObject(AuxiliaryDatabaseObject auxiliaryDatabaseObject) {
+	public void addAuxiliaryDatabaseObject(MappedAuxiliaryDatabaseObject auxiliaryDatabaseObject) {
 		getDatabase().addAuxiliaryDatabaseObject( auxiliaryDatabaseObject );
 	}
 
-	private final Map<String,AnnotatedClassType> annotatedClassTypeMap = new HashMap<>();
+	private final Map<String, AnnotatedClassType> annotatedClassTypeMap = new HashMap<>();
 
 	@Override
 	public AnnotatedClassType getClassType(XClass clazz) {
@@ -1234,7 +1000,10 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		public final String propertyName;
 		public final boolean unique;
 
-		public DelayedPropertyReferenceHandlerAnnotationImpl(String referencedClass, String propertyName, boolean unique) {
+		public DelayedPropertyReferenceHandlerAnnotationImpl(
+				String referencedClass,
+				String propertyName,
+				boolean unique) {
 			this.referencedClass = referencedClass;
 			this.propertyName = propertyName;
 			this.unique = unique;
@@ -1277,14 +1046,14 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked" })
-	public void addUniqueConstraints(Table table, List uniqueConstraints) {
+	@SuppressWarnings({"unchecked"})
+	public void addUniqueConstraints(MappedTable table, List uniqueConstraints) {
 		List<UniqueConstraintHolder> constraintHolders = new ArrayList<>(
 				CollectionHelper.determineProperSizing( uniqueConstraints.size() )
 		);
 
 		int keyNameBase = determineCurrentNumberOfUniqueConstraintHolders( table );
-		for ( String[] columns : ( List<String[]> ) uniqueConstraints ) {
+		for ( String[] columns : (List<String[]>) uniqueConstraints ) {
 			final String keyName = "key" + keyNameBase++;
 			constraintHolders.add(
 					new UniqueConstraintHolder().setName( keyName ).setColumns( columns )
@@ -1293,15 +1062,17 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		addUniqueConstraintHolders( table, constraintHolders );
 	}
 
-	private int determineCurrentNumberOfUniqueConstraintHolders(Table table) {
-		List currentHolders = uniqueConstraintHoldersByTable == null ? null : uniqueConstraintHoldersByTable.get( table );
+	private int determineCurrentNumberOfUniqueConstraintHolders(MappedTable table) {
+		List currentHolders = uniqueConstraintHoldersByTable == null ?
+				null :
+				uniqueConstraintHoldersByTable.get( table );
 		return currentHolders == null
 				? 0
 				: currentHolders.size();
 	}
 
 	@Override
-	public void addUniqueConstraintHolders(Table table, List<UniqueConstraintHolder> uniqueConstraintHolders) {
+	public void addUniqueConstraintHolders(MappedTable table, List<UniqueConstraintHolder> uniqueConstraintHolders) {
 		List<UniqueConstraintHolder> holderList = null;
 
 		if ( uniqueConstraintHoldersByTable == null ) {
@@ -1320,7 +1091,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	@Override
-	public void addJpaIndexHolders(Table table, List<JPAIndexHolder> holders) {
+	public void addJpaIndexHolders(MappedTable table, List<JPAIndexHolder> holders) {
 		List<JPAIndexHolder> holderList = null;
 
 		if ( jpaIndexHoldersByTable == null ) {
@@ -1338,7 +1109,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		holderList.addAll( holders );
 	}
 
-	private final Map<String,EntityTableXrefImpl> entityTableXrefMap = new HashMap<>();
+	private final Map<String, EntityTableXrefImpl> entityTableXrefMap = new HashMap<>();
 
 	@Override
 	public EntityTableXref getEntityTableXref(String entityName) {
@@ -1349,7 +1120,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	public EntityTableXref addEntityTableXref(
 			String entityName,
 			Identifier primaryTableLogicalName,
-			Table primaryTable,
+			MappedTable primaryTable,
 			EntityTableXref superEntityTableXref) {
 		final EntityTableXrefImpl entry = new EntityTableXrefImpl(
 				primaryTableLogicalName,
@@ -1370,21 +1141,27 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	private final class EntityTableXrefImpl implements EntityTableXref {
 		private final Identifier primaryTableLogicalName;
-		private final Table primaryTable;
+		private final MappedTable primaryTable;
 		private EntityTableXrefImpl superEntityTableXref;
 
 		//annotations needs a Map<String,Join>
 		//private Map<Identifier,Join> secondaryTableJoinMap;
-		private Map<String,Join> secondaryTableJoinMap;
+		private Map<String, Join> secondaryTableJoinMap;
 
-		public EntityTableXrefImpl(Identifier primaryTableLogicalName, Table primaryTable, EntityTableXrefImpl superEntityTableXref) {
+		public EntityTableXrefImpl(
+				Identifier primaryTableLogicalName,
+				MappedTable primaryTable,
+				EntityTableXrefImpl superEntityTableXref) {
 			this.primaryTableLogicalName = primaryTableLogicalName;
 			this.primaryTable = primaryTable;
 			this.superEntityTableXref = superEntityTableXref;
 		}
 
 		@Override
-		public void addSecondaryTable(LocalMetadataBuildingContext buildingContext, Identifier logicalName, Join secondaryTableJoin) {
+		public void addSecondaryTable(
+				LocalMetadataBuildingContext buildingContext,
+				Identifier logicalName,
+				Join secondaryTableJoin) {
 			if ( Identifier.areEqual( primaryTableLogicalName, logicalName ) ) {
 				throw new org.hibernate.boot.MappingException(
 						String.format(
@@ -1453,12 +1230,12 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 
 		@Override
-		public Table getPrimaryTable() {
+		public MappedTable getPrimaryTable() {
 			return primaryTable;
 		}
 
 		@Override
-		public Table resolveTable(Identifier tableName) {
+		public MappedTable resolveTable(Identifier tableName) {
 			if ( tableName == null ) {
 				return primaryTable;
 			}
@@ -1474,7 +1251,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			}
 
 			if ( secondaryTableJoin != null ) {
-				return secondaryTableJoin.getTable();
+				return secondaryTableJoin.getMappedTable();
 			}
 
 			if ( superEntityTableXref != null ) {
@@ -1570,7 +1347,10 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		addSecondPass( secondPass, pkDrivenByDefaultMapsIdSecondPassList, onTopOfTheQueue );
 	}
 
-	private <T extends SecondPass> void addSecondPass(T secondPass, ArrayList<T> secondPassList, boolean onTopOfTheQueue) {
+	private <T extends SecondPass> void addSecondPass(
+			T secondPass,
+			ArrayList<T> secondPassList,
+			boolean onTopOfTheQueue) {
 		if ( onTopOfTheQueue ) {
 			secondPassList.add( 0, secondPass );
 		}
@@ -1710,21 +1490,23 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	/* naive O(n^3) topological sort */
-	private void topologicalSort( List<CopyIdentifierComponentSecondPass> sorted, Set<CopyIdentifierComponentSecondPass> toSort ) {
-		while (!toSort.isEmpty()) {
+	private void topologicalSort(
+			List<CopyIdentifierComponentSecondPass> sorted,
+			Set<CopyIdentifierComponentSecondPass> toSort) {
+		while ( !toSort.isEmpty() ) {
 			CopyIdentifierComponentSecondPass independent = null;
 
 			searchForIndependent:
 			for ( CopyIdentifierComponentSecondPass secondPass : toSort ) {
 				for ( CopyIdentifierComponentSecondPass other : toSort ) {
-					if (secondPass.dependentUpon( other )) {
+					if ( secondPass.dependentUpon( other ) ) {
 						continue searchForIndependent;
 					}
 				}
 				independent = secondPass;
 				break;
 			}
-			if (independent == null) {
+			if ( independent == null ) {
 				throw new MappingException( "cyclic dependency in derived identities" );
 			}
 			toSort.remove( independent );
@@ -1746,7 +1528,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			if ( sp.isInPrimaryKey() ) {
 				final String referenceEntityName = sp.getReferencedEntityName();
 				final PersistentClass classMapping = getEntityBinding( referenceEntityName );
-				final String dependentTable = classMapping.getTable().getQualifiedTableName().render();
+				final String dependentTable = classMapping.getMappedTable().getQualifiedTableName().render();
 				if ( !isADependencyOf.containsKey( dependentTable ) ) {
 					isADependencyOf.put( dependentTable, new HashSet<>() );
 				}
@@ -1800,7 +1582,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 
 		for ( FkSecondPass sp : dependencies ) {
-			String dependentTable = sp.getValue().getTable().getQualifiedTableName().render();
+			String dependentTable = sp.getValue().getMappedTable().getQualifiedTableName().render();
 			if ( dependentTable.compareTo( startTable ) == 0 ) {
 				throw new AnnotationException( "Foreign key circularity dependency involving the following tables: " + startTable + ", " + dependentTable );
 			}
@@ -1843,29 +1625,27 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	private void secondPassCompileForeignKeys(MetadataBuildingContext buildingContext) {
 		int uniqueInteger = 0;
-		Set<ForeignKey> done = new HashSet<>();
-		for ( Table table : collectTableMappings() ) {
+		Set<MappedForeignKey> done = new HashSet<>();
+		for ( MappedTable table : collectTableMappings() ) {
 			table.setUniqueInteger( uniqueInteger++ );
 			secondPassCompileForeignKeys( table, done, buildingContext );
 		}
 	}
 
 	protected void secondPassCompileForeignKeys(
-			final Table table,
-			Set<ForeignKey> done,
+			final MappedTable<MappedColumn> table,
+			Set<MappedForeignKey> done,
 			final MetadataBuildingContext buildingContext) throws MappingException {
 		table.createForeignKeys();
 
-		Iterator itr = table.getForeignKeyIterator();
-		while ( itr.hasNext() ) {
-			final ForeignKey fk = (ForeignKey) itr.next();
+		for ( MappedForeignKey fk : table.getForeignKeys() ) {
 			if ( !done.contains( fk ) ) {
 				done.add( fk );
 				final String referencedEntityName = fk.getReferencedEntityName();
 				if ( referencedEntityName == null ) {
 					throw new MappingException(
 							"An association from the table " +
-									fk.getTable().getName() +
+									fk.getMappedTable().getName() +
 									" does not specify the referenced entity"
 					);
 				}
@@ -1875,60 +1655,61 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 				if ( referencedClass == null ) {
 					throw new MappingException(
 							"An association from the table " +
-									fk.getTable().getName() +
+									fk.getMappedTable().getName() +
 									" refers to an unmapped class: " +
 									referencedEntityName
 					);
 				}
 				if ( referencedClass.isJoinedSubclass() ) {
-					secondPassCompileForeignKeys( referencedClass.getSuperclass().getTable(), done, buildingContext );
+					secondPassCompileForeignKeys( referencedClass.getSuperclass().getMappedTable(), done, buildingContext );
 				}
 
-				fk.setReferencedTable( referencedClass.getTable() );
+				fk.setReferencedTable( referencedClass.getMappedTable() );
 
-				Identifier nameIdentifier;
+				// todo : should we apply a physical naming too?
+				if ( fk.getName() == null && fk.isCreationEnabled() ) {
+					final Identifier nameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineForeignKeyName(
+							new ImplicitForeignKeyNameSource() {
+								final List<Identifier> columnNames = extractColumnNames( fk.getColumns() );
+								List<Identifier> referencedColumnNames = null;
 
-				ImplicitForeignKeyNameSource foreignKeyNameSource = new ImplicitForeignKeyNameSource() {
-					final List<Identifier> columnNames = extractColumnNames( fk.getColumns() );
-					List<Identifier> referencedColumnNames = null;
+								@Override
+								public Identifier getTableName() {
+									return table.getNameIdentifier();
+								}
 
-					@Override
-					public Identifier getTableName() {
-						return table.getNameIdentifier();
-					}
+								@Override
+								public List<Identifier> getColumnNames() {
+									return columnNames;
+								}
 
-					@Override
-					public List<Identifier> getColumnNames() {
-						return columnNames;
-					}
+								@Override
+								public Identifier getReferencedTableName() {
+									return fk.getReferencedTable().getNameIdentifier();
+								}
 
-					@Override
-					public Identifier getReferencedTableName() {
-						return fk.getReferencedTable().getNameIdentifier();
-					}
+								@Override
+								public List<Identifier> getReferencedColumnNames() {
+									if ( referencedColumnNames == null ) {
+										referencedColumnNames = extractColumnNames( fk.getReferencedColumns() );
+									}
+									return referencedColumnNames;
+								}
 
-					@Override
-					public List<Identifier> getReferencedColumnNames() {
-						if ( referencedColumnNames == null ) {
-							referencedColumnNames = extractColumnNames( fk.getReferencedColumns() );
-						}
-						return referencedColumnNames;
-					}
+								@Override
+								public Identifier getUserProvidedIdentifier() {
+									return fk.getName() != null ? Identifier.toIdentifier( fk.getName() ) : null;
+								}
 
-					@Override
-					public Identifier getUserProvidedIdentifier() {
-						return fk.getName() != null ? Identifier.toIdentifier( fk.getName() ) : null;
-					}
+								@Override
+								public MetadataBuildingContext getBuildingContext() {
+									return buildingContext;
+								}
+							}
+					);
 
-					@Override
-					public MetadataBuildingContext getBuildingContext() {
-						return buildingContext;
-					}
-				};
-
-				nameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineForeignKeyName(foreignKeyNameSource);
-
-				fk.setName( nameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() ) );
+					fk.setName( nameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() ) );
+				}
 
 				fk.alignColumns();
 			}
@@ -1979,8 +1760,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return;
 		}
 
-		for ( Map.Entry<Table, List<UniqueConstraintHolder>> tableListEntry : uniqueConstraintHoldersByTable.entrySet() ) {
-			final Table table = tableListEntry.getKey();
+		for ( Map.Entry<MappedTable, List<UniqueConstraintHolder>> tableListEntry : uniqueConstraintHoldersByTable.entrySet() ) {
+			final MappedTable table = tableListEntry.getKey();
 			final List<UniqueConstraintHolder> uniqueConstraints = tableListEntry.getValue();
 			for ( UniqueConstraintHolder holder : uniqueConstraints ) {
 				buildUniqueKeyFromColumnNames( table, holder.getName(), holder.getColumns(), buildingContext );
@@ -1991,7 +1772,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	private void buildUniqueKeyFromColumnNames(
-			Table table,
+			MappedTable table,
 			String keyName,
 			String[] columnNames,
 			MetadataBuildingContext buildingContext) {
@@ -1999,29 +1780,28 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	}
 
 	private void buildUniqueKeyFromColumnNames(
-			final Table table,
+			final MappedTable table,
 			String keyName,
 			final String[] columnNames,
 			String[] orderings,
 			boolean unique,
 			final MetadataBuildingContext buildingContext) {
 		int size = columnNames.length;
-		Column[] columns = new Column[size];
-		Set<Column> unbound = new HashSet<>();
-		Set<Column> unboundNoLogical = new HashSet<>();
+		final Column[] columns = new Column[size];
+		final Set<Column> unbound = new HashSet<>();
+		final Set<Column> unboundNoLogical = new HashSet<>();
 		for ( int index = 0; index < size; index++ ) {
 			final String logicalColumnName = columnNames[index];
 			try {
-				final String physicalColumnName = getPhysicalColumnName( table, logicalColumnName );
-				columns[index] = new Column( physicalColumnName );
+				columns[index] = new Column( table.getNameIdentifier(), logicalColumnName, unique );
 				unbound.add( columns[index] );
 				//column equals and hashcode is based on column name
 			}
-			catch ( MappingException e ) {
+			catch (MappingException e) {
 				// If at least 1 columnName does exist, 'columns' will contain a mix of Columns and nulls.  In order
 				// to exhaustively report all of the unbound columns at once, w/o an NPE in
 				// Constraint#generateName's array sorting, simply create a fake Column.
-				columns[index] = new Column( logicalColumnName );
+				columns[index] = new Column( table.getNameIdentifier(), logicalColumnName, unique );
 				unboundNoLogical.add( columns[index] );
 			}
 		}
@@ -2029,92 +1809,94 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		final String originalKeyName = keyName;
 
 		if ( unique ) {
-			final Identifier keyNameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineUniqueKeyName(
-				new ImplicitUniqueKeyNameSource() {
-					@Override
-					public MetadataBuildingContext getBuildingContext() {
-						return buildingContext;
-					}
 
-					@Override
-					public Identifier getTableName() {
-						return table.getNameIdentifier();
-					}
+				final Identifier keyNameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineUniqueKeyName(
+						new ImplicitUniqueKeyNameSource() {
+							@Override
+							public MetadataBuildingContext getBuildingContext() {
+								return buildingContext;
+							}
 
-					private List<Identifier> columnNameIdentifiers;
+							@Override
+							public Identifier getTableName() {
+								return table.getNameIdentifier();
+							}
 
-					@Override
-					public List<Identifier> getColumnNames() {
-						// be lazy about building these
-						if ( columnNameIdentifiers == null ) {
-							columnNameIdentifiers = toIdentifiers( columnNames );
-						}
-						return columnNameIdentifiers;
-					}
+							private List<Identifier> columnNameIdentifiers;
 
-					@Override
+							@Override
+							public List<Identifier> getColumnNames() {
+								// be lazy about building these
+								if ( columnNameIdentifiers == null ) {
+									columnNameIdentifiers = toIdentifiers( columnNames );
+								}
+								return columnNameIdentifiers;
+							}
+
+				@Override
 					public Identifier getUserProvidedIdentifier() {
 						return originalKeyName != null ? Identifier.toIdentifier( originalKeyName ) : null;
 					}
-				}
-			);
-			keyName = keyNameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() );
+				});
+				keyName = keyNameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() );
 
-			UniqueKey uk = table.getOrCreateUniqueKey( keyName );
+
+			final MappedUniqueKey uk = table.getOrCreateUniqueKey( keyName );
 			for ( int i = 0; i < columns.length; i++ ) {
-				Column column = columns[i];
-				String order = orderings != null ? orderings[i] : null;
+				final Column column = columns[i];
+				final String order = orderings != null ? orderings[i] : null;
 				if ( table.containsColumn( column ) ) {
-					uk.addColumn( column, order );
+					uk.addColumn( (Column) table.getColumn( column ), order );
 					unbound.remove( column );
 				}
 			}
 		}
 		else {
-			final Identifier keyNameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineIndexName(
-				new ImplicitIndexNameSource() {
-					@Override
-					public MetadataBuildingContext getBuildingContext() {
-						return buildingContext;
-					}
 
-					@Override
-					public Identifier getTableName() {
-						return table.getNameIdentifier();
-					}
+				final Identifier keyNameIdentifier = getMetadataBuildingOptions().getImplicitNamingStrategy().determineIndexName(
+						new ImplicitIndexNameSource() {
+							@Override
+							public MetadataBuildingContext getBuildingContext() {
+								return buildingContext;
+							}
 
-					private List<Identifier> columnNameIdentifiers;
+							@Override
+							public Identifier getTableName() {
+								return table.getNameIdentifier();
+							}
 
-					@Override
-					public List<Identifier> getColumnNames() {
-						// be lazy about building these
-						if ( columnNameIdentifiers == null ) {
-							columnNameIdentifiers = toIdentifiers( columnNames );
-						}
-						return columnNameIdentifiers;
-					}
+							private List<Identifier> columnNameIdentifiers;
 
-					@Override
+							@Override
+							public List<Identifier> getColumnNames() {
+								// be lazy about building these
+								if ( columnNameIdentifiers == null ) {
+									columnNameIdentifiers = toIdentifiers( columnNames );
+								}
+								return columnNameIdentifiers;
+							}
+
+				@Override
 					public Identifier getUserProvidedIdentifier() {
 						return originalKeyName != null ? Identifier.toIdentifier( originalKeyName ) : null;
 					}
-				}
-			);
-			keyName = keyNameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() );
+				});
+				keyName = keyNameIdentifier.render( getDatabase().getJdbcEnvironment().getDialect() );
 
-			Index index = table.getOrCreateIndex( keyName );
+
+			final MappedIndex index = table.getOrCreateIndex( keyName );
 			for ( int i = 0; i < columns.length; i++ ) {
-				Column column = columns[i];
-				String order = orderings != null ? orderings[i] : null;
+				final Column column = columns[i];
+				final String order = orderings != null ? orderings[i] : null;
 				if ( table.containsColumn( column ) ) {
-					index.addColumn( column, order );
+					index.addColumn( (Column) table.getColumn( column ), order );
 					unbound.remove( column );
 				}
 			}
 		}
 
 		if ( unbound.size() > 0 || unboundNoLogical.size() > 0 ) {
-			StringBuilder sb = new StringBuilder( "Unable to create " );
+			final StringBuilder sb = new StringBuilder( "Unable to create " );
 			if ( unique ) {
 				sb.append( "unique key constraint (" );
 			}
@@ -2127,13 +1909,14 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			sb.setLength( sb.length() - 2 );
 			sb.append( ") on table " ).append( table.getName() ).append( ": database column " );
 			for ( Column column : unbound ) {
-				sb.append("'").append( column.getName() ).append( "', " );
+				sb.append( "'" ).append( column.getName() ).append( "', " );
 			}
 			for ( Column column : unboundNoLogical ) {
-				sb.append("'").append( column.getName() ).append( "', " );
+				sb.append( "'" ).append( column.getName() ).append( "', " );
 			}
 			sb.setLength( sb.length() - 2 );
-			sb.append( " not found. Make sure that you use the correct column name which depends on the naming strategy in use (it may not be the same as the property name in the entity, especially for relational types)" );
+			sb.append(
+					" not found. Make sure that you use the correct column name which depends on the naming strategy in use (it may not be the same as the property name in the entity, especially for relational types)" );
 			throw new AnnotationException( sb.toString() );
 		}
 	}
@@ -2143,7 +1926,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return;
 		}
 
-		for ( Table table : jpaIndexHoldersByTable.keySet() ) {
+		for ( MappedTable table : jpaIndexHoldersByTable.keySet() ) {
 			final List<JPAIndexHolder> jpaIndexHolders = jpaIndexHoldersByTable.get( table );
 			for ( JPAIndexHolder holder : jpaIndexHolders ) {
 				buildUniqueKeyFromColumnNames(
@@ -2158,7 +1941,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 	}
 
-	private Map<String,NaturalIdUniqueKeyBinder> naturalIdUniqueKeyBinderMap;
+	private Map<String, NaturalIdUniqueKeyBinder> naturalIdUniqueKeyBinderMap;
 
 	@Override
 	public NaturalIdUniqueKeyBinder locateNaturalIdUniqueKeyBinder(String entityName) {
@@ -2245,16 +2028,17 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return new MetadataImpl(
 					uuid,
 					options,
+					getBootstrapContext().getTypeConfiguration(),
+					entityMappingHierarchies,
 					identifierGeneratorFactory,
 					entityBindingMap,
 					mappedSuperClasses,
 					collectionBindingMap,
-					typeDefinitionMap,
 					filterDefinitionMap,
 					fetchProfileMap,
 					imports,
 					idGeneratorDefinitionMap,
-					namedQueryMap,
+					namedHqlQueryMap,
 					namedNativeQueryMap,
 					namedProcedureCallMap,
 					sqlResultSetMappingMap,
@@ -2262,6 +2046,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 					sqlFunctionMap,
 					regionConfigBuilders.values(),
 					getDatabase(),
+					auditMetadataBuilder,
 					bootstrapContext
 			);
 		}
@@ -2274,7 +2059,10 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		// for now we only handle id generators as ExportableProducers
 
 		final Dialect dialect = getDatabase().getJdbcEnvironment().getDialect();
-		final String defaultCatalog = extractName( getDatabase().getDefaultNamespace().getName().getCatalog(), dialect );
+		final String defaultCatalog = extractName(
+				getDatabase().getDefaultNamespace().getName().getCatalog(),
+				dialect
+		);
 		final String defaultSchema = extractName( getDatabase().getDefaultNamespace().getName().getSchema(), dialect );
 
 		for ( PersistentClass entityBinding : entityBindingMap.values() ) {
@@ -2318,7 +2106,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		//		it could be done better
 		try {
 			final IdentifierGenerator ig = identifierValueBinding.createIdentifierGenerator(
-					getIdentifierGeneratorFactory(),
+					options.getServiceRegistry().getService( MutableIdentifierGeneratorFactory.class ),
 					dialect,
 					defaultCatalog,
 					defaultSchema,
@@ -2334,7 +2122,10 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			// by tools.  We want to hold off requiring classes being present until we
 			// try to build a SF.  Here, just building the Metadata, it is "ok" for an
 			// exception to occur, the same exception will happen later as we build the SF.
-			log.debugf( "Ignoring exception thrown when trying to build IdentifierGenerator as part of Metadata building", e );
+			log.debugf(
+					"Ignoring exception thrown when trying to build IdentifierGenerator as part of Metadata building",
+					e
+			);
 		}
 	}
 

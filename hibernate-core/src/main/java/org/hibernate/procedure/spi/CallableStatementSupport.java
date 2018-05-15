@@ -13,20 +13,14 @@ import java.util.List;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.procedure.internal.ProcedureParamBindings;
 import org.hibernate.query.procedure.internal.ProcedureParameterMetadata;
+import org.hibernate.sql.exec.spi.JdbcCallFunctionReturn;
+import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 
 /**
  * @author Steve Ebersole
  */
 public interface CallableStatementSupport {
-	default String renderCallableStatement(
-			String name,
-			ParameterStrategy parameterStrategy,
-			List<ParameterRegistrationImplementor<?>> parameterRegistrations,
-			SharedSessionContractImplementor session) {
-		throw new UnsupportedOperationException(
-				"Legacy #renderCallableStatement called but implementation does not support that call."
-		);
-	}
+	boolean shouldUseFunctionSyntax(ParameterRegistry parameterRegistry);
 
 	default String renderCallableStatement(
 			String procedureName,
@@ -45,6 +39,7 @@ public interface CallableStatementSupport {
 			String procedureName,
 			CallableStatement statement,
 			ParameterStrategy parameterStrategy,
-			List<ParameterRegistrationImplementor<?>> parameterRegistrations,
+			JdbcCallFunctionReturn functionReturn,
+			List<JdbcCallParameterRegistration > parameterRegistrations,
 			SharedSessionContractImplementor session);;
 }

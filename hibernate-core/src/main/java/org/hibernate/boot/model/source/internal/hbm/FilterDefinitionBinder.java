@@ -14,6 +14,8 @@ import javax.xml.bind.JAXBElement;
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmFilterDefinitionType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmFilterParameterType;
+import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
+import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.type.Type;
@@ -36,7 +38,7 @@ public class FilterDefinitionBinder {
 	public static void processFilterDefinition(
 			HbmLocalMetadataBuildingContext context,
 			JaxbHbmFilterDefinitionType jaxbFilterDefinitionMapping) {
-		Map<String,Type> parameterMap = null;
+		Map<String, Type> parameterMap = null;
 		String condition = jaxbFilterDefinitionMapping.getCondition();
 
 		for ( Serializable content : jaxbFilterDefinitionMapping.getContent() ) {
@@ -69,13 +71,16 @@ public class FilterDefinitionBinder {
 				}
 
 				if ( parameterMap == null ) {
-					parameterMap = new HashMap<String, Type>();
+					parameterMap = new HashMap<>();
 				}
 
-				parameterMap.put(
-						jaxbParameterMapping.getParameterName(),
-						context.getMetadataCollector().getTypeResolver().heuristicType( jaxbParameterMapping.getParameterValueTypeName() )
+				final BasicTypeResolver basicTypeResolver = new BasicTypeResolverExplicitNamedImpl(
+						context,
+						jaxbParameterMapping
+								.getParameterValueTypeName()
 				);
+
+				parameterMap.put( jaxbParameterMapping.getParameterName(), basicTypeResolver.resolveBasicType() );
 			}
 		}
 

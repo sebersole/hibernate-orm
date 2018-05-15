@@ -10,9 +10,8 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.CollectionType;
-import org.hibernate.type.PrimitiveType;
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.type.descriptor.java.spi.Primitive;
 
 /**
  * An array mapping has a primary key consisting of the key columns + index column.
@@ -26,8 +25,8 @@ public class Array extends List {
 	 * @deprecated Use {@link Array#Array(MetadataBuildingContext, PersistentClass)} instead.
 	 */
 	@Deprecated
-	public Array(MetadataImplementor metadata, PersistentClass owner) {
-		super( metadata, owner );
+	public Array(MetadataBuildingContext buildingContext, PersistentClass owner) {
+		super( buildingContext, owner );
 	}
 
 	public Array(MetadataBuildingContext buildingContext, PersistentClass owner) {
@@ -36,14 +35,14 @@ public class Array extends List {
 
 	public Class getElementClass() throws MappingException {
 		if ( elementClassName == null ) {
-			org.hibernate.type.Type elementType = getElement().getType();
 			return isPrimitiveArray()
-					? ( (PrimitiveType) elementType ).getPrimitiveClass()
-					: elementType.getReturnedClass();
+					? ( (Primitive) getElement().getJavaTypeMapping().resolveJavaTypeDescriptor() ).getPrimitiveClass()
+					: getElement().getJavaTypeMapping().resolveJavaTypeDescriptor().getJavaType();
 		}
 		else {
 			try {
-				return getMetadata().getMetadataBuildingOptions()
+				return getMetadataBuildingContext()
+						.getBuildingOptions()
 						.getServiceRegistry()
 						.getService( ClassLoaderService.class )
 						.classForName( elementClassName );
@@ -52,13 +51,6 @@ public class Array extends List {
 				throw new MappingException( e );
 			}
 		}
-	}
-
-	@Override
-	public CollectionType getDefaultCollectionType() throws MappingException {
-		return getMetadata().getTypeResolver()
-				.getTypeFactory()
-				.array( getRole(), getReferencedPropertyName(), getElementClass() );
 	}
 
 	@Override

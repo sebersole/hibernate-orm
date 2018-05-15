@@ -11,7 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.type.internal.TypeHelper;
 
 /**
  * Structured CacheEntry format for entities.  Used to store the entry into the second-level cache
@@ -24,14 +25,14 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 	public static final String SUBCLASS_KEY = "_subclass";
 	public static final String VERSION_KEY = "_version";
 
-	private EntityPersister persister;
+	private EntityDescriptor persister;
 
 	/**
 	 * Constructs a StructuredCacheEntry strategy
 	 *
 	 * @param persister The persister whose data needs to be structured.
 	 */
-	public StructuredCacheEntry(EntityPersister persister) {
+	public StructuredCacheEntry(EntityDescriptor persister) {
 		this.persister = persister;
 	}
 
@@ -41,16 +42,18 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 		final Map map = (Map) structured;
 		final String subclass = (String) map.get( SUBCLASS_KEY );
 		final Object version = map.get( VERSION_KEY );
-		final EntityPersister subclassPersister = factory.getEntityPersister( subclass );
+		final EntityDescriptor subclassPersister = factory.getEntityPersister( subclass );
 		final String[] names = subclassPersister.getPropertyNames();
 		final Serializable[] disassembledState = new Serializable[names.length];
 		for ( int i = 0; i < names.length; i++ ) {
 			disassembledState[i] = (Serializable) map.get( names[i] );
 		}
+
 		return new StandardCacheEntryImpl(
-			disassembledState,
-			subclass,
-			version
+				state,
+				TypeHelper.toLoggableString( state, subclassPersister ),
+				subclass,
+				version
 		);
 	}
 

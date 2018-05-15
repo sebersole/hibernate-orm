@@ -12,7 +12,7 @@ import org.hibernate.cache.spi.access.AccessType;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractDomainDataCachingConfig implements DomainDataCachingConfig {
+public class AbstractDomainDataCachingConfig implements DomainDataCachingConfig {
 	private final AccessType accessType;
 
 	public AbstractDomainDataCachingConfig(AccessType accessType) {

@@ -18,15 +18,15 @@ import javax.persistence.StoredProcedureParameter;
 
 import org.hibernate.MappingException;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.engine.ResultSetMappingDefinition;
-import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
+import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.internal.ProcedureCallMementoImpl;
 import org.hibernate.procedure.internal.Util;
 import org.hibernate.procedure.spi.ParameterStrategy;
+import org.hibernate.sql.results.internal.RowReaderNoResultsExpectedImpl;
+import org.hibernate.sql.results.spi.QueryResult;
 
 import static org.hibernate.procedure.internal.ProcedureCallMementoImpl.ParameterMemento;
 
@@ -76,11 +76,16 @@ public class NamedProcedureCallDefinition {
 		return procedureName;
 	}
 
+	// todo (6.0) : (reminder) - I believe both ProcedureCallMemento and NamedProcedureCallDefinition are replaced and should be removed
+	//		replaced by:
+	//			* NamedCallableQueryDefinition
+	//			* NamedCallableQueryDescriptor
+
 	public ProcedureCallMemento toMemento(
-			final SessionFactoryImpl sessionFactory,
-			final Map<String,ResultSetMappingDefinition> resultSetMappingDefinitions) {
-		final List<NativeSQLQueryReturn> collectedQueryReturns = new ArrayList<NativeSQLQueryReturn>();
-		final Set<String> collectedQuerySpaces = new HashSet<String>();
+			final SessionFactoryImplementor sessionFactory,
+			final Map<String,ResultSetMappingDescriptor> resultSetMappingDefinitions) {
+		final List<QueryResult> collQueryResults = new ArrayList<>();
+		final Set<String> collectedQuerySpaces = new HashSet<>();
 
 		final boolean specifiesResultClasses = resultClasses != null && resultClasses.length > 0;
 		final boolean specifiesResultSetMappings = resultSetMappings != null && resultSetMappings.length > 0;
@@ -94,8 +99,8 @@ public class NamedProcedureCallDefinition {
 						}
 
 						@Override
-						public void addQueryReturns(NativeSQLQueryReturn... queryReturns) {
-							Collections.addAll( collectedQueryReturns, queryReturns );
+						public void addQueryResult(QueryResult... queryReturns) {
+							Collections.addAll( collQueryResults, queryReturns );
 						}
 
 						@Override
@@ -115,13 +120,13 @@ public class NamedProcedureCallDefinition {
 						}
 
 						@Override
-						public ResultSetMappingDefinition findResultSetMapping(String name) {
+						public ResultSetMappingDescriptor findResultSetMapping(String name) {
 							return resultSetMappingDefinitions.get( name );
 						}
 
 						@Override
-						public void addQueryReturns(NativeSQLQueryReturn... queryReturns) {
-							Collections.addAll( collectedQueryReturns, queryReturns );
+						public void addQueryReturns(QueryResult... queryReturns) {
+							Collections.addAll( collQueryResults, queryReturns );
 						}
 
 						@Override
@@ -132,12 +137,12 @@ public class NamedProcedureCallDefinition {
 					resultSetMappings
 			);
 		}
-
+		
 		return new ProcedureCallMementoImpl(
 				procedureName,
-				collectedQueryReturns.toArray( new NativeSQLQueryReturn[ collectedQueryReturns.size() ] ),
 				parameterDefinitions.getParameterStrategy(),
 				parameterDefinitions.toMementos( sessionFactory ),
+				RowReaderNoResultsExpectedImpl.INSTANCE,
 				collectedQuerySpaces,
 				hints
 		);
@@ -174,7 +179,7 @@ public class NamedProcedureCallDefinition {
 			return parameterStrategy;
 		}
 
-		public List<ParameterMemento> toMementos(SessionFactoryImpl sessionFactory) {
+		public List<ParameterMemento> toMementos(SessionFactoryImplementor sessionFactory) {
 			final List<ParameterMemento> mementos = new ArrayList<ParameterMemento>();
 			for ( ParameterDefinition definition : parameterDefinitions ) {
 				mementos.add(definition.toMemento( sessionFactory ));
@@ -231,8 +236,8 @@ public class NamedProcedureCallDefinition {
 			this.explicitPassNullSetting = explicitPassNullSetting;
 		}
 
-		@SuppressWarnings("UnnecessaryUnboxing")
-		public ParameterMemento toMemento(SessionFactoryImpl sessionFactory) {
+		@SuppressWarnings({"UnnecessaryUnboxing", "unchecked"})
+		public ParameterMemento toMemento(SessionFactoryImplementor sessionFactory) {
 			final boolean initialPassNullSetting = explicitPassNullSetting != null
 					? explicitPassNullSetting.booleanValue()
 					: sessionFactory.getSessionFactoryOptions().isProcedureParameterNullPassingEnabled();
@@ -242,7 +247,7 @@ public class NamedProcedureCallDefinition {
 					name,
 					parameterMode,
 					type,
-					sessionFactory.getTypeResolver().heuristicType( type.getName() ),
+					sessionFactory.getTypeConfiguration().getBasicTypeRegistry().getBasicType( type ),
 					initialPassNullSetting
 			);
 		}

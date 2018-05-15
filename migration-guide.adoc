@@ -1,114 +1,150 @@
-= 5.3 Migration Guide
+= 6.0 Migration Guide
 :toc:
 
-This guide discusses migration from Hibernate ORM version 5.2 to version 5.3.  For migration from
+This guide discusses migration from Hibernate ORM version 5.2 to version 6.0.  For migration from
 earlier versions, see any other pertinent migration guides as well.
 
 == Background
 
-Hibernate 5.3 adds support for the JPA 2.2 specification
+6.0 introduces major changes, such as:
+
+* refactoring Hibernate's Type contract to unify Hibernate ORM, JPA and SQM type systems
+* migration to SQM for query interpretation/representation
+** HQL/JPQL
+** (JPA) criteria queries
+
+Additionally, `hibernate-envers` has been made part of `hibernate-core` and better integrated
+from an API perspective.
 
 
-== Known changes
+== Major changes
 
-=== Changes to positional query parameter handling
-
-This really breaks down into 2 related changes:
-
-* Support for JDBC-style parameter declarations in HQL/JPQL queries has been removed.  This feature
-    has been deprecated since 4.1 and removing it made implementing the second change, so we decided
-    to remove that support.  JDBC-style parameter declaration is still supported in native-queries.
-* Since JPA positional parameters really behave more like named parameters (they can be repeated,
-    declared in any order, etc.) Hibernate used to treat them as named parameters - it relied on
-    Hibernate's JPA wrapper to interpret the JPA setParameter calls and properly handle delegating to
-    the named variant.  This is actually a regression in 5.2 as it causes
-    `javax.persistence.Parameter#getPosition` to report `null`.
-
-For JDBC-style parameter declarations in native queries, we have also moved to using one-based
-instead of zero-based parameter binding to be consistent with JPA.  That can temporarily be
-reverted by setting the `hibernate.query.sql.jdbc_style_params_base` setting to `true` which
-reverts to expecting zero-based binding.
-
-
-=== Change in the `@TableGenerator` stored value
-
-In order to be compliant with the JPA specification, the sequence value stored by Hibernate 5.3 in the database table used by the `javax.persistence.TableGenerator`
-is the *last* generated value. Previously, Hibernate stored the *next* sequence value.
-
-For backward compatibility, a new setting called `hibernate.id.generator.stored_last_used` was introduced, which gives you the opportunity to fall back to the old Hibernate behavior.
-
-[NOTE]
-====
-Existing applications migrating to 5.3 and using the `@TableGenerator` have to set the `hibernate.id.generator.stored_last_used` configuration property to `false`.
-====
-
-
-=== Second-level cache provider SPI changes
-
-Hibernate's second-level cache SPI needed to be redesigned to match with expectations between
-Hibernate and the various caching providers.  And the SPI did not really clarify the intention.
-These mis-matched expectations certainly had the potential to lead to bugs.  Although it was
-originally slated for 6.0 to delay the SPI changes, we decided to back-port the work to
-5.3 to address a number of bugs that could have been avoided with a clarified SPI.
-
-The changes also allow the caching providers to perform serious optimizations based on
-the users configuration of domain data caching in Hibernate.
-
-Details can be seen on the https://hibernate.atlassian.net/browse/HHH-11356[HHH-11356] Jira issue
-
-One potential upgrade concern is any custom `org.hibernate.cache.spi.QueryCacheFactory` implementations.
-`org.hibernate.cache.spi.QueryCacheFactory` was meant as a means to allow service providers the
-ability to define query result caching, generally with more stale-tolerant query result invalidation handling.
-However, the contract also bound it to the old second level cache contracts so they had to be
-updated.  Its responsibilities also changed so we also decided to "rename it" to
-`org.hibernate.cache.spi.TimestampsCacheFactory`
-
-Another specific change to be aware of is accessing cache entries via `SecondLevelCacheStatistics#getEntries`
-and `NaturalIdCacheStatistics#getEntries`.  These methods have been deprecated, however the new
-caching SPI does not really require caching providers to support this.  As of 5.3 these methods
-inherently return an empty Map (`Collections#emptyMap`).  This has always been something that providers
-did not implement "correctly" anyway
-
-
-=== Statistics changes
-
-The change for HHH-11356 required changes in its consumers.  One such consumer is the Hibernate
-Statistics system....
-
-
-=== Drop hibernate-infinispan module
-
-Support for using Infinispan as a Hibernate 2nd-level cache provider has been moved to the Infinispan project so
-the `hibernate-infinispan` module has been dropped.
-
-A relocation pom which is pointing to `org.infinispan:infinispan-hibernate-cache` dependency is still generated,
-therefore, avoiding the need of updating any library dependency.
-
-[WARN]
-====
-The relocation pom may be dropped in a future release.
-====
-
-
-=== EnhancementTask changes
-
-The API of the `org.hibernate.tool.enhance.EnhancementTask` Ant task was changed, specifically
-the `#addFileset` method was dropped in favor of `#setBase` and `#setDir`
-
-See details on the https://hibernate.atlassian.net/browse/HHH-11795[HHH-11795] Jira issue.
-
-The main gist is that EnhancementTask was fixed (through a contribution) to actually work with
-`Enhancer` from `BytecodeProvider`.  Previously it had not.  And part of fixing that required this
-change.
+	* Query and SQL execution performance (HHH-11358, HHH-10954)
+	* Maven group/artifact id changes (HHH-11444)
+	* Re-write of Hibernate's run-time metamodel (HHH-11358, HHH-10873)
+		* persister -> metamodel
+		* introduction of run-time relational model as first class citizen
+	* Improvements in boot-time model and its creation as well as processing into runtime-model
+		* Introduction of `BootstrapContext`
+		* Introduction of `TypeConfiguration` (which has run-time impact as well)
+		* Initial re-design of Hibernate's boot-time model.  This will continue in 7.0 as we transition to
+			Jandex as the basis for annotation and XML processing
+	* Schema tooling is now based on this run-time relational model instead of the boot-time model.  Leads
+		to better application of `PhysicalNamingStrategy` - delayed until we begin building the run-time
+		relational model (HHH-11760)
+	* Envers folded into `hibernate-core` proper - allows for more seamless "integration" (HHH-10755)
 
 
 
-=== 5.3 -> 6.0 compatibility changes
+== Known integration impacts
 
-The original driving force behind these series of changes is an effort to be as proactive as possible
-about designing compatibility between 5.3 and 6.0.
+	* The move to drive schema tooling based on the runtime relational model affects the various
+	 	`org.hibernate.tool.schema.spi` delegates in that we have to now pass `?` instead of
+	 	`org.hibernate.boot.Metadata`.
+	* The creation of `org.hibernate.naming` and moving logical and physical naming strategies
+		there cause a need for custom implementors to change source
+	* PersisterCreationContext -> RuntimeModelCreationContext
+	* PersisterFactory -> RuntimeModelNodeFactory
+	* PersisterClassResolver -> RuntimeModelNodeClassResolver
+	* `org.hibernate.persister` moved to `org.hibernate.metamodel`.  Also most references
+		to "persister" are replaced with "more appropriate names"
+	* `org.hibernate.mapping` deprecated in favor of the new `org.hibernate.boot.model` package
+	* `org.hibernate.dialect.function.SQLFunction` -> `org.hibernate.query.sqm.produce.function.SqmFunctionTemplate`
+	* Removal of `org.hibernate.loader.custom.CustomQuery` support in favor of the generalized
+		`org.hibernate.sql.exec.spi.JdbcOperation` handling via the Session's JdbcCoordinator
 
 
-==== Type system changes
+== Removed deprecations
 
-Use of NavigableRole, back-ported from 6.0 rather than plain String
+	* Legacy criteria support (`org.hibernate.criterion` package mainly) - The legacy Hibernate criteria API
+		as a whole has been deprecated all the way back to ?.  Time to clean up
+
+
+== Things that (might) make sense in a boot-only ServiceRegistry
+
+* ClassmateContext
+* Jandex/HCANN access
+* BasicTypeProducerRegistry
+
+At the moment this is being developed as `org.hibernate.boot.spi.BootstrapContext`.
+
+A general theme to remember is that there are certain things we need during the bootstrap process,
+but that we should unequivocally not hold reference to after:
+
+* ClassmateContext
+* BasicTypeProducerRegistry
+* Jandex IndexView
+* HCANN ReflectionManager, ClassLoaderDelegate, etc
+* JPA "temp ClassLoader" (and ClassLoaderAccess?)
+* Scanning / ArchiveDescriptor delegates
+* List<CacheRegionDefinition> (this is an exposed collector)
+* List<AttributeConverterDefinition>
+* List<AuxiliaryDatabaseObject>
+
+Some of these need to be exposed on the "BootstrapContext", some exposed on the
+MetadataBuilder/MetadataBuildingOptions.  Remember though that MetadataBuildingOptions portion
+of the MetadataBuilder/MetadataBuildingOptions combo is passed and held on the SessionFactory; so
+anything that we should not hold reference to after bootstrap should not be defined on this contract.
+
+
+== Misc
+
+* removed `org.hibernate.type.TypeHelper` and `org.hibernate.type.TypeResolver`, as well as methods exposing
+	access to them.  For the most part, replace with calls to `org.hibernate.Metamodel`
+	and/or `org.hibernate.type.spi.TypeConfiguration`.
+* removed `org.hibernate.type.TypeFactory` in favor of `TypeConfiguration`
+*  I think SqlTypeDescriptor should have some say in determining the JdbcLiteralFormatter to use.  Currently this is
+	defined on the mapper Type and the JavaTypeDescriptor.  But really its the fact that its a VARCHAR that dictates
+	that a literal should be quoted, e.g.
+* Moved `org.hibernate.jpa.event.spi.jpa.ExtendedBeanManager` to `org.hibernate.resource.cdi.spi.ExtendedBeanManager` although
+	`org.hibernate.jpa.event.spi.jpa.ExtendedBeanManager` was left in placce as a shadow (deprecated, extending the new
+	contract) to ease migrations
+
+== Envers 6.0 Migration Incompatibilities
+
+In 6.0, Envers users that use the `ValidityAuditStrategy` receive improved support for database partitioning for their
+audit tables based on the revision end timestamp column.  Prior to 6.0, entities that used the `JOINED` inheritance
+strategy and that were audited only stored the revision end timestamp in the root entity's audit table.  For cases
+where users want to partition their inheritance-based tables equally based on the revision timestamp, this wasn't
+possible without exploring the use of database triggers or other means to replicate the values after the fact
+rather than Envers doing this for you.
+
+With this release, Envers ships with this support enabled by default.  So if you use the `ValidityAuditStrategy` and
+you audit an inheritance strategy that uses `JOINED` inheritance you need to be aware of these changes during your
+migration.  If you use Hibernate's Schema Management to update your schema, this should be seamless.  For users that
+manage their schema manually, you either need to decide to support the feature or use the legacy behavior.
+
+To enable the legacy behavior, set `org.hibernate.envers.audit_strategy_validity_legacy_revend_timestamp` to `true`
+and Envers won't expect this new column to exist on the joined subclass audit tables and won't try to update/set the
+the value.
+
+To manually manipulate your schema, simply add a revison end timestamp column to your joined subclass audit table
+that mirrors the column maintained in your entity's root entity audit table.
+
+Once the column exists, you can:
+
+ * Elect to leave the field empty
+ * Seed it with a sentinel value if you don't intend to use partitioning based on the field's value
+ * Replicate the value from the root entity audit table for the revision end timestamp.  Replication should be based
+   on the entity's primary key value and revision number.
+
+== todo
+
+* need to split AttributeConverterDescriptor from AttributeConverterDefinition.  The former is the "bootstrap view" of
+	an AttributeConverter, whereas the latter is the runtime view of it.  In the bootstrap view we want to minimize
+	access to the AttributeConverter instance (unless we were handed an instance).  Also AttributeConverterDescriptor
+	needs to define the shouldAutoApplyToXYZ methods whereas that would not be appropriate for the runtime view.
+* merge `org.hibernate.jpa.AvailableSettings` into `org.hibernate.cfg.AvailableSettings`
+* design appropriate "keys" into the various "query interpretation" caches based on SQM.
+* ideally (perf wise) we'd "build and collect" ParameterMetadata as we build the SQM.  The alternative is to
+ 	build the SQM and then walk it to "build and collect" ParameterMetadata (extra walk).  This would mean either:
+ 	** collecting/storing and exposing the parameters on the SqmStatement itself
+ 	** passing an "ExpressionVisitor" into the SQM interpreter.
+* there is really nothing SQM-specific in most of the `org.hibernate.sql.sqm.exec.spi` contracts.  Let's get
+	them finished up, clean them up and consider moving to a new `org.hibernate.sql.exec.spi` package.  Much of
+	this is usable from NativeQuery as well...
+
+
+== additional "JPA compliance" checks
+
+* ConstructorResult arguments should only be ColumnResults type.

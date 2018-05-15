@@ -28,9 +28,8 @@ import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 public class SessionFactoryServiceRegistryImpl
 		extends AbstractServiceRegistryImpl
 		implements SessionFactoryServiceRegistry, SessionFactoryServiceInitiatorContext {
-
-	private final SessionFactoryOptions sessionFactoryOptions;
 	private final SessionFactoryImplementor sessionFactory;
+	private final SessionFactoryOptions sessionFactoryOptions;
 	private EventListenerRegistry cachedEventListenerRegistry;
 
 	private final BootstrapContext bootstrapContext;
@@ -49,10 +48,11 @@ public class SessionFactoryServiceRegistryImpl
 		this.sessionFactoryOptions = sessionFactoryOptions;
 		this.bootstrapContext = bootstrapContext;
 
-		// for now, just use the standard initiator list
+		this.bootstrapContext = bootstrapContext;
+
 		for ( SessionFactoryServiceInitiator initiator : initiators ) {
-			// create the bindings up front to help identify to which registry services belong
 			createServiceBinding( initiator );
+			initiateService( initiator );
 		}
 
 		for ( ProvidedService providedService : providedServices ) {
@@ -96,6 +96,26 @@ public class SessionFactoryServiceRegistryImpl
 	}
 
 	@Override
+	public BootstrapContext getBootstrapContext() {
+		return bootstrapContext;
+	}
+
+	@Override
+	public SessionFactoryImplementor getSessionFactory() {
+		return sessionFactory;
+	}
+
+	@Override
+	public SessionFactoryOptions getSessionFactoryOptions() {
+		return sessionFactoryOptions;
+	}
+
+	@Override
+	public ServiceRegistryImplementor getServiceRegistry() {
+		return this;
+	}
+
+	@Override
 	public <R extends Service> R getService(Class<R> serviceRole) {
 
 		//HHH-11051 cache EventListenerRegistry
@@ -108,5 +128,4 @@ public class SessionFactoryServiceRegistryImpl
 
 		return super.getService( serviceRole );
 	}
-
 }

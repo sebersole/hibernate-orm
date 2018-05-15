@@ -6,13 +6,33 @@
  */
 package org.hibernate.graph.spi;
 
+import java.util.Map;
 import javax.persistence.AttributeNode;
-import javax.persistence.metamodel.Attribute;
+
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 
 /**
+ * Hibernate extension to the JPA entity-graph AttributeNode contract.
+ *
  * @author Strong Liu <stliu@hibernate.org>
+ * @author Steve Ebersole
+ * @author Andrea Boriero
  */
 public interface AttributeNodeImplementor<T> extends AttributeNode<T> {
-	public Attribute<?,T> getAttribute();
-	public AttributeNodeImplementor<T> makeImmutableCopy();
+	/**
+	 * @deprecated Use {@link #getPersistentAttribute()} instead
+	 */
+	@Deprecated
+	PersistentAttribute<?,T> getAttribute();
+
+	default PersistentAttribute<?, T> getPersistentAttribute() {
+		return getAttribute();
+	}
+
+	Map<Class, SubGraphImplementor> subGraphs();
+	Map<Class, SubGraphImplementor> keySubGraphs();
+
+	AttributeNodeImplementor<T> makeImmutableCopy();
+
+	SubGraphImplementor<T> extractSubGraph(PersistentAttribute<?,T> persistentAttribute);
 }

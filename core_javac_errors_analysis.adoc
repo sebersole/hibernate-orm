@@ -1,0 +1,516 @@
+## TwoPhaseLoad
+
+These errors can be ignored.  TwoPhaseLoad is effectively replaced by
+`JdbcValuesSourceProcessingState`, `QueryResultAssembler` and `Initializer`.
+This class can really just be removed, although we do need to make sure that
+all of the functionality in TwoPhaseLoad makes it into the new design.
+
+
+However we could look back to 5.2 to have view of TwoPhaseLoad
+rather than keeping it on 6.0 branch.  We decided to keep TwoPhaseLoad
+around until it is the only remaining compile errors and then we will
+remove it and handle the compile errors that creates from code that
+references TwoPhaseLoad.
+
+
+
+## Type/Navigable
+
+Failures related to Type and Navigable
+
+
+
+
+### Attribute-specific
+
+The 2 main issues here are:
+
+	1. Attribute's Type - Type is no longer used for this purpose; need to adjust these to calls of
+		Navigable/PersistentAttribute and the Navigable/PersistentAttribute components (JavaTypeDescriptor,
+		PropertyAccess, etc)
+	2. An attribute's position as the means to access parts of the attribute, rather than the
+		Navigable/PersistentAttribute itself
+
+The first is actually pretty trivial to fix.  The second takes more thought, work and changes.  The main issue
+being accessing the individual parts of a "domain-values" array which is a multi-dimensional array which
+defines the state "between" the domain model and relational model view of the data.  It can be viewed as the
+decomposed state of a Navigable, each index representing a sub-Navigable.  It can also be viewed as the composed
+state of a JDBC-values array.  The concern is how each array element is mapped back to the proper sub-Navigable.
+
+E.g., consider a `Person` entity:
+
+[code]
+----
+@Entity
+class Person {
+	@Id
+	Integer id;
+	@Embedded
+	Name name;
+	@Convert( converter=SexConverter.class )
+	Sex sex;
+	....
+}
+----
+
+
+We'd end up with a domain-values array that looks like:
+
+[code]
+----
+[0] = {
+		[0] = "First-name",
+		[1] = "Last-name"
+	},
+[1] = Sex.MALE,
+...
+----
+
+although the JDBC-values array would have looked like:
+
+[code]
+----
+[0] = 1234, // the id value
+[1] = "First-name",
+[2] = "Last-name"
+[3] = "M",
+...
+----
+
+
+What would be awesome is a way to also keep the Navigable that each value came from, visually:
+
+[code]
+----
+[0] = Value {
+	Navigable = name,
+	value = {
+		[0] = Value {
+			Navigable = firstName,
+			value = "First-name"
+		},
+		[1] = Value {
+			Navigable = lastName,
+			value = "Last-name"
+		}
+	}
+}
+----
+
+although that would likely be inefficient in terms of allocations and memory space.
+
+
+`org.hibernate.sql.results.spi.EntitySqlSelectionMappings` and `CompositeSqlSelectionMappings`
+are intended to describe this transformation, based on the initial design of
+`org.hibernate.sql.results.spi.Initializer`
+
+
+My initial thought for a solution is to define a method like:
+
+[code]
+----
+interface NavigableContainer<J> ... {
+    ...
+    Object[] reduce(J instance, Session session);
+}
+
+// and
+
+interface PersistentAttribute<O,J> ... {
+    Object reduce(O containerInstance, Session session);
+}
+----
+
+
+(as well as their corollaries).  Possibly even a form accepting a "filter" (functional predicate)
+
+E.g.
+
+[code]
+----
+Object[] currentState = entityDescriptor.reduce( entity, session );
+
+EntityDescriptorJ> ... {
+    @Override
+    public Object[] reduce(J instance, Session session) {
+    	// todo (6.0) : ultimately hook in ReflectionOptimizer.AccessOptimizer
+
+    	// otherwise...
+    	List result = new ArrayList();
+    	// todo (6.0) : id, version, etc?
+    	visitAttributes(
+    			attribute -> results.add(
+    					attribute.getPropertyAccess().getGetter().get( instance )
+    			);
+    	);
+    }
+}
+----
+
+
+
+
+A related consideration is "hydrated state" versus "resolved state".  Currently (6.0 as well
+as >= 5.2) what happens is the following:
+
+	1. create the hydrated state array
+	2. create a deep-copy (`TypeHelper#deepCopy`) of that hydrated state array to use in EntityEntry#loadedState, etc
+	3. resolved the hydrated state "in place" (same array instance)
+
+E.g., simplified, this looks like:
+
+[code]
+----
+// Step 1 - create the hydrated state array
+Object[] hydratedState = ...;
+
+// Step 2 - create a deep copy of the array and "saves" that copy
+// somewhere (EntityEntry, etc)
+saveStateArray( deepCopy( hydratedState ) );
+
+// Step 3 - resolve the individual values of this `hydratedState` array
+// but do so in place
+Object[] resolvedState = new Object[hydratedState.length];
+entityDescriptor.stateArrayContributorStream().forEach(
+    attribute -> attribute.resolveHydratedState(
+    		hydratedState[ attribute.getStateArrayPosition() ],
+    		session,
+    		entityInstance
+    )
+);
+
+// a more "stream-y" solution might be:
+Object[] resolvedState = entityDescriptor.stateArrayContributorStream()
+		.map( attribute -> attribute.resolveHydratedState(
+				hydratedState[ attribute.getStateArrayPosition() ],
+				session,
+				entityInstance
+		)
+		.collect( StreamUtils.toArray( Object.class ) );
+----
+
+NOTE: for step 3 above, consider an array Collector similar to
+
+This algorithm works specifically because of the copy in (2).  But the important thing
+to note is that we still have 2 separate arrays: `hydratedState` and the deep-copied
+array.  In my opinion though, this algorithm hides this important fact and thus
+I personally think it makes things confusing.
+
+A potential alternative that is functionally the same is:
+
+	1. create the hydrated state array
+	2. use that hydrated state array in EntityEntry#loadedState, etc
+	3. create a new array that is the resolved copy of the hydrated state
+
+This would look something like:
+
+[code]
+----
+----
+
+  Personally I think this is confusing
+
+	//
+	// 		the above works because of the copy (2).  however, it would conceptually be the same to:
+	//			1) create the hydrated state array
+	//			2) use that hydrated state array in EntityEntry#loadedState, etc
+	//			3) create a new array that is the resolved copy of the hydrated state
+	//
+	//		decide which is more understandable
+
+### Entity metadata (1)
+
+
+Various errors dealing with entity metadata including versioning, natural-ids, attribute "position", etc
+
+
+[code]
+----
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/TwoPhaseLoad.java:320: error: cannot find symbol
+			return entityEntry.getPersister().hasLazyProperties()
+			                                 ^
+  symbol:   method hasLazyProperties()
+  location: interface EntityDescriptor
+
+----
+
+
+
+
+### PersistentCollection metadata (14)
+
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:732: error: cannot find symbol
+			return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityPersister() ) );
+			                                                                     ^
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+  symbol:   method getOwnerEntityPersister()
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/action/internal/QueuedOperationCollectionAction.java:43: error: cannot find symbol
+		getPersistentCollectionDescriptor().processQueuedOps( getCollection(), getKey(), getSession() );
+		                                   ^
+  symbol:   method processQueuedOps(PersistentCollection,Serializable,SharedSessionContractImplementor)
+  location: interface PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/loading/internal/CollectionLoadContext.java:309: error: cannot find symbol
+						final Serializable ownerKey = persister.getOwnerEntityPersister().getIdentifier( linkedOwner, session );
+						                                       ^
+  symbol:   method getOwnerEntityPersister()
+  location: variable persister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/spi/EntityUniqueKey.java:46: error: cannot find symbol
+		this.keyType = keyType.getSemiResolvedType( factory );
+		                      ^
+  symbol:   method getSemiResolvedType(SessionFactoryImplementor)
+  location: variable keyType of type Type
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/event/spi/AbstractCollectionEvent.java:75: error: cannot find symbol
+				( collectionPersister == null ? null : collectionPersister.getOwnerEntityPersister().getEntityName() );
+				                                                          ^
+  symbol:   method getOwnerEntityPersister()
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:784: error: cannot find symbol
+		return getEntity( session.generateEntityKey( key, collectionPersister.getOwnerEntityPersister() ) );
+		                                                                     ^
+  symbol:   method getOwnerEntityPersister()
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:730: error: cannot find symbol
+		final EntityDescriptor ownerPersister = collectionPersister.getOwnerEntityPersister();
+		                                                           ^
+  symbol:   method getOwnerEntityPersister()
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Collections.java:169: error: cannot find symbol
+		ce.setCurrentKey( descriptor.getKeyOfOwner( entity, session ) );
+		                            ^
+  symbol:   method getKeyOfOwner(Object,SessionImplementor)
+  location: variable descriptor of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/cache/internal/CollectionCacheInvalidator.java:116: error: cannot find symbol
+				String mappedBy = collectionDescriptor.getMappedByProperty();
+				                                      ^
+  symbol:   method getMappedByProperty()
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/cache/internal/CollectionCacheInvalidator.java:117: error: cannot find symbol
+				if ( !collectionDescriptor.isManyToMany() &&
+				                          ^
+  symbol:   method isManyToMany()
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/cache/internal/CollectionCacheInvalidator.java:119: error: cannot find symbol
+					int i = entityDescriptor.getEntityMetamodel().getPropertyIndex( mappedBy );
+					                        ^
+  symbol:   method getEntityMetamodel()
+  location: variable entityDescriptor of type EntityDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Cascade.java:442: error: cannot find symbol
+						descriptor.isCascadeDeleteEnabled
+  						^
+  symbol:   variable isCascadeDeleteEnabled
+  location: class Cascade
+
+/home/aboriero/hibernate/wip60/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/spi/CascadingActions.java:493: error: cannot find symbol
+		return collectionDescriptor.getElementsIterator( collection, session );
+		                           ^
+  symbol:   method getElementsIterator(Object,EventSource)
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+
+/home/aboriero/hibernate/wip60/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/spi/CascadingActions.java:506: error: cannot find symbol
+			return collectionDescriptor.getElementsIterator( collection, session );
+			                           ^
+----
+
+
+
+
+### Type "categorization" (4)
+
+
+What "kind of thing" does the Type represent?  An association?  A one-to-one?  A logical one-to-one?
+A collection?  etc
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Cascade.java:233: error: cannot find symbol
+							if (type.isAssociationType() && ((AssociationType)type).getForeignKeyDirection().equals(
+							    ^
+  symbol:   variable type
+  location: class Cascade
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Cascade.java:233: error: cannot find symbol
+							if (type.isAssociationType() && ((AssociationType)type).getForeignKeyDirection().equals(
+							                                  ^
+  symbol:   class AssociationType
+  location: class Cascade
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Cascade.java:233: error: cannot find symbol
+							if (type.isAssociationType() && ((AssociationType)type).getForeignKeyDirection().equals(
+							                                                  ^
+  symbol:   variable type
+  location: class Cascade
+
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/Cascade.java:267: error: cannot find symbol
+		return attribute.getForeignKeyDirection().cascadeNow( cascadePoint );
+		                ^
+  symbol:   method getForeignKeyDirection()
+  location: variable attribute of type PersistentAttribute
+----
+
+
+
+
+
+### Type read/write (2)
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/id/SelectGenerator.java:126: error: cannot find symbol
+			uniqueKeyType.nullSafeSet( ps, uniqueKeyValue, 1, session );
+			             ^
+  symbol:   method nullSafeSet(PreparedStatement,Object,int,SharedSessionContractImplementor)
+  location: variable uniqueKeyType of type Type
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/id/SelectGenerator.java:139: error: cannot find symbol
+			return (Serializable) idType.nullSafeGet(
+			                            ^
+  symbol:   method nullSafeGet(ResultSet,String[],SharedSessionContractImplementor,Object)
+  location: variable idType of type Type
+
+----
+
+
+
+
+### insert/update/delete calls for entity and collection (3)
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/action/internal/CollectionUpdateAction.java:83: error: cannot find symbol
+			collectionDescriptor.deleteRows( collection, id, session );
+			                    ^
+  symbol:   method deleteRows(PersistentCollection,Serializable,SharedSessionContractImplementor)
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/action/internal/CollectionUpdateAction.java:84: error: cannot find symbol
+			collectionDescriptor.updateRows( collection, id, session );
+			                    ^
+  symbol:   method updateRows(PersistentCollection,Serializable,SharedSessionContractImplementor)
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/action/internal/CollectionUpdateAction.java:85: error: cannot find symbol
+			collectionDescriptor.insertRows( collection, id, session );
+			                    ^
+  symbol:   method insertRows(PersistentCollection,Serializable,SharedSessionContractImplementor)
+  location: variable collectionDescriptor of type PersistentCollectionDescriptor
+----
+
+
+
+
+
+
+### Yet-uncategorized Type methods/usages (4)
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:746: error: cannot find symbol
+		final CollectionType collectionType = collectionPersister.getOrmType();
+		      ^
+  symbol:   class CollectionType
+  location: class StatefulPersistenceContext
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:746: error: cannot find symbol
+		final CollectionType collectionType = collectionPersister.getOrmType();
+		                                                         ^
+  symbol:   method getOrmType()
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:757: error: cannot find symbol
+							collectionPersister.getKeyType(),
+							                   ^
+  symbol:   method getKeyType()
+  location: variable collectionPersister of type PersistentCollectionDescriptor
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java:821: error: cannot find symbol
+		return ce.getLoadedPersistentCollectionDescriptor().getOrmType().getIdOfOwnerOrNull( ce.getLoadedKey(), session );
+		                                                   ^
+  symbol:   method getOrmType()
+  location: interface PersistentCollectionDescriptor
+----
+
+
+
+
+
+
+### TypeHelper (3)
+
+Specialized category because we have to decide best way to handle these TypeHelper calls, mainly
+in regards to visiting multiple Navigables - easily handled by `org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy`
+but would it make sense to also continue to support these TypeHelper calls (it would just delegate to `NavigableVisitationStrategy`
+internally) as well?
+
+[code]
+----
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/event/internal/DefaultMergeEventListener.java:404: error: cannot find symbol
+		final Object[] copiedValues = TypeHelper.replace(
+		                              ^
+  symbol:   variable TypeHelper
+  location: class DefaultMergeEventListener
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/event/internal/DefaultMergeEventListener.java:430: error: cannot find symbol
+			copiedValues = TypeHelper.replaceAssociations(
+			               ^
+  symbol:   variable TypeHelper
+  location: class DefaultMergeEventListener
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/event/internal/DefaultMergeEventListener.java:441: error: cannot find symbol
+			copiedValues = TypeHelper.replace(
+			               ^
+  symbol:   variable TypeHelper
+  location: class DefaultMergeEventListener
+
+----
+
+
+
+## ScrollableResults (1)
+
+[code]
+----
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/internal/DynamicFilterAliasGenerator.java:32: error: cannot find symbol
+					AbstractEntityPersister.getTableId( table, tables )
+					^
+  symbol:   variable AbstractEntityPersister
+  location: class DynamicFilterAliasGenerator
+----
+
+
+
+## Misc (2)
+
+
+[code]
+----
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/sql/results/internal/RowReaderStandardImpl.java:97: error: cannot find symbol
+				( (EntityInitializer) initializer ).resolveEntityState( rowProcessingState );
+				                                   ^
+  symbol:   method resolveEntityState(RowProcessingState)
+  location: interface EntityInitializer
+
+/home/sebersole/projects/hibernate/hibernate-orm/master/hibernate-orm/hibernate-core/src/main/java/org/hibernate/engine/internal/UnsavedValueFactory.java:93: error: cannot find symbol
+						.fromString( unsavedValue ) );
+						^
+  symbol:   method fromString(String)
+  location: interface JavaTypeDescriptor
+
+----

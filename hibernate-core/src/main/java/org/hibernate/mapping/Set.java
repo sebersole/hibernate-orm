@@ -6,13 +6,14 @@
  */
 package org.hibernate.mapping;
 
-import java.util.Iterator;
+import java.util.List;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.engine.spi.Mapping;
-import org.hibernate.type.CollectionType;
+import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.relational.MappedPrimaryKey;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A set with no nullable element columns. It will have a primary key
@@ -24,16 +25,16 @@ public class Set extends Collection {
 	 * @deprecated Use {@link Set#Set(MetadataBuildingContext, PersistentClass)} instead.
 	 */
 	@Deprecated
-	public Set(MetadataImplementor metadata, PersistentClass owner) {
-		super( metadata, owner );
+	public Set(MetadataBuildingContext context, PersistentClass owner) {
+		super( context, owner );
 	}
 
 	public Set(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 	}
 
-	public void validate(Mapping mapping) throws MappingException {
-		super.validate( mapping );
+	public void validate() throws MappingException {
+		super.validate();
 		//for backward compatibility, disable this:
 		/*Iterator iter = getElement().getColumnIterator();
 		while ( iter.hasNext() ) {
@@ -49,31 +50,11 @@ public class Set extends Collection {
 		return true;
 	}
 
-	public CollectionType getDefaultCollectionType() {
-		if ( isSorted() ) {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.sortedSet( getRole(), getReferencedPropertyName(), getComparator() );
-		}
-		else if ( hasOrder() ) {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.orderedSet( getRole(), getReferencedPropertyName() );
-		}
-		else {
-			return getMetadata().getTypeResolver()
-					.getTypeFactory()
-					.set( getRole(), getReferencedPropertyName() );
-		}
-	}
-
 	void createPrimaryKey() {
 		if ( !isOneToMany() ) {
-			PrimaryKey pk = new PrimaryKey( getCollectionTable() );
-			pk.addColumns( getKey().getColumnIterator() );
-			Iterator iter = getElement().getColumnIterator();
-			while ( iter.hasNext() ) {
-				Object selectable = iter.next();
+			final MappedPrimaryKey pk = new PrimaryKey( getMappedTable() );
+			pk.addColumns( getKey().getMappedColumns() );
+			for ( MappedColumn selectable : getElement().getMappedColumns() ) {
 				if ( selectable instanceof Column ) {
 					Column col = (Column) selectable;
 					if ( !col.isNullable() ) {
@@ -84,13 +65,14 @@ public class Set extends Collection {
 					}
 				}
 			}
+
 			if ( pk.getColumnSpan() == getKey().getColumnSpan() ) {
 				//for backward compatibility, allow a set with no not-null
 				//element columns, using all columns in the row locater SQL
 				//TODO: create an implicit not null constraint on all cols?
 			}
 			else {
-				getCollectionTable().setPrimaryKey( pk );
+				getMappedTable().setPrimaryKey( pk );
 			}
 		}
 		else {
@@ -100,5 +82,10 @@ public class Set extends Collection {
 
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return null;
 	}
 }

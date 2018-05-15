@@ -7,15 +7,19 @@
 package org.hibernate.graph.spi;
 
 import javax.persistence.EntityGraph;
-import javax.persistence.metamodel.EntityType;
+
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
+ * Hibernate extension to the JPA entity-graph EntityGraph contract.
+ *
  * @author Steve Ebersole
+ * @author Andrea Boriero
  */
-public interface EntityGraphImplementor<T> extends EntityGraph<T>, GraphNodeImplementor {
+public interface EntityGraphImplementor<T> extends EntityGraph<T>, AttributeNodeContainer {
 	boolean appliesTo(String entityName);
 
-	boolean appliesTo(EntityType<? super T> entityType);
+	boolean appliesTo(EntityDescriptor<? super T> entityType);
 
 	/**
 	 * Make a mutable copy of this entity graph

@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.sql.ResultSet;
 
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
 /**
@@ -20,13 +20,13 @@ import org.hibernate.pretty.MessageHelper;
  */
 public class LoadingCollectionEntry {
 	private final ResultSet resultSet;
-	private final CollectionPersister persister;
+	private final PersistentCollectionDescriptor persister;
 	private final Serializable key;
 	private final PersistentCollection collection;
 
 	LoadingCollectionEntry(
 			ResultSet resultSet,
-			CollectionPersister persister,
+			PersistentCollectionDescriptor persister,
 			Serializable key,
 			PersistentCollection collection) {
 		this.resultSet = resultSet;
@@ -39,7 +39,7 @@ public class LoadingCollectionEntry {
 		return resultSet;
 	}
 
-	public CollectionPersister getPersister() {
+	public PersistentCollectionDescriptor getPersister() {
 		return persister;
 	}
 
@@ -53,6 +53,6 @@ public class LoadingCollectionEntry {
 
 	@Override
 	public String toString() {
-		return getClass().getName() + "<rs=" + resultSet + ", coll=" + MessageHelper.collectionInfoString( persister.getRole(), key ) + ">@" + Integer.toHexString( hashCode() );
+		return getClass().getName() + "<rs=" + resultSet + ", coll=" + MessageHelper.collectionInfoString( persister.getNavigableRole().getFullPath(), key ) + ">@" + Integer.toHexString( hashCode() );
 	}
 }

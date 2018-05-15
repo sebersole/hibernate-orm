@@ -11,7 +11,7 @@ import java.io.Serializable;
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * If a collection is extra lazy and has queued ops, we still need to
@@ -32,7 +32,7 @@ public final class QueuedOperationCollectionAction extends CollectionAction {
 	 */
 	public QueuedOperationCollectionAction(
 			final PersistentCollection collection,
-			final CollectionPersister persister,
+			final PersistentCollectionDescriptor persister,
 			final Serializable id,
 			final SharedSessionContractImplementor session) {
 		super( persister, collection, id, session );
@@ -40,6 +40,6 @@ public final class QueuedOperationCollectionAction extends CollectionAction {
 
 	@Override
 	public void execute() throws HibernateException {
-		getPersister().processQueuedOps( getCollection(), getKey(), getSession() );
+		getPersistentCollectionDescriptor().processQueuedOps( getCollection(), getKey(), getSession() );
 	}
 }
