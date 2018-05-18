@@ -528,15 +528,15 @@ public class DB2Dialect extends Dialect {
 			}
 		};
 	}
-//
-//					@Override
-//					public String getCreateIdTableStatementOptions() {
-//						return "not logged";
-//					}
-//				},
-//				AfterUseAction.DROP
-//		);
-//	}
+
+	protected Exporter<IdTable> generateIdTableExporter() {
+		return new GlobalTempTableExporter() {
+			@Override
+			protected String getCreateOptions() {
+				return "not logged";
+			}
+		};
+	}
 
 	@Override
 	public boolean supportsCurrentTimestampSelection() {

@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.Metadata;
-import org.hibernate.boot.model.naming.Identifier;
-import org.hibernate.boot.model.relational.Exportable;
 import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedForeignKey;

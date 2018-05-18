@@ -6,14 +6,17 @@
  */
 package org.hibernate.dialect;
 
-import org.hibernate.dialect.function.DB2SubstringFunction;
-import org.hibernate.dialect.function.StandardSQLFunction;
-import org.hibernate.hql.spi.id.IdTableSupportStandardImpl;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
-import org.hibernate.hql.spi.id.global.GlobalTemporaryTableBulkIdStrategy;
-import org.hibernate.hql.spi.id.local.AfterUseAction;
-import org.hibernate.hql.spi.id.local.LocalTemporaryTableBulkIdStrategy;
-import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.dialect.function.DB2SubstringFunctionTemplate;
+import org.hibernate.query.sqm.consume.multitable.internal.StandardIdTableSupport;
+import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTempTableExporter;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTemporaryTableStrategy;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableExporterImpl;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableSupport;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
+import org.hibernate.tool.schema.spi.Exporter;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 /**
  * An SQL dialect for DB2 9.7.
@@ -24,7 +27,14 @@ public class DB297Dialect extends DB2Dialect {
 
 	public DB297Dialect() {
 		super();
-		registerFunction( "substring", new DB2SubstringFunction() );
+	}
+
+	@Override
+	public void initializeFunctionRegistry(SqmFunctionRegistry registry) {
+		super.initializeFunctionRegistry( registry );
+
+		registry.registerNamed( "chr", StandardSpiBasicTypes.CHARACTER );
+		registry.register( "substring", new DB2SubstringFunctionTemplate() );
 	}
 
 	@Override
@@ -34,27 +44,36 @@ public class DB297Dialect extends DB2Dialect {
 	}
 
 	@Override
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
+	public IdTableStrategy getDefaultIdTableStrategy() {
 		// Starting in DB2 9.7, "real" global temporary tables that can be shared between sessions
 		// are supported; (obviously) data is not shared between sessions.
-		return new GlobalTemporaryTableBulkIdStrategy(
-				new IdTableSupportStandardImpl() {
-					@Override
-					public String generateIdTableName(String baseName) {
-						return super.generateIdTableName( baseName );
-					}
-
-					@Override
-					public String getCreateIdTableCommand() {
-						return "create global temporary table";
-					}
-
-					@Override
-					public String getCreateIdTableStatementOptions() {
-						return "not logged";
-					}
-				},
-				AfterUseAction.CLEAN
+		return new GlobalTemporaryTableStrategy(
+				generateIdTableSupport()
 		);
+	}
+
+	@Override
+	protected IdTableSupport generateIdTableSupport() {
+		return new StandardIdTableSupport( new GlobalTempTableExporter() ) {
+			@Override
+			public Exporter<IdTable> getIdTableExporter() {
+				return generateIdTableExporter();
+			}
+		};
+	}
+
+	@Override
+	protected Exporter<IdTable> generateIdTableExporter() {
+		return new GlobalTempTableExporter() {
+			@Override
+			protected String getCreateOptions() {
+				return "not logged";
+			}
+
+			@Override
+			protected String getCreateCommand() {
+				return "create global temporary table";
+			}
+		};
 	}
 }

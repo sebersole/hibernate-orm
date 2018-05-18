@@ -15,23 +15,25 @@ import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
+import org.hibernate.boot.model.domain.EntityMappingHierarchy;
+import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
 import org.hibernate.boot.model.query.spi.NamedNativeQueryDefinition;
 import org.hibernate.boot.model.query.spi.NamedQueryDefinition;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.cache.cfg.internal.DomainDataRegionConfigImpl;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
 import org.hibernate.cfg.annotations.NamedProcedureCallDefinition;
-import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.envers.boot.spi.AuditMetadataBuilderImplementor;
 import org.hibernate.mapping.FetchProfile;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Table;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
-import org.hibernate.type.spi.TypeConfiguration;
+import org.hibernate.type.Type;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -182,11 +184,6 @@ public abstract class AbstractDelegatingMetadata implements MetadataImplementor 
 		return delegate.getMetadataBuildingOptions();
 	}
 
-	@Override
-	public TypeConfiguration getTypeConfiguration() {
-		return delegate.getTypeConfiguration();
-	}
-
 	/**
 	 * Retrieve the {@link Type} resolver associated with this factory.
 	 *
@@ -212,5 +209,30 @@ public abstract class AbstractDelegatingMetadata implements MetadataImplementor 
 	@Override
 	public Set<MappedSuperclass> getMappedSuperclassMappingsCopy() {
 		return delegate.getMappedSuperclassMappingsCopy();
+	}
+
+	@Override
+	public AuditMetadataBuilderImplementor getAuditMetadataBuilder() {
+		return delegate.getAuditMetadataBuilder();
+	}
+
+	@Override
+	public Collection<EntityMappingHierarchy> getEntityHierarchies() {
+		return delegate.getEntityHierarchies();
+	}
+
+	@Override
+	public NamedHqlQueryDefinition getNamedHqlQueryDefinition(String name) {
+		return delegate.getNamedHqlQueryDefinition( name );
+	}
+
+	@Override
+	public Collection<NamedHqlQueryDefinition> getNamedHqlQueryDefinitions() {
+		return delegate.getNamedHqlQueryDefinitions();
+	}
+
+	@Override
+	public Collection<MappedTable> collectMappedTableMappings() {
+		return delegate.collectMappedTableMappings();
 	}
 }

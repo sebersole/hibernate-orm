@@ -754,7 +754,7 @@ public class Configuration {
 	 * by its "entity attribute" parameterized type?
 	 */
 	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass, boolean autoApply) {
-		addAttributeConverter( AttributeConverterDefinition.from( classmateContext , attributeConverterClass, autoApply ) );
+		addAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass, autoApply ) );
 	}
 
 	/**
@@ -763,7 +763,7 @@ public class Configuration {
 	 * @param attributeConverterClass The AttributeConverter class.
 	 */
 	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass) {
-		addAttributeConverter( AttributeConverterDefinition.from( classmateContext, attributeConverterClass ) );
+		addAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass ) );
 	}
 
 	/**
@@ -774,7 +774,7 @@ public class Configuration {
 	 * @param attributeConverter The AttributeConverter instance.
 	 */
 	public void addAttributeConverter(AttributeConverter attributeConverter) {
-		addAttributeConverter( AttributeConverterDefinition.from( classmateContext, attributeConverter ) );
+		addAttributeConverter( AttributeConverterDefinition.from( attributeConverter ) );
 	}
 
 	/**
@@ -787,7 +787,7 @@ public class Configuration {
 	 * by its "entity attribute" parameterized type?
 	 */
 	public void addAttributeConverter(AttributeConverter attributeConverter, boolean autoApply) {
-		addAttributeConverter( AttributeConverterDefinition.from( classmateContext, attributeConverter, autoApply ) );
+		addAttributeConverter( AttributeConverterDefinition.from( attributeConverter, autoApply ) );
 	}
 
 	public void addAttributeConverter(AttributeConverterDefinition definition) {

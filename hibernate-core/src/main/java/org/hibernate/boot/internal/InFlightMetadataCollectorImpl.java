@@ -31,7 +31,6 @@ import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.common.reflection.XClass;
-import org.hibernate.annotations.common.util.StringHelper;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
@@ -41,7 +40,6 @@ import org.hibernate.boot.model.convert.internal.AttributeConverterManager;
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.ConverterAutoApplyHandler;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
-import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.ImplicitForeignKeyNameSource;
 import org.hibernate.boot.model.naming.ImplicitIndexNameSource;
 import org.hibernate.boot.model.naming.ImplicitUniqueKeyNameSource;
@@ -57,10 +55,8 @@ import org.hibernate.boot.model.relational.MappedNamespace;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.relational.MappedUniqueKey;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
-import org.hibernate.boot.model.relational.QualifiedTableName;
 import org.hibernate.boot.model.source.internal.ImplicitColumnNamingSecondPass;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -99,7 +95,6 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.DenormalizedTable;
 import org.hibernate.mapping.FetchProfile;
-import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.IdentifierCollection;
 import org.hibernate.mapping.Join;
 import org.hibernate.mapping.KeyValue;
@@ -109,7 +104,6 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.mapping.Table;
-import org.hibernate.mapping.UniqueKey;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
@@ -140,7 +134,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	private final Map<String, Collection> collectionBindingMap = new HashMap<>();
 
 	private final Map<String, FilterDefinition> filterDefinitionMap = new HashMap<>();
-	private final Map<String, TypeDefinition> typeDefinitionMap = new HashMap<>();
 	private final Map<String, String> imports = new HashMap<>();
 
 	private Database database;
@@ -183,8 +176,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		this.bootstrapContext = bootstrapContext;
 		this.uuid = UUID.randomUUID();
 		this.options = options;
-
-
 
 		for ( Map.Entry<String, SqmFunctionTemplate> sqlFunctionEntry : bootstrapContext.getSqlFunctions().entrySet() ) {
 			if ( sqlFunctionMap == null ) {
@@ -382,32 +373,11 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	// todo : can a Properties be wrapped in unmodifiable in any way?
 	private final static Properties EMPTY_PROPERTIES = new Properties();
 
-	private static Properties asProperties(Map parameters) {
-		if ( parameters instanceof Properties ) {
-			return (Properties) parameters;
-		}
-		else if ( CollectionHelper.isNotEmpty( parameters ) ) {
-			final Properties properties = new Properties();
-			properties.putAll( parameters );
-			return properties;
-		}
-		else {
-			return EMPTY_PROPERTIES;
-		}
-	}
-
-
-	@Override
-	public ClassmateContext getClassmateContext() {
-		return bootstrapContext.getClassmateContext();
-	}
-
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// attribute converters
 
 	@Override
-	public void addAttributeConverter(Class<? extends AttributeConverter> converterClass) {
+	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> converterClass) {
 		attributeConverterManager.addConverter(
 				new ClassBasedConverterDescriptor( converterClass, getBootstrapContext().getClassmateContext() )
 		);
@@ -1198,17 +1168,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 
 		@Override
-		public void addSecondaryTable(QualifiedTableName logicalQualifiedTableName, Join secondaryTableJoin) {
-			Identifier logicalName = logicalQualifiedTableName.getTableName();
-			if ( Identifier.areEqual(
-				Identifier.toIdentifier(
-					new QualifiedTableName(
-						Identifier.toIdentifier( primaryTable.getCatalog() ),
-						Identifier.toIdentifier( primaryTable.getSchema() ),
-						primaryTableLogicalName
-					).render()
-				),
-				Identifier.toIdentifier( logicalQualifiedTableName.render() ) ) ) {
+		public void addSecondaryTable(Identifier logicalName, Join secondaryTableJoin) {
+			if ( Identifier.areEqual( primaryTableLogicalName, logicalName ) ) {
 				throw new DuplicateSecondaryTableException( logicalName );
 			}
 
@@ -2028,9 +1989,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			return new MetadataImpl(
 					uuid,
 					options,
-					getBootstrapContext().getTypeConfiguration(),
 					entityMappingHierarchies,
-					identifierGeneratorFactory,
 					entityBindingMap,
 					mappedSuperClasses,
 					collectionBindingMap,
@@ -2045,8 +2004,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 					namedEntityGraphMap,
 					sqlFunctionMap,
 					regionConfigBuilders.values(),
-					getDatabase(),
 					auditMetadataBuilder,
+					getDatabase(),
 					bootstrapContext
 			);
 		}

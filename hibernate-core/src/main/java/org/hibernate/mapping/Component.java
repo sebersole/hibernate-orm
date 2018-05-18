@@ -33,7 +33,6 @@ import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.CompositeNestedGeneratedValueGenerator;
@@ -76,34 +75,18 @@ public class Component extends SimpleValue
 		this( metadata, owner.getMappedTable(), owner );
 	}
 
-	/**
-	 * @deprecated User {@link Component#Component(MetadataBuildingContext, Component)} instead.
-	 */
-	@Deprecated
 	public Component(MetadataBuildingContext metadata, Component component) throws MappingException {
 		this( metadata, component.getMappedTable(), component.getOwner() );
 	}
 
-	/**
-	 * @deprecated User {@link Component#Component(MetadataBuildingContext, Join)} instead.
-	 */
-	@Deprecated
 	public Component(MetadataBuildingContext metadata, Join join) throws MappingException {
 		this( metadata, join.getMappedTable(), join.getPersistentClass() );
 	}
 
-	/**
-	 * @deprecated User {@link Component#Component(MetadataBuildingContext, Collection)} instead.
-	 */
-	@Deprecated
 	public Component(MetadataBuildingContext metadata, Collection collection) throws MappingException {
 		this( metadata, collection.getMappedTable(), collection.getOwner() );
 	}
 
-	/**
-	 * @deprecated User {@link Component#Component(MetadataBuildingContext, Table, PersistentClass)} instead.
-	 */
-	@Deprecated
 	public Component(MetadataBuildingContext metadata, MappedTable table, PersistentClass owner) throws MappingException {
 		super( metadata, table );
 		this.owner = owner;
@@ -304,7 +287,6 @@ public class Component extends SimpleValue
 
 	public boolean isSame(Component other) {
 		return super.isSame( other )
-				&& Objects.equals( properties, other.properties )
 				&& Objects.equals( componentClassName, other.componentClassName )
 				&& embedded == other.embedded
 				&& Objects.equals( parentProperty, other.parentProperty )

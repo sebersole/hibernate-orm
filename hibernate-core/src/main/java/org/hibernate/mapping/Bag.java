@@ -7,7 +7,6 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A bag permits duplicates, so it has no primary key
@@ -15,14 +14,6 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
  * @author Gavin King
  */
 public class Bag extends Collection {
-
-	/**
-	 * @deprecated Use {@link Bag#Bag(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
-	public Bag(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		super( buildingContext, owner );
-	}
 
 	public Bag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );

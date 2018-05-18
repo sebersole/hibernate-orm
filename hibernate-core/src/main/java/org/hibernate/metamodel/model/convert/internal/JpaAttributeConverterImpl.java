@@ -10,8 +10,8 @@ import javax.persistence.AttributeConverter;
 
 import org.hibernate.metamodel.model.convert.spi.JpaAttributeConverter;
 import org.hibernate.resource.beans.spi.ManagedBean;
-import org.hibernate.type.descriptor.java.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * Standard implementation of JpaAttributeConverter

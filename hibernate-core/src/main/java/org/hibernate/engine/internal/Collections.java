@@ -110,7 +110,7 @@ public final class Collections {
 		// do the work
 		entry.setCurrentPersister( null );
 		entry.setCurrentKey( null );
-		prepareCollectionForUpdate( coll, entry, session.getFactory() );
+		prepareCollectionForUpdate( coll, entry );
 
 	}
 
@@ -134,7 +134,7 @@ public final class Collections {
 		entry.setCurrentPersister( entry.getLoadedPersistentCollectionDescriptor() );
 		entry.setCurrentKey( entry.getLoadedKey() );
 
-		prepareCollectionForUpdate( coll, entry, session.getFactory() );
+		prepareCollectionForUpdate( coll, entry);
 
 	}
 
@@ -161,8 +161,9 @@ public final class Collections {
 		}
 
 		final SessionFactoryImplementor factory = session.getFactory();
-		final PersistentCollectionDescriptor descriptor = factory.getTypeConfiguration().findCollectionDescriptor(
-				attributeCollection.getNavigableName() );
+		final PersistentCollectionDescriptor descriptor = factory
+				.getMetamodel()
+				.findCollectionDescriptor( attributeCollection.getNavigableName() );
 		ce.setCurrentPersister( descriptor );
 
 		//TODO: better to pass the id in as an argument?
@@ -227,14 +228,14 @@ public final class Collections {
 				}
 			}
 
-			prepareCollectionForUpdate( collection, ce, factory );
+			prepareCollectionForUpdate( collection, ce );
 		}
 	}
 
 	private static EntityDescriptor getOwnerEntityDescriptor(
 			PersistentCollectionDescriptor descriptor,
 			SessionFactoryImplementor factory) {
-		return factory.getTypeConfiguration().findEntityDescriptor(  descriptor.getContainer().getNavigableName() );
+		return factory.getMetamodel().findEntityDescriptor(  descriptor.getContainer().getNavigableName() );
 	}
 
 	/**
@@ -245,8 +246,7 @@ public final class Collections {
 	@SuppressWarnings( {"JavaDoc"})
 	private static void prepareCollectionForUpdate(
 			PersistentCollection collection,
-			CollectionEntry entry,
-			SessionFactoryImplementor factory) {
+			CollectionEntry entry) {
 		if ( entry.isProcessed() ) {
 			throw new AssertionFailure( "collection was processed twice by flush()" );
 		}

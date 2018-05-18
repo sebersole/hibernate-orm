@@ -6,6 +6,8 @@
  */
 package org.hibernate.type;
 
+import java.io.Serializable;
+
 import org.hibernate.HibernateException;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 

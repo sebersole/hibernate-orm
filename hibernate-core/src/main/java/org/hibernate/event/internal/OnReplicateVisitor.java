@@ -43,7 +43,7 @@ public class OnReplicateVisitor extends ReattachVisitor {
 		final EventSource session = getSession();
 
 		final PersistentCollectionDescriptor descriptor = session.getFactory()
-				.getTypeConfiguration()
+				.getMetamodel()
 				.findCollectionDescriptor( attributeCollection.getNavigableName() );
 
 		if ( isUpdate ) {

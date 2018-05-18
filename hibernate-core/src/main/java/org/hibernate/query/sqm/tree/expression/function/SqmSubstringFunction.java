@@ -61,7 +61,7 @@ public class SqmSubstringFunction extends AbstractSqmFunction {
 
 	@Override
 	public String asLoggableText() {
-		StringBuilder buff = new StringBuilder( NAME )
+		StringBuilder buff = new StringBuilder( getFunctionName() )
 				.append( '(' )
 				.append( getSource().asLoggableText() );
 

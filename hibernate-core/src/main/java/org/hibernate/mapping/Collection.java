@@ -42,7 +42,6 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 	public static final String DEFAULT_KEY_COLUMN_NAME = "id";
 
 	private final MetadataBuildingContext buildingContext;
-	private MetadataBuildingContext buildingContext;
 	private PersistentClass owner;
 
 	private KeyValue key;
@@ -93,15 +92,6 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 	private String loaderName;
 	private MappedForeignKey foreignKey;
 
-	protected Collection(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		this(buildingContext.getMetadataCollector(), owner);
-		this.buildingContext = buildingContext;
-	}
-
-	/**
-	 * @deprecated Use {@link Collection#Collection(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
 	protected Collection(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		this.buildingContext = buildingContext;
 		this.owner = owner;

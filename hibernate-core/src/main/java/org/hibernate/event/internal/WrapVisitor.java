@@ -56,7 +56,7 @@ public class WrapVisitor extends ProxyVisitor {
 		}
 		else {
 			final PersistentCollectionDescriptor descriptor = getSession().getFactory()
-					.getTypeConfiguration()
+					.getMetamodel()
 					.findCollectionDescriptor( attributeCollection.getNavigableName() );
 			return processArrayOrNewCollection( collection, descriptor );
 		}

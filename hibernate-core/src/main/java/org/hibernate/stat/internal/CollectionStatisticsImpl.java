@@ -9,7 +9,6 @@ package org.hibernate.stat.internal;
 import java.io.Serializable;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.stat.CollectionStatistics;
 
 /**

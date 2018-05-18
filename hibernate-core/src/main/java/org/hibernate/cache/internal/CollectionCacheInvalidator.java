@@ -71,7 +71,7 @@ public class CollectionCacheInvalidator
 	}
 
 	@Override
-	public boolean requiresPostCommitHanding(EntityDescriptor entityDescriptor) {
+	public boolean requiresPostCommitHandling(EntityDescriptor entityDescriptor) {
 		return true;
 	}
 

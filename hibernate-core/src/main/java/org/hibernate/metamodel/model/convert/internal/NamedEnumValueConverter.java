@@ -14,7 +14,7 @@ import java.sql.Types;
 import java.util.Locale;
 
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
-import org.hibernate.type.descriptor.java.EnumJavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -27,9 +27,9 @@ import org.jboss.logging.Logger;
 public class NamedEnumValueConverter<E extends Enum> implements EnumValueConverter<E,String>, Serializable {
 	private static final Logger log = Logger.getLogger( NamedEnumValueConverter.class );
 
-	private final EnumJavaTypeDescriptor<E> enumJavaDescriptor;
+	private final EnumJavaDescriptor<E> enumJavaDescriptor;
 
-	public NamedEnumValueConverter(EnumJavaTypeDescriptor<E> enumJavaDescriptor) {
+	public NamedEnumValueConverter(EnumJavaDescriptor<E> enumJavaDescriptor) {
 		this.enumJavaDescriptor = enumJavaDescriptor;
 	}
 
@@ -50,7 +50,7 @@ public class NamedEnumValueConverter<E extends Enum> implements EnumValueConvert
 	}
 
 	@Override
-	public EnumJavaTypeDescriptor<E> getJavaDescriptor() {
+	public EnumJavaDescriptor<E> getJavaDescriptor() {
 		return enumJavaDescriptor;
 	}
 

@@ -34,6 +34,4 @@ public interface Exporter<T extends Exportable> {
 	 * @return The commands needed for drop scripting.
 	 */
 	String[] getSqlDropStrings(T exportable, JdbcServices jdbcServices);
-
-
 }

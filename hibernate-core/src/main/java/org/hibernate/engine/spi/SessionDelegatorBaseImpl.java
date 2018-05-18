@@ -35,7 +35,6 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MultiIdentifierLoadAccess;
 import org.hibernate.NaturalIdLoadAccess;
-import org.hibernate.Query;
 import org.hibernate.ReplicationMode;
 import org.hibernate.Session;
 import org.hibernate.SessionEventListener;
@@ -166,11 +165,6 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	@Override
 	public Object immediateLoad(String entityName, Serializable id) throws HibernateException {
 		return delegate.immediateLoad( entityName, id );
-	}
-
-	@Override
-	public CacheTransactionContext getCurrentCacheTransactionContext() {
-		return delegate.getCurrentCacheTransactionContext();
 	}
 
 	@Override

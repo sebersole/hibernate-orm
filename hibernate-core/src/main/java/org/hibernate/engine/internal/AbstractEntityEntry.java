@@ -121,7 +121,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 			final PersistenceContext persistenceContext) {
 		this.descriptor = ( factory == null ?
 				null :
-				factory.getTypeConfiguration().resolveEntityDescriptor( entityName ) );
+				factory.getMetamodel().findEntityDescriptor( entityName ) );
 		this.id = id;
 		setCompressedValue( EnumState.STATUS, status );
 		setCompressedValue( EnumState.PREVIOUS_STATUS, previousStatus );
@@ -330,7 +330,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 	@SuppressWarnings( {"SimplifiableIfStatement"})
 	private boolean isUnequivocallyNonDirty(Object entity) {
 		if ( entity instanceof SelfDirtinessTracker ) {
-			return ! persister.hasCollections() && ! ( (SelfDirtinessTracker) entity ).$$_hibernate_hasDirtyAttributes();
+			return ! descriptor.hasCollections() && ! ( (SelfDirtinessTracker) entity ).$$_hibernate_hasDirtyAttributes();
 		}
 
 		final CustomEntityDirtinessStrategy customEntityDirtinessStrategy =

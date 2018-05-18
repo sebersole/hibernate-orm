@@ -9,13 +9,11 @@ package org.hibernate.mapping;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.internal.AttributeConverterDescriptorNonAutoApplicableImpl;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
-import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.BasicTypeResolverConvertibleSupport;
 import org.hibernate.internal.CoreLogging;

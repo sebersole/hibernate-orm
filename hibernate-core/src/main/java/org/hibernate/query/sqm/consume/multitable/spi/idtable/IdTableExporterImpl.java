@@ -28,6 +28,10 @@ public class IdTableExporterImpl implements Exporter<IdTable> {
 		return "drop table";
 	}
 
+	protected String getTruncateIdTableCommand(){
+		return "delete from";
+	}
+
 	@Override
 	public String[] getSqlCreateStrings(IdTable exportable, JdbcServices jdbcServices) {
 		final JdbcEnvironment jdbcEnvironment = jdbcServices.getJdbcEnvironment();

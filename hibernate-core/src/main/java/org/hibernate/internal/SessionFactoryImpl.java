@@ -50,7 +50,6 @@ import org.hibernate.StatelessSession;
 import org.hibernate.StatelessSessionBuilder;
 import org.hibernate.boot.cfgxml.spi.CfgXmlAccessService;
 import org.hibernate.boot.cfgxml.spi.LoadedConfig;
-import org.hibernate.boot.model.domain.spi.EntityMappingImplementor;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataImplementor;
@@ -94,9 +93,7 @@ import org.hibernate.jpa.internal.AfterCompletionActionLegacyJpaImpl;
 import org.hibernate.jpa.internal.ExceptionMapperLegacyJpaImpl;
 import org.hibernate.jpa.internal.ManagedFlushCheckerLegacyJpaImpl;
 import org.hibernate.jpa.internal.PersistenceUnitUtilImpl;
-import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
-import org.hibernate.metamodel.internal.MetamodelImpl;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -123,7 +120,6 @@ import org.hibernate.service.spi.SessionFactoryServiceRegistryFactory;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.stat.spi.StatisticsImplementor;
 import org.hibernate.tool.schema.spi.DelayedDropAction;
-import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
 import org.hibernate.type.Type;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -327,7 +323,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 					final String entityName = getImportedClassName( mappingFetch.getEntity() );
 					final EntityDescriptor owner = entityName == null
 							? null
-							: typeConfiguration.findEntityDescriptor( entityName );
+							: metamodel.findEntityDescriptor( entityName );
 					if ( owner == null ) {
 						throw new HibernateException(
 								"Unable to resolve entity reference [" + mappingFetch.getEntity()
@@ -563,7 +559,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
-		return getTypeConfiguration().findEntityGraphsByType( entityClass );
+		return getMetamodel().findEntityGraphsByType( entityClass );
 	}
 
 
@@ -686,11 +682,11 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 
 	public Type getIdentifierType(String className) throws MappingException {
-		return getTypeConfiguration().findEntityDescriptor( className ).getIdentifierType();
+		return getMetamodel().findEntityDescriptor( className ).getIdentifierType();
 	}
 
 	public String getIdentifierPropertyName(String className) throws MappingException {
-		return getTypeConfiguration().findEntityDescriptor( className ).getIdentifierPropertyName();
+		return getMetamodel().findEntityDescriptor( className ).getIdentifierPropertyName();
 	}
 
 	/**
@@ -854,14 +850,12 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public <T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph) {
-		getTypeConfiguration().addNamedEntityGraph( graphName, entityGraph );
+		getMetamodel().addNamedEntityGraph( graphName, entityGraph );
 	}
 
 	public boolean isClosed() {
 		return isClosed;
 	}
-
-	private transient StatisticsImplementor statistics;
 
 	public StatisticsImplementor getStatistics() {
 		if ( statistics == null ) {

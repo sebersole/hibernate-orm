@@ -15,7 +15,6 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedTable;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;

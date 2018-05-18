@@ -10,8 +10,6 @@ import org.hibernate.boot.model.TypeDefinition;
 import org.hibernate.boot.model.naming.ObjectNameNormalizer;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.model.type.internal.TypeDefinitionRegistryImpl;
-import org.hibernate.boot.model.type.spi.TypeDefinitionRegistry;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MappingDefaults;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -47,11 +45,6 @@ public class MetadataBuildingContextRootImpl implements MetadataBuildingContext 
 	}
 
 	@Override
-	public BootstrapContext getBootstrapContext() {
-		return bootstrapContext;
-	}
-
-	@Override
 	public TypeDefinition resolveTypeDefinition(String typeName) {
 		return typeDefinitionRegistry.resolve( typeName );
 	}
@@ -79,11 +72,6 @@ public class MetadataBuildingContextRootImpl implements MetadataBuildingContext 
 	@Override
 	public InFlightMetadataCollector getMetadataCollector() {
 		return metadataCollector;
-	}
-
-	@Override
-	public ClassLoaderAccess getClassLoaderAccess() {
-		return bootstrapContext.getClassLoaderAccess();
 	}
 
 	@Override

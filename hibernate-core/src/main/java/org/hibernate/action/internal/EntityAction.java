@@ -13,7 +13,6 @@ import org.hibernate.action.spi.AfterTransactionCompletionProcess;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
 import org.hibernate.action.spi.Executable;
 import org.hibernate.engine.spi.EntityEntry;
-import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.service.spi.EventListenerGroup;
 import org.hibernate.event.service.spi.EventListenerRegistry;
@@ -197,7 +196,7 @@ public abstract class EntityAction
 		// guard against NullPointerException
 		if ( session != null ) {
 			this.session = session;
-			this.entityDescriptor = session.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+			this.entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( entityName );
 			this.instance = session.getPersistenceContext().getEntity( session.generateEntityKey( id, entityDescriptor ) );
 		}
 	}

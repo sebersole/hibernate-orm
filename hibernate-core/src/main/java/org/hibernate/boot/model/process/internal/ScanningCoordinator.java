@@ -222,17 +222,15 @@ public class ScanningCoordinator {
 		// classes and packages ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 		final List<String> unresolvedListedClassNames = scanEnvironment.getExplicitlyListedClassNames() == null
-				? new ArrayList<String>()
-				: new ArrayList<String>( scanEnvironment.getExplicitlyListedClassNames() );
+				? new ArrayList<>()
+				: new ArrayList<>( scanEnvironment.getExplicitlyListedClassNames() );
 
 		for ( ClassDescriptor classDescriptor : scanResult.getLocatedClasses() ) {
 			if ( classDescriptor.getCategorization() == ClassDescriptor.Categorization.CONVERTER ) {
 				// converter classes are safe to load because we never enhance them,
 				// and notice we use the ClassLoaderService specifically, not the temp ClassLoader (if any)
 				managedResources.addAttributeConverterDefinition(
-						AttributeConverterDefinition.from(options.getClassmateContext(),
-														  classLoaderService.classForName( classDescriptor.getName() )
-						)
+						AttributeConverterDefinition.from( classLoaderService.classForName( classDescriptor.getName() ) )
 				);
 			}
 			else if ( classDescriptor.getCategorization() == ClassDescriptor.Categorization.MODEL ) {

@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
-import org.hibernate.type.descriptor.java.EnumJavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -26,9 +26,9 @@ import org.jboss.logging.Logger;
 public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConverter<E,Integer>, Serializable {
 	private static final Logger log = Logger.getLogger( OrdinalEnumValueConverter.class );
 
-	private final EnumJavaTypeDescriptor<E> enumJavaDescriptor;
+	private final EnumJavaDescriptor<E> enumJavaDescriptor;
 
-	public OrdinalEnumValueConverter(EnumJavaTypeDescriptor<E> enumJavaDescriptor) {
+	public OrdinalEnumValueConverter(EnumJavaDescriptor<E> enumJavaDescriptor) {
 		this.enumJavaDescriptor = enumJavaDescriptor;
 	}
 
@@ -49,7 +49,7 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	}
 
 	@Override
-	public EnumJavaTypeDescriptor<E> getJavaDescriptor() {
+	public EnumJavaDescriptor<E> getJavaDescriptor() {
 		return enumJavaDescriptor;
 	}
 

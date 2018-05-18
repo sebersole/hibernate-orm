@@ -20,6 +20,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
+import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.naming.Identifier;
 
@@ -127,7 +128,15 @@ public class Index implements MappedIndex, Serializable {
 			JdbcEnvironment jdbcEnvironment) {
 		org.hibernate.metamodel.model.relational.spi.Index index = new org.hibernate.metamodel.model.relational.spi.Index( name, runtimeTable );
 		for ( Column column : columns ) {
-			index.addColumn( column.generateRuntimeColumn( runtimeTable, namingStrategy, jdbcEnvironment ) );
+			PhysicalColumn runttimeColumn = column.generateRuntimeColumn(
+					runtimeTable,
+					namingStrategy,
+					jdbcEnvironment
+			);
+			index.addColumn( runttimeColumn );
+			if ( columnOrderMap.containsKey( column ) ) {
+				index.addColumnOrder( runttimeColumn, columnOrderMap.get( column ) );
+			}
 		}
 		return index;
 	}

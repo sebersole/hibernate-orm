@@ -139,14 +139,14 @@ public class TeradataDialect extends Dialect {
 			public String getCreateOptions() {
 				return " on commit preserve rows";
 			}
+
+			@Override
+			protected String getTruncateIdTableCommand() {
+				return "delete from";
+			}
 		};
 	}
 	
-	@Override
-	public String getTruncateIdTableCommand() {
-		return "delete from";
-	}
-
 	/**
 	 * Get the name of the database type associated with the given
 	 * <tt>java.sql.Types</tt> typecode.

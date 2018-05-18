@@ -80,8 +80,8 @@ public class FilterConfiguration {
 			for ( Map.Entry<String, String> entry : aliasEntityMap.entrySet() ) {
 				ret.put(
 						entry.getKey(),
-						factory.getTypeConfiguration()
-								.resolveEntityDescriptor( entry.getValue() )
+						factory.getMetamodel()
+								.findEntityDescriptor( entry.getValue() )
 								.getPrimaryTable()
 								.getTableExpression()
 				);

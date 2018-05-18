@@ -39,7 +39,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Sanne Grinovero
  * @since 5.0
  */
-public class DefaultCacheKeysFactory {
+public class DefaultCacheKeysFactory implements CacheKeysFactory {
 	public static final String SHORT_NAME = "default";
 	public static final DefaultCacheKeysFactory INSTANCE = new DefaultCacheKeysFactory();
 

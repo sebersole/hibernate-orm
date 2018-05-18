@@ -67,7 +67,7 @@ public class ResultSetMappingDefinitionImpl implements ResultSetMappingDefinitio
 
 
 		for ( Result result : results ) {
-			resultSetMapping.addResultBuilder( result.generateQueryResultBuilder( sessionFactory.getTypeConfiguration() ) );
+			resultSetMapping.addResultBuilder( result.generateQueryResultBuilder( sessionFactory.getMetamodel() ) );
 		}
 
 		for ( FetchDefinitionImpl fetch : fetches ) {

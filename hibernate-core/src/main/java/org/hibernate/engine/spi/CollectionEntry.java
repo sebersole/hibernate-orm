@@ -121,7 +121,7 @@ public final class CollectionEntry implements Serializable {
 		ignore = false;
 
 		loadedKey = collection.getKey();
-		setLoadedDescriptor( factory.getTypeConfiguration().findCollectionDescriptor( collection.getRole() ) );
+		setLoadedDescriptor( factory.getMetamodel().findCollectionDescriptor( collection.getRole() ) );
 
 		snapshot = collection.getStoredSnapshot();
 	}
@@ -289,7 +289,7 @@ public final class CollectionEntry implements Serializable {
 	void afterDeserialize(SessionFactoryImplementor factory) {
 		loadedCollectionDescriptor = ( factory == null ?
 				null :
-				factory.getTypeConfiguration().findCollectionDescriptor( role.getFullPath() ) );
+				factory.getMetamodel().findCollectionDescriptor( role.getFullPath() ) );
 	}
 
 	public boolean wasDereferenced() {

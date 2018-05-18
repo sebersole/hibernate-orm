@@ -11,14 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.type.MetaType;
-import org.hibernate.type.Type;
-import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedTable;
-import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
@@ -39,15 +35,15 @@ public class Any extends SimpleValue {
 
 	/**
 	 *
-	 * @deprecated since 5.3, use {@link #Any(MetadataBuildingContext, MappedTable)} instead
+	 * @deprecated since 6.0, use {@link #Any(MetadataBuildingContext, MappedTable)} instead
 	 */
 	@Deprecated
-	public Any(MetadataImplementor metadata, Table table) {
+	public Any(MetadataBuildingContext metadata, Table table) {
 		super( metadata, table );
 	}
 
-	public Any(MetadataBuildingContext buildingContext, Table table) {
-		super( buildingContext, table );
+	public Any(MetadataBuildingContext metadata, MappedTable table) {
+		super( metadata, table );
 	}
 
 	public String getIdentifierType() {
@@ -92,8 +88,7 @@ public class Any extends SimpleValue {
 	public boolean isSame(Any other) {
 		return super.isSame( other )
 				&& Objects.equals( identifierTypeName, other.identifierTypeName )
-				&& Objects.equals( metaTypeName, other.metaTypeName )
-				&& Objects.equals( metaValues, other.metaValues );
+				&& Objects.equals( metaTypeName, other.metaTypeName );
 	}
 
 	public void setIdentifierTypeResolver(BasicTypeResolver keyTypeResolver) {

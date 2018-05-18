@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.ResultSet;
@@ -31,8 +32,6 @@ import org.hibernate.MappingException;
 import org.hibernate.NullPrecedence;
 import org.hibernate.ScrollMode;
 import org.hibernate.boot.model.TypeContributions;
-import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
-import org.hibernate.boot.model.relational.Sequence;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.identity.IdentityColumnSupport;
@@ -211,7 +210,7 @@ public abstract class Dialect implements ConversionContext {
 		registerHibernateType( Types.TIME, StandardSpiBasicTypes.TIME.getJavaTypeDescriptor().getTypeName() );
 		registerHibernateType( Types.TIMESTAMP, StandardSpiBasicTypes.TIMESTAMP.getJavaTypeDescriptor().getTypeName() );
 		registerHibernateType( Types.VARCHAR, StandardSpiBasicTypes.STRING.getJavaTypeDescriptor().getTypeName() );
-		registerHibernateType( Types.NVARCHAR, StandardBasicTypes.NSTRING.getName() );
+		registerHibernateType( Types.NVARCHAR, StandardSpiBasicTypes.NSTRING.getJavaTypeDescriptor().getTypeName() );
 		registerHibernateType( Types.VARBINARY, StandardSpiBasicTypes.BINARY.getJavaTypeDescriptor().getTypeName() );
 		registerHibernateType( Types.LONGVARCHAR, StandardSpiBasicTypes.TEXT.getJavaTypeDescriptor().getTypeName() );
 		registerHibernateType( Types.LONGVARBINARY, StandardSpiBasicTypes.IMAGE.getJavaTypeDescriptor().getTypeName() );
@@ -380,14 +379,14 @@ public abstract class Dialect implements ConversionContext {
 		resolveLegacyLimitHandlerBehavior( serviceRegistry );
 	}
 
-	public static interface Initializable {
-		void initialize(
-				Connection jdbcConnection,
-				ExtractedDatabaseMetadata extractedMeta,
-				ServiceRegistry registry) {
-
-		}
-	}
+//	public static interface Initializable {
+//		void initialize(
+//				Connection jdbcConnection,
+//				ExtractedDatabaseMetadata extractedMeta,
+//				ServiceRegistry registry) {
+//
+//		}
+//	}
 
 
 	// todo (6.0) : new overall Dialect design?

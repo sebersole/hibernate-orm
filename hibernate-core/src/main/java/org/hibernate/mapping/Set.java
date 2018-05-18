@@ -6,14 +6,10 @@
  */
 package org.hibernate.mapping;
 
-import java.util.List;
-
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A set with no nullable element columns. It will have a primary key
@@ -21,13 +17,6 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
  * @author Gavin King
  */
 public class Set extends Collection {
-	/**
-	 * @deprecated Use {@link Set#Set(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
-	public Set(MetadataBuildingContext context, PersistentClass owner) {
-		super( context, owner );
-	}
 
 	public Set(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
@@ -54,7 +43,7 @@ public class Set extends Collection {
 		if ( !isOneToMany() ) {
 			final MappedPrimaryKey pk = new PrimaryKey( getMappedTable() );
 			pk.addColumns( getKey().getMappedColumns() );
-			for ( MappedColumn selectable : getElement().getMappedColumns() ) {
+			for ( Object selectable : getElement().getMappedColumns() ) {
 				if ( selectable instanceof Column ) {
 					Column col = (Column) selectable;
 					if ( !col.isNullable() ) {

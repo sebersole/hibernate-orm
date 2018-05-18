@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.hibernate.Metamodel;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -46,7 +46,7 @@ public class InstantiationResultDefinitionImpl implements ResultSetMappingDefini
 	}
 
 	@Override
-	public QueryResultBuilder generateQueryResultBuilder(TypeConfiguration typeConfiguration) {
+	public QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel) {
 		throw new NotYetImplementedFor6Exception();
 	}
 

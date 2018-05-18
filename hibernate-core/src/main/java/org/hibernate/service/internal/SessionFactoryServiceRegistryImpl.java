@@ -48,8 +48,6 @@ public class SessionFactoryServiceRegistryImpl
 		this.sessionFactoryOptions = sessionFactoryOptions;
 		this.bootstrapContext = bootstrapContext;
 
-		this.bootstrapContext = bootstrapContext;
-
 		for ( SessionFactoryServiceInitiator initiator : initiators ) {
 			createServiceBinding( initiator );
 			initiateService( initiator );
@@ -73,26 +71,6 @@ public class SessionFactoryServiceRegistryImpl
 		if ( Configurable.class.isInstance( serviceBinding.getService() ) ) {
 			( (Configurable) serviceBinding.getService() ).configure( getService( ConfigurationService.class ).getSettings() );
 		}
-	}
-
-	@Override
-	public BootstrapContext getBootstrapContext() {
-		return bootstrapContext;
-	}
-
-	@Override
-	public SessionFactoryImplementor getSessionFactory() {
-		return sessionFactory;
-	}
-
-	@Override
-	public SessionFactoryOptions getSessionFactoryOptions() {
-		return sessionFactoryOptions;
-	}
-
-	@Override
-	public ServiceRegistryImplementor getServiceRegistry() {
-		return this;
 	}
 
 	@Override

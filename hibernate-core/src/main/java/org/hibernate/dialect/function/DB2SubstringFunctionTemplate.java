@@ -11,10 +11,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
+import org.hibernate.query.sqm.tree.expression.SqmExpression;
+import org.hibernate.query.sqm.tree.expression.function.SqmSubstringFunction;
+import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 /**
- * When "substring" function is used for DB2, this implementation of {@link StandardSQLFunction}
+ * When "substring" function is used for DB2, this implementation of {@link SqmFunctionTemplate}
  * will render "substr" or "substring", depending on the last argument being used. If the last
  * argument is a string unit ("CODEUNITS16", "CODEUNITS32", or "OCTETS"), then the function
  * will be rendered as "substring"; otherwise, it will be rendered as "substr".
@@ -29,23 +34,49 @@ import org.hibernate.type.StandardBasicTypes;
  *
  * @author Gail Badner
  */
-public class DB2SubstringFunction extends StandardSQLFunction {
+public class DB2SubstringFunctionTemplate implements SqmFunctionTemplate {
 	private static final Set<String> possibleStringUnits = new HashSet<>(
 			Arrays.asList( "CODEUNITS16", "CODEUNITS32", "OCTETS" )
 	);
 
-	public DB2SubstringFunction() {
-		super( "substring", StandardBasicTypes.STRING  );
+	public DB2SubstringFunctionTemplate() {
 	}
 
-	@Override
 	protected String getRenderedName(List arguments) {
 		final String lastArgument = (String) arguments.get( arguments.size() - 1 );
 		if ( lastArgument != null && possibleStringUnits.contains( lastArgument.toUpperCase() ) ) {
-			return getName();
+			return "substring";
 		}
 		else{
 			return "substr";
+		}
+	}
+
+	@Override
+	public SqmExpression makeSqmFunctionExpression(
+			List<SqmExpression> arguments, AllowableFunctionReturnType impliedResultType) {
+		return new DB2SubstringFunction( getRenderedName( arguments ),
+										 StandardSpiBasicTypes.STRING, arguments.get( 1 ),
+										 arguments.get( 2 ),
+										 null
+		);
+	}
+
+	public static class DB2SubstringFunction extends SqmSubstringFunction{
+
+		String functionName;
+
+		public DB2SubstringFunction(
+				String functionName,
+				BasicValuedExpressableType resultType,
+				SqmExpression source, SqmExpression startPosition, SqmExpression length) {
+			super( resultType, source, startPosition, length );
+			this.functionName = functionName;
+		}
+
+		@Override
+		public String getFunctionName() {
+			return functionName;
 		}
 	}
 }

@@ -42,7 +42,7 @@ public class OnLockVisitor extends ReattachVisitor {
 			final PersistentCollection persistentCollection = (PersistentCollection) collection;
 			if ( persistentCollection.setCurrentSession( session ) ) {
 				final PersistentCollectionDescriptor descriptor = session.getFactory()
-						.getTypeConfiguration()
+						.getMetamodel()
 						.findCollectionDescriptor( attributeCollection.getNavigableName() );
 				if ( isOwnerUnchanged( persistentCollection,
 									   descriptor, extractCollectionKeyFromOwner( descriptor ) ) ) {

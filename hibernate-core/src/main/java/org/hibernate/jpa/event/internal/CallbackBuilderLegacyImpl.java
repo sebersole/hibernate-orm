@@ -242,7 +242,7 @@ public class CallbackBuilderLegacyImpl implements CallbackBuilder {
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
 	public Callback[] resolveEmbeddableCallbacks(Class entityClass, Property embeddableProperty, CallbackType callbackType, ReflectionManager reflectionManager) {
 
-		final String embeddableClassName = embeddableProperty.getType().getReturnedClass().getName();
+		final String embeddableClassName = embeddableProperty.getValue().getJavaTypeMapping().getTypeName();
 		final XClass embeddableXClass = reflectionManager.classForName( embeddableClassName );
 		final Getter embeddableGetter = embeddableProperty.getGetter( entityClass );
 		final boolean debugEnabled = log.isDebugEnabled();

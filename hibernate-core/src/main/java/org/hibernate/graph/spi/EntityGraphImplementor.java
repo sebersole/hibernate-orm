@@ -19,7 +19,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public interface EntityGraphImplementor<T> extends EntityGraph<T>, AttributeNodeContainer {
 	boolean appliesTo(String entityName);
 
-	boolean appliesTo(EntityDescriptor entityDescriptor);
+	boolean appliesTo(EntityDescriptor<? super T> entityType);
 
 	/**
 	 * Make a mutable copy of this entity graph

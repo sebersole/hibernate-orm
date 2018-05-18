@@ -7,6 +7,7 @@
 package org.hibernate.cfg.annotations;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -54,6 +55,7 @@ import org.hibernate.mapping.ManyToOne;
 import org.hibernate.mapping.OneToMany;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
+import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
@@ -119,7 +121,7 @@ public class MapBinder extends CollectionBinder {
 			if ( indexValue.getColumnSpan() != 1 ) {
 				throw new AssertionFailure( "Map key mapped by @MapKeyColumn does not have 1 column" );
 			}
-			final Selectable selectable = indexValue.getColumnIterator().next();
+			final Selectable selectable = (Selectable) indexValue.getColumnIterator().next();
 			if ( selectable.isFormula() ) {
 				throw new AssertionFailure( "Map key mapped by @MapKeyColumn is a Formula" );
 			}
@@ -145,7 +147,7 @@ public class MapBinder extends CollectionBinder {
 				final Selectable selectable = selectableIterator.next();
 				if ( column.equals( selectable ) ) {
 					final Column iteratedColumn = (Column) selectable;
-					if ( column.getValue().getTable().equals( iteratedColumn.getValue().getTable() ) ) {
+					if ( column.getTableName().equals( iteratedColumn.getTableName() ) ) {
 						return true;
 					}
 				}
