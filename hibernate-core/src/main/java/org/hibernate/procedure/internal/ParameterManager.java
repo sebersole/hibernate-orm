@@ -24,10 +24,9 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.internal.util.collections.streams.StreamUtils;
 import org.hibernate.procedure.NoSuchParameterException;
-import org.hibernate.procedure.ParameterRegistration;
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.ParameterStrategyException;
 import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
-import org.hibernate.procedure.spi.ParameterRegistry;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
@@ -330,7 +329,7 @@ public class ParameterManager implements ParameterRegistry {
 			throw new ParameterStrategyException( "Names were not used to register parameters with this stored procedure call" );
 		}
 
-		final ParameterRegistration<Object> registration = getQueryParameter( name );
+		final ProcedureParameterImplementor<Object> registration = getQueryParameter( name );
 
 		if ( registration == null ) {
 			throw new NoSuchParameterException( "Could not locate parameter registered under that name [" + name + "]" );
@@ -350,7 +349,7 @@ public class ParameterManager implements ParameterRegistry {
 			throw new ParameterStrategyException( "Positions were not used to register parameters with this stored procedure call" );
 		}
 
-		final ParameterRegistration<Object> registration = getQueryParameter( position );
+		final ProcedureParameterImplementor<Object> registration = getQueryParameter( position );
 
 		if ( registration == null ) {
 			throw new NoSuchParameterException( "Could not locate parameter registered under that position [" + position + "]" );
@@ -408,7 +407,7 @@ public class ParameterManager implements ParameterRegistry {
 		}
 	}
 
-	public List<ParameterRegistration> collectParameterRegistrations() {
+	public List<ProcedureParameterImplementor> collectParameterRegistrations() {
 		return parameterRegistrations.stream().collect( Collectors.toList() );
 	}
 

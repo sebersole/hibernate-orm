@@ -6,6 +6,7 @@
  */
 package org.hibernate.procedure;
 
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.result.Outputs;
 
 /**
@@ -46,7 +47,7 @@ public interface ProcedureOutputs extends Outputs {
 	 *
 	 * @see ProcedureCall#registerParameter(String, Class, javax.persistence.ParameterMode)
 	 */
-	<T> T getOutputParameterValue(ParameterRegistration<T> parameterRegistration);
+	<T> T getOutputParameterValue(ProcedureParameterImplementor<T> parameterRegistration);
 
 	/**
 	 * Retrieve the value of an OUTPUT parameter by the name under which the parameter was registered.

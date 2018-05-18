@@ -6,10 +6,13 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
+import javax.persistence.TemporalType;
+
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -29,6 +32,13 @@ public interface BasicValuedExpressableType<J>
 	@Override
 	default int getNumberOfJdbcParametersToBind() {
 		return 1;
+	}
+
+	@Override
+	default AllowableParameterType resolveTemporalPrecision(
+			TemporalType temporalType,
+			TypeConfiguration typeConfiguration) {
+		return getBasicType().resolveTemporalPrecision( temporalType, typeConfiguration );
 	}
 
 	// todo (6.0) : moved this down to BasicValuedNavigable#getSqlTypeDescriptor

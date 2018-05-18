@@ -15,7 +15,6 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 import org.hibernate.query.spi.QueryParameterBindingValidator;
-import org.hibernate.type.Type;
 
 /**
  * The standard Hibernate QueryParameterBinding implementation
@@ -30,28 +29,25 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 	private boolean isBound;
 	private boolean isMultiValued;
 
-	private AllowableParameterType bindType;
+	private AllowableParameterType<T> bindType;
 
 	private T bindValue;
 	private Collection<T> bindValues;
 
-	public QueryParameterBindingImpl(QueryParameter<T> queryParameter, QueryParameterBindingTypeResolver typeResolver,
-			boolean isBindingValidationRequired) {
-		this( queryParameter.getHibernateType(), queryParameter, typeResolver );
-	}
-
 	public QueryParameterBindingImpl(
-			AllowableParameterTypebindType ,
 			QueryParameter<T> queryParameter,
-			QueryParameterBindingTypeResolver typeResolver) {
-		this.bindType = bindType;
+			QueryParameterBindingTypeResolver typeResolver,
+			boolean isBindingValidationRequired) {
 		this.queryParameter = queryParameter;
 		this.typeResolver = typeResolver;
 		this.isBindingValidationRequired = isBindingValidationRequired;
+
+		this.bindType = queryParameter.getHibernateType();
+		// todo (6.0) : add TemporalType to QueryParameter and use to default precision here
 	}
 
 	@Override
-	public AllowableParameterType getBindType() {
+	public AllowableParameterType<T> getBindType() {
 		return bindType;
 	}
 
@@ -88,7 +84,17 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 		if ( isBindingValidationRequired ) {
 			validate( value );
 		}
+
 		bindValue( value );
+	}
+
+	private void bindValue(T value) {
+		this.isBound = true;
+		this.bindValue = value;
+
+		if ( bindType == null ) {
+			this.bindType = typeResolver.resolveParameterBindType( value );
+		}
 	}
 
 	@Override
@@ -96,7 +102,9 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 		if ( isBindingValidationRequired ) {
 			validate( value, clarifiedType );
 		}
+
 		bindValue( value );
+
 		if ( clarifiedType != null ) {
 			this.bindType = clarifiedType;
 		}
@@ -105,10 +113,12 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 	@Override
 	public void setBindValue(T value, TemporalType temporalTypePrecision) {
 		if ( isBindingValidationRequired ) {
-			validate( value, clarifiedTemporalType );
+			validate( value, temporalTypePrecision );
 		}
+
 		bindValue( value );
-		this.bindType = BindingTypeHelper.INSTANCE.determineTypeForTemporalType( temporalTypePrecision, bindType, value );
+
+		this.bindType = getBindType().resolveTemporalPrecision( temporalTypePrecision, null );
 	}
 
 
@@ -139,8 +149,7 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 	}
 
 	@Override
-	public void setBindValues(
-			Collection<T> values, AllowableParameterType<T> clarifiedType) {
+	public void setBindValues(Collection<T> values, AllowableParameterType<T> clarifiedType) {
 		setBindValues( values );
 		if ( clarifiedType != null ) {
 			this.bindType = clarifiedType;
@@ -150,24 +159,17 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 	@Override
 	public void setBindValues(Collection<T> values, TemporalType temporalTypePrecision) {
 		setBindValues( values );
+
 		final Object exampleValue = values.isEmpty() ? null : values.iterator().next();
-		this.bindType = BindingTypeHelper.INSTANCE.determineTypeForTemporalType( temporalTypePrecision, bindType, exampleValue );
+		this.bindType = BindingTypeHelper.INSTANCE.resolveTemporalPrecision( temporalTypePrecision, bindType, exampleValue );
 	}
 
-	private void bindValue(T value) {
-		this.isBound = true;
-		this.bindValue = value;
-
-		if ( bindType == null ) {
-			this.bindType = typeResolver.resolveParameterBindType( value );
-		}
-	}
 
 	private void validate(T value) {
 		QueryParameterBindingValidator.INSTANCE.validate( getBindType(), value );
 	}
 
-	private void validate(T value, Type clarifiedType) {
+	private void validate(T value, AllowableParameterType clarifiedType) {
 		QueryParameterBindingValidator.INSTANCE.validate( clarifiedType, value );
 	}
 

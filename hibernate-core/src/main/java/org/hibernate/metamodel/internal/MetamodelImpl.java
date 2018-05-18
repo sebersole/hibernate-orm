@@ -7,27 +7,38 @@
 package org.hibernate.metamodel.internal;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.persistence.EntityGraph;
 import javax.persistence.metamodel.EmbeddableType;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.ManagedType;
 
-import org.hibernate.EntityNameResolver;
-import org.hibernate.MappingException;
-import org.hibernate.UnknownEntityTypeException;
+import org.hibernate.HibernateException;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.metamodel.model.creation.spi.InFlightRuntimeModel;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.spi.AbstractRuntimeModel;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
+import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
+import org.hibernate.sql.ast.produce.sqm.internal.PolymorphicEntityValuedExpressableTypeImpl;
+import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
+
+import org.jboss.logging.Logger;
 
 /**
  * Standard implementation of Hibernate's extension to the JPA
@@ -36,50 +47,87 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  * @author Emmanuel Bernard
  */
-public class MetamodelImpl implements MetamodelImplementor, Serializable {
+public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImplementor, Serializable {
+	private static final Logger log = Logger.getLogger( MetamodelImpl.class );
+
+	public static final String INVALID_IMPORT = "<invalid>";
+
 	private final SessionFactoryImplementor sessionFactory;
 	private final TypeConfiguration typeConfiguration;
 
-	private final Set<EntityHierarchy> entityHierarchies = ConcurrentHashMap.newKeySet();
-	private final Map<String,EntityDescriptor<?>> entityDescriptorMap = new ConcurrentHashMap<>();
-	private final Map<String, MappedSuperclassDescriptor> mappedSuperclassDescriptorMap = new ConcurrentHashMap<>();
-	private final Map<String,PersistentCollectionDescriptor<?,?,?>> collectionDescriptorMap = new ConcurrentHashMap<>();
-	private final Map<String,EmbeddedTypeDescriptor<?>> embeddableDescriptorMap = new ConcurrentHashMap<>();
-
-	private final Map<String,String> importMap = new ConcurrentHashMap<>();
-	private final Set<EntityNameResolver> entityNameResolvers = ConcurrentHashMap.newKeySet();
-
-	private final Map<JavaTypeDescriptor, PolymorphicEntityValuedExpressableType<?>> polymorphicEntityReferenceMap = new HashMap<>();
+	// unmodifiable
 	private final Map<JavaTypeDescriptor,String> entityProxyInterfaceMap = new ConcurrentHashMap<>();
+	private final Map<EmbeddableJavaDescriptor<?>,Set<String>> embeddedRolesByEmbeddableType;
 	private final Map<String,Set<String>> collectionRolesByEntityParticipant = new ConcurrentHashMap<>();
-	private final Map<EmbeddableJavaDescriptor<?>,Set<String>> embeddedRolesByEmbeddableType = new ConcurrentHashMap<>();
-
 	private final Map<ManagedJavaDescriptor<?>, MappedSuperclassDescriptor<?>> jpaMappedSuperclassTypeMap = new ConcurrentHashMap<>();
 
-	private final Map<String,EntityGraph> entityGraphMap = new ConcurrentHashMap<>();
+	// modifiable
+	private final Map<JavaTypeDescriptor, PolymorphicEntityValuedExpressableType<?>> polymorphicEntityReferenceMap = new HashMap<>();
 
-
-	MetamodelImpl(
+	public MetamodelImpl(
 			SessionFactoryImplementor sessionFactory,
 			TypeConfiguration typeConfiguration,
+			InFlightRuntimeModel inFlightModel) {
+		super( inFlightModel );
 
-			// todo (6.0) : we only need the base data passed in...
-			//		would be better to build the "xref" structures here
-			//		e.g. `jpaMappedSuperclassTypeMap`, `collectionRolesByEntityParticipant` or `embeddedRolesByEmbeddableType`
+		this.sessionFactory = sessionFactory;
+		this.typeConfiguration = typeConfiguration;
 
-			Set<EntityHierarchy> entityHierarchies,
-			Map<String,EntityDescriptor<?>> entityDescriptorMap,
-			Map<String, MappedSuperclassDescriptor> mappedSuperclassDescriptorMap,
-			Map<String,PersistentCollectionDescriptor<?,?,?>> collectionDescriptorMap,
-			Map<String,EmbeddedTypeDescriptor<?>> embeddableDescriptorMap,
-			Map<String,String> importMap,
-			Set<EntityNameResolver> entityNameResolvers) {
-		// todo (6.0) : build the other structures
-	}
 
-	@Override
-	public TypeConfiguration getTypeConfiguration() {
-		return typeConfiguration;
+		if ( getEmbeddedDescriptorMap().isEmpty() ) {
+			this.embeddedRolesByEmbeddableType = Collections.emptyMap();
+		}
+		else {
+			final Map<EmbeddableJavaDescriptor<?>, Set<String>> embeddedRolesByEmbeddableType = new ConcurrentHashMap<>();
+			getEmbeddedDescriptorMap().forEach(
+					(role, embeddedTypeDescriptor) -> embeddedRolesByEmbeddableType.computeIfAbsent(
+							embeddedTypeDescriptor.getJavaTypeDescriptor(),
+							k -> new HashSet<>()
+					).add( embeddedTypeDescriptor.getNavigableRole().getFullPath() )
+			);
+			this.embeddedRolesByEmbeddableType = Collections.unmodifiableMap( embeddedRolesByEmbeddableType );
+		}
+
+		final Map<JavaTypeDescriptor,String> entityProxyInterfaceMap = new ConcurrentHashMap<>();
+
+		visitEntityDescriptors(
+				entityDescriptor -> {
+					final Class entityClass = entityDescriptor.getJavaTypeDescriptor().getClass();
+					final Class proxyClass = entityDescriptor.getConcreteProxyClass();
+					if ( proxyClass != null
+							&& proxyClass.isInterface()
+							&& !Map.class.isAssignableFrom( proxyClass ) ) {
+
+
+						if ( entityClass.equals( proxyClass ) ) {
+							// this part handles an odd case in the Hibernate test suite where we map an interface
+							// as the class and the proxy.  I cannot think of a real life use case for that
+							// specific test, but..
+							log.debugf( "Entity [%s] mapped same interface [%s] as class and proxy", entityDescriptor.getEntityName(), entityClass );
+						}
+						else {
+							final JavaTypeDescriptor proxyTypeDescriptor = typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor(
+									proxyClass,
+									// todo (6.0) : what to use by default here?  BasicJavaDescriptor?
+									(s, registry) ->  null
+							);
+							final String old = entityProxyInterfaceMap.put( proxyTypeDescriptor, entityDescriptor.getEntityName() );
+							if ( old != null ) {
+								throw new HibernateException(
+										String.format(
+												Locale.ENGLISH,
+												"Multiple entities [%s, %s] named the same interface [%s] as their proxy which is not supported",
+												old,
+												entityDescriptor.getEntityName(),
+												proxyClass.getName()
+										)
+								);
+							}
+						}
+					}
+				}
+		);
+
 	}
 
 	@Override
@@ -105,7 +153,7 @@ public class MetamodelImpl implements MetamodelImplementor, Serializable {
 			return entityDescriptor;
 		}
 
-		final EmbeddedTypeDescriptor embeddedDescriptor = findEmbeddableDescriptor( cls );
+		final EmbeddedTypeDescriptor embeddedDescriptor = findEmbeddedDescriptor( cls );
 		if ( embeddedDescriptor != null ) {
 			return embeddedDescriptor;
 		}
@@ -121,7 +169,7 @@ public class MetamodelImpl implements MetamodelImplementor, Serializable {
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public <X> EmbeddableType<X> embeddable(Class<X> cls) {
-		final EmbeddedTypeDescriptor embeddedDescriptor = findEmbeddableDescriptor( cls );
+		final EmbeddedTypeDescriptor embeddedDescriptor = findEmbeddedDescriptor( cls );
 		if ( embeddedDescriptor != null ) {
 			return embeddedDescriptor;
 		}
@@ -132,225 +180,134 @@ public class MetamodelImpl implements MetamodelImplementor, Serializable {
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public Set<ManagedType<?>> getManagedTypes() {
-		// todo (6.0) : cache this?  lazily?
-		final Set<ManagedType<?>> managedTypes = new HashSet<ManagedType<?>>();
-		managedTypes.addAll( jpaEntityTypeMap.values() );
-		managedTypes.addAll( jpaMappedSuperclassTypeMap.values() );
-		managedTypes.addAll( jpaEmbeddableTypeMap.values() );
+		final Set<ManagedType<?>> managedTypes = new HashSet<>();
+		managedTypes.addAll( getEntityDescriptorMap().values() );
+		managedTypes.addAll( getEntityDescriptorMap().values() );
+		managedTypes.addAll( getMappedSuperclassDescriptorMap().values() );
 		return managedTypes;
 	}
 
 	@Override
 	public Set<EntityType<?>> getEntities() {
-		return new HashSet<>( jpaEntityTypesByEntityName.values() );
+		return new HashSet<>( getEntityDescriptorMap().values() );
 	}
 
 	@Override
 	public Set<EmbeddableType<?>> getEmbeddables() {
-		return new HashSet<>( jpaEmbeddableTypeMap.values() );
+		return new HashSet<>( getEmbeddedDescriptorMap().values() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <X> EntityType<X> entity(String entityName) {
-		return (EntityType<X>) jpaEntityTypesByEntityName.get( entityName );
+		final EntityDescriptor<X> descriptor = findEntityDescriptor( entityName );
+		if ( descriptor == null ) {
+			throw new IllegalArgumentException( "Not an entity : " + entityName );
+		}
+		return descriptor;
 	}
 
 	@Override
-	public String getImportedClassName(String className) {
-		String result = imports.get( className );
-		if ( result == null ) {
+	public String getImportedName(String name) {
+		final String importedName = getNameImportMap().get( name );
+
+		if ( INVALID_IMPORT.equals( importedName ) ) {
+			return null;
+		}
+
+		if ( importedName == null ) {
+			// todo (6.0) : this is what is done in 5.3 code as well, but it seems wrong
+			//		how are entity-names handled?
+			//
+			// seems like the super call is the best already
 			try {
-				sessionFactory.getServiceRegistry().getService( ClassLoaderService.class ).classForName( className );
-				imports.put( className, className );
-				return className;
+				sessionFactory.getServiceRegistry().getService( ClassLoaderService.class ).classForName( name );
+				getNameImportMap().put( name, name );
+				return name;
 			}
-			catch ( ClassLoadingException cnfe ) {
-				imports.put( className, INVALID_IMPORT );
+			catch (ClassLoadingException cnfe) {
+				getNameImportMap().put( name, INVALID_IMPORT );
 				return null;
 			}
 		}
-		else if ( result == INVALID_IMPORT ) {
-			return null;
-		}
-		else {
-			return result;
-		}
+
+		return importedName;
 	}
 
-	/**
-	 * Given the name of an entity class, determine all the class and interface names by which it can be
-	 * referenced in an HQL query.
-	 *
-	 * @param className The name of the entity class
-	 *
-	 * @return the names of all persistent (mapped) classes that extend or implement the
-	 *     given class or interface, accounting for implicit/explicit polymorphism settings
-	 *     and excluding mapped subclasses/joined-subclasses of other classes in the result.
-	 * @throws MappingException
-	 */
-	public String[] getImplementors(String className) throws MappingException {
-
-		final Class clazz;
-		try {
-			clazz = getSessionFactory().getServiceRegistry().getService( ClassLoaderService.class ).classForName( className );
-		}
-		catch (ClassLoadingException e) {
-			return new String[] { className }; //for a dynamic-class
+	@SuppressWarnings("unchecked")
+	public <T> EntityValuedExpressableType<T> resolveEntityReference(Class<T> javaType) {
+		// see if we know of this Class by name as an EntityDescriptor key
+		if ( getEntityDescriptorMap().containsKey( javaType.getName() ) ) {
+			// and if so, return that descriptor
+			return (EntityValuedExpressableType<T>) getEntityDescriptorMap().get( javaType.getName() );
 		}
 
-		ArrayList<String> results = new ArrayList<>();
-		for ( EntityPersister checkPersister : entityPersisters().values() ) {
-			if ( ! Queryable.class.isInstance( checkPersister ) ) {
+		final JavaTypeDescriptor<T> jtd = typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( javaType );
+		if ( jtd == null ) {
+			throw new HibernateException( "Could not locate JavaTypeDescriptor : " + javaType.getName() );
+		}
+
+		// next check entityProxyInterfaceMap
+		final String proxyEntityName = entityProxyInterfaceMap.get( jtd );
+		if ( proxyEntityName != null ) {
+			return (EntityValuedExpressableType<T>) getEntityDescriptorMap().get( proxyEntityName );
+		}
+
+		// otherwise, trye to handle it as a polymorphic reference
+		if ( polymorphicEntityReferenceMap.containsKey( jtd ) ) {
+			return (EntityValuedExpressableType<T>) polymorphicEntityReferenceMap.get( jtd );
+		}
+
+		final Set<EntityDescriptor<?>> implementors = getImplementors( javaType );
+		if ( !implementors.isEmpty() ) {
+			final PolymorphicEntityValuedExpressableTypeImpl entityReference = new PolymorphicEntityValuedExpressableTypeImpl(
+					jtd,
+					implementors
+			);
+			polymorphicEntityReferenceMap.put( jtd, entityReference );
+			return entityReference;
+		}
+
+		throw new IllegalArgumentException( "Could not resolve entity reference : " + javaType.getName() );
+	}
+
+	@SuppressWarnings("unchecked")
+	private Set<EntityDescriptor<?>> getImplementors(Class javaType) {
+		// if the javaType refers directly to an EntityDescriptor by Class name, return just it.
+		final EntityDescriptor<?> exactMatch = getEntityDescriptorMap().get( javaType.getName() );
+		if ( exactMatch != null ) {
+			return Collections.singleton( exactMatch );
+		}
+
+		final HashSet<EntityDescriptor<?>> matchingDescriptors = new HashSet<>();
+
+		for ( EntityDescriptor entityDescriptor : getEntityDescriptorMap().values() ) {
+			if ( entityDescriptor.getJavaType() == null ) {
 				continue;
 			}
-			final Queryable checkQueryable = Queryable.class.cast( checkPersister );
-			final String checkQueryableEntityName = checkQueryable.getEntityName();
-			final boolean isMappedClass = className.equals( checkQueryableEntityName );
-			if ( checkQueryable.isExplicitPolymorphism() ) {
-				if ( isMappedClass ) {
-					return new String[] { className }; //NOTE EARLY EXIT
-				}
-			}
-			else {
-				if ( isMappedClass ) {
-					results.add( checkQueryableEntityName );
-				}
-				else {
-					final Class mappedClass = checkQueryable.getMappedClass();
-					if ( mappedClass != null && clazz.isAssignableFrom( mappedClass ) ) {
-						final boolean assignableSuperclass;
-						if ( checkQueryable.isInherited() ) {
-							Class mappedSuperclass = entityPersister( checkQueryable.getMappedSuperclass() ).getMappedClass();
-							assignableSuperclass = clazz.isAssignableFrom( mappedSuperclass );
-						}
-						else {
-							assignableSuperclass = false;
-						}
-						if ( !assignableSuperclass ) {
-							results.add( checkQueryableEntityName );
-						}
-					}
-				}
-			}
-		}
-		return results.toArray( new String[results.size()] );
-	}
 
-	@Override
-	public Map<String, EntityPersister> entityPersisters() {
-		return entityPersisterMap;
-	}
+			// todo : explicit/implicit polymorphism...
+			// todo : handle "duplicates" within a hierarchy
+			// todo : in fact we may want to cycle through descriptors via entityHierarchies and walking the subclass graph rather than walking each descriptor linearly (in random order)
 
-	@Override
-	public CollectionPersister collectionPersister(String role) {
-		final CollectionPersister persister = collectionPersisterMap.get( role );
-		if ( persister == null ) {
-			throw new MappingException( "Could not locate CollectionPersister for role : " + role );
-		}
-		return persister;
-	}
-
-	@Override
-	public Map<String, CollectionPersister> collectionPersisters() {
-		return collectionPersisterMap;
-	}
-
-	@Override
-	public EntityPersister entityPersister(Class entityClass) {
-		return entityPersister( entityClass.getName() );
-	}
-
-	@Override
-	public EntityPersister entityPersister(String entityName) throws MappingException {
-		EntityPersister result = entityPersisterMap.get( entityName );
-		if ( result == null ) {
-			throw new MappingException( "Unknown entity: " + entityName );
-		}
-		return result;
-	}
-
-
-	@Override
-	public EntityPersister locateEntityPersister(Class byClass) {
-		EntityPersister entityPersister = entityPersisterMap.get( byClass.getName() );
-		if ( entityPersister == null ) {
-			String mappedEntityName = entityProxyInterfaceMap.get( byClass );
-			if ( mappedEntityName != null ) {
-				entityPersister = entityPersisterMap.get( mappedEntityName );
+			if ( javaType.isAssignableFrom( entityDescriptor.getJavaType() ) ) {
+				matchingDescriptors.add( entityDescriptor );
 			}
 		}
 
-		if ( entityPersister == null ) {
-			throw new UnknownEntityTypeException( "Unable to locate persister: " + byClass.getName() );
-		}
-
-		return entityPersister;
+		return matchingDescriptors;
 	}
 
-	@Override
-	public EntityPersister locateEntityPersister(String byName) {
-		final EntityPersister entityPersister = entityPersisterMap.get( byName );
-		if ( entityPersister == null ) {
-			throw new UnknownEntityTypeException( "Unable to locate persister: " + byName );
-		}
-		return entityPersister;
-	}
-
-	@Override
-	public Set<String> getCollectionRolesByEntityParticipant(String entityName) {
-		return collectionRolesByEntityParticipant.get( entityName );
-	}
-
-	@Override
-	public String[] getAllEntityNames() {
-		return ArrayHelper.toStringArray( entityPersisterMap.keySet() );
-	}
-
-	@Override
-	public String[] getAllCollectionRoles() {
-		return ArrayHelper.toStringArray( entityPersisterMap.keySet() );
-	}
 
 	@Override
 	public <T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph) {
 		if ( entityGraph instanceof EntityGraphImplementor ) {
 			entityGraph = ( (EntityGraphImplementor<T>) entityGraph ).makeImmutableCopy( graphName );
 		}
-		final EntityGraph old = entityGraphMap.put( graphName, entityGraph );
+		final EntityGraph old = getEntityGraphMap().put( graphName, entityGraph );
 		if ( old != null ) {
 			log.debugf( "EntityGraph being replaced on EntityManagerFactory for name %s", graphName );
 		}
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> EntityGraph<T> findEntityGraphByName(String name) {
-		return entityGraphMap.get( name );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
-		final EntityType<T> entityType = entity( entityClass );
-		if ( entityType == null ) {
-			throw new IllegalArgumentException( "Given class is not an entity : " + entityClass.getName() );
-		}
-
-		final List<EntityGraph<? super T>> results = new ArrayList<>();
-
-		for ( EntityGraph entityGraph : entityGraphMap.values() ) {
-			if ( !EntityGraphImplementor.class.isInstance( entityGraph ) ) {
-				continue;
-			}
-
-			final EntityGraphImplementor egi = (EntityGraphImplementor) entityGraph;
-			if ( egi.appliesTo( entityType ) ) {
-				results.add( egi );
-			}
-		}
-
-		return results;
 	}
 
 	@Override

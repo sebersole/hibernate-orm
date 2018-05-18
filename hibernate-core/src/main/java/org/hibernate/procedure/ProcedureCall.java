@@ -14,7 +14,7 @@ import javax.persistence.StoredProcedureQuery;
 import org.hibernate.MappingException;
 import org.hibernate.query.CommonQueryContract;
 import org.hibernate.query.SynchronizeableQuery;
-import org.hibernate.query.CommonQueryContract;
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 
 /**
  * Defines support for executing database stored procedures and functions.
@@ -98,7 +98,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 *
 	 * @return The parameter registration memento
 	 */
-	<T> ParameterRegistration<T> registerParameter(int position, Class<T> type, ParameterMode mode);
+	<T> ProcedureParameterImplementor<T> registerParameter(int position, Class<T> type, ParameterMode mode);
 
 	/**
 	 * Chained form of {@link #registerParameter(int, Class, javax.persistence.ParameterMode)}
@@ -121,7 +121,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws ParameterStrategyException If the ProcedureCall is defined using named parameters
 	 * @throws NoSuchParameterException If no parameter with that position exists
 	 */
-	ParameterRegistration getParameterRegistration(int position);
+	ProcedureParameterImplementor getParameterRegistration(int position);
 
 	/**
 	 * Basic form for registering a named parameter.
@@ -136,7 +136,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws NamedParametersNotSupportedException When the underlying database is known to not support
 	 * named procedure parameters.
 	 */
-	<T> ParameterRegistration<T> registerParameter(String parameterName, Class<T> type, ParameterMode mode)
+	<T> ProcedureParameterImplementor<T> registerParameter(String parameterName, Class<T> type, ParameterMode mode)
 			throws NamedParametersNotSupportedException;
 
 	/**
@@ -164,14 +164,14 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws ParameterStrategyException If the ProcedureCall is defined using positional parameters
 	 * @throws NoSuchParameterException If no parameter with that name exists
 	 */
-	ParameterRegistration getParameterRegistration(String name);
+	ProcedureParameterImplementor getParameterRegistration(String name);
 
 	/**
 	 * Retrieve all registered parameters.
 	 *
 	 * @return The (immutable) list of all registered parameters.
 	 */
-	List<ParameterRegistration> getRegisteredParameters();
+	List<ProcedureParameterImplementor> getRegisteredParameters();
 
 	/**
 	 * Retrieves access to outputs of this procedure call.  Can be called multiple times, returning the same

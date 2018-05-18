@@ -278,7 +278,7 @@ public class OneToOneSecondPass implements SecondPass {
 		join.setTable( originalJoin.getMappedTable() );
 		join.setInverse( true );
 		SimpleValue key = new DependantValue(
-				buildingContext.,
+				buildingContext,
 				join.getMappedTable(),
 				persistentClass.getIdentifier()
 		);

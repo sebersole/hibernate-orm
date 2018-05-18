@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import javax.persistence.AttributeConverter;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
@@ -32,18 +31,9 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.BinaryType;
-import org.hibernate.type.RowVersionType;
-import org.hibernate.type.Type;
-import org.hibernate.type.descriptor.JdbcTypeNameMapper;
-import org.hibernate.type.descriptor.converter.AttributeConverterSqlTypeDescriptorAdapter;
-import org.hibernate.type.descriptor.converter.AttributeConverterTypeAdapter;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.sql.JdbcTypeJavaClassMappings;
-import org.hibernate.type.descriptor.sql.LobTypeMappings;
-import org.hibernate.type.descriptor.sql.NationalizedTypeMappings;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -56,22 +46,16 @@ public abstract class SimpleValue implements KeyValue {
 
 	public static final String DEFAULT_ID_GEN_STRATEGY = "assigned";
 
-	private MetadataBuildingContext buildingContext;
-	private final MetadataImplementor metadata;
-
 	protected final List<Selectable> columns = new ArrayList<>();
-	private final List<Boolean> insertability = new ArrayList<Boolean>();
-	private final List<Boolean> updatability = new ArrayList<Boolean>();
-
 	protected String typeName;
 	protected Properties typeParameters;
-	private boolean isVersion;
-	private boolean isNationalized;
-	private boolean isLob;
-
 	protected MappedTable table;
 	protected boolean cascadeDeleteEnabled;
 
+	private final MetadataBuildingContext buildingContext;
+
+	private Properties identifierGeneratorProperties;
+	private String identifierGeneratorStrategy = DEFAULT_ID_GEN_STRATEGY;
 	private String nullValue;
 	private String foreignKeyName;
 	private String foreignKeyDefinition;
@@ -79,19 +63,9 @@ public abstract class SimpleValue implements KeyValue {
 
 	private IdentifierGenerator identifierGenerator;
 
-	private ConverterDescriptor attributeConverterDescriptor;
-
 	public SimpleValue(MetadataBuildingContext buildingContext, MappedTable table) {
 		this.buildingContext = buildingContext;
 		this.table = table;
-	}
-
-	public SimpleValue(MetadataBuildingContext buildingContext) {
-		this ( buildingContext, null )
-	}
-
-	public SimpleValue(MetadataBuildingContext buildingContext, Table table) {
-		this( buildingContext, (MappedTable) table );
 	}
 
 	@Override
@@ -175,26 +149,6 @@ public abstract class SimpleValue implements KeyValue {
 	}
 
 	public void setTypeName(String typeName) {
-		if ( typeName != null && typeName.startsWith( AttributeConverterTypeAdapter.NAME_PREFIX ) ) {
-			final String converterClassName = typeName.substring( AttributeConverterTypeAdapter.NAME_PREFIX.length() );
-			final ClassLoaderService cls = getMetadata()
-					.getMetadataBuildingOptions()
-					.getServiceRegistry()
-					.getService( ClassLoaderService.class );
-			try {
-				final Class<? extends AttributeConverter> converterClass = cls.classForName( converterClassName );
-				this.attributeConverterDescriptor = new ClassBasedConverterDescriptor(
-						converterClass,
-						false,
-						( (InFlightMetadataCollector) getMetadata() ).getClassmateContext()
-				);
-				return;
-			}
-			catch (Exception e) {
-				log.logBadHbmAttributeConverterType( typeName, e.getMessage() );
-			}
-		}
-
 		this.typeName = typeName;
 	}
 
@@ -506,6 +460,30 @@ public abstract class SimpleValue implements KeyValue {
 	}
 
 	@Override
+	public String toString() {
+		return getClass().getName() + '(' + columns.toString() + ')';
+	}
+
+	public boolean[] getColumnInsertability() {
+		final boolean[] columnInsertability = new boolean[ getColumnSpan() ];
+		int i = 0;
+		for(MappedColumn column : columns){
+			columnInsertability[i++] = !column.isFormula();
+		}
+		return columnInsertability;
+	}
+
+	public boolean[] getColumnUpdateability() {
+		return getColumnInsertability();
+	}
+
+	public interface TypeDescriptorResolver {
+		SqlTypeDescriptor resolveSqlTypeDescriptor();
+		JavaTypeDescriptor resolveJavaTypeDescriptor();
+	}
+
+
+	@Override
 	public boolean isSame(Value other) {
 		return this == other || other instanceof SimpleValue && isSame( (SimpleValue) other );
 	}
@@ -521,33 +499,5 @@ public abstract class SimpleValue implements KeyValue {
 				&& Objects.equals( table, other.table )
 				&& Objects.equals( foreignKeyName, other.foreignKeyName )
 				&& Objects.equals( foreignKeyDefinition, other.foreignKeyDefinition );
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getName() + '(' + columns.toString() + ')';
-	}
-
-	public boolean[] getColumnInsertability() {
-		final boolean[] columnInsertability = new boolean[ getColumnSpan() ];
-		int i = 0;
-		for(MappedColumn column : columns){
-			columnInsertability[i++] = !column.isFormula();
-		}
-		return columnInsertability;
-	}
-
-	public void setJpaAttributeConverterDescriptor(ConverterDescriptor descriptor) {
-		this.attributeConverterDescriptor = descriptor;
-	}
-
-	public boolean[] getColumnUpdateability() {
-		return getColumnInsertability();
-	}
-
-
-		public interface TypeDescriptorResolver {
-SqlTypeDescriptor resolveSqlTypeDescriptor();
-		JavaTypeDescriptor resolveJavaTypeDescriptor();
 	}
 }

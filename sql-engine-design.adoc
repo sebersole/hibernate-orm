@@ -1,5 +1,4 @@
-Design Guide
-============
+= Design Guide
 :toc:
 
 == General Design
@@ -15,6 +14,8 @@ for Hibernate to generate and execute SQL:
 	** other unique key
 	** multi-id
 	** locker
+	** batch load/fetch
+	** subselect (load/) fetch (only fetch prior to 6.0)
 	** updates/deletes/inserts corresponding to normal PC state
 
 In other words, in versions of Hibernate prior to 6.0 there were multiple sources for generating the SQL and multiple
@@ -46,6 +47,7 @@ of results.
 
 The main parts of the overall design for this work follow...
 
+
 === JdbcOperation
 
 `org.hibernate.sql.exec.spi.JdbcOperation` and its sub-types represent, naturally, an operation to be
@@ -66,6 +68,13 @@ _Those in italics are not yet defined_
 
 Generally speaking, a `JdbcOperation` is created from a SQL AST.  The one exception is handling for
 native SQL queries (`org.hibernate.query.NativeQuery`).
+
+
+[NOTE]
+====
+Discussing with Christian, we should have a way to send arbitrary "batch blocks" to the database
+and process arbitrary result counts/sets much like our procedure call execution/result-handling does.
+====
 
 
 === SQL AST

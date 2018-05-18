@@ -11,6 +11,7 @@ import java.util.Comparator;
 
 import org.hibernate.internal.util.compare.ComparableComparator;
 import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 
 /**
  * Descriptor for the Java side of a value mapping.
@@ -37,21 +38,6 @@ public interface JavaTypeDescriptor<T> extends Serializable {
 	 * May be {@code null} in the case of dynamic models ({@link org.hibernate.EntityMode#MAP} e.g.).
 	 */
 	Class<T> getJavaType();
-
-	/**
-	 * Get the type name.  This is useful for dynamic models which either will not have
-	 * a Java type ({@link #getJavaType()} returns null) or {@link #getJavaType()}
-	 * returns a non-indicative value ({@code java.util.Map.class} for a composite value in
-	 * {@link org.hibernate.EntityMode#MAP} EntityMode, e.g.).
-	 * <p/>
-	 * For typed models, this generally returns {@link #getJavaType()}.{@linkplain Class#getName() getName}
-	 *
-	 * @return The Java type name.
-	 *
-	 * @deprecated Use {@link #getJavaType()} instead
-	 */
-	@Deprecated
-	public Class<T> getJavaTypeClass();
 
 	/**
 	 * Retrieve the mutability plan for this Java type.

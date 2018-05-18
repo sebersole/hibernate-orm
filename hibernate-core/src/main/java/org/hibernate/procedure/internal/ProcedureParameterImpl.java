@@ -9,7 +9,7 @@ package org.hibernate.procedure.internal;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.procedure.ProcedureParameter;
+import org.hibernate.query.procedure.internal.ProcedureParameter;
 import org.hibernate.query.internal.AbstractQueryParameter;
 
 /**

@@ -131,7 +131,6 @@ import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.EntityNamingSource;
 import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
-import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.InFlightMetadataCollector.EntityTableXref;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.annotations.CollectionBinder;
@@ -696,8 +695,12 @@ public final class AnnotationBinder {
 		if ( InheritanceType.JOINED.equals( inheritanceState.getType() ) ) {
 			if ( inheritanceState.hasParents() ) {
 				onDeleteAppropriate = true;
-				final JoinedSubclass jsc = ( JoinedSubclass ) persistentClass;
-				SimpleValue key = new DependantValue( context, jsc.getTable(), jsc.getIdentifier() );
+				final JoinedSubclass jsc = (JoinedSubclass) persistentClass;
+				SimpleValue key = new DependantValue(
+						metadataCollector.getTypeConfiguration().getMetadataBuildingContext(),
+						jsc.getTable(),
+						jsc.getIdentifier()
+				);
 				jsc.setKey( key );
 				ForeignKey fk = clazzToProcess.getAnnotation( ForeignKey.class );
 				if ( fk != null && !BinderHelper.isEmptyAnnotationValue( fk.name() ) ) {
@@ -2935,56 +2938,40 @@ public final class AnnotationBinder {
 		final RootClass rootClass = (RootClass) persistentClass;
 		SimpleValue id;
 		final String propertyName = inferredData.getPropertyName();
-		if ( isComposite ) {
-			id = fillComponent(
-					propertyHolder,
-					inferredData,
-					baseInferredData,
-					propertyAccessor,
-					false,
-					entityBinder,
-					isEmbedded,
-					isIdentifierMapper,
-					false,
-					buildingContext,
-					inheritanceStatePerClass
-			);
-			Component componentId = ( Component ) id;
-			componentId.setKey( true );
-			if ( rootClass.getIdentifier() != null ) {
-				throw new AnnotationException( componentId.getComponentClassName() + " must not have @Id properties when used as an @EmbeddedId" );
-			}
-			if ( componentId.getPropertySpan() == 0 ) {
-				throw new AnnotationException( componentId.getComponentClassName() + " has no persistent id property" );
-			}
-			//tuplizers
-			XProperty property = inferredData.getProperty();
-			setupComponentTuplizer( property, componentId );
+
+		id = fillComponent(
+				propertyHolder,
+				inferredData,
+				baseInferredData,
+				propertyAccessor,
+				false,
+				entityBinder,
+				isEmbedded,
+				isIdentifierMapper,
+				false,
+				buildingContext,
+				inheritanceStatePerClass
+		);
+		final Component componentId = (Component) id;
+		componentId.setKey( true );
+		if ( rootClass.getIdentifier() != null ) {
+			throw new AnnotationException( componentId.getEmbeddableClassName() + " must not have @Id properties when used as an @EmbeddedId" );
 		}
-		else {
-			//TODO I think this branch is never used. Remove.
+		if ( componentId.getDeclaredPersistentAttributes().size() == 0 ) {
+			throw new AnnotationException( componentId.getEmbeddableClassName() + " has no persistent id property" );
+		}
+		//tuplizers
+		final XProperty property = inferredData.getProperty();
+		setupComponentTuplizer( property, componentId );
 
 		rootClass.setIdentifier( id );
-		if ( isGlobalGeneratorNameGlobal( buildingContext ) ) {
-			SecondPass secondPass = new IdGeneratorResolverSecondPass(
-					id,
-					inferredData.getProperty(),
-					generatorType,
-					generatorName,
-					buildingContext
-			);
-			buildingContext.getMetadataCollector().addSecondPass( secondPass );
-		}
-		else {
-			BinderHelper.makeIdGenerator(
-					id,
-					inferredData.getProperty(),
-					generatorType,
-					generatorName,
-					buildingContext,
-					Collections.emptyMap()
-			);
-		}
+		BinderHelper.makeIdGenerator(
+				id,
+				generatorType,
+				generatorName,
+				buildingContext,
+				Collections.emptyMap()
+		);
 		if ( isEmbedded ) {
 			rootClass.getEntityMappingHierarchy().setEmbeddedIdentifier( inferredData.getPropertyClass() == null );
 		}
@@ -3371,28 +3358,6 @@ public final class AnnotationBinder {
 		Property prop = binder.makeProperty();
 		//composite FK columns are in the same table so its OK
 		propertyHolder.addProperty( prop, columns, inferredData.getDeclaringClass() );
-	}
-
-	private static String generatorType(
-			GenerationType generatorEnum,
-			final MetadataBuildingContext buildingContext,
-			final XClass javaTypeXClass) {
-		return buildingContext.getBuildingOptions().getIdGenerationTypeInterpreter().determineGeneratorName(
-				generatorEnum,
-				new IdGeneratorStrategyInterpreter.GeneratorNameDeterminationContext() {
-					Class javaType = null;
-
-					@Override
-					public Class getIdType() {
-						if ( javaType == null ) {
-							javaType = buildingContext.getBootstrapContext()
-									.getReflectionManager()
-									.toClass( javaTypeXClass );
-						}
-						return javaType;
-					}
-				}
-		);
 	}
 
 	private static EnumSet<CascadeType> convertToHibernateCascadeType(javax.persistence.CascadeType[] ejbCascades) {

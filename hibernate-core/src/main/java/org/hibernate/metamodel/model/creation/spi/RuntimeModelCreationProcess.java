@@ -35,7 +35,6 @@ import org.hibernate.graph.internal.AbstractAttributeNodeContainer;
 import org.hibernate.graph.internal.AttributeNodeImpl;
 import org.hibernate.graph.internal.EntityGraphImpl;
 import org.hibernate.graph.internal.SubgraphImpl;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
@@ -49,6 +48,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -62,9 +62,18 @@ import static org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetti
 public class RuntimeModelCreationProcess {
 	private static final Logger log = Logger.getLogger( RuntimeModelCreationProcess.class );
 
+	public static MetamodelImplementor execute(
+			SessionFactoryImplementor sessionFactory,
+			BootstrapContext bootstrapContext,
+			MetadataBuildingContext metadataBuildingContext) {
+		return new RuntimeModelCreationProcess( sessionFactory, bootstrapContext, metadataBuildingContext ).execute();
+	}
+
 	private final SessionFactoryImplementor sessionFactory;
 	private final BootstrapContext bootstrapContext;
 	private final MetadataBuildingContext metadataBuildingContext;
+	private final InFlightRuntimeModel inFlightRuntimeModel;
+
 	private final RuntimeModelDescriptorFactory descriptorFactory;
 
 	private final Map<EntityMappingHierarchy,IdentifiableTypeDescriptor> runtimeRootByBootHierarchy = new HashMap<>();
@@ -78,7 +87,7 @@ public class RuntimeModelCreationProcess {
 
 	private final Map<String, DomainDataRegionConfigImpl.Builder> regionConfigBuilders = new ConcurrentHashMap<>();
 
-	public RuntimeModelCreationProcess(
+	private RuntimeModelCreationProcess(
 			SessionFactoryImplementor sessionFactory,
 			BootstrapContext bootstrapContext,
 			MetadataBuildingContext metadataBuildingContext) {
@@ -86,10 +95,13 @@ public class RuntimeModelCreationProcess {
 		this.bootstrapContext = bootstrapContext;
 		this.metadataBuildingContext = metadataBuildingContext;
 
+		this.inFlightRuntimeModel = new InFlightRuntimeModel();
+
 		this.descriptorFactory = sessionFactory.getServiceRegistry().getService( RuntimeModelDescriptorFactory.class );
 	}
 
-	public void execute() {
+
+	public MetamodelImplementor execute() {
 		final InFlightMetadataCollector mappingMetadata = metadataBuildingContext.getMetadataCollector();
 
 		// todo (7.0) : better design where all FKs are created b4 we enter here
@@ -202,6 +214,8 @@ public class RuntimeModelCreationProcess {
 						.map( DomainDataRegionConfigImpl.Builder::build )
 						.collect( Collectors.toSet() )
 		);
+
+		return inFlightRuntimeModel.complete( sessionFactory, metadataBuildingContext );
 	}
 
 	private void walkSupers(
@@ -319,10 +333,8 @@ public class RuntimeModelCreationProcess {
 				definition.getJpaEntityName()
 		);
 
-		final EntityDescriptor<?> entityPersister = metadataBuildingContext.getBootstrapContext()
-				.getTypeConfiguration()
-				.findEntityDescriptor( definition.getEntityName() );
-		if ( entityPersister == null ) {
+		final EntityDescriptor<Object> entityDescriptor = inFlightRuntimeModel.findEntityDescriptor( definition.getEntityName() );
+		if ( entityDescriptor == null ) {
 			throw new IllegalArgumentException(
 					"Attempted to register named entity graph [" + definition.getRegisteredName()
 							+ "] for unknown entity ["+ definition.getEntityName() + "]"
@@ -332,14 +344,14 @@ public class RuntimeModelCreationProcess {
 
 		final EntityGraphImpl<?> entityGraph = new EntityGraphImpl<>(
 				definition.getRegisteredName(),
-				entityPersister,
+				entityDescriptor,
 				sessionFactory
 		);
 
 		final NamedEntityGraph namedEntityGraph = definition.getAnnotation();
 
 		if ( namedEntityGraph.includeAllAttributes() ) {
-			for ( Object attributeObject : entityPersister.getAttributes() ) {
+			for ( Object attributeObject : entityDescriptor.getAttributes() ) {
 				entityGraph.addAttributeNodes( (Attribute) attributeObject );
 			}
 		}
@@ -348,10 +360,7 @@ public class RuntimeModelCreationProcess {
 			applyNamedAttributeNodes( namedEntityGraph.attributeNodes(), namedEntityGraph, entityGraph );
 		}
 
-		metadataBuildingContext.getBootstrapContext().getTypeConfiguration().addNamedEntityGraph(
-				definition.getRegisteredName(),
-				entityGraph
-		);
+		inFlightRuntimeModel.addEntityNamedGraph( definition.getRegisteredName(), entityGraph );
 	}
 
 	private void applyNamedAttributeNodes(
@@ -462,12 +471,13 @@ public class RuntimeModelCreationProcess {
 
 		@Override
 		public void registerEntityHierarchy(EntityHierarchy runtimeHierarchy, EntityMappingHierarchy bootHierarchy) {
-			getTypeConfiguration().register( runtimeHierarchy );
+			inFlightRuntimeModel.addEntityHierarchy( runtimeHierarchy );
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public void registerEntityDescriptor(EntityDescriptor runtimeDescriptor, EntityMapping bootDescriptor) {
-			getTypeConfiguration().register( runtimeDescriptor );
+			inFlightRuntimeModel.addEntityDescriptor( runtimeDescriptor );
 
 			if ( RootClass.class.isInstance( bootDescriptor ) ) {
 				// prepare both the entity and natural-id second level cache access for this hierarchy
@@ -508,18 +518,30 @@ public class RuntimeModelCreationProcess {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public void registerMappedSuperclassDescriptor(
 				MappedSuperclassDescriptor runtimeType,
 				MappedSuperclassMapping bootMapping) {
-			getTypeConfiguration().register( runtimeType );
+			inFlightRuntimeModel.addMappedSuperclassDescriptor( runtimeType );
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
+		public void registerEmbeddableDescriptor(
+				EmbeddedTypeDescriptor runtimeDescriptor,
+				EmbeddedValueMappingImplementor bootDescriptor) {
+			embeddableRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
+			inFlightRuntimeModel.addEmbeddedDescriptor( runtimeDescriptor );
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
 		public void registerCollectionDescriptor(
 				PersistentCollectionDescriptor runtimeDescriptor,
 				Collection bootDescriptor) {
 			collectonRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
-			getTypeConfiguration().register( runtimeDescriptor );
+			inFlightRuntimeModel.addCollectionDescriptor( runtimeDescriptor );
+
 			final AccessType accessType = AccessType.fromExternalName( bootDescriptor.getCacheConcurrencyStrategy() );
 			if ( accessType != null ) {
 				addCollectionCachingConfig( runtimeDescriptor, bootDescriptor, accessType );
@@ -532,14 +554,6 @@ public class RuntimeModelCreationProcess {
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
 			configBuilder.addCollectionConfig( runtimeDescriptor, accessType );
-		}
-
-		@Override
-		public void registerEmbeddableDescriptor(
-				EmbeddedTypeDescriptor runtimeDescriptor,
-				EmbeddedValueMappingImplementor bootDescriptor) {
-			getTypeConfiguration().register( runtimeDescriptor );
-			embeddableRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
 		}
 	}
 }

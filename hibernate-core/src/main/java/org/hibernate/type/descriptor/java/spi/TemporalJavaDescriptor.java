@@ -6,11 +6,13 @@
  */
 package org.hibernate.type.descriptor.java.spi;
 
+import org.hibernate.Incubating;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
+@Incubating
 public interface TemporalJavaDescriptor<T> extends BasicJavaDescriptor<T> {
 	javax.persistence.TemporalType getPrecision();
 

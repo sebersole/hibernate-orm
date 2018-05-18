@@ -38,6 +38,7 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.BasicTypeRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
@@ -325,9 +326,6 @@ public class MetadataBuildingProcess {
 
 	private static void handleTypes(BootstrapContext bootstrapContext, MetadataBuildingOptions options) {
 
-	private static void handleTypes(
-			BootstrapContext bootstrapContext,
-			MetadataBuildingOptions options) {
 		final ClassLoaderService classLoaderService = options.getServiceRegistry().getService( ClassLoaderService.class );
 
 		final TypeContributions typeContributions = new TypeContributions() {
@@ -351,11 +349,6 @@ public class MetadataBuildingProcess {
 			public TypeConfiguration getTypeConfiguration() {
 				return bootstrapContext.getTypeConfiguration();
 			}
-
-			final BasicTypeRegistry getBasicTypeRegistry() {
-				return bootstrapContext.getTypeConfiguration().getBasicTypeRegistry();
-			}
-
 		};
 
 		final Dialect dialect = options.getServiceRegistry().getService( JdbcServices.class ).getDialect();

@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,12 +35,8 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.SharedSessionContract;
 import org.hibernate.cfg.NotYetImplementedException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.ScrollMode;
-import org.hibernate.ScrollableResults;
-import org.hibernate.engine.spi.RowSelection;
 import org.hibernate.transform.ResultTransformer;
 import org.hibernate.type.Type;
 
@@ -429,58 +424,7 @@ public interface Query<R> extends TypedQuery<R>, org.hibernate.Query<R>, CommonQ
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Overrides for methods we do not want deprecated
-
-	@Override
-	ScrollableResults scroll();
-
-	@Override
-	ScrollableResults scroll(ScrollMode scrollMode);
-
-	@Override
-	List<R> list();
-
-	default List<R> getResultList() {
-		return list();
-	}
-
-	@Override
-	R uniqueResult();
-
-	default R getSingleResult() {
-		return uniqueResult();
-	}
-
-	@Override
-	FlushMode getHibernateFlushMode();
-
-	@Override
-	CacheMode getCacheMode();
-
-	@Override
-	String getCacheRegion();
-
-	@Override
-	Integer getFetchSize();
-
-	@Override
-	LockOptions getLockOptions();
-
-	@Override
-	String getComment();
-
-	@Override
-	String getQueryString();
-
-	@Override
-	ParameterMetadata getParameterMetadata();
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-	//covariant overrides
-
-
-	- CommonQueryContract
+	// covariant overrides - CommonQueryContract
 
 	@Override
 	Query<R> setHibernateFlushMode(FlushMode flushMode);

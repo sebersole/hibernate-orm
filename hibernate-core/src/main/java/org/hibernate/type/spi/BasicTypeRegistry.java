@@ -122,7 +122,9 @@ public class BasicTypeRegistry {
 				}
 		);
 
-		return new BasicTypeImpl<T>( javaTypeDescriptor, recommendedSqlType );
+		final BasicTypeImpl<T> basicType = new BasicTypeImpl<>( javaTypeDescriptor, recommendedSqlType );
+		basicType.
+		return basicType;
 	}
 
 

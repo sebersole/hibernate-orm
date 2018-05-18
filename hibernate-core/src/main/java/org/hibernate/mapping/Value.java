@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.ValueMapping;
 
 /**
@@ -30,7 +29,8 @@ public interface Value<J> extends ValueMapping<J>, Serializable {
 	 */
 	@Deprecated
 	Iterator<Selectable> getColumnIterator();
-	public boolean isSame(Value other);
+
+	boolean isSame(Value other);
 
 	/**
 	 * @deprecated since 6.0, use {@link #getMappedTable()} instead.

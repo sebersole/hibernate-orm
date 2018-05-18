@@ -55,6 +55,8 @@ public interface RuntimeModelCreationContext {
 
 	PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver();
 
+	// todo (6.0) : replace these with InFlightRuntimeModel?
+
 	void registerEntityHierarchy(
 			EntityHierarchy runtimeHierarchy,
 			EntityMappingHierarchy bootHierarchy);

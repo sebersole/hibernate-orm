@@ -6,15 +6,14 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Objects;
+
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.internal.util.ReflectHelper;
-
-import java.util.Objects;
 
 /**
  * A simple-point association (ie. a reference to another entity).
@@ -31,6 +30,10 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	protected boolean referenceToPrimaryKey = true;
 
 	protected ToOne(MetadataBuildingContext buildingContext, Table table) {
+		super( buildingContext, table );
+	}
+
+	protected ToOne(MetadataBuildingContext buildingContext, MappedTable table) {
 		super( buildingContext, table );
 	}
 
@@ -82,6 +85,11 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 
 	public boolean isTypeSpecified() {
 		return referencedEntityName!=null;
+	}
+
+	@Override
+	public boolean isSame(Value other) {
+		return other instanceof ToOne && isSame( (ToOne) other );
 	}
 
 	@Override

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
 import javax.persistence.Parameter;
@@ -27,16 +26,9 @@ import javax.persistence.TemporalType;
 import javax.persistence.TransactionRequiredException;
 
 import org.hibernate.HibernateException;
-import org.hibernate.engine.ResultSetMappingDefinition;
-import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
-import org.hibernate.engine.spi.QueryParameters;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.ScrollMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.internal.util.StringHelper;
-import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
@@ -45,8 +37,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.NoMoreReturnsException;
 import org.hibernate.procedure.NoSuchParameterException;
 import org.hibernate.procedure.Output;
-import org.hibernate.procedure.ParameterMisuseException;
-import org.hibernate.procedure.ParameterRegistration;
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.ParameterStrategyException;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.ProcedureCallMemento;
@@ -61,25 +52,19 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.procedure.internal.ProcedureParamBindings;
 import org.hibernate.query.internal.QueryOptionsImpl;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.sql.exec.internal.JdbcCallImpl;
-import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
-import org.hibernate.sql.exec.internal.JdbcCallParameterBinderImpl;
-import org.hibernate.sql.exec.internal.JdbcCallParameterExtractorImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterRegistrationImpl;
-import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 import org.hibernate.sql.results.internal.RowReaderNoResultsExpectedImpl;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.RowReader;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.type.Type;
 
 /**
@@ -115,7 +100,7 @@ public class ProcedureCallImpl<R>
 	 * @param procedureName The name of the procedure to call
 	 */
 	public ProcedureCallImpl(SharedSessionContractImplementor session, String procedureName) {
-		super( session, null );
+		super( session );
 		this.procedureName = procedureName;
 
 		this.parameterManager = new ParameterManager( this );
@@ -135,7 +120,7 @@ public class ProcedureCallImpl<R>
 	 * @param resultClasses The classes making up the result
 	 */
 	public ProcedureCallImpl(final SharedSessionContractImplementor session, String procedureName, Class... resultClasses) {
-		super( session, null );
+		super( session );
 		this.procedureName = procedureName;
 
 		this.parameterManager = new ParameterManager( this );
@@ -187,7 +172,7 @@ public class ProcedureCallImpl<R>
 	 * @param resultSetMappings The names of the result set mappings making up the result
 	 */
 	public ProcedureCallImpl(final SharedSessionContractImplementor session, String procedureName, String... resultSetMappings) {
-		super( session, null );
+		super( session );
 		this.procedureName = procedureName;
 
 		this.parameterManager = new ParameterManager( this );
@@ -247,7 +232,7 @@ public class ProcedureCallImpl<R>
 	 */
 	@SuppressWarnings("unchecked")
 	ProcedureCallImpl(SharedSessionContractImplementor session, ProcedureCallMementoImpl memento) {
-		super( session, null );
+		super( session );
 		this.procedureName = memento.getProcedureName();
 
 		this.parameterManager = new ParameterManager( this );
@@ -303,7 +288,7 @@ public class ProcedureCallImpl<R>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> ParameterRegistration<T> registerParameter(int position, Class<T> type, ParameterMode mode) {
+	public <T> ProcedureParameterImplementor<T> registerParameter(int position, Class<T> type, ParameterMode mode) {
 		final ProcedureParameterImpl procedureParameter = new ProcedureParameterImpl(
 				this,
 				position,
@@ -336,7 +321,7 @@ public class ProcedureCallImpl<R>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> ParameterRegistration<T> registerParameter(String name, Class<T> type, ParameterMode mode) {
+	public <T> ProcedureParameterImplementor<T> registerParameter(String name, Class<T> type, ParameterMode mode) {
 		final ProcedureParameterImpl parameter = new ProcedureParameterImpl(
 				this,
 				name,

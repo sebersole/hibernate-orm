@@ -6,6 +6,8 @@
  */
 
 /**
+ * Package defining the Hibernate run-time view of the application domain model
+ *
  * todo (6.0) : clean up this package.  Most is superseded by the Navigable hierarchy.
  *		Currently Hibernate implements the JPA metamodel contracts with a series
  *		of wrapper objects defined in the `org.hibernate.metamodel` package.  This

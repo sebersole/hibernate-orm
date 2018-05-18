@@ -6,9 +6,12 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import javax.persistence.TemporalType;
+
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -19,4 +22,6 @@ public interface AllowableParameterType<T> extends ExpressableType<T> {
 
 	// todo (6.0) - move this to ValueBinder?
 	int getNumberOfJdbcParametersToBind();
+
+	AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration);
 }

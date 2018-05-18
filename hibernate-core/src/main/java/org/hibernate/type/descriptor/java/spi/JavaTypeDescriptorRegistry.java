@@ -9,6 +9,7 @@ package org.hibernate.type.descriptor.java.spi;
 import java.io.Serializable;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.TypeContributor;
@@ -32,9 +33,8 @@ import org.jboss.logging.Logger;
  *
  * @since 5.3
  */
-public class JavaTypeDescriptorRegistry implements Serializable {
+public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescriptorBaseline.BaselineTarget  {
 	private static final Logger log = Logger.getLogger( JavaTypeDescriptorRegistry.class );
-
 
 	private final TypeConfiguration typeConfiguration;
 	private final ConcurrentHashMap<String, JavaTypeDescriptor> descriptorsByName = new ConcurrentHashMap<>();
@@ -48,6 +48,7 @@ public class JavaTypeDescriptorRegistry implements Serializable {
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// baseline descriptors
+
 
 	@Override
 	public void addBaselineDescriptor(BasicJavaDescriptor descriptor) {
@@ -67,36 +68,42 @@ public class JavaTypeDescriptorRegistry implements Serializable {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// descriptor access
 
-	public <T> JavaTypeDescriptor<T> getDescriptor(Class<T> javaType) {
-		return RegistryHelper.INSTANCE.resolveDescriptor(
-				descriptorsByClass,
-				javaType,
-				() -> {
-					log.debugf(
-							"Could not find matching scoped JavaTypeDescriptor for requested Java class [%s]; " +
-									"falling back to static registry",
-							javaType.getName()
-					);
-
-					return org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry.INSTANCE.getDescriptor(
-							javaType );
-				}
+	@SuppressWarnings("unchecked")
+	public <T> JavaTypeDescriptor<T> getDescriptor(String javaTypeName) {
+		return getDescriptor(
+				javaTypeName,
+				(name,reg) -> null
 		);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> JavaTypeDescriptor<T> getDescriptor(Class<T> javaType) {
-		if ( javaType == null ) {
-			throw new IllegalArgumentException( "Class passed to locate Java type descriptor cannot be null" );
+	public <T> JavaTypeDescriptor<T> getDescriptor(String javaTypeName, BiFunction<String,JavaTypeDescriptorRegistry,JavaTypeDescriptor> fallback) {
+		if ( javaTypeName == null ) {
+			throw new IllegalArgumentException( "Java type name passed to locate Java type descriptor cannot be null" );
 		}
 
-		JavaTypeDescriptor javaTypeDescriptor = descriptorsByName.computeIfAbsent(
-				javaType.getName(),
-				k -> makeOnTheFlyJavaTypeDescriptor( javaType )
-		);
-
-		return javaTypeDescriptor;
+		final JavaTypeDescriptor javaTypeDescriptor = descriptorsByName.get( javaTypeName );
+		return javaTypeDescriptor != null
+				? javaTypeDescriptor
+				: fallback.apply( javaTypeName, this );
 	}
+
+	public <T> JavaTypeDescriptor<T> getDescriptor(Class<T> javaType) {
+		return getDescriptor( javaType, (s,r) -> null );
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> JavaTypeDescriptor<T> getDescriptor(Class<T> javaType, BiFunction<String,JavaTypeDescriptorRegistry,JavaTypeDescriptor> fallback) {
+		if ( javaType == null ) {
+			throw new IllegalArgumentException( "Java type passed to locate Java type descriptor cannot be null" );
+		}
+
+		return getDescriptor( javaType.getTypeName(), fallback );
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Registration access
 
 	@SuppressWarnings("unchecked")
 	private <T> BasicJavaDescriptor<T> makeOnTheFlyJavaTypeDescriptor(Class<T> javaType) {
@@ -130,14 +137,6 @@ public class JavaTypeDescriptorRegistry implements Serializable {
 	private String solution() {
 		return "Consider registering these JavaTypeDescriptors with the %s during bootstrap, " +
 				" either directly or through a registered %s accessing the %s ";
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> JavaTypeDescriptor<T> getDescriptor(String javaTypeName) {
-		if ( javaTypeName == null ) {
-			throw new IllegalArgumentException( "Java type name passed to locate Java type descriptor cannot be null" );
-		}
-		return descriptorsByName.get( javaTypeName );
 	}
 
 

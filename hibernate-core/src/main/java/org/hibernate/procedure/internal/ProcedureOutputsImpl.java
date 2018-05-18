@@ -25,7 +25,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.procedure.NoMoreReturnsException;
 import org.hibernate.procedure.Output;
-import org.hibernate.procedure.ParameterRegistration;
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.ProcedureOutputs;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.procedure.spi.ParameterStrategy;
@@ -237,13 +237,13 @@ public class ProcedureOutputsImpl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> T getOutputParameterValue(ParameterRegistration<T> parameterRegistration) {
+	public <T> T getOutputParameterValue(ProcedureParameterImplementor<T> parameterRegistration) {
 		final JdbcCallParameterExtractor extractor = resolveJdbcParameterExtractor( parameterRegistration );
 		return (T) extractor.extractValue( callableStatement, parameterStrategy == ParameterStrategy.NAMED, procedureCall.getSession() );
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> JdbcCallParameterExtractor resolveJdbcParameterExtractor(ParameterRegistration<T> parameterRegistration) {
+	private <T> JdbcCallParameterExtractor resolveJdbcParameterExtractor(ProcedureParameterImplementor<T> parameterRegistration) {
 		final String key = parameterRegistration.getName() != null
 				? parameterRegistration.getName()
 				: Integer.toString( parameterRegistration.getPosition() );

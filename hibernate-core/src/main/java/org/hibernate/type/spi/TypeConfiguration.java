@@ -8,9 +8,8 @@ package org.hibernate.type.spi;
 
 import java.io.InvalidObjectException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
@@ -19,16 +18,17 @@ import org.hibernate.SessionFactoryObserver;
 import org.hibernate.boot.cfgxml.spi.CfgXmlAccessService;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.uuid.LocalObjectUuidHelper;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
-import org.hibernate.metamodel.internal.MetamodelImpl;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationProcess;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
-import org.hibernate.type.BasicTypeRegistry;
-import org.hibernate.type.Type;
-import org.hibernate.type.TypeFactory;
-import org.hibernate.type.TypeResolver;
+import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
+import org.hibernate.query.sqm.tree.expression.SqmLiteral;
+import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptorRegistry;
 import org.hibernate.type.internal.TypeConfigurationRegistry;
@@ -60,18 +60,13 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	private final String uuid = LocalObjectUuidHelper.generateLocalObjectUuid();
 
 	private final Scope scope;
-	private final transient TypeFactory typeFactory;
+	private boolean initialized;
 
 	// things available during both boot and runtime ("active") lifecycle phases
 	private final transient JavaTypeDescriptorRegistry javaTypeDescriptorRegistry;
 	private final transient SqlTypeDescriptorRegistry sqlTypeDescriptorRegistry;
 	private final transient BasicTypeRegistry basicTypeRegistry;
 
-	private final transient Map<String,String> importMap = new ConcurrentHashMap<>();
-
-
-	// temporarily needed to support deprecations
-	private final transient TypeResolver typeResolver;
 
 	public TypeConfiguration() {
 		this.scope = new Scope();
@@ -105,13 +100,10 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 		return sqlTypeDescriptorRegistry;
 	}
 
-	public Set<EntityNameResolver> getEntityNameResolvers() {
-		return entityNameResolvers;
+	public BasicTypeRegistry getBasicTypeRegistry() {
+		return basicTypeRegistry;
 	}
 
-	public Map<String, String> getImportMap() {
-		return Collections.unmodifiableMap( importMap );
-	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Scoping
@@ -123,8 +115,6 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	 * @apiNote This will throw an exception if the SessionFactory is not yet
 	 * bound here.  See {@link Scope} for more details regarding the stages
 	 * a TypeConfiguration goes through
-	 *
-	 * @return
 	 */
 	public MetadataBuildingContext getMetadataBuildingContext() {
 		return scope.getMetadataBuildingContext();
@@ -136,20 +126,18 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	}
 
 	public MetamodelImplementor scope(SessionFactoryImplementor sessionFactory,  BootstrapContext bootstrapContext) {
+		assert scope.metadataBuildingContext != null;
+
 		log.debugf( "Scoping TypeConfiguration [%s] to SessionFactoryImpl [%s]", this, sessionFactory );
 		scope.setSessionFactory( sessionFactory );
 		sessionFactory.addObserver( this );
 		log.debugf( "Scoping TypeConfiguration [%s] to SessionFactory [%s]", this, sessionFactory );
 
-		for ( Map.Entry<String, String> importEntry : scope.metadataBuildingContext.getMetadataCollector().getImports().entrySet() ) {
-			if ( importMap.containsKey( importEntry.getKey() ) ) {
-				continue;
-			}
-
-			importMap.put( importEntry.getKey(), importEntry.getValue() );
-		}
-
-		return new MetamodelImpl( sessionFactory, this );
+		return RuntimeModelCreationProcess.execute(
+				sessionFactory,
+				bootstrapContext,
+				scope.getMetadataBuildingContext()
+		);
 	}
 
 	/**
@@ -342,6 +330,11 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	public BasicType resolveCastTargetType(String name) {
 		throw new NotYetImplementedException(  );
 	}
+
+
+
+
+
 
 	/**
 	 * Encapsulation of lifecycle concerns for a TypeConfiguration, mainly in

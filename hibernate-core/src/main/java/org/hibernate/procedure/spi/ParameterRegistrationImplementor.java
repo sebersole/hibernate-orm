@@ -6,8 +6,7 @@
  */
 package org.hibernate.procedure.spi;
 
-import org.hibernate.procedure.ParameterRegistration;
-import org.hibernate.query.QueryParameter;
+import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.internal.ProcedureCallMementoImpl;
 
 /**

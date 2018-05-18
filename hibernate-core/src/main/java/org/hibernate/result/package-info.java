@@ -11,10 +11,7 @@
  * exposed in the JDBC API.
  *
  * {@link org.hibernate.result.Outputs} represents the overall group of
- * results.
- *
- * {@link org.hibernate.result.Output} represents the mixed individual
- * outcomes, which might be either a {@link org.hibernate.result.ResultSetOutput}
+ * mixed individual outcomes, which might be either a {@link org.hibernate.result.ResultSetOutput}
  * or a {@link org.hibernate.result.UpdateCountOutput}.
  *
  * <code>
@@ -29,5 +26,7 @@
  *         }
  *     }
  * </code>
+ *
  */
+@Deprecated
 package org.hibernate.result;

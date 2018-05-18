@@ -23,8 +23,10 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 public interface QueryParameterBinding<T> {
 	boolean isBound();
 
+	// todo (6.0) : i think this is defined (or should be) on QueryParameter
 	boolean allowsMultiValued();
 
+	// this one should stay here though
 	boolean isMultiValued();
 
 	/**

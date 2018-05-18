@@ -21,15 +21,4 @@ import org.hibernate.result.UpdateCountOutput;
  * @author Steve Ebersole
  */
 public interface Output extends org.hibernate.result.Output {
-	/**
-	 * Determine if this return is a result (castable to {@link ResultSetOutput}).  The alternative is that it is
-	 * an update count (castable to {@link UpdateCountOutput}).
-	 *
-	 * @return {@code true} indicates that {@code this} can be safely cast to {@link ResultSetOutput}), other wise
-	 * it can be cast to {@link UpdateCountOutput}.
-	 *
-	 * @deprecated Perform instanceof checks instead.
-	 */
-	@Deprecated
-	boolean isResultSet();
 }

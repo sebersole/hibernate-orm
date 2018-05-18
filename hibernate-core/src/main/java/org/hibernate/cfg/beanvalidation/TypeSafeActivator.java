@@ -351,9 +351,6 @@ class TypeSafeActivator {
 		}
 	}
 
-		}
-	}
-
 	private static void applySize(PersistentAttributeMapping property, ConstraintDescriptor<?> descriptor, PropertyDescriptor propertyDescriptor) {
 		if ( Size.class.equals( descriptor.getAnnotation().annotationType() )
 				&& String.class.equals( propertyDescriptor.getElementClass() ) ) {

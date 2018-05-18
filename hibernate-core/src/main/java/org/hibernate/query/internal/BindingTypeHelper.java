@@ -4,7 +4,6 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-
 package org.hibernate.query.internal;
 
 import java.time.Instant;
@@ -14,15 +13,22 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import javax.persistence.TemporalType;
 
+import org.hibernate.Internal;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
-import org.hibernate.type.Type;
+import org.hibernate.type.spi.TypeConfiguration;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
+@Internal
 public class BindingTypeHelper {
+	private static final Logger log = Logger.getLogger( BindingTypeHelper.class );
+
 	/**
 	 * Singleton access
 	 */
@@ -31,51 +37,12 @@ public class BindingTypeHelper {
 	private BindingTypeHelper() {
 	}
 
-	public BasicType determineTypeForTemporalType(TemporalType temporalType, AllowableParameterType baseType, Object bindValue) {
-		// todo : for 6.0 make TemporalType part of org.hibernate.type.descriptor.java.JdbcRecommendedSqlTypeMappingContext
-		//		then we can just ask the org.hibernate.type.basic.BasicTypeFactory to handle this based on its registry
-		//
-		//   - or for 6.0 make TemporalType part of the state for those BasicType impls dealing with date/time types
-		//
-		// 	 - or for 6.0 make TemporalType part of Binder contract
-		//
-		//   - or add a org.hibernate.type.TemporalType#getVariant(TemporalType)
-		//
-		//	 - or ...
-
-		// todo : (5.2) review Java type handling for sanity.  This part was done quickly ;)
-
-		final Class javaType;
-
-		// Determine the "value java type" :
-		// 		prefer to leverage the bindValue java type (if bindValue not null),
-		// 		followed by the java type reported by the baseType,
-		// 		fallback to java.sql.Timestamp
-
-		if ( bindValue != null ) {
-			javaType = bindValue.getClass();
-		}
-		else if ( baseType != null ) {
-			javaType = baseType.getJavaTypeDescriptor().getJavaType();
-		}
-		else {
-			javaType = java.sql.Timestamp.class;
-		}
-
-		switch ( temporalType ) {
-			case TIMESTAMP: {
-				return resolveTimestampTemporalTypeVariant( javaType, baseType );
-			}
-			case DATE: {
-				return resolveDateTemporalTypeVariant( javaType, baseType );
-			}
-			case TIME: {
-				return resolveTimeTemporalTypeVariant( javaType, baseType );
-			}
-			default: {
-				throw new IllegalArgumentException( "Unexpected TemporalType [" + temporalType + "]; expecting TIMESTAMP, DATE or TIME" );
-			}
-		}
+	@SuppressWarnings({"WeakerAccess", "unchecked"})
+	public <T> AllowableParameterType<T> resolveTemporalPrecision(
+			TemporalType precision,
+			AllowableParameterType baseType,
+			TypeConfiguration typeConfiguration) {
+		return baseType.resolveTemporalPrecision( precision, typeConfiguration );
 	}
 
 	public BasicType resolveTimestampTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {

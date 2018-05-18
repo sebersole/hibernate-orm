@@ -18,13 +18,9 @@ import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.internal.ClassmateContext;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
-import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
-import org.hibernate.boot.model.relational.AuxiliaryDatabaseObject;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.jpa.spi.MutableJpaCompliance;
+import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
@@ -37,19 +33,19 @@ import org.jboss.jandex.IndexView;
  * @author Steve Ebersole
  */
 public interface BootstrapContext {
-	StandardServiceRegistry getServiceRegistry();
-
-	MutableJpaCompliance getJpaCompliance();
-
 	TypeConfiguration getTypeConfiguration();
 
+	StandardServiceRegistry getServiceRegistry();
+
 	MetadataBuildingOptions getMetadataBuildingOptions();
+
+	MutableJpaCompliance getJpaCompliance();
 
 	boolean isJpaBootstrap();
 
 	/**
 	 * Indicates that bootstrap was initiated from JPA bootstrapping.  Internally {@code false} is
-	 * the assumed value.  We only need to call this to mark that as true.
+	 * the assumed value.  We only need to call this to mark as true.
 	 */
 	void markAsJpaBootstrap();
 
