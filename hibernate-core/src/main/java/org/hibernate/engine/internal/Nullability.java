@@ -13,10 +13,8 @@ import javax.persistence.metamodel.Attribute.PersistentAttributeType;
 import org.hibernate.HibernateException;
 import org.hibernate.PropertyValueException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
-import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadingActions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.engine.spi.Status;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.CollectionElement;
 import org.hibernate.metamodel.model.domain.spi.CollectionElementEmbedded;
@@ -25,7 +23,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
-import org.hibernate.type.EntityType;
 import org.hibernate.type.descriptor.java.internal.AnyTypeJavaDescriptor;
 
 /**
@@ -60,7 +57,7 @@ public final class Nullability {
 			final Object[] values,
 			final EntityDescriptor entityDescriptor,
 			final boolean isUpdate) {
-		checkNullability( values, persister, isUpdate ? NullabilityCheckType.UPDATE : NullabilityCheckType.CREATE );
+		checkNullability( values, entityDescriptor, isUpdate ? NullabilityCheckType.UPDATE : NullabilityCheckType.CREATE );
 	}
 
 	public enum NullabilityCheckType {
@@ -71,7 +68,7 @@ public final class Nullability {
 
 	public void checkNullability(
 			final Object[] values,
-			final EntityPersister persister,
+			final EntityDescriptor entityDescriptor,
 			final NullabilityCheckType checkType) {
 		/*
 		 * Typically when Bean Validation is on, we don't want to validate null values

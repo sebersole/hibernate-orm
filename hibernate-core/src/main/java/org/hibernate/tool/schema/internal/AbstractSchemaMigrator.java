@@ -28,6 +28,8 @@ import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.Index;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
+import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
+import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Sequence;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.metamodel.model.relational.spi.UniqueKey;
@@ -483,8 +485,8 @@ public abstract class AbstractSchemaMigrator implements SchemaMigrator {
 			return false;
 		}
 
-		final String referencingColumn = foreignKey.getColumn( 0 ).getName();
-		final String referencedTable = foreignKey.getReferencedTable().getName();
+		final String referencingColumn = ((PhysicalColumn)foreignKey.getColumnMappings().getColumnMappings().get( 0 ).getReferringColumn()).getName().getText();
+		final String referencedTable = ((PhysicalTable)foreignKey.getReferringTable()).getTableName().getText();
 
 		/*
 		 * Find existing keys based on referencing column and referencedTable. "referencedColumnName" is not checked

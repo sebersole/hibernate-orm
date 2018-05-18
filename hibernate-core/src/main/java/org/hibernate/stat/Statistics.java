@@ -348,16 +348,4 @@ public interface Statistics {
 	 */
 	@Deprecated
 	SecondLevelCacheStatistics getSecondLevelCacheStatistics(String regionName);
-
-	/**
-	 * Natural id cache statistics per region
-	 *
-	 * @param regionName region name
-	 * @return NaturalIdCacheStatistics
-	 *
-	 * @deprecated (since 5.3) Use {@link #getNaturalIdStatistics} or
-	 * {@link @getDomainDataRegionStatistics} instead depending on need
-	 */
-	@Deprecated
-	NaturalIdCacheStatistics getNaturalIdCacheStatistics(String regionName);
 }

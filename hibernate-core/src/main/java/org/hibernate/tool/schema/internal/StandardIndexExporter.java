@@ -6,10 +6,13 @@
  */
 package org.hibernate.tool.schema.internal;
 
+import java.util.Map;
+
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.util.StringHelper;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Index;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.naming.QualifiedNameImpl;
@@ -63,8 +66,9 @@ public class StandardIndexExporter implements Exporter<Index> {
 				buf.append( ", " );
 			}
 			buf.append( ( column.getName().render( jdbcEnvironment.getDialect() ) ) );
-			if ( columnOrderMap.containsKey( column ) ) {
-				buf.append( " " ).append( columnOrderMap.get( column ) );
+			String orderMap = index.getColumnOrderMap( column );
+			if ( StringHelper.isNotEmpty( orderMap ) ) {
+				buf.append( " " ).append( orderMap );
 			}
 		}
 		buf.append( ")" );

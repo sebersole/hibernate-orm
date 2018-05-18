@@ -43,6 +43,7 @@ import org.hibernate.cfg.annotations.NamedProcedureCallDefinition;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.envers.boot.spi.AuditMetadataBuilderImplementor;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.FetchProfile;
 import org.hibernate.mapping.MappedSuperclass;
@@ -69,7 +70,6 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 	private final MetadataBuildingOptions metadataBuildingOptions;
 	private final BootstrapContext bootstrapContext;
 
-	private final IdentifierGeneratorFactory identifierGeneratorFactory;
 
 	private final Map<String, EntityMappingHierarchy> entityMappingHierarchies;
 	private final Map<String,PersistentClass> entityBindingMap;
@@ -88,12 +88,10 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 	private final java.util.Collection<DomainDataRegionConfigImpl.Builder> cacheRegionConfigBuilders;
 	private final Database database;
 	private final AuditMetadataBuilderImplementor auditMetadataBuilder;
-	private final BootstrapContext bootstrapContext;
 
 	MetadataImpl(
 			UUID uuid,
 			MetadataBuildingOptions metadataBuildingOptions,
-			MutableIdentifierGeneratorFactory identifierGeneratorFactory,
 			Map<String, EntityMappingHierarchy> entityMappingHierarchies,
 			Map<String, PersistentClass> entityBindingMap,
 			Map<Class, MappedSuperclass> mappedSuperclassMap,
@@ -107,14 +105,13 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 			Map<String, NamedProcedureCallDefinition> namedProcedureCallMap,
 			Map<String, ResultSetMappingDefinition> sqlResultSetMappingMap,
 			Map<String, NamedEntityGraphDefinition> namedEntityGraphMap,
-			Map<String, SQLFunction> sqlFunctionMap,
+			Map<String, SqmFunctionTemplate> sqlFunctionMap,
 			java.util.Collection<DomainDataRegionConfigImpl.Builder> cacheRegionConfigBuilders,
 			AuditMetadataBuilderImplementor auditMetadataBuilder,
 			Database database,
 			BootstrapContext bootstrapContext) {
 		this.uuid = uuid;
 		this.metadataBuildingOptions = metadataBuildingOptions;
-		this.identifierGeneratorFactory = identifierGeneratorFactory;
 		this.entityMappingHierarchies = entityMappingHierarchies;
 		this.entityBindingMap = entityBindingMap;
 		this.mappedSuperclassMap = mappedSuperclassMap;
@@ -145,18 +142,6 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return bootstrapContext.getTypeConfiguration();
 	}
 
-	/**
-	 * Retrieve the {@link Type} resolver associated with this factory.
-	 *
-	 * @return The type resolver
-	 *
-	 * @deprecated (since 5.3) No replacement, access to and handling of Types will be much different in 6.0
-	 */
-	@Deprecated
-	public TypeResolver getTypeResolver() {
-		return bootstrapContext.getTypeConfiguration().getTypeResolver();
-	}
-
 	@Override
 	public SessionFactoryBuilder getSessionFactoryBuilder() {
 		final SessionFactoryBuilderImpl defaultBuilder = new SessionFactoryBuilderImpl( this, bootstrapContext );
@@ -181,7 +166,7 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		if ( activeFactoryNames != null && activeFactoryNames.size() > 1 ) {
 			throw new HibernateException(
 					"Multiple active SessionFactoryBuilderFactory definitions were discovered : " +
-							String.join(", ", activeFactoryNames)
+							StringHelper.join( ", ", activeFactoryNames )
 			);
 		}
 

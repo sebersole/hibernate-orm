@@ -28,7 +28,6 @@ import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
-import org.hibernate.boot.model.relational.QualifiedTableName;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
 import org.hibernate.cfg.AnnotatedClassType;
 import org.hibernate.cfg.AttributeConverterDefinition;
@@ -46,7 +45,6 @@ import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.naming.Identifier;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.mapping.Table;
 
 /**
  * An in-flight representation of Metadata while Metadata is being built.
@@ -305,17 +303,6 @@ public interface InFlightMetadataCollector extends MetadataImplementor {
 	void registerNaturalIdUniqueKeyBinder(String entityName, NaturalIdUniqueKeyBinder ukBinder);
 
 	/**
-	 * Access to the shared Classmate objects used throughout Hibernate's
-	 * bootstrap process.
-	 *
-	 * @return Access to the shared Classmate delegates.
-	 *
-	 * @deprecated Use {@link BootstrapContext#getClassmateContext()} instead.
-	 */
-	@Deprecated
-	ClassmateContext getClassmateContext();
-
-	/**
 	 * Performs the same function as the legacy TypeResolver#basic, essentially performing
 	 * a resolution for BasicType using "registry keys".
 	 */
@@ -341,7 +328,7 @@ public interface InFlightMetadataCollector extends MetadataImplementor {
 
 	interface EntityTableXref {
 		void addSecondaryTable(LocalMetadataBuildingContext buildingContext, Identifier logicalName, Join secondaryTableJoin);
-		void addSecondaryTable(QualifiedTableName logicalName, Join secondaryTableJoin);
+		void addSecondaryTable(Identifier logicalName, Join secondaryTableJoin);
 		MappedTable resolveTable(Identifier tableName);
 		MappedTable getPrimaryTable();
 		Join locateJoin(Identifier tableName);

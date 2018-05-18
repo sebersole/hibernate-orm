@@ -77,7 +77,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener i
 	}
 
 	@Override
-	public boolean requiresPostCommitHanding(EntityDescriptor persister) {
+	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
 		return getAuditService().getEntityBindings().isVersioned( persister.getEntityName() );
 	}
 }

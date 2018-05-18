@@ -9,7 +9,6 @@ package org.hibernate.type.spi;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.persistence.EnumType;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
@@ -122,9 +121,7 @@ public class BasicTypeRegistry {
 				}
 		);
 
-		final BasicTypeImpl<T> basicType = new BasicTypeImpl<>( javaTypeDescriptor, recommendedSqlType );
-		basicType.
-		return basicType;
+		return new BasicTypeImpl<T>( javaTypeDescriptor, recommendedSqlType );
 	}
 
 

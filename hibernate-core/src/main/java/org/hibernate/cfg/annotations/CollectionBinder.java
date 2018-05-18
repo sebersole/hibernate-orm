@@ -8,7 +8,6 @@ package org.hibernate.cfg.annotations;
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1559,7 +1558,6 @@ public abstract class CollectionBinder {
 					column.setLogicalColumnName( Identifier.toIdentifier( Collection.DEFAULT_ELEMENT_COLUMN_NAME ) );
 					//TODO create an EMPTY_JOINS collection
 					column.setJoins( new HashMap<>() );
-					column.setBuildingContext( buildingContext );
 					column.bind();
 					elementColumns[0] = column;
 				}

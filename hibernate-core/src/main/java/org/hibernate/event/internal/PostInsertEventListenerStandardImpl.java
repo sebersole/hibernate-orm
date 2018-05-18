@@ -32,7 +32,7 @@ public class PostInsertEventListenerStandardImpl implements PostInsertEventListe
 	}
 
 	@Override
-	public boolean requiresPostCommitHanding(EntityDescriptor persister) {
+	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
 		return callbackRegistry.hasRegisteredCallbacks( persister.getMappedClass(), CallbackType.POST_PERSIST );
 	}
 }

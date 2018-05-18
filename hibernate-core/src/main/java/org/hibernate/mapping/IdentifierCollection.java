@@ -9,7 +9,6 @@ package org.hibernate.mapping;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A collection with a synthetic "identifier" column
@@ -19,14 +18,6 @@ public abstract class IdentifierCollection extends Collection {
 	public static final String DEFAULT_IDENTIFIER_COLUMN_NAME = "id";
 
 	private KeyValue identifier;
-
-	/**
-	 * @deprecated Use {@link IdentifierCollection#IdentifierCollection(MetadataBuildingContext, PersistentClass)} instead.
- 	 */
-	@Deprecated
-	public IdentifierCollection(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		super( buildingContext, owner );
-	}
 
 	public IdentifierCollection(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );

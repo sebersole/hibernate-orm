@@ -684,9 +684,8 @@ public class Ejb3Column {
 			return;
 		}
 
-		final String nonNullLogicalColumnName = logicalColumnName != null
-				? logicalColumnName
-				: "";
+		Identifier nonNullLogicalColumnName =
+				logicalColumnName != null ? logicalColumnName : Identifier.toIdentifier( "" );
 
 		if ( StringHelper.isEmpty( annotation.forColumn() )
 				|| annotation.forColumn().equals( nonNullLogicalColumnName ) ) {

@@ -9,6 +9,8 @@ package org.hibernate.boot.model.naming;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.hibernate.naming.Identifier;
+
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.hibernate.test.util.ReflectionUtil;

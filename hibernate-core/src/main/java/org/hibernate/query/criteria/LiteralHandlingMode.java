@@ -7,6 +7,7 @@
 package org.hibernate.query.criteria;
 
 import org.hibernate.HibernateException;
+import org.hibernate.query.QueryLiteralRendering;
 
 /**
  * This enum defines how literals are handled by JPA Criteria.
@@ -22,7 +23,10 @@ import org.hibernate.HibernateException;
  * Always use constants with the {@code INLINE} mode.
  *
  * @author Vlad Mihalcea
+ *
+ * @deprecated since 6.0, Use {@link QueryLiteralRendering} instead.
  */
+@Deprecated
 public enum LiteralHandlingMode {
 
 	AUTO,

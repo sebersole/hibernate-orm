@@ -8,11 +8,11 @@ package org.hibernate.boot.model.resultset.internal;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
+import org.hibernate.Metamodel;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
 import org.hibernate.query.sql.spi.QueryResultBuilderScalar;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -37,8 +37,8 @@ public class ScalarResultDefinitionImpl implements ResultSetMappingDefinition.Sc
 	}
 
 	@Override
-	public QueryResultBuilder generateQueryResultBuilder(TypeConfiguration typeConfiguration) {
-		final BasicType basicType = typeConfiguration.getBasicTypeRegistry()
+	public QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel) {
+		final BasicType basicType = metamodel.getTypeConfiguration().getBasicTypeRegistry()
 				.getBasicType( typeName );
 		if ( basicType == null ) {
 			throw noTypeException( typeName );

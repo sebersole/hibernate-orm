@@ -11,7 +11,6 @@ import java.util.List;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * Indexed collections include Lists, Maps, arrays and
@@ -23,14 +22,6 @@ public abstract class IndexedCollection extends Collection {
 	public static final String DEFAULT_INDEX_COLUMN_NAME = "idx";
 
 	private Value index;
-
-	/**
-	 * @deprecated Use {@link IndexedCollection#IndexedCollection(MetadataBuildingContext, PersistentClass)} insetad.
-	 */
-	@Deprecated
-	public IndexedCollection(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		super( buildingContext, owner );
-	}
 
 	public IndexedCollection(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );

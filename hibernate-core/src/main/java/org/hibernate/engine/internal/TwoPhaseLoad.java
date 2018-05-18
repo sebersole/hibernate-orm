@@ -36,7 +36,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.stat.internal.StatsHelper;
 import org.hibernate.type.internal.TypeHelper;
 
 import org.jboss.logging.Logger;

@@ -123,7 +123,7 @@ public class DefaultResolveNaturalIdEventListener
 			final long endTime = System.nanoTime();
 			final long milliseconds = TimeUnit.MILLISECONDS.convert( endTime - startTime, TimeUnit.NANOSECONDS );
 			factory.getStatistics().naturalIdQueryExecuted(
-					event.getEntityPersister().getRootEntityName(),
+					event.getEntityDescriptor().getHierarchy().getRootEntityType().getEntityName(),
 					milliseconds );
 		}
 		

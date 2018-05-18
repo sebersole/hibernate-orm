@@ -9,7 +9,6 @@ package org.hibernate.mapping;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A map has a primary key consisting of
@@ -17,16 +16,8 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
  */
 public class Map extends IndexedCollection {
 
-	/**
-	 * @deprecated Use {@link Map#Map(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
 	public Map(MetadataBuildingContext context, PersistentClass owner) {
 		super( context, owner );
-	}
-
-	public Map(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		super( buildingContext, owner );
 	}
 
 	public boolean isMap() {

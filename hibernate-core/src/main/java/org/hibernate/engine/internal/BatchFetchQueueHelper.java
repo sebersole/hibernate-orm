@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.BatchFetchQueue;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -44,7 +44,7 @@ public class BatchFetchQueueHelper {
 	public static void removeNotFoundBatchLoadableEntityKeys(
 			Serializable[] ids,
 			List<?> results,
-			EntityPersister persister,
+			EntityDescriptor persister,
 			SharedSessionContractImplementor session) {
 		if ( !persister.isBatchLoadable() ) {
 			return;
@@ -77,7 +77,7 @@ public class BatchFetchQueueHelper {
 	 */
 	public static void removeBatchLoadableEntityKey(
 			Serializable id,
-			EntityPersister persister,
+			EntityDescriptor persister,
 			SharedSessionContractImplementor session) {
 		final EntityKey entityKey = session.generateEntityKey( id, persister );
 		final BatchFetchQueue batchFetchQueue = session.getPersistenceContext().getBatchFetchQueue();

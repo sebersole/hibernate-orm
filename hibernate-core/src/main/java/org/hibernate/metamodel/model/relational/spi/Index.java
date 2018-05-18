@@ -7,7 +7,9 @@
 package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.naming.Identifier;
@@ -18,6 +20,7 @@ import org.hibernate.naming.Identifier;
 public class Index implements Exportable {
 	private final ExportableTable table;
 	private final List<PhysicalColumn> columns = new ArrayList<>();
+	private final Map<Column, String> columnOrder = new HashMap<>();
 	private final Identifier name;
 
 
@@ -45,5 +48,13 @@ public class Index implements Exportable {
 	@Override
 	public String getExportIdentifier() {
 		return StringHelper.qualify( getTable().getTableName().getText(), "IDX-" + getName().render() );
+	}
+
+	public String getColumnOrderMap(Column column) {
+		return columnOrder.get( column );
+	}
+
+	public void addColumnOrder(Column column, String order) {
+		columnOrder.putIfAbsent( column, order );
 	}
 }

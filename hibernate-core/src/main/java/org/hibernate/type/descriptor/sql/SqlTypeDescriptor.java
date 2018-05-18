@@ -6,6 +6,8 @@
  */
 package org.hibernate.type.descriptor.sql;
 
+import java.io.Serializable;
+
 /**
  * Describes a JDBC/SQL type.
  *
@@ -20,7 +22,9 @@ public interface SqlTypeDescriptor extends Serializable {
 	 * @deprecated (since 6.0) Use {@link #getJdbcTypeCode} instead.
 	 */
 	@Deprecated
-	public int getSqlType();
+	default int getSqlType(){
+		return getJdbcTypeCode();
+	}
 
 	/**
 	 * Retrieve the JDBC/SQL type-code that this descriptor represents.
@@ -30,7 +34,5 @@ public interface SqlTypeDescriptor extends Serializable {
 	 *
 	 * @return typeCode The JDBC/SQL type-code
 	 */
-	default int getJdbcTypeCode() {
-		return getSqlType();
-	}
+	int getJdbcTypeCode();
 }

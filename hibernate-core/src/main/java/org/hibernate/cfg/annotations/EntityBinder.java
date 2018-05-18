@@ -27,7 +27,6 @@ import javax.persistence.SharedCacheMode;
 
 import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
-import org.hibernate.EntityMode;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
@@ -54,8 +53,6 @@ import org.hibernate.annotations.SelectBeforeUpdate;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.annotations.Synchronize;
 import org.hibernate.annotations.Tables;
-import org.hibernate.annotations.Tuplizer;
-import org.hibernate.annotations.Tuplizers;
 import org.hibernate.annotations.Where;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.annotations.common.reflection.XAnnotatedElement;
@@ -65,7 +62,6 @@ import org.hibernate.boot.model.naming.EntityNaming;
 import org.hibernate.boot.model.naming.ImplicitEntityNameSource;
 import org.hibernate.boot.model.naming.NamingStrategyHelper;
 import org.hibernate.boot.model.relational.MappedTable;
-import org.hibernate.boot.model.relational.QualifiedTableName;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -1102,34 +1098,26 @@ public class EntityBinder {
 		final Object joinColumns;
 		final List<UniqueConstraintHolder> uniqueConstraintHolders;
 
-		final QualifiedTableName logicalName;
+		final Identifier logicalName;
 		if ( secondaryTable != null ) {
 			schema = secondaryTable.schema();
 			catalog = secondaryTable.catalog();
-			logicalName = new QualifiedTableName(
-				Identifier.toIdentifier( catalog ),
-				Identifier.toIdentifier( schema ),
-					context.getMetadataCollector()
+			logicalName = context.getMetadataCollector()
 					.getDatabase()
 					.getJdbcEnvironment()
 					.getIdentifierHelper()
-					.toIdentifier( secondaryTable.name() )
-			);
+					.toIdentifier( secondaryTable.name() );
 			joinColumns = secondaryTable.pkJoinColumns();
 			uniqueConstraintHolders = TableBinder.buildUniqueConstraintHolders( secondaryTable.uniqueConstraints() );
 		}
 		else if ( joinTable != null ) {
 			schema = joinTable.schema();
 			catalog = joinTable.catalog();
-			logicalName = new QualifiedTableName(
-				Identifier.toIdentifier( catalog ),
-				Identifier.toIdentifier( schema ),
-				context.getMetadataCollector()
-						.getDatabase()
-						.getJdbcEnvironment()
-						.getIdentifierHelper()
-						.toIdentifier( joinTable.name() )
-			);
+			logicalName = context.getMetadataCollector()
+					.getDatabase()
+					.getJdbcEnvironment()
+					.getIdentifierHelper()
+					.toIdentifier( joinTable.name() );
 			joinColumns = joinTable.joinColumns();
 			uniqueConstraintHolders = TableBinder.buildUniqueConstraintHolders( joinTable.uniqueConstraints() );
 		}
@@ -1140,7 +1128,7 @@ public class EntityBinder {
 		final MappedTable table = TableBinder.buildAndFillTable(
 				schema,
 				catalog,
-				logicalName.getTableName(),
+				logicalName,
 				false,
 				uniqueConstraintHolders,
 				null,

@@ -89,10 +89,6 @@ public class ClassLoaderAccessImpl implements ClassLoaderAccess {
 
 	}
 
-	public ClassLoader getJpaTempClassLoader() {
-		return jpaTempClassLoader;
-	}
-
 	@Override
 	public URL locateResource(String resourceName) {
 		return classLoaderService.locateResource( resourceName );

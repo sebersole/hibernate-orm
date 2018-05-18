@@ -245,7 +245,7 @@ public class HSQLDialect extends Dialect {
 		registry.registerNamed( "round" );
 		registry.registerNamed( "roundmagic" );
 		registry.registerNamed( "truncate" );
-		registerFunction( "trunc", new StandardSQLFunction( "trunc" ) );
+		registry.registerNamed( "trunc" );
 
 		registry.registerNamed( "ceiling" );
 		registry.registerNamed( "floor" );

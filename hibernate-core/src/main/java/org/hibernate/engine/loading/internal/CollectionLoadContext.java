@@ -330,7 +330,7 @@ public class CollectionLoadContext {
 		}
 
 		final CollectionCacheEntry entry = new CollectionCacheEntry( lce.getCollection(), persister );
-		final CollectionDataAccess cacheAccess = persister.getCacheAccessStrategy();
+		final CollectionDataAccess cacheAccess = persister.getCacheAccess();
 		final Object cacheKey = cacheAccess.generateCacheKey(
 				lce.getKey(),
 				persister,

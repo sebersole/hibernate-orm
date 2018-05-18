@@ -19,7 +19,6 @@ import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.service.ServiceRegistry;
 
 /**
@@ -36,17 +35,8 @@ public class OneToMany implements ForeignKeyExporter, Value {
 	private boolean ignoreNotFound;
 	private JavaTypeMapping javaTypeMapping;
 
-	/**
-	 * @deprecated Use {@link OneToMany#OneToMany(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
 	public OneToMany(MetadataBuildingContext buildingContext, PersistentClass owner) throws MappingException {
 		this.buildingContext = buildingContext;
-		this.referencingTable = ( owner == null ) ? null : owner.getTable();
-	}
-
-	public OneToMany(MetadataBuildingContext buildingContext, PersistentClass owner) throws MappingException {
-		this.metadata = buildingContext.getMetadataCollector();
 		this.referencingTable = ( owner == null ) ? null : owner.getTable();
 	}
 

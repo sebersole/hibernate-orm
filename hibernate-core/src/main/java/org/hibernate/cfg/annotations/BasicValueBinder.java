@@ -31,7 +31,6 @@ import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.model.TypeDefinition;
 import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
-import org.hibernate.boot.spi.AttributeConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.BasicTypeResolverConvertibleSupport;
 import org.hibernate.cfg.BasicTypeResolverSupport;

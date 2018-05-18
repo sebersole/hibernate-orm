@@ -10,12 +10,6 @@ import java.util.List;
 import javax.persistence.SharedCacheMode;
 
 import org.hibernate.MultiTenancyStrategy;
-import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.boot.AttributeConverterInfo;
-import org.hibernate.boot.CacheRegionDefinition;
-import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
-import org.hibernate.boot.archive.scan.spi.ScanOptions;
-import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -132,4 +126,8 @@ public interface MetadataBuildingOptions {
 
 	ManagedTypeRepresentationResolver getManagedTypeRepresentationResolver();
 	PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver();
+
+	default String getSchemaCharset() {
+		return null;
+	}
 }

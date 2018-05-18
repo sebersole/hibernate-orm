@@ -19,7 +19,6 @@ import org.hibernate.ConnectionAcquisitionMode;
 import org.hibernate.ConnectionReleaseMode;
 import org.hibernate.CustomEntityDirtinessStrategy;
 import org.hibernate.EmptyInterceptor;
-import org.hibernate.EntityMode;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
@@ -40,12 +39,11 @@ import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
-import org.hibernate.dialect.function.SQLFunction;
+import org.hibernate.dialect.function.SQLFunctionTemplate;
 import org.hibernate.engine.config.internal.ConfigurationServiceImpl;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.jdbc.env.spi.ExtractedDatabaseMetaData;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.id.uuid.LocalObjectUuidHelper;
 import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.internal.util.config.ConfigurationHelper;
@@ -54,13 +52,14 @@ import org.hibernate.jpa.spi.MutableJpaCompliance;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.ImmutableEntityUpdateQueryHandlingMode;
+import org.hibernate.query.QueryLiteralRendering;
 import org.hibernate.query.criteria.LiteralHandlingMode;
+import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
+import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.service.spi.ServiceRegistryImplementor;
-import org.hibernate.tuple.entity.EntityTuplizer;
-import org.hibernate.tuple.entity.EntityTuplizerFactory;
 
 import org.jboss.logging.Logger;
 
@@ -81,13 +80,13 @@ import static org.hibernate.cfg.AvailableSettings.CONVENTIONAL_JAVA_CONSTANTS;
 import static org.hibernate.cfg.AvailableSettings.CRITERIA_LITERAL_HANDLING_MODE;
 import static org.hibernate.cfg.AvailableSettings.CUSTOM_ENTITY_DIRTINESS_STRATEGY;
 import static org.hibernate.cfg.AvailableSettings.DEFAULT_BATCH_FETCH_SIZE;
-import static org.hibernate.cfg.AvailableSettings.DEFAULT_ENTITY_MODE;
 import static org.hibernate.cfg.AvailableSettings.DELAY_ENTITY_LOADER_CREATIONS;
 import static org.hibernate.cfg.AvailableSettings.ENABLE_LAZY_LOAD_NO_TRANS;
 import static org.hibernate.cfg.AvailableSettings.FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH;
 import static org.hibernate.cfg.AvailableSettings.FLUSH_BEFORE_COMPLETION;
 import static org.hibernate.cfg.AvailableSettings.GENERATE_STATISTICS;
 import static org.hibernate.cfg.AvailableSettings.HQL_BULK_ID_STRATEGY;
+import static org.hibernate.cfg.AvailableSettings.ID_TABLE_STRATEGY;
 import static org.hibernate.cfg.AvailableSettings.IMMUTABLE_ENTITY_UPDATE_QUERY_HANDLING_MODE;
 import static org.hibernate.cfg.AvailableSettings.INTERCEPTOR;
 import static org.hibernate.cfg.AvailableSettings.IN_CLAUSE_PARAMETER_PADDING;
@@ -100,7 +99,6 @@ import static org.hibernate.cfg.AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLV
 import static org.hibernate.cfg.AvailableSettings.ORDER_INSERTS;
 import static org.hibernate.cfg.AvailableSettings.ORDER_UPDATES;
 import static org.hibernate.cfg.AvailableSettings.PREFER_USER_TRANSACTION;
-import static org.hibernate.cfg.AvailableSettings.PROCEDURE_NULL_PARAM_PASSING;
 import static org.hibernate.cfg.AvailableSettings.QUERY_CACHE_FACTORY;
 import static org.hibernate.cfg.AvailableSettings.QUERY_STARTUP_CHECKING;
 import static org.hibernate.cfg.AvailableSettings.QUERY_SUBSTITUTIONS;
@@ -122,7 +120,10 @@ import static org.hibernate.cfg.AvailableSettings.USE_SQL_COMMENTS;
 import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 import static org.hibernate.cfg.AvailableSettings.VALIDATE_QUERY_PARAMETERS;
 import static org.hibernate.cfg.AvailableSettings.WRAP_RESULT_SETS;
+import static org.hibernate.cfg.AvailableSettings.PROCEDURE_NULL_PARAM_PASSING;
+import static org.hibernate.cfg.AvailableSettings.CALLABLE_NAMED_PARAMS_ENABLED;
 import static org.hibernate.engine.config.spi.StandardConverters.BOOLEAN;
+import static org.hibernate.internal.util.NullnessHelper.coalesce;
 import static org.hibernate.jpa.AvailableSettings.DISCARD_PC_ON_CLOSE;
 
 /**
@@ -177,11 +178,9 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	private List<EntityNameResolver> entityNameResolvers = new ArrayList<>();
 	private EntityNotFoundDelegate entityNotFoundDelegate;
 	private boolean identifierRollbackEnabled;
-	private EntityMode defaultEntityMode;
-	private EntityTuplizerFactory entityTuplizerFactory = new EntityTuplizerFactory();
 	private boolean checkNullability;
 	private boolean initializeLazyStateOutsideTransactions;
-	private MultiTableBulkIdStrategy multiTableBulkIdStrategy;
+	private IdTableStrategy idTableStrategy;
 	private TempTableDdlTransactionHandling tempTableDdlTransactionHandling;
 	private BatchFetchStyle batchFetchStyle;
 	private boolean delayBatchFetchLoaderCreations;
@@ -203,6 +202,8 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	private final boolean procedureParameterNullPassingEnabled;
 	private final boolean collectionJoinSubqueryRewriteEnabled;
 	private boolean jdbcStyleParamsZeroBased;
+	private Integer nonJpaNativeQueryOrdinalParameterBase;
+	private final boolean useOfJdbcNamedParametersEnabled;
 
 	// Caching
 	private boolean secondLevelCacheEnabled;
@@ -232,12 +233,17 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	private LiteralHandlingMode criteriaLiteralHandlingMode;
 	private ImmutableEntityUpdateQueryHandlingMode immutableEntityUpdateQueryHandlingMode;
 
-	private Map<String, SQLFunction> sqlFunctions;
+	private Map<String, SQLFunctionTemplate> sqlFunctions;
 
 	private JpaCompliance jpaCompliance;
 
 	private boolean failOnPaginationOverCollectionFetchEnabled;
 	private boolean inClauseParameterPaddingEnabled;
+
+	private QueryLiteralRendering queryLiteralRendering;
+
+	private final SqmFunctionRegistry sqmFunctionRegistry = new SqmFunctionRegistry();
+
 
 	@SuppressWarnings({"WeakerAccess", "deprecation"})
 	public SessionFactoryOptionsBuilder(StandardServiceRegistry serviceRegistry, BootstrapContext context) {
@@ -309,7 +315,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 
 		this.entityNotFoundDelegate = StandardEntityNotFoundDelegate.INSTANCE;
 		this.identifierRollbackEnabled = cfgService.getSetting( USE_IDENTIFIER_ROLLBACK, BOOLEAN, false );
-		this.defaultEntityMode = EntityMode.parse( (String) configurationSettings.get( DEFAULT_ENTITY_MODE ) );
 		this.checkNullability = cfgService.getSetting( CHECK_NULLABILITY, BOOLEAN, true );
 		this.initializeLazyStateOutsideTransactions = cfgService.getSetting( ENABLE_LAZY_LOAD_NO_TRANS, BOOLEAN, false );
 
@@ -319,11 +324,7 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 				configurationSettings.get( MULTI_TENANT_IDENTIFIER_RESOLVER )
 		);
 
-		this.multiTableBulkIdStrategy = strategySelector.resolveDefaultableStrategy(
-				MultiTableBulkIdStrategy.class,
-				configurationSettings.get( HQL_BULK_ID_STRATEGY ),
-				jdbcServices.getJdbcEnvironment().getDialect().getDefaultMultiTableBulkIdStrategy()
-		);
+		this.idTableStrategy = resolveIdTableStrategy( configurationSettings, jdbcServices, strategySelector );
 
 		this.batchFetchStyle = BatchFetchStyle.interpret( configurationSettings.get( BATCH_FETCH_STYLE ) );
 		this.delayBatchFetchLoaderCreations = cfgService.getSetting( DELAY_ENTITY_LOADER_CREATIONS, BOOLEAN, true );
@@ -344,6 +345,8 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 				CONVENTIONAL_JAVA_CONSTANTS, BOOLEAN, true );
 		this.procedureParameterNullPassingEnabled = cfgService.getSetting( PROCEDURE_NULL_PARAM_PASSING, BOOLEAN, false );
 		this.collectionJoinSubqueryRewriteEnabled = cfgService.getSetting( COLLECTION_JOIN_SUBQUERY, BOOLEAN, true );
+		this.useOfJdbcNamedParametersEnabled = cfgService.getSetting( CALLABLE_NAMED_PARAMS_ENABLED, BOOLEAN, true );
+
 
 		final RegionFactory regionFactory = serviceRegistry.getService( RegionFactory.class );
 		if ( !NoCachingRegionFactory.class.isInstance( regionFactory ) ) {
@@ -500,6 +503,25 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		);
 	}
 
+	private IdTableStrategy resolveIdTableStrategy(
+			Map configurationSettings,
+			JdbcServices jdbcServices,
+			StrategySelector strategySelector) {
+		final Object idTableStrategy = configurationSettings.get( ID_TABLE_STRATEGY );
+
+		// check the legacy (deprecated) setting for id table strategy and warn if set
+		final Object legacyIdTableStrategy = configurationSettings.get( ID_TABLE_STRATEGY );
+		if ( legacyIdTableStrategy != null ) {
+			DeprecationLogger.DEPRECATION_LOGGER.deprecatedSetting( HQL_BULK_ID_STRATEGY, ID_TABLE_STRATEGY );
+		}
+
+		return strategySelector.resolveDefaultableStrategy(
+				IdTableStrategy.class,
+				coalesce( idTableStrategy, legacyIdTableStrategy),
+				(Supplier<IdTableStrategy>) () -> jdbcServices.getJdbcEnvironment().getDialect().getDefaultIdTableStrategy()
+		);
+	}
+
 	@SuppressWarnings("deprecation")
 	private static Interceptor determineInterceptor(Map configurationSettings, StrategySelector strategySelector) {
 		Object setting = configurationSettings.get( INTERCEPTOR );
@@ -555,7 +577,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 			);
 		}
 	}
-
 
 	private static Supplier<? extends Interceptor> interceptorSupplier(Class<? extends Interceptor> clazz) {
 		return () -> {
@@ -628,8 +649,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 
 		return PhysicalConnectionHandlingMode.interpret( effectiveAcquisitionMode, effectiveReleaseMode );
 	}
-
-
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -742,16 +761,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	}
 
 	@Override
-	public EntityMode getDefaultEntityMode() {
-		return defaultEntityMode;
-	}
-
-	@Override
-	public EntityTuplizerFactory getEntityTuplizerFactory() {
-		return entityTuplizerFactory;
-	}
-
-	@Override
 	public boolean isCheckNullability() {
 		return checkNullability;
 	}
@@ -762,8 +771,8 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	}
 
 	@Override
-	public MultiTableBulkIdStrategy getMultiTableBulkIdStrategy() {
-		return multiTableBulkIdStrategy;
+	public IdTableStrategy getIdTableStrategy() {
+		return this.idTableStrategy;
 	}
 
 	@Override
@@ -962,8 +971,8 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	}
 
 	@Override
-	public Map<String, SQLFunction> getCustomSqlFunctionMap() {
-		return sqlFunctions == null ? Collections.emptyMap() : sqlFunctions;
+	public SqmFunctionRegistry getSqmFunctionRegistry() {
+		return sqmFunctionRegistry;
 	}
 
 	@Override
@@ -974,6 +983,21 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	@Override
 	public TimeZone getJdbcTimeZone() {
 		return this.jdbcTimeZone;
+	}
+
+	@Override
+	public Integer getNonJpaNativeQueryOrdinalParameterBase() {
+		return this.nonJpaNativeQueryOrdinalParameterBase;
+	}
+
+	@Override
+	public boolean isUseOfJdbcNamedParametersEnabled() {
+		return this.useOfJdbcNamedParametersEnabled;
+	}
+
+	@Override
+	public QueryLiteralRendering getQueryLiteralRendering() {
+		return this.queryLiteralRendering;
 	}
 
 	@Override
@@ -1086,10 +1110,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		this.identifierRollbackEnabled = enabled;
 	}
 
-	public void applyDefaultEntityMode(EntityMode entityMode) {
-		this.defaultEntityMode = entityMode;
-	}
-
 	public void enableNullabilityChecking(boolean enabled) {
 		this.checkNullability = enabled;
 	}
@@ -1098,20 +1118,12 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		this.initializeLazyStateOutsideTransactions = enabled;
 	}
 
-	public void applyEntityTuplizerFactory(EntityTuplizerFactory entityTuplizerFactory) {
-		this.entityTuplizerFactory = entityTuplizerFactory;
-	}
-
-	public void applyEntityTuplizer(EntityMode entityMode, Class<? extends EntityTuplizer> tuplizerClass) {
-		this.entityTuplizerFactory.registerDefaultTuplizerClass( entityMode, tuplizerClass );
-	}
-
-	public void applyMultiTableBulkIdStrategy(MultiTableBulkIdStrategy strategy) {
-		this.multiTableBulkIdStrategy = strategy;
-	}
-
 	public void applyTempTableDdlTransactionHandling(TempTableDdlTransactionHandling handling) {
 		this.tempTableDdlTransactionHandling = handling;
+	}
+
+	public void applyIdTableStrategy(IdTableStrategy strategy){
+		this.idTableStrategy = strategy;
 	}
 
 	public void applyBatchFetchStyle(BatchFetchStyle style) {
@@ -1242,13 +1254,6 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		this.commentsEnabled = enabled;
 	}
 
-	public void applySqlFunction(String registrationName, SQLFunction sqlFunction) {
-		if ( this.sqlFunctions == null ) {
-			this.sqlFunctions = new HashMap<>();
-		}
-		this.sqlFunctions.put( registrationName, sqlFunction );
-	}
-
 	public void allowOutOfTransactionUpdateOperations(boolean allow) {
 		this.allowOutOfTransactionUpdateOperations = allow;
 	}
@@ -1311,5 +1316,13 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		}
 
 		return this;
+	}
+
+	public void applyLiteralRendering(QueryLiteralRendering queryLiteralRendering) {
+		this.queryLiteralRendering = queryLiteralRendering;
+	}
+
+	public void applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
+		this.nonJpaNativeQueryOrdinalParameterBase =base;
 	}
 }

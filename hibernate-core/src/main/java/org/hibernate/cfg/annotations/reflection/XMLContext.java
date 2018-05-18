@@ -12,11 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.AccessType;
+import javax.persistence.AttributeConverter;
 
 import org.hibernate.AnnotationException;
 import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.internal.CoreLogging;
@@ -44,16 +44,8 @@ public class XMLContext implements Serializable {
 	private List<String> defaultEntityListeners = new ArrayList<>();
 	private boolean hasContext = false;
 
-	/**
-	 * @deprecated Use {@link XMLContext#XMLContext(BootstrapContext)} instead.
-	 */
-	@Deprecated
 	public XMLContext(BootstrapContext bootstrapContext) {
 		this.bootstrapContext = bootstrapContext;
-	}
-
-	public XMLContext(BootstrapContext bootstrapContext) {
-		this.classLoaderAccess = bootstrapContext.getClassLoaderAccess();
 	}
 
 	/**
@@ -198,9 +190,9 @@ public class XMLContext implements Serializable {
 			final boolean autoApply = autoApplyAttribute != null && Boolean.parseBoolean( autoApplyAttribute );
 
 			try {
-				final Class<? extends AttributeConverter> attributeConverterClass = classLoaderAccess.classForName(
-						className
-				);
+				final Class<? extends AttributeConverter> attributeConverterClass = bootstrapContext
+						.getClassLoaderAccess()
+						.classForName( className );
 				attributeConverterInfoList.add(
 						new AttributeConverterDefinition( attributeConverterClass.newInstance(), autoApply )
 				);

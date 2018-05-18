@@ -8,7 +8,6 @@ package org.hibernate.mapping;
 
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A list mapping has a primary key consisting of the key columns + index column.
@@ -21,14 +20,6 @@ public class List extends IndexedCollection {
 
 	public boolean isList() {
 		return true;
-	}
-
-	/**
-	 * @deprecated Use {@link List#List(MetadataBuildingContext, PersistentClass)} instead.
-	 */
-	@Deprecated
-	public List(MetadataBuildingContext buildingContext, PersistentClass owner) {
-		super( buildingContext, owner );
 	}
 
 	public List(MetadataBuildingContext buildingContext, PersistentClass owner) {

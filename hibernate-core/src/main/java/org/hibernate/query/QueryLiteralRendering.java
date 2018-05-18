@@ -8,12 +8,16 @@ package org.hibernate.query;
 
 import java.util.Locale;
 
+import org.hibernate.query.criteria.LiteralHandlingMode;
+
 /**
  * Defines possible ways we can handle query literals in terms of handling in regards to JDBC.
  *
  * @author Steve Ebersole
  */
 public enum QueryLiteralRendering {
+
+	AUTO( "auto" ),
 	/**
 	 * Always render as a SQL literal, never a parameter
 	 */
@@ -47,6 +51,17 @@ public enum QueryLiteralRendering {
 			return (QueryLiteralRendering) externalValue;
 		}
 
+		if ( externalValue instanceof LiteralHandlingMode ) {
+			switch ( (LiteralHandlingMode) externalValue ) {
+				case AUTO:
+					return QueryLiteralRendering.AUTO;
+				case BIND:
+					return QueryLiteralRendering.AS_PARAM;
+				case INLINE:
+					return QueryLiteralRendering.AS_LITERAL;
+			}
+		}
+
 		final String externalValueString = externalValue.toString().trim().toLowerCase( Locale.ROOT );
 		if ( externalValueString.isEmpty() ) {
 			return null;
@@ -62,6 +77,18 @@ public enum QueryLiteralRendering {
 
 		if ( AS_PARAM_OUTSIDE_SELECT.externalForm.equals( externalValueString ) ) {
 			return AS_PARAM_OUTSIDE_SELECT;
+		}
+
+		if ( LiteralHandlingMode.AUTO.equals( externalValue ) ) {
+			return AUTO;
+		}
+
+		if ( LiteralHandlingMode.BIND.equals( externalValue ) ) {
+			return AS_PARAM;
+		}
+
+		if ( LiteralHandlingMode.INLINE.equals( externalValue ) ) {
+			return AS_LITERAL;
 		}
 
 		throw new IllegalArgumentException(

@@ -28,7 +28,6 @@ import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
-import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 
 /**
@@ -155,7 +154,7 @@ public abstract class AbstractDelegatingSessionFactoryBuilder<T extends SessionF
 	}
 
 	@Override
-	public SessionFactoryBuilder applyIdTableStrategy(IdTableStrategy strategy) {
+	public T applyIdTableStrategy(IdTableStrategy strategy) {
 		delegate.applyIdTableStrategy( strategy );
 		return getThis();
 	}
@@ -173,7 +172,7 @@ public abstract class AbstractDelegatingSessionFactoryBuilder<T extends SessionF
 	}
 
 	@Override
-	public SessionFactoryBuilder applyDelayedEntityLoaderCreations(boolean delay) {
+	public T applyDelayedEntityLoaderCreations(boolean delay) {
 		delegate.applyDelayedEntityLoaderCreations( delay );
 		return getThis();
 	}
@@ -343,7 +342,7 @@ public abstract class AbstractDelegatingSessionFactoryBuilder<T extends SessionF
 	}
 
 	@Override
-	public SessionFactoryBuilder applyConnectionProviderDisablesAutoCommit(boolean providerDisablesAutoCommit) {
+	public T applyConnectionProviderDisablesAutoCommit(boolean providerDisablesAutoCommit) {
 		delegate.applyConnectionProviderDisablesAutoCommit( providerDisablesAutoCommit );
 		return getThis();
 	}
@@ -368,48 +367,38 @@ public abstract class AbstractDelegatingSessionFactoryBuilder<T extends SessionF
 		return getThis();
 	}
 
-	public SessionFactoryBuilder applyStatelessInterceptor(Class<? extends Interceptor> statelessInterceptorClass) {
-		delegate.applyStatelessInterceptor( statelessInterceptorClass );
-		return getThis();
-	}
-
 	@Override
 	public T enableReleaseResourcesOnCloseEnabled(boolean enable) {
 		delegate.enableReleaseResourcesOnCloseEnabled( enable );
 		return getThis();
 	}
 
-	public SessionFactoryBuilder applyConnectionHandlingMode(PhysicalConnectionHandlingMode connectionHandlingMode) {
-		delegate.applyConnectionHandlingMode( connectionHandlingMode );
-		return getThis();
-	}
-
 	@Override
-	public SessionFactoryBuilder applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
+	public T applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
 		delegate.applyNonJpaNativeQueryOrdinalParameterBase( base );
 		return getThis();
 	}
 
 	@Override
-	public SessionFactoryBuilder enableJpaQueryCompliance(boolean enabled) {
+	public T enableJpaQueryCompliance(boolean enabled) {
 		delegate.enableJpaQueryCompliance( enabled );
 		return getThis();
 	}
 
 	@Override
-	public SessionFactoryBuilder enableJpaTransactionCompliance(boolean enabled) {
+	public T enableJpaTransactionCompliance(boolean enabled) {
 		delegate.enableJpaTransactionCompliance( enabled );
 		return getThis();
 	}
 
 	@Override
-	public SessionFactoryBuilder enableJpaListCompliance(boolean enabled) {
+	public T enableJpaListCompliance(boolean enabled) {
 		delegate.enableJpaListCompliance( enabled );
 		return getThis();
 	}
 
 	@Override
-	public SessionFactoryBuilder enableJpaClosedCompliance(boolean enabled) {
+	public T enableJpaClosedCompliance(boolean enabled) {
 		delegate.enableJpaClosedCompliance( enabled );
 		return getThis();
 	}
@@ -444,7 +433,7 @@ public abstract class AbstractDelegatingSessionFactoryBuilder<T extends SessionF
 	}
 
 	@Override
-	public SessionFactoryBuilder applyQueryLiteralRendering(QueryLiteralRendering queryLiteralRendering) {
+	public T applyQueryLiteralRendering(QueryLiteralRendering queryLiteralRendering) {
 		delegate.applyQueryLiteralRendering( queryLiteralRendering );
 		return getThis();
 	}

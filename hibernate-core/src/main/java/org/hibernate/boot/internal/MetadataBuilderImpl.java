@@ -16,7 +16,6 @@ import javax.persistence.SharedCacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.MetadataBuilder;
@@ -36,8 +35,6 @@ import org.hibernate.boot.model.convert.internal.InstanceBasedConverterDescripto
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl;
-import org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl;
-import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
 import org.hibernate.boot.model.process.spi.MetadataBuildingProcess;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
@@ -46,7 +43,6 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.JpaOrmXmlPersistenceUnitDefaultAware;
 import org.hibernate.boot.spi.MappingDefaults;
@@ -62,7 +58,6 @@ import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.MetadataSourceType;
 import org.hibernate.collection.internal.PersistentCollectionRepresentationResolverImpl;
-import org.hibernate.collection.spi.PersistentCollectionRepresentation;
 import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.config.spi.StandardConverters;
@@ -75,12 +70,9 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolve
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.AbstractStandardBasicType;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
@@ -264,25 +256,11 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public void contributeJavaTypeDescriptor(JavaTypeDescriptor descriptor) {
-		this.bootstrapContext.getTypeConfiguration().getJavaTypeDescriptorRegistry().addDescriptor( descriptor );
-	}
-
-	@Override
-	public void contributeSqlTypeDescriptor(SqlTypeDescriptor descriptor) {
-		this.bootstrapContext.getTypeConfiguration().getSqlTypeDescriptorRegistry().addDescriptor( descriptor );
-	}
-
-	@Override
-	public void contributeType(org.hibernate.type.spi.BasicType type) {
+	public void contributeType(BasicType type) {
 		// register the BasicType with the BasicTypeRegistry
 		this.bootstrapContext.getTypeConfiguration().getBasicTypeRegistry().register( type );
 	}
 
-	@Override
-	public TypeConfiguration getTypeConfiguration() {
-		return bootstrapContext.getTypeConfiguration();
-	}
 
 	@Override
 	public void contributeJavaTypeDescriptor(JavaTypeDescriptor descriptor) {
@@ -341,7 +319,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass) {
+	public <O,R> MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass) {
 		this.bootstrapContext.addAttributeConverterInfo(
 				new AttributeConverterInfo() {
 					@Override
@@ -363,7 +341,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter> attributeConverterClass, boolean autoApply) {
+	public <O,R> MetadataBuilder applyAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass, boolean autoApply) {
 		this.bootstrapContext.addAttributeConverterInfo(
 				new AttributeConverterInfo() {
 					@Override
@@ -599,9 +577,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		private final StandardServiceRegistry serviceRegistry;
 		private final MappingDefaultsImpl mappingDefaults;
 		// todo (6.0) : remove bootstrapContext property along with the deprecated methods
-		private BootstrapContext bootstrapContext;
-
-		private ArrayList<BasicTypeRegistration> basicTypeRegistrations = new ArrayList<>();
 
 		private ImplicitNamingStrategy implicitNamingStrategy;
 		private PhysicalNamingStrategy physicalNamingStrategy;
@@ -809,11 +784,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		@Override
-		public List<CacheRegionDefinition> getCacheRegionDefinitions() {
-			return new ArrayList<>( bootstrapContext.getCacheRegionDefinitions() );
-		}
-
-		@Override
 		public boolean ignoreExplicitDiscriminatorsForJoinedInheritance() {
 			return !explicitDiscriminatorsForJoinedInheritanceSupported;
 		}
@@ -854,11 +824,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		@Override
-		public List<AttributeConverterInfo> getAttributeConverters() {
-			return new ArrayList<>( bootstrapContext.getAttributeConverters() );
-		}
-
-		@Override
 		public String getSchemaCharset() {
 			return schemaCharset;
 		}
@@ -884,10 +849,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 						jpaOrmXmlPersistenceUnitDefaults.getDefaultSchemaName()
 				);
 			}
-		}
-
-		public void setBootstrapContext(BootstrapContextImpl bootstrapContext) {
-			this.bootstrapContext = bootstrapContext;
 		}
 	}
 }

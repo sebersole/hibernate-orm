@@ -6,10 +6,8 @@
  */
 package org.hibernate.boot.model.source.internal.hbm;
 
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1967,7 +1965,7 @@ public class ModelBinder {
 				attributeSource.getAttributeRole()
 		);
 
-		resolveLob( attributeSource, value );
+//		resolveLob( attributeSource, value );
 
 //		// this is done here 'cos we might only know the type here (ugly!)
 //		// TODO: improve this a lot:
@@ -1992,7 +1990,7 @@ public class ModelBinder {
 
 		Property property = new Property();
 		property.setValue( value );
-		property.setLob( value.isLob() );
+//		property.setLob( value.isLob() );
 		bindProperty(
 				sourceDocument,
 				attributeSource,
@@ -2002,45 +2000,45 @@ public class ModelBinder {
 		return property;
 	}
 
-	private void resolveLob(final SingularAttributeSourceBasic attributeSource, SimpleValue value) {
-		// Resolves whether the property is LOB based on the type attribute on the attribute property source.
-		// Essentially this expects the type to map to a CLOB/NCLOB/BLOB sql type internally and compares.
-		if ( !value.isLob() && value.getTypeName() != null ) {
-			final TypeResolver typeResolver = attributeSource.getBuildingContext().getMetadataCollector().getTypeResolver();
-			final BasicType basicType = typeResolver.basic( value.getTypeName() );
-			if ( basicType instanceof AbstractSingleColumnStandardBasicType ) {
-				if ( isLob( ( (AbstractSingleColumnStandardBasicType) basicType ).getSqlTypeDescriptor().getSqlType(), null ) ) {
-					value.makeLob();
-				}
-			}
-		}
-
-		// If the prior check didn't set the lob flag, this will inspect the column sql-type attribute value and
-		// if this maps to CLOB/NCLOB/BLOB then the value will be marked as lob.
-		if ( !value.isLob() ) {
-			for ( RelationalValueSource relationalValueSource : attributeSource.getRelationalValueSources() ) {
-				if ( ColumnSource.class.isInstance( relationalValueSource ) ) {
-					if ( isLob( null, ( (ColumnSource) relationalValueSource ).getSqlType() ) ) {
-						value.makeLob();
-					}
-				}
-			}
-		}
-	}
-
-	private static boolean isLob(Integer sqlType, String sqlTypeName) {
-		if ( sqlType != null ) {
-			return ClobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType ||
-					BlobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType ||
-					NClobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType;
-		}
-		else if ( sqlTypeName != null ) {
-			return ClobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName ) ||
-					BlobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName ) ||
-					NClobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName );
-		}
-		return false;
-	}
+//	private void resolveLob(final SingularAttributeSourceBasic attributeSource, SimpleValue value) {
+//		// Resolves whether the property is LOB based on the type attribute on the attribute property source.
+//		// Essentially this expects the type to map to a CLOB/NCLOB/BLOB sql type internally and compares.
+//		if ( !value.isLob() && value.getTypeName() != null ) {
+//			final TypeResolver typeResolver = attributeSource.getBuildingContext().getMetadataCollector().getTypeResolver();
+//			final BasicType basicType = typeResolver.basic( value.getTypeName() );
+//			if ( basicType instanceof AbstractSingleColumnStandardBasicType ) {
+//				if ( isLob( ( (AbstractSingleColumnStandardBasicType) basicType ).getSqlTypeDescriptor().getSqlType(), null ) ) {
+//					value.makeLob();
+//				}
+//			}
+//		}
+//
+//		// If the prior check didn't set the lob flag, this will inspect the column sql-type attribute value and
+//		// if this maps to CLOB/NCLOB/BLOB then the value will be marked as lob.
+//		if ( !value.isLob() ) {
+//			for ( RelationalValueSource relationalValueSource : attributeSource.getRelationalValueSources() ) {
+//				if ( ColumnSource.class.isInstance( relationalValueSource ) ) {
+//					if ( isLob( null, ( (ColumnSource) relationalValueSource ).getSqlType() ) ) {
+//						value.makeLob();
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	private static boolean isLob(Integer sqlType, String sqlTypeName) {
+//		if ( sqlType != null ) {
+//			return ClobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType ||
+//					BlobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType ||
+//					NClobType.INSTANCE.getSqlTypeDescriptor().getSqlType() == sqlType;
+//		}
+//		else if ( sqlTypeName != null ) {
+//			return ClobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName ) ||
+//					BlobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName ) ||
+//					NClobType.INSTANCE.getName().equalsIgnoreCase( sqlTypeName );
+//		}
+//		return false;
+//	}
 
 	private Property createOneToOneAttribute(
 			MappingDocument sourceDocument,

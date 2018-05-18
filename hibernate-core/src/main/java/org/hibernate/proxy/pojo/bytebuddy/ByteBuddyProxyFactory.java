@@ -25,7 +25,6 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.ProxyConfiguration;
 import org.hibernate.proxy.ProxyFactory;
-import org.hibernate.type.CompositeType;
 
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.TypeCache;

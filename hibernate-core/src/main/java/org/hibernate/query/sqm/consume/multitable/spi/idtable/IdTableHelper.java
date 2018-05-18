@@ -261,7 +261,7 @@ public class IdTableHelper {
 					.getQualifiedObjectNameFormatter()
 					.format( idTableInfo.getQualifiedTableName(), jdbcServices.getJdbcEnvironment().getDialect() );
 
-			final String sql = "delete from " + tableName;
+			final String sql = ((IdTableExporterImpl)this.idTableSupport.getIdTableExporter()).getTruncateIdTableCommand() + " " + tableName;
 			ps = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql, false );
 			session.getJdbcCoordinator().getResultSetReturn().executeUpdate( ps );
 		}

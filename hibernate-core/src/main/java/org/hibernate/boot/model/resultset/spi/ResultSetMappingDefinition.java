@@ -8,11 +8,11 @@ package org.hibernate.boot.model.resultset.spi;
 
 import java.util.List;
 
+import org.hibernate.Metamodel;
 import org.hibernate.boot.model.resultset.internal.FetchDefinitionImpl;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * The boot-time model representation of native query SqlResultSetMapping
@@ -29,7 +29,7 @@ public interface ResultSetMappingDefinition {
 	ResultSetMappingDescriptor resolve(SessionFactoryImplementor sessionFactory);
 
 	interface Result {
-		QueryResultBuilder generateQueryResultBuilder(TypeConfiguration typeConfiguration);
+		QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel);
 	}
 
 	interface Fetch {

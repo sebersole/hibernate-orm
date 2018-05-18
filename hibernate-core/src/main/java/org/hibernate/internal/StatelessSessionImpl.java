@@ -173,7 +173,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	public Object get(String entityName, Serializable id, LockMode lockMode) {
 		checkOpen();
 
-		Object result = getFactory().getTypeConfiguration().findEntityDescriptor( entityName )
+		Object result = getFactory().getMetamodel().findEntityDescriptor( entityName )
 				.load( id, null, getNullSafeLockMode( lockMode ), this );
 		if ( temporaryPersistenceContext.isLoadFinished() ) {
 			temporaryPersistenceContext.clear();
@@ -198,27 +198,27 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 	@Override
 	public void refresh(String entityName, Object entity, LockMode lockMode) {
-		final EntityDescriptor persister = this.getEntityPersister( entityName, entity );
-		final Serializable id = persister.getIdentifier( entity, this );
+		final EntityDescriptor entityDescriptor = this.getEntityPersister( entityName, entity );
+		final Serializable id = entityDescriptor.getIdentifier( entity, this );
 		if ( LOG.isTraceEnabled() ) {
-			LOG.tracev( "Refreshing transient {0}", MessageHelper.infoString( persister, id, this.getFactory() ) );
+			LOG.tracev( "Refreshing transient {0}", MessageHelper.infoString( entityDescriptor, id, this.getFactory() ) );
 		}
 		// TODO : can this ever happen???
-//		EntityKey key = new EntityKey( id, persister, source.getEntityMode() );
+//		EntityKey key = new EntityKey( id, entityDescriptor, source.getEntityMode() );
 //		if ( source.getPersistenceContext().getEntry( key ) != null ) {
 //			throw new PersistentObjectException(
 //					"attempted to refresh transient instance when persistent " +
 //					"instance was already associated with the Session: " +
-//					MessageHelper.infoString( persister, id, source.getFactory() )
+//					MessageHelper.infoString( entityDescriptor, id, source.getFactory() )
 //			);
 //		}
 
-		if ( persister.canWriteToCache() ) {
-			final EntityDataAccess cacheAccess = persister.getCacheAccessStrategy();
+		if ( entityDescriptor.canWriteToCache() ) {
+			final EntityDataAccess cacheAccess = entityDescriptor.getCacheAccessStrategy();
 			if ( cacheAccess != null ) {
 				final Object ck = cacheAccess.generateCacheKey(
 						id,
-						persister,
+						entityDescriptor,
 						getFactory(),
 						getTenantIdentifier()
 				);
@@ -228,15 +228,15 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 		final LoadQueryInfluencers.InternalFetchProfileType previouslyEnabledInternalFetchProfileType =getLoadQueryInfluencers().getEnabledInternalFetchProfileType();
 		getLoadQueryInfluencers().setEnabledInternalFetchProfileType( LoadQueryInfluencers.InternalFetchProfileType.REFRESH );
 
-		finalObject result ;
+		final Object result ;
 		try {
-			result = persister.load( id, entity, getNullSafeLockMode( lockMode ), this );
+			result = entityDescriptor.load( id, entity, getNullSafeLockMode( lockMode ), this );
 		}
 		finally {
 			getLoadQueryInfluencers().setEnabledInternalFetchProfileType( previouslyEnabledInternalFetchProfileType );
 		}
 
-		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
+		UnresolvableObjectException.throwIfNull( result, id, entityDescriptor.getEntityName() );
 	}
 
 	@Override
@@ -257,7 +257,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			String entityName,
 			Serializable id) throws HibernateException {
 		checkOpen();
-		return getFactory().getTypeConfiguration().findEntityDescriptor( entityName ).instantiate( id, this );
+		return getFactory().getMetamodel().findEntityDescriptor( entityName ).instantiate( id, this );
 	}
 
 	@Override
@@ -267,7 +267,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			boolean eager,
 			boolean nullable) throws HibernateException {
 		checkOpen();
-		EntityDescriptor persister = getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+		EntityDescriptor persister = getFactory().getMetamodel().findEntityDescriptor( entityName );
 		// first, try to load it from the temp PC associated to this SS
 		Object loaded = temporaryPersistenceContext.getEntity( generateEntityKey( id, persister ) );
 		if ( loaded != null ) {
@@ -371,10 +371,10 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			throws HibernateException {
 		checkOpen();
 		if ( entityName == null ) {
-			return getFactory().getTypeConfiguration().findEntityDescriptor( guessEntityName( object ) );
+			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );
 		}
 		else {
-			return getFactory().getTypeConfiguration().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
+			return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
 		}
 	}
 

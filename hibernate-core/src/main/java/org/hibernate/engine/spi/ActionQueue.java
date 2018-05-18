@@ -46,15 +46,10 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.type.CollectionType;
-import org.hibernate.type.CompositeType;
-import org.hibernate.type.EntityType;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
 
 /**
@@ -1159,8 +1154,8 @@ public class ActionQueue {
 						action.getSession()
 								.getFactory()
 								.getMetamodel()
-								.entityPersister( action.getEntityName() )
-								.getRootEntityName()
+								.findEntityDescriptor( action.getEntityName() )
+								.getHierarchy().getRootEntityType().getEntityName()
 				);
 
 				// the entity associated with the current action.
@@ -1281,48 +1276,48 @@ public class ActionQueue {
 		}
 
 		private void addParentChildEntityNameByPropertyAndValue(AbstractEntityInsertAction action, BatchIdentifier batchIdentifier, Type type, Object value) {
-			if ( type.isEntityType() && value != null ) {
-				final EntityType entityType = (EntityType) type;
-				final String entityName = entityType.getName();
-				final String rootEntityName = action.getSession().getFactory().getMetamodel().entityPersister( entityName ).getRootEntityName();
-
-				if ( entityType.isOneToOne() && OneToOneType.class.cast( entityType ).getForeignKeyDirection() == ForeignKeyDirection.TO_PARENT ) {
-					batchIdentifier.getChildEntityNames().add( entityName );
-					if ( !rootEntityName.equals( entityName ) ) {
-						batchIdentifier.getChildEntityNames().add( rootEntityName );
-					}
-				}
-				else {
-					batchIdentifier.getParentEntityNames().add( entityName );
-					if ( !rootEntityName.equals( entityName ) ) {
-						batchIdentifier.getParentEntityNames().add( rootEntityName );
-					}
-				}
-			}
-			else if ( type.isCollectionType() && value != null ) {
-				CollectionType collectionType = (CollectionType) type;
-				final SessionFactoryImplementor sessionFactory = ( (SessionImplementor) action.getSession() )
-						.getSessionFactory();
-				if ( collectionType.getElementType( sessionFactory ).isEntityType() ) {
-					String entityName = collectionType.getAssociatedEntityName( sessionFactory );
-					String rootEntityName = action.getSession().getFactory().getMetamodel().entityPersister( entityName ).getRootEntityName();
-					batchIdentifier.getChildEntityNames().add( entityName );
-					if ( !rootEntityName.equals( entityName ) ) {
-						batchIdentifier.getChildEntityNames().add( rootEntityName );
-					}
-				}
-			}
-			else if ( type.isComponentType() && value != null ) {
-				// Support recursive checks of composite type properties for associations and collections.
-				CompositeType compositeType = (CompositeType) type;
-				final SharedSessionContractImplementor session = action.getSession();
-				Object[] componentValues = compositeType.getPropertyValues( value, session );
-				for ( int j = 0; j < componentValues.length; ++j ) {
-					Type componentValueType = compositeType.getSubtypes()[j];
-					Object componentValue = componentValues[j];
-					addParentChildEntityNameByPropertyAndValue( action, batchIdentifier, componentValueType, componentValue );
-				}
-			}
+//			if ( type.isEntityType() && value != null ) {
+//				final EntityType entityType = (EntityType) type;
+//				final String entityName = entityType.getName();
+//				final String rootEntityName = action.getSession().getFactory().getMetamodel().entityPersister( entityName ).getRootEntityName();
+//
+//				if ( entityType.isOneToOne() && OneToOneType.class.cast( entityType ).getForeignKeyDirection() == ForeignKeyDirection.TO_PARENT ) {
+//					batchIdentifier.getChildEntityNames().add( entityName );
+//					if ( !rootEntityName.equals( entityName ) ) {
+//						batchIdentifier.getChildEntityNames().add( rootEntityName );
+//					}
+//				}
+//				else {
+//					batchIdentifier.getParentEntityNames().add( entityName );
+//					if ( !rootEntityName.equals( entityName ) ) {
+//						batchIdentifier.getParentEntityNames().add( rootEntityName );
+//					}
+//				}
+//			}
+//			else if ( type.isCollectionType() && value != null ) {
+//				CollectionType collectionType = (CollectionType) type;
+//				final SessionFactoryImplementor sessionFactory = ( (SessionImplementor) action.getSession() )
+//						.getSessionFactory();
+//				if ( collectionType.getElementType( sessionFactory ).isEntityType() ) {
+//					String entityName = collectionType.getAssociatedEntityName( sessionFactory );
+//					String rootEntityName = action.getSession().getFactory().getMetamodel().entityPersister( entityName ).getRootEntityName();
+//					batchIdentifier.getChildEntityNames().add( entityName );
+//					if ( !rootEntityName.equals( entityName ) ) {
+//						batchIdentifier.getChildEntityNames().add( rootEntityName );
+//					}
+//				}
+//			}
+//			else if ( type.isComponentType() && value != null ) {
+//				// Support recursive checks of composite type properties for associations and collections.
+//				CompositeType compositeType = (CompositeType) type;
+//				final SharedSessionContractImplementor session = action.getSession();
+//				Object[] componentValues = compositeType.getPropertyValues( value, session );
+//				for ( int j = 0; j < componentValues.length; ++j ) {
+//					Type componentValueType = compositeType.getSubtypes()[j];
+//					Object componentValue = componentValues[j];
+//					addParentChildEntityNameByPropertyAndValue( action, batchIdentifier, componentValueType, componentValue );
+//				}
+//			}
 		}
 
 		private void addToBatch(BatchIdentifier batchIdentifier, AbstractEntityInsertAction action) {

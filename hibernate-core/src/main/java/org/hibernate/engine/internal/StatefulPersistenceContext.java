@@ -58,7 +58,6 @@ import org.hibernate.internal.util.collections.ConcurrentReferenceHashMap;
 import org.hibernate.internal.util.collections.IdentityMap;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -67,8 +66,6 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-import org.hibernate.stat.internal.StatsHelper;
-import org.hibernate.type.CollectionType;
 
 import org.jboss.logging.Logger;
 
@@ -402,7 +399,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	private EntityDescriptor locateProperDescriptor(EntityDescriptor descriptor) {
 		// tod0 (6.0) : avoid the lookup if the passed descriptor is the root.
-		return session.getFactory().getTypeConfiguration().findEntityDescriptor( descriptor.getHierarchy().getRootEntityType().getEntityName() );
+		return session.getFactory().getMetamodel().findEntityDescriptor( descriptor.getHierarchy().getRootEntityType().getEntityName() );
 	}
 
 	@Override
@@ -629,7 +626,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	 */
 	private void reassociateProxy(LazyInitializer li, HibernateProxy proxy) {
 		if ( li.getSession() != this.getSession() ) {
-			final EntityDescriptor entityDescriptor = session.getFactory().getTypeConfiguration().findEntityDescriptor( li.getEntityName() );
+			final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( li.getEntityName() );
 			final EntityKey key = session.generateEntityKey( li.getIdentifier(), entityDescriptor );
 		  	// any earlier proxy takes precedence
 			proxiesByKey.putIfAbsent( key, proxy );
@@ -1166,8 +1163,8 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	@Override
 	public Serializable getOwnerId(String entityName, String propertyName, Object childEntity, Map mergeMap) {
 		final String collectionRole = entityName + '.' + propertyName;
-		final EntityDescriptor entityDescriptor = session.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
-		final PersistentCollectionDescriptor collectionDescriptor = session.getFactory().getTypeConfiguration().findCollectionDescriptor( collectionRole );
+		final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( entityName );
+		final PersistentCollectionDescriptor collectionDescriptor = session.getFactory().getMetamodel().findCollectionDescriptor( collectionRole );
 
 	    // try cache lookup first
 		final Object parent = parentsByChild.get( childEntity );
@@ -1285,8 +1282,8 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	@Override
 	public Object getIndexInOwner(String entity, String property, Object childEntity, Map mergeMap) {
-		final EntityDescriptor entityDescriptor = session.getFactory().getTypeConfiguration().findEntityDescriptor( entity );
-		final PersistentCollectionDescriptor collectionDescriptor = session.getFactory().getTypeConfiguration().findCollectionDescriptor( entity + '.' + property );
+		final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( entity );
+		final PersistentCollectionDescriptor collectionDescriptor = session.getFactory().getMetamodel().findCollectionDescriptor( entity + '.' + property );
 
 	    // try cache lookup first
 		final Object parent = parentsByChild.get( childEntity );
@@ -1830,7 +1827,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				Object[] naturalIdValues,
 				Object[] previousNaturalIdValues,
 				CachedNaturalIdValueSource source) {
-			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, persister, session );
+			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor, session );
 
 			final SessionFactoryImplementor factory = session.getFactory();
 

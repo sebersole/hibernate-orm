@@ -231,7 +231,7 @@ public class Helper {
 			BootstrapContext bootstrapContext,
 			String attributeOwnerClassName,
 			String attributeName) {
-		final Class attributeOwnerClass = bootstrapContext.getBootstrapContext().getClassLoaderAccess().classForName(
+		final Class attributeOwnerClass = bootstrapContext.getClassLoaderAccess().classForName(
 				attributeOwnerClassName );
 		return reflectedPropertyClass(
 				attributeOwnerClass,

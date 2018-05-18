@@ -15,17 +15,13 @@ import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
-import org.hibernate.query.ParameterMetadata;
 import org.hibernate.query.QueryLiteralRendering;
-import org.hibernate.resource.cdi.spi.ExtendedBeanManager;
 import org.hibernate.resource.cdi.spi.ManagedBeanRegistry;
 import org.hibernate.boot.registry.classloading.internal.TcclLookupPrecedence;
-import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.jpa.spi.JpaCompliance;
 import org.hibernate.query.ImmutableEntityUpdateQueryHandlingMode;
 import org.hibernate.query.internal.ParameterMetadataImpl;
-import org.hibernate.resource.beans.container.spi.ExtendedBeanManager;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.tool.schema.JdbcMetadaAccessStrategy;
@@ -1787,6 +1783,19 @@ public interface AvailableSettings extends org.hibernate.jpa.AvailableSettings {
 	String CRITERIA_LITERAL_HANDLING_MODE = "hibernate.criteria.literal_handling_mode";
 
 	/**
+	 * Global setting for whether NULL parameter bindings should be passed to database
+	 * procedure/function calls as part of {@link org.hibernate.procedure.ProcedureCall}
+	 * handling.  Implicitly Hibernate will not pass the NULL, the intention being to allow
+	 * any default argument values to be applied.
+	 * <p/>
+	 * This defines a global setting, which can them be controlled per parameter via
+	 * {@link org.hibernate.procedure.ParameterRegistration#enablePassingNulls(boolean)}
+	 * <p/>
+	 * Values are {@code true} (pass the NULLs) or {@code false} (do not pass the NULLs).
+	 */
+	String PROCEDURE_NULL_PARAM_PASSING = "hibernate.proc.param_null_passing";
+
+	/**
 	 * True/false setting indicating whether the value specified for {@link GeneratedValue#generator()}
 	 * should be used as the sequence/table name when no matching {@link javax.persistence.SequenceGenerator}
 	 * or {@link javax.persistence.TableGenerator} is found.
@@ -1962,6 +1971,30 @@ public interface AvailableSettings extends org.hibernate.jpa.AvailableSettings {
 	 * @since 6.0
 	 */
 	String NATIVE_QUERY_ORDINAL_PARAMETER_BASE = "hibernate.query.native.ordinal_parameter_base";
+
+	/**
+	 * Global setting name for controlling whether Hibernate should try to map
+	 * named parameter names specified in a
+	 * {@link org.hibernate.procedure.ProcedureCall} or
+	 * {@link javax.persistence.StoredProcedureQuery} to named parameters in
+	 * the JDBC {@link java.sql.CallableStatement}.
+	 *
+	 * @see SessionFactoryOptions#isUseOfJdbcNamedParametersEnabled()
+	 *
+	 * @since 6.0
+	 */
+	String CALLABLE_NAMED_PARAMS_ENABLED = "hibernate.query.proc.callable_named_params_enabled";
+
+	/**
+	 * The classname of the HQL query parser factory
+	 */
+	String QUERY_TRANSLATOR = "hibernate.query.factory_class";
+
+	/**
+	 * A comma-separated list of token substitutions to use when translating a Hibernate
+	 * query to SQL
+	 */
+	String QUERY_SUBSTITUTIONS = "hibernate.query.substitutions";
 
 	/**
 	 * Global setting identifying the preferred JDBC type code for storing

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.AssociationOverride;
@@ -252,7 +251,8 @@ public class JPAOverriddenAnnotationReader implements AnnotationReader {
 
 	/**
 	 * @deprecated Use {@link JPAMetadataProvider(AnnotatedElement, XMLContext, BootstrapContext)} instead.
-	 */public JPAOverriddenAnnotationReader(AnnotatedElement el, XMLContext xmlContext, BootstrapContext bootstrapContext) {
+	 */
+	public JPAOverriddenAnnotationReader(AnnotatedElement el, XMLContext xmlContext, BootstrapContext bootstrapContext) {
 		this.element = el;
 		this.xmlContext = xmlContext;
 		this.bootstrapContext = bootstrapContext;
@@ -309,14 +309,6 @@ public class JPAOverriddenAnnotationReader implements AnnotationReader {
 			propertyName = null;
 		}
 	}
-
-	public JPAOverriddenAnnotationReader(
-			AnnotatedElement el,
-			XMLContext xmlContext,
-			BootstrapContext bootstrapContext) {
-		this( el, xmlContext, bootstrapContext.getClassLoaderAccess() );
-	}
-
 
 	public <T extends Annotation> T getAnnotation(Class<T> annotationType) {
 		initAnnotations();

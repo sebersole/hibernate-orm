@@ -13,7 +13,6 @@ import java.util.List;
 import org.hibernate.AssertionFailure;
 import org.hibernate.CustomEntityDirtinessStrategy;
 import org.hibernate.HibernateException;
-import org.hibernate.SessionFactory;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.action.internal.DelayedPostInsertIdentifier;
 import org.hibernate.action.internal.EntityUpdateAction;
@@ -32,9 +31,6 @@ import org.hibernate.event.spi.FlushEntityEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.collections.ArrayHelper;
-import org.hibernate.jpa.event.spi.CallbackRegistry;
-import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
-import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -156,7 +152,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		final Object entity = event.getEntity();
 		final EntityEntry entry = event.getEntityEntry();
 		final EventSource session = event.getSession();
-		final EntityDescriptor entityDescriptor = entry.getPersister();
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
 		final Status status = entry.getStatus();
 		final List persistentAttributes = entityDescriptor.getPersistentAttributes();
 
@@ -191,7 +187,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	private Object[] getValues(Object entity, EntityEntry entry, boolean mightBeDirty, SessionImplementor session) {
 		final Object[] loadedState = entry.getLoadedState();
 		final Status status = entry.getStatus();
-		final EntityDescriptor persister = entry.getPersister();
+		final EntityDescriptor descriptor = entry.getDescriptor();
 
 		final Object[] values;
 		if ( status == Status.DELETED ) {
@@ -202,22 +198,22 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 			values = loadedState;
 		}
 		else {
-			checkId( entity, persister, entry.getId(), session );
+			checkId( entity, descriptor, entry.getId(), session );
 
 			// grab its current state
-			values = persister.getPropertyValues( entity );
+			values = descriptor.getPropertyValues( entity );
 
-			checkNaturalId( persister, entry, values, loadedState, session );
+			checkNaturalId( descriptor, entry, values, loadedState, session );
 		}
 		return values;
 	}
 
 	private boolean wrapCollections(
 			EventSource session,
-			EntityDescriptor persister,
+			EntityDescriptor entityDescriptor,
 			List<PersistentAttribute> persistentAttributes,
 			Object[] values) {
-		if ( !persister.hasCollections() ) {
+		if ( !entityDescriptor.hasCollections() ) {
 			return false;
 		}
 
@@ -250,12 +246,12 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				event.getSession()
 						.getFactory()
 						.getCustomEntityDirtinessStrategy()
-						.resetDirty( event.getEntity(), event.getEntityEntry().getPersister(), event.getSession() );
+						.resetDirty( event.getEntity(), event.getEntityEntry().getDescriptor(), event.getSession() );
 				return false;
 			}
 		}
 		else {
-			return hasDirtyCollections( event, event.getEntityEntry().getPersister(), status );
+			return hasDirtyCollections( event, event.getEntityEntry().getDescriptor(), status );
 		}
 	}
 
@@ -264,7 +260,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		final EventSource session = event.getSession();
 		final Object entity = event.getEntity();
 		final Status status = entry.getStatus();
-		final EntityDescriptor entityDescriptor = entry.getPersister();
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
 		final Object[] values = event.getPropertyValues();
 
 		if ( LOG.isTraceEnabled() ) {
@@ -367,11 +363,11 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 			Object entity,
 			EntityEntry entry,
 			final Object[] values,
-			EntityDescriptor persister) {
+			EntityDescriptor entityDescriptor) {
 		boolean isDirty = false;
 		if ( entry.getStatus() != Status.DELETED ) {
 			if ( callbackRegistry.preUpdate( entity ) ) {
-				isDirty = copyState( entity, persister.getPropertyJavaTypeDescriptors(), values, session.getFactory() );
+				isDirty = copyState( entity, entityDescriptor.getPropertyJavaTypeDescriptors(), values, session.getFactory() );
 			}
 		}
 
@@ -384,14 +380,14 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				entry.getId(),
 				values,
 				entry.getLoadedState(),
-				persister.getPropertyNames(),
-				persister.getPropertyJavaTypeDescriptors()
+				entityDescriptor.getPropertyNames(),
+				entityDescriptor.getPropertyJavaTypeDescriptors()
 		);
 	}
 
 	private boolean copyState(Object entity, JavaTypeDescriptor[] javaTypeDescriptors, Object[] state, SessionFactoryImplementor sf) {
 		// copy the entity state into the state array and return true if the state has changed
-		EntityDescriptor entityDescriptor = sf.getTypeConfiguration().resolveEntityDescriptor( entity.getClass() );
+		EntityDescriptor entityDescriptor = sf.getMetamodel().findEntityDescriptor( entity.getClass() );
 		Object[] newState = entityDescriptor.getPropertyValues( entity );
 		int size = newState.length;
 		boolean isDirty = false;
@@ -412,16 +408,16 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	private Object getNextVersion(FlushEntityEvent event) throws HibernateException {
 
 		final EntityEntry entry = event.getEntityEntry();
-		final EntityDescriptor persister = entry.getPersister();
-		final VersionDescriptor versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
+		final VersionDescriptor versionDescriptor = entityDescriptor.getHierarchy().getVersionDescriptor();
 
 		if ( versionDescriptor != null ) {
-			final VersionSupport versionSupport = persister.getHierarchy().getVersionDescriptor().getVersionSupport();
+			final VersionSupport versionSupport = entityDescriptor.getHierarchy().getVersionDescriptor().getVersionSupport();
 
 			Object[] values = event.getPropertyValues();
 
 			if ( entry.isBeingReplicated() ) {
-				return Versioning.getVersion( values, persister );
+				return Versioning.getVersion( values, entityDescriptor );
 			}
 			else {
 				int[] dirtyProperties = event.getDirtyProperties();
@@ -429,7 +425,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				final boolean isVersionIncrementRequired = isVersionIncrementRequired(
 						event,
 						entry,
-						persister,
+						entityDescriptor,
 						dirtyProperties
 				);
 
@@ -441,7 +437,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 						) :
 						entry.getVersion(); //use the current version
 
-				Versioning.setVersion( values, nextVersion, persister );
+				Versioning.setVersion( values, nextVersion, entityDescriptor );
 
 				return nextVersion;
 			}
@@ -455,7 +451,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	private boolean isVersionIncrementRequired(
 			FlushEntityEvent event,
 			EntityEntry entry,
-			EntityDescriptor persister,
+			EntityDescriptor entityDescriptor,
 			int[] dirtyProperties
 	) {
 		final boolean isVersionIncrementRequired = entry.getStatus() != Status.DELETED && (
@@ -463,7 +459,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 						Versioning.isVersionIncrementRequired(
 								dirtyProperties,
 								event.hasDirtyCollection(),
-								persister.getPropertyVersionability()
+								entityDescriptor.getPropertyVersionability()
 						)
 		);
 		return isVersionIncrementRequired;
@@ -476,7 +472,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	 */
 	protected final boolean isUpdateNecessary(FlushEntityEvent event) throws HibernateException {
 
-		EntityDescriptor persister = event.getEntityEntry().getPersister();
+		EntityDescriptor entityDescriptor = event.getEntityEntry().getDescriptor();
 		Status status = event.getEntityEntry().getStatus();
 
 		if ( !event.isDirtyCheckPossible() ) {
@@ -489,19 +485,19 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				return true; //TODO: suck into event class
 			}
 			else {
-				return hasDirtyCollections( event, persister, status );
+				return hasDirtyCollections( event, entityDescriptor, status );
 			}
 
 		}
 	}
 
-	private boolean hasDirtyCollections(FlushEntityEvent event, EntityDescriptor persister, Status status) {
-		if ( isCollectionDirtyCheckNecessary( persister, status ) ) {
+	private boolean hasDirtyCollections(FlushEntityEvent event, EntityDescriptor entityDescriptor, Status status) {
+		if ( isCollectionDirtyCheckNecessary( entityDescriptor, status ) ) {
 			DirtyCollectionSearchVisitor visitor = new DirtyCollectionSearchVisitor(
 					event.getSession(),
-					persister.getPropertyVersionability()
+					entityDescriptor.getPropertyVersionability()
 			);
-			visitor.processEntityPropertyValues( event.getPropertyValues(), persister.getPersistentAttributes() );
+			visitor.processEntityPropertyValues( event.getPropertyValues(), entityDescriptor.getPersistentAttributes() );
 			boolean hasDirtyCollections = visitor.wasDirtyCollectionFound();
 			event.setHasDirtyCollection( hasDirtyCollections );
 			return hasDirtyCollections;
@@ -512,16 +508,16 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	}
 
 	@SuppressWarnings("RedundantIfStatement")
-	private boolean isCollectionDirtyCheckNecessary(EntityDescriptor persister, Status status) {
+	private boolean isCollectionDirtyCheckNecessary(EntityDescriptor descriptor, Status status) {
 		if ( status != Status.MANAGED && status != Status.READ_ONLY ) {
 			return false;
 		}
 
-		if ( persister.getHierarchy().getVersionDescriptor() == null ) {
+		if ( descriptor.getHierarchy().getVersionDescriptor() == null ) {
 			return false;
 		}
 
-		if ( !persister.hasCollections() ) {
+		if ( !descriptor.hasCollections() ) {
 			return false;
 		}
 
@@ -536,7 +532,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		final Object[] values = event.getPropertyValues();
 		final SessionImplementor session = event.getSession();
 		final EntityEntry entry = event.getEntityEntry();
-		final EntityDescriptor persister = entry.getPersister();
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
 		final Serializable id = entry.getId();
 		final Object[] loadedState = entry.getLoadedState();
 
@@ -545,20 +541,20 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				id,
 				values,
 				loadedState,
-				persister.getPropertyNames(),
-				persister.getPropertyJavaTypeDescriptors()
+				entityDescriptor.getPropertyNames(),
+				entityDescriptor.getPropertyJavaTypeDescriptors()
 		);
 
 		if ( dirtyProperties == null ) {
 			if ( entity instanceof SelfDirtinessTracker ) {
 				if ( ( (SelfDirtinessTracker) entity ).$$_hibernate_hasDirtyAttributes() ) {
-					int[] dirty = persister.resolveAttributeIndexes( ( (SelfDirtinessTracker) entity ).$$_hibernate_getDirtyAttributes() );
+					int[] dirty = entityDescriptor.resolveAttributeIndexes( ( (SelfDirtinessTracker) entity ).$$_hibernate_getDirtyAttributes() );
 
 					// HHH-12051 - filter non-updatable attributes
 					// TODO: add Updateability to EnhancementContext and skip dirty tracking of those attributes
 					int count = 0;
 					for ( int i : dirty ) {
-						if ( persister.getPropertyUpdateability()[i] ) {
+						if ( entityDescriptor.getPropertyUpdateability()[i] ) {
 							dirty[count++] = i;
 						}
 					}
@@ -584,7 +580,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				DirtyCheckContextImpl context = new DirtyCheckContextImpl();
 				session.getFactory().getCustomEntityDirtinessStrategy().findDirty(
 						entity,
-						persister,
+						entityDescriptor,
 						session,
 						context
 				);
@@ -607,7 +603,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				cannotDirtyCheck = loadedState == null;
 				if ( !cannotDirtyCheck ) {
 					// dirty check against the usual snapshot of the entity
-					dirtyProperties = persister.findDirty( values, loadedState, entity, session );
+					dirtyProperties = entityDescriptor.findDirty( values, loadedState, entity, session );
 				}
 				else if ( entry.getStatus() == Status.DELETED && !event.getEntityEntry().isModifiableEntity() ) {
 					// A non-modifiable (e.g., read-only or immutable) entity needs to be have
@@ -625,15 +621,15 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 					// - entry.getDeletedState() contains the entity's current property values with
 					//   references to transient entities set to null.
 					// - dirtyProperties will only contain properties that refer to transient entities
-					final Object[] currentState = persister.getPropertyValues( event.getEntity() );
-					dirtyProperties = persister.findDirty( entry.getDeletedState(), currentState, entity, session );
+					final Object[] currentState = entityDescriptor.getPropertyValues( event.getEntity() );
+					dirtyProperties = entityDescriptor.findDirty( entry.getDeletedState(), currentState, entity, session );
 					cannotDirtyCheck = false;
 				}
 				else {
 					// dirty check against the database snapshot, if possible/necessary
-					final Object[] databaseSnapshot = getDatabaseSnapshot( session, persister, id );
+					final Object[] databaseSnapshot = getDatabaseSnapshot( session, entityDescriptor, id );
 					if ( databaseSnapshot != null ) {
-						dirtyProperties = persister.findModified( databaseSnapshot, values, entity, session );
+						dirtyProperties = entityDescriptor.findModified( databaseSnapshot, values, entity, session );
 						cannotDirtyCheck = false;
 						event.setDatabaseSnapshot( databaseSnapshot );
 					}
@@ -649,7 +645,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 			interceptorHandledDirtyCheck = true;
 		}
 
-		logDirtyProperties( id, dirtyProperties, persister );
+		logDirtyProperties( id, dirtyProperties, entityDescriptor );
 
 		event.setDirtyProperties( dirtyProperties );
 		event.setDirtyCheckHandledByInterceptor( interceptorHandledDirtyCheck );
@@ -659,19 +655,19 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 
 	private class DirtyCheckAttributeInfoImpl implements CustomEntityDirtinessStrategy.AttributeInformation {
 		private final FlushEntityEvent event;
-		private final EntityDescriptor persister;
+		private final EntityDescriptor descriptor;
 		private final int numberOfAttributes;
 		private int index;
 
 		private DirtyCheckAttributeInfoImpl(FlushEntityEvent event) {
 			this.event = event;
-			this.persister = event.getEntityEntry().getPersister();
-			this.numberOfAttributes = persister.getPropertyNames().length;
+			this.descriptor = event.getEntityEntry().getDescriptor();
+			this.numberOfAttributes = descriptor.getPropertyNames().length;
 		}
 
 		@Override
 		public EntityDescriptor getContainingPersister() {
-			return persister;
+			return descriptor;
 		}
 
 		@Override
@@ -681,12 +677,12 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 
 		@Override
 		public String getName() {
-			return persister.getPropertyNames()[index];
+			return descriptor.getPropertyNames()[index];
 		}
 
 		@Override
 		public Type getType() {
-			return persister.getPropertyTypes()[index];
+			return descriptor.getPropertyTypes()[index];
 		}
 
 		@Override
@@ -699,7 +695,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		@Override
 		public Object getLoadedValue() {
 			if ( databaseSnapshot == null ) {
-				databaseSnapshot = getDatabaseSnapshot( event.getSession(), persister, event.getEntityEntry().getId() );
+				databaseSnapshot = getDatabaseSnapshot( event.getSession(), descriptor, event.getEntityEntry().getId() );
 			}
 			return databaseSnapshot[index];
 		}
@@ -719,37 +715,37 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		}
 	}
 
-	private void logDirtyProperties(Serializable id, int[] dirtyProperties, EntityDescriptor persister) {
+	private void logDirtyProperties(Serializable id, int[] dirtyProperties, EntityDescriptor entityDescriptor) {
 		if ( dirtyProperties != null && dirtyProperties.length > 0 && LOG.isTraceEnabled() ) {
-			final String[] allPropertyNames = persister.getPropertyNames();
+			final String[] allPropertyNames = entityDescriptor.getPropertyNames();
 			final String[] dirtyPropertyNames = new String[dirtyProperties.length];
 			for ( int i = 0; i < dirtyProperties.length; i++ ) {
 				dirtyPropertyNames[i] = allPropertyNames[dirtyProperties[i]];
 			}
 			LOG.tracev(
 					"Found dirty properties [{0}] : {1}",
-					MessageHelper.infoString( persister.getEntityName(), id ),
+					MessageHelper.infoString( entityDescriptor.getEntityName(), id ),
 					Arrays.toString( dirtyPropertyNames )
 			);
 		}
 	}
 
-	private Object[] getDatabaseSnapshot(SessionImplementor session, EntityDescriptor persister, Serializable id) {
-		if ( persister.isSelectBeforeUpdateRequired() ) {
+	private Object[] getDatabaseSnapshot(SessionImplementor session, EntityDescriptor entityDescriptor, Serializable id) {
+		if ( entityDescriptor.isSelectBeforeUpdateRequired() ) {
 			Object[] snapshot = session.getPersistenceContext()
-					.getDatabaseSnapshot( id, persister );
+					.getDatabaseSnapshot( id, entityDescriptor );
 			if ( snapshot == null ) {
 				//do we even really need this? the update will fail anyway....
 				if ( session.getFactory().getStatistics().isStatisticsEnabled() ) {
 					session.getFactory().getStatistics()
-							.optimisticFailure( persister.getEntityName() );
+							.optimisticFailure( entityDescriptor.getEntityName() );
 				}
-				throw new StaleObjectStateException( persister.getEntityName(), id );
+				throw new StaleObjectStateException( entityDescriptor.getEntityName(), id );
 			}
 			return snapshot;
 		}
 		// TODO: optimize away this lookup for entities w/o unsaved-value="undefined"
-		final EntityKey entityKey = session.generateEntityKey( id, persister );
+		final EntityKey entityKey = session.generateEntityKey( id, entityDescriptor );
 		return session.getPersistenceContext().getCachedDatabaseSnapshot( entityKey );
 	}
 }

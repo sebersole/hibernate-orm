@@ -6,18 +6,11 @@
  */
 package org.hibernate.boot.internal;
 
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.function.Supplier;
 
 import org.hibernate.ConnectionReleaseMode;
 import org.hibernate.CustomEntityDirtinessStrategy;
-import org.hibernate.EmptyInterceptor;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Interceptor;
 import org.hibernate.MultiTenancyStrategy;
@@ -27,22 +20,11 @@ import org.hibernate.SessionFactoryObserver;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.TempTableDdlTransactionHandling;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.boot.spi.SessionFactoryBuilderImplementor;
 import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.internal.StandardQueryCacheFactory;
-import org.hibernate.cache.spi.QueryCacheFactory;
-import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
+import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
-import org.hibernate.dialect.function.SQLFunction;
-import org.hibernate.engine.config.internal.ConfigurationServiceImpl;
-import org.hibernate.engine.config.spi.ConfigurationService;
-import org.hibernate.engine.jdbc.env.spi.ExtractedDatabaseMetaData;
-import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
@@ -52,8 +34,6 @@ import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
-import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
-import org.hibernate.service.spi.ServiceRegistryImplementor;
 
 /**
  * @author Gail Badner
@@ -62,16 +42,15 @@ import org.hibernate.service.spi.ServiceRegistryImplementor;
 public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplementor {
 	private final MetadataImplementor metadata;
 	private final BootstrapContext bootstrapContext;
-	private final BootstrapContext bootstrapContext;
 	private final SessionFactoryOptionsBuilder optionsBuilder;
+
 
 	public SessionFactoryBuilderImpl(MetadataImplementor metadata, BootstrapContext bootstrapContext) {
 		this.metadata = metadata;
-		this.bootstrapContext = bootstrapContext;this.bootstrapContext = bootstrapContext;
+		this.bootstrapContext = bootstrapContext;
 
 		this.optionsBuilder = new SessionFactoryOptionsBuilder( metadata.getMetadataBuildingOptions().getServiceRegistry() ,
 				bootstrapContext);
-
 		if ( metadata.getSqlFunctionMap() != null ) {
 			for ( Map.Entry<String, SqmFunctionTemplate> sqlFunctionEntry : metadata.getSqlFunctionMap().entrySet() ) {
 				applySqlFunction( sqlFunctionEntry.getKey(), sqlFunctionEntry.getValue() );
@@ -201,7 +180,7 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 
 	@Override
 	public SessionFactoryBuilder applyIdTableStrategy(IdTableStrategy strategy) {
-		this.options.idTableStrategy = strategy;
+		this.optionsBuilder.applyIdTableStrategy(strategy);
 		return this;
 	}
 
@@ -279,13 +258,16 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 
 	@Override
 	public SessionFactoryBuilder applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
-		this.options.applyNonJpaNativeQueryOrdinalParameterBase( base );
+		if ( base != null && base != 0 && base != 1 ) {
+			throw new IllegalArgumentException( "Illegal value for ordinal parameter base [" + base + "]; should be null, 0 or 1" );
+		}
+		this.optionsBuilder.applyNonJpaNativeQueryOrdinalParameterBase( base );
 		return this;
 	}
 
 	@Override
 	public SessionFactoryBuilder applyQueryLiteralRendering(QueryLiteralRendering queryLiteralRendering) {
-		this.options.queryLiteralRendering = queryLiteralRendering;
+		this.optionsBuilder.applyLiteralRendering(queryLiteralRendering);
 		return this;
 	}
 
@@ -399,7 +381,7 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 
 	@Override
 	public SqmFunctionRegistry getSqmFunctionRegistry() {
-		return this.options.sqmFunctionRegistry;
+		return this.optionsBuilder.getSqmFunctionRegistry();
 	}
 
 	@Override
@@ -413,7 +395,6 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 		this.optionsBuilder.enableReleaseResourcesOnClose( enable );
 		return this;
 	}
-
 
 	@Override
 	public SessionFactoryBuilder applyStrictJpaQueryLanguageCompliance(boolean enabled) {
@@ -443,11 +424,6 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	public SessionFactoryBuilder enableJpaClosedCompliance(boolean enabled) {
 		this.optionsBuilder.enableJpaClosedCompliance( enabled );
 		return this;
-	}
-
-	@Override
-	public void markAsJpaBootstrap() {
-		this.bootstrapContext.markAsJpaBootstrap();
 	}
 
 	@Override

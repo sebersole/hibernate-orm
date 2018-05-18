@@ -129,16 +129,10 @@ import org.hibernate.jpa.internal.util.CacheModeHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
-import org.hibernate.loader.criteria.CriteriaLoader;
-import org.hibernate.loader.custom.CustomLoader;
-import org.hibernate.loader.custom.CustomQuery;
+import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.persister.entity.MultiLoadOptions;
-import org.hibernate.persister.entity.OuterJoinLoadable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.ProcedureCallMemento;
@@ -1078,7 +1072,7 @@ public final class SessionImpl
 	@Override
 	public Object immediateLoad(String entityName, Serializable id) throws HibernateException {
 		if ( log.isDebugEnabled() ) {
-			EntityDescriptor persister = getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+			EntityDescriptor persister = getFactory().getMetamodel().findEntityDescriptor( entityName );
 			log.debugf( "Initializing proxy: %s", MessageHelper.infoString( persister, id, getFactory() ) );
 		}
 		LoadEvent event = loadEvent;
@@ -1462,7 +1456,7 @@ public final class SessionImpl
 
 	@Override
 	public Object instantiate(String entityName, Serializable id) throws HibernateException {
-		return instantiate( getFactory().getTypeConfiguration().findEntityDescriptor( entityName ), id );
+		return instantiate( getFactory().getMetamodel().findEntityDescriptor( entityName ), id );
 	}
 
 	/**
@@ -1488,7 +1482,7 @@ public final class SessionImpl
 	public EntityDescriptor getEntityPersister(final String entityName, final Object object) {
 		checkOpenOrWaitingForAutoClose();
 		if ( entityName == null ) {
-			return getFactory().getTypeConfiguration().findEntityDescriptor( guessEntityName( object ) );
+			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );
 		}
 		else {
 			// try block is a hack around fact that currently tuplizers are not
@@ -1497,7 +1491,7 @@ public final class SessionImpl
 			// influence this decision if we were not able to based on the
 			// given entityName
 			try {
-				return getFactory().getTypeConfiguration().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
+				return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
 			}
 			catch (HibernateException e) {
 				try {
@@ -1595,7 +1589,7 @@ public final class SessionImpl
 						if ( entityName == null ) {
 							throw new IllegalArgumentException( "Could not resolve entity-name [" + object + "]" );
 						}
-						getSessionFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+						getSessionFactory().getMetamodel().findEntityDescriptor( entityName );
 					}
 					catch (HibernateException e) {
 						throw new IllegalArgumentException( "Not an entity [" + object.getClass() + "]", e );
@@ -1628,7 +1622,7 @@ public final class SessionImpl
 			if ( !HibernateProxy.class.isInstance( object ) && persistenceContext.getEntry( object ) == null ) {
 				// check if it is an entity -> if not throw an exception (per JPA)
 				try {
-					getSessionFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+					getSessionFactory().getMetamodel().findEntityDescriptor( entityName );
 				}
 				catch (HibernateException e) {
 					throw new IllegalArgumentException( "Not an entity [" + entityName + "] : " + object );
@@ -2467,11 +2461,11 @@ public final class SessionImpl
 	}
 
 	private <T> EntityDescriptor<? extends T> locateEntityPersister(Class<T> entityClass) {
-		return getFactory().getTypeConfiguration().findEntityDescriptor( entityClass );
+		return getFactory().getMetamodel().findEntityDescriptor( entityClass );
 	}
 
 	private <T> EntityDescriptor<? extends T> locateEntityPersister(String entityName) {
-		return getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+		return getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
 	private abstract class BaseNaturalIdLoadAccessImpl<T> {
@@ -3296,7 +3290,7 @@ public final class SessionImpl
 		checkOpen();
 		return new EntityGraphImpl<T>(
 				null,
-				(EntityDescriptor<T>) getFactory().getTypeConfiguration().resolveEntityDescriptor( rootType ),
+				(EntityDescriptor<T>) getFactory().getMetamodel().findEntityDescriptor( rootType ),
 				getEntityManagerFactory()
 		);
 	}

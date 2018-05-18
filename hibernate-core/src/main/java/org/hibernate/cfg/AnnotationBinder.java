@@ -2454,7 +2454,6 @@ public final class AnnotationBinder {
 		XClass entityXClass = inferredData.getClassOrElement();
 		XProperty idXProperty = inferredData.getProperty();
 
-
 		//manage composite related metadata
 		//guess if its a component and find id data access (property, field etc)
 		final boolean isComponent = entityXClass.isAnnotationPresent( Embeddable.class )
@@ -2721,8 +2720,7 @@ public final class AnnotationBinder {
 	public static Component fillComponent(
 			PropertyHolder propertyHolder,
 			PropertyData inferredData,
-			PropertyData baseInferredData,
-			//base inferred data correspond to the entity reproducing inferredData's properties (ie IdClass)
+			PropertyData baseInferredData, //base inferred data correspond to the entity reproducing inferredData's properties (ie IdClass)
 			AccessType propertyAccessor,
 			boolean isNullable,
 			EntityBinder entityBinder,
@@ -2965,13 +2963,26 @@ public final class AnnotationBinder {
 		setupComponentTuplizer( property, componentId );
 
 		rootClass.setIdentifier( id );
-		BinderHelper.makeIdGenerator(
-				id,
-				generatorType,
-				generatorName,
-				buildingContext,
-				Collections.emptyMap()
-		);
+		if ( isGlobalGeneratorNameGlobal( buildingContext ) ) {
+			SecondPass secondPass = new IdGeneratorResolverSecondPass(
+					id,
+					inferredData.getProperty(),
+					generatorType,
+					generatorName,
+					buildingContext
+			);
+			buildingContext.getMetadataCollector().addSecondPass( secondPass );
+		}
+		else {
+			BinderHelper.makeIdGenerator(
+					id,
+					inferredData.getProperty(),
+					generatorType,
+					generatorName,
+					buildingContext,
+					Collections.emptyMap()
+			);
+		}
 		if ( isEmbedded ) {
 			rootClass.getEntityMappingHierarchy().setEmbeddedIdentifier( inferredData.getPropertyClass() == null );
 		}
@@ -3132,8 +3143,7 @@ public final class AnnotationBinder {
 				}
 				else if ( joinColumn != null ) {
 					value.setForeignKeyName( StringHelper.nullIfEmpty( joinColumn.foreignKey().name() ) );
-					value.setForeignKeyDefinition( StringHelper.nullIfEmpty( joinColumn.foreignKey()
-																				 .foreignKeyDefinition() ) );
+					value.setForeignKeyDefinition( StringHelper.nullIfEmpty( joinColumn.foreignKey().foreignKeyDefinition() ) );
 				}
 			}
 		}

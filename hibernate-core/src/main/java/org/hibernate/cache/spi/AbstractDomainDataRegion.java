@@ -79,7 +79,7 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 
 	@Override
 	public NaturalIdDataAccess getNaturalIdDataAccess(NavigableRole rootEntityRole) {
-		final EntityHierarchy entityHierarchy = sessionFactory.getTypeConfiguration()
+		final EntityHierarchy entityHierarchy = sessionFactory.getMetamodel().
 				.resolveEntityDescriptor( rootEntityRole.getFullPath() )
 				.getHierarchy();
 

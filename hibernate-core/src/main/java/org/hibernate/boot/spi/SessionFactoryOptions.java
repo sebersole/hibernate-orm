@@ -24,9 +24,12 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cache.spi.TimestampsCacheFactory;
 import org.hibernate.cfg.BaselineSessionEventsListenerBuilder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.jpa.spi.JpaCompliance;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.QueryLiteralRendering;
+import org.hibernate.query.criteria.LiteralHandlingMode;
 import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.ImmutableEntityUpdateQueryHandlingMode;
@@ -263,7 +266,6 @@ public interface SessionFactoryOptions {
 	 * or {@link javax.persistence.StoredProcedureQuery} how should we treat {@code null}
 	 * bindings?
 	 *
-	 * @see org.hibernate.cfg.AvailableSettings#PROCEDURE_NULL_PARAM_PASSING
 	 */
 	boolean isProcedureParameterNullPassingEnabled();
 
@@ -317,6 +319,10 @@ public interface SessionFactoryOptions {
 		return isJpaBootstrap();
 	}
 
+	/**
+	 * @deprecated since 6.0, Use {@link #getQueryLiteralRendering()} instead.
+	 */
+	@Deprecated
 	default LiteralHandlingMode getCriteriaLiteralHandlingMode() {
 		return LiteralHandlingMode.AUTO;
 	}
@@ -334,4 +340,5 @@ public interface SessionFactoryOptions {
 	default boolean inClauseParameterPaddingEnabled() {
 		return false;
 	}
+
 }

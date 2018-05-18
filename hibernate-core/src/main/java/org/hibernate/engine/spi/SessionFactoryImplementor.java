@@ -285,12 +285,12 @@ public interface SessionFactoryImplementor
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#resolveEntityDescriptor(String)}
+	 * {@link #getMetamodel()}} -> {@link Metamodel#findEntityDescriptor(String)}
 	 * instead
 	 */
 	@Deprecated
 	default EntityDescriptor getEntityPersister(String entityName) throws MappingException {
-		return getTypeConfiguration().resolveEntityDescriptor( entityName );
+		return getMetamodel().findEntityDescriptor( entityName );
 	}
 
 	/**
@@ -305,12 +305,11 @@ public interface SessionFactoryImplementor
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#findCollectionDescriptor}
-	 * instead
+	 * {@link #getMetamodel()}} -> {@link Metamodel#findCollectionDescriptor(String)} instead
 	 */
 	@Deprecated
 	default PersistentCollectionDescriptor getCollectionPersister(String role) throws MappingException {
-		final PersistentCollectionDescriptor<?,?,?> collectionPersister = getTypeConfiguration().findCollectionDescriptor( role );
+		final PersistentCollectionDescriptor<?,?,?> collectionPersister = getMetamodel().findCollectionDescriptor( role );
 		if ( collectionPersister == null ) {
 			throw new MappingException( "Could not locate CollectionPersister for given role [" + role + "]" );
 		}
@@ -339,22 +338,22 @@ public interface SessionFactoryImplementor
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#resolveEntityDescriptor(Class)}
+	 * {@link #getMetamodel()}} -> {@link Metamodel#findEntityDescriptor(Class)}
 	 * instead
 	 */
 	@Deprecated
 	default EntityDescriptor locateEntityPersister(Class byClass) {
-		return getTypeConfiguration().resolveEntityDescriptor( byClass );
+		return getMetamodel().findEntityDescriptor( byClass );
 	}
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#resolveEntityDescriptor(String)}
+	 * {@link #getMetamodel()}} -> {@link Metamodel#findEntityDescriptor(String)}
 	 * instead
 	 */
 	@Deprecated
 	default EntityDescriptor locateEntityPersister(String byName) {
-		return getTypeConfiguration().resolveEntityDescriptor( byName );
+		return getMetamodel().findEntityDescriptor( byName );
 	}
 
 	/**
@@ -376,7 +375,7 @@ public interface SessionFactoryImplementor
 			entityName = importedName;
 		}
 
-		final EntityDescriptor referencedPersister = getTypeConfiguration().findEntityDescriptor( entityName );
+		final EntityDescriptor referencedPersister = getMetamodel().findEntityDescriptor( entityName );
 		if ( referencedPersister != null ) {
 			return new String[] { referencedPersister.getEntityName() };
 		}

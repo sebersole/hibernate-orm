@@ -21,7 +21,6 @@ import org.hibernate.query.NavigablePath;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
-import static org.hibernate.internal.CoreLogging.logger;
 import static org.hibernate.internal.CoreLogging.messageLogger;
 
 /**
@@ -86,7 +85,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		// needs to be a Session for the #save and #contains calls below...
 		final Session session = ( Session ) sessionImplementor;
 
-		final EntityDescriptor persister = sessionImplementor.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+		final EntityDescriptor persister = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 		Object associatedObject = persister.getPropertyValue( object, propertyName );
 		if ( associatedObject == null ) {
 			throw new IdentifierGenerationException(
@@ -108,7 +107,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 			if ( LOG.isDebugEnabled() ) {
 				LOG.debugf(
 						"ForeignGenerator detected a transient entity [%s]",
-						foreignValueSourceType.getAssociatedEntityName()
+						entityName
 				);
 			}
 			id = session.save( entityName, associatedObject );

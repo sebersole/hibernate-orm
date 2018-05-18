@@ -8,12 +8,12 @@ package org.hibernate.boot.model.resultset.internal;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.Metamodel;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
 import org.hibernate.query.sql.spi.QueryResultBuilderRootEntity;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -50,13 +50,13 @@ public class EntityResultDefinitionImpl implements ResultSetMappingDefinition.En
 	}
 
 	@Override
-	public QueryResultBuilder generateQueryResultBuilder(TypeConfiguration typeConfiguration) {
+	public QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel) {
 		final EntityDescriptor entityDescriptor;
 		if ( StringHelper.isNotEmpty( entityName ) ) {
-			entityDescriptor = typeConfiguration.resolveEntityDescriptor( entityName );
+			entityDescriptor = metamodel.findEntityDescriptor( entityName );
 		}
 		else {
-			entityDescriptor = typeConfiguration.resolveEntityDescriptor( entityClassName );
+			entityDescriptor = metamodel.findEntityDescriptor( entityClassName );
 		}
 
 		// todo (6.0) : pass along lockMode, etc

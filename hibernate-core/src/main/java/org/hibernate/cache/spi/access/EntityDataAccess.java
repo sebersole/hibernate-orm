@@ -10,7 +10,6 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 
 /**
  * Contract for managing transactional and concurrent access to cached entity
@@ -42,7 +41,7 @@ public interface EntityDataAccess extends CachedDomainDataAccess {
 	 */
 	Object generateCacheKey(
 			Object id,
-			EntityPersister rootEntityDescriptor,
+			EntityDescriptor rootEntityDescriptor,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier);
 

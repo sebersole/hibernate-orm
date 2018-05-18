@@ -6,7 +6,6 @@
  */
 package org.hibernate.id.uuid;
 
-import org.hibernate.type.descriptor.java.UUIDTypeDescriptor;
 
 /**
  * @author Steve Ebersole
