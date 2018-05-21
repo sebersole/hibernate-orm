@@ -85,7 +85,7 @@ public abstract class CriteriaTools {
 		final AuditService auditService = versionsReader.getAuditService();
 
 		if ( AuditId.IDENTIFIER_PLACEHOLDER.equals( propertyName ) ) {
-			final String identifierPropertyName = sessionFactory.getTypeConfiguration()
+			final String identifierPropertyName = sessionFactory.getMetamodel()
 					.findEntityDescriptor( entityName ).getIdentifierPropertyName();
 			propertyName = auditService.getOptions().getOriginalIdPropName() + "." + identifierPropertyName;
 		}
@@ -106,13 +106,13 @@ public abstract class CriteriaTools {
 	 * @return List of property names representing entity identifier.
 	 */
 	private static List<String> identifierPropertyNames(SessionFactoryImplementor sessionFactory, String entityName) {
-		final String identifierPropertyName = sessionFactory.getTypeConfiguration()
+		final String identifierPropertyName = sessionFactory.getMetamodel()
 				.findEntityDescriptor( entityName ).getIdentifierPropertyName();
 		if ( identifierPropertyName != null ) {
 			// Single id.
 			return Arrays.asList( identifierPropertyName );
 		}
-		final EntityDescriptor<?> entityDescriptor = sessionFactory.getTypeConfiguration().findEntityDescriptor( entityName );
+		final EntityDescriptor<?> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
 		final EntityIdentifier entityIdentifier = entityDescriptor.getIdentifierDescriptor();
 
 		if ( entityIdentifier instanceof EntityIdentifierCompositeNonAggregated ) {
