@@ -19,7 +19,7 @@ public class RevisionTimestampData extends PropertyData {
 	private JavaTypeDescriptor javaTypeDescriptor;
 
 	public RevisionTimestampData(String name, String beanName, String accessType, JavaTypeDescriptor javaTypeDescriptor) {
-		super( name, beanName, accessType );
+		super( name, beanName, accessType, null );
 		this.javaTypeDescriptor = javaTypeDescriptor;
 	}
 

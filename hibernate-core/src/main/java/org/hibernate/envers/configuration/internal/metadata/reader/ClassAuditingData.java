@@ -82,14 +82,14 @@ public class ClassAuditingData implements AuditedPropertiesHolder {
 
 	public Iterable<String> getNonSyntheticPropertyNames() {
 		return properties.entrySet().stream()
-				.filter( e -> !e.getValue().isSyntheic() )
+				.filter( e -> !e.getValue().isSynthetic() )
 				.map( Map.Entry::getKey )
 				.collect( Collectors.toList() );
 	}
 
 	public Iterable<PropertyAuditingData> getSyntheticProperties() {
 		return properties.values().stream()
-				.filter( p -> p.isSyntheic() )
+				.filter( p -> p.isSynthetic() )
 				.collect( Collectors.toList() );
 	}
 }

@@ -15,6 +15,8 @@ import org.hibernate.envers.AuditOverrides;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.hibernate.envers.RelationTargetNotFoundAction;
 import org.hibernate.envers.internal.entities.PropertyData;
+import org.hibernate.mapping.Value;
+import org.hibernate.type.Type;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -36,6 +38,10 @@ public class PropertyAuditingData {
 	private boolean forceInsertable;
 	private boolean usingModifiedFlag;
 	private String modifiedFlagName;
+	private Value value;
+	// Synthetic properties are ones which are not part of the actual java model.
+	// They're properties used for bookkeeping by Hibernate
+	private boolean synthetic;
 
 	public PropertyAuditingData() {
 	}
@@ -54,7 +60,9 @@ public class PropertyAuditingData {
 				RelationTargetNotFoundAction.ERROR,
 				auditMappedBy,
 				positionMappedBy,
-				forceInsertable
+				forceInsertable,
+				false,
+				null
 		);
 	}
 
@@ -65,7 +73,9 @@ public class PropertyAuditingData {
 			RelationTargetNotFoundAction relationTargetNotFoundAction,
 			String auditMappedBy,
 			String positionMappedBy,
-			boolean forceInsertable) {
+			boolean forceInsertable,
+			boolean synthetic,
+			Value value) {
 		this.name = name;
 		this.beanName = name;
 		this.accessType = accessType;
@@ -74,6 +84,8 @@ public class PropertyAuditingData {
 		this.auditMappedBy = auditMappedBy;
 		this.positionMappedBy = positionMappedBy;
 		this.forceInsertable = forceInsertable;
+		this.synthetic = synthetic;
+		this.value = value;
 	}
 
 	public String getName() {
@@ -117,12 +129,31 @@ public class PropertyAuditingData {
 	}
 
 	public PropertyData getPropertyData() {
+		return resolvePropertyData( null );
+	}
+
+	public PropertyData resolvePropertyData(Type propertyType) {
 		return new PropertyData(
 				name,
 				beanName,
 				accessType,
 				usingModifiedFlag,
-				modifiedFlagName
+				modifiedFlagName,
+				synthetic,
+				propertyType
+		);
+	}
+
+	public PropertyData resolvePropertyData(Type propertyType, Type virtualType) {
+		return new PropertyData(
+				name,
+				beanName,
+				accessType,
+				usingModifiedFlag,
+				modifiedFlagName,
+				synthetic,
+				propertyType,
+				virtualType.getJavaTypeDescriptor().getJavaType()
 		);
 	}
 
@@ -226,5 +257,13 @@ public class PropertyAuditingData {
 
 	public void setRelationTargetNotFoundAction(RelationTargetNotFoundAction relationTargetNotFoundAction) {
 		this.relationTargetNotFoundAction = relationTargetNotFoundAction;
+	}
+
+	public boolean isSynthetic() {
+		return synthetic;
+	}
+
+	public Value getValue() {
+		return value;
 	}
 }

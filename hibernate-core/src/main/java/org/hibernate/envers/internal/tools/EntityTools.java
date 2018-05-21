@@ -86,7 +86,7 @@ public abstract class EntityTools {
 	 * @return Java class mapped to specified entity name.
 	 */
 	public static Class getEntityClass(SessionImplementor sessionImplementor, String entityName) {
-		final EntityDescriptor entityPersister = sessionImplementor.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+		final EntityDescriptor entityPersister = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 		return entityPersister.getMappedClass();
 	}
 }
