@@ -6,10 +6,12 @@
  */
 package org.hibernate.procedure.spi;
 
-import org.hibernate.procedure.FunctionReturn;
+import org.hibernate.procedure.ProcedureParameter;
+import org.hibernate.query.spi.QueryParameterImplementor;
 
 /**
  * @author Steve Ebersole
  */
-public interface FunctionReturnImplementor extends FunctionReturn, ProcedureParameterImplementor {
+public interface ProcedureParameterImplementor<T> extends ProcedureParameter<T>, QueryParameterImplementor<T> {
+
 }

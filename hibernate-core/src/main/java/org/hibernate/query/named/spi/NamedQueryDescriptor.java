@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.named.spi;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
@@ -19,7 +19,10 @@ import org.hibernate.query.spi.QueryImplementor;
  */
 public interface NamedQueryDescriptor {
 	String getName();
+
 	String getQueryString();
+
+	List<ParameterDescriptor> getParameterDescriptors();
 
 	Boolean getCacheable();
 
@@ -38,6 +41,8 @@ public interface NamedQueryDescriptor {
 	Integer getFetchSize();
 
 	String getComment();
+
+	NamedQueryDescriptor makeCopy(String name);
 
 	QueryImplementor toQuery(SharedSessionContractImplementor session);
 }

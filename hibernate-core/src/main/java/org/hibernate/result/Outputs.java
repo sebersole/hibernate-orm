@@ -7,18 +7,13 @@
 package org.hibernate.result;
 
 /**
- * Represents the outputs of executing a JDBC statement accounting for mixing of result sets and update counts
- * hiding the complexity (IMO) of how this is exposed in the JDBC API.
- * <p/>
- * The outputs are exposed as a group of {@link Output} objects, each representing a single result set or update count.
- * Conceptually, Result presents those Returns as an iterator.
+ * Group of mixed Output references representing outcomes of the individual statements executed
+ * (procedure, anonymous procedure block, etc).  Each Output may be either a {@link ResultSetOutput}
+ * or {@link UpdateCountOutput}.  This allows consuming the results directly from JDBC's
+ * mixed result-set/update-count while being easier to work with.
  *
  * @author Steve Ebersole
- *
- * @deprecated Used only in defining outputs for procedure calls, so use {@link org.hibernate.procedure.ProcedureOutputs}
- * instead
  */
-@Deprecated
 public interface Outputs {
 	/**
 	 * Retrieve the current Output object.

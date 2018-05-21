@@ -9,7 +9,6 @@ package org.hibernate.test.temporal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -18,7 +17,6 @@ import javax.persistence.TemporalType;
 
 import org.junit.Test;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Generated;

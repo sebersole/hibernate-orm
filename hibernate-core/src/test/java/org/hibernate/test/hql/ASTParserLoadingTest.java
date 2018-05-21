@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
 import org.hibernate.QueryException;
 import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
@@ -76,8 +75,6 @@ import org.hibernate.test.cid.LineItem.Id;
 import org.hibernate.test.cid.Order;
 import org.hibernate.test.cid.Product;
 import org.junit.Test;
-
-import org.jboss.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hibernate.testing.junit4.ExtraAssertions.assertClassAssignability;

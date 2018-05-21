@@ -11,10 +11,7 @@ package org.hibernate.result;
  * counts ({@link UpdateCountOutput}).
  *
  * @author Steve Ebersole
- *
- * @deprecated Use {@link org.hibernate.procedure.Output} instead
  */
-@Deprecated
 public interface Output {
 	/**
 	 * Determine if this return is a result (castable to {@link ResultSetOutput}).  The alternative is that it is

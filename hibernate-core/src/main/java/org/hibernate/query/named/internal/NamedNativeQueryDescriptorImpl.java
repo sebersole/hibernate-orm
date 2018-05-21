@@ -7,6 +7,8 @@
 package org.hibernate.query.named.internal;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
@@ -14,6 +16,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.named.spi.AbstractNamedQueryDescriptor;
 import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
 
@@ -27,6 +30,7 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 
 	public NamedNativeQueryDescriptorImpl(
 			String name,
+			List<ParameterDescriptor> parameterDescriptors,
 			String sqlString,
 			String resultSetMappingName,
 			Collection<String> querySpaces,
@@ -38,9 +42,11 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		super(
 				name,
+				parameterDescriptors,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -49,7 +55,8 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 				lockOptions,
 				timeout,
 				fetchSize,
-				comment
+				comment,
+				hints
 		);
 		this.sqlString = sqlString;
 		this.resultSetMappingName = resultSetMappingName;
@@ -77,18 +84,10 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 	}
 
 	@Override
-	public NativeQueryImplementor toQuery(SharedSessionContractImplementor session) {
-		final NativeQueryImpl query = new NativeQueryImpl( this, session );
-
-		applyBaseOptions( query, session );
-
-		return query;
-	}
-
-	@Override
 	public NamedNativeQueryDescriptor makeCopy(String name) {
 		return new NamedNativeQueryDescriptorImpl(
 				name,
+				getParameterDescriptors(),
 				sqlString,
 				resultSetMappingName,
 				getQuerySpaces(),
@@ -100,7 +99,17 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 				getLockOptions(),
 				getTimeout(),
 				getFetchSize(),
-				getComment()
+				getComment(),
+				getHints()
 		);
+	}
+
+	@Override
+	public NativeQueryImplementor toQuery(SharedSessionContractImplementor session) {
+		final NativeQueryImpl query = new NativeQueryImpl( this, session );
+
+		applyBaseOptions( query, session );
+
+		return query;
 	}
 }

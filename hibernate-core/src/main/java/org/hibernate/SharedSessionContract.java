@@ -20,6 +20,8 @@ import org.hibernate.query.QueryProducer;
  * @author Steve Ebersole
  */
 public interface SharedSessionContract extends QueryProducer, Serializable {
+	SessionFactory getSessionFactory();
+
 	/**
 	 * Obtain the tenant identifier associated with this session.
 	 *

@@ -6,31 +6,32 @@
  */
 package org.hibernate.procedure.internal;
 
-import javax.persistence.ParameterMode;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.procedure.ParameterBind;
-import org.hibernate.procedure.spi.ParameterBindImplementor;
-import org.hibernate.query.QueryParameter;
+import org.hibernate.procedure.ProcedureParameterBinding;
+import org.hibernate.procedure.spi.ProcedureParameterBindingImplementor;
+import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.internal.QueryParameterBindingImpl;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 
 /**
- * Implementation of the {@link ParameterBind} contract.
+ * Implementation of the {@link ProcedureParameterBinding} contract.
  *
  * @author Steve Ebersole
  */
-public class ParameterBindImpl<T> extends QueryParameterBindingImpl<T> implements ParameterBindImplementor<T> {
-	public ParameterBindImpl(
-			QueryParameter<T> queryParameter,
+public class ProcedureParameterBindingImpl<T>
+		extends QueryParameterBindingImpl<T>
+		implements ProcedureParameterBindingImplementor<T> {
+	public ProcedureParameterBindingImpl(
+			ProcedureParameterImplementor<T> queryParameter,
 			QueryParameterBindingTypeResolver typeResolver) {
-		super( queryParameter, typeResolver );
+		super( queryParameter, typeResolver, true );
 	}
 
-	public ParameterBindImpl(
-			AllowableParameterType bindType,
-			QueryParameter<T> queryParameter,
+	public ProcedureParameterBindingImpl(
+			AllowableParameterType<T> bindType,
+			ProcedureParameterImplementor<T> queryParameter,
 			QueryParameterBindingTypeResolver typeResolver) {
-		super( bindType, queryParameter, typeResolver );
+		super( queryParameter, typeResolver, bindType, true );
 	}
 
 	@Override

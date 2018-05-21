@@ -6,40 +6,39 @@
  */
 package org.hibernate.procedure.spi;
 
-import java.sql.CallableStatement;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.procedure.internal.ProcedureParamBindings;
-import org.hibernate.query.procedure.internal.ProcedureParameterMetadata;
-import org.hibernate.sql.exec.spi.JdbcCallFunctionReturn;
-import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
+import org.hibernate.procedure.internal.FunctionReturnImpl;
+import org.hibernate.sql.exec.spi.JdbcCall;
 
 /**
  * @author Steve Ebersole
  */
 public interface CallableStatementSupport {
-	boolean shouldUseFunctionSyntax(ParameterRegistry parameterRegistry);
-
-	default String renderCallableStatement(
+	JdbcCall interpretCall(
 			String procedureName,
+			FunctionReturnImpl functionReturn,
 			ProcedureParameterMetadata parameterMetadata,
 			ProcedureParamBindings paramBindings,
-			SharedSessionContractImplementor session) {
-		return renderCallableStatement(
-				procedureName,
-				parameterMetadata.getParameterStrategy(),
-				new ArrayList( parameterMetadata.collectAllParameters() ),
-				session
-		);
-	}
+			SharedSessionContractImplementor session);
 
-	void registerParameters(
-			String procedureName,
-			CallableStatement statement,
-			ParameterStrategy parameterStrategy,
-			JdbcCallFunctionReturn functionReturn,
-			List<JdbcCallParameterRegistration > parameterRegistrations,
-			SharedSessionContractImplementor session);;
+//	boolean shouldUseFunctionSyntax(
+//			ProcedureCallImplementor procedureCall,
+//			ProcedureParameterMetadata parameterMetadata,
+//			ProcedureParamBindings paramBindings,
+//			SessionFactoryImplementor sessionFactory);
+//
+//	String renderCallableStatement(
+//			String procedureName,
+//			JdbcCallFunctionReturn functionReturn,
+//			ProcedureParameterMetadata parameterMetadata,
+//			ProcedureParamBindings paramBindings,
+//			SharedSessionContractImplementor session);
+//
+//	void registerParameters(
+//			String procedureName,
+//			CallableStatement statement,
+//			ParameterStrategy parameterStrategy,
+//			JdbcCallFunctionReturn functionReturn,
+//			List<JdbcCallParameterRegistration > parameterRegistrations,
+//			SharedSessionContractImplementor session);
 }

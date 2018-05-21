@@ -9,11 +9,12 @@ package org.hibernate.procedure;
 import javax.persistence.TemporalType;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.spi.QueryParameterBinding;
 
 /**
  * Describes an input value binding for any IN/INOUT parameters.
  */
-public interface ParameterBind<T> extends QueryParameterBinding<T> {
+public interface ProcedureParameterBinding<T> extends QueryParameterBinding<T> {
 	/**
 	 * Retrieves the bound value.
 	 *

@@ -9,6 +9,7 @@ package org.hibernate.query.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.QueryParameter;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
 
 /**
@@ -58,5 +59,10 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 	@Override
 	public Integer getPosition() {
 		return position;
+	}
+
+	@Override
+	public ParameterDescriptor toMemento() {
+		return session -> new QueryParameterPositionalImpl( getPosition(), allowsMultiValuedBinding(), getHibernateType() );
 	}
 }

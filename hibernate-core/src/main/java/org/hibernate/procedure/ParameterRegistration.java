@@ -9,10 +9,11 @@ package org.hibernate.procedure;
 import javax.persistence.ParameterMode;
 import javax.persistence.TemporalType;
 
-import org.hibernate.query.procedure.ProcedureParameter;
-
 /**
  * Describes a registered procedure/function parameter.
+ *
+ * @apiNote Literally a composite view of {@link ProcedureParameter} and
+ * {@link ProcedureParameterBinding}
  *
  * @author Steve Ebersole
  */
@@ -48,7 +49,7 @@ public interface ParameterRegistration<T> extends ProcedureParameter<T> {
 	 *
 	 * @return The parameter binding
 	 */
-	ParameterBind<T> getBind();
+	ProcedureParameterBinding<T> getBind();
 
 	/**
 	 * Bind a value to the parameter.  How this value is bound to the underlying JDBC CallableStatement is

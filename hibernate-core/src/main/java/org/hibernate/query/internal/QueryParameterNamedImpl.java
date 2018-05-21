@@ -8,6 +8,7 @@
 package org.hibernate.query.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
 
 /**
@@ -15,7 +16,7 @@ import org.hibernate.query.sqm.tree.expression.SqmParameter;
  *
  * @author Steve Ebersole
  */
-public class QueryParameterNamedImpl<T> extends QueryParameterImpl<T> {
+public class QueryParameterNamedImpl<T> extends AbstractQueryParameter<T> {
 	/**
 	 * Create a named parameter descriptor from the SQM parameter
 	 *
@@ -57,5 +58,10 @@ public class QueryParameterNamedImpl<T> extends QueryParameterImpl<T> {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public ParameterDescriptor toMemento() {
+		return session -> new QueryParameterNamedImpl( getName(), allowsMultiValuedBinding(), getHibernateType() );
 	}
 }

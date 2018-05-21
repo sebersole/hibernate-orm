@@ -15,13 +15,15 @@ import javax.persistence.ParameterMode;
 import javax.persistence.TemporalType;
 
 import org.hibernate.procedure.ProcedureCall;
+import org.hibernate.query.named.spi.NameableQuery;
 import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 import org.hibernate.query.spi.QueryImplementor;
 
 /**
  * @author Steve Ebersole
  */
-public interface ProcedureCallImplementor<R> extends ProcedureCall, QueryImplementor<R> {
+public interface ProcedureCallImplementor<R>
+		extends ProcedureCall, QueryImplementor<R>, NameableQuery<NamedCallableQueryDescriptor> {
 	@Override
 	default List<R> getResultList() {
 		return list();
@@ -31,9 +33,6 @@ public interface ProcedureCallImplementor<R> extends ProcedureCall, QueryImpleme
 	default R getSingleResult() {
 		return uniqueResult();
 	}
-
-	@Override
-	NamedCallableQueryDescriptor toNamedDescriptor(String name);
 
 	@Override
 	ProcedureCallImplementor<R> setHint(String hintName, Object value);

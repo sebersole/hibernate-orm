@@ -23,7 +23,8 @@ public interface NamedNativeQueryDescriptor extends NamedQueryDescriptor {
 	Collection<String> getQuerySpaces();
 
 	@Override
-	NativeQueryImplementor toQuery(SharedSessionContractImplementor session);
-
 	NamedNativeQueryDescriptor makeCopy(String name);
+
+	@Override
+	NativeQueryImplementor toQuery(SharedSessionContractImplementor session);
 }

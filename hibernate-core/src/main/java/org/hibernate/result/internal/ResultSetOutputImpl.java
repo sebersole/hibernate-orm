@@ -4,23 +4,27 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.procedure.internal;
+package org.hibernate.result.internal;
 
 import java.util.List;
+import java.util.function.Supplier;
 
-import org.hibernate.procedure.ResultSetOutput;
-
+import org.hibernate.result.ResultSetOutput;
 
 /**
  * Implementation of ResultSetOutput
  *
  * @author Steve Ebersole
  */
-public class ResultSetOutputImpl implements ResultSetOutput {
-	private final List results;
+class ResultSetOutputImpl implements ResultSetOutput {
+	private final Supplier<List> resultSetSupplier;
 
 	public ResultSetOutputImpl(List results) {
-		this.results = results;
+		this.resultSetSupplier = () -> results;
+	}
+
+	public ResultSetOutputImpl(Supplier<List> resultSetSupplier) {
+		this.resultSetSupplier = resultSetSupplier;
 	}
 
 	@Override
@@ -31,7 +35,7 @@ public class ResultSetOutputImpl implements ResultSetOutput {
 	@Override
 	@SuppressWarnings("unchecked")
 	public List getResultList() {
-		return results;
+		return resultSetSupplier.get();
 	}
 
 	@Override

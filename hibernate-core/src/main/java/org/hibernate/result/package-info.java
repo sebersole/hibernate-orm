@@ -10,10 +10,6 @@
  * result sets and update counts hiding the complexity (IMO) of how this is
  * exposed in the JDBC API.
  *
- * {@link org.hibernate.result.Outputs} represents the overall group of
- * mixed individual outcomes, which might be either a {@link org.hibernate.result.ResultSetOutput}
- * or a {@link org.hibernate.result.UpdateCountOutput}.
- *
  * <code>
  *     Outputs outputs = ...;
  *     while ( result.goToNext() ) {
@@ -28,5 +24,4 @@
  * </code>
  *
  */
-@Deprecated
 package org.hibernate.result;

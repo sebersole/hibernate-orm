@@ -16,7 +16,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +56,7 @@ import org.hibernate.property.access.spi.BuiltInPropertyAccessStrategies;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.IllegalQueryOperationException;
+import org.hibernate.query.ParameterMetadata;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
@@ -65,8 +65,12 @@ import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 
 import static org.hibernate.LockOptions.WAIT_FOREVER;
 import static org.hibernate.cfg.AvailableSettings.JPA_LOCK_SCOPE;
@@ -111,7 +115,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	protected abstract void verifySettingAliasSpecificLockModes();
 
-	protected abstract QueryParameterBindings queryParameterBindings();
+	protected abstract QueryParameterBindings getQueryParameterBindings();
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -667,6 +671,12 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 	// QueryParameter handling
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public Set<Parameter<?>> getParameters() {
+		return ( (ParameterMetadata) getParameterMetadata() ).getRegistrations();
+	}
+
+	@Override
 	public Parameter<?> getParameter(String name) {
 		try {
 			return getParameterMetadata().getQueryParameter( name );
@@ -726,8 +736,8 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	public boolean isBound(Parameter<?> param) {
-		final QueryParameter qp = getParameterMetadata().resolve( param );
-		return qp != null && queryParameterBindings().isBound( qp );
+		final QueryParameterImplementor qp = getParameterMetadata().resolve( param );
+		return qp != null && getQueryParameterBindings().isBound( qp );
 	}
 
 	// todo : rename these #locateParameterBinding
@@ -749,16 +759,16 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 		);
 	}
 
-	protected <P> QueryParameterBinding<P> locateBinding(QueryParameter<P> parameter) {
-		return queryParameterBindings().getBinding( parameter );
+	protected <P> QueryParameterBinding<P> locateBinding(QueryParameterImplementor<P> parameter) {
+		return getQueryParameterBindings().getBinding( parameter );
 	}
 
 	protected <P> QueryParameterBinding<P> locateBinding(String name) {
-		return queryParameterBindings().getBinding( name );
+		return getQueryParameterBindings().getBinding( name );
 	}
 
 	protected <P> QueryParameterBinding<P> locateBinding(int position) {
-		return queryParameterBindings().getBinding( position );
+		return getQueryParameterBindings().getBinding( position );
 	}
 
 	@Override
@@ -835,14 +845,14 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value) {
+	public <P> QueryImplementor<R> setParameter(QueryParameter<P> parameter, P value) {
 		locateBinding( parameter ).setBindValue( value );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <P> QueryImplementor setParameter(Parameter<P> parameter, P value) {
+	public <P> QueryImplementor<R> setParameter(Parameter<P> parameter, P value) {
 		if ( value instanceof TypedParameterValue ) {
 			setParameter( parameter, ( (TypedParameterValue) value ).getValue(), ( (TypedParameterValue) value ).getType() );
 		}
@@ -871,7 +881,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(String name, Object value) {
+	public QueryImplementor<R> setParameter(String name, Object value) {
 		if ( value instanceof TypedParameterValue ) {
 			final TypedParameterValue  typedValueWrapper = (TypedParameterValue) value;
 			setParameter( name, typedValueWrapper.getValue(), typedValueWrapper.getType() );
@@ -888,7 +898,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(int position, Object value) {
+	public QueryImplementor<R> setParameter(int position, Object value) {
 		if ( value instanceof TypedParameterValue ) {
 			final TypedParameterValue typedParameterValue = (TypedParameterValue) value;
 			setParameter( position, typedParameterValue.getValue(), typedParameterValue.getType() );
@@ -904,14 +914,14 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value, AllowableParameterType type) {
+	public <P> QueryImplementor<R> setParameter(QueryParameter<P> parameter, P value, AllowableParameterType type) {
 		locateBinding( parameter ).setBindValue( value,  type );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(String name, Object value, AllowableParameterType type) {
+	public QueryImplementor<R> setParameter(String name, Object value, AllowableParameterType type) {
 		locateBinding( name ).setBindValue( value, type );
 		return this;
 	}
@@ -925,21 +935,21 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <P> QueryImplementor setParameter(QueryParameter<P> parameter, P value, TemporalType temporalType) {
+	public <P> QueryImplementor<R> setParameter(QueryParameter<P> parameter, P value, TemporalType temporalType) {
 		locateBinding( parameter ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(String name, Object value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(String name, Object value, TemporalType temporalType) {
 		locateBinding( name ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(int position, Object value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(int position, Object value, TemporalType temporalType) {
 		locateBinding( position ).setBindValue( value, temporalType );
 		return this;
 	}
@@ -960,63 +970,152 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameterList(String name, Collection values, AllowableParameterType type) {
+	public QueryImplementor<R> setParameterList(int position, Collection values) {
+		locateBinding( position ).setBindValues( values );
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public QueryImplementor<R> setParameterList(String name, Collection values, AllowableParameterType type) {
 		locateBinding( name ).setBindValues( values, type );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameterList(String name, Object[] values, AllowableParameterType type) {
+	public QueryImplementor<R> setParameterList(int position, Collection values, AllowableParameterType type) {
+		locateBinding( position ).setBindValues( values, type );
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public QueryImplementor<R> setParameterList(String name, Object[] values) {
+		locateBinding( name ).setBindValues( Arrays.asList( values ) );
+		return this;
+	}
+
+	@Override
+	public QueryImplementor<R> setParameterList(int position, Object[] values) {
+		locateBinding( position ).setBindValues( Arrays.asList( values ) );
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public QueryImplementor<R> setParameterList(String name, Object[] values, AllowableParameterType type) {
 		locateBinding( name ).setBindValues( Arrays.asList( values ), type );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameterList(String name, Object[] values) {
-		locateBinding( name ).setBindValues( Arrays.asList( values ) );
+	public QueryImplementor<R> setParameterList(int position, Object[] values, AllowableParameterType type) {
+		locateBinding( position ).setBindValues( Arrays.asList( values ), type );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(Parameter<Calendar> param, Calendar value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameterList(String name, Collection values, Class type) {
+		final JavaTypeDescriptor javaDescriptor = getSession().getFactory()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getDescriptor( type );
+		if ( javaDescriptor == null ) {
+			setParameterList( name, values );
+		}
+		else {
+			final AllowableParameterType paramType;
+			if ( javaDescriptor instanceof BasicJavaDescriptor ) {
+				paramType = getSession().getFactory()
+						.getTypeConfiguration()
+						.getBasicTypeRegistry()
+						.getBasicType( type );
+			}
+			else if ( javaDescriptor instanceof ManagedJavaDescriptor ) {
+				paramType = (AllowableParameterType) getSession().getFactory().getMetamodel().managedType( type );
+			}
+			else {
+				throw new HibernateException( "Unable to determine AllowableParameterType : " + type.getName() );
+			}
+
+			setParameterList( name, values, paramType );
+		}
+
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public QueryImplementor<R> setParameterList(int position, Collection values, Class type) {
+		final JavaTypeDescriptor javaDescriptor = getSession().getFactory()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getDescriptor( type );
+		if ( javaDescriptor == null ) {
+			setParameterList( position, values );
+		}
+		else {
+			final AllowableParameterType paramType;
+			if ( javaDescriptor instanceof BasicJavaDescriptor ) {
+				paramType = getSession().getFactory()
+						.getTypeConfiguration()
+						.getBasicTypeRegistry()
+						.getBasicType( type );
+			}
+			else if ( javaDescriptor instanceof ManagedJavaDescriptor ) {
+				paramType = (AllowableParameterType) getSession().getFactory().getMetamodel().managedType( type );
+			}
+			else {
+				throw new HibernateException( "Unable to determine AllowableParameterType : " + type.getName() );
+			}
+
+			setParameterList( position, values, paramType );
+		}
+
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public QueryImplementor<R> setParameter(Parameter<Calendar> param, Calendar value, TemporalType temporalType) {
 		locateBinding( (QueryParameter) param ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(Parameter<Date> param, Date value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(Parameter<Date> param, Date value, TemporalType temporalType) {
 		locateBinding( (QueryParameter) param ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(String name, Calendar value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(String name, Calendar value, TemporalType temporalType) {
 		locateBinding( name ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(String name, Date value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(String name, Date value, TemporalType temporalType) {
 		locateBinding( name ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(int position, Calendar value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(int position, Calendar value, TemporalType temporalType) {
 		locateBinding( position ).setBindValue( value, temporalType );
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setParameter(int position, Date value, TemporalType temporalType) {
+	public QueryImplementor<R> setParameter(int position, Date value, TemporalType temporalType) {
 		locateBinding( position ).setBindValue( value, temporalType );
 		return this;
 	}
@@ -1024,12 +1123,12 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T getParameterValue(Parameter<T> param) {
-		final QueryParameter qp = getParameterMetadata().resolve( param );
+		final QueryParameterImplementor qp = getParameterMetadata().resolve( param );
 		if ( qp == null ) {
 			throw new IllegalArgumentException( "The parameter [" + param + "] is not part of this Query" );
 		}
 
-		final QueryParameterBinding binding = queryParameterBindings().getBinding( qp );
+		final QueryParameterBinding binding = getQueryParameterBindings().getBinding( qp );
 		if ( binding == null || !binding.isBound() ) {
 			throw new IllegalStateException( "The parameter [" + param + "] has not yet been bound" );
 		}
@@ -1044,12 +1143,12 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	public Object getParameterValue(String name) {
-		final QueryParameter qp = getParameterMetadata().getQueryParameter( name );
+		final QueryParameterImplementor qp = getParameterMetadata().getQueryParameter( name );
 		if ( qp == null ) {
 			throw new IllegalArgumentException( "The parameter [" + name + "] is not part of this Query" );
 		}
 
-		final QueryParameterBinding binding = queryParameterBindings().getBinding( qp );
+		final QueryParameterBinding binding = getQueryParameterBindings().getBinding( qp );
 		if ( binding == null || !binding.isBound() ) {
 			throw new IllegalStateException( "The parameter [" + name + "] has not yet been bound" );
 		}
@@ -1064,12 +1163,12 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	public Object getParameterValue(int position) {
-		final QueryParameter qp = getParameterMetadata().getQueryParameter( position );
+		final QueryParameterImplementor qp = getParameterMetadata().getQueryParameter( position );
 		if ( qp == null ) {
 			throw new IllegalArgumentException( "The parameter [" + position + "] is not part of this Query" );
 		}
 
-		final QueryParameterBinding binding = queryParameterBindings().getBinding( qp );
+		final QueryParameterBinding binding = getQueryParameterBindings().getBinding( qp );
 		if ( binding == null || !binding.isBound() ) {
 			throw new IllegalStateException( "The parameter [" + position + "] has not yet been bound" );
 		}
@@ -1091,7 +1190,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 	private CacheMode sessionCacheMode;
 
 	protected void beforeQuery() {
-		queryParameterBindings().validate();
+		getQueryParameterBindings().validate();
 
 		prepareForExecution();
 
@@ -1116,7 +1215,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryImplementor setProperties(Object bean) {
+	public QueryImplementor<R> setProperties(Object bean) {
 		Class clazz = bean.getClass();
 		for ( String paramName : getParameterMetadata().getNamedParameterNames() ) {
 			try {

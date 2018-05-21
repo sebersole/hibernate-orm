@@ -6,7 +6,8 @@
  */
 package org.hibernate.query.named.internal;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
@@ -14,8 +15,8 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.named.spi.AbstractNamedQueryDescriptor;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.HqlQueryImplementor;
-import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 
 /**
@@ -28,6 +29,7 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 
 	public NamedHqlQueryDescriptorImpl(
 			String name,
+			List<ParameterDescriptor> parameterDescriptors,
 			String hqlString,
 			Integer firstResult,
 			Integer maxResults,
@@ -39,9 +41,11 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		super(
 				name,
+				parameterDescriptors,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -50,7 +54,8 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 				lockOptions,
 				timeout,
 				fetchSize,
-				comment
+				comment,
+				hints
 		);
 		this.hqlString = hqlString;
 		this.firstResult = firstResult;
@@ -60,6 +65,27 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 	@Override
 	public String getHqlString() {
 		return hqlString;
+	}
+
+	@Override
+	public NamedHqlQueryDescriptor makeCopy(String name) {
+		return new NamedHqlQueryDescriptorImpl(
+				name,
+				getParameterDescriptors(),
+				getHqlString(),
+				firstResult,
+				maxResults,
+				getCacheable(),
+				getCacheRegion(),
+				getCacheMode(),
+				getFlushMode(),
+				getReadOnly(),
+				getLockOptions(),
+				getTimeout(),
+				getFetchSize(),
+				getComment(),
+				getHints()
+		);
 	}
 
 	@Override
@@ -81,24 +107,5 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 		applyBaseOptions( query, session );
 
 		return query;
-	}
-
-	@Override
-	public NamedHqlQueryDescriptor makeCopy(String name) {
-		return new NamedHqlQueryDescriptorImpl(
-				name,
-				getHqlString(),
-				firstResult,
-				maxResults,
-				getCacheable(),
-				getCacheRegion(),
-				getCacheMode(),
-				getFlushMode(),
-				getReadOnly(),
-				getLockOptions(),
-				getTimeout(),
-				getFetchSize(),
-				getComment()
-		);
 	}
 }

@@ -6,12 +6,9 @@
  */
 package org.hibernate.query.spi;
 
-import java.util.Map;
-
 import org.hibernate.Incubating;
-import org.hibernate.cache.spi.QueryKey;
-import org.hibernate.query.QueryParameter;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.cache.spi.QueryKey;
 
 /**
  * Manages all the parameter bindings for a particular query.
@@ -19,7 +16,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
  * @author Steve Ebersole
  */
 @Incubating
-public interface QueryParameterBindings {
+public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
 	/**
 	 * Has binding been done for the given parameter.  Handles
 	 * cases where we do not (yet) have a binding object as well
@@ -30,7 +27,7 @@ public interface QueryParameterBindings {
 	 * @return {@code true} if its value has been bound; {@code false}
 	 * otherwise.
 	 */
-	boolean isBound(QueryParameter parameter);
+	boolean isBound(QueryParameterImplementor parameter);
 
 	/**
 	 * Access to the binding via QueryParameter reference
@@ -39,7 +36,7 @@ public interface QueryParameterBindings {
 	 *
 	 * @return The binding, or {@code null} if not yet bound
 	 */
-	<T> QueryParameterBinding<T> getBinding(QueryParameter<T> parameter);
+	B getBinding(QueryParameterImplementor parameter);
 
 	/**
 	 * Access to the binding via name
@@ -48,7 +45,7 @@ public interface QueryParameterBindings {
 	 *
 	 * @return The binding, or {@code null} if not yet bound
 	 */
-	<T> QueryParameterBinding<T> getBinding(String name);
+	B getBinding(String name);
 
 	/**
 	 * Access to the binding via position
@@ -57,7 +54,7 @@ public interface QueryParameterBindings {
 	 *
 	 * @return The binding, or {@code null} if not yet bound
 	 */
-	<T> QueryParameterBinding getBinding(int position);
+	B getBinding(int position);
 
 	/**
 	 * Validate the bindings.  Called just before execution

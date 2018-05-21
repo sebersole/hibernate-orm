@@ -17,7 +17,6 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import org.hibernate.Query;
 import org.hibernate.ScrollableResults;
 import org.hibernate.dialect.AbstractHANADialect;
 import org.hibernate.jpa.test.BaseEntityManagerFunctionalTestCase;

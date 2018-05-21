@@ -10,7 +10,6 @@ import java.util.Iterator;
 
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.MappingException;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;

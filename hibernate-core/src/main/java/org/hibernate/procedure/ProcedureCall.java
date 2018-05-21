@@ -7,27 +7,26 @@
 package org.hibernate.procedure;
 
 import java.util.List;
-import java.util.Map;
 import javax.persistence.ParameterMode;
 import javax.persistence.StoredProcedureQuery;
 
+import org.hibernate.Incubating;
 import org.hibernate.MappingException;
 import org.hibernate.query.CommonQueryContract;
 import org.hibernate.query.SynchronizeableQuery;
-import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
 
 /**
  * Defines support for executing database stored procedures and functions.
  * <p/>
  * Note that here we use the terms "procedure" and "function" as follows:<ul>
  *     <li>procedure is a named database executable we expect to call via : {@code {call procedureName(...)}}</li>
- *     <li>function is a named database executable we expect to call via : {@code {? = call procedureName(...)}}</li>
+ *     <li>function is a named database executable we expect to call via : {@code {? = call functionName(...)}}</li>
  * </ul>
  * Unless explicitly specified, the ProcedureCall is assumed to follow the
  * procedure call syntax.  To explicitly specify that this should be a function
  * call, use {@link #markAsFunctionCall}.  JPA users could either:<ul>
  *     <li>use {@code storedProcedureQuery.unwrap( ProcedureCall.class }.markAsFunctionCall()</li>
- *     <li>set the {@link #IS_FUNCTION_HINT} hint (avoids loading Hibernate-specific classes)</li>
+ *     <li>set the {@link #FUNCTION_RETURN_TYPE_HINT} hint (avoids casting to Hibernate-specific classes)</li>
  * </ul>
  * <p/>
  * When using function-call syntax:<ul>
@@ -48,7 +47,14 @@ import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
  *
  * @author Steve Ebersole
  */
-public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, SynchronizeableQuery, StoredProcedureQuery {
+@Incubating
+public interface ProcedureCall extends CommonQueryContract, SynchronizeableQuery, StoredProcedureQuery {
+	/**
+	 * The hint key (for use with JPA's "hint system") indicating the function's return JDBC type code
+	 * (aka, {@link java.sql.Types} code)
+	 */
+	String FUNCTION_RETURN_TYPE_HINT = "hibernate.procedure.function_return_jdbc_type_code";
+
 	@Override
 	ProcedureCall addSynchronizedQuerySpace(String querySpace);
 
@@ -98,7 +104,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 *
 	 * @return The parameter registration memento
 	 */
-	<T> ProcedureParameterImplementor<T> registerParameter(int position, Class<T> type, ParameterMode mode);
+	<T> ProcedureParameter<T> registerParameter(int position, Class<T> type, ParameterMode mode);
 
 	/**
 	 * Chained form of {@link #registerParameter(int, Class, javax.persistence.ParameterMode)}
@@ -109,7 +115,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 *
 	 * @return {@code this}, for method chaining
 	 */
-	ProcedureCall registerParameter0(int position, Class type, ParameterMode mode);
+	<T> ProcedureCall registerParameter0(int position, Class<T> type, ParameterMode mode);
 
 	/**
 	 * Retrieve a previously registered parameter memento by the position under which it was registered.
@@ -121,7 +127,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws ParameterStrategyException If the ProcedureCall is defined using named parameters
 	 * @throws NoSuchParameterException If no parameter with that position exists
 	 */
-	ProcedureParameterImplementor getParameterRegistration(int position);
+	ProcedureParameter getParameterRegistration(int position);
 
 	/**
 	 * Basic form for registering a named parameter.
@@ -136,7 +142,7 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws NamedParametersNotSupportedException When the underlying database is known to not support
 	 * named procedure parameters.
 	 */
-	<T> ProcedureParameterImplementor<T> registerParameter(String parameterName, Class<T> type, ParameterMode mode)
+	<T> ProcedureParameter<T> registerParameter(String parameterName, Class<T> type, ParameterMode mode)
 			throws NamedParametersNotSupportedException;
 
 	/**
@@ -164,14 +170,14 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @throws ParameterStrategyException If the ProcedureCall is defined using positional parameters
 	 * @throws NoSuchParameterException If no parameter with that name exists
 	 */
-	ProcedureParameterImplementor getParameterRegistration(String name);
+	ProcedureParameter getParameterRegistration(String name);
 
 	/**
 	 * Retrieve all registered parameters.
 	 *
 	 * @return The (immutable) list of all registered parameters.
 	 */
-	List<ProcedureParameterImplementor> getRegisteredParameters();
+	List<ProcedureParameter> getRegisteredParameters();
 
 	/**
 	 * Retrieves access to outputs of this procedure call.  Can be called multiple times, returning the same
@@ -183,20 +189,4 @@ public interface ProcedureCall extends BasicQueryContract<CommonQueryContract>, 
 	 * @return The ProcedureOutputs representation
 	 */
 	ProcedureOutputs getOutputs();
-
-	/**
-	 * Extract the disconnected representation of this call.  Used in HEM to allow redefining a named query
-	 *
-	 * @param hints The hints to incorporate into the memento
-	 *
-	 * @return The memento
-	 */
-	ProcedureCallMemento extractMemento(Map<String, Object> hints);
-
-	/**
-	 * Extract the disconnected representation of this call.  Used in HEM to allow redefining a named query
-	 * *
-	 * @return The memento
-	 */
-	ProcedureCallMemento extractMemento();
 }

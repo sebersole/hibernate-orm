@@ -9,18 +9,18 @@ package org.hibernate.procedure.internal;
 
 import java.sql.Types;
 import javax.persistence.ParameterMode;
-import javax.persistence.TemporalType;
 
-import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.spi.FunctionReturnImplementor;
-import org.hibernate.procedure.spi.ParameterBindImplementor;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
+import org.hibernate.query.QueryParameter;
+import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.exec.internal.JdbcCallFunctionReturnImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterExtractorImpl;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
-import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
+import org.hibernate.sql.exec.spi.JdbcCallFunctionReturn;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -31,24 +31,23 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class FunctionReturnImpl implements FunctionReturnImplementor {
 	private final ProcedureCallImplementor procedureCall;
 	private int jdbcTypeCode;
-	private AllowableParameterType ormType;
+
+	private BasicValuedExpressableType ormType;
 
 	public FunctionReturnImpl(ProcedureCallImplementor procedureCall, int jdbcTypeCode) {
 		this.procedureCall = procedureCall;
 		this.jdbcTypeCode = jdbcTypeCode;
 	}
 
-	public FunctionReturnImpl(ProcedureCallImplementor procedureCall, AllowableParameterType ormType) {
+	public FunctionReturnImpl(ProcedureCallImplementor procedureCall, BasicValuedExpressableType ormType) {
 		this.procedureCall = procedureCall;
-		setHibernateType( ormType );
+		this.jdbcTypeCode = ormType.getBasicType().getSqlTypeDescriptor().getJdbcTypeCode();
+
+		this.ormType = ormType;
 	}
 
-	@Override
-	public ProcedureCallImplementor getProcedureCall() {
-		return procedureCall;
-	}
 
-	public JdbcCallParameterRegistration toJdbcCallParameterRegistration(SharedSessionContractImplementor persistenceContext) {
+	public JdbcCallFunctionReturn toJdbcFunctionReturn(SharedSessionContractImplementor persistenceContext) {
 		final AllowableParameterType ormType;
 		final JdbcCallRefCursorExtractorImpl refCursorExtractor;
 		final JdbcCallParameterExtractorImpl parameterExtractor;
@@ -71,11 +70,6 @@ public class FunctionReturnImpl implements FunctionReturnImplementor {
 		}
 
 		return new JdbcCallFunctionReturnImpl( getJdbcTypeCode(), ormType, parameterExtractor, refCursorExtractor );
-	}
-
-	@Override
-	public ParameterBindImplementor getBind() {
-		throw new HibernateException( "Function return does not define binding" );
 	}
 
 	@Override
@@ -105,7 +99,12 @@ public class FunctionReturnImpl implements FunctionReturnImplementor {
 
 	@Override
 	public Class getParameterType() {
-		return null;
+		return ormType == null ? null : ormType.getJavaType();
+	}
+
+	@Override
+	public void allowMultiValuedBinding() {
+		// no-op
 	}
 
 	@Override
@@ -114,35 +113,18 @@ public class FunctionReturnImpl implements FunctionReturnImplementor {
 	}
 
 	@Override
-	public void bindValue(Object value) {
-		throw new HibernateException( "Function return does not define binding" );
-	}
-
-	@Override
-	public void bindValue(Object value, TemporalType explicitTemporalType) {
-		throw new HibernateException( "Function return does not define binding" );
-	}
-
-	@Override
-	public void enablePassingNulls(boolean enabled) {
-		throw new HibernateException( "enablePassingNulls is not valid on a function return" );
-	}
-
-	@Override
-	public void setHibernateType(AllowableParameterType type) {
-		this.ormType = type;
-	}
-
-	@Override
-	public ProcedureCallMementoImpl.ParameterMemento toMemento() {
+	public ParameterDescriptor toMemento() {
 		// todo (6.0) : do we need a FunctionReturnMemento?
-		return new ProcedureCallMementoImpl.ParameterMemento(
-				getPosition(),
-				getName(),
-				getMode(),
-				getParameterType(),
-				getHibernateType(),
-				false
-		);
+		return new ParameterDescriptor() {
+			@Override
+			public QueryParameter toQueryParameter(SharedSessionContractImplementor session) {
+				if ( ormType != null ) {
+					return new FunctionReturnImpl( procedureCall, ormType );
+				}
+				else {
+					return new FunctionReturnImpl( procedureCall, jdbcTypeCode );
+				}
+			}
+		};
 	}
 }

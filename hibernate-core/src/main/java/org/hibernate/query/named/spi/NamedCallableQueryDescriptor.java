@@ -19,5 +19,8 @@ public interface NamedCallableQueryDescriptor extends NamedQueryDescriptor {
 	Collection<String> getQuerySpaces();
 
 	@Override
+	NamedCallableQueryDescriptor makeCopy(String name);
+
+	@Override
 	ProcedureCallImplementor toQuery(SharedSessionContractImplementor session);
 }

@@ -13,7 +13,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.dialect.MySQL5Dialect;
 import org.hibernate.dialect.Oracle9iDialect;

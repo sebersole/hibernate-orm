@@ -9,13 +9,13 @@ package org.hibernate.procedure.internal;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.procedure.internal.ProcedureParameter;
+import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.internal.AbstractQueryParameter;
 
 /**
  * @author Steve Ebersole
  */
-public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> implements ProcedureParameter<T> {
+public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> implements ProcedureParameterImplementor<T> {
 	private final String name;
 	private final Integer position;
 

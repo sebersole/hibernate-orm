@@ -12,17 +12,14 @@ import java.util.List;
  * Models a return that is a result set.
  *
  * @author Steve Ebersole
- *
- * @deprecated Use {@link org.hibernate.procedure.ResultSetOutput} instead
  */
-@Deprecated
 public interface ResultSetOutput extends Output {
 	/**
 	 * Consume the underlying {@link java.sql.ResultSet} and return the resulting List.
 	 *
 	 * @return The consumed ResultSet values.
 	 */
-	public List getResultList();
+	List getResultList();
 
 	/**
 	 * Consume the underlying {@link java.sql.ResultSet} with the expectation that there is just a single level of
@@ -30,5 +27,5 @@ public interface ResultSetOutput extends Output {
 	 *
 	 * @return The single result.
 	 */
-	public Object getSingleResult();
+	Object getSingleResult();
 }

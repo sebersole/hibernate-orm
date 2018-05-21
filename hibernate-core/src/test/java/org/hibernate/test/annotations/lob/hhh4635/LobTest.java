@@ -6,13 +6,11 @@
  */
 package org.hibernate.test.annotations.lob.hhh4635;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.dialect.Oracle8iDialect;
 import org.hibernate.testing.RequiresDialect;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
-import org.jboss.logging.Logger;
 import org.junit.Test;
 
 /**

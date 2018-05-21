@@ -15,7 +15,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.ProcedureCallMemento;
-import org.hibernate.procedure.spi.ParameterRegistrationImplementor;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.sql.results.spi.RowReader;
 
@@ -96,7 +95,7 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 		private final Integer position;
 		private final String name;
 		private final ParameterMode mode;
-		private final Class type;
+		private final Class javaType;
 		private final AllowableParameterType hibernateType;
 		private final boolean passNulls;
 
@@ -106,7 +105,7 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 		 * @param position The parameter position
 		 * @param name The parameter name
 		 * @param mode The parameter mode
-		 * @param type The Java type of the parameter
+		 * @param javaType The Java type of the parameter
 		 * @param hibernateType The Hibernate Type.
 		 * @param passNulls Should NULL values to passed to the database?
 		 */
@@ -114,13 +113,13 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 				int position,
 				String name,
 				ParameterMode mode,
-				Class type,
+				Class javaType,
 				AllowableParameterType hibernateType,
 				boolean passNulls) {
 			this.position = position;
 			this.name = name;
 			this.mode = mode;
-			this.type = type;
+			this.javaType = javaType;
 			this.hibernateType = hibernateType;
 			this.passNulls = passNulls;
 		}
@@ -137,8 +136,8 @@ public class ProcedureCallMementoImpl implements ProcedureCallMemento {
 			return mode;
 		}
 
-		public Class getType() {
-			return type;
+		public Class getJavaType() {
+			return javaType;
 		}
 
 		public AllowableParameterType getHibernateType() {

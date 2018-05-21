@@ -8,17 +8,21 @@ package org.hibernate.boot.model.query.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.boot.model.query.spi.NamedQueryDefinition;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractNamedQueryDefinition implements NamedQueryDefinition {
 	private final String name;
+
+	private final List<ParameterDescriptor> parameterDescriptors;
 
 	private final Boolean cacheable;
 	private final String cacheRegion;
@@ -36,6 +40,7 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 	public AbstractNamedQueryDefinition(
 			String name,
+			List<ParameterDescriptor> parameterDescriptors,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -46,6 +51,7 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 			Integer fetchSize,
 			String comment) {
 		this.name = name;
+		this.parameterDescriptors = new ArrayList<>( parameterDescriptors );
 		this.cacheable = cacheable;
 		this.cacheRegion = cacheRegion;
 		this.cacheMode = cacheMode;
@@ -100,6 +106,9 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 	protected static abstract class AbstractBuilder<T extends AbstractBuilder> {
 		private final String name;
+		private final ParameterDescriptorBuilder parameterDescriptorBuilder;
+
+		private List<ParameterDescriptor> parameterDescriptors;
 
 		private Collection<String> querySpaces;
 		private Boolean cacheable;
@@ -116,8 +125,9 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 		private String comment;
 
-		public AbstractBuilder(String name) {
+		public AbstractBuilder(String name, ParameterDescriptorBuilder parameterDescriptorBuilder) {
 			this.name = name;
+			this.parameterDescriptorBuilder = parameterDescriptorBuilder;
 		}
 
 		public String getName() {
@@ -125,6 +135,35 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 		}
 
 		protected abstract T getThis();
+
+		public T addParameter(Class javaType) {
+			prepareParamDescriptorList();
+
+			parameterDescriptors.add(
+					parameterDescriptorBuilder.createPositionalParameter(
+							parameterDescriptors.size() + 1,
+							javaType
+					)
+			);
+
+			return getThis();
+		}
+
+		public T addParameter(String name, Class javaType) {
+			prepareParamDescriptorList();
+
+			parameterDescriptors.add(
+					parameterDescriptorBuilder.createNamedParameter( name, javaType )
+			);
+
+			return getThis();
+		}
+
+		private void prepareParamDescriptorList() {
+			if ( parameterDescriptors == null ) {
+				parameterDescriptors = new ArrayList<>();
+			}
+		}
 
 		public T addQuerySpaces(Collection<String> querySpaces) {
 			if ( querySpaces == null || querySpaces.isEmpty() ) {
@@ -231,5 +270,11 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 		public String getComment() {
 			return comment;
 		}
+	}
+
+	interface ParameterDescriptorBuilder {
+		ParameterDescriptor createPositionalParameter(int label, Class javaType);
+
+		ParameterDescriptor createNamedParameter(String name, Class javaType);
 	}
 }

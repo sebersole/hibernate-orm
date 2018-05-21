@@ -23,15 +23,15 @@ import org.hibernate.HibernateException;
 import org.hibernate.JDBCException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
-import org.hibernate.procedure.NoMoreReturnsException;
-import org.hibernate.procedure.Output;
-import org.hibernate.query.procedure.spi.ProcedureParameterImplementor;
+import org.hibernate.procedure.spi.ProcedureParameterImplementor;
+import org.hibernate.result.NoMoreOutputsException;
 import org.hibernate.procedure.ProcedureOutputs;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sql.internal.ResultSetMappingDescriptorUndefined;
+import org.hibernate.result.Output;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcCall;
@@ -121,7 +121,6 @@ public class ProcedureOutputsImpl
 
 		return callableStatementSupport.renderCallableStatement(
 				callableName,
-				parameterStrategy,
 				jdbcCall.getFunctionReturn(),
 				jdbcCall.getParameterRegistrations(),
 				persistenceContext
@@ -440,7 +439,7 @@ public class ProcedureOutputsImpl
 				return buildUpdateCountOutput( updateCount );
 			}
 
-			throw new NoMoreReturnsException();
+			throw new NoMoreOutputsException();
 		}
 
 		private Output buildResultSetOutput(List list) {
@@ -459,7 +458,7 @@ public class ProcedureOutputsImpl
 
 	@Override
 	public QueryParameterBindings getQueryParameterBindings() {
-		return procedureCall.queryParameterBindings();
+		return procedureCall.getQueryParameterBindings();
 	}
 
 	@Override

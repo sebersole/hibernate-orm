@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Locale;
 
 import org.hibernate.MappingException;
-import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;

@@ -171,7 +171,7 @@ public class QuerySqmImpl<R>
 	}
 
 	@Override
-	protected QueryParameterBindings queryParameterBindings() {
+	protected QueryParameterBindings getQueryParameterBindings() {
 		return parameterBindings;
 	}
 

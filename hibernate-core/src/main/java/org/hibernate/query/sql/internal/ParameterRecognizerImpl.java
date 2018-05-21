@@ -11,22 +11,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.persistence.StoredProcedureQuery;
 
 import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.procedure.ProcedureCall;
-import org.hibernate.query.QueryParameter;
-import org.hibernate.query.internal.*;
+import org.hibernate.query.internal.QueryParameterNamedImpl;
+import org.hibernate.query.internal.QueryParameterPositionalImpl;
 import org.hibernate.query.spi.ParameterRecognizer;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
 /**
  * @author Steve Ebersole
  */
 public class ParameterRecognizerImpl implements ParameterRecognizer {
-
 	private enum PositionalParameterStyle {
 		/**
 		 * Ordinal
@@ -42,8 +41,8 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 
 	private boolean hadMainOutputParameter;
 
-	private Map<String,QueryParameter> namedQueryParameters;
-	private Map<Integer,QueryParameter> positionalQueryParameters;
+	private Map<String,QueryParameterImplementor> namedQueryParameters;
+	private Map<Integer,QueryParameterImplementor> positionalQueryParameters;
 
 	private PositionalParameterStyle positionalParameterStyle;
 	private int ordinalParameterImplicitPosition;
@@ -84,8 +83,7 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		for ( Integer position : positionsArray ) {
 			if ( position != previous + 1 ) {
 				if ( first ) {
-					final int base = positionalParameterStyle == PositionalParameterStyle.JPA ? 1 : ordinalParameterBase;
-					throw new QueryException( "Positional parameters did not start with base [" + base + "] : " + position );
+					throw new QueryException( "Positional parameters did not start with base [" + ordinalParameterBase + "] : " + position );
 				}
 				else {
 					throw new QueryException( "Gap in positional parameter positions; skipped " + (previous+1) );
@@ -96,11 +94,11 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		}
 	}
 
-	public Map<String, QueryParameter> getNamedQueryParameters() {
+	public Map<String, QueryParameterImplementor> getNamedQueryParameters() {
 		return namedQueryParameters;
 	}
 
-	public Map<Integer, QueryParameter> getPositionalQueryParameters() {
+	public Map<Integer, QueryParameterImplementor> getPositionalQueryParameters() {
 		return positionalQueryParameters;
 	}
 

@@ -35,7 +35,6 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.test.jpa.AbstractJPATest;
 import org.hibernate.testing.TestForIssue;

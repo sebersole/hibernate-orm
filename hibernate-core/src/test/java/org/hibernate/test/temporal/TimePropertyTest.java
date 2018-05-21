@@ -18,7 +18,6 @@ import javax.persistence.TemporalType;
 
 import org.junit.Test;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.dialect.SQLServerDialect;
 

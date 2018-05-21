@@ -6,25 +6,19 @@
  */
 package org.hibernate.test.sql.hand.custom;
 
-import java.sql.CallableStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
 import org.junit.Test;
 
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.engine.query.ParameterRecognitionException;
-import org.hibernate.procedure.ProcedureCall;
 
 import org.hibernate.test.sql.hand.Employment;
 import org.hibernate.test.sql.hand.Organization;
 import org.hibernate.test.sql.hand.Person;
-
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

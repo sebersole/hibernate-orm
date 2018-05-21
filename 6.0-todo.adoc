@@ -2,7 +2,7 @@
 
 A list of work to do (and questions to be answered) with regard to ORM 6.0 and 6.x.
 
-This categorization follows the http://https://en.wikipedia.org/wiki/MoSCoW_method[MoSCoW] paradigm.
+This categorization follows the https://en.wikipedia.org/wiki/MoSCoW_method[MoSCoW] paradigm.
 
 
 == Related major Jira issues

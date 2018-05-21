@@ -6,7 +6,8 @@
  */
 package org.hibernate.query.named.spi;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
@@ -19,6 +20,8 @@ import org.hibernate.query.spi.QueryImplementor;
  */
 public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescriptor {
 	private final String name;
+
+	private final List<ParameterDescriptor> parameterDescriptors;
 
 	private final Boolean cacheable;
 	private final String cacheRegion;
@@ -33,9 +36,11 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 	private final Integer fetchSize;
 
 	private final String comment;
+	private final Map<String, Object> hints;
 
 	public AbstractNamedQueryDescriptor(
 			String name,
+			List<ParameterDescriptor> parameterDescriptors,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -44,8 +49,10 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String, Object> hints) {
 		this.name = name;
+		this.parameterDescriptors = parameterDescriptors;
 		this.cacheable = cacheable;
 		this.cacheRegion = cacheRegion;
 		this.cacheMode = cacheMode;
@@ -55,11 +62,16 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 		this.timeout = timeout;
 		this.fetchSize = fetchSize;
 		this.comment = comment;
+		this.hints = hints;
 	}
 
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	public List<ParameterDescriptor> getParameterDescriptors() {
+		return parameterDescriptors;
 	}
 
 	@Override
@@ -105,6 +117,10 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 	@Override
 	public String getComment() {
 		return comment;
+	}
+
+	public Map<String, Object> getHints() {
+		return hints;
 	}
 
 	protected void applyBaseOptions(QueryImplementor query, SharedSessionContractImplementor session) {

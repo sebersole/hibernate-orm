@@ -7,13 +7,12 @@
 package org.hibernate.procedure.spi;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.procedure.ParameterBind;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.procedure.ProcedureParameterBinding;
 
 /**
  * @author Steve Ebersole
  */
-public interface ParameterBindImplementor<T> extends ParameterBind<T>, QueryParameterBinding<T> {
+public interface ProcedureParameterBindingImplementor<T> extends ProcedureParameterBinding<T> {
 	@Override
 	default AllowableParameterType<T> getBindType() {
 		return null;

@@ -8,7 +8,6 @@
 //$Id$
 package org.hibernate.test.annotations;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;

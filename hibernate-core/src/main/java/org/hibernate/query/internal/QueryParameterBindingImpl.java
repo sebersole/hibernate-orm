@@ -41,8 +41,21 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 		this.queryParameter = queryParameter;
 		this.typeResolver = typeResolver;
 		this.isBindingValidationRequired = isBindingValidationRequired;
-
 		this.bindType = queryParameter.getHibernateType();
+
+		// todo (6.0) : add TemporalType to QueryParameter and use to default precision here
+	}
+
+	public QueryParameterBindingImpl(
+			QueryParameter<T> queryParameter,
+			QueryParameterBindingTypeResolver typeResolver,
+			AllowableParameterType<T> bindType,
+			boolean isBindingValidationRequired) {
+		this.queryParameter = queryParameter;
+		this.typeResolver = typeResolver;
+		this.isBindingValidationRequired = isBindingValidationRequired;
+		this.bindType = bindType;
+
 		// todo (6.0) : add TemporalType to QueryParameter and use to default precision here
 	}
 
