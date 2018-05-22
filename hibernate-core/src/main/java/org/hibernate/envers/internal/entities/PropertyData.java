@@ -40,6 +40,15 @@ public class PropertyData {
 	}
 
 	/**
+	 * @param name Name of the property
+	 * @param beanName Name of the property in the bean.
+	 * @param accessType Accessor type for this property.
+	 */
+	public PropertyData(String name, String beanName, String accessType) {
+		this( name, beanName, accessType, null );
+	}
+
+	/**
 	 * @param name Name of the property.
 	 * @param beanName Name of the property in the bean.
 	 * @param accessType Accessor type for this property.

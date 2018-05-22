@@ -12,8 +12,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.hibernate.MappingException;
-import org.hibernate.envers.ModificationStore;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.envers.RelationTargetAuditMode;
+import org.hibernate.envers.RelationTargetNotFoundAction;
 import org.hibernate.envers.configuration.internal.metadata.reader.AuditedPropertiesHolder;
 import org.hibernate.envers.configuration.internal.metadata.reader.ClassAuditingData;
 import org.hibernate.envers.configuration.internal.metadata.reader.ComponentAuditingData;
@@ -147,14 +148,14 @@ public class ClassesAuditingData {
 
 	private void addSyntheticIndexProperty(List value, String propertyAccessorName, ClassAuditingData classAuditingData) {
 		final Value indexValue = value.getIndex();
-		if ( indexValue != null && indexValue.getColumnIterator().hasNext() ) {
-			final String indexColumnName = indexValue.getColumnIterator().next().getText();
+		if ( indexValue != null && !indexValue.getMappedColumns().isEmpty() ) {
+			final String indexColumnName = ( (MappedColumn) indexValue.getMappedColumns().get( 0 ) ).getText();
 			if ( indexColumnName != null ) {
 				final PropertyAuditingData auditingData = new PropertyAuditingData(
 						indexColumnName,
 						propertyAccessorName,
-						ModificationStore.FULL,
 						RelationTargetAuditMode.AUDITED,
+						RelationTargetNotFoundAction.DEFAULT,
 						null,
 						null,
 						false,

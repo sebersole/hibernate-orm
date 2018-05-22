@@ -172,6 +172,10 @@ public final class CollectionMetadataGenerator {
 				propertyName
 		);
 
+		// check whether the property has an @IndexColumn or @OrderColumn because its part of an
+		// IndexedCollection mapping type.
+		final boolean indexed = ( propertyValue instanceof IndexedCollection ) && ( (IndexedCollection) propertyValue ).getIndex() != null;
+
 		final String mappedBy = getMappedBy( propertyValue );
 
 		final IdMappingData referencedIdMapping = mainGenerator.getReferencedIdMappingData(
@@ -282,7 +286,8 @@ public final class CollectionMetadataGenerator {
 				referencedEntityName,
 				referencingIdData.getPrefixedMapper(),
 				fakeBidirectionalRelationMapper,
-				fakeBidirectionalRelationIndexMapper
+				fakeBidirectionalRelationIndexMapper,
+				indexed
 		);
 	}
 
