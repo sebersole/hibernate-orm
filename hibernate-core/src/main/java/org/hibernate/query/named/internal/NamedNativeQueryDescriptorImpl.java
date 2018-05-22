@@ -105,8 +105,9 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 	}
 
 	@Override
-	public NativeQueryImplementor toQuery(SharedSessionContractImplementor session) {
-		final NativeQueryImpl query = new NativeQueryImpl( this, session );
+	@SuppressWarnings("unchecked")
+	public NativeQueryImplementor toQuery(SharedSessionContractImplementor session, Class resultType) {
+		final NativeQueryImpl query = new NativeQueryImpl( this, resultType, session );
 
 		applyBaseOptions( query, session );
 

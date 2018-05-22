@@ -23,5 +23,5 @@ public interface NamedCallableQueryDescriptor extends NamedQueryDescriptor {
 	NamedCallableQueryDescriptor makeCopy(String name);
 
 	@Override
-	ProcedureCallImplementor toQuery(SharedSessionContractImplementor session);
+	<T> ProcedureCallImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);
 }

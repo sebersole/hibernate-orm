@@ -116,7 +116,7 @@ public class NamedCallableQueryDescriptorImpl
 	}
 
 	@Override
-	public ProcedureCallImplementor toQuery(SharedSessionContractImplementor session) {
+	public <T> ProcedureCallImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType) {
 		throw new NotYetImplementedFor6Exception();
 	}
 }

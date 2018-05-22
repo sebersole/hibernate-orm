@@ -24,5 +24,5 @@ public interface NamedHqlQueryDescriptor extends NamedQueryDescriptor {
 	NamedHqlQueryDescriptor makeCopy(String name);
 
 	@Override
-	HqlQueryImplementor toQuery(SharedSessionContractImplementor session);
+	<T> HqlQueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);
 }

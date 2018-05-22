@@ -27,5 +27,5 @@ public interface NamedNativeQueryDescriptor extends NamedQueryDescriptor {
 	NamedNativeQueryDescriptor makeCopy(String name);
 
 	@Override
-	NativeQueryImplementor toQuery(SharedSessionContractImplementor session);
+	<T> NativeQueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);
 }

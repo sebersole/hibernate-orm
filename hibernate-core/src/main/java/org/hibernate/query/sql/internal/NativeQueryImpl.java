@@ -150,6 +150,7 @@ public class NativeQueryImpl<R>
 	 */
 	public NativeQueryImpl(
 			NamedNativeQueryDescriptor namedQueryDescriptor,
+			Class<R> resultType,
 			SharedSessionContractImplementor session) {
 		this( namedQueryDescriptor.getQueryString(), session );
 

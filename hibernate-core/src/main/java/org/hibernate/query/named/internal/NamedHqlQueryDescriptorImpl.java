@@ -89,11 +89,11 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 	}
 
 	@Override
-	public HqlQueryImplementor toQuery(SharedSessionContractImplementor session) {
-		final QuerySqmImpl query = new QuerySqmImpl(
+	public <T> HqlQueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType) {
+		final QuerySqmImpl<T> query = new QuerySqmImpl<>(
 				hqlString,
 				session.getFactory().getQueryEngine().getSemanticQueryProducer().interpret( hqlString ),
-				null,
+				resultType,
 				session
 		);
 
