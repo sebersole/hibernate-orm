@@ -42,6 +42,7 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.spi.QueryEngine;
@@ -371,7 +372,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public Metamodel getMetamodel() {
+	public MetamodelImplementor getMetamodel() {
 		return delegate.getMetamodel();
 	}
 

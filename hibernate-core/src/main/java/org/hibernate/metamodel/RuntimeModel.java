@@ -44,9 +44,9 @@ public interface RuntimeModel {
 	<O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(NavigableRole name);
 	void visitCollectionDescriptors(Consumer<PersistentCollectionDescriptor<?,?,?>> action);
 
-	<T> EntityGraph<T> findEntityGraph(String name);
-	<T> List<EntityGraph<T>> findEntityGraphForType(Class<T> baseType);
-	<T> List<EntityGraph<T>> findEntityGraphForType(String baseTypeName);
+	<T> EntityGraph<? super T> findEntityGraph(String name);
+	<T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType);
+	<T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName);
 	void visitEntityGraphs(Consumer<EntityGraph<?>> action);
 
 	// todo (6.0) : default-for-type as well?

@@ -39,8 +39,6 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
 import org.hibernate.MappingException;
-import org.hibernate.Metamodel;
-import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
 import org.hibernate.SessionEventListener;
@@ -559,10 +557,8 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
-		return getMetamodel().findEntityGraphsByType( entityClass );
+		return getMetamodel().findEntityGraphForType( entityClass );
 	}
-
-
 
 	// todo : (5.2) review synchronizationType, persistenceContextType, transactionType usage
 
@@ -640,7 +636,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	}
 
 	@Override
-	public Metamodel getMetamodel() {
+	public MetamodelImplementor getMetamodel() {
 		validateNotClosed();
 		return metamodel;
 	}
@@ -652,7 +648,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public EntityGraph findEntityGraphByName(String name) {
-		return getTypeConfiguration().findEntityGraphByName( name );
+		return getMetamodel().findEntityGraphByName( name );
 	}
 	@Override
 	public SessionFactoryOptions getSessionFactoryOptions() {
@@ -674,12 +670,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 				null
 		);
 	}
-
-	@Override
-	public org.hibernate.query.spi.NamedQueryRepository getNamedQueryRepository() {
-		return queryEngine.getNamedQueryRepository();
-	}
-
 
 	public Type getIdentifierType(String className) throws MappingException {
 		return getMetamodel().findEntityDescriptor( className ).getIdentifierType();

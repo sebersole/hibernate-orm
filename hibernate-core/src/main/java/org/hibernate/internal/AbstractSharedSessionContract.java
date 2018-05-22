@@ -122,12 +122,6 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	// NOTE : these fields are transient & non-final for Serialization purposes - ugh
 	private transient EntityNameResolver entityNameResolver;
 
-	private transient JdbcConnectionAccess jdbcConnectionAccess;
-	private transient JdbcSessionContext jdbcSessionContext;
-	private transient JdbcCoordinator jdbcCoordinator;
-
-	private transient TransactionImplementor currentHibernateTransaction;
-	private transient TransactionCoordinator transactionCoordinator;
 	private transient SessionEventListenerManagerImpl sessionEventsManager = new SessionEventListenerManagerImpl();
 	private transient CacheTransactionContext cacheTransactionContext;
 	protected transient ExceptionConverter exceptionConverter;
