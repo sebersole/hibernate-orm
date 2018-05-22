@@ -323,29 +323,29 @@ public final class TwoPhaseLoad {
 	 *
 	 * @return null if there is no overriding, true if it is overridden to eager and false if it is overridden to lazy
 	 */
-	private static Boolean getOverridingEager(
-			SharedSessionContractImplementor session,
-			String entityName,
-			String associationName,
-			Type type) {
-		if ( type.isAssociationType() || type.isCollectionType() ) {
-			Boolean overridingEager = isEagerFetchProfile( session, entityName + "." + associationName );
-
-			if ( LOG.isDebugEnabled() ) {
-				if ( overridingEager != null ) {
-					LOG.debugf(
-							"Overriding eager fetching using active fetch profile. EntityName: %s, associationName: %s, eager fetching: %s",
-							entityName,
-							associationName,
-							overridingEager
-					);
-				}
-			}
-
-			return overridingEager;
-		}
-		return null;
-	}
+//	private static Boolean getOverridingEager(
+//			SharedSessionContractImplementor session,
+//			String entityName,
+//			String associationName,
+//			Type type) {
+//		if ( type.isAssociationType() || type.isCollectionType() ) {
+//			Boolean overridingEager = isEagerFetchProfile( session, entityName + "." + associationName );
+//
+//			if ( LOG.isDebugEnabled() ) {
+//				if ( overridingEager != null ) {
+//					LOG.debugf(
+//							"Overriding eager fetching using active fetch profile. EntityName: %s, associationName: %s, eager fetching: %s",
+//							entityName,
+//							associationName,
+//							overridingEager
+//					);
+//				}
+//			}
+//
+//			return overridingEager;
+//		}
+//		return null;
+//	}
 
 	private static Boolean isEagerFetchProfile(SharedSessionContractImplementor session, String role) {
 		LoadQueryInfluencers loadQueryInfluencers = session.getLoadQueryInfluencers();

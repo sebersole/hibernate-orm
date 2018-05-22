@@ -7,6 +7,7 @@
 package org.hibernate.event.internal;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -39,7 +40,7 @@ public class FlushVisitor extends AbstractVisitor {
 				coll = getSession().getPersistenceContext().getCollectionHolder(collection);
 			}
 			else if ( collection == LazyPropertyInitializer.UNFETCHED_PROPERTY ) {
-				coll = (PersistentCollection) type.resolve( collection, getSession(), owner );
+				throw new NotYetImplementedFor6Exception( "processCollection + LazyPropertyInitializer.UNFETCHED_PROPERTY" );
 			}
 			else {
 				coll = (PersistentCollection) collection;

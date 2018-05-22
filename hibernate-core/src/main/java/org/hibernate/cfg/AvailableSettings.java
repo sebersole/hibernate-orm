@@ -1152,6 +1152,8 @@ public interface AvailableSettings extends org.hibernate.jpa.AvailableSettings {
 	 */
 	String BYTECODE_PROVIDER = "hibernate.bytecode.provider";
 
+	String JPAQL_STRICT_COMPLIANCE= "hibernate.query.jpaql_strict_compliance";
+
 	/**
 	 * When using pooled {@link org.hibernate.id.enhanced.Optimizer optimizers}, prefer interpreting the
 	 * database value as the lower (lo) boundary.  The default is to interpret it as the high boundary.

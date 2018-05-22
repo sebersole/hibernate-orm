@@ -56,17 +56,6 @@ public class DefaultCacheKeysFactory implements CacheKeysFactory {
 		);
 	}
 
-	public static Object staticCreateEntityKey(
-			Object[] naturalIdValues,
-			EntityHierarchy entityHierarchy,
-			SharedSessionContractImplementor session) {
-		return new CacheKeyImplementation(
-				naturalIdValues,
-				entityHierarchy,
-				session
-		);
-	}
-
 	public static Object staticCreateCollectionKey(
 			Object id,
 			PersistentCollectionDescriptor descriptor,
