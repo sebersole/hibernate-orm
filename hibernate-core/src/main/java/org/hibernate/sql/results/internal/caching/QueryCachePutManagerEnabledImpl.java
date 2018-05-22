@@ -42,6 +42,8 @@ public class QueryCachePutManagerEnabledImpl implements QueryCachePutManager {
 		queryCache.put(
 				queryKey,
 				dataToCache,
+				// todo (6.0) : currently needs "return types" - ultimately should be the Returns
+				null,
 				// todo (6.0) : needs access to Session to pass along to cache call
 				null
 		);

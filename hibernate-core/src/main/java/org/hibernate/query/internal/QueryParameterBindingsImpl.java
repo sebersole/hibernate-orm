@@ -32,7 +32,7 @@ public class QueryParameterBindingsImpl implements QueryParameterBindings {
 	private static final CoreMessageLogger log = CoreLogging.messageLogger( QueryParameterBindingsImpl.class );
 
 	private final SessionFactoryImplementor sessionFactory;
-	private final ParameterMetadataImplementor parameterMetadata;
+	private final ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata;
 	private final boolean queryParametersValidationEnabled;
 
 	private final int jdbcStyleOrdinalCountBase;

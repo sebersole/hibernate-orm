@@ -113,35 +113,33 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 			return false;
 		}
 
-		final boolean useCache = persister.hasCache() && source.getCacheMode().isGetEnabled();
+		final boolean useCache = collectionDescriptor.hasCache() && source.getCacheMode().isGetEnabled();
 
 		if ( !useCache ) {
 			return false;
 		}
 
-		final CollectionDataAccess cacheAccess = source.getFactory().getCache()
-				.getCollectionRegionAccess( collectionDescriptor );
+		final CollectionDataAccess cacheAccess = collectionDescriptor.getCacheAccess();
 		if ( cacheAccess == null ) {
 			// not cached
 			return false;
 		}
 
 		final SessionFactoryImplementor factory = source.getFactory();
-		final CollectionDataAccess cacheAccessStrategy = persister.getCacheAccessStrategy();
-		final Object ck = cacheAccessStrategy.generateCacheKey( id, persister, factory, source.getTenantIdentifier() );
-		final Object ce = CacheHelper.fromSharedCache( source, ck, persister.getCacheAccessStrategy() );
+		final Object ck = cacheAccess.generateCacheKey( id, collectionDescriptor, factory, source.getTenantIdentifier() );
+		final Object ce = CacheHelper.fromSharedCache( source, ck, cacheAccess );
 
 		if ( factory.getStatistics().isStatisticsEnabled() ) {
 			if ( ce == null ) {
 				factory.getStatistics().collectionCacheMiss(
-						persister.getNavigableRole(),
-						cacheAccessStrategy.getRegion().getName()
+						collectionDescriptor.getNavigableRole(),
+						cacheAccess.getRegion().getName()
 				);
 			}
 			else {
 				factory.getStatistics().collectionCacheHit(
-						persister.getNavigableRole(),
-						cacheAccessStrategy.getRegion().getName()
+						collectionDescriptor.getNavigableRole(),
+						cacheAccess.getRegion().getName()
 				);
 			}
 		}

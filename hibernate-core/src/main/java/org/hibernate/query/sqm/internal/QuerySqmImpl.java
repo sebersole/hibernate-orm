@@ -16,6 +16,7 @@ import javax.persistence.Parameter;
 import javax.persistence.PersistenceException;
 
 import org.hibernate.LockMode;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.ScrollMode;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -23,7 +24,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.Query;
-import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.ParameterMetadataImpl;
 import org.hibernate.query.internal.QueryOptionsImpl;
@@ -32,6 +32,7 @@ import org.hibernate.query.internal.QueryParameterNamedImpl;
 import org.hibernate.query.internal.QueryParameterPositionalImpl;
 import org.hibernate.query.named.internal.NamedHqlQueryDescriptorImpl;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.MutableQueryOptions;
@@ -40,6 +41,7 @@ import org.hibernate.query.spi.ParameterMetadataImplementor;
 import org.hibernate.query.spi.QueryInterpretations;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.spi.SelectQueryPlan;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
@@ -95,8 +97,8 @@ public class QuerySqmImpl<R>
 	}
 
 	private static ParameterMetadataImpl buildParameterMetadata(SqmStatement sqm) {
-		Map<String, QueryParameter> namedQueryParameters = null;
-		Map<Integer, QueryParameter> positionalQueryParameters = null;
+		Map<String, QueryParameterImplementor> namedQueryParameters = null;
+		Map<Integer, QueryParameterImplementor> positionalQueryParameters = null;
 
 		for ( SqmParameter parameter : sqm.getQueryParameters() ) {
 			if ( parameter.getName() != null ) {
@@ -119,7 +121,7 @@ public class QuerySqmImpl<R>
 			}
 		}
 
-		return new ParameterMetadataImpl( namedQueryParameters, positionalQueryParameters );
+		return new ParameterMetadataImpl( positionalQueryParameters, namedQueryParameters );
 	}
 
 	@Override
@@ -155,10 +157,11 @@ public class QuerySqmImpl<R>
 	}
 
 	@Override
-	public ParameterMetadataImplementor getParameterMetadata() {
+	public ParameterMetadataImplementor<QueryParameterImplementor<?>> getParameterMetadata() {
 		return parameterMetadata;
 	}
 
+	@Override
 	public QueryParameterBindings getQueryParameterBindings() {
 		return parameterBindings;
 	}
@@ -168,11 +171,6 @@ public class QuerySqmImpl<R>
 		Set<Parameter<?>> parameters = new HashSet<>();
 		parameterMetadata.collectAllParameters( parameters::add );
 		return parameters;
-	}
-
-	@Override
-	protected QueryParameterBindings getQueryParameterBindings() {
-		return parameterBindings;
 	}
 
 	@Override
@@ -450,6 +448,7 @@ public class QuerySqmImpl<R>
 	public NamedHqlQueryDescriptor toNamedDescriptor(String name) {
 		return new NamedHqlQueryDescriptorImpl(
 				name,
+				toParameterMementos( getParameterMetadata() ),
 				sourceQueryString,
 				getFirstResult(),
 				getMaxResults(),
@@ -461,7 +460,12 @@ public class QuerySqmImpl<R>
 				getLockOptions(),
 				getTimeout(),
 				getFetchSize(),
-				getComment()
+				getComment(),
+				getHints()
 		);
+	}
+
+	private static List<ParameterDescriptor> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
+		throw new NotYetImplementedFor6Exception();
 	}
 }

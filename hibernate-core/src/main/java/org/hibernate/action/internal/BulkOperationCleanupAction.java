@@ -26,6 +26,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * An {@link org.hibernate.engine.spi.ActionQueue} {@link org.hibernate.action.spi.Executable} for ensuring
@@ -56,38 +57,35 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	public BulkOperationCleanupAction(SharedSessionContractImplementor session, List<EntityDescriptor> affectedEntities) {
 		final SessionFactoryImplementor factory = session.getFactory();
 		final LinkedHashSet<String> spacesList = new LinkedHashSet<>();
-		for ( EntityDescriptor persister : affectedEntities ) {
-			spacesList.addAll( Arrays.asList( (String[]) persister.getAffectedTableNames() ) );
+		for ( EntityDescriptor entityDescriptor : affectedEntities ) {
+			spacesList.addAll( Arrays.asList( (String[]) entityDescriptor.getAffectedTableNames() ) );
 
-			final EntityDescriptor rootEntityDescriptor = persister.getHierarchy().getRootEntityType();
+			final EntityDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
 			final String[] entityTableNames = rootEntityDescriptor.getAffectedTableNames();
 			Collections.addAll( spacesList, entityTableNames );
 
-			if ( persister.canWriteToCache() ) {
-				final EntityDataAccess entityDataAccess = persister.getCacheAccessStrategy();
+			if ( entityDescriptor.canWriteToCache() ) {
+				final EntityDataAccess entityDataAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 				if ( entityDataAccess != null ) {
 					entityCleanups.add( new EntityCleanup( entityDataAccess, session ) );
 				}
 			}
 
-			if ( persister.hasNaturalIdentifier() && persister.hasNaturalIdCache() ) {
+			if ( entityDescriptor.hasNaturalIdentifier() && entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess() != null ) {
 				naturalIdCleanups.add(
-						new NaturalIdCleanup( persister.getNaturalIdCacheAccessStrategy(), session )
+						new NaturalIdCleanup( entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess(), session )
 				);
 			}
 
-			final Set<String> roles = factory.getMetamodel().getCollectionRolesByEntityParticipant( persister.getEntityName() );
-			if ( roles != null ) {
-				for ( String role : roles ) {
-					final CollectionPersister collectionPersister = factory.getMetamodel().collectionPersister( role );
-					if ( collectionPersister.hasCache() ) {
-						collectionCleanups.add(
-								new CollectionCleanup(
-										collectionPersister.getCacheAccessStrategy(),
-										session
-								)
-						);
-					}
+			for ( PersistentCollectionDescriptor<?, ?, ?> collectionDescriptor : factory.getMetamodel()
+					.findCollectionsByEntityParticipant( entityDescriptor ) ) {
+				if ( collectionDescriptor.hasCache() ) {
+					collectionCleanups.add(
+							new CollectionCleanup(
+									collectionDescriptor.getCacheAccess(),
+									session
+							)
+					);
 				}
 			}
 		}
@@ -115,28 +113,26 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 
 		final SessionFactoryImplementor factory = session.getFactory();
 
-		for ( EntityHierarchy entityHierarchy : factory.getTypeConfiguration().getEntityHierarchies() ) {
+		for ( EntityHierarchy entityHierarchy : factory.getMetamodel().getEntityHierarchies() ) {
 			final EntityDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
 			final String[] affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
 			if ( affectedEntity( tableSpaces, affectedTableNames ) ) {
 				spacesList.addAll( Arrays.asList( affectedTableNames ) );
 
-				if ( persister.canWriteToCache() ) {
-					entityCleanups.add( new EntityCleanup( persister.getCacheAccessStrategy(), session ) );
+				if ( rootEntityDescriptor.canWriteToCache() ) {
+					entityCleanups.add( new EntityCleanup( entityHierarchy.getEntityCacheAccess(), session ) );
 				}
-				if ( persister.hasNaturalIdentifier() && persister.hasNaturalIdCache() ) {
-					naturalIdCleanups.add( new NaturalIdCleanup( persister.getNaturalIdCacheAccessStrategy(), session ) );
+				if ( rootEntityDescriptor.hasNaturalIdentifier() && entityHierarchy.getNaturalIdDescriptor().getCacheAccess() != null ) {
+					naturalIdCleanups.add( new NaturalIdCleanup( entityHierarchy.getNaturalIdDescriptor().getCacheAccess(), session ) );
 				}
 
-				final Set<String> roles = session.getFactory().getMetamodel().getCollectionRolesByEntityParticipant( persister.getEntityName() );
-				if ( roles != null ) {
-					for ( String role : roles ) {
-						final CollectionPersister collectionPersister = factory.getMetamodel().collectionPersister( role );
-						if ( collectionPersister.hasCache() ) {
-							collectionCleanups.add(
-									new CollectionCleanup( collectionPersister.getCacheAccessStrategy(), session )
-							);
-						}
+				for ( PersistentCollectionDescriptor<?, ?, ?> collectionDescriptor : session.getFactory()
+						.getMetamodel()
+						.findCollectionsByEntityParticipant( rootEntityDescriptor ) ) {
+					if ( collectionDescriptor.hasCache() ) {
+						collectionCleanups.add(
+								new CollectionCleanup( collectionDescriptor.getCacheAccess(), session )
+						);
 					}
 				}
 			}

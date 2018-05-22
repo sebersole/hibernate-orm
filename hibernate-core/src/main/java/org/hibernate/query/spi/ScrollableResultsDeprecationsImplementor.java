@@ -6,8 +6,6 @@
  */
 package org.hibernate.query.spi;
 
-import org.hibernate.query.ScrollableResultsDeprecations;
-
 /**
  * @author Steve Ebersole
  *

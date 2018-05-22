@@ -115,6 +115,10 @@ public interface EntityDescriptor<T>
 	 */
 	EntityHierarchy getHierarchy();
 
+	boolean canReadFromCache();
+
+	boolean canWriteToCache();
+
 	/**
 	 * Access to information about the entity identifier, specifically relative to this
 	 * entity (in terms of Java parameterized type signature in regards to all "id attributes").

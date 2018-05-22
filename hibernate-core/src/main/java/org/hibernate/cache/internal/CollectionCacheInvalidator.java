@@ -7,7 +7,6 @@
 package org.hibernate.cache.internal;
 
 import java.io.Serializable;
-import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.action.internal.CollectionAction;
@@ -104,12 +103,7 @@ public class CollectionCacheInvalidator
 		try {
 			SessionFactoryImplementor factory = entityDescriptor.getFactory();
 
-			Set<String> collectionRoles = factory.getMetamodel().getTypeConfiguration().getCollectionRolesByEntityParticipant( entityDescriptor.getEntityName() );
-			if ( collectionRoles == null || collectionRoles.isEmpty() ) {
-				return;
-			}
-			for ( String role : collectionRoles ) {
-				final PersistentCollectionDescriptor collectionDescriptor = factory.getTypeConfiguration().findCollectionDescriptor( role );
+			for ( PersistentCollectionDescriptor<?, ?, ?> collectionDescriptor : factory.getMetamodel().findCollectionsByEntityParticipant( entityDescriptor ) ) {
 				final CollectionDataAccess cacheAccess = collectionDescriptor.getCacheAccess();
 				if ( cacheAccess == null ) {
 					// ignore collection if no caching is used
@@ -142,13 +136,14 @@ public class CollectionCacheInvalidator
 					}
 				}
 				else {
-					LOG.debug( "Evict CollectionRegion " + role );
+					LOG.debug( "Evict CollectionRegion " + collectionDescriptor.getNavigableRole().getFullPath() );
 					final SoftLock softLock = cacheAccess.lockRegion();
 					session.getActionQueue().registerProcess( (success, session1) -> {
 						cacheAccess.unlockRegion( softLock );
 					} );
 				}
 			}
+
 		}
 		catch ( Exception e ) {
 			if ( PROPAGATE_EXCEPTION ) {
@@ -164,7 +159,7 @@ public class CollectionCacheInvalidator
 		if ( obj != null ) {
 			id = session.getContextEntityIdentifier( obj );
 			if ( id == null ) {
-				id = session.getSessionFactory().getTypeConfiguration().findEntityDescriptor( obj.getClass() ).getIdentifier( obj, session );
+				id = session.getSessionFactory().getMetamodel().findEntityDescriptor( obj.getClass() ).getIdentifier( obj, session );
 			}
 		}
 		return id;

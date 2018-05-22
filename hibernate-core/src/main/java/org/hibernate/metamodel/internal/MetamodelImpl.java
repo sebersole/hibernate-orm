@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.internal;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,14 +21,19 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.ManagedType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.creation.spi.InFlightRuntimeModel;
+import org.hibernate.metamodel.model.domain.spi.CollectionElementEntity;
+import org.hibernate.metamodel.model.domain.spi.CollectionIndexEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.AbstractRuntimeModel;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
@@ -58,7 +64,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	// unmodifiable
 	private final Map<JavaTypeDescriptor,String> entityProxyInterfaceMap = new ConcurrentHashMap<>();
 	private final Map<EmbeddableJavaDescriptor<?>,Set<String>> embeddedRolesByEmbeddableType;
-	private final Map<String,Set<String>> collectionRolesByEntityParticipant = new ConcurrentHashMap<>();
+	private final Map<String,Set<PersistentCollectionDescriptor<?,?,?>>> collectionDescriptorsByEntityParticipant = new ConcurrentHashMap<>();
 	private final Map<ManagedJavaDescriptor<?>, MappedSuperclassDescriptor<?>> jpaMappedSuperclassTypeMap = new ConcurrentHashMap<>();
 
 	// modifiable
@@ -128,6 +134,27 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 				}
 		);
 
+		visitCollectionDescriptors(
+				collectionDescriptor -> {
+					if ( collectionDescriptor.getElementDescriptor() instanceof CollectionElementEntity ) {
+						final EntityDescriptor elementEntityDescriptor = ( (CollectionElementEntity) collectionDescriptor.getElementDescriptor() )
+								.getEntityDescriptor();
+						collectionDescriptorsByEntityParticipant.computeIfAbsent(
+								elementEntityDescriptor.getNavigableRole().getFullPath(),
+								s -> new HashSet<>()
+						).add( collectionDescriptor );
+					}
+
+					if ( collectionDescriptor.getIndexDescriptor() != null && collectionDescriptor.getIndexDescriptor() instanceof CollectionIndexEntity ) {
+						final EntityDescriptor elementEntityDescriptor = ( (CollectionIndexEntity) collectionDescriptor.getIndexDescriptor() )
+								.getEntityDescriptor();
+						collectionDescriptorsByEntityParticipant.computeIfAbsent(
+								elementEntityDescriptor.getNavigableRole().getFullPath(),
+								s -> new HashSet<>()
+						).add( collectionDescriptor );
+					}
+				}
+		);
 	}
 
 	@Override
@@ -208,6 +235,64 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	}
 
 	@Override
+	public Set<PersistentCollectionDescriptor<?, ?, ?>> findCollectionsByEntityParticipant(EntityDescriptor entityDescriptor) {
+		final Set<PersistentCollectionDescriptor<?, ?, ?>> descriptorSet = collectionDescriptorsByEntityParticipant.get( entityDescriptor.getNavigableRole().getFullPath() );
+		return descriptorSet == null ? Collections.emptySet() : descriptorSet;
+	}
+
+	@Override
+	public Collection<EntityHierarchy> getEntityHierarchies() {
+		return getEntityHierarchySet();
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// SQM Query handling
+	//		- everything within this "block" of methods relates to SQM
+	// 			interpretation of queries and implements its calls accordingly
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public EntityValuedExpressableType resolveEntityReference(String name) {
+		final String rename = getImportedName( name );
+		if ( rename != null ) {
+			name = rename;
+		}
+
+		{
+			final EntityDescriptor descriptor = findEntityDescriptor( name );
+			if ( descriptor != null ) {
+				return descriptor;
+			}
+		}
+
+		{
+			final MappedSuperclassDescriptor descriptor = findMappedSuperclassDescriptor( name );
+			if ( descriptor != null ) {
+				// todo (6.0) : a better option is to have MappedSuperclassDescriptor extend EntityValuedExpressableType
+				//		but that currently causes some conflicts regarding `#getJavaTypeDescriptor`
+				throw new NotYetImplementedFor6Exception();
+			}
+		}
+
+		final Class requestedClass = resolveRequestedClass( name );
+		if ( requestedClass != null ) {
+			return resolveEntityReference( requestedClass );
+		}
+
+		throw new IllegalArgumentException( "Per JPA spec : no entity named " + name );
+	}
+
+	private Class resolveRequestedClass(String entityName) {
+		try {
+			return sessionFactory.getServiceRegistry().getService( ClassLoaderService.class ).classForName( entityName );
+		}
+		catch (ClassLoadingException e) {
+			return null;
+		}
+	}
+
+	@Override
 	public String getImportedName(String name) {
 		final String importedName = getNameImportMap().get( name );
 
@@ -234,6 +319,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 		return importedName;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T> EntityValuedExpressableType<T> resolveEntityReference(Class<T> javaType) {
 		// see if we know of this Class by name as an EntityDescriptor key
@@ -314,5 +400,4 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	public void close() {
 		// anything to do ?
 	}
-
 }

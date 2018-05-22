@@ -6,12 +6,13 @@
  */
 package org.hibernate.query.spi;
 
+import org.hibernate.query.named.spi.NameableQuery;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public interface HqlQueryImplementor<R> extends QueryImplementor<R> {
+public interface HqlQueryImplementor<R> extends QueryImplementor<R>, NameableQuery<NamedHqlQueryDescriptor> {
 	@Override
-	NamedHqlQueryDescriptor toNamedDescriptor(String name);
+	NamedHqlQueryDescriptor toMemento(String name);
 }

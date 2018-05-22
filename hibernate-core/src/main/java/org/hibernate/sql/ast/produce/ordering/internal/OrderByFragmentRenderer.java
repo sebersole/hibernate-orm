@@ -15,9 +15,9 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
-import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.consume.spi.AbstractSqlAstWalker;
 import org.hibernate.sql.ast.consume.spi.ConversionContext;
@@ -118,28 +118,27 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 
 	private static QueryParameterBindings NO_PARAM_BINDINGS = new QueryParameterBindings() {
 		@Override
-		public boolean isBound(QueryParameter parameter) {
+		public boolean isBound(QueryParameterImplementor parameter) {
 			return false;
 		}
 
 		@Override
-		public <T> QueryParameterBinding<T> getBinding(QueryParameter<T> parameter) {
+		public QueryParameterBinding<?> getBinding(QueryParameterImplementor parameter) {
 			return null;
 		}
 
 		@Override
-		public <T> QueryParameterBinding<T> getBinding(String name) {
+		public QueryParameterBinding<?> getBinding(String name) {
 			return null;
 		}
 
 		@Override
-		public <T> QueryParameterBinding getBinding(int position) {
+		public QueryParameterBinding<?> getBinding(int position) {
 			return null;
 		}
 
 		@Override
 		public void validate() {
-
 		}
 	};
 

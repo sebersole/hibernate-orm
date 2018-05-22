@@ -7,8 +7,8 @@
 package org.hibernate;
 
 import java.io.Closeable;
+
 import org.hibernate.query.Query;
-import org.hibernate.query.ScrollableResultsDeprecations;
 
 /**
  * A result iterator that allows moving around within the results
@@ -23,7 +23,13 @@ import org.hibernate.query.ScrollableResultsDeprecations;
  *
  * @author Gavin King
  */
-public interface ScrollableResults extends ScrollableResultsDeprecations, AutoCloseable, Closeable {
+public interface ScrollableResults<R> extends AutoCloseable, Closeable {
+	/**
+	 * Get the current row of results.
+	 *
+	 * @return The array of results
+	 */
+	R get();
 
 	/**
 	 * Release resources immediately.

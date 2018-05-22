@@ -108,7 +108,7 @@ public class SimpleAuditExpression extends AbstractAtomicExpression {
 			String attributeName) {
 		final EntityDescriptor entityDescriptor = session
 				.getSessionFactory()
-				.getTypeConfiguration()
+				.getMetamodel()
 				.findEntityDescriptor( entityName );
 		return entityDescriptor.findPersistentAttribute( attributeName );
 	}

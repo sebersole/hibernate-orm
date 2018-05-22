@@ -8,7 +8,6 @@
 package org.hibernate.query.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.QueryParameter;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
 
@@ -25,7 +24,7 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 	 *
 	 * @return The parameter descriptor
 	 */
-	public static <T> QueryParameter<T> fromSqm(SqmParameter parameter) {
+	public static <T> QueryParameterPositionalImpl<T> fromSqm(SqmParameter parameter) {
 		assert parameter.getPosition() != null;
 		assert parameter.getName() == null;
 

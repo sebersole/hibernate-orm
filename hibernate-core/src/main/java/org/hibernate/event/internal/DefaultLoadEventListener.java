@@ -12,6 +12,7 @@ import java.util.Set;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.PersistentObjectException;
 import org.hibernate.TypeMismatchException;
 import org.hibernate.WrongClassException;
@@ -46,8 +47,6 @@ import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-import org.hibernate.stat.internal.StatsHelper;
-import org.hibernate.NotYetImplementedFor6Exception;
 
 /**
  * Defines the default load event listeners used by hibernate for loading entities
@@ -383,11 +382,11 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final SessionImplementor source) {
 		SoftLock lock = null;
 		final Object ck;
-		final EntityDataAccess cache = persister.getCacheAccessStrategy();
-		if ( persister.canWriteToCache() ) {
-			ck = cache.generateCacheKey(
+		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
+		if ( entityDescriptor.canWriteToCache() ) {
+			ck = cacheAccess.generateCacheKey(
 					event.getEntityId(),
-					entityDescriptor.getHierarchy(),
+					entityDescriptor,
 					source.getFactory(),
 					source.getTenantIdentifier()
 			);
@@ -402,8 +401,8 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			entity = load( event, entityDescriptor, keyToLoad, options );
 		}
 		finally {
-			if ( persister.canWriteToCache() ) {
-				cache.unlockItem( source, ck, lock );
+			if ( entityDescriptor.canWriteToCache() ) {
+				cacheAccess.unlockItem( source, ck, lock );
 			}
 		}
 
@@ -593,7 +592,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			return null;
 		}
 
-		final Object ce = getFromSharedCache( event, entityDescriptor, cacheAccess, source );
+		final Object ce = getFromSharedCache( event, entityDescriptor, source );
 
 		if ( ce == null ) {
 			// nothing was found in cache
@@ -641,10 +640,10 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final LoadEvent event,
 			final EntityDescriptor entityDescriptor,
 			SessionImplementor source) {
-		final EntityDataAccess cache = entityDescriptor.getCacheAccessStrategy();
+		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		final Object ck = cacheAccess.generateCacheKey(
 				event.getEntityId(),
-				entityDescriptor.getHierarchy(),
+				entityDescriptor,
 				source.getFactory(),
 				source.getTenantIdentifier()
 		);
@@ -653,14 +652,14 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 		if ( source.getFactory().getStatistics().isStatisticsEnabled() ) {
 			if ( ce == null ) {
 				source.getFactory().getStatistics().entityCacheMiss(
-						entityDescriptor.getRole(),
-						cache.getRegion().getName()
+						entityDescriptor.getNavigableRole(),
+						cacheAccess.getRegion().getName()
 				);
 			}
 			else {
 				source.getFactory().getStatistics().entityCacheHit(
-						entityDescriptor.getRole(),
-						cache.getRegion().getName()
+						entityDescriptor.getNavigableRole(),
+						cacheAccess.getRegion().getName()
 				);
 			}
 		}

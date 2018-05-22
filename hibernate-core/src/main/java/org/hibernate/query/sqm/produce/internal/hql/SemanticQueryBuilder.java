@@ -987,7 +987,7 @@ public class SemanticQueryBuilder
 		EntityValuedExpressableType reference = null;
 		try {
 			reference = getSessionFactory()
-					.getTypeConfiguration()
+					.getMetamodel()
 					.resolveEntityReference( entityName );
 		}
 		catch (Exception ignore) {

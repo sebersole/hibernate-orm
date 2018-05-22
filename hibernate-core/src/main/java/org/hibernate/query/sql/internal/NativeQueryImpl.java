@@ -59,6 +59,7 @@ import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.ParameterMetadataImplementor;
 import org.hibernate.query.spi.QueryInterpretations;
 import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.spi.SelectQueryPlan;
@@ -1116,7 +1117,7 @@ public class NativeQueryImpl<R>
 		);
 	}
 
-	private static List<ParameterDescriptor> toParameterMementos(ParameterMetadataImplementor parameterMetadata) {
+	private static List<ParameterDescriptor> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
 		if ( parameterMetadata.getParameterCount() <= 0 ) {
 			// none...
 			return Collections.emptyList();

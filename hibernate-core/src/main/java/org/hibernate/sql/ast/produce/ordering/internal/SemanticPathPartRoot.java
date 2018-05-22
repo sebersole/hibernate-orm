@@ -60,7 +60,7 @@ public class SemanticPathPartRoot implements SemanticPathPart {
 
 		// #3
 		final EntityDescriptor entityByName = context.getSessionFactory()
-				.getTypeConfiguration()
+				.getMetamodel()
 				.findEntityDescriptor( name );
 		if ( entityByName != null ) {
 			return new SemanticPathPartNamedEntity( entityByName );

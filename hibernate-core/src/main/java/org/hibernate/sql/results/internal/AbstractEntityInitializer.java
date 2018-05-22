@@ -31,7 +31,6 @@ import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
@@ -308,7 +307,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			);
 		}
 
-		return persistenceContext.getFactory().getTypeConfiguration().resolveEntityDescriptor( result );
+		return persistenceContext.getFactory().getMetamodel().findEntityDescriptor( result );
 	}
 
 	@Override
@@ -382,7 +381,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		);
 
 		final SessionFactoryImplementor factory = session.getFactory();
-		final EntityDataAccess cacheAccess = factory.getCache().getEntityRegionAccess( entityDescriptor.getHierarchy() );
+		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		if ( cacheAccess != null && session.getCacheMode().isPutEnabled() ) {
 
 			if ( debugEnabled ) {
@@ -393,7 +392,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			}
 
 			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, hydratedEntityState, version, session );
-			final Object cacheKey = cacheAccess.generateCacheKey( entityIdentifier, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
+			final Object cacheKey = cacheAccess.generateCacheKey( entityIdentifier, entityDescriptor, factory, session.getTenantIdentifier() );
 
 			// explicit handling of caching for rows just inserted and then somehow forced to be read
 			// from the database *within the same transaction*.  usually this is done by
@@ -424,7 +423,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 					);
 
 					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
-						factory.getStatistics().secondLevelCachePut( cacheAccess.getRegion().getName() );
+						factory.getStatistics().entityCachePut( entityDescriptor.getNavigableRole(), cacheAccess.getRegion().getName() );
 					}
 				}
 				finally {

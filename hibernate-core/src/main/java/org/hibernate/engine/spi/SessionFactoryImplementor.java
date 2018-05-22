@@ -35,6 +35,7 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.util.collections.streams.StreamUtils;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.spi.QueryEngine;
@@ -275,7 +276,7 @@ public interface SessionFactoryImplementor
 	Settings getSettings();
 
 	@Override
-	Metamodel getMetamodel();
+	MetamodelImplementor getMetamodel();
 
 
 

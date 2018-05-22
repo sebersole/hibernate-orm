@@ -197,33 +197,34 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		}
 
 		final SessionFactoryImplementor sessionFactory = ( (SessionImplementor) session ).getFactory();
-		final EntityDescriptor<Object> entityDescriptor = sessionFactory.getTypeConfiguration().findEntityDescriptor(
-				entityName );
-		entityDescriptor.visitAttributes( attribute -> {
-											  if ( attribute.getName().equals( propertyName )
-													  && PluralAttributeCollection.class.isInstance( attribute ) ) {
-												  // Handling collection of components.
-												  if ( ( (PluralPersistentAttribute) attribute ).getElementType() instanceof javax.persistence.metamodel.EmbeddableType ) {
-													  // Adding restrictions to compare data outside of primary key.
-													  // todo: is it necessary that non-primary key attributes be compared?
-													  for ( Map.Entry<String, Object> dataEntry : persistentCollectionChangeData.getData().entrySet() ) {
-														  if ( !originalIdPropName.equals( dataEntry.getKey() ) ) {
-															  if ( dataEntry.getValue() != null ) {
-																  qb.getRootParameters().addWhereWithParam(
-																		  dataEntry.getKey(),
-																		  true,
-																		  "=",
-																		  dataEntry.getValue()
-																  );
-															  }
-															  else {
-																  qb.getRootParameters().addNullRestriction( dataEntry.getKey(), true );
-															  }
-														  }
-													  }
-												  }
-											  }
-										  }
+		final EntityDescriptor<Object> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
+		entityDescriptor.visitAttributes(
+				attribute -> {
+					if ( attribute.getName().equals( propertyName )
+							&& PluralAttributeCollection.class.isInstance( attribute ) ) {
+						// Handling collection of components.
+						if ( ( (PluralPersistentAttribute) attribute ).getElementType() instanceof javax.persistence.metamodel.EmbeddableType ) {
+							// Adding restrictions to compare data outside of primary key.
+							// todo: is it necessary that non-primary key attributes be compared?
+							for ( Map.Entry<String, Object> dataEntry : persistentCollectionChangeData.getData()
+									.entrySet() ) {
+								if ( !originalIdPropName.equals( dataEntry.getKey() ) ) {
+									if ( dataEntry.getValue() != null ) {
+										qb.getRootParameters().addWhereWithParam(
+												dataEntry.getKey(),
+												true,
+												"=",
+												dataEntry.getValue()
+										);
+									}
+									else {
+										qb.getRootParameters().addNullRestriction( dataEntry.getKey(), true );
+									}
+								}
+							}
+						}
+					}
+				}
 		);
 		addEndRevisionNullRestriction( options, qb.getRootParameters() );
 
@@ -615,7 +616,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	}
 
 	private EntityDescriptor getEntityDescriptor(String entityName, SessionImplementor sessionImplementor) {
-		return sessionImplementor.getFactory().getTypeConfiguration().findEntityDescriptor( entityName );
+		return sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
 	private String[] getEntityDescriptorPrimaryKeyColumnNames(EntityDescriptor entityDescriptor) {

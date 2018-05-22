@@ -9,7 +9,6 @@ package org.hibernate.event.internal;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.ObjectDeletedException;
-import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.Status;
@@ -47,38 +46,38 @@ public abstract class AbstractLockUpgradeEventListener extends AbstractReassocia
 				throw new ObjectDeletedException(
 						"attempted to lock a deleted instance",
 						entry.getId(),
-						entry.getPersister().getEntityName()
+						entry.getDescriptor().getEntityName()
 				);
 			}
 
-			final EntityDescriptor persister = entry.getPersister();
+			final EntityDescriptor entityDescriptor = entry.getDescriptor();
 
 			if ( log.isTraceEnabled() ) {
 				log.tracev(
 						"Locking {0} in mode: {1}",
-						MessageHelper.infoString( persister, entry.getId(), source.getFactory() ),
+						MessageHelper.infoString( entityDescriptor, entry.getId(), source.getFactory() ),
 						requestedLockMode
 				);
 			}
 
-			final boolean cachingEnabled = persister.canWriteToCache();
+			final boolean cachingEnabled = entityDescriptor.canWriteToCache();
 			SoftLock lock = null;
 			Object ck = null;
 			try {
 				if ( cachingEnabled ) {
-					ck = cacheAccess.generateCacheKey(
+					ck = entityDescriptor.getHierarchy().getEntityCacheAccess().generateCacheKey(
 							entry.getId(),
-							persister.getHierarchy(),
+							entityDescriptor,
 							source.getFactory(),
 							source.getTenantIdentifier()
 					);
-					lock = cacheAccess.lockItem( source, ck, entry.getVersion() );
+					lock = entityDescriptor.getHierarchy().getEntityCacheAccess().lockItem( source, ck, entry.getVersion() );
 				}
 
-				if ( persister.getHierarchy().getVersionDescriptor() != null
+				if ( entityDescriptor.getHierarchy().getVersionDescriptor() != null
 						&& shouldForceVersionIncrement( requestedLockMode ) ) {
 					// todo : should we check the current isolation mode explicitly?
-					final Object nextVersion = persister.forceVersionIncrement(
+					final Object nextVersion = entityDescriptor.forceVersionIncrement(
 							entry.getId(),
 							entry.getVersion(),
 							source
@@ -86,7 +85,7 @@ public abstract class AbstractLockUpgradeEventListener extends AbstractReassocia
 					entry.forceLocked( object, nextVersion );
 				}
 				else {
-					persister.lock( entry.getId(), entry.getVersion(), object, lockOptions, source );
+					entityDescriptor.lock( entry.getId(), entry.getVersion(), object, lockOptions, source );
 				}
 				entry.setLockMode( requestedLockMode );
 			}
@@ -94,7 +93,7 @@ public abstract class AbstractLockUpgradeEventListener extends AbstractReassocia
 				// the database now holds a lock + the object is flushed from the cache,
 				// so release the soft lock
 				if ( cachingEnabled ) {
-					cacheAccess.unlockItem( source, ck, lock );
+					entityDescriptor.getHierarchy().getEntityCacheAccess().unlockItem( source, ck, lock );
 				}
 			}
 

@@ -442,6 +442,10 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	String[] getCollectionSpaces();
 
+	default boolean hasCache() {
+		return getCacheAccess() != null;
+	}
+
 	CollectionDataAccess getCacheAccess();
 
 	void initialize(Serializable loadedKey, SharedSessionContractImplementor session);

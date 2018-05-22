@@ -76,7 +76,7 @@ public class CollectionElementEntityImpl<J>
 			);
 		}
 
-		return creationContext.getTypeConfiguration().findEntityDescriptor( elementEntityName );
+		return creationContext.getSessionFactory().getMetamodel().findEntityDescriptor( elementEntityName );
 	}
 
 	@Override

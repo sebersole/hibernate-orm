@@ -80,29 +80,29 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		}
 
 		final EntityEntry e = source.getPersistenceContext().getEntry( object );
-		final EntityDescriptor persister;
+		final EntityDescriptor entityDescriptor;
 		final Serializable id;
 
 		if ( e == null ) {
-			persister = source.getEntityPersister(
+			entityDescriptor = source.getEntityPersister(
 					event.getEntityName(),
 					object
 			); //refresh() does not pass an entityName
-			id = persister.getIdentifier( object, event.getSession() );
+			id = entityDescriptor.getIdentifier( object, event.getSession() );
 			if ( LOG.isTraceEnabled() ) {
 				LOG.tracev(
 						"Refreshing transient {0}", MessageHelper.infoString(
-						persister,
+						entityDescriptor,
 						id,
 						source.getFactory()
 				)
 				);
 			}
-			final EntityKey key = source.generateEntityKey( id, persister );
+			final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 			if ( source.getPersistenceContext().getEntry( key ) != null ) {
 				throw new PersistentObjectException(
 						"attempted to refresh transient instance when persistent instance was already associated with the Session: " +
-								MessageHelper.infoString( persister, id, source.getFactory() )
+								MessageHelper.infoString( entityDescriptor, id, source.getFactory() )
 				);
 			}
 		}
@@ -123,7 +123,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				);
 			}
 
-			persister = e.getPersister();
+			entityDescriptor = e.getPersister();
 			id = e.getId();
 		}
 
@@ -133,40 +133,40 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				CascadingActions.REFRESH,
 				CascadePoint.BEFORE_REFRESH,
 				source,
-				persister,
+				entityDescriptor,
 				object,
 				refreshedAlready
 		);
 
 		if ( e != null ) {
-			final EntityKey key = source.generateEntityKey( id, persister );
+			final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 			source.getPersistenceContext().removeEntity( key );
-			if ( persister.getHierarchy().getMutabilityPlan().isMutable() ) {
-				new EvictVisitor( source, object ).process( object, persister );
+			if ( entityDescriptor.getHierarchy().getMutabilityPlan().isMutable() ) {
+				new EvictVisitor( source, object ).process( object, entityDescriptor );
 			}
 		}
 
-		if ( persister.canWriteToCache() ) {
+		if ( entityDescriptor.canWriteToCache() ) {
 			Object previousVersion = null;
-			if ( persister.isVersionPropertyGenerated() ) {
+			if ( entityDescriptor.isVersionPropertyGenerated() ) {
 				// we need to grab the version value from the entity, otherwise
 				// we have issues with generated-version entities that may have
 				// multiple actions queued during the same flush
-				previousVersion = persister.getVersion( object );
+				previousVersion = entityDescriptor.getVersion( object );
 			}
-			final EntityDataAccess cacheAccess = persister.getCacheAccessStrategy();
+			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					id,
-					persister.getHierarchy(),
+					entityDescriptor,
 					source.getFactory(),
 					source.getTenantIdentifier()
 			);
-			final SoftLock lock = cache.lockItem( source, ck, previousVersion );
-			source.getActionQueue().registerProcess( (success, session) -> cache.unlockItem( session, ck, lock ) );
-			cache.remove( source, ck );
+			final SoftLock lock = cacheAccess.lockItem( source, ck, previousVersion );
+			source.getActionQueue().registerProcess( (success, session) -> cacheAccess.unlockItem( session, ck, lock ) );
+			cacheAccess.remove( source, ck );
 		}
 
-		evictCachedCollections( persister, id, source );
+		evictCachedCollections( entityDescriptor, id, source );
 
 		final InternalFetchProfileType previouslyEnabledInternalFetchProfileType =
 				source.getLoadQueryInfluencers().getEnabledInternalFetchProfileType();
@@ -205,7 +205,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			}
 		}
 
-		final Object result = persister.load( id, object, lockOptionsToUse, source );
+		final Object result = entityDescriptor.load( id, object, lockOptionsToUse, source );
 
 		if ( result != null ) {
 			// apply `postRefreshLockMode`, if needed
@@ -217,7 +217,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 
 			// Keep the same read-only/modifiable setting for the entity that it had before refreshing;
 			// If it was transient, then set it to the default for the source.
-			if ( !persister.getHierarchy().getMutabilityPlan().isMutable() ) {
+			if ( !entityDescriptor.getHierarchy().getMutabilityPlan().isMutable() ) {
 				// this is probably redundant; it should already be read-only
 				source.setReadOnly( result, true );
 			}
@@ -226,7 +226,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			}
 		}
 
-		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
+		UnresolvableObjectException.throwIfNull( result, id, entityDescriptor.getEntityName() );
 	}
 
 	private void evictCachedCollections(EntityDescriptor entityDescriptor, Serializable id, EventSource source) {
@@ -241,7 +241,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				final PersistentCollectionDescriptor collectionDescriptor = ( (PluralPersistentAttribute) attribute ).getPersistentCollectionDescriptor();
 
 				if ( collectionDescriptor.hasCache() ) {
-					final CollectionDataAccess cache = collectionDescriptor.getCacheAccessStrategy();
+					final CollectionDataAccess cache = collectionDescriptor.getCacheAccess();
 					final Object ck = cache.generateCacheKey(
 							id,
 							collectionDescriptor,

@@ -6,7 +6,6 @@
  */
 package org.hibernate.cache.cfg.spi;
 
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import java.util.Comparator;
 
 /**
@@ -16,11 +15,6 @@ import java.util.Comparator;
  * @author Steve Ebersole
  */
 public interface CollectionDataCachingConfig extends DomainDataCachingConfig {
-	/**
-	 * The persistent collection to be cached here.
-	 */
-	PersistentCollectionDescriptor getCollectionDescriptor();
-
 	/**
 	 * The comparator to be used with the owning entity's version (if it has one).
 	 */
