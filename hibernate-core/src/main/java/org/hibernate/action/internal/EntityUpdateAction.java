@@ -30,7 +30,6 @@ import org.hibernate.event.spi.PreUpdateEvent;
 import org.hibernate.event.spi.PreUpdateEventListener;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.stat.internal.StatsHelper;
 import org.hibernate.type.internal.TypeHelper;
 
 /**
@@ -130,14 +129,14 @@ public final class EntityUpdateAction extends EntityAction {
 
 		final Object ck;
 		if ( entityDescriptor.canWriteToCache() ) {
-			final EntityDataAccess cache = entityDescriptor.getCacheAccessStrategy();
+			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			ck = cache.generateCacheKey(
 					id,
 					entityDescriptor,
 					factory,
 					session.getTenantIdentifier()
 			);
-			lock = cacheAccess.lockItem( session, ck, previousVersion );
+			lock = cache.lockItem( session, ck, previousVersion );
 		}
 		else {
 			ck = null;
@@ -189,7 +188,7 @@ public final class EntityUpdateAction extends EntityAction {
 
 		if ( entityDescriptor.canWriteToCache() ) {
 			if ( entityDescriptor.isCacheInvalidationRequired() || entry.getStatus()!= Status.MANAGED ) {
-				entityDescriptor.getCacheAccessStrategy().remove( session, ck);
+				entityDescriptor.getHierarchy().getEntityCacheAccess().remove( session, ck);
 			}
 			else if ( session.getCacheMode().isPutEnabled() ) {
 				//TODO: inefficient if that cache is just going to ignore the updated state!
@@ -199,8 +198,8 @@ public final class EntityUpdateAction extends EntityAction {
 				final boolean put = cacheUpdate( entityDescriptor, previousVersion, ck );
 				if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 					factory.getStatistics().entityCachePut(
-							entityDescriptor.getRole(),
-							getPersister().getCacheAccessStrategy().getRegion().getName()
+							entityDescriptor.getNavigableRole(),
+							entityDescriptor.getHierarchy().getEntityCacheAccess().getRegion().getName()
 					);
 				}
 			}
@@ -226,7 +225,7 @@ public final class EntityUpdateAction extends EntityAction {
 		try {
 			session.getEventListenerManager().cachePutStart();
 			final EntityDescriptor rootDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
-			return session.getFactory().getCache().getEntityRegionAccess( rootDescriptor.getHierarchy() ).update(
+			return session.getFactory().getCache().getEntityRegionAccess( rootDescriptor.getNavigableRole() ).update(
 					session,
 					ck,
 					cacheEntry,
@@ -325,7 +324,7 @@ public final class EntityUpdateAction extends EntityAction {
 		final SessionFactoryImplementor factory = session.getFactory();
 		final EntityDescriptor entityDescriptor = getEntityDescriptor();
 		if ( entityDescriptor.canWriteToCache() ) {
-			final EntityDataAccess cacheAccess = entityDescriptor.getCacheAccessStrategy();
+			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					getId(),
 					entityDescriptor,
@@ -342,8 +341,8 @@ public final class EntityUpdateAction extends EntityAction {
 
 				if ( put && getSession().getFactory().getStatistics().isStatisticsEnabled() ) {
 					session.getFactory().getStatistics().entityCachePut(
-							entityDescriptor.getRole(),
-							getPersister().getCacheAccessStrategy().getRegion().getName()
+							entityDescriptor.getNavigableRole(),
+							entityDescriptor.getHierarchy().getEntityCacheAccess().getRegion().getName()
 					);
 				}
 			}

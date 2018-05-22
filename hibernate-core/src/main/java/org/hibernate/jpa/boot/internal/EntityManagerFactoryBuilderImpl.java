@@ -817,6 +817,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 	// Phase 2 concerns ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	private Object validatorFactory;
+	private Object cdiBeanManager;
 	private DataSource dataSource;
 	private MetadataImplementor metadata;
 
