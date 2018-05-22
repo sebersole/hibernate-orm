@@ -34,7 +34,7 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
 import org.hibernate.query.named.spi.NameableQuery;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.type.Type;
 
@@ -46,7 +46,7 @@ public interface NativeQueryImplementor<R> extends QueryImplementor<R>, NativeQu
 	NativeQueryImplementor setCollectionKey(Serializable key);
 
 	@Override
-	NamedNativeQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
+	NamedNativeQueryMemento toMemento(String name, SessionFactoryImplementor factory);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -6,16 +6,16 @@
  */
 package org.hibernate.query.named.internal;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.named.spi.AbstractNamedQueryDescriptor;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
@@ -23,17 +23,17 @@ import org.hibernate.query.sql.internal.NativeQueryImpl;
 /**
  * @author Steve Ebersole
  */
-public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor implements NamedNativeQueryDescriptor {
+public class NamedNativeQueryMementoImpl extends AbstractNamedQueryMemento implements NamedNativeQueryMemento {
 	private final String sqlString;
 	private final String resultSetMappingName;
-	private final Collection<String> querySpaces;
+	private final Set<String> querySpaces;
 
-	public NamedNativeQueryDescriptorImpl(
+	public NamedNativeQueryMementoImpl(
 			String name,
 			List<ParameterDescriptor> parameterDescriptors,
 			String sqlString,
 			String resultSetMappingName,
-			Collection<String> querySpaces,
+			Set<String> querySpaces,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -79,13 +79,13 @@ public class NamedNativeQueryDescriptorImpl extends AbstractNamedQueryDescriptor
 	}
 
 	@Override
-	public Collection<String> getQuerySpaces() {
+	public Set<String> getQuerySpaces() {
 		return querySpaces;
 	}
 
 	@Override
-	public NamedNativeQueryDescriptor makeCopy(String name) {
-		return new NamedNativeQueryDescriptorImpl(
+	public NamedNativeQueryMemento makeCopy(String name) {
+		return new NamedNativeQueryMementoImpl(
 				name,
 				getParameterDescriptors(),
 				sqlString,

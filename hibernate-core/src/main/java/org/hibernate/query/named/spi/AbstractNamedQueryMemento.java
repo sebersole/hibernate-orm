@@ -19,7 +19,7 @@ import org.hibernate.query.spi.QueryImplementor;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescriptor {
+public abstract class AbstractNamedQueryMemento implements NamedQueryMemento {
 	private final String name;
 
 	private final List<ParameterDescriptor> parameterDescriptors;
@@ -40,7 +40,7 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 
 	private final Map<String, Object> hints;
 
-	public AbstractNamedQueryDescriptor(
+	public AbstractNamedQueryMemento(
 			String name,
 			List<ParameterDescriptor> parameterDescriptors,
 			Boolean cacheable,
@@ -131,6 +131,8 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 	}
 
 	protected void applyBaseOptions(QueryImplementor query, SharedSessionContractImplementor session) {
+		getHints().forEach( query::setHint );
+
 		if ( cacheable != null ) {
 			query.setCacheable( cacheable );
 		}

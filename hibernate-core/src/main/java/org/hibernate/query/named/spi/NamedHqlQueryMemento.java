@@ -12,7 +12,7 @@ import org.hibernate.query.spi.HqlQueryImplementor;
 /**
  * @author Steve Ebersole
  */
-public interface NamedHqlQueryDescriptor extends NamedQueryDescriptor {
+public interface NamedHqlQueryMemento extends NamedQueryMemento {
 	String getHqlString();
 
 	@Override
@@ -21,7 +21,7 @@ public interface NamedHqlQueryDescriptor extends NamedQueryDescriptor {
 	}
 
 	@Override
-	NamedHqlQueryDescriptor makeCopy(String name);
+	NamedHqlQueryMemento makeCopy(String name);
 
 	@Override
 	<T> HqlQueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);

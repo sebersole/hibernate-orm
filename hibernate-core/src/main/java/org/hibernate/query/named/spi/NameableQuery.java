@@ -12,5 +12,5 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
  * @author Steve Ebersole
  */
 public interface NameableQuery {
-	NamedQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
+	NamedQueryMemento toMemento(String name, SessionFactoryImplementor factory);
 }

@@ -30,8 +30,8 @@ import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.procedure.internal.ProcedureParameterImpl;
 import org.hibernate.procedure.internal.Util;
 import org.hibernate.procedure.spi.ParameterStrategy;
-import org.hibernate.query.named.internal.NamedCallableQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
+import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.QueryResult;
@@ -87,7 +87,7 @@ public class NamedProcedureCallDefinition {
 	//			* NamedCallableQueryDefinition
 	//			* NamedCallableQueryDescriptor
 
-	public NamedCallableQueryDescriptor toMemento(
+	public NamedCallableQueryMemento toMemento(
 			final SessionFactoryImplementor sessionFactory,
 			final Map<String,ResultSetMappingDescriptor> resultSetMappingDefinitions) {
 		final List<QueryResult> collQueryResults = new ArrayList<>();
@@ -146,7 +146,7 @@ public class NamedProcedureCallDefinition {
 
 		final boolean isCacheable = isCacheable( hints, sessionFactory );
 
-		return new NamedCallableQueryDescriptorImpl(
+		return new NamedCallableQueryMementoImpl(
 				registeredName,
 				procedureName,
 				parameterDefinitions.getParameterStrategy(),

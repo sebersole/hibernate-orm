@@ -50,8 +50,8 @@ import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.ParameterMetadataImpl;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.internal.QueryParameterBindingsImpl;
-import org.hibernate.query.named.internal.NamedNativeQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.internal.NamedNativeQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.NativeQueryImplementor;
@@ -149,7 +149,7 @@ public class NativeQueryImpl<R>
 	 * @param session The session to which this NativeQuery belongs.
 	 */
 	public NativeQueryImpl(
-			NamedNativeQueryDescriptor namedQueryDescriptor,
+			NamedNativeQueryMemento namedQueryDescriptor,
 			Class<R> resultType,
 			SharedSessionContractImplementor session) {
 		this( namedQueryDescriptor.getQueryString(), session );
@@ -159,7 +159,7 @@ public class NativeQueryImpl<R>
 		applyResultSetMapping( namedQueryDescriptor );
 	}
 
-	private void applyResultSetMapping(NamedNativeQueryDescriptor namedQueryDescriptor) {
+	private void applyResultSetMapping(NamedNativeQueryMemento namedQueryDescriptor) {
 		if ( namedQueryDescriptor.getResultSetMappingName() == null ) {
 			return;
 		}
@@ -1094,8 +1094,8 @@ public class NativeQueryImpl<R>
 
 
 	@Override
-	public NamedNativeQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
-		return new NamedNativeQueryDescriptorImpl(
+	public NamedNativeQueryMemento toMemento(String name, SessionFactoryImplementor factory) {
+		return new NamedNativeQueryMementoImpl(
 				name,
 				toParameterMementos( getParameterMetadata() ),
 				sqlString,

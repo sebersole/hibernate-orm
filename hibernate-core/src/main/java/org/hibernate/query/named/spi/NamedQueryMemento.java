@@ -18,7 +18,7 @@ import org.hibernate.query.spi.QueryImplementor;
 /**
  * @author Steve Ebersole
  */
-public interface NamedQueryDescriptor {
+public interface NamedQueryMemento {
 	String getName();
 
 	String getQueryString();
@@ -45,7 +45,7 @@ public interface NamedQueryDescriptor {
 
 	Map<String,Object> getHints();
 
-	NamedQueryDescriptor makeCopy(String name);
+	NamedQueryMemento makeCopy(String name);
 
 	<T> QueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);
 }

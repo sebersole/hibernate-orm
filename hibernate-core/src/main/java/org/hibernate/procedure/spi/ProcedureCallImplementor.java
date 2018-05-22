@@ -17,7 +17,7 @@ import javax.persistence.TemporalType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.named.spi.NameableQuery;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.spi.QueryImplementor;
 
 /**
@@ -35,7 +35,7 @@ public interface ProcedureCallImplementor<R> extends ProcedureCall, QueryImpleme
 	}
 
 	@Override
-	NamedCallableQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
+	NamedCallableQueryMemento toMemento(String name, SessionFactoryImplementor factory);
 
 	@Override
 	ProcedureCallImplementor<R> setHint(String hintName, Object value);

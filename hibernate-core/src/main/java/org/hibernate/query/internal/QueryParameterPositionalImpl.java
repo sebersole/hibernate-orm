@@ -31,9 +31,9 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 		return new QueryParameterPositionalImpl<T>(
 				parameter.getPosition(),
 				parameter.allowMultiValuedBinding(),
-				parameter.getAnticipatedType() != null ?
-						(AllowableParameterType) parameter.getAnticipatedType() :
-						null
+				parameter.getAnticipatedType() != null
+						? (AllowableParameterType) parameter.getAnticipatedType()
+						: null
 		);
 	}
 
@@ -47,7 +47,7 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 
 	private final int position;
 
-	private QueryParameterPositionalImpl(
+	public QueryParameterPositionalImpl(
 			Integer position,
 			boolean allowMultiValuedBinding,
 			AllowableParameterType anticipatedType) {

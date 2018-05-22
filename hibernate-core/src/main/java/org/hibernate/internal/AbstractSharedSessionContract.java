@@ -55,9 +55,9 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.query.Query;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
@@ -761,7 +761,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		// this method can be called for either a named HQL query or a named native query
 
 		// first see if it is a named HQL query
-		final NamedHqlQueryDescriptor namedHqlDescriptor = getFactory().getQueryEngine()
+		final NamedHqlQueryMemento namedHqlDescriptor = getFactory().getQueryEngine()
 				.getNamedQueryRepository()
 				.getNamedHqlDescriptor( queryName );
 
@@ -770,7 +770,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		}
 
 		// otherwise, see if it is a named native query
-		final NamedNativeQueryDescriptor namedNativeDescriptor = getFactory().getQueryEngine()
+		final NamedNativeQueryMemento namedNativeDescriptor = getFactory().getQueryEngine()
 				.getNamedQueryRepository()
 				.getNamedNativeDescriptor( queryName );
 
@@ -802,7 +802,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			checkTransactionSynchStatus();
 			delayedAfterCompletion();
 
-			final NamedNativeQueryDescriptor namedQueryDescriptor = factory.getQueryEngine().getNamedQueryRepository()
+			final NamedNativeQueryMemento namedQueryDescriptor = factory.getQueryEngine().getNamedQueryRepository()
 					.getNamedNativeDescriptor( name );
 			if ( namedQueryDescriptor != null ) {
 				return namedQueryDescriptor.toQuery( this, null );
@@ -820,7 +820,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	public ProcedureCall getNamedProcedureCall(String name) {
 		checkOpen();
 
-		final NamedCallableQueryDescriptor memento = factory.getQueryEngine()
+		final NamedCallableQueryMemento memento = factory.getQueryEngine()
 				.getNamedQueryRepository()
 				.getNamedCallableQueryDescriptor( name );
 		if ( memento == null ) {

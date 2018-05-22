@@ -6,42 +6,42 @@
  */
 package org.hibernate.query.named.internal;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.procedure.internal.Util;
+import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
-import org.hibernate.query.named.spi.AbstractNamedQueryDescriptor;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
+import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.RowReaderMemento;
 
 /**
  * @author Steve Ebersole
  */
-public class NamedCallableQueryDescriptorImpl
-		extends AbstractNamedQueryDescriptor
-		implements NamedCallableQueryDescriptor {
+public class NamedCallableQueryMementoImpl
+		extends AbstractNamedQueryMemento
+		implements NamedCallableQueryMemento {
 	private final String callableName;
 	private final ParameterStrategy parameterStrategy;
 	private final Class[] resultClasses;
 	private final String[] resultSetMappingNames;
-	private final Collection<String> querySpaces;
+	private final Set<String> querySpaces;
 
-	public NamedCallableQueryDescriptorImpl(
+	public NamedCallableQueryMementoImpl(
 			String name,
 			String callableName,
 			ParameterStrategy parameterStrategy,
 			List<ParameterDescriptor> parameterDescriptors,
 			Class[] resultClasses,
 			String[] resultSetMappingNames,
-			Collection<String> querySpaces,
+			Set<String> querySpaces,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -73,6 +73,44 @@ public class NamedCallableQueryDescriptorImpl
 		this.querySpaces = querySpaces;
 	}
 
+	public NamedCallableQueryMementoImpl(
+			String name,
+			String procedureName,
+			ParameterStrategy parameterStrategy,
+			List<ParameterDescriptor> parameterDescriptors,
+			RowReaderMemento rowReaderMemento,
+			Set<String> querySpaces,
+			Boolean cacheable,
+			String cacheRegion,
+			CacheMode cacheMode,
+			FlushMode flushMode,
+			Boolean readOnly,
+			LockOptions lockOptions,
+			Integer timeout,
+			Integer fetchSize,
+			String comment,
+			Map<String, Object> hints) {
+		this(
+				name,
+				procedureName,
+				parameterStrategy,
+				parameterDescriptors,
+				rowReaderMemento.getResultClasses(),
+				rowReaderMemento.getResultMappingNames(),
+				querySpaces,
+				cacheable,
+				cacheRegion,
+				cacheMode,
+				flushMode,
+				readOnly,
+				lockOptions,
+				timeout,
+				fetchSize,
+				comment,
+				hints
+		);
+	}
+
 	@Override
 	public String getCallableName() {
 		return callableName;
@@ -83,7 +121,7 @@ public class NamedCallableQueryDescriptorImpl
 	}
 
 	@Override
-	public Collection<String> getQuerySpaces() {
+	public Set<String> getQuerySpaces() {
 		return querySpaces;
 	}
 
@@ -93,8 +131,18 @@ public class NamedCallableQueryDescriptorImpl
 	}
 
 	@Override
-	public NamedCallableQueryDescriptor makeCopy(String name) {
-		return new NamedCallableQueryDescriptorImpl(
+	public Class[] getResultClasses() {
+		return resultClasses;
+	}
+
+	@Override
+	public String[] getResultSetMappingNames() {
+		return resultSetMappingNames;
+	}
+
+	@Override
+	public NamedCallableQueryMemento makeCopy(String name) {
+		return new NamedCallableQueryMementoImpl(
 				name,
 				getCallableName(),
 				getParameterStrategy(),
@@ -117,6 +165,6 @@ public class NamedCallableQueryDescriptorImpl
 
 	@Override
 	public <T> ProcedureCallImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType) {
-		throw new NotYetImplementedFor6Exception();
+		return new ProcedureCallImpl<>( session, this, resultType );
 	}
 }

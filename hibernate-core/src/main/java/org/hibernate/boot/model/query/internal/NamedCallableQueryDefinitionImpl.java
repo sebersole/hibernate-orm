@@ -6,15 +6,22 @@
  */
 package org.hibernate.boot.model.query.internal;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.persistence.ParameterMode;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.boot.model.query.spi.NamedCallableQueryDefinition;
+import org.hibernate.boot.model.query.spi.ParameterDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.internal.NamedCallableQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
+import org.hibernate.procedure.internal.ProcedureParameterImpl;
+import org.hibernate.procedure.spi.ParameterStrategy;
+import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -22,13 +29,22 @@ import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 public class NamedCallableQueryDefinitionImpl
 		extends AbstractNamedQueryDefinition
 		implements NamedCallableQueryDefinition {
+
+	public static final Class[] EMPTY_CLASSES = new Class[0];
+	public static final String[] EMPTY_NAMES = new String[0];
+
 	private final String callableName;
-	private final Collection<String> querySpaces;
+	private final Class[] resultClasses;
+	private final String[] resultSetMappingNames;
+	private final Set<String> querySpaces;
 
 	public NamedCallableQueryDefinitionImpl(
 			String name,
 			String callableName,
-			Collection<String> querySpaces,
+			List<ParameterDefinition> parameterDefinitions,
+			List<Class> resultClasses,
+			List<String> resultSetMappingNames,
+			Set<String> querySpaces,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -37,9 +53,11 @@ public class NamedCallableQueryDefinitionImpl
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		super(
 				name,
+				parameterDefinitions,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -48,17 +66,31 @@ public class NamedCallableQueryDefinitionImpl
 				lockOptions,
 				timeout,
 				fetchSize,
-				comment
+				comment,
+				hints
 		);
 		this.callableName = callableName;
+
+		this.resultClasses = resultClasses == null || resultClasses.isEmpty()
+				? EMPTY_CLASSES
+				: resultClasses.toArray( new Class[0] );
+
+		this.resultSetMappingNames = resultSetMappingNames == null || resultSetMappingNames.isEmpty()
+				? EMPTY_NAMES
+				: resultSetMappingNames.toArray( new String[0] );
+
 		this.querySpaces = querySpaces;
 	}
 
 	@Override
-	public NamedCallableQueryDescriptor resolve(SessionFactoryImplementor factory) {
-		return new NamedCallableQueryDescriptorImpl(
+	public NamedCallableQueryMemento resolve(SessionFactoryImplementor factory) {
+		return new NamedCallableQueryMementoImpl(
 				getName(),
 				callableName,
+				ParameterStrategy.UNKNOWN,
+				resolveParameterDescriptors( factory ),
+				resultClasses,
+				resultSetMappingNames,
 				querySpaces,
 				getCacheable(),
 				getCacheRegion(),
@@ -68,12 +100,16 @@ public class NamedCallableQueryDefinitionImpl
 				getLockOptions(),
 				getTimeout(),
 				getFetchSize(),
-				getComment()
+				getComment(),
+				getHints()
 		);
 	}
 
 	public  static class Builder extends AbstractBuilder<Builder> {
 		private String callableName;
+
+		private List<Class> resultClasses;
+		private List<String> resultSetMappingNames;
 
 		public Builder(String name) {
 			super( name );
@@ -84,10 +120,49 @@ public class NamedCallableQueryDefinitionImpl
 			return this;
 		}
 
+		@Override
+		protected ParameterDefinition createPositionalParameter(int label, Class javaType, ParameterMode mode) {
+			//noinspection Convert2Lambda
+			return new ParameterDefinition() {
+				@Override
+				@SuppressWarnings("unchecked")
+				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+					return session -> new ProcedureParameterImpl(
+							label,
+							mode,
+							javaType,
+							factory.getTypeConfiguration().getBasicTypeRegistry().getBasicType( javaType ),
+							factory.getSessionFactoryOptions().isProcedureParameterNullPassingEnabled()
+					);
+				}
+			};
+		}
+
+		@Override
+		protected ParameterDefinition createNamedParameter(String name, Class javaType, ParameterMode mode) {
+			//noinspection Convert2Lambda
+			return new ParameterDefinition() {
+				@Override
+				@SuppressWarnings("unchecked")
+				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+					return session -> new ProcedureParameterImpl(
+							name,
+							mode,
+							javaType,
+							factory.getTypeConfiguration().getBasicTypeRegistry().getBasicType( javaType ),
+							factory.getSessionFactoryOptions().isProcedureParameterNullPassingEnabled()
+					);
+				}
+			};
+		}
+
 		public NamedCallableQueryDefinition build() {
 			return new NamedCallableQueryDefinitionImpl(
 					getName(),
 					callableName,
+					getParameterDescriptors(),
+					resultClasses,
+					resultSetMappingNames,
 					getQuerySpaces(),
 					getCacheable(),
 					getCacheRegion(),
@@ -97,7 +172,8 @@ public class NamedCallableQueryDefinitionImpl
 					getLockOptions(),
 					getTimeout(),
 					getFetchSize(),
-					getComment()
+					getComment(),
+					getHints()
 			);
 		}
 

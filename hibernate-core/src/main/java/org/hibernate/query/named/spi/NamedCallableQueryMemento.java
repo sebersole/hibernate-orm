@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.named.spi;
 
-import java.util.Collection;
+import java.util.Set;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
@@ -14,13 +14,17 @@ import org.hibernate.procedure.spi.ProcedureCallImplementor;
 /**
  * @author Steve Ebersole
  */
-public interface NamedCallableQueryDescriptor extends NamedQueryDescriptor {
+public interface NamedCallableQueryMemento extends NamedQueryMemento {
 	String getCallableName();
 
-	Collection<String> getQuerySpaces();
+	Set<String> getQuerySpaces();
+
+	Class[] getResultClasses();
+
+	String[] getResultSetMappingNames();
 
 	@Override
-	NamedCallableQueryDescriptor makeCopy(String name);
+	NamedCallableQueryMemento makeCopy(String name);
 
 	@Override
 	<T> ProcedureCallImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);

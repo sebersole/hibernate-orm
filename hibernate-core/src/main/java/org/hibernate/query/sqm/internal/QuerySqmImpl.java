@@ -30,8 +30,8 @@ import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.internal.QueryParameterBindingsImpl;
 import org.hibernate.query.internal.QueryParameterNamedImpl;
 import org.hibernate.query.internal.QueryParameterPositionalImpl;
-import org.hibernate.query.named.internal.NamedHqlQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.internal.NamedHqlQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.HqlQueryImplementor;
@@ -445,8 +445,8 @@ public class QuerySqmImpl<R>
 	}
 
 	@Override
-	public NamedHqlQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
-		return new NamedHqlQueryDescriptorImpl(
+	public NamedHqlQueryMemento toMemento(String name, SessionFactoryImplementor factory) {
+		return new NamedHqlQueryMementoImpl(
 				name,
 				toParameterMementos( getParameterMetadata() ),
 				sourceQueryString,

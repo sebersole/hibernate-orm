@@ -7,7 +7,7 @@
 package org.hibernate.boot.model.query.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 
 /**
  * @author Steve Ebersole
@@ -16,5 +16,5 @@ public interface NamedHqlQueryDefinition extends NamedQueryDefinition {
 	String getQueryString();
 
 	@Override
-	NamedHqlQueryDescriptor resolve(SessionFactoryImplementor factory);
+	NamedHqlQueryMemento resolve(SessionFactoryImplementor factory);
 }

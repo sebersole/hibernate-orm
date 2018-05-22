@@ -6,15 +6,21 @@
  */
 package org.hibernate.boot.model.query.internal;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.persistence.ParameterMode;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.boot.model.query.spi.NamedNativeQueryDefinition;
+import org.hibernate.boot.model.query.spi.ParameterDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.internal.NamedNativeQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.internal.QueryParameterPositionalImpl;
+import org.hibernate.query.named.internal.NamedNativeQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -22,13 +28,14 @@ import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
 public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition implements NamedNativeQueryDefinition {
 	private final String sqlString;
 	private final String resultSetMappingName;
-	private final Collection<String> querySpaces;
+	private final Set<String> querySpaces;
 
 	public NamedNativeQueryDefinitionImpl(
 			String name,
 			String sqlString,
+			List<ParameterDefinition> parameterDescriptors,
 			String resultSetMappingName,
-			Collection<String> querySpaces,
+			Set<String> querySpaces,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -37,9 +44,11 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		super(
 				name,
+				parameterDescriptors,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -48,7 +57,8 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 				lockOptions,
 				timeout,
 				fetchSize,
-				comment
+				comment,
+				hints
 		);
 		this.sqlString = sqlString;
 		this.resultSetMappingName = resultSetMappingName;
@@ -66,9 +76,10 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 	}
 
 	@Override
-	public NamedNativeQueryDescriptor resolve(SessionFactoryImplementor factory) {
-		return new NamedNativeQueryDescriptorImpl(
+	public NamedNativeQueryMemento resolve(SessionFactoryImplementor factory) {
+		return new NamedNativeQueryMementoImpl(
 				getName(),
+				resolveParameterDescriptors( factory ),
 				sqlString,
 				resultSetMappingName,
 				querySpaces,
@@ -80,7 +91,8 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 				getLockOptions(),
 				getTimeout(),
 				getFetchSize(),
-				getComment()
+				getComment(),
+				getHints()
 		);
 	}
 
@@ -102,6 +114,7 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 			return new NamedNativeQueryDefinitionImpl(
 					getName(),
 					sqlString,
+					getParameterDescriptors(),
 					resultSetMapping,
 					getQuerySpaces(),
 					getCacheable(),
@@ -112,14 +125,35 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 					getLockOptions(),
 					getTimeout(),
 					getFetchSize(),
-					getComment()
-					// todo (6.0) : information about parameters
+					getComment(),
+					getHints()
 			);
 		}
 
 		@Override
 		protected Builder getThis() {
 			return this;
+		}
+
+		@Override
+		protected ParameterDefinition createPositionalParameter(int i, Class javaType, ParameterMode mode) {
+			//noinspection Convert2Lambda
+			return new ParameterDefinition() {
+				@Override
+				@SuppressWarnings("unchecked")
+				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+					return session -> new QueryParameterPositionalImpl(
+							i,
+							false,
+							factory.getTypeConfiguration().getBasicTypeRegistry().getBasicType( javaType )
+					);
+				}
+			};
+		}
+
+		@Override
+		protected ParameterDefinition createNamedParameter(String name, Class javaType, ParameterMode mode) {
+			return null;
 		}
 
 		public Builder setResultSetMapping(String resultSetMapping) {

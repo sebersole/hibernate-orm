@@ -7,7 +7,7 @@
 package org.hibernate.boot.model.query.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.spi.NamedQueryDescriptor;
+import org.hibernate.query.named.spi.NamedQueryMemento;
 
 /**
  * Common attributes shared across named queries whether
@@ -18,5 +18,5 @@ import org.hibernate.query.named.spi.NamedQueryDescriptor;
 public interface NamedQueryDefinition {
 	String getName();
 
-	NamedQueryDescriptor resolve(SessionFactoryImplementor factory);
+	NamedQueryMemento resolve(SessionFactoryImplementor factory);
 }

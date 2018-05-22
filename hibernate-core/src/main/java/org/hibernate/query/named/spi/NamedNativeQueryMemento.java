@@ -7,6 +7,7 @@
 package org.hibernate.query.named.spi;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NativeQueryImplementor;
@@ -16,15 +17,15 @@ import org.hibernate.query.spi.NativeQueryImplementor;
  *
  * @author Steve Ebersole
  */
-public interface NamedNativeQueryDescriptor extends NamedQueryDescriptor {
+public interface NamedNativeQueryMemento extends NamedQueryMemento {
 	String getSqlString();
 
 	String getResultSetMappingName();
 
-	Collection<String> getQuerySpaces();
+	Set<String> getQuerySpaces();
 
 	@Override
-	NamedNativeQueryDescriptor makeCopy(String name);
+	NamedNativeQueryMemento makeCopy(String name);
 
 	@Override
 	<T> NativeQueryImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType);

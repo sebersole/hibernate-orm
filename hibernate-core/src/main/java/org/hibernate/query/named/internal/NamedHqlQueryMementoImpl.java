@@ -13,8 +13,8 @@ import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.named.spi.AbstractNamedQueryDescriptor;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.HqlQueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
@@ -22,12 +22,12 @@ import org.hibernate.query.sqm.internal.QuerySqmImpl;
 /**
  * @author Steve Ebersole
  */
-public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor implements NamedHqlQueryDescriptor {
+public class NamedHqlQueryMementoImpl extends AbstractNamedQueryMemento implements NamedHqlQueryMemento {
 	private final String hqlString;
 	private final Integer firstResult;
 	private final Integer maxResults;
 
-	public NamedHqlQueryDescriptorImpl(
+	public NamedHqlQueryMementoImpl(
 			String name,
 			List<ParameterDescriptor> parameterDescriptors,
 			String hqlString,
@@ -68,8 +68,8 @@ public class NamedHqlQueryDescriptorImpl extends AbstractNamedQueryDescriptor im
 	}
 
 	@Override
-	public NamedHqlQueryDescriptor makeCopy(String name) {
-		return new NamedHqlQueryDescriptorImpl(
+	public NamedHqlQueryMemento makeCopy(String name) {
+		return new NamedHqlQueryMementoImpl(
 				name,
 				getParameterDescriptors(),
 				getHqlString(),

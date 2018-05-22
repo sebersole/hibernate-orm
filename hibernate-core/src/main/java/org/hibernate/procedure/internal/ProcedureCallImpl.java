@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
@@ -50,8 +49,8 @@ import org.hibernate.procedure.spi.ProcedureParameterMetadata;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.QueryOptionsImpl;
-import org.hibernate.query.named.internal.NamedCallableQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
+import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
@@ -225,20 +224,84 @@ public class ProcedureCallImpl<R>
 	 * @param memento The named/stored memento
 	 */
 	@SuppressWarnings("unchecked")
-	ProcedureCallImpl(SharedSessionContractImplementor session, ProcedureCallMementoImpl memento) {
+	public ProcedureCallImpl(SharedSessionContractImplementor session, NamedCallableQueryMemento memento, Class<R> resultType) {
 		super( session );
-		this.procedureName = memento.getProcedureName();
+
+		this.procedureName = memento.getCallableName();
 
 		this.parameterMetadata = new ProcedureParameterMetadata( this );
 		this.paramBindings = new ProcedureParamBindings( parameterMetadata, this );
 
-		this.synchronizedQuerySpaces = Util.copy( memento.getSynchronizedQuerySpaces() );
+		final Set<String> querySpaces = new HashSet<>();
+		final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
+		final List<Initializer> initializers = new ArrayList<>();
 
-		this.rowReader = memento.getRowReader();
+		Util.resolveResultClasses(
+				new Util.ResultClassesResolutionContext() {
+					@Override
+					public SessionFactoryImplementor getSessionFactory() {
+						return session.getFactory();
+					}
 
-		for ( Map.Entry<String, Object> entry : memento.getHintsMap().entrySet() ) {
-			setHint( entry.getKey(), entry.getValue() );
-		}
+					@Override
+					public void addQuerySpaces(String... spaces) {
+						Collections.addAll( querySpaces, spaces );
+					}
+
+					@Override
+					public void addQueryResult(QueryResult... queryResults) {
+						for ( QueryResult queryResult : queryResults ) {
+							queryResult.registerInitializers( initializers::add );
+							returnAssemblers.add( queryResult.getResultAssembler() );
+						}
+					}
+				},
+				memento.getResultClasses()
+		);
+
+		Util.resolveResultSetMappings(
+				new Util.ResultSetMappingResolutionContext() {
+					@Override
+					public SessionFactoryImplementor getSessionFactory() {
+						return session.getFactory();
+					}
+
+					@Override
+					public ResultSetMappingDescriptor findResultSetMapping(String name) {
+						return session.getFactory().getQueryEngine().getNamedQueryRepository().getResultSetMappingDescriptor( name );
+					}
+
+					@Override
+					public void addQuerySpaces(String... spaces) {
+						Collections.addAll( querySpaces, spaces );
+					}
+
+					@Override
+					public void addQueryReturns(QueryResult... queryResults) {
+						for ( QueryResult queryResult : queryResults ) {
+							queryResult.registerInitializers( initializers::add );
+							returnAssemblers.add( queryResult.getResultAssembler() );
+						}
+					}
+
+					// todo : add QuerySpaces to JdbcOperation
+					// todo : add JdbcOperation#shouldFlushAffectedQuerySpaces()
+				},
+				memento.getResultSetMappingNames()
+		);
+
+
+		this.synchronizedQuerySpaces = new HashSet<>( memento.getQuerySpaces() );
+		this.synchronizedQuerySpaces.addAll( querySpaces );
+
+		this.rowReader = new RowReaderStandardImpl<>(
+				returnAssemblers,
+				initializers,
+				null,
+				null
+		);
+
+		memento.getHints().forEach( this::setHint );
 	}
 
 	@Override
@@ -954,12 +1017,13 @@ public class ProcedureCallImpl<R>
 	}
 
 	@Override
-	public NamedCallableQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
-		return new NamedCallableQueryDescriptorImpl(
+	public NamedCallableQueryMemento toMemento(String name, SessionFactoryImplementor factory) {
+		return new NamedCallableQueryMementoImpl(
 				name,
 				procedureName,
 				getParameterMetadata().getParameterStrategy(),
 				toParameterMementos( getParameterMetadata() ),
+				rowReader.toMemento( factory ),
 				synchronizedQuerySpaces,
 				isCacheable(),
 				getCacheRegion(),

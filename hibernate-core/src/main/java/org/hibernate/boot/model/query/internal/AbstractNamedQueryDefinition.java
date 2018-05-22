@@ -7,13 +7,19 @@
 package org.hibernate.boot.model.query.internal;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.persistence.ParameterMode;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.boot.model.query.spi.NamedQueryDefinition;
+import org.hibernate.boot.model.query.spi.ParameterDefinition;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 
 /**
@@ -22,7 +28,7 @@ import org.hibernate.query.named.spi.ParameterDescriptor;
 public abstract class AbstractNamedQueryDefinition implements NamedQueryDefinition {
 	private final String name;
 
-	private final List<ParameterDescriptor> parameterDescriptors;
+	private final List<ParameterDefinition> parameterDescriptors;
 
 	private final Boolean cacheable;
 	private final String cacheRegion;
@@ -38,9 +44,11 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 	private final String comment;
 
+	private final Map<String,Object> hints;
+
 	public AbstractNamedQueryDefinition(
 			String name,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterDefinition> parameterDescriptors,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -49,7 +57,8 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		this.name = name;
 		this.parameterDescriptors = new ArrayList<>( parameterDescriptors );
 		this.cacheable = cacheable;
@@ -61,6 +70,7 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 		this.timeout = timeout;
 		this.fetchSize = fetchSize;
 		this.comment = comment;
+		this.hints = new HashMap<>( hints );
 	}
 
 	@Override
@@ -104,13 +114,22 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 		return comment;
 	}
 
+	public Map<String, Object> getHints() {
+		return hints;
+	}
+
+	protected List<ParameterDescriptor> resolveParameterDescriptors(SessionFactoryImplementor factory) {
+		final ArrayList<ParameterDescriptor> descriptors = new ArrayList<>();
+		parameterDescriptors.forEach( parameterDefinition -> descriptors.add( parameterDefinition.resolve( factory ) ) );
+		return descriptors;
+	}
+
 	protected static abstract class AbstractBuilder<T extends AbstractBuilder> {
 		private final String name;
-		private final ParameterDescriptorBuilder parameterDescriptorBuilder;
 
-		private List<ParameterDescriptor> parameterDescriptors;
+		private List<ParameterDefinition> parameterDescriptors;
 
-		private Collection<String> querySpaces;
+		private Set<String> querySpaces;
 		private Boolean cacheable;
 		private String cacheRegion;
 		private CacheMode cacheMode;
@@ -125,9 +144,10 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 		private String comment;
 
-		public AbstractBuilder(String name, ParameterDescriptorBuilder parameterDescriptorBuilder) {
+		private Map<String,Object> hints;
+
+		public AbstractBuilder(String name) {
 			this.name = name;
-			this.parameterDescriptorBuilder = parameterDescriptorBuilder;
 		}
 
 		public String getName() {
@@ -136,42 +156,48 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 		protected abstract T getThis();
 
-		public T addParameter(Class javaType) {
-			prepareParamDescriptorList();
-
-			parameterDescriptors.add(
-					parameterDescriptorBuilder.createPositionalParameter(
+		public T addParameter(Class javaType, ParameterMode mode) {
+			return addParameter(
+					createPositionalParameter(
 							parameterDescriptors.size() + 1,
-							javaType
+							javaType,
+							mode
 					)
 			);
-
-			return getThis();
 		}
 
-		public T addParameter(String name, Class javaType) {
-			prepareParamDescriptorList();
+		protected abstract ParameterDefinition createPositionalParameter(int i, Class javaType, ParameterMode mode);
 
-			parameterDescriptors.add(
-					parameterDescriptorBuilder.createNamedParameter( name, javaType )
-			);
-
-			return getThis();
-		}
-
-		private void prepareParamDescriptorList() {
+		public T addParameter(ParameterDefinition parameterDefinition) {
 			if ( parameterDescriptors == null ) {
 				parameterDescriptors = new ArrayList<>();
 			}
+
+			parameterDescriptors.add( parameterDefinition );
+
+			return getThis();
 		}
 
-		public T addQuerySpaces(Collection<String> querySpaces) {
+		public T addParameter(String name, Class javaType, ParameterMode mode) {
+			if ( parameterDescriptors == null ) {
+				parameterDescriptors = new ArrayList<>();
+			}
+
+			parameterDescriptors.add( createNamedParameter( name, javaType, mode ) );
+
+			return getThis();
+		}
+
+		protected abstract ParameterDefinition createNamedParameter(String name, Class javaType, ParameterMode mode);
+
+
+		public T addQuerySpaces(Set<String> querySpaces) {
 			if ( querySpaces == null || querySpaces.isEmpty() ) {
 				return getThis();
 			}
 
 			if ( this.querySpaces == null ) {
-				this.querySpaces = new ArrayList<>();
+				this.querySpaces = new HashSet<>();
 			}
 			this.querySpaces.addAll( querySpaces );
 			return getThis();
@@ -179,7 +205,7 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 
 		public T addQuerySpace(String space) {
 			if ( this.querySpaces == null ) {
-				this.querySpaces = new ArrayList<>();
+				this.querySpaces = new HashSet<>();
 			}
 			this.querySpaces.add( space );
 			return getThis();
@@ -230,8 +256,7 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 			return getThis();
 		}
 
-
-		public Collection<String> getQuerySpaces() {
+		public Set<String> getQuerySpaces() {
 			return querySpaces;
 		}
 
@@ -270,11 +295,20 @@ public abstract class AbstractNamedQueryDefinition implements NamedQueryDefiniti
 		public String getComment() {
 			return comment;
 		}
-	}
 
-	interface ParameterDescriptorBuilder {
-		ParameterDescriptor createPositionalParameter(int label, Class javaType);
+		protected List<ParameterDefinition> getParameterDescriptors() {
+			return parameterDescriptors;
+		}
 
-		ParameterDescriptor createNamedParameter(String name, Class javaType);
+		public void addHint(String name, Object value) {
+			if ( hints == null ) {
+				hints = new HashMap<>();
+			}
+			hints.put( name, value );
+		}
+
+		public Map<String, Object> getHints() {
+			return hints;
+		}
 	}
 }

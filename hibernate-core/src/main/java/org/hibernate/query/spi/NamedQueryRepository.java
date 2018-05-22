@@ -10,9 +10,9 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 
 /**
  * Repository for named query-related objects
@@ -21,14 +21,14 @@ import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
  */
 @Incubating
 public interface NamedQueryRepository {
-	void registerNamedHqlQueryDescriptor(String name, NamedHqlQueryDescriptor descriptor);
-	NamedHqlQueryDescriptor getNamedHqlDescriptor(String queryName);
+	void registerNamedHqlQueryDescriptor(String name, NamedHqlQueryMemento descriptor);
+	NamedHqlQueryMemento getNamedHqlDescriptor(String queryName);
 
-	void registerNamedNativeQueryDescriptor(String name, NamedNativeQueryDescriptor descriptor);
-	NamedNativeQueryDescriptor getNamedNativeDescriptor(String queryName);
+	void registerNamedNativeQueryDescriptor(String name, NamedNativeQueryMemento descriptor);
+	NamedNativeQueryMemento getNamedNativeDescriptor(String queryName);
 
-	void registerNamedCallableQueryDescriptor(String name, NamedCallableQueryDescriptor memento);
-	NamedCallableQueryDescriptor getNamedCallableQueryDescriptor(String name);
+	void registerNamedCallableQueryDescriptor(String name, NamedCallableQueryMemento memento);
+	NamedCallableQueryMemento getNamedCallableQueryDescriptor(String name);
 
 	ResultSetMappingDescriptor getResultSetMappingDescriptor(String mappingName);
 

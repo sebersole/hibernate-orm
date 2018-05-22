@@ -7,7 +7,7 @@
 package org.hibernate.boot.model.query.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 
 /**
  * @author Steve Ebersole
@@ -17,5 +17,5 @@ public interface NamedNativeQueryDefinition extends NamedQueryDefinition {
 	String getResultSetMappingName();
 
 	@Override
-	NamedNativeQueryDescriptor resolve(SessionFactoryImplementor factory);
+	NamedNativeQueryMemento resolve(SessionFactoryImplementor factory);
 }

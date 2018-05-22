@@ -6,13 +6,19 @@
  */
 package org.hibernate.boot.model.query.internal;
 
+import java.util.List;
+import java.util.Map;
+import javax.persistence.ParameterMode;
+
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
+import org.hibernate.boot.model.query.spi.ParameterDefinition;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.internal.NamedHqlQueryDescriptorImpl;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.internal.NamedHqlQueryMementoImpl;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 
 /**
  * @author Steve Ebersole
@@ -25,6 +31,7 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 	public NamedHqlQueryDefinitionImpl(
 			String name,
 			String hqlString,
+			List<ParameterDefinition> parameterDefinitions,
 			Integer firstResult,
 			Integer maxResults,
 			Boolean cacheable,
@@ -35,9 +42,11 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 			LockOptions lockOptions,
 			Integer timeout,
 			Integer fetchSize,
-			String comment) {
+			String comment,
+			Map<String,Object> hints) {
 		super(
 				name,
+				parameterDefinitions,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -46,7 +55,8 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 				lockOptions,
 				timeout,
 				fetchSize,
-				comment
+				comment,
+				hints
 		);
 		this.hqlString = hqlString;
 		this.firstResult = firstResult;
@@ -59,9 +69,10 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 	}
 
 	@Override
-	public NamedHqlQueryDescriptor resolve(SessionFactoryImplementor factory) {
-		return new NamedHqlQueryDescriptorImpl(
+	public NamedHqlQueryMemento resolve(SessionFactoryImplementor factory) {
+		return new NamedHqlQueryMementoImpl(
 				getName(),
+				resolveParameterDescriptors( factory ),
 				hqlString,
 				firstResult,
 				maxResults,
@@ -73,7 +84,8 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 				getLockOptions(),
 				getTimeout(),
 				getFetchSize(),
-				getComment()
+				getComment(),
+				getHints()
 		);
 	}
 
@@ -103,10 +115,33 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 			return getThis();
 		}
 
+		@Override
+		protected ParameterDefinition createPositionalParameter(int i, Class javaType, ParameterMode mode) {
+			/// todo (6.0) : this really ought to just adjust the type, if one...
+			throw new NotYetImplementedFor6Exception();
+//			return new ParameterDefinition() {
+//				@Override
+//				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+//					return new ParameterDescriptor() {
+//						@Override
+//						public QueryParameter toQueryParameter(SharedSessionContractImplementor session) {
+//							return new QueryParameterPositionalImpl( i,  );
+//						}
+//					};
+//				}
+//			};
+		}
+
+		@Override
+		protected ParameterDefinition createNamedParameter(String name, Class javaType, ParameterMode mode) {
+			throw new NotYetImplementedFor6Exception();
+		}
+
 		public NamedHqlQueryDefinitionImpl build() {
 			return new NamedHqlQueryDefinitionImpl(
 					getName(),
 					hqlString,
+					getParameterDescriptors(),
 					firstResult,
 					maxResults,
 					getCacheable(),
@@ -117,7 +152,8 @@ public class NamedHqlQueryDefinitionImpl extends AbstractNamedQueryDefinition im
 					getLockOptions(),
 					getTimeout(),
 					getFetchSize(),
-					getComment()
+					getComment(),
+					getHints()
 			);
 		}
 	}

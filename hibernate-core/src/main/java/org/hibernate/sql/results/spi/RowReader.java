@@ -8,6 +8,9 @@ package org.hibernate.sql.results.spi;
 
 import java.sql.SQLException;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.named.spi.RowReaderMemento;
+
 /**
  * @author Steve Ebersole
  */
@@ -17,4 +20,6 @@ public interface RowReader<R> {
 	R readRow(RowProcessingState processingState, JdbcValuesSourceProcessingOptions options) throws SQLException;
 
 	void finishUp(JdbcValuesSourceProcessingState context);
+
+	RowReaderMemento toMemento(SessionFactoryImplementor factory);
 }

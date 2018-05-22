@@ -50,9 +50,9 @@ import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Table;
 import org.hibernate.query.internal.NamedQueryRepositoryImpl;
-import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
-import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
+import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.query.spi.NamedQueryRepository;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
@@ -323,12 +323,12 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 
 	}
 
-	private Map<String, NamedHqlQueryDescriptor> buildNamedHqlDescriptorMap(SessionFactoryImplementor sessionFactory) {
+	private Map<String, NamedHqlQueryMemento> buildNamedHqlDescriptorMap(SessionFactoryImplementor sessionFactory) {
 		if ( namedHqlQueryMap == null || namedHqlQueryMap.isEmpty() ) {
 			return Collections.emptyMap();
 		}
 
-		final ConcurrentHashMap<String,NamedHqlQueryDescriptor> descriptorMap = new ConcurrentHashMap<>();
+		final ConcurrentHashMap<String,NamedHqlQueryMemento> descriptorMap = new ConcurrentHashMap<>();
 
 		for ( Map.Entry<String, NamedHqlQueryDefinition> entry : namedHqlQueryMap.entrySet() ) {
 			descriptorMap.put(
@@ -340,12 +340,12 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return descriptorMap;
 	}
 
-	private Map<String, NamedNativeQueryDescriptor> buildNamedNativeDescriptorMap(SessionFactoryImplementor sessionFactory) {
+	private Map<String, NamedNativeQueryMemento> buildNamedNativeDescriptorMap(SessionFactoryImplementor sessionFactory) {
 		if ( namedNativeQueryMap == null || namedNativeQueryMap.isEmpty() ) {
 			return Collections.emptyMap();
 		}
 
-		final ConcurrentHashMap<String,NamedNativeQueryDescriptor> descriptorMap = new ConcurrentHashMap<>();
+		final ConcurrentHashMap<String,NamedNativeQueryMemento> descriptorMap = new ConcurrentHashMap<>();
 
 		for ( Map.Entry<String, NamedNativeQueryDefinition> entry : namedNativeQueryMap.entrySet() ) {
 			descriptorMap.put(
@@ -374,10 +374,10 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return converted;
 	}
 
-	private Map<String, NamedCallableQueryDescriptor> buildProcedureCallMementos(
+	private Map<String, NamedCallableQueryMemento> buildProcedureCallMementos(
 			SessionFactoryImplementor sessionFactory,
 			Map<String, ResultSetMappingDescriptor> resolvedResultSetMappings) {
-		final Map<String, NamedCallableQueryDescriptor> rtn = new HashMap<>();
+		final Map<String, NamedCallableQueryMemento> rtn = new HashMap<>();
 		if ( namedProcedureCallMap != null ) {
 			for ( NamedProcedureCallDefinition procedureCallDefinition : namedProcedureCallMap.values() ) {
 				rtn.put(

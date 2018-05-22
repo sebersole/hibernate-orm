@@ -8,12 +8,12 @@ package org.hibernate.query.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.named.spi.NameableQuery;
-import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
+import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 
 /**
  * @author Steve Ebersole
  */
 public interface HqlQueryImplementor<R> extends QueryImplementor<R>, NameableQuery {
 	@Override
-	NamedHqlQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
+	NamedHqlQueryMemento toMemento(String name, SessionFactoryImplementor factory);
 }
