@@ -18,6 +18,7 @@ import org.hibernate.query.spi.NativeQueryImplementor;
  */
 public interface NamedNativeQueryDescriptor extends NamedQueryDescriptor {
 	String getSqlString();
+
 	String getResultSetMappingName();
 
 	Collection<String> getQuerySpaces();

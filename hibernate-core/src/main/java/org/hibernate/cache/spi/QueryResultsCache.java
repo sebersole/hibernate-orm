@@ -51,7 +51,6 @@ public interface QueryResultsCache {
 	boolean put(
 			QueryKey key,
 			List result,
-			Type[] returnTypes,
 			SharedSessionContractImplementor session) throws HibernateException;
 
 	/**
@@ -67,8 +66,7 @@ public interface QueryResultsCache {
 	 */
 	List get(
 			QueryKey key,
-			Set<Serializable> spaces,
-			Type[] returnTypes,
+			Set<String> spaces,
 			SharedSessionContractImplementor session) throws HibernateException;
 
 	/**
@@ -85,7 +83,6 @@ public interface QueryResultsCache {
 	List get(
 			QueryKey key,
 			String[] spaces,
-			Type[] returnTypes,
 			SharedSessionContractImplementor session) throws HibernateException;
 
 
@@ -98,16 +95,17 @@ public interface QueryResultsCache {
 			List result,
 			boolean isNaturalKeyLookup,
 			SharedSessionContractImplementor session) {
-		return put( key, result, returnTypes, session );
+		return put( key, result, session );
 	}
 
+	@SuppressWarnings("unchecked")
 	default List get(
 			QueryKey key,
 			Type[] returnTypes,
 			boolean isNaturalKeyLookup,
 			Set<Serializable> spaces,
 			SharedSessionContractImplementor session) {
-		return get( key, spaces, returnTypes, session );
+		return get( key, (Set) spaces, session );
 	}
 
 	default void destroy() {

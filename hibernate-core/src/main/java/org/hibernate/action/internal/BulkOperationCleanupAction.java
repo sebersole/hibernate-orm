@@ -113,30 +113,32 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 
 		final SessionFactoryImplementor factory = session.getFactory();
 
-		for ( EntityHierarchy entityHierarchy : factory.getMetamodel().getEntityHierarchies() ) {
-			final EntityDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
-			final String[] affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
-			if ( affectedEntity( tableSpaces, affectedTableNames ) ) {
-				spacesList.addAll( Arrays.asList( affectedTableNames ) );
+		factory.getMetamodel().visitEntityHierarchies(
+				entityHierarchy -> {
+					final EntityDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
+					final String[] affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
+					if ( affectedEntity( tableSpaces, affectedTableNames ) ) {
+						spacesList.addAll( Arrays.asList( affectedTableNames ) );
 
-				if ( rootEntityDescriptor.canWriteToCache() ) {
-					entityCleanups.add( new EntityCleanup( entityHierarchy.getEntityCacheAccess(), session ) );
-				}
-				if ( rootEntityDescriptor.hasNaturalIdentifier() && entityHierarchy.getNaturalIdDescriptor().getCacheAccess() != null ) {
-					naturalIdCleanups.add( new NaturalIdCleanup( entityHierarchy.getNaturalIdDescriptor().getCacheAccess(), session ) );
-				}
+						if ( rootEntityDescriptor.canWriteToCache() ) {
+							entityCleanups.add( new EntityCleanup( entityHierarchy.getEntityCacheAccess(), session ) );
+						}
+						if ( rootEntityDescriptor.hasNaturalIdentifier() && entityHierarchy.getNaturalIdDescriptor().getCacheAccess() != null ) {
+							naturalIdCleanups.add( new NaturalIdCleanup( entityHierarchy.getNaturalIdDescriptor().getCacheAccess(), session ) );
+						}
 
-				for ( PersistentCollectionDescriptor<?, ?, ?> collectionDescriptor : session.getFactory()
-						.getMetamodel()
-						.findCollectionsByEntityParticipant( rootEntityDescriptor ) ) {
-					if ( collectionDescriptor.hasCache() ) {
-						collectionCleanups.add(
-								new CollectionCleanup( collectionDescriptor.getCacheAccess(), session )
-						);
+						for ( PersistentCollectionDescriptor<?, ?, ?> collectionDescriptor : session.getFactory()
+								.getMetamodel()
+								.findCollectionsByEntityParticipant( rootEntityDescriptor ) ) {
+							if ( collectionDescriptor.hasCache() ) {
+								collectionCleanups.add(
+										new CollectionCleanup( collectionDescriptor.getCacheAccess(), session )
+								);
+							}
+						}
 					}
 				}
-			}
-		}
+		);
 
 		this.affectedTableSpaces = spacesList.toArray( new String[ spacesList.size() ] );
 	}

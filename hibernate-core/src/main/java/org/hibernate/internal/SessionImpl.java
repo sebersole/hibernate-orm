@@ -135,7 +135,6 @@ import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.procedure.ProcedureCall;
-import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -2461,7 +2460,7 @@ public final class SessionImpl
 	}
 
 	private <T> EntityDescriptor<? extends T> locateEntityPersister(Class<T> entityClass) {
-		return getFactory().getMetamodel().findEntityDescriptor( entityClass );
+		return getFactory().getMetamodel().getEntityDescriptor( entityClass );
 	}
 
 	private <T> EntityDescriptor<? extends T> locateEntityPersister(String entityName) {
@@ -3161,7 +3160,7 @@ public final class SessionImpl
 	public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
 		checkOpen();
 		try {
-			final ProcedureCallMemento memento = getFactory().getQueryEngine().getNamedQueryRepository().getNamedProcedureCallMemento( name );
+			final ProcedureCallMemento memento = getFactory().getQueryEngine().getNamedQueryRepository().getNamedCallableQueryDescriptor( name );
 			if ( memento == null ) {
 				throw new IllegalArgumentException( "No @NamedStoredProcedureQuery was found with that name : " + name );
 			}
@@ -3290,7 +3289,7 @@ public final class SessionImpl
 		checkOpen();
 		return new EntityGraphImpl<T>(
 				null,
-				(EntityDescriptor<T>) getFactory().getMetamodel().findEntityDescriptor( rootType ),
+				(EntityDescriptor<T>) getFactory().getMetamodel().getEntityDescriptor( rootType ),
 				getEntityManagerFactory()
 		);
 	}

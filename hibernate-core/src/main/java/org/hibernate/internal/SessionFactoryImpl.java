@@ -80,6 +80,7 @@ import org.hibernate.envers.internal.reader.AuditReaderImpl;
 import org.hibernate.event.service.spi.EventListenerGroup;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
@@ -95,7 +96,7 @@ import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
-import org.hibernate.procedure.ProcedureCall;
+import org.hibernate.procedure.spi.ProcedureCallImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.proxy.HibernateProxyHelper;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
@@ -172,8 +173,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	private final transient CacheImplementor cacheEngine;
 
 	private final transient QueryEngine queryEngine;
-	// todo (6.0) - move to QueryEngine?
-	private final transient CriteriaBuilderImpl criteriaBuilder;
 
 	private final transient CurrentSessionContext currentSessionContext;
 
@@ -318,10 +317,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 				final FetchProfile fetchProfile = new FetchProfile( mappingProfile.getName() );
 				for ( org.hibernate.mapping.FetchProfile.Fetch mappingFetch : mappingProfile.getFetches() ) {
 					// resolve the persister owning the fetch
-					final String entityName = getImportedClassName( mappingFetch.getEntity() );
-					final EntityDescriptor owner = entityName == null
-							? null
-							: metamodel.findEntityDescriptor( entityName );
+					final EntityDescriptor owner = metamodel.findEntityDescriptor( mappingFetch.getEntity() );
 					if ( owner == null ) {
 						throw new HibernateException(
 								"Unable to resolve entity reference [" + mappingFetch.getEntity()
@@ -556,7 +552,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
+	public <T> List<EntityGraphImplementor<? super T>> findEntityGraphsByType(Class<T> entityClass) {
 		return getMetamodel().findEntityGraphForType( entityClass );
 	}
 
@@ -763,11 +759,11 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 		// first, handle StoredProcedureQuery
 		try {
-			final ProcedureCall unwrapped = query.unwrap( ProcedureCall.class );
+			final ProcedureCallImplementor unwrapped = query.unwrap( ProcedureCallImplementor.class );
 			if ( unwrapped != null ) {
-				getQueryEngine().getNamedQueryRepository().registerNamedProcedureCallMemento(
+				getQueryEngine().getNamedQueryRepository().registerNamedCallableQueryDescriptor(
 						name,
-						unwrapped.extractMemento( unwrapped.getHints() )
+						unwrapped.toMemento( name )
 				);
 				return;
 			}
@@ -782,7 +778,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			if ( hqlQuery != null ) {
 				getQueryEngine().getNamedQueryRepository().registerNamedHqlQueryDescriptor(
 						name,
-						hqlQuery.toNamedDescriptor( name )
+						hqlQuery.toMemento( name )
 				);
 
 				return;
@@ -798,7 +794,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			if ( nativeQuery != null ) {
 				getQueryEngine().getNamedQueryRepository().registerNamedNativeQueryDescriptor(
 						name,
-						nativeQuery.toNamedDescriptor( name )
+						nativeQuery.toMemento( name )
 				);
 
 				return;

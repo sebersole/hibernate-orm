@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 
@@ -33,13 +34,12 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public E toDomainValue(Integer relationalForm) {
+	public E toDomainValue(Integer relationalForm, SharedSessionContractImplementor session) {
 		return enumJavaDescriptor.fromOrdinal( relationalForm );
 	}
 
 	@Override
-	public Integer toRelationalValue(E domainForm) {
+	public Integer toRelationalValue(E domainForm, SharedSessionContractImplementor session) {
 		return enumJavaDescriptor.toOrdinal( domainForm );
 	}
 
@@ -54,7 +54,10 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	}
 
 	@Override
-	public E readValue(ResultSet resultSet, String name) throws SQLException {
+	public E readValue(
+			ResultSet resultSet,
+			String name,
+			SharedSessionContractImplementor session) throws SQLException {
 		final int ordinal = resultSet.getInt( name );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( resultSet.wasNull() ) {
@@ -64,7 +67,7 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 			return null;
 		}
 
-		final E enumValue = toDomainValue( ordinal );
+		final E enumValue = toDomainValue( ordinal, session );
 		if ( traceEnabled ) {
 			log.trace(String.format("Returning [%s] as column [%s]", enumValue, name));
 		}
@@ -73,8 +76,12 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	}
 
 	@Override
-	public void writeValue(PreparedStatement statement, E value, int position) throws SQLException {
-		final Integer jdbcValue = value == null ? null : toRelationalValue( value );
+	public void writeValue(
+			PreparedStatement statement,
+			E value,
+			int position,
+			SharedSessionContractImplementor session) throws SQLException {
+		final Integer jdbcValue = value == null ? null : toRelationalValue( value, session );
 
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( jdbcValue == null ) {

@@ -17,6 +17,7 @@ import javax.persistence.EntityGraph;
 
 import org.hibernate.EntityNameResolver;
 import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.metamodel.NotNavigableException;
 import org.hibernate.metamodel.RuntimeModel;
 import org.hibernate.metamodel.model.creation.spi.InFlightRuntimeModel;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -39,7 +40,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	private final Map<String,String> nameImportMap;
 	private final Set<EntityNameResolver> entityNameResolvers;
 
-	private final Map<String,EntityGraph<?>> entityGraphMap;
+	private final Map<String,EntityGraphImplementor<?>> entityGraphMap;
 
 	public AbstractRuntimeModel() {
 		this.entityDescriptorMap = new ConcurrentHashMap<>();
@@ -73,7 +74,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 			Map<String, PersistentCollectionDescriptor<?, ?, ?>> collectionDescriptorMap,
 			Set<EntityNameResolver> entityNameResolvers,
 			Map<String, String> nameImportMap,
-			Map<String, EntityGraph<?>> entityGraphMap) {
+			Map<String, EntityGraphImplementor<?>> entityGraphMap) {
 		this.entityHierarchySet = Collections.unmodifiableSet( entityHierarchySet );
 		this.entityDescriptorMap = Collections.unmodifiableMap( entityDescriptorMap );
 		this.mappedSuperclassDescriptorMap = Collections.unmodifiableMap( mappedSuperclassDescriptorMap );
@@ -108,18 +109,37 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	}
 
 	@Override
-	public <T> EntityDescriptor<T> findEntityDescriptor(Class<T> javaType) {
-		return findEntityDescriptor( javaType.getName() );
+	public <T> EntityDescriptor<T> getEntityDescriptor(Class<T> javaType) {
+		return getEntityDescriptor( javaType.getName() );
 	}
 
 	@Override
-	public <T> EntityDescriptor<T> findEntityDescriptor(NavigableRole name) {
-		return findEntityDescriptor( name.getFullPath() );
+	public <T> EntityDescriptor<T> getEntityDescriptor(NavigableRole name) {
+		return getEntityDescriptor( name.getFullPath() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> EntityDescriptor<T> getEntityDescriptor(String entityName) throws NotNavigableException {
+		final EntityDescriptor<T> descriptor = (EntityDescriptor<T>) entityDescriptorMap.get( entityName );
+
+		if ( descriptor == null ) {
+			throw new NotNavigableException( entityName );
+		}
+
+		return descriptor;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> EntityDescriptor<T> findEntityDescriptor(Class<T> javaType) {
+		return (EntityDescriptor<T>) entityDescriptorMap.get( javaType.getName() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> EntityDescriptor<T> findEntityDescriptor(String entityName) {
+		entityName = getImportedName( entityName );
 		return (EntityDescriptor<T>) entityDescriptorMap.get( entityName );
 	}
 
@@ -138,18 +158,37 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	}
 
 	@Override
-	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType) {
-		return findMappedSuperclassDescriptor( javaType.getName() );
+	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(NavigableRole role) throws NotNavigableException {
+		return getMappedSuperclassDescriptor( role.getFullPath() );
 	}
 
 	@Override
-	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(NavigableRole name) {
-		return findMappedSuperclassDescriptor( name.getFullPath() );
+	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException {
+		return getMappedSuperclassDescriptor( javaType.getName() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException {
+		final MappedSuperclassDescriptor<T> descriptor = (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
+
+		if ( descriptor == null ) {
+			throw new NotNavigableException( name );
+		}
+
+		return descriptor;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType) {
+		return (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( javaType.getName() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(String name) {
+		name = getImportedName( name );
 		return (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
 	}
 
@@ -197,6 +236,21 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	}
 
 	@Override
+	public <O, C, E> PersistentCollectionDescriptor<O, C, E> getCollectionDescriptor(NavigableRole name) throws NotNavigableException {
+		return getCollectionDescriptor( name.getFullPath() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <O, C, E> PersistentCollectionDescriptor<O, C, E> getCollectionDescriptor(String name) throws NotNavigableException {
+		final PersistentCollectionDescriptor descriptor = findCollectionDescriptor( name );
+		if ( descriptor == null ) {
+			throw new NotNavigableException( name );
+		}
+		return descriptor;
+	}
+
+	@Override
 	public <O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(NavigableRole name) {
 		return findCollectionDescriptor( name.getFullPath() );
 	}
@@ -217,29 +271,29 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	// EntityGraph
 
 
-	protected Map<String, EntityGraph<?>> getEntityGraphMap() {
+	protected Map<String, EntityGraphImplementor<?>> getEntityGraphMap() {
 		return entityGraphMap;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityGraph<? super T> findEntityGraph(String name) {
-		return (EntityGraph<T>) entityGraphMap.get( name );
+	public <T> EntityGraphImplementor<? super T> findEntityGraph(String name) {
+		return (EntityGraphImplementor<T>) entityGraphMap.get( name );
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType) {
+	public <T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(Class<T> baseType) {
 		return findEntityGraphForType( baseType.getName() );
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName) {
+	public <T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(String baseTypeName) {
 		final EntityDescriptor<? extends T> entityDescriptor = findEntityDescriptor( baseTypeName );
 		if ( entityDescriptor == null ) {
 			throw new IllegalArgumentException( "Not an entity : " + baseTypeName );
 		}
 
-		final List<EntityGraph<? super T>> results = new ArrayList<>();
+		final List<EntityGraphImplementor<? super T>> results = new ArrayList<>();
 
 		for ( EntityGraph entityGraph : entityGraphMap.values() ) {
 			if ( !EntityGraphImplementor.class.isInstance( entityGraph ) ) {

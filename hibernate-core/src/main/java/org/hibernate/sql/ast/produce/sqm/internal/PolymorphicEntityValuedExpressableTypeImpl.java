@@ -255,6 +255,16 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
+	public boolean canReadFromCache() {
+		return false;
+	}
+
+	@Override
+	public boolean canWriteToCache() {
+		return false;
+	}
+
+	@Override
 	public void visitNavigables(NavigableVisitationStrategy visitor) {
 		// todo (6.0) : not sure how visitation should work here
 		throw new NotYetImplementedFor6Exception();

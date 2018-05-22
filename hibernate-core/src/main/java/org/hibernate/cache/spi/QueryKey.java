@@ -33,6 +33,12 @@ public class QueryKey implements Serializable {
 			Limit limit,
 			QueryParameterBindings parameterBindings,
 			SharedSessionContractImplementor persistenceContext) {
+		// todo (6.0) : here is where we should centralize cacheable-or-not
+		//		if this method returns null, the query should be considered un-cacheable
+		//
+		// todo (6.0) : should limited (first/max) results be cacheable?
+		// todo (6.0) : should filtered results be cacheable?
+
 		final Limit limitToUse = limit == null ? Limit.NONE : limit;
 
 		return new QueryKey(
@@ -44,6 +50,7 @@ public class QueryKey implements Serializable {
 				persistenceContext.getLoadQueryInfluencers().getEnabledFilterNames()
 		);
 	}
+
 
 	private final String sqlQueryString;
 	private final ParameterBindingsMemento parameterBindingsMemento;

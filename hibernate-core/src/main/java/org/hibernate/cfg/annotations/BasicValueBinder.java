@@ -29,6 +29,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.model.TypeDefinition;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -78,7 +79,7 @@ public class BasicValueBinder<T> {
 	// BasicType info
 
 	private BasicJavaDescriptor<T> javaDescriptor;
-	private AttributeConverterDescriptor converterDescriptor;
+	private ConverterDescriptor converterDescriptor;
 	private boolean isNationalized;
 	private boolean isLob;
 	private javax.persistence.EnumType enumType;
@@ -155,7 +156,7 @@ public class BasicValueBinder<T> {
 			XProperty navigableXProperty,
 			XClass navigableXClass,
 			String declaringClassName,
-			AttributeConverterDescriptor converterDescriptor) {
+			ConverterDescriptor converterDescriptor) {
 		if ( navigableXClass == null ) {
 			// we cannot guess anything
 			return;
@@ -280,7 +281,7 @@ public class BasicValueBinder<T> {
 				.getDialect();
 	}
 
-	private void applyAttributeConverter(XProperty property, AttributeConverterDescriptor attributeConverterDescriptor, boolean key) {
+	private void applyAttributeConverter(XProperty property, ConverterDescriptor attributeConverterDescriptor, boolean key) {
 		if ( attributeConverterDescriptor == null ) {
 			return;
 		}
@@ -468,7 +469,7 @@ public class BasicValueBinder<T> {
 
 		public BasicTypeResolverMapKeyImpl(
 				MetadataBuildingContext buildingContext,
-				AttributeConverterDescriptor converterDescriptor,
+				ConverterDescriptor converterDescriptor,
 				XProperty mapAttribute,
 				boolean isLob,
 				boolean isNationalized) {
@@ -604,7 +605,7 @@ public class BasicValueBinder<T> {
 		@SuppressWarnings("unchecked")
 		public BasicTypeResolverAttributeImpl(
 				MetadataBuildingContext buildingContext,
-				AttributeConverterDescriptor converterDescriptor,
+				ConverterDescriptor converterDescriptor,
 				XProperty attributeDescriptor,
 				XClass elementJavaType,
 				boolean isLob,
@@ -696,7 +697,7 @@ public class BasicValueBinder<T> {
 
 		public BasicTypeResolverCollectionElementImpl(
 				MetadataBuildingContext buildingContext,
-				AttributeConverterDescriptor converterDescriptor,
+				ConverterDescriptor converterDescriptor,
 				XProperty attributeDescriptor,
 				XClass elementJavaType,
 				boolean isLob,

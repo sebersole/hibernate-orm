@@ -954,7 +954,7 @@ public class ProcedureCallImpl<R>
 	}
 
 	@Override
-	public NamedCallableQueryDescriptor toMemento(String name) {
+	public NamedCallableQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
 		return new NamedCallableQueryDescriptorImpl(
 				name,
 				procedureName,

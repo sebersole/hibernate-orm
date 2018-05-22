@@ -207,4 +207,9 @@ public class SqmFunctionRegistry {
 		functionMap.forEach( registryToOverly::register );
 		alternateKeyMap.forEach( registryToOverly::registerAlternateKey );
 	}
+
+	public void close() {
+		functionMap.clear();
+		alternateKeyMap.clear();
+	}
 }

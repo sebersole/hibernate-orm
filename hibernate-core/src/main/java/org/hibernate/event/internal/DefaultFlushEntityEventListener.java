@@ -387,7 +387,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 
 	private boolean copyState(Object entity, JavaTypeDescriptor[] javaTypeDescriptors, Object[] state, SessionFactoryImplementor sf) {
 		// copy the entity state into the state array and return true if the state has changed
-		EntityDescriptor entityDescriptor = sf.getMetamodel().findEntityDescriptor( entity.getClass() );
+		EntityDescriptor entityDescriptor = sf.getMetamodel().getEntityDescriptor( entity.getClass() );
 		Object[] newState = entityDescriptor.getPropertyValues( entity );
 		int size = newState.length;
 		boolean isDirty = false;

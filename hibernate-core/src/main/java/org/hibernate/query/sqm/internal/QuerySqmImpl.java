@@ -445,7 +445,7 @@ public class QuerySqmImpl<R>
 	}
 
 	@Override
-	public NamedHqlQueryDescriptor toNamedDescriptor(String name) {
+	public NamedHqlQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
 		return new NamedHqlQueryDescriptorImpl(
 				name,
 				toParameterMementos( getParameterMetadata() ),

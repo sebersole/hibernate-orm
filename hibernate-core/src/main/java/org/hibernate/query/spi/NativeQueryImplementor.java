@@ -27,6 +27,7 @@ import org.hibernate.Incubating;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.QueryParameter;
@@ -41,8 +42,12 @@ import org.hibernate.type.Type;
  * @author Steve Ebersole
  */
 @Incubating
-public interface NativeQueryImplementor<R> extends QueryImplementor<R>, NativeQuery<R>, NameableQuery<NamedNativeQueryDescriptor> {
+public interface NativeQueryImplementor<R> extends QueryImplementor<R>, NativeQuery<R>, NameableQuery {
 	NativeQueryImplementor setCollectionKey(Serializable key);
+
+	@Override
+	NamedNativeQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// covariant overrides - NativeQuery

@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.mapping.Collection;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionElement;
@@ -24,7 +25,6 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
@@ -41,7 +41,7 @@ public class BasicCollectionElementImpl<J>
 
 	private final Column column;
 	private final BasicType<J> basicType;
-	private final AttributeConverterDefinition attributeConverter;
+	private final BasicValueConverter valueConverter;
 
 	@SuppressWarnings("unchecked")
 	public BasicCollectionElementImpl(
@@ -57,21 +57,20 @@ public class BasicCollectionElementImpl<J>
 		// todo (6.0) : resolve SimpleValue -> BasicType
 		this.basicType = ( (BasicValueMapping) bootCollectionMapping.getElement() ).resolveType();
 
-		this.attributeConverter = simpleElementValueMapping.getAttributeConverterDefinition();
+		this.valueConverter = simpleElementValueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
 
-		if ( attributeConverter != null ) {
+		if ( valueConverter != null ) {
 			log.debugf(
-					"AttributeConverter [%s] being injected for elements of the '%s' collection; was : %s",
-					attributeConverter.getAttributeConverter(),
-					getContainer().getNavigableRole(),
-					this.attributeConverter
+					"BasicValueConverter [%s] being applied for basic collection elements : %s",
+					valueConverter,
+					getNavigableRole()
 			);
 		}
 	}
 
 	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
-		return attributeConverter;
+	public BasicValueConverter getValueConverter() {
+		return valueConverter;
 	}
 
 	@Override

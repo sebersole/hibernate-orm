@@ -14,7 +14,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.CollectionHelper;
-import org.hibernate.procedure.ProcedureCallMemento;
+import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
 import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
 import org.hibernate.query.spi.NamedQueryRepository;
@@ -34,13 +34,13 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 
 	private volatile Map<String, NamedHqlQueryDescriptor> namedHqlQueryDescriptorMap;
 	private volatile Map<String, NamedNativeQueryDescriptor> namedNativeQueryDescriptorMap;
-	private volatile Map<String, ProcedureCallMemento> procedureCallMementoMap;
+	private volatile Map<String, NamedCallableQueryDescriptor> procedureCallMementoMap;
 
 	public NamedQueryRepositoryImpl(
 			Iterable<NamedHqlQueryDescriptor> namedHqlQueryDescriptors,
 			Iterable<NamedNativeQueryDescriptor> namedNativeQueryDescriptors,
 			Iterable<ResultSetMappingDescriptor> namedSqlResultSetMappings,
-			Map<String, ProcedureCallMemento> namedProcedureCalls) {
+			Map<String, NamedCallableQueryDescriptor> namedProcedureCalls) {
 		final HashMap<String, NamedHqlQueryDescriptor> namedQueryDefinitionMap = new HashMap<>();
 		for ( NamedHqlQueryDescriptor namedHqlQueryDescriptor : namedHqlQueryDescriptors ) {
 			namedQueryDefinitionMap.put( namedHqlQueryDescriptor.getName(), namedHqlQueryDescriptor );
@@ -66,7 +66,7 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 			Map<String,NamedHqlQueryDescriptor> namedHqlQueryDescriptorMap,
 			Map<String,NamedNativeQueryDescriptor> namedNativeQueryDescriptorMap,
 			Map<String,ResultSetMappingDescriptor> namedSqlResultSetMappingMap,
-			Map<String, ProcedureCallMemento> namedProcedureCallMap) {
+			Map<String, NamedCallableQueryDescriptor> namedProcedureCallMap) {
 		this.namedHqlQueryDescriptorMap = Collections.unmodifiableMap( namedHqlQueryDescriptorMap );
 		this.namedNativeQueryDescriptorMap = Collections.unmodifiableMap( namedNativeQueryDescriptorMap );
 		this.namedSqlResultSetMappingMap = Collections.unmodifiableMap( namedSqlResultSetMappingMap );
@@ -83,7 +83,8 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 		return namedNativeQueryDescriptorMap.get( queryName );
 	}
 
-	@Override public ProcedureCallMemento getNamedProcedureCallMemento(String name) {
+	@Override
+	public NamedCallableQueryDescriptor getNamedCallableQueryDescriptor(String name) {
 		return procedureCallMementoMap.get( name );
 	}
 
@@ -131,9 +132,9 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 		this.namedNativeQueryDescriptorMap = Collections.unmodifiableMap( copy );
 	}
 
-	@Override public synchronized void registerNamedProcedureCallMemento(String name, ProcedureCallMemento memento) {
-		final Map<String, ProcedureCallMemento> copy = CollectionHelper.makeCopy( procedureCallMementoMap );
-		final ProcedureCallMemento previous = copy.put( name, memento );
+	@Override public synchronized void registerNamedCallableQueryDescriptor(String name, NamedCallableQueryDescriptor memento) {
+		final Map<String, NamedCallableQueryDescriptor> copy = CollectionHelper.makeCopy( procedureCallMementoMap );
+		final NamedCallableQueryDescriptor previous = copy.put( name, memento );
 		if ( previous != null ) {
 			log.debugf(
 					"registering named procedure call definition [%s] overriding previously registered definition [%s]",
@@ -257,5 +258,13 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 		}
 
 		return errors;
+	}
+
+	@Override
+	public void close() {
+		namedSqlResultSetMappingMap.clear();
+		namedHqlQueryDescriptorMap.clear();
+		namedNativeQueryDescriptorMap.clear();
+		procedureCallMementoMap.clear();
 	}
 }

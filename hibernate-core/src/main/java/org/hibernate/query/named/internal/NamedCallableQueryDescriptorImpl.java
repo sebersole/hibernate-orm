@@ -30,6 +30,8 @@ public class NamedCallableQueryDescriptorImpl
 		implements NamedCallableQueryDescriptor {
 	private final String callableName;
 	private final ParameterStrategy parameterStrategy;
+	private final Class[] resultClasses;
+	private final String[] resultSetMappingNames;
 	private final Collection<String> querySpaces;
 
 	public NamedCallableQueryDescriptorImpl(
@@ -37,6 +39,8 @@ public class NamedCallableQueryDescriptorImpl
 			String callableName,
 			ParameterStrategy parameterStrategy,
 			List<ParameterDescriptor> parameterDescriptors,
+			Class[] resultClasses,
+			String[] resultSetMappingNames,
 			Collection<String> querySpaces,
 			Boolean cacheable,
 			String cacheRegion,
@@ -64,8 +68,9 @@ public class NamedCallableQueryDescriptorImpl
 		);
 		this.callableName = callableName;
 		this.parameterStrategy = parameterStrategy;
+		this.resultClasses = resultClasses;
+		this.resultSetMappingNames = resultSetMappingNames;
 		this.querySpaces = querySpaces;
-
 	}
 
 	@Override
@@ -94,6 +99,8 @@ public class NamedCallableQueryDescriptorImpl
 				getCallableName(),
 				getParameterStrategy(),
 				getParameterDescriptors(),
+				resultClasses,
+				resultSetMappingNames,
 				getQuerySpaces(),
 				getCacheable(),
 				getCacheRegion(),
@@ -104,7 +111,7 @@ public class NamedCallableQueryDescriptorImpl
 				getTimeout(),
 				getFetchSize(),
 				getComment(),
-				Util.copy( getHints() )
+				getHintsCopy()
 		);
 	}
 

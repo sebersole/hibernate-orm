@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import javax.persistence.EntityGraph;
 
 import org.hibernate.EntityNameResolver;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -25,13 +26,17 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 public interface RuntimeModel {
 	void visitEntityHierarchies(Consumer<EntityHierarchy> action);
 
+	<T> EntityDescriptor<T> getEntityDescriptor(NavigableRole name) throws NotNavigableException;
+	<T> EntityDescriptor<T> getEntityDescriptor(Class<T> javaType) throws NotNavigableException;
+	<T> EntityDescriptor<T> getEntityDescriptor(String name) throws NotNavigableException;
 	<T> EntityDescriptor<T> findEntityDescriptor(Class<T> javaType);
-	<T> EntityDescriptor<T> findEntityDescriptor(NavigableRole name);
 	<T> EntityDescriptor<T> findEntityDescriptor(String name);
 	void visitEntityDescriptors(Consumer<EntityDescriptor<?>> action);
 
+	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(NavigableRole name) throws NotNavigableException;
+	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException;
+	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException;
 	<T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType);
-	<T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(NavigableRole name);
 	<T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(String name);
 	void visitMappedSuperclassDescriptors(Consumer<MappedSuperclassDescriptor<?>> action);
 
@@ -40,18 +45,20 @@ public interface RuntimeModel {
 	<T> EmbeddedTypeDescriptor<T> findEmbeddedDescriptor(String name);
 	void visitEmbeddedDescriptors(Consumer<EmbeddedTypeDescriptor<?>> action);
 
-	<O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(String name);
+	<O,C,E> PersistentCollectionDescriptor<O,C,E> getCollectionDescriptor(NavigableRole name) throws NotNavigableException;
+	<O,C,E> PersistentCollectionDescriptor<O,C,E> getCollectionDescriptor(String name) throws NotNavigableException;
 	<O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(NavigableRole name);
+	<O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(String name);
 	void visitCollectionDescriptors(Consumer<PersistentCollectionDescriptor<?,?,?>> action);
 
-	<T> EntityGraph<? super T> findEntityGraph(String name);
-	<T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType);
-	<T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName);
+	<T> EntityGraphImplementor<? super T> findEntityGraph(String name);
+	<T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(Class<T> baseType);
+	<T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(String baseTypeName);
 	void visitEntityGraphs(Consumer<EntityGraph<?>> action);
 
 	// todo (6.0) : default-for-type as well?
 	//		aka:
-	//<T> EntityGraph<T> defaultGraph(Class<T> javaType):
+	//<T> EntityGraphImplementor<T> defaultGraph(Class<T> entityJavaType);
 
 	String getImportedName(String name);
 

@@ -6,12 +6,9 @@
  */
 package org.hibernate.cfg;
 
-import org.hibernate.boot.model.type.spi.BasicTypeResolver;
-import org.hibernate.boot.spi.AttributeConverterDescriptor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.spi.BasicTypeParameters;
 
 /**
  * Standard support for BasicTypeResolver impls that represent
@@ -22,17 +19,17 @@ import org.hibernate.type.spi.BasicTypeParameters;
 public abstract class BasicTypeResolverConvertibleSupport
 		extends BasicTypeResolverSupport
 		implements JdbcRecommendedSqlTypeMappingContext {
-	private final AttributeConverterDescriptor converterDescriptor;
+	private final ConverterDescriptor converterDescriptor;
 
 	public BasicTypeResolverConvertibleSupport(
 			MetadataBuildingContext buildingContext,
-			AttributeConverterDescriptor converterDescriptor) {
+			ConverterDescriptor converterDescriptor) {
 		super( buildingContext );
 		this.converterDescriptor = converterDescriptor;
 	}
 
 	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
+	public ConverterDescriptor getAttributeConverterDescriptor() {
 		return converterDescriptor;
 
 	}

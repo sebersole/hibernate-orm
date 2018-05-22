@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.mapping.IndexedCollection;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionIndex;
@@ -27,10 +28,11 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
@@ -38,10 +40,11 @@ import org.hibernate.type.spi.BasicType;
 public class BasicCollectionIndexImpl<J>
 		extends AbstractCollectionIndex<J>
 		implements BasicCollectionIndex<J>, ConvertibleNavigable<J> {
+	private static final Logger log = Logger.getLogger( BasicCollectionIndexImpl.class );
 
 	private final BasicType<J> basicType;
 	private final Column column;
-	private final AttributeConverterDefinition attributeConverter;
+	private final BasicValueConverter valueConverter;
 
 	@SuppressWarnings("unchecked")
 	public BasicCollectionIndexImpl(
@@ -53,15 +56,23 @@ public class BasicCollectionIndexImpl<J>
 		final BasicValueMapping valueMapping = (BasicValueMapping) bootCollectionMapping.getIndex();
 		this.column  = creationContext.getDatabaseObjectResolver().resolveColumn( valueMapping.getMappedColumn() );
 
-		this.attributeConverter = valueMapping.getAttributeConverterDefinition();
+		this.basicType = valueMapping.resolveType();
 
-		// todo (6.0) : SimpleValue -> BasicType
-		this.basicType = ( (BasicValueMapping) bootCollectionMapping.getIndex() ).resolveType();
+		this.valueConverter = valueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
+
+		if ( valueConverter != null ) {
+			log.debugf(
+					"BasicValueConverter [%s] being applied for basic collection elements : %s",
+					valueConverter,
+					getNavigableRole()
+			);
+		}
+
 	}
 
 	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
-		return attributeConverter;
+	public BasicValueConverter getValueConverter() {
+		return valueConverter;
 	}
 
 	@Override

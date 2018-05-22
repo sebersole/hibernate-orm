@@ -9,6 +9,7 @@ package org.hibernate.cfg;
 import java.util.Comparator;
 import javax.persistence.TemporalType;
 
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -42,7 +43,7 @@ public abstract class BasicTypeResolverSupport<T>
 	}
 
 	@Override
-	public org.hibernate.type.converter.spi.AttributeConverterDefinition getAttributeConverterDefinition() {
+	public ConverterDescriptor getAttributeConverterDescriptor() {
 		return null;
 	}
 

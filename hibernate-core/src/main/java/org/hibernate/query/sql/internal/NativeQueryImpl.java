@@ -36,6 +36,7 @@ import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.QueryException;
 import org.hibernate.ScrollMode;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
@@ -79,16 +80,12 @@ import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.transform.ResultTransformer;
 import org.hibernate.type.Type;
 
-import org.jboss.logging.Logger;
-
 /**
  * @author Steve Ebersole
  */
 public class NativeQueryImpl<R>
 		extends AbstractQuery<R>
 		implements NativeQueryImplementor<R>, ParameterBindingContext, ExecutionContext {
-	private static final Logger log = Logger.getLogger( NativeQueryImpl.class );
-
 	private final String sqlString;
 
 	private List<QueryResultBuilder> resultBuilders;
@@ -623,7 +620,7 @@ public class NativeQueryImpl<R>
 	@Override
 	@SuppressWarnings("unchecked")
 	public NativeQueryImplementor<R> addSynchronizedEntityClass(Class entityClass) throws MappingException {
-		addQuerySpaces( getSession().getFactory().getMetamodel().findEntityDescriptor( entityClass ).getAffectedTableNames() );
+		addQuerySpaces( getSession().getFactory().getMetamodel().getEntityDescriptor( entityClass ).getAffectedTableNames() );
 		return this;
 	}
 
@@ -1096,7 +1093,7 @@ public class NativeQueryImpl<R>
 
 
 	@Override
-	public NamedNativeQueryDescriptor toMemento(String name) {
+	public NamedNativeQueryDescriptor toMemento(String name, SessionFactoryImplementor factory) {
 		return new NamedNativeQueryDescriptorImpl(
 				name,
 				toParameterMementos( getParameterMetadata() ),

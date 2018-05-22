@@ -54,7 +54,6 @@ import org.hibernate.jpa.spi.NativeQueryTupleTransformer;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.ProcedureCall;
-import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.query.Query;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
@@ -954,7 +953,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	public ProcedureCall getNamedProcedureCall(String name) {
 		checkOpen();
 
-		final ProcedureCallMemento memento = factory.getQueryEngine().getNamedQueryRepository().getNamedProcedureCallMemento( name );
+		final ProcedureCallMemento memento = factory.getQueryEngine().getNamedQueryRepository().getNamedCallableQueryDescriptor( name );
 		if ( memento == null ) {
 			throw new IllegalArgumentException(
 					"Could not find named stored procedure call with that registration name : " + name

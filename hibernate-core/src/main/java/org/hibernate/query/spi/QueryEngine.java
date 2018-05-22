@@ -90,21 +90,11 @@ public class QueryEngine {
 		return sqmFunctionRegistry;
 	}
 
-	public EntityDescriptor findEntityByName(String name) {
-		final Map<String,String> importMap = getSessionFactory().getTypeConfiguration().getImportMap();
-		if ( importMap.containsKey( name ) ) {
-			name = importMap.get( name );
-		}
-
-		final EntityDescriptor entityPersister = getSessionFactory().getTypeConfiguration().resolveEntityDescriptor( name );
-		if ( entityPersister != null ) {
-			return entityPersister;
-		}
-
-		return null;
-	}
-
 	public void close() {
-
+		namedQueryRepository.close();
+		criteriaBuilder.close();
+		semanticQueryProducer.close();
+		queryInterpretations.close();
+		sqmFunctionRegistry.close();
 	}
 }

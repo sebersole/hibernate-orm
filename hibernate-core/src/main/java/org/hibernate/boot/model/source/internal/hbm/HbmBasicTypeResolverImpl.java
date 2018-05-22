@@ -10,10 +10,10 @@ import java.util.Comparator;
 import javax.persistence.EnumType;
 import javax.persistence.TemporalType;
 
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.source.spi.HibernateTypeSource;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.BasicTypeResolverSupport;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
@@ -53,7 +53,7 @@ public class HbmBasicTypeResolverImpl extends BasicTypeResolverSupport
 	}
 
 	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
+	public ConverterDescriptor getAttributeConverterDescriptor() {
 		// not supported
 		return null;
 	}

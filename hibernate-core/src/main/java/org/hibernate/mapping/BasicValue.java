@@ -9,6 +9,8 @@ package org.hibernate.mapping;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.MappingException;
+import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedTable;
@@ -20,7 +22,6 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -35,7 +36,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 
 	private boolean isNationalized;
 	private boolean isLob;
-	private AttributeConverterDescriptor attributeConverterDescriptor;
+	private ConverterDescriptor attributeConverterDescriptor;
 	private BasicTypeResolver basicTypeResolver;
 	private JavaTypeMapping javaTypeMapping;
 	private BasicType basicType;
@@ -65,7 +66,8 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 		return javaTypeMapping;
 	}
 
-	public AttributeConverterDescriptor getAttributeConverterDescriptor() {
+	@Override
+	public ConverterDescriptor getAttributeConverterDescriptor() {
 		return attributeConverterDescriptor;
 	}
 
@@ -77,7 +79,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 		return isLob;
 	}
 
-	public void setJpaAttributeConverterDescriptor(AttributeConverterDescriptor attributeConverterDescriptor) {
+	public void setJpaAttributeConverterDescriptor(ConverterDescriptor attributeConverterDescriptor) {
 		this.attributeConverterDescriptor = attributeConverterDescriptor;
 	}
 
@@ -132,8 +134,8 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 	}
 
 	public void setTypeName(String typeName) {
-		if ( typeName != null && typeName.startsWith( AttributeConverterDescriptor.EXPLICIT_TYPE_NAME_PREFIX ) ) {
-			final String converterClassName = typeName.substring( AttributeConverterDescriptor.EXPLICIT_TYPE_NAME_PREFIX.length() );
+		if ( typeName != null && typeName.startsWith( ConverterDescriptor.TYPE_NAME_PREFIX ) ) {
+			final String converterClassName = typeName.substring( ConverterDescriptor.TYPE_NAME_PREFIX.length() );
 			final ClassLoaderService cls = getMetadataBuildingContext()
 					.getMetadataCollector()
 					.getMetadataBuildingOptions()
@@ -141,9 +143,10 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 					.getService( ClassLoaderService.class );
 			try {
 				final Class<AttributeConverter> converterClass = cls.classForName( converterClassName );
-				attributeConverterDescriptor = new AttributeConverterDescriptorNonAutoApplicableImpl(
-						converterClass.newInstance(),
-						getMetadataBuildingContext().getBootstrapContext().getTypeConfiguration().getJavaTypeDescriptorRegistry()
+				attributeConverterDescriptor = new ClassBasedConverterDescriptor(
+						converterClass,
+						false,
+						getMetadataBuildingContext().getBootstrapContext().getClassmateContext()
 				);
 				return;
 			}
@@ -161,11 +164,6 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 			basicType = basicTypeResolver.resolveBasicType();
 		}
 		return basicType;
-	}
-
-	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
-		return attributeConverterDescriptor;
 	}
 
 	@Override
@@ -202,7 +200,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 
 		public BasicTypeResolverUsingReflection(
 				MetadataBuildingContext buildingContext,
-				AttributeConverterDescriptor converterDefinition,
+				ConverterDescriptor converterDefinition,
 				String className,
 				String propertyName,
 				boolean isLob,
@@ -230,15 +228,23 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 						);
 			}
 			else {
-				javaTypeDescriptor = converterDefinition.getDomainType();
-				sqlTypeDescriptor = converterDefinition
-						.getJdbcType()
-						.getJdbcRecommendedSqlType(
-								buildingContext.getBootstrapContext()
-										.getTypeConfiguration()
-										.getBasicTypeRegistry()
-										.getBaseJdbcRecommendedSqlTypeMappingContext()
-						);
+				final Class<?> domainJavaType = converterDefinition.getDomainValueResolvedType().getErasedType();
+				javaTypeDescriptor = buildingContext.getBootstrapContext()
+						.getTypeConfiguration()
+						.getJavaTypeDescriptorRegistry()
+						.getDescriptor( domainJavaType );
+
+				final Class<?> relationalJavaType = converterDefinition.getRelationalValueResolvedType().getErasedType();
+				final JavaTypeDescriptor<?> relationalJavaDescriptor = buildingContext.getBootstrapContext()
+						.getTypeConfiguration()
+						.getJavaTypeDescriptorRegistry()
+						.getDescriptor( relationalJavaType );
+				sqlTypeDescriptor = relationalJavaDescriptor.getJdbcRecommendedSqlType(
+						buildingContext.getBootstrapContext()
+								.getTypeConfiguration()
+								.getBasicTypeRegistry()
+								.getBaseJdbcRecommendedSqlTypeMappingContext()
+				);
 			}
 		}
 

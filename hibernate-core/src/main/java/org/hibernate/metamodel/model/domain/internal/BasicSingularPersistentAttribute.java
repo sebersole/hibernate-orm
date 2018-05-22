@@ -9,9 +9,12 @@ package org.hibernate.metamodel.model.domain.internal;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.convert.internal.NamedEnumValueConverter;
+import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
+import org.hibernate.metamodel.model.convert.internal.StandardBasicValueConverter;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
@@ -28,24 +31,25 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Steve Ebersole
  */
 public class BasicSingularPersistentAttribute<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, BasicValueConverter {
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J> {
+	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
 
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
 	private final BasicValueConverter valueConverter;
-	private final AttributeConverterDefinition converterDefinition;
 
 	@SuppressWarnings("unchecked")
 	public BasicSingularPersistentAttribute(
@@ -64,34 +68,16 @@ public class BasicSingularPersistentAttribute<O, J>
 		final BasicValueMapping<J> basicValueMapping = (BasicValueMapping<J>) bootAttribute.getValueMapping();
 		this.boundColumn = context.getDatabaseObjectResolver().resolveColumn( basicValueMapping.getMappedColumn() );
 		this.basicType = basicValueMapping.resolveType();
-		this.converterDefinition = basicValueMapping.getAttributeConverterDefinition();
 
-		this.valueConverter = resolveValueConverter( basicValueMapping, context );
-	}
+		this.valueConverter = basicValueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( context );
 
-	@SuppressWarnings({ "unchecked", "unused" })
-	private BasicValueConverter resolveValueConverter(
-			BasicValueMapping<J> basicValueMapping,
-			RuntimeModelCreationContext context) {
-		if ( converterDefinition != null ) {
-			return converterDefinition;
+		if ( valueConverter != null ) {
+			log.debugf(
+					"BasicValueConverter [%s] being applied for basic attribute : %s",
+					valueConverter,
+					getNavigableRole()
+			);
 		}
-
-		if ( getJavaType().isEnum() ) {
-			assert basicType.getJavaTypeDescriptor() instanceof EnumJavaDescriptor;
-			final EnumJavaDescriptor enumJavaDescriptor = (EnumJavaDescriptor) basicType.getJavaTypeDescriptor();
-
-			if ( basicType.getSqlTypeDescriptor().getJdbcTypeCode() == EnumJavaDescriptor.ORDINAL_JDBC_TYPE_CODE ) {
-				return new OrdinalEnumValueConverter<>( enumJavaDescriptor );
-			}
-			else {
-				return new NamedEnumValueConverter( enumJavaDescriptor );
-			}
-		}
-
-		// todo (6.0) : temporals?
-
-		return this;
 	}
 
 	@Override
@@ -145,8 +131,8 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
-	public AttributeConverterDefinition getAttributeConverterDefinition() {
-		return converterDefinition;
+	public BasicValueConverter getValueConverter() {
+		return valueConverter;
 	}
 
 	@Override
@@ -183,17 +169,4 @@ public class BasicSingularPersistentAttribute<O, J>
 		return valueConverter.toDomainValue( hydratedForm, session );
 	}
 
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// "standard" BasicValueConverter - a pass-through
-
-	@Override
-	public Object toDomainValue(Object relationalForm, SharedSessionContractImplementor session) {
-		return relationalForm;
-	}
-
-	@Override
-	public Object toRelationalValue(Object domainForm, SharedSessionContractImplementor session) {
-		return domainForm;
-	}
 }

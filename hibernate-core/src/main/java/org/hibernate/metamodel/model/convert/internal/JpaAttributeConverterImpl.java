@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.convert.internal;
 
 import javax.persistence.AttributeConverter;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.JpaAttributeConverter;
 import org.hibernate.resource.beans.spi.ManagedBean;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
@@ -41,12 +42,12 @@ public class JpaAttributeConverterImpl<O,R> implements JpaAttributeConverter<O,R
 	}
 
 	@Override
-	public O toDomainValue(R relationalForm) {
+	public O toDomainValue(R relationalForm, SharedSessionContractImplementor session) {
 		return attributeConverterBean.getBeanInstance().convertToEntityAttribute( relationalForm );
 	}
 
 	@Override
-	public R toRelationalValue(O domainForm) {
+	public R toRelationalValue(O domainForm, SharedSessionContractImplementor session) {
 		return attributeConverterBean.getBeanInstance().convertToDatabaseColumn( domainForm );
 	}
 

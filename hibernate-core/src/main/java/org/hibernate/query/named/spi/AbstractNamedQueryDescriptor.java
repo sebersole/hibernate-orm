@@ -13,6 +13,7 @@ import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.procedure.internal.Util;
 import org.hibernate.query.spi.QueryImplementor;
 
 /**
@@ -36,6 +37,7 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 	private final Integer fetchSize;
 
 	private final String comment;
+
 	private final Map<String, Object> hints;
 
 	public AbstractNamedQueryDescriptor(
@@ -119,8 +121,13 @@ public abstract class AbstractNamedQueryDescriptor implements NamedQueryDescript
 		return comment;
 	}
 
+	@Override
 	public Map<String, Object> getHints() {
 		return hints;
+	}
+
+	protected Map<String, Object> getHintsCopy() {
+		return Util.copy( hints );
 	}
 
 	protected void applyBaseOptions(QueryImplementor query, SharedSessionContractImplementor session) {

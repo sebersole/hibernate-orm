@@ -57,36 +57,14 @@ public class QueryResultsCacheImpl implements QueryResultsCache {
 	public boolean put(
 			final QueryKey key,
 			final List results,
-			final Type[] returnTypes,
 			final SharedSessionContractImplementor session) throws HibernateException {
 		if ( DEBUGGING ) {
 			LOG.debugf( "Caching query results in region: %s; timestamp=%s", cacheRegion.getName(), session.getTransactionStartTimestamp() );
 		}
 
-		final List resultsCopy = CollectionHelper.arrayList( results.size() );
-
-		final boolean isSingleResult = returnTypes.length == 1;
-		for ( Object aResult : results ) {
-			final Serializable resultRowForCache;
-			if ( isSingleResult ) {
-				resultRowForCache = returnTypes[0].disassemble( aResult, session, null );
-			}
-			else {
-				resultRowForCache = TypeHelper.disassemble( (Object[]) aResult, returnTypes, null, session, null );
-			}
-			resultsCopy.add( resultRowForCache );
-			if ( TRACING ) {
-				logCachedResultRowDetails( returnTypes, aResult );
-			}
-		}
-
-		if ( TRACING ) {
-			logCachedResultDetails( key, null, returnTypes, resultsCopy );
-		}
-
 		final CacheItem cacheItem = new CacheItem(
 				session.getTransactionStartTimestamp(),
-				resultsCopy
+				new ArrayList<>( results )
 		);
 
 		try {
@@ -127,17 +105,35 @@ public class QueryResultsCacheImpl implements QueryResultsCache {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public List get(
 			QueryKey key,
-			Set<Serializable> spaces,
-			final Type[] returnTypes,
+			Set<String> spaces,
 			SharedSessionContractImplementor session) {
-		return get(
-				key,
-				QuerySpacesHelper.INSTANCE.toStringArray( spaces ),
-				returnTypes,
-				session
-		);
+		if ( DEBUGGING ) {
+			LOG.debugf( "Checking cached query results in region: %s", cacheRegion.getName() );
+		}
+
+		final CacheItem cacheItem = getCachedData( key, session );
+		if ( cacheItem == null ) {
+			if ( DEBUGGING ) {
+				LOG.debug( "Query results were not found in cache" );
+			}
+			return null;
+		}
+
+		if ( !timestampsCache.isUpToDate( spaces, cacheItem.timestamp, session ) ) {
+			if ( DEBUGGING ) {
+				LOG.debug( "Cached query results were not up-to-date" );
+			}
+			return null;
+		}
+
+		if ( DEBUGGING ) {
+			LOG.debug( "Returning cached query results" );
+		}
+
+		return new ArrayList( cacheItem.results );
 	}
 
 	@Override
@@ -145,7 +141,6 @@ public class QueryResultsCacheImpl implements QueryResultsCache {
 	public List get(
 			final QueryKey key,
 			final String[] spaces,
-			final Type[] returnTypes,
 			final SharedSessionContractImplementor session) {
 		if ( DEBUGGING ) {
 			LOG.debugf( "Checking cached query results in region: %s", cacheRegion.getName() );

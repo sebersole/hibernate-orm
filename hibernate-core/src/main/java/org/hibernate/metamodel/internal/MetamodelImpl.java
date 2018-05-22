@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.internal;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,7 +30,6 @@ import org.hibernate.metamodel.model.domain.spi.CollectionElementEntity;
 import org.hibernate.metamodel.model.domain.spi.CollectionIndexEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.AbstractRuntimeModel;
@@ -165,7 +163,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public <X> EntityType<X> entity(Class<X> cls) {
-		final EntityDescriptor descriptor = findEntityDescriptor( cls );
+		final EntityDescriptor descriptor = getEntityDescriptor( cls );
 		if ( descriptor == null ) {
 			throw new IllegalArgumentException( "Not an entity: " + cls );
 		}
@@ -175,7 +173,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public <X> ManagedType<X> managedType(Class<X> cls) {
-		final EntityDescriptor entityDescriptor = findEntityDescriptor( cls );
+		final EntityDescriptor entityDescriptor = getEntityDescriptor( cls );
 		if ( entityDescriptor != null ) {
 			return entityDescriptor;
 		}
@@ -241,8 +239,10 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	}
 
 	@Override
-	public Collection<EntityHierarchy> getEntityHierarchies() {
-		return getEntityHierarchySet();
+	public Set<String> findCollectionRolesByEntityParticipant(EntityDescriptor entityDescriptor) {
+		final Set<String> result = new HashSet<>();
+		findCollectionsByEntityParticipant( entityDescriptor ).forEach( d -> result.add( d.getNavigableRole().getFullPath() ) );
+		return result;
 	}
 
 
@@ -384,13 +384,13 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 		return matchingDescriptors;
 	}
 
-
 	@Override
+	@SuppressWarnings("ConstantConditions")
 	public <T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph) {
 		if ( entityGraph instanceof EntityGraphImplementor ) {
 			entityGraph = ( (EntityGraphImplementor<T>) entityGraph ).makeImmutableCopy( graphName );
 		}
-		final EntityGraph old = getEntityGraphMap().put( graphName, entityGraph );
+		final EntityGraphImplementor old = getEntityGraphMap().put( graphName, (EntityGraphImplementor<?>) entityGraph );
 		if ( old != null ) {
 			log.debugf( "EntityGraph being replaced on EntityManagerFactory for name %s", graphName );
 		}

@@ -159,7 +159,7 @@ public class CollectionCacheInvalidator
 		if ( obj != null ) {
 			id = session.getContextEntityIdentifier( obj );
 			if ( id == null ) {
-				id = session.getSessionFactory().getMetamodel().findEntityDescriptor( obj.getClass() ).getIdentifier( obj, session );
+				id = session.getSessionFactory().getMetamodel().getEntityDescriptor( obj.getClass() ).getIdentifier( obj, session );
 			}
 		}
 		return id;

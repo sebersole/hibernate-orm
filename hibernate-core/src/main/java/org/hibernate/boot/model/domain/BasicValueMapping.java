@@ -10,9 +10,9 @@ import java.util.List;
 
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.Origin;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -46,6 +46,5 @@ public interface BasicValueMapping<J> extends ValueMapping<J> {
 
 	BasicType<J> resolveType();
 
-	// todo (6.0) : this always returns null - needs fixed
-	AttributeConverterDefinition getAttributeConverterDefinition();
+	ConverterDescriptor getAttributeConverterDescriptor();
 }

@@ -6,12 +6,10 @@
  */
 package org.hibernate.metamodel.spi;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.hibernate.Metamodel;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -29,10 +27,8 @@ public interface MetamodelImplementor extends Metamodel {
 	//		that DatabaseModel holds state that we do not need beyond
 	//		schema-management tooling - init-commands and aux-db-objects
 
-
-	Collection<EntityHierarchy> getEntityHierarchies();
-
 	Set<PersistentCollectionDescriptor<?,?,?>> findCollectionsByEntityParticipant(EntityDescriptor entityDescriptor);
+	Set<String> findCollectionRolesByEntityParticipant(EntityDescriptor entityDescriptor);
 
 	/**
 	 * When a Class is referenced in a query, this method is invoked to resolve

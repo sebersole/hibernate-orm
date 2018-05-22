@@ -82,6 +82,8 @@ public interface HibernateCriteriaBuilder extends CriteriaBuilder {
 	 */
 	<M extends Map<?,?>> Expression<Integer> mapSize(M map);
 
+	void close();
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Co-variant overrides

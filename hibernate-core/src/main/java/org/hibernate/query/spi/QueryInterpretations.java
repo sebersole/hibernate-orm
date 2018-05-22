@@ -22,4 +22,6 @@ public interface QueryInterpretations {
 
 	NonSelectQueryPlan getNonSelectQueryPlan(Key key);
 	void cacheNonSelectQueryPlan(Key key, NonSelectQueryPlan plan);
+
+	void close();
 }

@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.convert.spi;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+
 /**
  * Support for basic-value conversions.
  *
@@ -22,11 +24,11 @@ public interface BasicValueConverter<O,R> {
 	 * Convert the relational form just retrieved from JDBC ResultSet into
 	 * the domain form.
 	 */
-	O toDomainValue(R relationalForm);
+	O toDomainValue(R relationalForm, SharedSessionContractImplementor session);
 
 	/**
 	 * Convert the domain form into the relational form in preparation for
 	 * storage into JDBC
 	 */
-	R toRelationalValue(O domainForm);
+	R toRelationalValue(O domainForm, SharedSessionContractImplementor session);
 }

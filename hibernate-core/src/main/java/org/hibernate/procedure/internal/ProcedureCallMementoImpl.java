@@ -14,7 +14,6 @@ import javax.persistence.ParameterMode;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ProcedureCall;
-import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.sql.results.spi.RowReader;
 

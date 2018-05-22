@@ -49,8 +49,8 @@ import org.hibernate.mapping.FetchProfile;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Table;
-import org.hibernate.procedure.ProcedureCallMemento;
 import org.hibernate.query.internal.NamedQueryRepositoryImpl;
+import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
 import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
 import org.hibernate.query.spi.NamedQueryRepository;
@@ -374,10 +374,10 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return converted;
 	}
 
-	private Map<String, ProcedureCallMemento> buildProcedureCallMementos(
+	private Map<String, NamedCallableQueryDescriptor> buildProcedureCallMementos(
 			SessionFactoryImplementor sessionFactory,
 			Map<String, ResultSetMappingDescriptor> resolvedResultSetMappings) {
-		final Map<String, ProcedureCallMemento> rtn = new HashMap<>();
+		final Map<String, NamedCallableQueryDescriptor> rtn = new HashMap<>();
 		if ( namedProcedureCallMap != null ) {
 			for ( NamedProcedureCallDefinition procedureCallDefinition : namedProcedureCallMap.values() ) {
 				rtn.put(

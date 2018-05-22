@@ -14,6 +14,7 @@ import javax.persistence.Parameter;
 import javax.persistence.ParameterMode;
 import javax.persistence.TemporalType;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.named.spi.NameableQuery;
 import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
@@ -22,8 +23,7 @@ import org.hibernate.query.spi.QueryImplementor;
 /**
  * @author Steve Ebersole
  */
-public interface ProcedureCallImplementor<R>
-		extends ProcedureCall, QueryImplementor<R>, NameableQuery<NamedCallableQueryDescriptor> {
+public interface ProcedureCallImplementor<R> extends ProcedureCall, QueryImplementor<R>, NameableQuery {
 	@Override
 	default List<R> getResultList() {
 		return list();
@@ -33,6 +33,9 @@ public interface ProcedureCallImplementor<R>
 	default R getSingleResult() {
 		return uniqueResult();
 	}
+
+	@Override
+	NamedCallableQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
 
 	@Override
 	ProcedureCallImplementor<R> setHint(String hintName, Object value);

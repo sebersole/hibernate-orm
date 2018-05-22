@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.convert.internal;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 
 /**
@@ -24,13 +25,13 @@ public class StandardBasicValueConverter<O,R> implements BasicValueConverter<O,R
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public O toDomainValue(R relationalForm) {
+	public O toDomainValue(R relationalForm, SharedSessionContractImplementor session) {
 		return (O) relationalForm;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public R toRelationalValue(O domainForm) {
+	public R toRelationalValue(O domainForm, SharedSessionContractImplementor session) {
 		return (R) domainForm;
 	}
 }

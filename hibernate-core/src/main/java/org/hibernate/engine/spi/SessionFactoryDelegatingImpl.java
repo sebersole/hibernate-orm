@@ -22,7 +22,6 @@ import org.hibernate.CustomEntityDirtinessStrategy;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
 import org.hibernate.MappingException;
-import org.hibernate.Metamodel;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
@@ -38,6 +37,7 @@ import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.exception.spi.SQLExceptionConverter;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -172,18 +172,8 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public Map<String, EntityDescriptor<?>> getEntityPersisters() {
-		return delegate.getEntityPersisters();
-	}
-
-	@Override
 	public PersistentCollectionDescriptor getCollectionPersister(String role) throws MappingException {
 		return delegate.getCollectionPersister( role );
-	}
-
-	@Override
-	public Map<String, PersistentCollectionDescriptor<?,?,?>> getCollectionPersisters() {
-		return delegate.getCollectionPersisters();
 	}
 
 	@Override
@@ -214,16 +204,6 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	@Override
 	public String[] getReturnAliases(String queryString) throws HibernateException {
 		return delegate.getReturnAliases( queryString );
-	}
-
-	@Override
-	public String[] getImplementors(String className) throws MappingException {
-		return delegate.getImplementors( className );
-	}
-
-	@Override
-	public String getImportedClassName(String name) {
-		return delegate.getImportedClassName( name );
 	}
 
 	@Override
@@ -342,7 +322,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
+	public <T> List<EntityGraphImplementor<? super T>> findEntityGraphsByType(Class<T> entityClass) {
 		return delegate.findEntityGraphsByType( entityClass );
 	}
 

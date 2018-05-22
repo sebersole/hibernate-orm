@@ -21,9 +21,7 @@ import org.hibernate.sql.results.spi.RowReader;
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractScrollableResults<R>
-		extends AbstractScrollableResultsDeprecations
-		implements ScrollableResultsImplementor<R> {
+public abstract class AbstractScrollableResults<R> implements ScrollableResultsImplementor<R> {
 	private final JdbcValuesSource jdbcValuesSource;
 	private final JdbcValuesSourceProcessingOptions processingOptions;
 	private final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState;
@@ -51,8 +49,6 @@ public abstract class AbstractScrollableResults<R>
 	// todo (6.0) : re-look at the arguments passed here.  What is really needed?
 	//		and relatedly, what is exposed
 
-
-	@Override
 	protected ResultSetMapping getResultSetMapping() {
 		return jdbcValuesSource.getResultSetMapping();
 	}
@@ -103,11 +99,6 @@ public abstract class AbstractScrollableResults<R>
 	@Override
 	public boolean isClosed() {
 		return this.closed;
-	}
-
-	@Override
-	public int getNumberOfTypes() {
-		return rowReader.getNumberOfResults();
 	}
 
 	@Override

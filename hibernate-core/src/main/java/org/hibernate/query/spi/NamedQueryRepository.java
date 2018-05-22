@@ -10,7 +10,7 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
-import org.hibernate.procedure.ProcedureCallMemento;
+import org.hibernate.query.named.spi.NamedCallableQueryDescriptor;
 import org.hibernate.query.named.spi.NamedHqlQueryDescriptor;
 import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
 
@@ -21,19 +21,18 @@ import org.hibernate.query.named.spi.NamedNativeQueryDescriptor;
  */
 @Incubating
 public interface NamedQueryRepository {
+	void registerNamedHqlQueryDescriptor(String name, NamedHqlQueryDescriptor descriptor);
 	NamedHqlQueryDescriptor getNamedHqlDescriptor(String queryName);
 
+	void registerNamedNativeQueryDescriptor(String name, NamedNativeQueryDescriptor descriptor);
 	NamedNativeQueryDescriptor getNamedNativeDescriptor(String queryName);
 
-	ProcedureCallMemento getNamedProcedureCallMemento(String name);
+	void registerNamedCallableQueryDescriptor(String name, NamedCallableQueryDescriptor memento);
+	NamedCallableQueryDescriptor getNamedCallableQueryDescriptor(String name);
 
 	ResultSetMappingDescriptor getResultSetMappingDescriptor(String mappingName);
 
-	void registerNamedHqlQueryDescriptor(String name, NamedHqlQueryDescriptor descriptor);
-
-	void registerNamedNativeQueryDescriptor(String name, NamedNativeQueryDescriptor descriptor);
-
-	void registerNamedProcedureCallMemento(String name, ProcedureCallMemento memento);
-
 	Map<String,HibernateException> checkNamedQueries(QueryEngine queryPlanCache);
+
+	void close();
 }

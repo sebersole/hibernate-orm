@@ -8,9 +8,7 @@ package org.hibernate.engine.spi;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.persistence.EntityGraph;
 
 import org.hibernate.CustomEntityDirtinessStrategy;
@@ -21,7 +19,6 @@ import org.hibernate.Metamodel;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.spi.CacheImplementor;
 import org.hibernate.cfg.Settings;
@@ -31,8 +28,8 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.exception.spi.SQLExceptionConverter;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.id.IdentifierGenerator;
-import org.hibernate.internal.util.collections.streams.StreamUtils;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -150,6 +147,7 @@ public interface SessionFactoryImplementor
 	/**
 	 * Contract for resolving this SessionFactory on deserialization
 	 */
+	@FunctionalInterface
 	interface DeserializationResolver<T extends SessionFactoryImplementor> extends Serializable {
 		T resolve();
 	}
@@ -164,7 +162,7 @@ public interface SessionFactoryImplementor
 	 * @return A list of {@code EntityGraph} instances associated with the given entity type. The empty list is
 	 * returned in case there are not entity graphs.
 	 */
-	<T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass);
+	<T> List<EntityGraphImplementor<? super T>> findEntityGraphsByType(Class<T> entityClass);
 
 
 
@@ -291,17 +289,7 @@ public interface SessionFactoryImplementor
 	 */
 	@Deprecated
 	default EntityDescriptor getEntityPersister(String entityName) throws MappingException {
-		return getMetamodel().findEntityDescriptor( entityName );
-	}
-
-	/**
-	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#getEntityDescriptorMap}
-	 * instead
-	 */
-	@Deprecated
-	default Map<String,EntityDescriptor<?>> getEntityPersisters() {
-		return getTypeConfiguration().getEntityDescriptorMap();
+		return getMetamodel().getEntityDescriptor( entityName );
 	}
 
 	/**
@@ -319,32 +307,22 @@ public interface SessionFactoryImplementor
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#getCollectionDescriptorMap}
-	 * instead
-	 */
-	@Deprecated
-	default Map<String, PersistentCollectionDescriptor<?,?,?>> getCollectionPersisters() {
-		return getTypeConfiguration().getCollectionDescriptorMap();
-	}
-
-	/**
-	 * @deprecated (since 5.2) Use
-	 * {@link #getTypeConfiguration()}} -> {@link TypeConfiguration#getCollectionRolesByEntityParticipant}
+	 * {@link #getMetamodel()}} -> {@link MetamodelImplementor#findCollectionRolesByEntityParticipant}
 	 * instead
 	 */
 	@Deprecated
 	default Set<String> getCollectionRolesByEntityParticipant(String entityName) {
-		return getTypeConfiguration().getCollectionRolesByEntityParticipant( entityName );
+		return getMetamodel().findCollectionRolesByEntityParticipant( getMetamodel().findEntityDescriptor( entityName ) );
 	}
 
 	/**
 	 * @deprecated (since 5.2) Use
-	 * {@link #getMetamodel()}} -> {@link Metamodel#findEntityDescriptor(Class)}
+	 * {@link #getMetamodel()}} -> {@link Metamodel#getEntityDescriptor(Class)}
 	 * instead
 	 */
 	@Deprecated
 	default EntityDescriptor locateEntityPersister(Class byClass) {
-		return getMetamodel().findEntityDescriptor( byClass );
+		return getMetamodel().getEntityDescriptor( byClass );
 	}
 
 	/**
@@ -357,54 +335,5 @@ public interface SessionFactoryImplementor
 		return getMetamodel().findEntityDescriptor( byName );
 	}
 
-	/**
-	 * Get the names of all persistent classes that implement/extend the given interface/class
-	 *
-	 * @deprecated (6.0) With no replacement.  The intended target of this method was always Query parsing
-	 * which is now handled in a different way via SQM and this method is no longer needed on the new
-	 * SPIs.  Its closest corollary is {@link TypeConfiguration#getImplementors(Class)}, but that method
-	 * expects that the caller has already checked.  I've added a default implementation that mimics
-	 * the legacy behavior
-	 */
-	@Deprecated
-	default String[] getImplementors(String entityName) {
-		// NOTE : this is the legacy impl... I am adding the impls here because I will
-		//		not be moving these methods to the new TypeConfiguration contract for
-		//		persister, etc.
-		final String importedName = getImportedClassName( entityName );
-		if ( importedName != null ) {
-			entityName = importedName;
-		}
-
-		final EntityDescriptor referencedPersister = getMetamodel().findEntityDescriptor( entityName );
-		if ( referencedPersister != null ) {
-			return new String[] { referencedPersister.getEntityName() };
-		}
-
-		// otherwise it has to be a Class
-		try {
-			final Class implementee = getServiceRegistry().getService( ClassLoaderService.class )
-					.classForName( entityName );
-
-			final Set<EntityDescriptor<?>> implementors = getTypeConfiguration().getImplementors( implementee );
-			final Stream<String> implementorNames = implementors.stream().map( EntityDescriptor::getEntityName );
-			return implementorNames.collect( StreamUtils.toStringArray() );
-		}
-		catch (Exception e) {
-			throw new IllegalArgumentException( "Unable to resolve EntityPersister [" + entityName + "]" );
-		}
-	}
-
-	/**
-	 * @deprecated (since 5.2) with no real replacement..  I have added a default implementation
-	 * whcih mimics the legacy behavior
-	 */
-	@Deprecated
-	default String getImportedClassName(String name) {
-		return getMetamodel().getImportedClassName( name );
-	}
-
 	EntityGraph findEntityGraphByName(String name);
-
-
 }

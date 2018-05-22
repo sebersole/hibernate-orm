@@ -6,9 +6,11 @@
  */
 package org.hibernate.query.named.spi;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+
 /**
  * @author Steve Ebersole
  */
-public interface NameableQuery<D extends NamedQueryDescriptor> {
-	D toMemento(String name);
+public interface NameableQuery {
+	NamedQueryDescriptor toMemento(String name, SessionFactoryImplementor factory);
 }

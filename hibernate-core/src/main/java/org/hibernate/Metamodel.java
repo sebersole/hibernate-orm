@@ -32,7 +32,7 @@ public interface Metamodel extends javax.persistence.metamodel.Metamodel, Runtim
 	@Override
 	@SuppressWarnings("unchecked")
 	default <X> EntityType<X> entity(Class<X> cls) {
-		final EntityDescriptor<X> descriptor = findEntityDescriptor( cls );
+		final EntityDescriptor<X> descriptor = getEntityDescriptor( cls );
 		if ( descriptor == null ) {
 			// per JPA, this condition needs to be an (illegal argument) exception
 			throw new IllegalArgumentException( "Not an entity: " + cls );
@@ -58,12 +58,13 @@ public interface Metamodel extends javax.persistence.metamodel.Metamodel, Runtim
 
 	<T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph);
 
+	@SuppressWarnings("unchecked")
 	default <T> EntityGraph<T> findEntityGraphByName(String name) {
-		return findEntityGraph( name );
+		return (EntityGraph) this.findEntityGraph( name );
 	}
 
 	@SuppressWarnings("unchecked")
 	default <T> List<EntityGraph<T>> findEntityGraphsByType(Class<T> entityClass) {
-		return findEntityGraphForType( entityClass );
+		return (List) findEntityGraphForType( entityClass );
 	}
 }

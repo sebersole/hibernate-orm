@@ -61,4 +61,8 @@ public interface SemanticQueryProducer {
 	 * @return The semantic representation of the incoming criteria query.
 	 */
 	SqmUpdateStatement interpret(CriteriaUpdate criteria);
+
+	default void close() {
+		// nothing to do generally speaking
+	}
 }

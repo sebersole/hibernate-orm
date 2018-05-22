@@ -7,6 +7,7 @@
 package org.hibernate.query.named.spi;
 
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
@@ -41,6 +42,8 @@ public interface NamedQueryDescriptor {
 	Integer getFetchSize();
 
 	String getComment();
+
+	Map<String,Object> getHints();
 
 	NamedQueryDescriptor makeCopy(String name);
 

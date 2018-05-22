@@ -16,6 +16,7 @@ import org.hibernate.procedure.spi.ProcedureCallImplementor;
  */
 public interface NamedCallableQueryDescriptor extends NamedQueryDescriptor {
 	String getCallableName();
+
 	Collection<String> getQuerySpaces();
 
 	@Override

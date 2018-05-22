@@ -44,4 +44,9 @@ public class QueryInterpretationsImpl implements QueryInterpretations {
 	public void cacheNonSelectQueryPlan(Key key, NonSelectQueryPlan plan) {
 		// todo (6.0) : implement
 	}
+
+	@Override
+	public void close() {
+		// todo (6.0) : clear maps/caches
+	}
 }

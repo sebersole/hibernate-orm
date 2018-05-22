@@ -8,7 +8,7 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import javax.persistence.AttributeConverter;
 
-import org.hibernate.type.converter.spi.AttributeConverterDefinition;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 
 /**
  * Specialization of a DomainReference whose values may have a JPA
@@ -17,6 +17,5 @@ import org.hibernate.type.converter.spi.AttributeConverterDefinition;
  * @author Steve Ebersole
  */
 public interface ConvertibleNavigable<T> extends Navigable<T> {
-	// todo (6.0) : find usages of this and consider removing or replacing with BasicValueConverter
-	AttributeConverterDefinition getAttributeConverterDefinition();
+	BasicValueConverter getValueConverter();
 }

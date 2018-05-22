@@ -14,7 +14,13 @@ package org.hibernate.sql.results.spi;
  *
  * @author Steve Ebersole
  */
-public interface InitializerCollector {
+@FunctionalInterface
+public interface InitializerCollector extends java.util.function.Consumer<Initializer> {
+	@Override
+	default void accept(Initializer initializer) {
+		addInitializer( initializer );
+	}
+
 	/**
 	 * Collect the passed Initializer
 	 */

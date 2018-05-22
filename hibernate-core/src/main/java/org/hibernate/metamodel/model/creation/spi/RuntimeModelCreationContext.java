@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.creation.spi;
 
+import org.hibernate.boot.model.convert.spi.JpaAttributeConverterCreationContext;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
@@ -33,7 +34,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  *
  * @author Steve Ebersole
  */
-public interface RuntimeModelCreationContext {
+public interface RuntimeModelCreationContext extends JpaAttributeConverterCreationContext {
 	SessionFactoryImplementor getSessionFactory();
 
 	BootstrapContext getBootstrapContext();
