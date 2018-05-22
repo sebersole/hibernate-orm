@@ -32,9 +32,9 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 	private final SessionFactoryImplementor sessionFactory;
 	private final RegionFactory regionFactory;
 
-	private final Map<EntityHierarchy,EntityDataAccess> entityDataAccessMap;
-	private final Map<EntityHierarchy,NaturalIdDataAccess> naturalIdDataAccessMap;
-	private final Map<PersistentCollectionDescriptor,CollectionDataAccess> collectionDataAccessMap;
+	private final Map<NavigableRole,EntityDataAccess> entityDataAccessMap;
+	private final Map<NavigableRole,NaturalIdDataAccess> naturalIdDataAccessMap;
+	private final Map<NavigableRole,CollectionDataAccess> collectionDataAccessMap;
 
 	public AbstractDomainDataRegion(
 			DomainDataRegionConfig regionConfig,
@@ -65,8 +65,8 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 
 	@Override
 	public EntityDataAccess getEntityDataAccess(NavigableRole rootEntityRole) {
-		final EntityHierarchy entityHierarchy = sessionFactory.getTypeConfiguration()
-				.resolveEntityDescriptor( rootEntityRole.getFullPath() )
+		final EntityHierarchy entityHierarchy = sessionFactory.getMetamodel()
+				.findEntityDescriptor( rootEntityRole.getFullPath() )
 				.getHierarchy();
 
 		final EntityDataAccess access = entityDataAccessMap.get( entityHierarchy );
@@ -79,8 +79,7 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 
 	@Override
 	public NaturalIdDataAccess getNaturalIdDataAccess(NavigableRole rootEntityRole) {
-		final EntityHierarchy entityHierarchy = sessionFactory.getMetamodel().
-				.resolveEntityDescriptor( rootEntityRole.getFullPath() )
+		final EntityHierarchy entityHierarchy = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityRole.getFullPath() )
 				.getHierarchy();
 
 		final NaturalIdDataAccess access = naturalIdDataAccessMap.get( entityHierarchy );
@@ -92,7 +91,7 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 
 	@Override
 	public CollectionDataAccess getCollectionDataAccess(NavigableRole collectionRole) {
-		final PersistentCollectionDescriptor collectionDescriptor = sessionFactory.getTypeConfiguration()
+		final PersistentCollectionDescriptor collectionDescriptor = sessionFactory.getMetamodel()
 				.findCollectionDescriptor( collectionRole.getFullPath() );
 
 		final CollectionDataAccess access = collectionDataAccessMap.get( collectionDescriptor );
@@ -109,16 +108,16 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 	protected abstract CollectionDataAccess generateCollectionAccess(CollectionDataCachingConfig cachingConfig);
 	protected abstract NaturalIdDataAccess generateNaturalIdAccess(NaturalIdDataCachingConfig naturalIdAccessConfig);
 
-	private Map<EntityHierarchy, EntityDataAccess> generateEntityDataAccessMap(
+	private Map<NavigableRole, EntityDataAccess> generateEntityDataAccessMap(
 			DomainDataRegionConfig regionConfig) {
 		if ( regionConfig.getEntityCaching().isEmpty() ) {
 			return Collections.emptyMap();
 		}
 
-		final Map<EntityHierarchy, EntityDataAccess> accessMap = new ConcurrentHashMap<>();
+		final Map<NavigableRole, EntityDataAccess> accessMap = new ConcurrentHashMap<>();
 		for ( EntityDataCachingConfig entityAccessConfig : regionConfig.getEntityCaching() ) {
 			accessMap.computeIfAbsent(
-					entityAccessConfig.getEntityHierarchy(),
+					entityAccessConfig.getNavigableRole(),
 					hierarchy -> generateEntityAccess( entityAccessConfig )
 			);
 		}
@@ -126,15 +125,15 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 		return Collections.unmodifiableMap( accessMap );
 	}
 
-	private Map<EntityHierarchy, NaturalIdDataAccess> generateNaturalIdDataAccessMap(DomainDataRegionConfig regionConfig) {
+	private Map<NavigableRole, NaturalIdDataAccess> generateNaturalIdDataAccessMap(DomainDataRegionConfig regionConfig) {
 		if ( regionConfig.getNaturalIdCaching().isEmpty() ) {
 			return Collections.emptyMap();
 		}
 
-		final Map<EntityHierarchy, NaturalIdDataAccess> accessMap = new ConcurrentHashMap<>();
+		final Map<NavigableRole, NaturalIdDataAccess> accessMap = new ConcurrentHashMap<>();
 		for ( NaturalIdDataCachingConfig naturalIdAccessConfig : regionConfig.getNaturalIdCaching() ) {
 			accessMap.computeIfAbsent(
-					naturalIdAccessConfig.getEntityHierarchy(),
+					naturalIdAccessConfig.getNavigableRole(),
 					hierarchy -> generateNaturalIdAccess( naturalIdAccessConfig )
 			);
 		}
@@ -142,16 +141,16 @@ public abstract class AbstractDomainDataRegion implements DomainDataRegion {
 		return Collections.unmodifiableMap( accessMap );
 	}
 
-	private Map<PersistentCollectionDescriptor, CollectionDataAccess> generateCollectionDataAccessMap(
+	private Map<NavigableRole, CollectionDataAccess> generateCollectionDataAccessMap(
 			DomainDataRegionConfig regionConfig) {
 		if ( regionConfig.getNaturalIdCaching().isEmpty() ) {
 			return Collections.emptyMap();
 		}
 
-		final Map<PersistentCollectionDescriptor, CollectionDataAccess> accessMap = new ConcurrentHashMap<>();
+		final Map<NavigableRole, CollectionDataAccess> accessMap = new ConcurrentHashMap<>();
 		for ( CollectionDataCachingConfig cachingConfig : regionConfig.getCollectionCaching() ) {
 			accessMap.computeIfAbsent(
-					cachingConfig.getCollectionDescriptor(),
+					cachingConfig.getNavigableRole(),
 					hierarchy -> generateCollectionAccess( cachingConfig )
 			);
 		}
