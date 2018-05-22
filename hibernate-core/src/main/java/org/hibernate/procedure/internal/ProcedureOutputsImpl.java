@@ -6,8 +6,8 @@
  */
 package org.hibernate.procedure.internal;
 
-import java.io.Serializable;
 import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,19 +19,18 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.AssertionFailure;
-import org.hibernate.HibernateException;
 import org.hibernate.JDBCException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
-import org.hibernate.procedure.spi.ProcedureParameterImplementor;
-import org.hibernate.result.NoMoreOutputsException;
 import org.hibernate.procedure.ProcedureOutputs;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.procedure.spi.ParameterStrategy;
+import org.hibernate.procedure.spi.ProcedureParamBindings;
+import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
-import org.hibernate.query.sql.internal.ResultSetMappingDescriptorUndefined;
 import org.hibernate.result.Output;
+import org.hibernate.result.internal.OutputsImpl;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcCall;
@@ -40,14 +39,7 @@ import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 import org.hibernate.sql.exec.spi.JdbcCallRefCursorExtractor;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.values.DirectResultSetAccess;
-import org.hibernate.sql.results.internal.values.JdbcValuesSourceResultSetImpl;
-import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
-import org.hibernate.sql.results.spi.RowReader;
 
 import org.jboss.logging.Logger;
 
@@ -56,7 +48,7 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class ProcedureOutputsImpl
+public class ProcedureOutputsImpl extends OutputsImpl
 		implements ProcedureOutputs,
 		ExecutionContext,
 		ResultSetMappingDescriptor.ResolutionContext,
@@ -73,10 +65,6 @@ public class ProcedureOutputsImpl
 	private final String callString;
 	private final CallableStatement callableStatement;
 
-	private final RowReader rowReader;
-
-	private CurrentOutputState currentOutputState;
-
 	private Map<String, JdbcCallParameterExtractor> parameterExtractorMap;
 	private Iterator<JdbcCallRefCursorExtractor> refCursorExtractorIterator;
 
@@ -85,9 +73,9 @@ public class ProcedureOutputsImpl
 			JdbcCall jdbcCall,
 			ParameterStrategy parameterStrategy,
 			QueryOptions queryOptions,
-			QueryParameterBindings bindings,
-			RowReader rowReader,
+			ProcedureParamBindings bindings,
 			SharedSessionContractImplementor persistenceContext) {
+		super( procedureCall );
 		this.parameterStrategy = parameterStrategy;
 		this.queryOptions = queryOptions;
 		this.persistenceContext = persistenceContext;
@@ -96,33 +84,23 @@ public class ProcedureOutputsImpl
 
 		// JdbcCall.getSql is the callable name
 		this.callableName = jdbcCall.getSql();
-		this.callString = buildCallableString();
+		this.callString = buildCallableString( bindings );
 		this.callableStatement = prepareCallableStatement( queryOptions, bindings );
 
-		// todo (6.0) : pass in RowReader based on ResultSet-mapping
-		// todo (6.0) : ^^ or build the RowReader here based on ResultSet-mapping
-		//		^^ see #extractResults
+		prime( callableStatement );
 
-		this.rowReader = rowReader;
-
-		try {
-			final boolean isResultSet = callableStatement.execute();
-			currentOutputState = buildCurrentReturnState( isResultSet );
-		}
-		catch (SQLException e) {
-			throw convert( e, "Error calling CallableStatement.getMoreResults" );
-		}
+		this.refCursorExtractorIterator = jdbcCall.getCallRefCursorExtractors().iterator();
 	}
 
-	private String buildCallableString() {
+	private String buildCallableString(ProcedureParamBindings bindings) {
 		final CallableStatementSupport callableStatementSupport = persistenceContext.getJdbcServices()
 				.getJdbcEnvironment()
 				.getDialect().getCallableStatementSupport();
 
 		return callableStatementSupport.renderCallableStatement(
 				callableName,
-				jdbcCall.getFunctionReturn(),
-				jdbcCall.getParameterRegistrations(),
+				jdbcCall,
+				bindings,
 				persistenceContext
 		);
 	}
@@ -208,22 +186,34 @@ public class ProcedureOutputsImpl
 		}
 	}
 
-	private CurrentOutputState buildCurrentReturnState(boolean isResultSet) {
-		int updateCount = -1;
-		if ( ! isResultSet ) {
-			try {
-				updateCount = callableStatement.getUpdateCount();
-			}
-			catch (SQLException e) {
-				throw convert( e, "Error calling CallableStatement.getUpdateCount" );
-			}
-		}
-
-		return buildCurrentReturnState( isResultSet, updateCount );
+	@Override
+	protected boolean nextResult() throws SQLException {
+		return callableStatement.getMoreResults();
 	}
 
-	private CurrentOutputState buildCurrentReturnState(boolean isResultSet, int updateCount) {
-		return new CurrentOutputState( isResultSet, updateCount );
+	@Override
+	protected CurrentReturnState buildCurrentReturnState(boolean isResultSet) throws SQLException {
+		return buildCurrentReturnState( isResultSet, callableStatement );
+	}
+
+	@Override
+	protected CurrentReturnState buildCurrentReturnState(
+			boolean isResultSet,
+			int updateCount,
+			PreparedStatement jdbcStatement) {
+		return new CurrentReturnState( isResultSet, updateCount, jdbcStatement ) {
+			@Override
+			protected boolean hasExtendedReturns() {
+				return !jdbcCall.getCallRefCursorExtractors().isEmpty();
+			}
+
+			@Override
+			protected Output buildExtendedReturn() {
+				final JdbcCallRefCursorExtractor extractor = refCursorExtractorIterator.next();
+				final ResultSet resultSet = extractor.extractResultSet( callableStatement, persistenceContext );
+				return buildResultSetOutput( extractResults( resultSet, callableStatement ) );
+			}
+		};
 	}
 
 	private JDBCException convert(SQLException e, String message) {
@@ -264,190 +254,12 @@ public class ProcedureOutputsImpl
 	}
 
 	@Override
-	public Output getCurrent() {
-		if ( currentOutputState == null ) {
-			return null;
-		}
-		return currentOutputState.buildOutput();
-	}
-
-	@Override
-	public boolean goToNext() {
-		if ( currentOutputState == null ) {
-			return false;
-		}
-
-		if ( currentOutputState.indicatesMoreOutputs() ) {
-			// prepare the next return state
-			try {
-				final boolean isResultSet = callableStatement.getMoreResults();
-				currentOutputState = buildCurrentReturnState( isResultSet );
-			}
-			catch (SQLException e) {
-				throw convert( e, "Error calling CallableStatement.getMoreResults" );
-			}
-		}
-
-		// and return
-		return currentOutputState != null && currentOutputState.indicatesMoreOutputs();
-	}
-
-	@Override
 	public void release() {
 		try {
 			callableStatement.close();
 		}
 		catch (SQLException e) {
 			log.debug( "Unable to close PreparedStatement", e );
-		}
-	}
-
-	private List extractCurrentResults() {
-		final JdbcCallRefCursorExtractor refCursorExtractor = refCursorExtractorIterator.next();
-
-		return extractResults(
-				refCursorExtractor.extractResultSet( callableStatement, persistenceContext )
-		);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected List extractResults(ResultSet resultSet) {
-		final DirectResultSetAccess resultSetAccess = new DirectResultSetAccess( persistenceContext, callableStatement, resultSet );
-		final ResultSetMapping resultSetMapping = resolveResultSetMapping( resultSetAccess );
-		final JdbcValuesSourceResultSetImpl jdbcValuesSource = new JdbcValuesSourceResultSetImpl(
-				resultSetAccess,
-				null,
-				queryOptions,
-				resultSetMapping,
-				persistenceContext
-		);
-
-
-		/*
-		 * Processing options effectively are only used for entity loading.  Here we don't need these values.
-		 */
-		final JdbcValuesSourceProcessingOptions processingOptions = new JdbcValuesSourceProcessingOptions() {
-			@Override
-			public Object getEffectiveOptionalObject() {
-				return null;
-			}
-
-			@Override
-			public String getEffectiveOptionalEntityName() {
-				return null;
-			}
-
-			@Override
-			public Serializable getEffectiveOptionalId() {
-				return null;
-			}
-
-			@Override
-			public boolean shouldReturnProxies() {
-				return true;
-			}
-		};
-
-		final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState =
-				new JdbcValuesSourceProcessingStateStandardImpl( this, processingOptions );
-
-		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
-				jdbcValuesSourceProcessingState,
-				queryOptions,
-				jdbcValuesSource
-		);
-
-		try {
-			final List results = new ArrayList<>();
-			while ( rowProcessingState.next() ) {
-				results.add( rowReader.readRow( rowProcessingState, processingOptions ) );
-				rowProcessingState.finishRowProcessing();
-			}
-			return results;
-		}
-		catch (SQLException e) {
-			throw persistenceContext.getJdbcServices().getSqlExceptionHelper().convert(
-					e,
-					"Error processing return rows"
-			);
-		}
-		finally {
-			rowReader.finishUp( jdbcValuesSourceProcessingState );
-			jdbcValuesSourceProcessingState.finishUp();
-			jdbcValuesSource.finishUp();
-		}
-	}
-
-	private int currentResultSetMappingIndex = -1;
-	private ResultSetMappingDescriptor currentResultSetMapping;
-
-	private ResultSetMapping resolveResultSetMapping(DirectResultSetAccess resultSetAccess) {
-		currentResultSetMappingIndex++;
-		if ( jdbcCall.getResultSetMappings() == null || jdbcCall.getResultSetMappings().isEmpty() ) {
-			if ( currentResultSetMapping == null ) {
-				currentResultSetMapping = new ResultSetMappingDescriptorUndefined();
-			}
-		}
-		else {
-			if ( currentResultSetMappingIndex >= jdbcCall.getResultSetMappings().size() ) {
-				throw new HibernateException( "Needed ResultSetMapping for ResultSet #%s, but query defined only %s ResultSetMapping(s)" );
-			}
-			currentResultSetMapping = jdbcCall.getResultSetMappings().get( currentResultSetMappingIndex );
-		}
-
-		return currentResultSetMapping.resolve( resultSetAccess, this );
-	}
-
-	protected class CurrentOutputState {
-		private final boolean isResultSet;
-		private final int updateCount;
-
-		private CurrentOutputState(boolean isResultSet, int updateCount) {
-			this.isResultSet = isResultSet;
-			this.updateCount = updateCount;
-		}
-
-		public boolean isResultSet() {
-			return isResultSet;
-		}
-
-		public int getUpdateCount() {
-			return updateCount;
-		}
-
-		public boolean indicatesMoreOutputs() {
-			return isResultSet() || getUpdateCount() >= 0 || refCursorExtractorIterator.hasNext();
-		}
-
-		protected Output buildOutput() {
-			if ( !indicatesMoreOutputs() ) {
-				throw new IllegalStateException( "No more REF_CURSOR results to process" );
-			}
-
-			if ( log.isDebugEnabled() ) {
-				log.debugf(
-						"Building Return [isResultSet=%s, updateCount=%s]",
-						isResultSet(),
-						getUpdateCount()
-				);
-			}
-
-			if ( isResultSet() ) {
-				return buildResultSetOutput( extractCurrentResults() );
-			}
-			else if ( getUpdateCount() >= 0 ) {
-				return buildUpdateCountOutput( updateCount );
-			}
-
-			throw new NoMoreOutputsException();
-		}
-
-		private Output buildResultSetOutput(List list) {
-			return new ResultSetOutputImpl( list );
-		}
-
-		private Output buildUpdateCountOutput(int updateCount) {
-			return new UpdateCountOutputImpl( updateCount );
 		}
 	}
 

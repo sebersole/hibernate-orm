@@ -9,6 +9,8 @@ package org.hibernate.sql.results.internal;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.named.spi.RowReaderMemento;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
@@ -112,5 +114,20 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 	public void finishUp(JdbcValuesSourceProcessingState context) {
 		// todo : use Callback to execute AfterLoadActions
 		// todo : another option is to use Callback to execute the AfterLoadActions after each row
+	}
+
+	@Override
+	public RowReaderMemento toMemento(SessionFactoryImplementor factory) {
+		return new RowReaderMemento() {
+			@Override
+			public Class[] getResultClasses() {
+				return new Class[0];
+			}
+
+			@Override
+			public String[] getResultMappingNames() {
+				return new String[0];
+			}
+		};
 	}
 }

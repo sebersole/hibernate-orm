@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.ResultSet;
@@ -29,6 +28,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.NullPrecedence;
 import org.hibernate.ScrollMode;
 import org.hibernate.boot.model.TypeContributions;
@@ -95,7 +95,6 @@ import org.hibernate.sql.ANSIJoinFragment;
 import org.hibernate.sql.CaseFragment;
 import org.hibernate.sql.ForUpdateFragment;
 import org.hibernate.sql.JoinFragment;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.tool.schema.extract.internal.SequenceInformationExtractorLegacyImpl;
 import org.hibernate.tool.schema.extract.internal.SequenceInformationExtractorNoOpImpl;
 import org.hibernate.tool.schema.extract.spi.SequenceInformationExtractor;
@@ -3109,24 +3108,20 @@ public abstract class Dialect implements ConversionContext {
 
 	/**
 	 * Modify the SQL, adding hints or comments, if necessary
-	 *
-	 * @param sql original sql
-	 * @param parameters query parameters
-	 * @param commentsEnabled if comments are enabled
 	 */
 	public String addSqlHintOrComment(
 			String sql,
-			QueryParameters parameters,
+//			QueryParameters parameters,
 			boolean commentsEnabled) {
 
 		// Keep this here, rather than moving to Select.  Some Dialects may need the hint to be appended to the very
 		// end or beginning of the finalized SQL statement, so wait until everything is processed.
-		if ( parameters.getQueryHints() != null && parameters.getQueryHints().size() > 0 ) {
-			sql = getQueryHintString( sql, parameters.getQueryHints() );
-		}
-		if ( commentsEnabled && parameters.getComment() != null ){
-			sql = prependComment( sql, parameters.getComment() );
-		}
+//		if ( parameters.getQueryHints() != null && parameters.getQueryHints().size() > 0 ) {
+//			sql = getQueryHintString( sql, parameters.getQueryHints() );
+//		}
+//		if ( commentsEnabled && parameters.getComment() != null ){
+//			sql = prependComment( sql, parameters.getComment() );
+//		}
 
 		return sql;
 	}

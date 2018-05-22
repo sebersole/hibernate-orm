@@ -9,6 +9,8 @@ package org.hibernate.sql.results.internal;
 import java.sql.SQLException;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.named.spi.RowReaderMemento;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -22,6 +24,19 @@ public class RowReaderNoResultsExpectedImpl implements RowReader {
 	 * Singleton access
 	 */
 	public static final RowReaderNoResultsExpectedImpl INSTANCE = new RowReaderNoResultsExpectedImpl();
+
+	private static final RowReaderMemento MEMENTO = new RowReaderMemento() {
+		@Override
+		public Class[] getResultClasses() {
+			return new Class[0];
+		}
+
+		@Override
+		public String[] getResultMappingNames() {
+			return new String[0];
+		}
+	};
+
 
 	public static <R> RowReader<R> instance() {
 		return INSTANCE;
@@ -43,5 +58,10 @@ public class RowReaderNoResultsExpectedImpl implements RowReader {
 	@Override
 	public void finishUp(JdbcValuesSourceProcessingState context) {
 		// nothing to do
+	}
+
+	@Override
+	public RowReaderMemento toMemento(SessionFactoryImplementor factory) {
+		return MEMENTO;
 	}
 }

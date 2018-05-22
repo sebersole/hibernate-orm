@@ -33,15 +33,11 @@ import org.hibernate.sql.exec.spi.PreparedStatementCreator;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.RowReaderStandardImpl;
 import org.hibernate.sql.results.internal.values.DeferredResultSetAccess;
 import org.hibernate.sql.results.internal.values.JdbcValuesSource;
 import org.hibernate.sql.results.internal.values.JdbcValuesSourceCacheHit;
 import org.hibernate.sql.results.internal.values.JdbcValuesSourceResultSetImpl;
-import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.ResultSetAccess;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.RowReader;
@@ -269,19 +265,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState =
 				new JdbcValuesSourceProcessingStateStandardImpl( executionContext, processingOptions );
 
-		final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
-		final List<Initializer> initializers = new ArrayList<>();
-		for ( QueryResult queryResult : jdbcValuesSource.getResultSetMapping().getQueryResults() ) {
-			queryResult.registerInitializers( initializers::add );
-			returnAssemblers.add( queryResult.getResultAssembler() );
-		}
-
-		final RowReader<R> rowReader = new RowReaderStandardImpl<>(
-				returnAssemblers,
-				initializers,
-				rowTransformer,
-				executionContext.getCallback()
-		);
+		final RowReader<R> rowReader = Helper.createRowReader( executionContext, rowTransformer, jdbcValuesSource );
 		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
 				jdbcValuesSourceProcessingState,
 				executionContext.getQueryOptions(),

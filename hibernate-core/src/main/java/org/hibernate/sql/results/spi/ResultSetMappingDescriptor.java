@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.util.List;
-
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 

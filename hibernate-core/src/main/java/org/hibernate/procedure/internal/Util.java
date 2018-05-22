@@ -10,15 +10,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.LockMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
+import org.hibernate.sql.results.internal.EntityQueryResultImpl;
+import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.internal.SqlSelectionReaderImpl;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -109,6 +118,12 @@ public class Util {
 		}
 	}
 
+	public static void resolveResultSetMapping(
+			ResultSetMappingResolutionContext context,
+			String resultSetMappingName) {
+		new QueryReturnResolver( context ).resolve( resultSetMappingName );
+	}
+
 	/**
 	 * Context for resolving result-class definitions
 	 */
@@ -134,6 +149,8 @@ public class Util {
 		 * @param querySpaces The query spaces
 		 */
 		void addQuerySpaces(String... querySpaces);
+
+		QueryResultCreationContext getQueryResultCreationContext();
 	}
 
 	/**
@@ -142,11 +159,47 @@ public class Util {
 	 * @param context The context for the resolution.  See {@link ResultSetMappingResolutionContext}
 	 * @param resultClasses The Classes to which the results should be mapped
 	 */
-	public static void resolveResultClasses(
-			ResultClassesResolutionContext context,
-			Class... resultClasses) {
+	public static void resolveResultClasses(ResultClassesResolutionContext context, Class... resultClasses) {
+		for ( Class resultClass : resultClasses ) {
+			resolveResultClass( context, resultClass );
+		}
+	}
 
-//		int i = 0;
+	public static void resolveResultClass(ResultClassesResolutionContext context, Class resultType) {
+		final JavaTypeDescriptor resultTypeDescriptor = context.getSessionFactory()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getDescriptor( resultType );
+
+		if ( resultTypeDescriptor instanceof BasicJavaDescriptor ) {
+			context.addQueryResult(
+					new ScalarQueryResultImpl(
+							// todo (6.0) : resultVariable?
+							null,
+							// todo : SqlSelection
+							null,
+							context.getSessionFactory().getTypeConfiguration().getBasicTypeRegistry().getBasicType( resultType )
+					)
+			);
+		}
+		else if ( resultTypeDescriptor instanceof EntityJavaDescriptor ) {
+			final EntityDescriptor entityDescriptor = context.getSessionFactory().getMetamodel().getEntityDescriptor( resultType.getName() );
+			context.addQuerySpaces( entityDescriptor.getAffectedTableNames() );
+			context.addQueryResult(
+					new EntityQueryResultImpl(
+							entityDescriptor,
+							// todo (6.0) : resultVariable?
+							null,
+							// todo : EntitySqlSelectionMappings
+							null,
+							LockMode.NONE,
+							new NavigablePath( entityDescriptor.getEntityName() ),
+							context.getQueryResultCreationContext()
+					)
+			);
+		}
+
+		//		int i = 0;
 //		for ( Class resultClass : resultClasses ) {
 //			final EntityDescriptor entityDescriptor = context.getSessionFactory().getTypeConfiguration().getEntityDescriptor( resultClass.getName() );
 //			context.addQuerySpaces( (String[]) entityDescriptor.getAffectedTableNames() );

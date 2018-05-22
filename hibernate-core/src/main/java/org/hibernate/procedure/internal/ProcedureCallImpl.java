@@ -6,6 +6,7 @@
  */
 package org.hibernate.procedure.internal;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -28,10 +29,13 @@ import javax.persistence.TemporalType;
 import javax.persistence.TransactionRequiredException;
 
 import org.hibernate.HibernateException;
+import org.hibernate.JDBCException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.ScrollMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -60,11 +64,14 @@ import org.hibernate.result.NoMoreOutputsException;
 import org.hibernate.result.Output;
 import org.hibernate.result.ResultSetOutput;
 import org.hibernate.result.UpdateCountOutput;
-import org.hibernate.sql.results.internal.RowReaderNoResultsExpectedImpl;
+import org.hibernate.result.internal.ResultContext;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.RowReader;
 import org.hibernate.type.Type;
 
@@ -75,7 +82,7 @@ import org.hibernate.type.Type;
  */
 public class ProcedureCallImpl<R>
 		extends AbstractQuery<R>
-		implements ProcedureCallImplementor<R> {
+		implements ProcedureCallImplementor<R>, ResultContext {
 	private final String procedureName;
 
 	private FunctionReturnImpl functionReturn;
@@ -83,7 +90,7 @@ public class ProcedureCallImpl<R>
 	private final ProcedureParameterMetadata parameterMetadata;
 	private final ProcedureParamBindings paramBindings;
 
-	private final RowReader<R> rowReader;
+	private final List<RowReader> rowReaders;
 
 	private Set<String> synchronizedQuerySpaces;
 
@@ -106,7 +113,7 @@ public class ProcedureCallImpl<R>
 		this.paramBindings = new ProcedureParamBindings( parameterMetadata, this );
 
 		this.synchronizedQuerySpaces = Collections.emptySet();
-		this.rowReader = RowReaderNoResultsExpectedImpl.instance();
+		this.rowReaders = Collections.emptyList();
 	}
 
 	/**
@@ -130,6 +137,11 @@ public class ProcedureCallImpl<R>
 		Util.resolveResultClasses(
 				new Util.ResultClassesResolutionContext() {
 					@Override
+					public QueryResultCreationContext getQueryResultCreationContext() {
+						throw new NotYetImplementedFor6Exception();
+					}
+
+					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return session.getFactory();
 					}
@@ -151,11 +163,13 @@ public class ProcedureCallImpl<R>
 		);
 
 		this.synchronizedQuerySpaces = Collections.unmodifiableSet( querySpaces );
-		this.rowReader = new RowReaderStandardImpl<>(
-				returnAssemblers,
-				initializers,
-				null,
-				null
+		this.rowReaders = Collections.singletonList(
+				new RowReaderStandardImpl<>(
+						returnAssemblers,
+						initializers,
+						null,
+						null
+				)
 		);
 	}
 
@@ -174,47 +188,55 @@ public class ProcedureCallImpl<R>
 		this.paramBindings = new ProcedureParamBindings( parameterMetadata, this );
 
 		final Set<String> querySpaces = new HashSet<>();
-		final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
-		final List<Initializer> initializers = new ArrayList<>();
 
-		Util.resolveResultSetMappings(
-				new Util.ResultSetMappingResolutionContext() {
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return session.getFactory();
-					}
+		this.rowReaders = CollectionHelper.arrayList( resultSetMappings.length );
 
-					@Override
-					public ResultSetMappingDescriptor findResultSetMapping(String name) {
-						return session.getFactory().getQueryEngine().getNamedQueryRepository().getResultSetMappingDescriptor( name );
-					}
+		for ( String resultSetMapping : resultSetMappings ) {
+			final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
+			final List<Initializer> initializers = new ArrayList<>();
 
-					@Override
-					public void addQuerySpaces(String... spaces) {
-						Collections.addAll( querySpaces, spaces );
-					}
-
-					@Override
-					public void addQueryReturns(QueryResult... queryResults) {
-						for ( QueryResult queryResult : queryResults ) {
-							queryResult.registerInitializers( initializers::add );
-							returnAssemblers.add( queryResult.getResultAssembler() );
+			Util.resolveResultSetMapping(
+					new Util.ResultSetMappingResolutionContext() {
+						@Override
+						public SessionFactoryImplementor getSessionFactory() {
+							return session.getFactory();
 						}
-					}
 
-					// todo : add QuerySpaces to JdbcOperation
-					// todo : add JdbcOperation#shouldFlushAffectedQuerySpaces()
-				},
-				resultSetMappings
-		);
+						@Override
+						public ResultSetMappingDescriptor findResultSetMapping(String name) {
+							return session.getFactory().getQueryEngine().getNamedQueryRepository().getResultSetMappingDescriptor( name );
+						}
+
+						@Override
+						public void addQuerySpaces(String... spaces) {
+							Collections.addAll( querySpaces, spaces );
+						}
+
+						@Override
+						public void addQueryReturns(QueryResult... queryResults) {
+							for ( QueryResult queryResult : queryResults ) {
+								queryResult.registerInitializers( initializers::add );
+								returnAssemblers.add( queryResult.getResultAssembler() );
+							}
+						}
+
+						// todo : add QuerySpaces to JdbcOperation
+						// todo : add JdbcOperation#shouldFlushAffectedQuerySpaces()
+					},
+					resultSetMapping
+			);
+
+			rowReaders.add(
+					new RowReaderStandardImpl<>(
+							returnAssemblers,
+							initializers,
+							null,
+							null
+					)
+			);
+		}
 
 		this.synchronizedQuerySpaces = Collections.unmodifiableSet( querySpaces );
-		this.rowReader = new RowReaderStandardImpl<>(
-				returnAssemblers,
-				initializers,
-				null,
-				null
-		);
 	}
 
 	/**
@@ -232,74 +254,107 @@ public class ProcedureCallImpl<R>
 		this.parameterMetadata = new ProcedureParameterMetadata( this );
 		this.paramBindings = new ProcedureParamBindings( parameterMetadata, this );
 
-		final Set<String> querySpaces = new HashSet<>();
-		final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
-		final List<Initializer> initializers = new ArrayList<>();
+		if ( memento.getResultClasses().length > 0 ) {
+			final Set<String> querySpaces = new HashSet<>();
+			final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
+			final List<Initializer> initializers = new ArrayList<>();
 
-		Util.resolveResultClasses(
-				new Util.ResultClassesResolutionContext() {
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return session.getFactory();
-					}
-
-					@Override
-					public void addQuerySpaces(String... spaces) {
-						Collections.addAll( querySpaces, spaces );
-					}
-
-					@Override
-					public void addQueryResult(QueryResult... queryResults) {
-						for ( QueryResult queryResult : queryResults ) {
-							queryResult.registerInitializers( initializers::add );
-							returnAssemblers.add( queryResult.getResultAssembler() );
+			Util.resolveResultClasses(
+					new Util.ResultClassesResolutionContext() {
+						@Override
+						public QueryResultCreationContext getQueryResultCreationContext() {
+							throw new NotYetImplementedFor6Exception();
 						}
-					}
-				},
-				memento.getResultClasses()
-		);
 
-		Util.resolveResultSetMappings(
-				new Util.ResultSetMappingResolutionContext() {
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return session.getFactory();
-					}
-
-					@Override
-					public ResultSetMappingDescriptor findResultSetMapping(String name) {
-						return session.getFactory().getQueryEngine().getNamedQueryRepository().getResultSetMappingDescriptor( name );
-					}
-
-					@Override
-					public void addQuerySpaces(String... spaces) {
-						Collections.addAll( querySpaces, spaces );
-					}
-
-					@Override
-					public void addQueryReturns(QueryResult... queryResults) {
-						for ( QueryResult queryResult : queryResults ) {
-							queryResult.registerInitializers( initializers::add );
-							returnAssemblers.add( queryResult.getResultAssembler() );
+						@Override
+						public SessionFactoryImplementor getSessionFactory() {
+							return session.getFactory();
 						}
-					}
 
-					// todo : add QuerySpaces to JdbcOperation
-					// todo : add JdbcOperation#shouldFlushAffectedQuerySpaces()
-				},
-				memento.getResultSetMappingNames()
-		);
+						@Override
+						public void addQuerySpaces(String... spaces) {
+							Collections.addAll( querySpaces, spaces );
+						}
 
+						@Override
+						public void addQueryResult(QueryResult... queryResults) {
+							for ( QueryResult queryResult : queryResults ) {
+								queryResult.registerInitializers( initializers::add );
+								returnAssemblers.add( queryResult.getResultAssembler() );
+							}
+						}
+					},
+					memento.getResultClasses()
+			);
 
-		this.synchronizedQuerySpaces = new HashSet<>( memento.getQuerySpaces() );
-		this.synchronizedQuerySpaces.addAll( querySpaces );
+			this.synchronizedQuerySpaces = Collections.unmodifiableSet( querySpaces );
+			this.rowReaders = Collections.singletonList(
+					new RowReaderStandardImpl<>(
+							returnAssemblers,
+							initializers,
+							null,
+							null
+					)
+			);
+		}
+		else if ( memento.getResultSetMappingNames().length > 0 ) {
+			final Set<String> querySpaces = new HashSet<>();
 
-		this.rowReader = new RowReaderStandardImpl<>(
-				returnAssemblers,
-				initializers,
-				null,
-				null
-		);
+			this.rowReaders = CollectionHelper.arrayList( memento.getResultSetMappingNames().length );
+
+			for ( String resultSetMapping : memento.getResultSetMappingNames() ) {
+				final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
+				final List<Initializer> initializers = new ArrayList<>();
+
+				Util.resolveResultSetMapping(
+						new Util.ResultSetMappingResolutionContext() {
+							@Override
+							public SessionFactoryImplementor getSessionFactory() {
+								return session.getFactory();
+							}
+
+							@Override
+							public ResultSetMappingDescriptor findResultSetMapping(String name) {
+								return session.getFactory().getQueryEngine().getNamedQueryRepository().getResultSetMappingDescriptor( name );
+							}
+
+							@Override
+							public void addQuerySpaces(String... spaces) {
+								Collections.addAll( querySpaces, spaces );
+							}
+
+							@Override
+							public void addQueryReturns(QueryResult... queryResults) {
+								for ( QueryResult queryResult : queryResults ) {
+									queryResult.registerInitializers( initializers::add );
+									returnAssemblers.add( queryResult.getResultAssembler() );
+								}
+							}
+
+							// todo : add QuerySpaces to JdbcOperation
+							// todo : add JdbcOperation#shouldFlushAffectedQuerySpaces()
+						},
+						resultSetMapping
+				);
+
+				rowReaders.add(
+						new RowReaderStandardImpl<>(
+								returnAssemblers,
+								initializers,
+								null,
+								null
+						)
+				);
+			}
+
+			this.synchronizedQuerySpaces = Collections.unmodifiableSet( querySpaces );
+		}
+		else {
+			this.rowReaders = Collections.emptyList();
+			this.synchronizedQuerySpaces = new HashSet<>();
+		}
+
+		this.synchronizedQuerySpaces.addAll( memento.getQuerySpaces() );
 
 		memento.getHints().forEach( this::setHint );
 	}
@@ -458,8 +513,6 @@ public class ProcedureCallImpl<R>
 				parameterMetadata.getParameterStrategy(),
 				queryOptions,
 				paramBindings,
-				// todo : build RowTransformer based on ResultSet mapping
-				null,
 				getSession()
 		);
 	}
@@ -1023,7 +1076,8 @@ public class ProcedureCallImpl<R>
 				procedureName,
 				getParameterMetadata().getParameterStrategy(),
 				toParameterMementos( getParameterMetadata() ),
-				rowReader.toMemento( factory ),
+				// row-readers
+				null,
 				synchronizedQuerySpaces,
 				isCacheable(),
 				getCacheRegion(),
@@ -1047,5 +1101,25 @@ public class ProcedureCallImpl<R>
 		final List<ParameterDescriptor> copy = new ArrayList<>();
 		parameterMetadata.visitRegistrations( queryParameter -> copy.add( queryParameter.toMemento() ) );
 		return copy;
+	}
+
+	@Override
+	public ParameterBindingContext getParameterBindingContext() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Callback getCallback() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public List<org.hibernate.sql.results.spi.ResultSetMappingDescriptor> getResultSetMappings() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public JDBCException convertException(SQLException e, String message) {
+		throw new NotYetImplementedFor6Exception();
 	}
 }
