@@ -15,6 +15,7 @@ import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 import org.hibernate.query.spi.QueryParameterBindingValidator;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * The standard Hibernate QueryParameterBinding implementation
@@ -170,11 +171,18 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 	}
 
 	@Override
-	public void setBindValues(Collection<T> values, TemporalType temporalTypePrecision) {
+	public void setBindValues(
+			Collection<T> values,
+			TemporalType temporalTypePrecision,
+			TypeConfiguration typeConfiguration) {
 		setBindValues( values );
 
 		final Object exampleValue = values.isEmpty() ? null : values.iterator().next();
-		this.bindType = BindingTypeHelper.INSTANCE.resolveTemporalPrecision( temporalTypePrecision, bindType, exampleValue );
+		this.bindType = BindingTypeHelper.INSTANCE.resolveTemporalPrecision(
+				temporalTypePrecision,
+				bindType,
+				typeConfiguration
+		);
 	}
 
 

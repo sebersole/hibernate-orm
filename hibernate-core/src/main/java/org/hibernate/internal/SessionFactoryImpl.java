@@ -763,7 +763,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			if ( unwrapped != null ) {
 				getQueryEngine().getNamedQueryRepository().registerNamedCallableQueryDescriptor(
 						name,
-						unwrapped.toMemento( name )
+						unwrapped.toMemento( name, this )
 				);
 				return;
 			}
@@ -778,7 +778,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			if ( hqlQuery != null ) {
 				getQueryEngine().getNamedQueryRepository().registerNamedHqlQueryDescriptor(
 						name,
-						hqlQuery.toMemento( name )
+						hqlQuery.toMemento( name, this )
 				);
 
 				return;
@@ -794,7 +794,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			if ( nativeQuery != null ) {
 				getQueryEngine().getNamedQueryRepository().registerNamedNativeQueryDescriptor(
 						name,
-						nativeQuery.toMemento( name )
+						nativeQuery.toMemento( name, this )
 				);
 
 				return;

@@ -21,11 +21,6 @@ public class EmptyScrollableResults implements ScrollableResultsImplementor {
 	}
 
 	@Override
-	public int getNumberOfTypes() {
-		return 0;
-	}
-
-	@Override
 	public void close() {
 
 	}

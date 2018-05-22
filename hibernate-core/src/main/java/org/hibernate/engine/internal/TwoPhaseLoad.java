@@ -218,7 +218,7 @@ public final class TwoPhaseLoad {
 
 			final Object version = Versioning.getVersion( hydratedState, entityDescriptor );
 			final CacheEntry entry = entityDescriptor.buildCacheEntry( entity, hydratedState, version, session );
-			final EntityDataAccess cache = entityDescriptor.getCacheAccessStrategy();
+			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object cacheKey = cache.generateCacheKey( id, entityDescriptor, factory, session.getTenantIdentifier() );
 
 			// explicit handling of caching for rows just inserted and then somehow forced to be read
@@ -228,7 +228,7 @@ public final class TwoPhaseLoad {
 			//
 			// we need to be careful not to clobber the lock here in the cache so that it can be rolled back if need be
 			if ( session.getPersistenceContext().wasInsertedDuringTransaction( entityDescriptor, id ) ) {
-				cacheAccess.update(
+				cache.update(
 						session,
 						cacheKey,
 						entityDescriptor.getCacheEntryStructure().structure( entry ),
@@ -240,7 +240,7 @@ public final class TwoPhaseLoad {
 				final SessionEventListenerManager eventListenerManager = session.getEventListenerManager();
 				try {
 					eventListenerManager.cachePutStart();
-					final boolean put = cacheAccess.putFromLoad(
+					final boolean put = cache.putFromLoad(
 							session,
 							cacheKey,
 							entityDescriptor.getCacheEntryStructure().structure( entry ),
@@ -250,8 +250,8 @@ public final class TwoPhaseLoad {
 
 					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 						factory.getStatistics().entityCachePut(
-								entityDescriptor.getRole(),
-								cacheAccess.getRegion().getName()
+								entityDescriptor.getNavigableRole(),
+								cache.getRegion().getName()
 						);
 					}
 				}
@@ -314,15 +314,15 @@ public final class TwoPhaseLoad {
 		}
 	}
 
-	/**
-	 * Check if eager of the association is overriden by anything.
-	 *
-	 * @param session session
-	 * @param entityName entity name
-	 * @param associationName association name
-	 *
-	 * @return null if there is no overriding, true if it is overridden to eager and false if it is overridden to lazy
-	 */
+//	/**
+//	 * Check if eager of the association is overriden by anything.
+//	 *
+//	 * @param session session
+//	 * @param entityName entity name
+//	 * @param associationName association name
+//	 *
+//	 * @return null if there is no overriding, true if it is overridden to eager and false if it is overridden to lazy
+//	 */
 //	private static Boolean getOverridingEager(
 //			SharedSessionContractImplementor session,
 //			String entityName,

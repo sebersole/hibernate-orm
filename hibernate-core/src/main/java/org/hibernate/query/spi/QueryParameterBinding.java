@@ -12,6 +12,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.Incubating;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * The value/type binding information for a particular query parameter.  Supports
@@ -87,7 +88,7 @@ public interface QueryParameterBinding<T> {
 	 * @param values The bind values
 	 * @param temporalTypePrecision The temporal type to use
 	 */
-	void setBindValues(Collection<T> values, TemporalType temporalTypePrecision);
+	void setBindValues(Collection<T> values, TemporalType temporalTypePrecision, TypeConfiguration typeConfiguration);
 
 	/**
 	 * Get the values currently bound.
