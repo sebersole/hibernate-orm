@@ -142,7 +142,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			cacheEntryStructure = UnstructuredCacheEntry.INSTANCE;
 		}
 
-		cacheAccess = sessionFactory.getCache().getCollectionRegionAccess( this );
+		cacheAccess = sessionFactory.getCache().getCollectionRegionAccess( getNavigableRole() );
 
 		int spacesSize = 1 + collectionBinding.getSynchronizedTables().size();
 		spaces = new String[spacesSize];

@@ -18,7 +18,9 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.named.spi.NameableQuery;
 import org.hibernate.query.named.spi.NamedCallableQueryMemento;
+import org.hibernate.query.spi.ParameterMetadataImplementor;
 import org.hibernate.query.spi.QueryImplementor;
+import org.hibernate.query.spi.QueryParameterImplementor;
 
 /**
  * @author Steve Ebersole
@@ -36,6 +38,9 @@ public interface ProcedureCallImplementor<R> extends ProcedureCall, QueryImpleme
 
 	@Override
 	NamedCallableQueryMemento toMemento(String name, SessionFactoryImplementor factory);
+
+	@Override
+	ParameterMetadataImplementor<QueryParameterImplementor<?>> getParameterMetadata();
 
 	@Override
 	ProcedureCallImplementor<R> setHint(String hintName, Object value);

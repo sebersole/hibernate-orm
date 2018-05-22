@@ -593,7 +593,7 @@ public class NativeQueryImpl<R>
 	}
 
 	@Override
-	public Collection<String> getSynchronizedQuerySpaces() {
+	public Set<String> getSynchronizedQuerySpaces() {
 		return affectedTableNames;
 	}
 

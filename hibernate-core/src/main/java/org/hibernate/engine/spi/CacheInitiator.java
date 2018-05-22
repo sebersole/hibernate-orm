@@ -6,13 +6,11 @@
  */
 package org.hibernate.engine.spi;
 
-import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.internal.DisabledCaching;
 import org.hibernate.cache.internal.EnabledCaching;
 import org.hibernate.cache.internal.NoCachingRegionFactory;
 import org.hibernate.cache.spi.CacheImplementor;
 import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.service.spi.ServiceRegistryImplementor;
 import org.hibernate.service.spi.SessionFactoryServiceInitiator;
 import org.hibernate.service.spi.SessionFactoryServiceInitiatorContext;
 
@@ -26,24 +24,14 @@ public class CacheInitiator implements SessionFactoryServiceInitiator<CacheImple
 	public static final CacheInitiator INSTANCE = new CacheInitiator();
 
 	@Override
-	public CacheImplementor initiateService(
-			SessionFactoryImplementor sessionFactory,
-			SessionFactoryOptions sessionFactoryOptions,
-			ServiceRegistryImplementor registry) {
-		final RegionFactory regionFactory = registry.getService( RegionFactory.class );
-		return ( ! NoCachingRegionFactory.class.isInstance( regionFactory ) )
-				? new EnabledCaching( sessionFactory )
-				: new DisabledCaching( sessionFactory );
-	}
-
-	@Override
 	public Class<CacheImplementor> getServiceInitiated() {
 		return CacheImplementor.class;
 	}
 
 	@Override
 	public CacheImplementor initiateService(SessionFactoryServiceInitiatorContext context) {
-		return context.getSessionFactoryOptions().isSecondLevelCacheEnabled()
+		final RegionFactory regionFactory = context.getServiceRegistry().getService( RegionFactory.class );
+		return ( !NoCachingRegionFactory.class.isInstance( regionFactory ) )
 				? new EnabledCaching( context.getSessionFactory() )
 				: new DisabledCaching( context.getSessionFactory() );
 	}

@@ -1765,10 +1765,19 @@ public class StatefulPersistenceContext implements PersistenceContext {
 			final boolean justAddedLocally = naturalIdXrefDelegate.cacheNaturalIdCrossReference( descriptor, id, naturalIdValues );
 
 			if ( justAddedLocally ) {
-				final NaturalIdDataAccess cacheAccess = descriptor.getFactory().getCache()
-						.getNaturalIdRegionAccess( descriptor.getHierarchy() );
-				if ( cacheAccess != null ) {
-					managedSharedCacheEntries( descriptor, cacheAccess, id, naturalIdValues, null, CachedNaturalIdValueSource.LOAD );
+				if(descriptor.hasNaturalIdentifier()) {
+					final NaturalIdDataAccess cacheAccess = descriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess();
+
+					if ( cacheAccess != null ) {
+						managedSharedCacheEntries(
+								descriptor,
+								cacheAccess,
+								id,
+								naturalIdValues,
+								null,
+								CachedNaturalIdValueSource.LOAD
+						);
+					}
 				}
 			}
 		}
@@ -1803,21 +1812,30 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				// nothing to do
 				return;
 			}
+			if ( descriptor.hasNaturalIdentifier() ) {
+				final NaturalIdDataAccess cacheAccess = descriptor.getHierarchy()
+						.getNaturalIdDescriptor()
+						.getCacheAccess();
+				if ( cacheAccess == null ) {
+					// nothing to do
+					return;
+				}
+				descriptor = locateProperDescriptor( descriptor );
+				final Object[] naturalIdValues = extractNaturalIdValues( state, descriptor );
+				final Object[] previousNaturalIdValues = previousState == null ? null : extractNaturalIdValues(
+						previousState,
+						descriptor
+				);
 
-			final NaturalIdDataAccess cacheAccess = descriptor.getFactory().getCache()
-					.getNaturalIdRegionAccess( descriptor.getHierarchy() );
-			if ( cacheAccess == null ) {
-				// nothing to do
-				return;
+				managedSharedCacheEntries(
+						descriptor,
+						cacheAccess,
+						id,
+						naturalIdValues,
+						previousNaturalIdValues,
+						source
+				);
 			}
-
-			descriptor = locateProperDescriptor( descriptor );
-			final Object[] naturalIdValues = extractNaturalIdValues( state, descriptor );
-			final Object[] previousNaturalIdValues = previousState == null ? null : extractNaturalIdValues( previousState,
-																											descriptor
-			);
-
-			managedSharedCacheEntries( descriptor, cacheAccess, id, naturalIdValues, previousNaturalIdValues, source );
 		}
 
 		private void managedSharedCacheEntries(
@@ -1846,7 +1864,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 						factory.getStatistics().naturalIdCachePut(
-								descriptor.getRole(),
+								descriptor.getNavigableRole(),
 								cacheAccess.getRegion().getName()
 						);
 					}
@@ -1857,7 +1875,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 					final boolean put = cacheAccess.insert( session, naturalIdCacheKey, id );
 					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 						factory.getStatistics().naturalIdCachePut(
-								descriptor.getRole(),
+								descriptor.getNavigableRole(),
 								cacheAccess.getRegion().getName()
 						);
 					}
@@ -1869,7 +1887,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 									if ( put1 && factory.getStatistics().isStatisticsEnabled() ) {
 										factory.getStatistics().naturalIdCachePut(
-												descriptor.getRole(),
+												descriptor.getNavigableRole(),
 												cacheAccess.getRegion().getName()
 										);
 									}
@@ -1895,7 +1913,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 					final boolean put = cacheAccess.update( session, naturalIdCacheKey, id );
 					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 						factory.getStatistics().naturalIdCachePut(
-								descriptor.getRole(),
+								descriptor.getNavigableRole(),
 								cacheAccess.getRegion().getName()
 						);
 					}
@@ -1904,16 +1922,16 @@ public class StatefulPersistenceContext implements PersistenceContext {
 							(success, session) -> {
 								cacheAccess.unlockItem( session, previousCacheKey, removalLock );
 								if ( success ) {
-									final boolean put = cacheAccess.afterUpdate(
+									final boolean afterUpdatePut = cacheAccess.afterUpdate(
 											session,
 											naturalIdCacheKey,
 											id,
 											lock
 									);
 
-									if ( put && factory.getStatistics().isStatisticsEnabled() ) {
+									if ( afterUpdatePut && factory.getStatistics().isStatisticsEnabled() ) {
 										factory.getStatistics().naturalIdCachePut(
-												descriptor.getRole(),
+												descriptor.getNavigableRole(),
 												cacheAccess.getRegion().getName()
 										);
 									}
@@ -1958,20 +1976,23 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				return;
 			}
 
-			final NaturalIdDataAccess cacheAccess = descriptor.getFactory().getCache()
-					.getNaturalIdRegionAccess( descriptor.getHierarchy() );
-			if ( cacheAccess == null ) {
-				// nothing to do
-				return;
+			if ( descriptor.hasNaturalIdentifier() ) {
+				final NaturalIdDataAccess cacheAccess = descriptor.getHierarchy()
+						.getNaturalIdDescriptor()
+						.getCacheAccess();
+				if ( cacheAccess == null ) {
+					// nothing to do
+					return;
+				}
+
+				// todo : couple of things wrong here:
+				//		1) should be using access strategy, not plain evict..
+				//		2) should prefer session-cached values if any (requires interaction from removeLocalNaturalIdCrossReference
+
+				descriptor = locateProperDescriptor( descriptor );
+				final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor, session );
+				cacheAccess.evict( naturalIdCacheKey );
 			}
-
-			// todo : couple of things wrong here:
-			//		1) should be using access strategy, not plain evict..
-			//		2) should prefer session-cached values if any (requires interaction from removeLocalNaturalIdCrossReference
-
-			descriptor = locateProperDescriptor( descriptor );
-			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor, session );
-			cacheAccess.evict( naturalIdCacheKey );
 
 //			if ( sessionCachedNaturalIdValues != null
 //					&& !Arrays.equals( sessionCachedNaturalIdValues, deletedNaturalIdValues ) ) {

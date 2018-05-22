@@ -294,7 +294,7 @@ public class NaturalIdXrefDelegate {
 		else if ( factory.getStatistics().isStatisticsEnabled() ) {
 			factory.getStatistics().naturalIdCacheMiss(
 					entityDescriptor.getNavigableRole(),
-					entityNaturalIdResolutionCache.getRegion().getName()
+					cacheAccess.getRegion().getName()
 			);
 		}
 

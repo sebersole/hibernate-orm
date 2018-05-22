@@ -160,7 +160,9 @@ public class NamedProcedureCallDefinition {
 				determineFlushMode( hints, sessionFactory ),
 				ConfigurationHelper.getBoolean( QueryHints.HINT_READONLY, hints, false ),
 				LockOptions.NONE,
-				ConfigurationHelper.getInt( QueryHints.SPEC_HINT_TIMEOUT, hints, false ),
+				ConfigurationHelper.getInt( QueryHints.SPEC_HINT_TIMEOUT, hints, 0 ),
+				0,
+				null,
 				Util.copy( hints )
 		);
 	}

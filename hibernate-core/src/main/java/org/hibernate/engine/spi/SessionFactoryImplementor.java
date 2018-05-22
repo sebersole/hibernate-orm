@@ -162,7 +162,7 @@ public interface SessionFactoryImplementor
 	 * @return A list of {@code EntityGraph} instances associated with the given entity type. The empty list is
 	 * returned in case there are not entity graphs.
 	 */
-	<T> List<EntityGraphImplementor<? super T>> findEntityGraphsByType(Class<T> entityClass);
+	<T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass);
 
 
 
