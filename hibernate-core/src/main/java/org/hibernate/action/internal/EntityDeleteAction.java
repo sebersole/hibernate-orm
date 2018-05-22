@@ -43,7 +43,7 @@ public class EntityDeleteAction extends EntityAction {
 	 * @param state The current (extracted) entity state
 	 * @param version The current entity version
 	 * @param instance The entity instance
-	 * @param persister The entity persister
+	 * @param entityDescriptor The entity entityDescriptor
 	 * @param isCascadeDeleteEnabled Whether cascade delete is enabled
 	 * @param session The session
 	 */
@@ -52,10 +52,10 @@ public class EntityDeleteAction extends EntityAction {
 			final Object[] state,
 			final Object version,
 			final Object instance,
-			final EntityDescriptor persister,
+			final EntityDescriptor entityDescriptor,
 			final boolean isCascadeDeleteEnabled,
 			final SessionImplementor session) {
-		super( session, id, instance, persister );
+		super( session, id, instance, entityDescriptor );
 		this.version = version;
 		this.isCascadeDeleteEnabled = isCascadeDeleteEnabled;
 		this.state = state;
@@ -71,24 +71,24 @@ public class EntityDeleteAction extends EntityAction {
 	@Override
 	public void execute() throws HibernateException {
 		final Serializable id = getId();
-		final EntityDescriptor persister = getEntityDescriptor();
+		final EntityDescriptor entityDescriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();
 
 		final boolean veto = preDelete();
 
 		Object version = this.version;
-		if ( persister.isVersionPropertyGenerated() ) {
+		if ( entityDescriptor.isVersionPropertyGenerated() ) {
 			// we need to grab the version value from the entity, otherwise
 			// we have issues with generated-version entities that may have
 			// multiple actions queued during the same flush
-			version = persister.getVersion( instance );
+			version = entityDescriptor.getVersion( instance );
 		}
 
 		final Object ck;
-		if ( persister.canWriteToCache() ) {
-			final EntityDataAccess cache = persister.getCacheAccessStrategy();
-			ck = cache.generateCacheKey( id, persister, session.getFactory(), session.getTenantIdentifier() );
+		if ( entityDescriptor.canWriteToCache() ) {
+			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
+			ck = cache.generateCacheKey( id, entityDescriptor, session.getFactory(), session.getTenantIdentifier() );
 			lock = cache.lockItem( session, ck, version );
 		}
 		else {
@@ -96,7 +96,7 @@ public class EntityDeleteAction extends EntityAction {
 		}
 
 		if ( !isCascadeDeleteEnabled && !veto ) {
-			persister.delete( id, version, instance, session );
+			entityDescriptor.delete( id, version, instance, session );
 		}
 		
 		//postDelete:
@@ -113,11 +113,11 @@ public class EntityDeleteAction extends EntityAction {
 		persistenceContext.removeEntity( entry.getEntityKey() );
 		persistenceContext.removeProxy( entry.getEntityKey() );
 		
-		if ( persister.canWriteToCache() ) {
-			persister.getCacheAccessStrategy().remove( session, ck);
+		if ( entityDescriptor.canWriteToCache() ) {
+			entityDescriptor.getHierarchy().getEntityCacheAccess().remove( session, ck);
 		}
 
-		persistenceContext.getNaturalIdHelper().removeSharedNaturalIdCrossReference( persister, id, naturalIdValues );
+		persistenceContext.getNaturalIdHelper().removeSharedNaturalIdCrossReference( entityDescriptor, id, naturalIdValues );
 
 		postDelete();
 
@@ -188,10 +188,10 @@ public class EntityDeleteAction extends EntityAction {
 	public void doAfterTransactionCompletion(boolean success, SharedSessionContractImplementor session) throws HibernateException {
 		final EntityDescriptor descriptor = getEntityDescriptor();
 		if ( descriptor.canWriteToCache() ) {
-			EntityDataAccess cacheAccess = descriptor.getCacheAccessStrategy();
+			EntityDataAccess cacheAccess = descriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					getId(),
-					entityPersister.getHierarchy(),
+					descriptor,
 					session.getFactory(),
 					session.getTenantIdentifier()
 			);

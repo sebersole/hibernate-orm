@@ -39,15 +39,6 @@ public class StatisticsInitiator implements SessionFactoryServiceInitiator<Stati
 	}
 
 	@Override
-	public StatisticsImplementor initiateService(SessionFactoryServiceInitiatorContext context) {
-		final Object configValue = context.getServiceRegistry()
-				.getService( ConfigurationService.class )
-				.getSettings()
-				.get( STATS_BUILDER );
-		return initiateServiceInternal( context.getSessionFactory(), configValue, context.getServiceRegistry() );
-	}
-
-	@Override
 	public StatisticsImplementor initiateService(
 			SessionFactoryServiceInitiatorContext context) {
 		final Object configValue = context.getServiceRegistry().getService( ConfigurationService.class ).getSettings().get( STATS_BUILDER );

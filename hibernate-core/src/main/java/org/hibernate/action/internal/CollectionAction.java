@@ -75,7 +75,7 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 		// we need to obtain the lock before any actions are executed, since this may be an inverse="true"
 		// bidirectional association and it is one of the earlier entity actions which actually updates
 		// the database (this action is responsible for second-level cache invalidation only)
-		if ( persister.hasCache() ) {
+		if ( collectionDescriptor.hasCache() ) {
 			final CollectionDataAccess cacheAccess = collectionDescriptor.getCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					key,
@@ -128,11 +128,11 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 	}
 
 	protected final void evict() throws CacheException {
-		if ( persister.hasCache() ) {
+		if ( collectionDescriptor.hasCache() ) {
 			final CollectionDataAccess cacheAccess = collectionDescriptor.getCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					key, 
-					persister,
+					collectionDescriptor,
 					session.getFactory(),
 					session.getTenantIdentifier()
 			);
