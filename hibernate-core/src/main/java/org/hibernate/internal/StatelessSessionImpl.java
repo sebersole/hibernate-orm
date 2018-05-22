@@ -214,7 +214,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 //		}
 
 		if ( entityDescriptor.canWriteToCache() ) {
-			final EntityDataAccess cacheAccess = entityDescriptor.getCacheAccessStrategy();
+			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			if ( cacheAccess != null ) {
 				final Object ck = cacheAccess.generateCacheKey(
 						id,

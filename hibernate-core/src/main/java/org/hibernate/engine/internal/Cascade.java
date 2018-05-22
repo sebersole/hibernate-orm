@@ -103,7 +103,7 @@ public final class Cascade {
 				final String propertyName = propertyNames[ i ];
 				final boolean isUninitializedProperty =
 						hasUninitializedLazyProperties &&
-						!persister.getInstrumentationMetadata().isAttributeLoaded( parent, propertyName );
+						!descriptor.getInstrumentationMetadata().isAttributeLoaded( parent, propertyName );
 
 				if ( style.doCascade( action ) ) {
 					final Object child;

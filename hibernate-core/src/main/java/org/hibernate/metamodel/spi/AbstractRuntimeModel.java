@@ -223,23 +223,23 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityGraph<T> findEntityGraph(String name) {
+	public <T> EntityGraph<? super T> findEntityGraph(String name) {
 		return (EntityGraph<T>) entityGraphMap.get( name );
 	}
 
 	@Override
-	public <T> List<EntityGraph<T>> findEntityGraphForType(Class<T> baseType) {
+	public <T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType) {
 		return findEntityGraphForType( baseType.getName() );
 	}
 
 	@Override
-	public <T> List<EntityGraph<T>> findEntityGraphForType(String baseTypeName) {
+	public <T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName) {
 		final EntityDescriptor<? extends T> entityDescriptor = findEntityDescriptor( baseTypeName );
 		if ( entityDescriptor == null ) {
 			throw new IllegalArgumentException( "Not an entity : " + baseTypeName );
 		}
 
-		final List<EntityGraph<T>> results = new ArrayList<>();
+		final List<EntityGraph<? super T>> results = new ArrayList<>();
 
 		for ( EntityGraph entityGraph : entityGraphMap.values() ) {
 			if ( !EntityGraphImplementor.class.isInstance( entityGraph ) ) {

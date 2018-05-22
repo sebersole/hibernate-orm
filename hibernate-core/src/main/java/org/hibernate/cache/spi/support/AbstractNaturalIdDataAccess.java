@@ -12,7 +12,7 @@ import org.hibernate.cache.spi.DomainDataRegion;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -32,9 +32,9 @@ public abstract class AbstractNaturalIdDataAccess extends AbstractCachedDomainDa
 	@Override
 	public Object generateCacheKey(
 			Object[] naturalIdValues,
-			EntityPersister persister,
+			EntityDescriptor entityDescriptor,
 			SharedSessionContractImplementor session) {
-		return keysFactory.createNaturalIdKey( naturalIdValues, persister, session );
+		return keysFactory.createNaturalIdKey( naturalIdValues, entityDescriptor.getHierarchy(), session );
 	}
 
 	@Override

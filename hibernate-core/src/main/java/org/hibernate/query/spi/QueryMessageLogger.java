@@ -25,7 +25,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
  * todo (6.0) : fix ids
  */
 @MessageLogger( projectCode = "HHH" )
-@ValidIdRange( min = 90001001, max = 90002000 )
+@ValidIdRange( min = 90003001, max = 90004000 )
 public interface QueryMessageLogger {
 	QueryMessageLogger QUERY_LOGGER = Logger.getMessageLogger(
 			QueryMessageLogger.class,
@@ -34,6 +34,6 @@ public interface QueryMessageLogger {
 
 
 	@LogMessage(level = ERROR)
-	@Message(value = "Error in named query: %s", id = 90001177)
+	@Message(value = "Error in named query: %s", id = 90003001)
 	void namedQueryError(String queryName, @Cause HibernateException e);
 }

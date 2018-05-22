@@ -22,9 +22,9 @@ import static org.jboss.logging.Logger.Level.WARN;
  * @author Steve Ebersole
  */
 @MessageLogger( projectCode = "HHH" )
-@ValidIdRange( min = 10005001, max = 10010000 )
+@ValidIdRange( min = 10006001, max = 10007000 )
 public interface CdiMessageLogger {
-	public static final CdiMessageLogger CDI_LOGGER = Logger.getMessageLogger(
+	CdiMessageLogger CDI_LOGGER = Logger.getMessageLogger(
 			CdiMessageLogger.class,
 			"org.hibernate.orm.cdi"
 	);
@@ -32,7 +32,7 @@ public interface CdiMessageLogger {
 
 	@LogMessage( level = INFO )
 	@Message(
-			id = 10005001,
+			id = 10006001,
 			value = "Found explicitly configured ManagedBeanRegistry instance [%s], " +
 					"but an explicit BeanManager reference was also explicitly configured [%s]; " +
 					"ignoring BeanManager reference"
@@ -43,7 +43,7 @@ public interface CdiMessageLogger {
 
 	@LogMessage( level = WARN )
 	@Message(
-			id = 10005002,
+			id = 10006002,
 			value = "An explicit CDI BeanManager reference [%s] was passed to Hibernate, " +
 					"but CDI is not available on the Hibernate ClassLoader.  This is likely " +
 					"going to lead to exceptions later on in bootstrap"
@@ -52,7 +52,7 @@ public interface CdiMessageLogger {
 
 	@LogMessage( level = INFO )
 	@Message(
-			id = 10005003,
+			id = 10006003,
 			value = "No explicit CDI BeanManager reference was passed to Hibernate, " +
 					"but CDI is available on the Hibernate ClassLoader."
 	)
@@ -60,7 +60,7 @@ public interface CdiMessageLogger {
 
 	@LogMessage( level = INFO )
 	@Message(
-			id = 10005004,
+			id = 10006004,
 			value = "Stopping ManagedBeanRegistry : %s"
 	)
 	void stoppingManagedBeanRegistry(ManagedBeanRegistry registry);

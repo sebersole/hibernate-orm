@@ -17,7 +17,8 @@ import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+
 /**
  * Standard support for {@link org.hibernate.cache.spi.access.CollectionDataAccess}
  * using the {@link org.hibernate.cache.spi.access.AccessType#READ_WRITE} access type.
@@ -54,7 +55,7 @@ public class CollectionReadWriteAccess extends AbstractReadWriteAccess implement
 	@Override
 	public Object generateCacheKey(
 			Object id,
-			CollectionPersister collectionDescriptor,
+			PersistentCollectionDescriptor collectionDescriptor,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier) {
 		return keysFactory.createCollectionKey( id, collectionDescriptor, factory, tenantIdentifier );

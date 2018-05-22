@@ -63,11 +63,6 @@ public class NoCachingRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	public CacheTransactionContext createTransactionContext(SharedSessionContractImplementor session) {
-		return new NoCachingTransactionContextImpl( this );
-	}
-
-	@Override
 	public long nextTimestamp() {
 		return System.currentTimeMillis();
 	}

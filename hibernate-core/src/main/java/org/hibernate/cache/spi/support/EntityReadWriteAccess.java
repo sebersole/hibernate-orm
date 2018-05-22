@@ -16,7 +16,7 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * Standard support for {@link org.hibernate.cache.spi.access.EntityDataAccess}
@@ -58,10 +58,10 @@ public class EntityReadWriteAccess extends AbstractReadWriteAccess implements En
 	@Override
 	public Object generateCacheKey(
 			Object id,
-			EntityPersister rootEntityDescriptor,
+			EntityDescriptor rootEntityDescriptor,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier) {
-		return keysFactory.createEntityKey( id, rootEntityDescriptor, factory, tenantIdentifier );
+		return keysFactory.createEntityKey( id, rootEntityDescriptor.getHierarchy(), factory, tenantIdentifier );
 	}
 
 	@Override
