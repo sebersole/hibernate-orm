@@ -7,6 +7,7 @@
 package org.hibernate.event.internal;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -53,7 +54,8 @@ public class EvictVisitor extends AbstractVisitor {
 			collection = (PersistentCollection) value;
 		}
 		else if ( value == LazyPropertyInitializer.UNFETCHED_PROPERTY ) {
-			collection = (PersistentCollection) type.resolve( value, getSession(), this.owner );
+//			collection = (PersistentCollection) type.resolve( value, getSession(), this.owner );
+			throw new NotYetImplementedFor6Exception( "evictCollection + LazyPropertyInitializer.UNFETCHED_PROPERTY" );
 		}
 		else {
 			return; //EARLY EXIT!
