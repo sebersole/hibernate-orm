@@ -55,7 +55,6 @@ public class StandardCacheEntryImpl implements CacheEntry {
 				? null
 				: descriptor.getPropertyLaziness();
 		this.disassembledState = TypeHelper.disassemble( state, nonCacheable, descriptor );
-		this.disassembledStateText = TypeHelper.toLoggableString( state, descriptor );
 		this.subclass = descriptor.getEntityName();
 		this.version = version;
 	}
