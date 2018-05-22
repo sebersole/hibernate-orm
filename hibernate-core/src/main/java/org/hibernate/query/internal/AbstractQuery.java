@@ -62,6 +62,7 @@ import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
 import org.hibernate.query.TypedParameterValue;
 import org.hibernate.query.spi.MutableQueryOptions;
+import org.hibernate.query.spi.ParameterMetadataImplementor;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
@@ -117,8 +118,10 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	protected abstract QueryParameterBindings getQueryParameterBindings();
 
+	@Override
+	public abstract ParameterMetadataImplementor<QueryParameterImplementor<?>> getParameterMetadata();
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// QueryOptions handling
 
 	@Override

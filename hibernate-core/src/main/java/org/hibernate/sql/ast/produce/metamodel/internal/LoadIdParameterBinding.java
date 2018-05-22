@@ -11,6 +11,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -77,7 +78,10 @@ public class LoadIdParameterBinding<T> implements QueryParameterBinding<T> {
 	}
 
 	@Override
-	public void setBindValues(Collection values, TemporalType temporalTypePrecision) {
+	public void setBindValues(
+			Collection values,
+			TemporalType temporalTypePrecision,
+			TypeConfiguration typeConfiguration) {
 		throw new UnsupportedOperationException( "Cannot change parameter binding value" );
 	}
 

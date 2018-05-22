@@ -290,7 +290,10 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		}
 
 		return new NaturalIdDescriptorImpl(
-				entityHierarchy.getRootEntityType().getFactory().getCache().getNaturalIdRegionAccess( entityHierarchy )
+				entityHierarchy.getRootEntityType()
+						.getFactory()
+						.getCache()
+						.getNaturalIdCacheRegionAccessStrategy( entityHierarchy.rootEntityDescriptor.getNavigableRole() )
 		);
 	}
 
@@ -375,7 +378,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	@Override
 	public EntityDataAccess getEntityCacheAccess() {
 		if ( caching == null ) {
-			caching = rootEntityDescriptor.getFactory().getCache().getEntityRegionAccess( this );
+			caching = rootEntityDescriptor.getFactory().getCache().getEntityRegionAccess( identifierDescriptor.getNavigableRole()  );
 		}
 		return caching;
 	}

@@ -15,6 +15,7 @@ import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -103,8 +104,9 @@ public final class Cascade {
 				final String propertyName = propertyNames[ i ];
 				final boolean isUninitializedProperty =
 						hasUninitializedLazyProperties &&
-						!descriptor.getInstrumentationMetadata().isAttributeLoaded( parent, propertyName );
+						!descriptor.getBytecodeEnhancementMetadata().isAttributeLoaded( parent, propertyName );
 
+				PersistentAttribute attribute = persistentAttributes.get( i );
 				if ( style.doCascade( action ) ) {
 					final Object child;
 
@@ -113,12 +115,13 @@ public final class Cascade {
 					if ( isUninitializedProperty  ) {
 						// parent is a bytecode enhanced entity.
 						// cascading to an uninitialized, lazy value.
-						if ( types[ i ].isCollectionType() ) {
+						if ( attribute.isCollection() ) {
 							// The collection does not need to be loaded from the DB.
 							// CollectionType#resolve will return an uninitialized PersistentCollection.
 							// The action will initialize the collection later, if necessary.
-							child = types[ i ].resolve( LazyPropertyInitializer.UNFETCHED_PROPERTY, eventSource, parent );
+//							child = types[ i ].resolve( LazyPropertyInitializer.UNFETCHED_PROPERTY, eventSource, parent );
 							// TODO: it would be nice to be able to set the attribute in parent using
+							throw new NotYetImplementedFor6Exception("cascade uninitialized Collection Property");
 							// persister.setPropertyValue( parent, i, child ).
 							// Unfortunately, that would cause the uninitialized collection to be
 							// loaded from the DB.
@@ -126,7 +129,7 @@ public final class Cascade {
 						else if ( action.performOnLazyProperty() ) {
 							// The (non-collection) attribute needs to be initialized so that
 							// the action can be performed on the initialized attribute.
-							LazyAttributeLoadingInterceptor interceptor = persister.getInstrumentationMetadata().extractInterceptor( parent );
+							LazyAttributeLoadingInterceptor interceptor = descriptor.getBytecodeEnhancementMetadata().extractInterceptor( parent );
 							child = interceptor.fetchAttribute( parent, propertyName );
 						}
 						else {
@@ -144,7 +147,7 @@ public final class Cascade {
 							componentPathStackDepth,
 							parent,
 							child,
-							persistentAttributes.get(i),
+							attribute,
 							style,
 							propertyName,
 							anything,
@@ -156,7 +159,7 @@ public final class Cascade {
 							eventSource,
 							parent,
 							descriptor,
-							persistentAttributes.get(i),
+							attribute,
 							i
 					);}
 					// If the property is uninitialized, then there cannot be any orphans.
@@ -166,8 +169,8 @@ public final class Cascade {
 								eventSource,
 								componentPathStackDepth,
 								parent,
-								persister.getPropertyValue( parent, i ),
-								types[ i ],
+								descriptor.getPropertyValue( parent, i ),
+								attribute,
 								style,
 								propertyName,
 								false
@@ -234,7 +237,7 @@ public final class Cascade {
 				componentPathStackDepth,
 				parent,
 				child,
-				type,
+				attribute,
 				style,
 				propertyName,
 				isCascadeDeleteEnabled );
@@ -246,7 +249,7 @@ public final class Cascade {
 			final int componentPathStackDepth,
 			final Object parent,
 			final Object child,
-			final Type type,
+			final PersistentAttribute attribute,
 			final CascadeStyle style,
 			final String propertyName,
 			final boolean isCascadeDeleteEnabled) throws HibernateException {
@@ -434,7 +437,7 @@ public final class Cascade {
 			final PluralPersistentAttribute attribute) {
 		final CollectionElement collectionElement = attribute.getPersistentCollectionDescriptor().getElementDescriptor();
 		final PersistentCollectionDescriptor descriptor = eventSource.getFactory()
-				.getTypeConfiguration()
+				.getMetamodel()
 				.findCollectionDescriptor( attribute.getNavigableName() );
 
 		CascadePoint elementsCascadePoint = cascadePoint;

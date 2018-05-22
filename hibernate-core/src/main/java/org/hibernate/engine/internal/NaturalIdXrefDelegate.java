@@ -89,17 +89,17 @@ public class NaturalIdXrefDelegate {
 	/**
 	 * Handle removing cross reference entries for the given natural-id/pk combo
 	 *
-	 * @param persister The persister representing the entity type.
+	 * @param entityDescriptor The entityDescriptor representing the entity type.
 	 * @param pk The primary key value
 	 * @param naturalIdValues The natural id value(s)
 	 * 
 	 * @return The cached values, if any.  May be different from incoming values.
 	 */
-	public Object[] removeNaturalIdCrossReference(EntityDescriptor persister, Serializable pk, Object[] naturalIdValues) {
-		persister = locatePersisterForKey( persister );
-		validateNaturalId( persister, naturalIdValues );
+	public Object[] removeNaturalIdCrossReference(EntityDescriptor entityDescriptor, Serializable pk, Object[] naturalIdValues) {
+		entityDescriptor = locatePersisterForKey( entityDescriptor );
+		validateNaturalId( entityDescriptor, naturalIdValues );
 
-		final NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
+		final NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( entityDescriptor );
 		Object[] sessionCachedNaturalIdValues = null;
 		if ( entityNaturalIdResolutionCache != null ) {
 			final CachedNaturalId cachedNaturalId = entityNaturalIdResolutionCache.pkToNaturalIdMap
@@ -110,14 +110,14 @@ public class NaturalIdXrefDelegate {
 			}
 		}
 
-		if ( persister.hasNaturalIdCache() ) {
-			final NaturalIdRegionAccessStrategy cacheAccess = persister.getNaturalIdCacheAccessStrategy();
-			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, persister, session() );
+		if ( entityDescriptor.hasNaturalIdentifier() && entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess() != null ) {
+			final NaturalIdDataAccess cacheAccess = entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess();
+			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, entityDescriptor, session() );
 			cacheAccess.evict( naturalIdCacheKey );
 
 			if ( sessionCachedNaturalIdValues != null
 					&& !Arrays.equals( sessionCachedNaturalIdValues, naturalIdValues ) ) {
-				final Object sessionNaturalIdCacheKey = cacheAccess.generateCacheKey( sessionCachedNaturalIdValues, persister, session() );
+				final Object sessionNaturalIdCacheKey = cacheAccess.generateCacheKey( sessionCachedNaturalIdValues, entityDescriptor, session() );
 				cacheAccess.evict( sessionNaturalIdCacheKey );
 			}
 		}
@@ -196,25 +196,25 @@ public class NaturalIdXrefDelegate {
 	}
 
 	/**
-	 * Given a persister and natural-id value(s), find the locally cross-referenced primary key.  Will return
+	 * Given a entityDescriptor and natural-id value(s), find the locally cross-referenced primary key.  Will return
 	 * {@link PersistenceContext.NaturalIdHelper#INVALID_NATURAL_ID_REFERENCE} if the given natural ids are known to
 	 * be invalid (see {@link #stashInvalidNaturalIdReference}).
 	 *
-	 * @param persister The persister representing the entity type.
+	 * @param entityDescriptor The entityDescriptor representing the entity type.
 	 * @param naturalIdValues The natural id value(s)
 	 * 
 	 * @return The corresponding cross-referenced primary key, 
 	 * 		{@link PersistenceContext.NaturalIdHelper#INVALID_NATURAL_ID_REFERENCE},
 	 * 		or {@code null} if none 
 	 */
-	public Serializable findCachedNaturalIdResolution(EntityDescriptor persister, Object[] naturalIdValues) {
-		persister = locatePersisterForKey( persister );
-		validateNaturalId( persister, naturalIdValues );
+	public Serializable findCachedNaturalIdResolution(EntityDescriptor entityDescriptor, Object[] naturalIdValues) {
+		entityDescriptor = locatePersisterForKey( entityDescriptor );
+		validateNaturalId( entityDescriptor, naturalIdValues );
 
-		NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
+		NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( entityDescriptor );
 
-		Serializable pk;
-		final CachedNaturalId cachedNaturalId = new CachedNaturalId( persister, naturalIdValues );
+		Serializable pk = null;
+		final CachedNaturalId cachedNaturalId = new CachedNaturalId( entityDescriptor, naturalIdValues );
 		if ( entityNaturalIdResolutionCache != null ) {
 			pk = entityNaturalIdResolutionCache.naturalIdToPkMap.get( cachedNaturalId );
 
@@ -223,7 +223,7 @@ public class NaturalIdXrefDelegate {
 				if ( LOG.isTraceEnabled() ) {
 					LOG.trace(
 							"Resolved natural key -> primary key resolution in session cache: " +
-									persister.getEntityName() + "#[" +
+									entityDescriptor.getEntityName() + "#[" +
 									Arrays.toString( naturalIdValues ) + "]"
 					);
 				}
@@ -238,23 +238,34 @@ public class NaturalIdXrefDelegate {
 		}
 
 		// Session cache miss, see if second-level caching is enabled
-		final NaturalIdDataAccess cacheAccess = persister.getHierarchy().getNaturalIdDescriptor().getCacheAccess();
+		final NaturalIdDataAccess cacheAccess = entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess();
 		if ( cacheAccess == null ) {
 			return null;
 		}
 
 		// Try resolution from second-level cache
-		final NaturalIdDataAccess naturalIdCacheAccessStrategy = persister.getNaturalIdCacheAccessStrategy();
-		final Object naturalIdCacheKey = naturalIdCacheAccessStrategy.generateCacheKey( naturalIdValues, persister, session() );
 
-		pk = CacheHelper.fromSharedCache( session(), naturalIdCacheKey, cacheAccess );
+		if ( entityDescriptor.hasNaturalIdentifier() && entityDescriptor.getHierarchy()
+				.getNaturalIdDescriptor()
+				.getCacheAccess() != null ) {
+			final NaturalIdDataAccess naturalIdCacheAccessStrategy = entityDescriptor.getHierarchy()
+					.getNaturalIdDescriptor()
+					.getCacheAccess();
+
+			final Object naturalIdCacheKey = naturalIdCacheAccessStrategy.generateCacheKey(
+					naturalIdValues,
+					entityDescriptor,
+					session()
+			);
+			pk = CacheHelper.fromSharedCache( session(), naturalIdCacheKey, cacheAccess );
+		}
 
 		// Found in second-level cache, store in session cache
 		final SessionFactoryImplementor factory = session().getFactory();
 		if ( pk != null ) {
 			if ( factory.getStatistics().isStatisticsEnabled() ) {
 				factory.getStatistics().naturalIdCacheHit(
-						StatsHelper.INSTANCE.getRootEntityRole( persister ),
+						StatsHelper.INSTANCE.getRootEntityRole( entityDescriptor ),
 						cacheAccess.getRegion().getName()
 				);
 			}
@@ -265,13 +276,13 @@ public class NaturalIdXrefDelegate {
 						"Found natural key [%s] -> primary key [%s] xref in second-level cache for %s",
 						Arrays.toString( naturalIdValues ),
 						pk,
-						persister.getEntityName()
+						entityDescriptor.getEntityName()
 				);
 			}
 
 			if ( entityNaturalIdResolutionCache == null ) {
-				entityNaturalIdResolutionCache = new NaturalIdResolutionCache( persister );
-				NaturalIdResolutionCache existingCache = naturalIdResolutionCacheMap.putIfAbsent( persister, entityNaturalIdResolutionCache );
+				entityNaturalIdResolutionCache = new NaturalIdResolutionCache( entityDescriptor );
+				NaturalIdResolutionCache existingCache = naturalIdResolutionCacheMap.putIfAbsent( entityDescriptor, entityNaturalIdResolutionCache );
 				if ( existingCache != null ) {
 					entityNaturalIdResolutionCache = existingCache;
 				}
@@ -282,8 +293,8 @@ public class NaturalIdXrefDelegate {
 		}
 		else if ( factory.getStatistics().isStatisticsEnabled() ) {
 			factory.getStatistics().naturalIdCacheMiss(
-					persister.getRole(),
-					naturalIdCacheAccessStrategy.getRegion().getName()
+					entityDescriptor.getNavigableRole(),
+					entityNaturalIdResolutionCache.getRegion().getName()
 			);
 		}
 
