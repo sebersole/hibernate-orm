@@ -322,7 +322,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public <T> List<EntityGraphImplementor<? super T>> findEntityGraphsByType(Class<T> entityClass) {
+	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
 		return delegate.findEntityGraphsByType( entityClass );
 	}
 

@@ -23,7 +23,6 @@ import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.MappedTableJoin;
-import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.internal.AbstractIdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.spi.EntityMappingHierarchyImplementor;
 import org.hibernate.boot.model.domain.spi.EntityMappingImplementor;
@@ -103,10 +102,13 @@ public abstract class PersistentClass
 	private MappedSuperclass superMappedSuperclass;
 	private EmbeddedValueMapping declaredIdentifierValueMapping;
 
-private boolean isCached;	public PersistentClass(MetadataBuildingContext metadataBuildingContext,
+	private boolean isCached;
+
+	public PersistentClass(
+			MetadataBuildingContext metadataBuildingContext,
 			EntityJavaTypeMapping javaTypeMapping,
 			EntityMappingHierarchy entityMappingHierarchy) {
-		super( entityMappingHierarchy, javaTypeMapping) ;
+		super( entityMappingHierarchy, javaTypeMapping );
 		this.metadataBuildingContext = metadataBuildingContext;
 	}
 

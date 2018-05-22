@@ -52,8 +52,8 @@ public interface RuntimeModel {
 	void visitCollectionDescriptors(Consumer<PersistentCollectionDescriptor<?,?,?>> action);
 
 	<T> EntityGraphImplementor<? super T> findEntityGraph(String name);
-	<T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(Class<T> baseType);
-	<T> List<EntityGraphImplementor<? super T>> findEntityGraphForType(String baseTypeName);
+	<T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType);
+	<T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName);
 	void visitEntityGraphs(Consumer<EntityGraph<?>> action);
 
 	// todo (6.0) : default-for-type as well?

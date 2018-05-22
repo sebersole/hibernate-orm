@@ -181,6 +181,9 @@ public interface NativeQueryImplementor<R> extends QueryImplementor<R>, NativeQu
 	NativeQueryImplementor<R> setParameter(String name, Object val, AllowableParameterType type);
 
 	@Override
+	ParameterMetadataImplementor<QueryParameterImplementor<?>> getParameterMetadata();
+
+	@Override
 	default NativeQueryImplementor<R> setParameter(int position, Object val, Type type) {
 		return setParameter( position, val, (AllowableParameterType) type );
 	}

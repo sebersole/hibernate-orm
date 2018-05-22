@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,7 +55,9 @@ import org.hibernate.loader.spi.MultiIdLoaderSelectors;
 import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
+import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
+import org.hibernate.mapping.Subclass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
@@ -113,6 +116,9 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private final Dialect dialect;
 
+	private final boolean canReadFromCache;
+	private final boolean canWriteToCache;
+
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
 			EntityMapping bootMapping,
@@ -157,6 +163,32 @@ public abstract class AbstractEntityDescriptor<J>
 
 		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromEntityName( bootMapping.getEntityName() );
 		this.dialect = factory.getServiceRegistry().getService( JdbcServices.class ).getDialect();
+
+		if ( creationContext.getSessionFactory().getSessionFactoryOptions().isSecondLevelCacheEnabled() ) {
+			PersistentClass persistentClass = (PersistentClass) bootMapping;
+			this.canWriteToCache = persistentClass.isCached();
+			this.canReadFromCache = determineCanReadFromCache( persistentClass );
+		}
+		else {
+			this.canWriteToCache = false;
+			this.canReadFromCache = false;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean determineCanReadFromCache(PersistentClass persistentClass) {
+		if ( persistentClass.isCached() ) {
+			return true;
+		}
+
+		final Iterator<Subclass> subclassIterator = persistentClass.getSubclassIterator();
+		while ( subclassIterator.hasNext() ) {
+			final Subclass subclass = subclassIterator.next();
+			if ( subclass.isCached() ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private EntityHierarchy resolveEntityHierarchy(
@@ -250,6 +282,16 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	public EntityHierarchy getHierarchy() {
 		return hierarchy;
+	}
+
+	@Override
+	public boolean canReadFromCache() {
+		return canReadFromCache;
+	}
+
+	@Override
+	public boolean canWriteToCache() {
+		return canWriteToCache;
 	}
 
 	@Override

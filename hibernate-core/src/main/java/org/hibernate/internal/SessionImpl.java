@@ -139,6 +139,7 @@ import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.hibernate.query.Query;
+import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 import org.hibernate.resource.transaction.TransactionRequiredForJoinException;
@@ -3160,11 +3161,13 @@ public final class SessionImpl
 	public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
 		checkOpen();
 		try {
-			final ProcedureCallMemento memento = getFactory().getQueryEngine().getNamedQueryRepository().getNamedCallableQueryDescriptor( name );
-			if ( memento == null ) {
+			final NamedCallableQueryMemento namedCallableQueryDescriptor = getFactory().getQueryEngine()
+					.getNamedQueryRepository()
+					.getNamedCallableQueryDescriptor( name );
+			if ( namedCallableQueryDescriptor == null ) {
 				throw new IllegalArgumentException( "No @NamedStoredProcedureQuery was found with that name : " + name );
 			}
-			return memento.makeProcedureCall( this );
+			return namedCallableQueryDescriptor.toQuery( this, null );
 		}
 		catch ( RuntimeException e ) {
 			throw exceptionConverter.convert( e );
@@ -3324,9 +3327,8 @@ public final class SessionImpl
 	@Override
 	public <T> List<EntityGraph<? super T>> getEntityGraphs(Class<T> entityClass) {
 		checkOpen();
-		return getEntityManagerFactory().findEntityGraphsByType( entityClass );
+		return getFactory().findEntityGraphsByType( entityClass );
 	}
-
 
 	/**
 	 * Used by JDK serialization...

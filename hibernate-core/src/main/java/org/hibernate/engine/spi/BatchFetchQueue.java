@@ -225,13 +225,14 @@ public class BatchFetchQueue {
 			return false;
 		}
 
-		final Object key = cache.generateCacheKey(
+		EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
+		final Object key = cacheAccess.generateCacheKey(
 				entityKey.getIdentifier(),
-				persister,
+				entityDescriptor,
 				session.getFactory(),
 				session.getTenantIdentifier()
 		);
-		return CacheHelper.fromSharedCache( session, key, cache ) != null;
+		return CacheHelper.fromSharedCache( session, key, cacheAccess ) != null;
 	}
 	
 
@@ -339,7 +340,7 @@ public class BatchFetchQueue {
 	private boolean isCached(Serializable collectionKey, PersistentCollectionDescriptor descriptor) {
 		SharedSessionContractImplementor session = context.getSession();
 		if ( session.getCacheMode().isGetEnabled() && descriptor.hasCache() ) {
-			CollectionRegionAccessStrategy cache = descriptor.getCacheAccessStrategy();
+			CollectionDataAccess cache = descriptor.getCacheAccess();
 			Object cacheKey = cache.generateCacheKey(
 					collectionKey,
 					descriptor,
