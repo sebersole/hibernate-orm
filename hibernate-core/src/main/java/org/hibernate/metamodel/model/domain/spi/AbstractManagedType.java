@@ -38,7 +38,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	// todo (6.0) : I think we can just drop the mutabilityPlan and comparator for managed types
 
 	private final ManagedJavaDescriptor<J> javaTypeDescriptor;
-	private final ManagedTypeRepresentationStrategy representationStrategy;
 
 	private final TypeConfiguration typeConfiguration;
 
@@ -53,6 +52,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	//
 	//		see `#getNavigables` and `#getDeclaredNavigables` below.
 
+	private ManagedTypeRepresentationStrategy representationStrategy;
 
 	private List<NonIdPersistentAttribute> declaredAttributes;
 	private List<NonIdPersistentAttribute> attributes;
@@ -64,7 +64,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractManagedType(
-			ManagedTypeMapping managedTypeMapping,
+			ManagedTypeMapping bootDescriptor,
 			InheritanceCapable<? super J> superTypeDescriptor,
 			ManagedJavaDescriptor<J> javaTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
@@ -72,9 +72,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		this.javaTypeDescriptor = javaTypeDescriptor;
 
 		this.typeConfiguration = creationContext.getTypeConfiguration();
-
-		this.representationStrategy = creationContext.getRepresentationStrategySelector()
-				.resolveStrategy( managedTypeMapping, this, creationContext );
 	}
 
 	@Override
@@ -132,6 +129,9 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			contributor.setStateArrayPosition( stateArrayContributors.size() );
 			stateArrayContributors.add( contributor );
 		}
+
+		this.representationStrategy = creationContext.getRepresentationStrategySelector()
+				.resolveStrategy( bootDescriptor, this, creationContext );
 	}
 
 

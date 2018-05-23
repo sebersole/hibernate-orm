@@ -18,6 +18,7 @@ import org.hibernate.bytecode.enhance.spi.Enhancer;
 import org.hibernate.bytecode.spi.BytecodeProvider;
 import org.hibernate.bytecode.spi.ProxyFactoryFactory;
 import org.hibernate.bytecode.spi.ReflectionOptimizer;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.description.method.MethodDescription;
@@ -55,7 +56,7 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 			final Class clazz,
 			final String[] getterNames,
 			final String[] setterNames,
-			final Class[] types) {
+			final JavaTypeDescriptor[] types) {
 		final Method[] getters = new Method[getterNames.length];
 		final Method[] setters = new Method[setterNames.length];
 		findAccessors( clazz, getterNames, setterNames, types, getters, setters );
@@ -193,7 +194,7 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 			Class clazz,
 			String[] getterNames,
 			String[] setterNames,
-			Class[] types,
+			JavaTypeDescriptor[] types,
 			Method[] getters,
 			Method[] setters) {
 		final int length = types.length;
@@ -206,7 +207,7 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 		for ( int i = 0; i < length; i++ ) {
 			if ( getterNames[i] != null ) {
 				final Method getter = findAccessor( clazz, getterNames[i], getParam, i );
-				if ( getter.getReturnType() != types[i] ) {
+				if ( getter.getReturnType() != types[i].getJavaType() ) {
 					throw new BulkAccessorException( "wrong return type: " + getterNames[i], i );
 				}
 
@@ -214,7 +215,7 @@ public class BytecodeProviderImpl implements BytecodeProvider {
 			}
 
 			if ( setterNames[i] != null ) {
-				setParam[0] = types[i];
+				setParam[0] = types[i].getJavaType();
 				setters[i] = findAccessor( clazz, setterNames[i], setParam, i );
 			}
 		}

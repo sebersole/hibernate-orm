@@ -6,7 +6,10 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
@@ -19,9 +22,11 @@ import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.property.access.spi.BuiltInPropertyAccessStrategies;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.property.access.spi.PropertyAccessStrategy;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -56,17 +61,28 @@ public class StandardPojoRepresentationStrategy implements ManagedTypeRepresenta
 			return null;
 		}
 
-		// todo (6.0) : extract these from the ManagedTypeDescriptor
-		final String[] getterNames = null;
-		final String[] setterNames = null;
-		final Class[] types = null;
+		final List<String> getterNames = new ArrayList<>();
+		final List<String> setterNames = new ArrayList<>();
+		final List<JavaTypeDescriptor> types = new ArrayList<>();
+
+		//noinspection Convert2Lambda
+		runtimeDescriptor.visitAttributes(
+				new Consumer<NonIdPersistentAttribute>() {
+					@Override
+					public void accept(NonIdPersistentAttribute attribute) {
+						getterNames.add( attribute.getPropertyAccess().getGetter().getMethodName() );
+						setterNames.add( attribute.getPropertyAccess().getSetter().getMethodName() );
+						types.add( attribute.getJavaTypeDescriptor() );
+					}
+				}
+		);
 
 		try {
 			return bytecodeProvider.getReflectionOptimizer(
 					runtimeDescriptor.getJavaTypeDescriptor().getJavaType(),
-					getterNames,
-					setterNames,
-					types
+					getterNames.toArray( new String[0] ),
+					setterNames.toArray( new String[0] ),
+					types.toArray( new JavaTypeDescriptor[0] )
 			);
 		}
 		catch (Exception e) {

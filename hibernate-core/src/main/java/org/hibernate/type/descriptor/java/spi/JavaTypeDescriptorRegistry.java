@@ -16,6 +16,7 @@ import org.hibernate.boot.model.TypeContributor;
 import org.hibernate.internal.util.SerializationHelper;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.internal.JavaTypeDescriptorBaseline;
+import org.hibernate.type.descriptor.java.internal.JavaTypeDescriptorBasicAdaptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -90,6 +91,29 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 
 	public <T> JavaTypeDescriptor<T> getDescriptor(Class<T> javaType) {
 		return getDescriptor( javaType, (s,r) -> null );
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> BasicJavaDescriptor<T> getBasicJavaDescriptor(Class<T> javaType) {
+		return (BasicJavaDescriptor<T>) getDescriptor(
+				javaType,
+				(s, registry) -> {
+					final BasicJavaDescriptor fallbackDescriptor;
+					if ( javaType.isEnum() ) {
+						fallbackDescriptor = new EnumJavaDescriptor( javaType );
+					}
+					else if ( Serializable.class.isAssignableFrom( javaType ) ) {
+						fallbackDescriptor = new OnTheFlySerializableJavaDescriptor( javaType );
+					}
+					else {
+						fallbackDescriptor = new JavaTypeDescriptorBasicAdaptor( javaType );
+					}
+
+					registry.addDescriptor( fallbackDescriptor );
+
+					return fallbackDescriptor;
+				}
+		);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -22,6 +22,8 @@ import javassist.bytecode.StackMapTable;
 import javassist.util.proxy.FactoryHelper;
 import javassist.util.proxy.RuntimeSupport;
 
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+
 /**
  * A factory of bulk accessors.
  *
@@ -45,14 +47,14 @@ class BulkAccessorFactory {
 	private Class targetBean;
 	private String[] getterNames;
 	private String[] setterNames;
-	private Class[] types;
+	private JavaTypeDescriptor[] types;
 	public String writeDirectory;
 
 	BulkAccessorFactory(
 			Class target,
 			String[] getterNames,
 			String[] setterNames,
-			Class[] types) {
+			JavaTypeDescriptor[] types) {
 		this.targetBean = target;
 		// todo (6.0) : these should be checked to not allow nulls (throw exception)
 		// 		being null is not valid long term, but for initial wip dev i allow
@@ -129,7 +131,7 @@ class BulkAccessorFactory {
 		for ( int i = 0; i < len; i++ ) {
 			instance.getters[i] = getterNames[i];
 			instance.setters[i] = setterNames[i];
-			instance.types[i] = types[i];
+			instance.types[i] = types[i].getJavaType();
 		}
 
 		return instance;
@@ -382,7 +384,7 @@ class BulkAccessorFactory {
 			Class clazz,
 			String[] getterNames,
 			String[] setterNames,
-			Class[] types,
+			JavaTypeDescriptor[] types,
 			Method[] getters,
 			Method[] setters) {
 		final int length = types.length;
@@ -395,7 +397,7 @@ class BulkAccessorFactory {
 		for ( int i = 0; i < length; i++ ) {
 			if ( getterNames[i] != null ) {
 				final Method getter = findAccessor( clazz, getterNames[i], getParam, i );
-				if ( getter.getReturnType() != types[i] ) {
+				if ( getter.getReturnType() != types[i].getJavaType() ) {
 					throw new BulkAccessorException( "wrong return type: " + getterNames[i], i );
 				}
 
@@ -403,7 +405,7 @@ class BulkAccessorFactory {
 			}
 
 			if ( setterNames[i] != null ) {
-				setParam[0] = types[i];
+				setParam[0] = types[i].getJavaType();
 				setters[i] = findAccessor( clazz, setterNames[i], setParam, i );
 			}
 		}
