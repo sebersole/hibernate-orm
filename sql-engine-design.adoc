@@ -3,6 +3,28 @@
 
 == General Design
 
+The primary goal for 6.0 is to make performance improvements at the JDBC interaction level in the form of optimizing:
+
+* the SQL that gets generated - queries that are smaller which makes them quicker across wire, easier for db to
+ 	parse and execute.
+* optimizing the processing of ResultSets.  This comes down to:
+	** positional access to JDBC results - much quicker for most drivers since they tend to hold these values
+		in arrays and the positional access is generally direct array access whereas name access generally
+		goes through an intermediate Map-style lookup (typically name->position, plus the positional array access)
+	** JDBC "columns" (physical or formula):
+		*** condense multiple references to a single reference in the generated SQL - (specific references of
+			a particular bound column in the persister Navigable model).  An example would be an entity that maps
+			more than one attribute to a given column; for each of those attributes we wil generate just a single reference
+			to that column in the SQL SELECT.  E.g. the PERSON table might have a FIRST_NAME column that the Person
+			entity map multiple attributes for some reason.  When we generate the SQL SELECT we understand that fact
+			and generate just the one "column" reference (P.FIRST_NAME) in the SELECT clause.  Each attribute
+			understands where to get that underlying JDBC value positionally.
+		*** accessed only once per row - all of the JDBC ResultSet values are read just a single time and then
+			held in a "current JDBC values array" as part of processing state via position - much more efficient.
+
+A "hopeful" goal was to centralize the generation of SQL into a single, consistent "engine" and a single, consistent handling
+of results.
+
 Ultimately the idea here is to redefine how Hibernate generates and executes SQL.  In general there are 3(*) sources
 for Hibernate to generate and execute SQL:
 
@@ -18,32 +40,8 @@ for Hibernate to generate and execute SQL:
 	** subselect (load/) fetch (only fetch prior to 6.0)
 	** updates/deletes/inserts corresponding to normal PC state
 
-In other words, in versions of Hibernate prior to 6.0 there were multiple sources for generating the SQL and multiple
-sources for executing the SQL and processing any results.
-
-The primary goal for 6.0 is to make performance improvements at the JDBC interaction level in the form of optimizing:
-
-* the SQL that gets generated - queries that are smaller which makes them quicker across wire, easier for db to
- 	parse and execute.
-* optimizing the processing of ResultSets.  This comes down to:
-	** positional access to JDBC results - much quicker for most drivers since they tend to hold these values
-		in arrays and the positional access is generally direct array access whereas name access generally
-		goes through an intermediate Map-style lookup
-	** JDBC "columns" (physical or formula):
-		*** condensed to a single reference in the generated SQL - multiple "columns" references (specific references of
-			a particular bound column in the persister Navigable model).  An example would be an entity that maps more than one
-			attribute to a given column; for each of those attributes we wil generate just a single reference
-			to that column in the SQL SELECT.  E.g. the PERSON table might have a FIRST_NAME column that the Person
-			entity map multiple attributes for some reason.  When we generate the SQL SELECT we understand that fact
-			and generate just the one "column" reference (P.FIRST_NAME) in the SELECT clause.  Each attribute
-			understands where to get that underlying JDBC value positionally.
-		*** accessed only once per row - all of the JDBC ResultSet values are read just a single time and then
-			held in a "current JDBC values array" as part of processing state via position - much more efficient.
-			AttributeConverters et.al are applied at this step.
-
-
-A "hopeful" goal was to centralize the generation of SQL into a single, consistent "engine" and a single, consistent handling
-of results.
+In versions of Hibernate prior to 6.0 there were multiple sources for generating the SQL and multiple
+sources for executing the SQL and processing any results (largely not shared code)
 
 The main parts of the overall design for this work follow...
 
@@ -62,7 +60,8 @@ types and their corresponding executors are as follows:
 ** _JdbcDelete_
 ** _JdbcInsert_
 ** `JdbcInsertSelect`
-* `JdbcCall` -> _JdbcCallExecutor_
+* `JdbcAnonCall`
+** `JdbcCall` -> _JdbcCallExecutor_
 
 _Those in italics are not yet defined_
 

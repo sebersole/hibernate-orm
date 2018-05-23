@@ -8,29 +8,16 @@ package org.hibernate.sql.exec.spi;
 
 import java.util.List;
 
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
-
 /**
  * @author Steve Ebersole
  */
-public interface JdbcCall extends JdbcOperation {
-	JdbcCallFunctionReturn getFunctionReturn();
-
+public interface JdbcCall extends JdbcAnonCall {
 	/**
-	 * Get the list of any parameter registrations we need to register
-	 * against the generated CallableStatement
+	 * If the call is a function, returns the function return descriptor
 	 */
-	List<JdbcCallParameterRegistration> getParameterRegistrations();
+	JdbcCallFunctionReturn getFunctionReturn();
 
 	List<JdbcCallParameterExtractor> getParameterExtractors();
 
 	List<JdbcCallRefCursorExtractor> getCallRefCursorExtractors();
-
-	/**
-	 * Retrieve the "result set mappings" for the JDBC call.  We expose multiple
-	 * because JPA allows for an application to define multiple such mappings
-	 * which are (unclearly) intended to describe the mapping for each
-	 * ResultSet (in order) returned from the call.
-	 */
-	List<ResultSetMappingDescriptor> getResultSetMappings();
 }
