@@ -41,8 +41,8 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 
 	private boolean hadMainOutputParameter;
 
-	private Map<String,QueryParameterImplementor> namedQueryParameters;
-	private Map<Integer,QueryParameterImplementor> positionalQueryParameters;
+	private Map<String,QueryParameterImplementor<?>> namedQueryParameters;
+	private Map<Integer,QueryParameterImplementor<?>> positionalQueryParameters;
 
 	private PositionalParameterStyle positionalParameterStyle;
 	private int ordinalParameterImplicitPosition;
@@ -94,11 +94,11 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		}
 	}
 
-	public Map<String, QueryParameterImplementor> getNamedQueryParameters() {
+	public Map<String, QueryParameterImplementor<?>> getNamedQueryParameters() {
 		return namedQueryParameters;
 	}
 
-	public Map<Integer, QueryParameterImplementor> getPositionalQueryParameters() {
+	public Map<Integer, QueryParameterImplementor<?>> getPositionalQueryParameters() {
 		return positionalQueryParameters;
 	}
 

@@ -49,7 +49,9 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolve
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -499,7 +501,7 @@ public class RuntimeModelCreationProcess {
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder  builder = locateBuilder( bootDescriptor.getNaturalIdCacheRegionName() );
-			builder.addEntityConfig( runtimeDescriptor.getHierarchy(), accessType );
+			builder.addEntityConfig( bootDescriptor, accessType );
 		}
 
 		private DomainDataRegionConfigImpl.Builder  locateBuilder(String regionName) {
@@ -514,7 +516,7 @@ public class RuntimeModelCreationProcess {
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
-			configBuilder.addNaturalIdConfig( runtimeDescriptor.getHierarchy(), accessType );
+			configBuilder.addNaturalIdConfig( bootDescriptor, accessType );
 		}
 
 		@Override
@@ -553,7 +555,19 @@ public class RuntimeModelCreationProcess {
 				Collection bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
-			configBuilder.addCollectionConfig( runtimeDescriptor, accessType );
+			configBuilder.addCollectionConfig( bootDescriptor, accessType );
+		}
+
+		@Override
+		public ManagedBeanRegistry getManagedBeanRegistry() {
+			return mappingMetadata.getMetadataBuildingOptions()
+					.getServiceRegistry()
+					.getService( ManagedBeanRegistry.class );
+		}
+
+		@Override
+		public JavaTypeDescriptorRegistry getJavaTypeDescriptorRegistry() {
+			return mappingMetadata.getBootstrapContext().getTypeConfiguration().getJavaTypeDescriptorRegistry();
 		}
 	}
 }

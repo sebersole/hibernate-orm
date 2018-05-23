@@ -21,6 +21,7 @@ import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.StringHelper;
@@ -35,6 +36,7 @@ import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.named.spi.ParameterDescriptor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 
 /**
  * Holds all the information needed from a named procedure call declaration in order to create a
@@ -112,6 +114,11 @@ public class NamedProcedureCallDefinition {
 						@Override
 						public void addQuerySpaces(String... spaces) {
 							Collections.addAll( collectedQuerySpaces, spaces );
+						}
+
+						@Override
+						public QueryResultCreationContext getQueryResultCreationContext() {
+							throw new NotYetImplementedFor6Exception();
 						}
 					},
 					resultClasses

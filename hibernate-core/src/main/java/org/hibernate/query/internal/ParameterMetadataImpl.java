@@ -34,8 +34,8 @@ public class ParameterMetadataImpl implements ParameterMetadataImplementor<Query
 	private final Map<String,QueryParameterImplementor<?>> namedDescriptorMap;
 
 	public ParameterMetadataImpl(
-			Map<Integer,QueryParameterImplementor> ordinalDescriptorMap,
-			Map<String, QueryParameterImplementor> namedDescriptorMap) {
+			Map<Integer,QueryParameterImplementor<?>> ordinalDescriptorMap,
+			Map<String, QueryParameterImplementor<?>> namedDescriptorMap) {
 		this.ordinalDescriptorMap = ordinalDescriptorMap == null
 				? Collections.emptyMap()
 				: Collections.unmodifiableMap( ordinalDescriptorMap );
