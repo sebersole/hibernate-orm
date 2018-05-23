@@ -210,7 +210,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 	}
 
 	public static class BasicTypeResolverUsingReflection extends BasicTypeResolverConvertibleSupport {
-		private final JavaTypeDescriptor javaTypeDescriptor;
+		private final BasicJavaDescriptor javaTypeDescriptor;
 		private final SqlTypeDescriptor sqlTypeDescriptor;
 		private final boolean isLob;
 		private final boolean isNationalized;
@@ -235,7 +235,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 				javaTypeDescriptor = buildingContext.getBootstrapContext()
 						.getTypeConfiguration()
 						.getJavaTypeDescriptorRegistry()
-						.getDescriptor( attributeType );
+						.getBasicJavaDescriptor( attributeType );
 				sqlTypeDescriptor = javaTypeDescriptor
 						.getJdbcRecommendedSqlType(
 								buildingContext.getBootstrapContext()
@@ -249,13 +249,13 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 				javaTypeDescriptor = buildingContext.getBootstrapContext()
 						.getTypeConfiguration()
 						.getJavaTypeDescriptorRegistry()
-						.getDescriptor( domainJavaType );
+						.getBasicJavaDescriptor( domainJavaType );
 
 				final Class<?> relationalJavaType = converterDefinition.getRelationalValueResolvedType().getErasedType();
 				final JavaTypeDescriptor<?> relationalJavaDescriptor = buildingContext.getBootstrapContext()
 						.getTypeConfiguration()
 						.getJavaTypeDescriptorRegistry()
-						.getDescriptor( relationalJavaType );
+						.getBasicJavaDescriptor( relationalJavaType );
 				sqlTypeDescriptor = relationalJavaDescriptor.getJdbcRecommendedSqlType(
 						buildingContext.getBootstrapContext()
 								.getTypeConfiguration()
@@ -267,7 +267,7 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 
 		@Override
 		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			return (BasicJavaDescriptor) javaTypeDescriptor;
+			return javaTypeDescriptor;
 		}
 
 		@Override

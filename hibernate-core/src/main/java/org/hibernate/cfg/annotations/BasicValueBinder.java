@@ -483,10 +483,10 @@ public class BasicValueBinder<T> {
 			final Class javaType = buildingContext.getBootstrapContext()
 					.getReflectionManager()
 					.toClass( mapAttribute.getMapKey() );
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+			javaDescriptor = buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getDescriptor( javaType );
+					.getBasicJavaDescriptor( javaType );
 
 			final MapKeyType mapKeyTypeAnn = mapAttribute.getAnnotation( MapKeyType.class );
 			if ( mapKeyTypeAnn != null ) {
@@ -576,7 +576,7 @@ public class BasicValueBinder<T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public BasicJavaDescriptor<Integer> getJavaTypeDescriptor() {
-			return (BasicJavaDescriptor) getTypeConfiguration().getJavaTypeDescriptorRegistry().getDescriptor( Integer.class );
+			return getTypeConfiguration().getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Integer.class );
 		}
 
 		@Override
@@ -618,10 +618,10 @@ public class BasicValueBinder<T> {
 					.getReflectionManager()
 					.toClass( elementJavaType );
 
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+			javaDescriptor = buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getDescriptor( javaType );
+					.getBasicJavaDescriptor( javaType );
 
 			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
 			if ( temporalAnn != null ) {
@@ -710,10 +710,10 @@ public class BasicValueBinder<T> {
 			final Class javaType = buildingContext.getBootstrapContext()
 					.getReflectionManager()
 					.toClass( elementJavaType );
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+			javaDescriptor = buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getDescriptor( javaType );
+					.getBasicJavaDescriptor( javaType );
 
 			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
 			if ( temporalAnn != null ) {

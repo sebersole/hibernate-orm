@@ -18,6 +18,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementException;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -35,7 +36,8 @@ public class SchemaUpdateHaltOnErrorTest {
 		}
 		catch (Exception e) {
 			SchemaManagementException cause = (SchemaManagementException) e;
-			assertEquals( "Halting on error : Error executing DDL via JDBC Statement", cause.getMessage() );
+			assertTrue( cause.getMessage().startsWith( "Halting on error : Error executing DDL" ) );
+			assertTrue( cause.getMessage().endsWith( "via JDBC Statement" ) );
 		}
 	}
 

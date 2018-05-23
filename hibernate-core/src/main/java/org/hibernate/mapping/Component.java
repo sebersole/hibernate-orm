@@ -95,7 +95,7 @@ public class Component extends SimpleValue
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
 		if ( javaTypeMapping == null ) {
-			javaTypeMapping = new EmbeddableJavaTypeMappingImpl<>( getMetadataBuildingContext(), roleName, componentClassName, null );
+			javaTypeMapping = new EmbeddableJavaTypeMappingImpl<>( getMetadataBuildingContext(), getName(), componentClassName, null );
 		}
 		return javaTypeMapping;
 	}

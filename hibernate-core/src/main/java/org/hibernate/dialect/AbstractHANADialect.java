@@ -343,7 +343,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -435,7 +435,7 @@ public abstract class AbstractHANADialect extends Dialect {
 	// using non-contexual lob creation and HANA then closes our StringReader.
 	// see test case LobLocatorTest
 
-	private static class HANAClobTypeDescriptor extends ClobSqlDescriptor {
+	private static class HANAClobTypeDescriptor<T> extends ClobSqlDescriptor {
 
 		/** serial version uid. */
 		private static final long serialVersionUID = -379042275442752102L;
@@ -450,7 +450,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -550,7 +550,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -646,7 +646,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
 		}
 
 		@Override

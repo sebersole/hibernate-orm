@@ -6,11 +6,21 @@
  */
 package org.hibernate.orm.test;
 
+import java.util.EnumSet;
+
+import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
+import org.hibernate.tool.schema.Action;
+import org.hibernate.tool.schema.TargetType;
+import org.hibernate.tool.schema.internal.Helper;
+import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
 
 import org.hibernate.testing.junit5.FunctionalSessionFactoryTesting;
 import org.hibernate.testing.junit5.SessionFactoryProducer;
@@ -46,18 +56,38 @@ public abstract class SessionFactoryBasedFunctionalTest
 				.applySetting( AvailableSettings.HBM2DDL_AUTO, exportSchema() ? "create-drop" : "none" );
 		applySettings( ssrBuilder );
 		final StandardServiceRegistry ssr = ssrBuilder.build();
-
+		Metadata metadata = null;
 		try {
-			MetadataSources metadataSources = new MetadataSources( ssr );
-			applyMetadataSources( metadataSources );
-
-			final SessionFactoryImplementor factory = (SessionFactoryImplementor) metadataSources.buildMetadata().buildSessionFactory();
+			metadata = buildMetadata( ssr );
+			final SessionFactoryImplementor factory = (SessionFactoryImplementor) metadata.buildSessionFactory();
 			sessionFactoryBuilt( factory );
 			return factory;
 		}
 		catch (Exception e) {
 			StandardServiceRegistryBuilder.destroy( ssr );
+			SchemaManagementToolCoordinator.ActionGrouping actions = SchemaManagementToolCoordinator.ActionGrouping.interpret(
+					ssrBuilder.getSettings() );
+			if ( ( exportSchema() || actions.getDatabaseAction() != Action.NONE ) && metadata != null ) {
+				dropDatabase( );
+			}
 			throw e;
+		}
+	}
+
+	private MetadataImplementor buildMetadata(StandardServiceRegistry ssr) {
+		MetadataSources metadataSources = new MetadataSources( ssr );
+		applyMetadataSources( metadataSources );
+		return (MetadataImplementor) metadataSources.buildMetadata();
+	}
+
+	private void dropDatabase() {
+		final StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().build();
+		try {
+			final DatabaseModel databaseModel = Helper.buildDatabaseModel( buildMetadata( ssr ) );
+			new SchemaExport( databaseModel, ssr ).drop( EnumSet.of( TargetType.DATABASE ) );
+		}
+		finally {
+			StandardServiceRegistryBuilder.destroy( ssr );
 		}
 	}
 
