@@ -19,12 +19,6 @@ import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
  */
 public interface JdbcAnonBlock extends JdbcOperation {
 	/**
-	 * Get the list of any parameter registrations we need to register
-	 * against the generated CallableStatement
-	 */
-	List<JdbcCallParameterRegistration> getParameterRegistrations();
-
-	/**
 	 * Retrieve the "result set mappings" for processing any ResultSets returned from
 	 * the JDBC call.  We expose multiple because JPA allows for an application to
 	 * define multiple such mappings which are (unclearly) intended to describe the mapping
