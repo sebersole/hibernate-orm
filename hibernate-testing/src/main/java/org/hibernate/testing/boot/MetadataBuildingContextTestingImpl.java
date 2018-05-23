@@ -15,7 +15,6 @@ import org.hibernate.boot.model.type.internal.TypeDefinitionRegistryImpl;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MappingDefaults;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -65,10 +64,6 @@ public class MetadataBuildingContextTestingImpl implements MetadataBuildingConte
 		typeDefinitionRegistry.register( typeDefinition );
 	}
 
-	@Override
-	public BootstrapContext getBootstrapContext() {
-		return bootstrapContext;
-	}
 
 	@Override
 	public MetadataBuildingOptions getBuildingOptions() {
@@ -93,10 +88,6 @@ public class MetadataBuildingContextTestingImpl implements MetadataBuildingConte
 	@Override
 	public int getPreferredSqlTypeCodeForBoolean() {
 		return 0;
-	}
-
-	public ClassLoaderAccess getClassLoaderAccess() {
-		return bootstrapContext.getClassLoaderAccess();
 	}
 
 	@Override

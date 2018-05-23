@@ -34,7 +34,7 @@ public class SecondaryTableTests extends SessionFactoryBasedFunctionalTest {
 
 	@Test
 	public void basicSecondaryTableTest() {
-		final EntityDescriptor<? extends Contact> contactDescriptor = sessionFactory().getTypeConfiguration()
+		final EntityDescriptor<? extends Contact> contactDescriptor = sessionFactory().getMetamodel()
 				.findEntityDescriptor( Contact.class );
 		assertThat( contactDescriptor.getPrimaryTable(), notNullValue() );
 		assertThat( contactDescriptor.getSecondaryTableBindings(), hasSize( 1 ) );
