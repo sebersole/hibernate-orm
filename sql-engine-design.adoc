@@ -314,16 +314,7 @@ is `NavigableReference` which is an `Expression` whose `Selectable` is its refer
 
 === SQM
 
-SQM is an AST (tree) representation of a query defined via HQL or Criteria
-
-==== HQL
-
-Discuss Antlr-based HQL-to-SQM process
-
-
-==== Criteria
-
-Discuss alternatives : pros, cons
+See <<sqm>>
 
 
 === EntityDescriptor (load, update, etc)
@@ -714,6 +705,72 @@ And so on...
 
 
 
+[#sqm]
+== SQM
+
+SQM is an AST (tree) representation of a query defined via HQL or Criteria
+
+[#sqm-tree]
+=== Tree
+
+==== FromClause
+
+==== Expressions
+
+===== Literals
+
+===== Functions
+
+===== NavigableReference
+
+A `Navigable` represents some part of the user's domain model - e.g., an attribute, an id, an entity, etc.
+
+A `NavigableReference` is (strangely) a reference to a `Navigable`.  Easiest to explain by way of some examples...
+
+[source]
+.Simple Example
+----
+select count(*) from Person p
+----
+
+Here we have just one `NavigableReference`, the reference to the Person entity.
+
+[source]
+.Multiple Example
+----
+select count(*) from Person p, Person p2
+----
+
+Now we have 2 `NavigableReference`s.. the `p` reference to Person and the `p2` reference.
+
+
+[source]
+.Attribute Example
+----
+select p.name from Person p
+----
+
+Here we have 2 `NavigableReference`s.. the Person reference and then the reference to it's name attribute
+
+
+==== SelectClause
+
+===== Selection
+
+
+[#sqm-sources]
+=== Sources
+
+==== HQL
+
+Discuss Antlr-based HQL-to-SQM process
+
+
+==== Criteria
+
+Discuss alternatives : pros, cons
+
+
 
 
 -- end of work ---
@@ -726,7 +783,9 @@ rest needs to be re-worked
 
 
 
+== Needs re-work
 
+=== JdbcParameterBinder, ParameterBindingContext
 
 
 ==== Parameters
@@ -882,33 +941,6 @@ This will be discussed more in the section describing processing results.
 
 
 
-todo (6.0) : add example from discussion  with Andrea yesterday wrt jdbc-results -> domain-results
-
-
-
-
-== Open Design Questions
-
-Collection of open questions regarding various aspects of the design of this work.
-
-
-
-
-=== Consider adding Return/Fetch graph as part of SQM
-
-or easily buildable from SQM.  The purpose would be determination of of the cacheability of
-the query-plan for a given SQM.
-
-This could also facilitate caching query-plans in cases where a load/fetch EntityGraph was specified
-assuming the EntityGraph was applied to this SQM "return/fetch graph".  At the moment the presence of a
-fetch graph excludes the query-plan from bing cached.
-
-This comes down to a general decision of where the tipping point is for the effectiveness of caching
-these plans (size of cache versus resources to build plan).
-
-?Maybe config options stating what to to include in the cache key versus what implicitly means excluding from cache?
-
-
 
 
 
@@ -944,6 +976,3 @@ in the EntityPersister hierarchy.  As a follow-on to this... we should incorpora
 MappedSuperclass into the SQM domain model.  Seems that the spec does not allow querying MappedSuperclasses; verify!
 
 
-=== SQL AST
-
-The SQL AST is a syntax tree modelling a SQL query.  It is made up of the following parts.
