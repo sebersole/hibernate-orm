@@ -25,28 +25,30 @@ The primary goal for 6.0 is to make performance improvements at the JDBC interac
 A "hopeful" goal was to centralize the generation of SQL into a single, consistent "engine" and a single, consistent handling
 of results.
 
-Ultimately the idea here is to redefine how Hibernate generates and executes SQL.  In general there are 3(*) sources
-for Hibernate to generate and execute SQL:
+Ultimately the idea here is to redefine how Hibernate generates and executes SQL, in general related to
 
-* HQL query
-* Criteria query
-* Various queries Hibernate generates itself:
-	** single-id
-	** natural-id
-	** other unique key
-	** multi-id
-	** locker
-	** batch load/fetch
-	** subselect (load/) fetch (only fetch prior to 6.0)
-	** updates/deletes/inserts corresponding to normal PC state
+	* HQL
+	* Criteria
+	* ProcedureCall / StoredProcedureQuery
+	* load-by-single-id
+	* load-by-natural-id
+	* load-by-uk
+	* load-by-multi-id
+	* locker
+	* batch load/fetch
+	* subselect (load/) fetch (only fetch prior to 6.0)
+
+(plus updates/deletes/inserts corresponding to normal PC state)
 
 In versions of Hibernate prior to 6.0 there were multiple sources for generating the SQL and multiple
-sources for executing the SQL and processing any results (largely not shared code)
+sources for executing the SQL and processing any results largely based on inheritance from `Loader`.  But each
+Loader impl ends up being significantly different.
 
-The main parts of the overall design for this work follow...
+The design idea here is to use delegation rather than inheritance.
 
 
-=== JdbcOperation
+[#jdbc-operation]
+== JdbcOperation
 
 `org.hibernate.sql.exec.spi.JdbcOperation` and its sub-types represent, naturally, an operation to be
 performed against the database via JDBC.  The main source of these JdbcOperations is from processing (walking)
@@ -54,48 +56,73 @@ a SQL AST (see below).  Each operation sub-type also defines a corresponding exe
 to coordinate the execution of the particular type of operation being performed.  The specific operation
 types and their corresponding executors are as follows:
 
-* `JdbcSelect` -> `JdbcSelectExecutor`
-* `JdbcMutation` -> `JdbcMutationExecutor`
-** `JdbcUpdate`
-** _JdbcDelete_
-** _JdbcInsert_
-** `JdbcInsertSelect`
-* `JdbcAnonCall`
-** `JdbcCall` -> _JdbcCallExecutor_
-
 _Those in italics are not yet defined_
 
-Generally speaking, a `JdbcOperation` is created from a SQL AST.  The one exception is handling for
-native SQL queries (`org.hibernate.query.NativeQuery`).
+=== `JdbcSelect`
+	-> `JdbcSelectExecutor`
+
+=== `JdbcMutation`
+	-> `JdbcMutationExecutor`
+
+==== `JdbcUpdate`
+
+==== _JdbcDelete_
+
+==== _JdbcInsert_
+
+==== `JdbcInsertSelect`
+
+=== `JdbcAnonCall`
+
+=== `JdbcCall`
+ 	-> _JdbcCallExecutor_
 
 
-[NOTE]
-====
-Discussing with Christian, we should have a way to send arbitrary "batch blocks" to the database
-and process arbitrary result counts/sets much like our procedure call execution/result-handling does.
-====
+Generally speaking, a `JdbcOperation` is created from a SQL AST, except for NativeQuery and ProcedureCall handling.
 
+
+[#jdbc-operation-sources]
+== JdbcOperation sources
+
+We mentioned up front the different sources for which Hibernate generating SELECT queries
+and processing ResultSets.  Roughly these boil down to SQM and queries Hibernate itself generates.
 
 === SQL AST
+
+See <<sql-ast-sources>>
+
+=== ProcedureCall/StoredProcedureQuery
+
+Discuss `ProcedureCall` interpretation to `JdbcCall`
+
+
+
+
+== SQL AST
 
 The general approach for centralizing the SQL generation, execution and (for SELECTS) processing results was
 to use an Abstract Syntax Tree (AST) representing the SQL and walking/visiting the AST to produce the SQL and
 all delegates needed to execute the JDBC operation.  The term AST is just a fancy phrase for a visitable object
 representation of a SQL query.  The overall solution here includes:
+
  	* The SQL AST - `org.hibernate.sql.ast.tree`
  	* contracts to produce this AST - `org.hibernate.sql.ast.produce`
  	* contracts to consume this AST - `org.hibernate.sql.ast.consume`
+
 
 Producing the SQL AST tree comes from 2 main sources:
 
 	* Queries - HQL and Criteria, as well as custom "SQM producers"
 	* Metadata-based load, remove, etc calls.
 
+
 In either case, metadata objects are responsible for generating the various "sub-trees" of the SQL AST.  It was decided
-to have persisters directly produce entire SQL AST trees in handling metadata-based load, remove, etc calls_ because:
+to have descriptors (EntityDescriptor, etc) directly produce entire SQL AST trees in handling metadata-based load,
+remove, etc calls_ because:
 
  	* It already knows how to generate the sub-trees.
  	* Is more performant than generating the SQM view and then walking that SQM to produce the SQL AST.
+
 
 Producing the SQL AST is beyond the scope of this doc, but is not hard to conceptually understand...
 
@@ -109,7 +136,7 @@ The following sub-sections describe the sub-parts of the SQL AST.
 There is a 3rd source for JDBC
 ----
 
-==== FromClause - Tables and Groups and Spaces (oh my)
+=== FromClause - Tables and Groups and Spaces (oh my)
 
 Modeling the from-clause is central to SQL (and to SQM as we will see later).  The FromClause (`org.hibernate.sql.ast.tree.spi.from.FromClause`)
 is logically contained on a QuerySpec (`org.hibernate.sql.ast.tree.spi.QuerySpec`) meant to capture the commonality between
@@ -223,7 +250,7 @@ FromClause
 ----
 
 
-==== Expressions
+=== Expressions
 
 Expressions are fundamental to building the other parts of the SQL AST.  Examples of `Expression` include:
 
@@ -247,7 +274,7 @@ as the basis for the selection
 ====
 
 
-==== SelectClause
+=== SelectClause
 
 `org.hibernate.sql.ast.tree.spi.select.SelectClause` contains one or more
 `org.hibernate.sql.ast.tree.spi.select.Selection` references.  These `Selection`
@@ -281,8 +308,33 @@ As we see above, a `Expression` acts as a factory for an appropriate `Selection`
 is `NavigableReference` which is an `Expression` whose `Selectable` is its referenced `Navigable`.
 
 
-[#operations]
-==== SQL AST consumption
+
+[#sql-ast-sources]
+== SQL AST sources
+
+=== SQM
+
+SQM is an AST (tree) representation of a query defined via HQL or Criteria
+
+==== HQL
+
+Discuss Antlr-based HQL-to-SQM process
+
+
+==== Criteria
+
+Discuss alternatives : pros, cons
+
+
+=== EntityDescriptor (load, update, etc)
+
+=== CollectionDescriptor (load, update, etc)
+
+
+
+
+[#sql-ast-consumption]
+== SQL AST consumption
 
 Ultimately, the consumption of the SQL AST is execution of some JDBC call.  Here we will focus on processing
 SELECT queries as they are the most complicated due to the select-clause.  The other statement types are logically
@@ -314,8 +366,8 @@ Producer <-- Selection : QueryResult
 
 
 
-[#rendering]
-===== Rendering SQL String
+[#sql-ast-rendering]
+=== Rendering SQL String
 
 As it walks the AST it renders the SELECT portion
 
@@ -395,9 +447,270 @@ results by the first selection item (p.id).
 
 
 
+== Processing results
+
+There are quite a few actors involved in processing results and assembling the query returns.
+
+First it is important to understand a major paradigm change in how JDBC results are obtained
+in current Hibernate versions versus this 6.0 work.
+
+Previously all Types worked on the ResultSet directly.  To read a value from a ResultSet we'd ask the
+type of assemble/resolve it (or nullSafeGet).  This has a major drawback in that we cannot hydrate
+results from query-cache or ResultSet using the same code.
+
+The design here is to abstract access to the JDBC results as
+`org.hibernate.sql.results.internal.values.JdbcValues`, which will be discussed below.  We
+then have 2 implementations of this interface:
+
+`org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl`::
+	JdbcValues wrapping ResultSet access
+`org.hibernate.sql.results.internal.values.JdbcValuesCacheHit`::
+	JdbcValues wrapping cached query results
+
+This allows the same code to be used to process results from either seamlessly.
+
+
+=== JDBC results versus domain results
+
+When a Query is executed, the user gets back a "domain result" - a List (typically) of domain-level
+values (entities, composites, scalars, etc).  The structure of each "row" in these domain results
+is described by a `org.hibernate.sql.results.spi.QueryResult` / `org.hibernate.sql.results.spi.Fetch`
+graph
+
+To create this Query result, Hibernate executes a query via JDBC and processes the ResultSet
+to transform the JDBC results into the domain results.
+
+
+=== JdbcValues, SqlSelection
+
+When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates, including:
+
+`org.hibernate.sql.results.internal.values.JdbcValues`::
+	Wraps access to the ResultSet, exposing it as a collection of `Object[]` (see `JdbcValues#getCurrentRowValuesArray`)
+
+`org.hibernate.sql.results.spi.SqlSelection`::
+	Represents a single selection in the JDBC ResultSet.  Used to access values from the JdbcValues current row
+
+
+The main premise of `JdbcValuesSource` is to expose access to the values as a simple `Object[]` row.
+This is where `SqlSelection` comes back into the picture.  We already discussed how `SqlSelection` knows
+its position in the "JDBC result".  It also gives access to a `SqlSelectionReader` (via its `SqlSelectable`)
+that we can use to read values from the JDBC ResultSet (as part of JdbcValuesSourceResultSetImpl).  At
+this level of reading we are always dealing with simple basic types (single-column BasicType).  Conceptually
+think of the row in the JDBC ResultSet as a Object[] of its extracted values.  This `Object[]` is exposed
+from the `JdbcValuesSource` and ultimately exposed as `RowProcessingStateStandard#getJdbcValues` for higher-
+level readers to access.
 
 
 
+=== RowReader, QueryResultAssembler, Initializer, FetchInitializer
+
+When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates.  The main ones include:
+
+`org.hibernate.sql.results.spi.RowReader`::
+	Coordinates all of the processing of each row
+
+`org.hibernate.sql.results.spi.QueryResultAssembler`::
+	responsible for assembling the actual Object to be put in the Query result
+    for a given Return
+
+`org.hibernate.sql.results.spi.Initializer`::
+	Responsible for performing all of the work that needs to happen in order for `QueryResultAssembler` to do its thing.
+	See `org.hibernate.sql.results.spi.EntityInitializer`, `org.hibernate.sql.results.spi.PluralAttributeInitializer`
+	and `org.hibernate.sql.results.spi.CompositeInitializer`
+
+FetchInitializer::
+	Specifically `org.hibernate.sql.results.internal.EntityFetchInitializer` and
+	`org.hibernate.sql.results.internal.PluralAttributeFetchInitializer`.  Same responsibilities
+	as a normal `Initializer`, plus the added responsibility of managing fetch-related activities.
+	Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
+	object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they
+	are still under active dev/design.  But they hearken back to load-plan work as well, so the initial
+	work here follows the lead of the load-plan initializers.
+
+
+=== ResultSet handling walk-through
+
+For JdbcOperations that return ResultSet(s), the following is the general synopsis of how those
+ResultSet values are processed into domain values.
+
+At the "lowest" level we have `JdbcValues`, `RowProcessingState`, `RowReader` and `SqlSelection`.  We've
+already discussed these in the general sense, but let's look deeper at how these interact to process the
+results using an example:
+
+
+[source]
+----
+@Entity
+class Company {
+    @Id Integer id;
+    String name;
+    @ManyToOne Person ceo;
+}
+
+@Entity
+class Person {
+    @Id Integer id;
+    @Embedded Name name;
+    LocalDate dob;
+}
+
+@Embeddable
+class Name {
+    String firstName;
+    String lastName;
+}
+
+Query<Company> query = session.createQuery( "select c from Company c join fetch c.ceo" );
+----
+
+
+Here we need to execute a SQL statement that selects the joined result of Company and its CEO's Person data.  Let's say
+that this produces the following ResultSet:
+
+|===
+|COMPANY.ID|COMPANY.NAME|COMPANY.CEO|PERSON.ID|PERSON.FIRST_NAME|PERSON.LAST_NAME|PERSON.DOB
+
+|1|"Acme"|900|900|"John"|"Smith"|1900-01-01
+|2|"Spacely Sprockets"|901|901|"Cosmo"|"Spacely"|1950-01-01
+|===
+
+The first part of processing the ResultSet is to iterate each row and extract that row's "JDBC values array"
+which is an extracted `Object[]` of the current row values from the ResultSet.  Each selected column in the
+ResultSet has a corresponding `SqlSelection` that is used to extract the value and put it into the values array.
+
+[NOTE]
+====
+As discussed above, access to the ResultSet is abstracted behind `JdbcValues` which unifies reading values from
+a ResultSet or cached values...
+====
+
+
+Here, for the first row we'd end up with:
+
+|===
+|1|"Acme"|900|900|"John"|"Smith"|1900-01-01
+|===
+
+These values are read from the `JdbcValues` and pushed to the "current JDBC values array" available
+from `RowProcessingState`.  Further steps access the values from there by `SqlSelection` via
+`RowProcessingState#getJdbcValue(SqlSelection)`.
+
+
+From here, the next steps vary based on the type of thing being selected in the domain query, which
+is represented by a collection of `QueryResult` (which is a tree to represent fetches).  `QueryResult`
+produces 2 things used in this result processing: `QueryResultAssembler` and zero-or-more `Initiallizer`
+references.  `QueryResultAssembler` is simply the final step in assembling the value that is the return
+"column" in the domain query for each selection.
+
+Initializers are specific to non-scalar/non-basic state.  They coordinate all the "initialization" woork
+needed for those `QueryResultAssembler` types.
+
+Unfortunately the initializer work is not generic enough to define through `Initializer`[1].  Instead
+the specifics are handled through specific sub-types: `EntityInitializer`, `PluralAttributeInitializer`
+and `CompositeInitializer`.  In general though each Initializer performs an orchestrated series of steps:
+
+	* "hydrate" basic state
+	* resolve state
+
+EntityInitializers add an additional sequence:
+
+	* "hydrate" identifier basic state
+	* resolve identifier
+
+The term "hydrate" generally means getting a slice of the underlying values for the thing
+being initialized from the JDBC values array.
+
+In our example, we have 3 initializers in play:
+
+	* EntityInitializer for the root Company entity
+	* EntityInitializer for the fetched Company.ceo reference
+	* CompositeInitializer for the fetched Company.ceo.name reference
+
+The tree structure of the QueryResult ensures that we process these in the correct order.
+
+The very first step always is to allow the EntityInitializers to hydrate and then resolve their identifiers.  The
+Company EntityInitializer hydrates its identifier as:
+
+|=
+|1
+|=
+
+and the Company#ceo EntityInitializer hydrates its identifier as:
+
+|=
+|900
+|=
+
+This hydration always results in an `Object[]` that is effectively a "slice" or the full
+JDBC current values array.
+
+After all entity identifiers have been hydrated, each EntityInitializer is asked to resolve
+its identifier.  This incorporates instantiating the identifier representation (Integers in our example)
+and then the `EntityKey`.  Later, this EntityKey can be used to locate already processed entity instances.
+
+For entity's whose EntityKey has been found to already be loaded into the Session or
+part of the current "loading context", the additional EntityInitializer steps are by-passed
+(except for refresh, etc).
+
+The "additional steps" for the Company.ceo EntityInitializer would be to first hydrate its non-identifier
+state.  Logically, that array looks like:
+
+[source]
+----
+{
+	{
+		firstName="John",
+		lastName="Smith"
+	},
+	1900-01-01
+}
+----
+
+[IMPORTANT]
+====
+Note especially the nested array!
+====
+
+
+The "additional steps" for the Company EntityInitializer would be to first hydrate its non-identifier
+state.  Logically, that looks like:
+
+[source]
+----
+{
+    "Acme",
+    900
+}
+----
+
+
+For the Company.ceo.name CompositeInitializer, hydration logically produces:
+
+[source]
+----
+{
+	firstName="John",
+	lastName="Smith"
+}
+----
+
+
+Next, each initializer is asked to resolve its state.  This is the process of converting
+the raw hydrated state into the domain-model representation (if needed).
+
+For Company.ceo.name's CompositeInitializer that means taking the raw first and last name
+values and creating a Name instance.  For fetch initializers (such as this) it also means
+writing the Name instance into the owner's (Company.ceo's initializer) value array.
+
+[NOTE]
+====
+This last part is still TBD.  Is it the fetch initializer's responsibility to adjust
+the owner's value array or does the owner's initializer know how to get the resolved value
+from the fetch initializer (or somewhere else)?  StateArrayContributor maybe?
+====
+
+And so on...
 
 
 
@@ -567,87 +880,6 @@ associated with the selected Expression.
 
 This will be discussed more in the section describing processing results.
 
-
-== Processing results
-
-There are quite a few actors involved in processing results and assembling the query returns.
-
-First it is important to understand a major paradigm change in how JDBC results are obtained
-in current Hibernate versions versus this PoC.
-
-Previously all Types worked on the ResultSet directly.  To read a value from a ResultSet we'd ask the
-type of assemble/resolve it (or nullSafeGet).  This has a major drawback in that we cannot hydrate
-results from query-cache or ResultSet using the same code.
-
-The design here is too abstract access to the JDBC results as
-`org.hibernate.sql.results.internal.values.JdbcValues`, which will be discussed below.  We
-then have 2 implementations of this interface:
-
-`org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl`::
-	JdbcValues wrapping ResultSet access
-`org.hibernate.sql.results.internal.values.JdbcValuesCacheHit`::
-	JdbcValues wrapping cached query results
-
-This allows the same code to be used to process results from either seamlessly.
-
-
-=== JDBC results versus domain results
-
-When a Query is executed, the user gets back a "domain result" - a List (typically) of domain-level
-values (entities, composites, scalars, etc).  The structure of each "row" in these domain results
-is described by a `org.hibernate.sql.results.spi.QueryResult` / `org.hibernate.sql.results.spi.Fetch`
-graph
-
-To create this Query result, Hibernate executes a query via JDBC and processes the ResultSet
-to transform the JDBC results into the domain results.
-
-
-=== JdbcValues, SqlSelection
-
-When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates, including:
-
-`org.hibernate.sql.results.internal.values.JdbcValues`::
-	Wraps access to the ResultSet, exposing it as a collection of `Object[]` (see `JdbcValues#getCurrentRowValuesArray`)
-
-`org.hibernate.sql.results.spi.SqlSelection`::
-	Represents a single selection in the JDBC ResultSet.  Used to access values from the JdbcValues current row
-
-
-The main premise of `JdbcValuesSource` is to expose access to the values as a simple `Object[]` row.
-This is where `SqlSelection` comes back into the picture.  We already discussed how `SqlSelection` knows
-its position in the "JDBC result".  It also gives access to a `SqlSelectionReader` (via its `SqlSelectable`)
-that we can use to read values from the JDBC ResultSet (as part of JdbcValuesSourceResultSetImpl).  At
-this level of reading we are always dealing with simple basic types (single-column BasicType).  Conceptually
-think of the row in the JDBC ResultSet as a Object[] of its extracted values.  This `Object[]` is exposed
-from the `JdbcValuesSource` and ultimately exposed as `RowProcessingStateStandard#getJdbcValues` for higher-
-level readers to access.
-
-
-
-=== RowReader, QueryResultAssembler, Initializer, FetchInitializer
-
-When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates.  The main ones include:
-
-`org.hibernate.sql.results.spi.RowReader`::
-	Coordinates all of the processing of each row
-
-`org.hibernate.sql.results.spi.QueryResultAssembler`::
-	responsible for assembling the actual Object to be put in the Query result
-    for a given Return
-
-`org.hibernate.sql.results.spi.Initializer`::
-	Responsible for performing all of the work that needs to happen in order for `QueryResultAssembler` to do its thing.
-	See `org.hibernate.sql.results.spi.EntityInitializer`, `org.hibernate.sql.results.spi.PluralAttributeInitializer`
-	and `org.hibernate.sql.results.spi.CompositeInitializer`
-
-FetchInitializer::
-	Specifically `org.hibernate.sql.results.internal.EntityFetchInitializer` and
-	`org.hibernate.sql.results.internal.PluralAttributeFetchInitializer`.  Same responsibilities
-	as a normal `Initializer`, plus the added responsibility of managing fetch-related activities.
-	Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
-	object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they
-	are still under active dev/design.  But they hearken back to load-plan work as well, so the initial
-	work here follows the lead of the load-plan initializers.
 
 
 todo (6.0) : add example from discussion  with Andrea yesterday wrt jdbc-results -> domain-results
