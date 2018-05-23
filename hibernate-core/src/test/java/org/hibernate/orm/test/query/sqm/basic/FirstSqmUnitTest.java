@@ -52,7 +52,7 @@ public class FirstSqmUnitTest extends BaseSqmUnitTest {
 		);
 		assertThat(
 				sqm.getQuerySpec().getFromClause().getFromElementSpaces().get( 0 ).getRoot().getEntityName(),
-				is( getSessionFactory().getTypeConfiguration().findEntityDescriptor( Person.class ).getEntityName() )
+				is( getSessionFactory().getMetamodel().findEntityDescriptor( Person.class ).getEntityName() )
 		);
 	}
 }

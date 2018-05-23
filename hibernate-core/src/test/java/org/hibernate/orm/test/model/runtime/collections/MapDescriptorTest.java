@@ -38,7 +38,7 @@ public class MapDescriptorTest extends SessionFactoryBasedFunctionalTest {
 
 	@BeforeAll
 	public void findEntityDescriptor() {
-		entityDescriptor = sessionFactory().getTypeConfiguration().findEntityDescriptor( EntityOfMaps.class );
+		entityDescriptor = sessionFactory().getMetamodel().findEntityDescriptor( EntityOfMaps.class );
 	}
 
 	@Test

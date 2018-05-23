@@ -17,6 +17,7 @@ import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
@@ -50,22 +51,22 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 
 						private final QueryParameterBindings parameterBindings = new QueryParameterBindings() {
 							@Override
-							public boolean isBound(QueryParameter parameter) {
+							public boolean isBound(QueryParameterImplementor parameter) {
 								return false;
 							}
 
 							@Override
-							public <T> QueryParameterBinding<T> getBinding(QueryParameter<T> parameter) {
+							public QueryParameterBinding<?> getBinding(QueryParameterImplementor parameter) {
 								return null;
 							}
 
 							@Override
-							public <T> QueryParameterBinding<T> getBinding(String name) {
+							public QueryParameterBinding<?> getBinding(String name) {
 								return null;
 							}
 
 							@Override
-							public <T> QueryParameterBinding getBinding(int position) {
+							public QueryParameterBinding<?> getBinding(int position) {
 								return null;
 							}
 
