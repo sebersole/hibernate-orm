@@ -18,10 +18,10 @@ import org.hibernate.boot.archive.scan.spi.Scanner;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.TypeContributor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.MetadataSourceType;
 import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
@@ -202,8 +202,8 @@ public abstract class AbstractDelegatingMetadataBuilderImplementor<T extends Met
 	}
 
 	@Override
-	public MetadataBuilder applyAttributeConverter(AttributeConverterDefinition definition) {
-		delegate.applyAttributeConverter( definition );
+	public MetadataBuilder applyAttributeConverter(ConverterDescriptor descriptor) {
+		delegate.applyAttributeConverter( descriptor );
 		return getThis();
 	}
 

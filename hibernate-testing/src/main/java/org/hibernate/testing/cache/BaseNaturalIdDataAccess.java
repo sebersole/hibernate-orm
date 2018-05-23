@@ -9,12 +9,12 @@ package org.hibernate.testing.cache;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class BaseNaturalIdDataAccess extends AbstractCachedDomainDataAccess implements NaturalIdDataAccess {
 	private final EntityHierarchy entityHierarchy;
 
@@ -25,6 +25,7 @@ public abstract class BaseNaturalIdDataAccess extends AbstractCachedDomainDataAc
 		this.entityHierarchy = entityHierarchy;
 	}
 
+	@SuppressWarnings("unused")
 	public EntityHierarchy getEntityHierarchy() {
 		return entityHierarchy;
 	}
@@ -32,9 +33,9 @@ public abstract class BaseNaturalIdDataAccess extends AbstractCachedDomainDataAc
 	@Override
 	public Object generateCacheKey(
 			Object[] naturalIdValues,
-			EntityDescriptor persister,
+			EntityHierarchy entityHierarchy,
 			SharedSessionContractImplementor session) {
-		return getRegion().getEffectiveKeysFactory().createNaturalIdKey( naturalIdValues, persister.getHierarchy(), session );
+		return getRegion().getEffectiveKeysFactory().createNaturalIdKey( naturalIdValues, entityHierarchy, session );
 	}
 
 	@Override

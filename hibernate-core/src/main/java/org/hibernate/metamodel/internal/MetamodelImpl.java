@@ -14,11 +14,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.persistence.EntityGraph;
 import javax.persistence.metamodel.EmbeddableType;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.ManagedType;
 
+import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
@@ -54,6 +56,7 @@ import org.jboss.logging.Logger;
 public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImplementor, Serializable {
 	private static final Logger log = Logger.getLogger( MetamodelImpl.class );
 
+	private static final Object ENTITY_NAME_RESOLVER_MAP_VALUE = new Object();
 	public static final String INVALID_IMPORT = "<invalid>";
 
 	private final SessionFactoryImplementor sessionFactory;
@@ -64,6 +67,8 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	private final Map<EmbeddableJavaDescriptor<?>,Set<String>> embeddedRolesByEmbeddableType;
 	private final Map<String,Set<PersistentCollectionDescriptor<?,?,?>>> collectionDescriptorsByEntityParticipant = new ConcurrentHashMap<>();
 	private final Map<ManagedJavaDescriptor<?>, MappedSuperclassDescriptor<?>> jpaMappedSuperclassTypeMap = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<EntityNameResolver,Object> entityNameResolvers = new ConcurrentHashMap<>();
 
 	// modifiable
 	private final Map<JavaTypeDescriptor, PolymorphicEntityValuedExpressableType<?>> polymorphicEntityReferenceMap = new HashMap<>();

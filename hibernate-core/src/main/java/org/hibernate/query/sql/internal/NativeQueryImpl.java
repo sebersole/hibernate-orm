@@ -52,7 +52,7 @@ import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.internal.QueryParameterBindingsImpl;
 import org.hibernate.query.named.internal.NamedNativeQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedNativeQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.NativeQueryInterpreter;
@@ -1115,13 +1115,13 @@ public class NativeQueryImpl<R>
 		);
 	}
 
-	private static List<ParameterDescriptor> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
+	private static List<ParameterMemento> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
 		if ( parameterMetadata.getParameterCount() <= 0 ) {
 			// none...
 			return Collections.emptyList();
 		}
 
-		final List<ParameterDescriptor> copy = new ArrayList<>();
+		final List<ParameterMemento> copy = new ArrayList<>();
 		parameterMetadata.visitRegistrations( queryParameter -> copy.add( queryParameter.toMemento() ) );
 		return copy;
 	}

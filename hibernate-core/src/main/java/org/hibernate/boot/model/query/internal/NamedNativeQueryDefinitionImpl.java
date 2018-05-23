@@ -20,7 +20,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.internal.QueryParameterPositionalImpl;
 import org.hibernate.query.named.internal.NamedNativeQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedNativeQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * @author Steve Ebersole
@@ -141,7 +141,7 @@ public class NamedNativeQueryDefinitionImpl extends AbstractNamedQueryDefinition
 			return new ParameterDefinition() {
 				@Override
 				@SuppressWarnings("unchecked")
-				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+				public ParameterMemento resolve(SessionFactoryImplementor factory) {
 					return session -> new QueryParameterPositionalImpl(
 							i,
 							false,

@@ -72,6 +72,11 @@ public class JdbcCallParameterRegistrationImpl implements JdbcCallParameterRegis
 	}
 
 	@Override
+	public AllowableParameterType getParameterType() {
+		return ormType;
+	}
+
+	@Override
 	public void registerParameter(
 			CallableStatement callableStatement, SharedSessionContractImplementor session) {
 		switch ( parameterMode ) {

@@ -6,15 +6,22 @@
  */
 package org.hibernate.testing.cache;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class CollectionReadOnlyAccess extends BaseCollectionDataAccess {
 	public CollectionReadOnlyAccess(
 			DomainDataRegionImpl region,
 			PersistentCollectionDescriptor collectionDescriptor) {
 		super( region, collectionDescriptor );
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.READ_ONLY;
 	}
 }

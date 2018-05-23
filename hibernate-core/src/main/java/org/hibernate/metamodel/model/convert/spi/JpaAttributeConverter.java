@@ -22,6 +22,6 @@ public interface JpaAttributeConverter<O,R> extends BasicValueConverter<O,R> {
 
 	ManagedBean<AttributeConverter<O,R>> getConverterBean();
 
-	BasicJavaDescriptor<O> getDomainJavaTypeDescriptor();
-	BasicJavaDescriptor<R> getRelationalJavaTypeDescriptor();
+	BasicJavaDescriptor<O> getDomainJavaDescriptor();
+	BasicJavaDescriptor<R> getRelationalJavaDescriptor();
 }

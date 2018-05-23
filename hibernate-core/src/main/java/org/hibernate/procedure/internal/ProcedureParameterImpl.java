@@ -8,9 +8,12 @@ package org.hibernate.procedure.internal;
 
 import javax.persistence.ParameterMode;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
+import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQueryParameter;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * @author Steve Ebersole
@@ -72,4 +75,31 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 		return javaType;
 	}
 
+	@Override
+	public ParameterMemento toMemento() {
+		return new ParameterMemento() {
+			@Override
+			@SuppressWarnings("unchecked")
+			public QueryParameter toQueryParameter(SharedSessionContractImplementor session) {
+				if ( getName() != null ) {
+					return new ProcedureParameterImpl(
+							getName(),
+							getMode(),
+							javaType,
+							getHibernateType(),
+							session.getFactory().getSessionFactoryOptions().isProcedureParameterNullPassingEnabled()
+					);
+				}
+				else {
+					return new ProcedureParameterImpl(
+							getPosition(),
+							getMode(),
+							javaType,
+							getHibernateType(),
+							session.getFactory().getSessionFactoryOptions().isProcedureParameterNullPassingEnabled()
+					);
+				}
+			}
+		};
+	}
 }

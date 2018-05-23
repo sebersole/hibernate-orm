@@ -157,7 +157,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					id,
-					entityDescriptor,
+					entityDescriptor.getHierarchy(),
 					source.getFactory(),
 					source.getTenantIdentifier()
 			);

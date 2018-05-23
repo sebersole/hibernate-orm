@@ -19,7 +19,7 @@ import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
 import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
 import org.hibernate.query.named.spi.NamedCallableQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.named.spi.RowReaderMemento;
 
 /**
@@ -38,7 +38,7 @@ public class NamedCallableQueryMementoImpl
 			String name,
 			String callableName,
 			ParameterStrategy parameterStrategy,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterMemento> parameterMementos,
 			Class[] resultClasses,
 			String[] resultSetMappingNames,
 			Set<String> querySpaces,
@@ -54,7 +54,7 @@ public class NamedCallableQueryMementoImpl
 			Map<String, Object> hints) {
 		super(
 				name,
-				parameterDescriptors,
+				parameterMementos,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -77,7 +77,7 @@ public class NamedCallableQueryMementoImpl
 			String name,
 			String procedureName,
 			ParameterStrategy parameterStrategy,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterMemento> parameterMementos,
 			RowReaderMemento rowReaderMemento,
 			Set<String> querySpaces,
 			Boolean cacheable,
@@ -94,7 +94,7 @@ public class NamedCallableQueryMementoImpl
 				name,
 				procedureName,
 				parameterStrategy,
-				parameterDescriptors,
+				parameterMementos,
 				rowReaderMemento.getResultClasses(),
 				rowReaderMemento.getResultMappingNames(),
 				querySpaces,
@@ -146,7 +146,7 @@ public class NamedCallableQueryMementoImpl
 				name,
 				getCallableName(),
 				getParameterStrategy(),
-				getParameterDescriptors(),
+				getParameterMementos(),
 				resultClasses,
 				resultSetMappingNames,
 				getQuerySpaces(),

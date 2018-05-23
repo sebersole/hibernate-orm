@@ -16,7 +16,7 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 
 /**
  * Standard support for {@link org.hibernate.cache.spi.access.EntityDataAccess}
@@ -24,6 +24,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  *
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public class EntityReadWriteAccess extends AbstractReadWriteAccess implements EntityDataAccess {
 	private final CacheKeysFactory keysFactory;
 	private final Comparator versionComparator;
@@ -58,10 +59,10 @@ public class EntityReadWriteAccess extends AbstractReadWriteAccess implements En
 	@Override
 	public Object generateCacheKey(
 			Object id,
-			EntityDescriptor rootEntityDescriptor,
+			EntityHierarchy entityHierarchy,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier) {
-		return keysFactory.createEntityKey( id, rootEntityDescriptor.getHierarchy(), factory, tenantIdentifier );
+		return keysFactory.createEntityKey( id, entityHierarchy, factory, tenantIdentifier );
 	}
 
 	@Override

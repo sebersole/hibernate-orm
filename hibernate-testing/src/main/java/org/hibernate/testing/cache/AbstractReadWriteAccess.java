@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -32,6 +33,11 @@ public abstract class AbstractReadWriteAccess extends AbstractCachedDomainDataAc
 
 	protected AbstractReadWriteAccess(DomainDataRegionImpl region) {
 		super( region );
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.READ_WRITE;
 	}
 
 	protected abstract Comparator getVersionComparator();

@@ -219,7 +219,7 @@ public final class TwoPhaseLoad {
 			final Object version = Versioning.getVersion( hydratedState, entityDescriptor );
 			final CacheEntry entry = entityDescriptor.buildCacheEntry( entity, hydratedState, version, session );
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
-			final Object cacheKey = cache.generateCacheKey( id, entityDescriptor, factory, session.getTenantIdentifier() );
+			final Object cacheKey = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
 
 			// explicit handling of caching for rows just inserted and then somehow forced to be read
 			// from the database *within the same transaction*.  usually this is done by

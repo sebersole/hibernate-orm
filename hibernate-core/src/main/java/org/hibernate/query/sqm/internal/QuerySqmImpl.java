@@ -32,7 +32,7 @@ import org.hibernate.query.internal.QueryParameterNamedImpl;
 import org.hibernate.query.internal.QueryParameterPositionalImpl;
 import org.hibernate.query.named.internal.NamedHqlQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedHqlQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.MutableQueryOptions;
@@ -97,8 +97,8 @@ public class QuerySqmImpl<R>
 	}
 
 	private static ParameterMetadataImpl buildParameterMetadata(SqmStatement sqm) {
-		Map<String, QueryParameterImplementor> namedQueryParameters = null;
-		Map<Integer, QueryParameterImplementor> positionalQueryParameters = null;
+		Map<String, QueryParameterImplementor<?>> namedQueryParameters = null;
+		Map<Integer, QueryParameterImplementor<?>> positionalQueryParameters = null;
 
 		for ( SqmParameter parameter : sqm.getQueryParameters() ) {
 			if ( parameter.getName() != null ) {
@@ -465,7 +465,7 @@ public class QuerySqmImpl<R>
 		);
 	}
 
-	private static List<ParameterDescriptor> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
+	private static List<ParameterMemento> toParameterMementos(ParameterMetadataImplementor<QueryParameterImplementor<?>> parameterMetadata) {
 		throw new NotYetImplementedFor6Exception();
 	}
 }

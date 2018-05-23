@@ -55,7 +55,7 @@ import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedCallableQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
@@ -1092,13 +1092,13 @@ public class ProcedureCallImpl<R>
 		);
 	}
 
-	private static List<ParameterDescriptor> toParameterMementos(ProcedureParameterMetadata<ProcedureParameterImplementor<?>> parameterMetadata) {
+	private static List<ParameterMemento> toParameterMementos(ProcedureParameterMetadata<ProcedureParameterImplementor<?>> parameterMetadata) {
 		if ( parameterMetadata.getParameterStrategy() == ParameterStrategy.UNKNOWN ) {
 			// none...
 			return Collections.emptyList();
 		}
 
-		final List<ParameterDescriptor> copy = new ArrayList<>();
+		final List<ParameterMemento> copy = new ArrayList<>();
 		parameterMetadata.visitRegistrations( queryParameter -> copy.add( queryParameter.toMemento() ) );
 		return copy;
 	}

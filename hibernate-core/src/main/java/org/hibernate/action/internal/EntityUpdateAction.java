@@ -132,7 +132,7 @@ public final class EntityUpdateAction extends EntityAction {
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			ck = cache.generateCacheKey(
 					id,
-					entityDescriptor,
+					entityDescriptor.getHierarchy(),
 					factory,
 					session.getTenantIdentifier()
 			);
@@ -327,7 +327,7 @@ public final class EntityUpdateAction extends EntityAction {
 			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					getId(),
-					entityDescriptor,
+					entityDescriptor.getHierarchy(),
 					factory,
 					session.getTenantIdentifier()
 					

@@ -7,7 +7,9 @@
 package org.hibernate.metamodel.spi;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
+import org.hibernate.EntityNameResolver;
 import org.hibernate.Metamodel;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -29,6 +31,8 @@ public interface MetamodelImplementor extends Metamodel {
 
 	Set<PersistentCollectionDescriptor<?,?,?>> findCollectionsByEntityParticipant(EntityDescriptor entityDescriptor);
 	Set<String> findCollectionRolesByEntityParticipant(EntityDescriptor entityDescriptor);
+
+	void visitEntityNameResolvers(Consumer<EntityNameResolver> action);
 
 	/**
 	 * When a Class is referenced in a query, this method is invoked to resolve

@@ -15,6 +15,9 @@ import java.sql.Types;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
+import org.hibernate.type.spi.TypeConfigurationAware;
 
 import org.jboss.logging.Logger;
 
@@ -28,9 +31,15 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	private static final Logger log = Logger.getLogger( OrdinalEnumValueConverter.class );
 
 	private final EnumJavaDescriptor<E> enumJavaDescriptor;
+	private final BasicJavaDescriptor<Integer> relationalJavaDescriptor;
 
 	public OrdinalEnumValueConverter(EnumJavaDescriptor<E> enumJavaDescriptor) {
 		this.enumJavaDescriptor = enumJavaDescriptor;
+
+		final TypeConfiguration typeConfiguration = ( (TypeConfigurationAware) enumJavaDescriptor ).getTypeConfiguration();
+		this.relationalJavaDescriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
+				.getDescriptor( getJdbcTypeCode() )
+				.getJdbcRecommendedJavaTypeMapping( typeConfiguration );
 	}
 
 	@Override
@@ -49,8 +58,13 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	}
 
 	@Override
-	public EnumJavaDescriptor<E> getJavaDescriptor() {
+	public EnumJavaDescriptor<E> getDomainJavaDescriptor() {
 		return enumJavaDescriptor;
+	}
+
+	@Override
+	public BasicJavaDescriptor<Integer> getRelationalJavaDescriptor() {
+		return relationalJavaDescriptor;
 	}
 
 	@Override

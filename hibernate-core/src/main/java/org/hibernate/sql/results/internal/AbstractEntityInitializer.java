@@ -75,7 +75,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	private Object entityInstance;
 	private LoadingEntityEntry loadingEntityEntry;
 
-	public AbstractEntityInitializer(
+	@SuppressWarnings("WeakerAccess")
+	protected AbstractEntityInitializer(
 			EntityDescriptor entityDescriptor,
 			EntitySqlSelectionMappings sqlSelectionMappings,
 			LockMode lockMode,
@@ -392,7 +393,12 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			}
 
 			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, hydratedEntityState, version, session );
-			final Object cacheKey = cacheAccess.generateCacheKey( entityIdentifier, entityDescriptor, factory, session.getTenantIdentifier() );
+			final Object cacheKey = cacheAccess.generateCacheKey(
+					entityIdentifier,
+					entityDescriptor.getHierarchy(),
+					factory,
+					session.getTenantIdentifier()
+			);
 
 			// explicit handling of caching for rows just inserted and then somehow forced to be read
 			// from the database *within the same transaction*.  usually this is done by

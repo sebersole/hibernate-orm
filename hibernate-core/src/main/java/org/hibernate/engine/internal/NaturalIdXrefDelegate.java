@@ -112,12 +112,12 @@ public class NaturalIdXrefDelegate {
 
 		if ( entityDescriptor.hasNaturalIdentifier() && entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess() != null ) {
 			final NaturalIdDataAccess cacheAccess = entityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess();
-			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, entityDescriptor, session() );
+			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, entityDescriptor.getHierarchy(), session() );
 			cacheAccess.evict( naturalIdCacheKey );
 
 			if ( sessionCachedNaturalIdValues != null
 					&& !Arrays.equals( sessionCachedNaturalIdValues, naturalIdValues ) ) {
-				final Object sessionNaturalIdCacheKey = cacheAccess.generateCacheKey( sessionCachedNaturalIdValues, entityDescriptor, session() );
+				final Object sessionNaturalIdCacheKey = cacheAccess.generateCacheKey( sessionCachedNaturalIdValues, entityDescriptor.getHierarchy(), session() );
 				cacheAccess.evict( sessionNaturalIdCacheKey );
 			}
 		}
@@ -254,7 +254,7 @@ public class NaturalIdXrefDelegate {
 
 			final Object naturalIdCacheKey = naturalIdCacheAccessStrategy.generateCacheKey(
 					naturalIdValues,
-					entityDescriptor,
+					entityDescriptor.getHierarchy(),
 					session()
 			);
 			pk = CacheHelper.fromSharedCache( session(), naturalIdCacheKey, cacheAccess );

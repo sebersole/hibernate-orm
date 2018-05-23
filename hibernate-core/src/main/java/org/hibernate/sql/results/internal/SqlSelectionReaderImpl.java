@@ -11,11 +11,12 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -282,9 +283,11 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 
 	@SuppressWarnings("unchecked")
 	private static <T> BasicJavaDescriptor<T> determineJavaTypeDescriptor(BasicValuedExpressableType expressableType) {
-		if ( expressableType instanceof ConvertibleNavigable
-				&& ( (ConvertibleNavigable) expressableType ).getAttributeConverterDefinition() != null ) {
-			return ( (ConvertibleNavigable) expressableType ).getAttributeConverterDefinition().getJdbcType();
+		if ( expressableType instanceof ConvertibleNavigable ) {
+			final BasicValueConverter valueConverter = ( (ConvertibleNavigable) expressableType ).getValueConverter();
+			if ( valueConverter != null ) {
+				return valueConverter.getDomainJavaDescriptor();
+			}
 		}
 
 		return expressableType.getJavaTypeDescriptor();

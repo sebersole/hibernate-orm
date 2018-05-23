@@ -15,19 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.jaxb.spi.Binding;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.cfg.AttributeConverterDefinition;
 
 /**
  * @author Steve Ebersole
  */
 public class ManagedResourcesImpl implements ManagedResources {
-	private Map<Class, AttributeConverterInfo> attributeConverterInfoMap = new HashMap<>();
+	private Map<Class, ConverterDescriptor> attributeConverterDescriptorMap = new HashMap<>();
 	private Set<Class> annotatedClassReferences = new LinkedHashSet<>();
 	private Set<String> annotatedClassNames = new LinkedHashSet<>();
 	private Set<String> annotatedPackageNames = new LinkedHashSet<>();
@@ -47,8 +45,8 @@ public class ManagedResourcesImpl implements ManagedResources {
 	}
 
 	@Override
-	public Collection<AttributeConverterInfo> getAttributeConverterDefinitions() {
-		return Collections.unmodifiableCollection( attributeConverterInfoMap.values() );
+	public Collection<ConverterDescriptor> getAttributeConverterDescriptors() {
+		return Collections.unmodifiableCollection( attributeConverterDescriptorMap.values() );
 	}
 
 	@Override
@@ -75,8 +73,8 @@ public class ManagedResourcesImpl implements ManagedResources {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// package private
 
-	void addAttributeConverterDefinition(AttributeConverterInfo converterInfo) {
-		attributeConverterInfoMap.put( converterInfo.getConverterClass(), converterInfo );
+	void addAttributeConverterDefinition(ConverterDescriptor descriptor) {
+		attributeConverterDescriptorMap.put( descriptor.getAttributeConverterClass(), descriptor );
 	}
 
 	void addAnnotatedClassReference(Class annotatedClassReference) {

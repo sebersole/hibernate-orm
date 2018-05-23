@@ -57,12 +57,12 @@ public class JpaAttributeConverterImpl<O,R> implements JpaAttributeConverter<O,R
 	}
 
 	@Override
-	public BasicJavaDescriptor<O> getDomainJavaTypeDescriptor() {
+	public BasicJavaDescriptor<O> getDomainJavaDescriptor() {
 		return domainJavaTypeDescriptor;
 	}
 
 	@Override
-	public BasicJavaDescriptor<R> getRelationalJavaTypeDescriptor() {
+	public BasicJavaDescriptor<R> getRelationalJavaDescriptor() {
 		return relationalJavaTypeDescriptor;
 	}
 }

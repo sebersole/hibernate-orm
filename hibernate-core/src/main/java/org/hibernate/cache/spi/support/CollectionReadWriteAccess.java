@@ -16,7 +16,6 @@ import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -26,8 +25,8 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  * @author Chris Cranford
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public class CollectionReadWriteAccess extends AbstractReadWriteAccess implements CollectionDataAccess {
-	private final NavigableRole collectionRole;
 	private final Comparator versionComparator;
 	private final CacheKeysFactory keysFactory;
 
@@ -38,7 +37,6 @@ public class CollectionReadWriteAccess extends AbstractReadWriteAccess implement
 			CollectionDataCachingConfig config) {
 		super( region, storageAccess );
 		this.keysFactory = keysFactory;
-		this.collectionRole = config.getNavigableRole();
 		this.versionComparator = config.getOwnerVersionComparator();
 	}
 

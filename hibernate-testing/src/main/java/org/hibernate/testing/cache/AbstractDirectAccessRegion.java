@@ -10,13 +10,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.cache.spi.DirectAccessRegion;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractDirectAccessRegion
 		extends AbstractRegion
-		implements DirectAccessRegion, DirectAccessRegion.DataAccess {
+		implements DirectAccessRegion {
 	private Map dataMap;
 
 	public AbstractDirectAccessRegion(String name) {
@@ -24,12 +25,7 @@ public abstract class AbstractDirectAccessRegion
 	}
 
 	@Override
-	public DataAccess getAccess() {
-		return this;
-	}
-
-	@Override
-	public Object getFromCache(Object key) {
+	public Object getFromCache(Object key, SharedSessionContractImplementor session) {
 		if ( dataMap == null ) {
 			return null;
 		}
@@ -37,8 +33,7 @@ public abstract class AbstractDirectAccessRegion
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public void addToCache(Object key, Object value) {
+	public void putIntoCache(Object key, Object value, SharedSessionContractImplementor session) {
 		if ( dataMap == null ) {
 			dataMap = new ConcurrentHashMap();
 		}
@@ -47,14 +42,7 @@ public abstract class AbstractDirectAccessRegion
 	}
 
 	@Override
-	public void removeFromCache(Object key) {
-		if ( dataMap != null ) {
-			dataMap.remove( key );
-		}
-	}
-
-	@Override
-	public void clearCache() {
+	public void clear() {
 		if ( dataMap != null ) {
 			dataMap.clear();
 		}

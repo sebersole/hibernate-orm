@@ -218,7 +218,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			if ( cacheAccess != null ) {
 				final Object ck = cacheAccess.generateCacheKey(
 						id,
-						entityDescriptor,
+						entityDescriptor.getHierarchy(),
 						getFactory(),
 						getTenantIdentifier()
 				);

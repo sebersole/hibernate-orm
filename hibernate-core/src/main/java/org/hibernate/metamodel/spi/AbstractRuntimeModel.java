@@ -318,8 +318,8 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// EntityNameResolver
 
-
-	protected Set<EntityNameResolver> getEntityNameResolvers() {
+	@Override
+	public Set<EntityNameResolver> getEntityNameResolvers() {
 		return entityNameResolvers;
 	}
 

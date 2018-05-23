@@ -7,7 +7,7 @@
 package org.hibernate.query.spi;
 
 import org.hibernate.query.QueryParameter;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * @author Steve Ebersole
@@ -15,5 +15,5 @@ import org.hibernate.query.named.spi.ParameterDescriptor;
 public interface QueryParameterImplementor<T> extends QueryParameter<T> {
 	void allowMultiValuedBinding();
 
-	ParameterDescriptor toMemento();
+	ParameterMemento toMemento();
 }

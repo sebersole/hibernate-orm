@@ -24,6 +24,7 @@ public abstract class AbstractCollectionDataAccess
 
 	private final CacheKeysFactory keysFactory;
 
+	@SuppressWarnings("unused")
 	public AbstractCollectionDataAccess(
 			DomainDataRegion region,
 			CacheKeysFactory keysFactory,

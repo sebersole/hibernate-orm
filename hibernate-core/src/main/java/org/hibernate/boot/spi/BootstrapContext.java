@@ -10,12 +10,12 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.archive.scan.spi.ScanEnvironment;
 import org.hibernate.boot.archive.scan.spi.ScanOptions;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.internal.ClassmateContext;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
@@ -159,7 +159,7 @@ public interface BootstrapContext {
 	 *
 	 * @return The AttributeConverterInfo registered through MetadataBuilder
 	 */
-	Collection<AttributeConverterInfo> getAttributeConverters();
+	Collection<ConverterDescriptor> getAttributeConverters();
 
 	/**
 	 * Access to all explicit cache region mappings.

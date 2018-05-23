@@ -15,7 +15,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
 import org.hibernate.query.named.spi.NamedHqlQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.spi.HqlQueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 
@@ -29,7 +29,7 @@ public class NamedHqlQueryMementoImpl extends AbstractNamedQueryMemento implemen
 
 	public NamedHqlQueryMementoImpl(
 			String name,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterMemento> parameterMementos,
 			String hqlString,
 			Integer firstResult,
 			Integer maxResults,
@@ -45,7 +45,7 @@ public class NamedHqlQueryMementoImpl extends AbstractNamedQueryMemento implemen
 			Map<String,Object> hints) {
 		super(
 				name,
-				parameterDescriptors,
+				parameterMementos,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -71,7 +71,7 @@ public class NamedHqlQueryMementoImpl extends AbstractNamedQueryMemento implemen
 	public NamedHqlQueryMemento makeCopy(String name) {
 		return new NamedHqlQueryMementoImpl(
 				name,
-				getParameterDescriptors(),
+				getParameterMementos(),
 				getHqlString(),
 				firstResult,
 				maxResults,

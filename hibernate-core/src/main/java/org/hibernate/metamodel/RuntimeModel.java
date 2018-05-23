@@ -7,6 +7,7 @@
 package org.hibernate.metamodel;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.persistence.EntityGraph;
@@ -62,6 +63,7 @@ public interface RuntimeModel {
 
 	String getImportedName(String name);
 
+	Set<EntityNameResolver> getEntityNameResolvers();
 	void visitEntityNameResolvers(Consumer<EntityNameResolver> action);
 
 }

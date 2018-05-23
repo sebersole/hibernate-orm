@@ -6,6 +6,7 @@
  */
 package org.hibernate.testing.cache;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
@@ -15,6 +16,7 @@ import org.jboss.logging.Logger;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class EntityReadOnlyAccess extends BaseEntityDataAccess {
 	private static final Logger log = Logger.getLogger( EntityReadOnlyAccess.class );
 
@@ -22,6 +24,11 @@ public class EntityReadOnlyAccess extends BaseEntityDataAccess {
 			DomainDataRegionImpl region,
 			EntityHierarchy entityHierarchy) {
 		super( region, entityHierarchy );
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.READ_ONLY;
 	}
 
 	@Override

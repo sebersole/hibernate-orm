@@ -6,8 +6,7 @@
  */
 package org.hibernate.sql.results.internal;
 
-import javax.persistence.AttributeConverter;
-
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -19,15 +18,15 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  */
 public class ScalarQueryResultAssembler implements QueryResultAssembler {
 	private final SqlSelection sqlSelection;
-	private final AttributeConverter attributeConverter;
+	private final BasicValueConverter valueConverter;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
 	public ScalarQueryResultAssembler(
 			SqlSelection sqlSelection,
-			AttributeConverter attributeConverter,
+			BasicValueConverter valueConverter,
 			JavaTypeDescriptor javaTypeDescriptor) {
 		this.sqlSelection = sqlSelection;
-		this.attributeConverter = attributeConverter;
+		this.valueConverter = valueConverter;
 		this.javaTypeDescriptor = javaTypeDescriptor;
 	}
 
@@ -43,8 +42,8 @@ public class ScalarQueryResultAssembler implements QueryResultAssembler {
 			JdbcValuesSourceProcessingOptions options) {
 		final Object rawJdbcValue = rowProcessingState.getJdbcValue( sqlSelection );
 
-		if ( attributeConverter != null ) {
-			return attributeConverter.convertToEntityAttribute( rawJdbcValue );
+		if ( valueConverter != null ) {
+			return valueConverter.toDomainValue( rawJdbcValue, rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext() );
 		}
 
 		return rawJdbcValue;

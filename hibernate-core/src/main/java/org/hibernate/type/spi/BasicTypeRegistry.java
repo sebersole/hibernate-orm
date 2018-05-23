@@ -149,16 +149,23 @@ public class BasicTypeRegistry {
 		BasicJavaDescriptor<T> javaTypeDescriptor = parameters.getJavaTypeDescriptor();
 		SqlTypeDescriptor sqlTypeDescriptor = parameters.getSqlTypeDescriptor();
 
-		if ( parameters.getAttributeConverterDefinition() != null ) {
+		if ( parameters.getAttributeConverterDescriptor() != null ) {
 			// we have an attribute converter, use that to either:
 			//		1) validate the BasicJavaDescriptor/SqlTypeDescriptor defined on parameters
 			//		2) use the converter param types as hints to the missing BasicJavaDescriptor/SqlTypeDescriptor
 
+			final Class<?> converterDomainJavaType = parameters.getAttributeConverterDescriptor()
+					.getDomainValueResolvedType()
+					.getErasedType();
+
+			final JavaTypeDescriptor<?> converterDomainJavaDescriptor = typeConfiguration.getJavaTypeDescriptorRegistry()
+					.getDescriptor( converterDomainJavaType );
+
 			if ( javaTypeDescriptor == null ) {
-				javaTypeDescriptor = parameters.getAttributeConverterDefinition().getDomainType();
+				javaTypeDescriptor = (BasicJavaDescriptor<T> ) converterDomainJavaDescriptor;
 			}
 			else {
-				if ( !javaTypeDescriptor.equals( parameters.getAttributeConverterDefinition().getDomainType() ) ) {
+				if ( !javaTypeDescriptor.equals( converterDomainJavaDescriptor ) ) {
 					throw new HibernateException(
 							"JavaTypeDescriptors did not match between BasicTypeParameters#getJavaTypeDescriptor and " +
 									"BasicTypeParameters#getAttributeConverterDefinition#getDomainType"
@@ -166,9 +173,15 @@ public class BasicTypeRegistry {
 				}
 			}
 
-			final SqlTypeDescriptor resolvedConverterHintedSqlTypeDescriptor = parameters.getAttributeConverterDefinition()
-					.getJdbcType()
+			final Class<?> converterRelationalJavaType = parameters.getAttributeConverterDescriptor()
+					.getRelationalValueResolvedType()
+					.getErasedType();
+			final JavaTypeDescriptor<?> converterRelationalJavaDescriptor = typeConfiguration.getJavaTypeDescriptorRegistry()
+					.getDescriptor( converterRelationalJavaType );
+
+			final SqlTypeDescriptor resolvedConverterHintedSqlTypeDescriptor = converterRelationalJavaDescriptor
 					.getJdbcRecommendedSqlType( jdbcTypeResolutionContext );
+
 			if ( sqlTypeDescriptor == null ) {
 				sqlTypeDescriptor = resolvedConverterHintedSqlTypeDescriptor;
 			}

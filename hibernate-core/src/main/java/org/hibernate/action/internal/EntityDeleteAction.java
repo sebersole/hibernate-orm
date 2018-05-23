@@ -88,7 +88,7 @@ public class EntityDeleteAction extends EntityAction {
 		final Object ck;
 		if ( entityDescriptor.canWriteToCache() ) {
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
-			ck = cache.generateCacheKey( id, entityDescriptor, session.getFactory(), session.getTenantIdentifier() );
+			ck = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), session.getFactory(), session.getTenantIdentifier() );
 			lock = cache.lockItem( session, ck, version );
 		}
 		else {
@@ -191,7 +191,7 @@ public class EntityDeleteAction extends EntityAction {
 			EntityDataAccess cacheAccess = descriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(
 					getId(),
-					descriptor,
+					descriptor.getHierarchy(),
 					session.getFactory(),
 					session.getTenantIdentifier()
 			);

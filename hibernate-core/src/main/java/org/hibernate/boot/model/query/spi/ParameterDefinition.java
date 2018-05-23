@@ -7,11 +7,11 @@
 package org.hibernate.boot.model.query.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * @author Steve Ebersole
  */
 public interface ParameterDefinition {
-	ParameterDescriptor resolve(SessionFactoryImplementor factory);
+	ParameterMemento resolve(SessionFactoryImplementor factory);
 }

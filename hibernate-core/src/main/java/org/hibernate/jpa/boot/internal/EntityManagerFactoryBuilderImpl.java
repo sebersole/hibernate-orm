@@ -35,6 +35,8 @@ import org.hibernate.boot.cfgxml.internal.ConfigLoader;
 import org.hibernate.boot.cfgxml.spi.CfgXmlAccessService;
 import org.hibernate.boot.cfgxml.spi.LoadedConfig;
 import org.hibernate.boot.cfgxml.spi.MappingReference;
+import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.model.process.spi.MetadataBuildingProcess;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
@@ -52,7 +54,6 @@ import org.hibernate.bytecode.enhance.spi.DefaultEnhancementContext;
 import org.hibernate.bytecode.enhance.spi.EnhancementContext;
 import org.hibernate.bytecode.enhance.spi.UnloadedClass;
 import org.hibernate.bytecode.enhance.spi.UnloadedField;
-import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.beanvalidation.BeanValidationIntegrator;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -204,13 +205,13 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 		configure( standardServiceRegistry, mergedSettings );
 
 		final MetadataSources metadataSources = new MetadataSources( bsr );
-		List<AttributeConverterDefinition> attributeConverterDefinitions = populate(
+		List<ConverterDescriptor> attributeConverterDescriptors = populate(
 				metadataSources,
 				mergedSettings,
 				standardServiceRegistry
 		);
 		this.metamodelBuilder = (MetadataBuilderImplementor) metadataSources.getMetadataBuilder( standardServiceRegistry );
-		populate( metamodelBuilder, mergedSettings, standardServiceRegistry, attributeConverterDefinitions );
+		populate( metamodelBuilder, mergedSettings, standardServiceRegistry, attributeConverterDescriptors );
 
 		// todo : would be nice to have MetadataBuilder still do the handling of CfgXmlAccessService here
 		//		another option is to immediately handle them here (probably in mergeSettings?) as we encounter them...
@@ -693,7 +694,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 	}
 
 	@SuppressWarnings("unchecked")
-	protected List<AttributeConverterDefinition> populate(
+	protected List<ConverterDescriptor> populate(
 			MetadataSources metadataSources,
 			MergedSettings mergedSettings,
 			StandardServiceRegistry ssr) {
@@ -738,7 +739,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 //			}
 //		}
 
-		List<AttributeConverterDefinition> attributeConverterDefinitions = null;
+		List<ConverterDescriptor> attributeConverterDefinitions = null;
 
 		// add any explicit Class references passed in
 		final List<Class> loadedAnnotatedClasses = (List<Class>) configurationValues.remove( AvailableSettings.LOADED_CLASSES );
@@ -749,10 +750,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 						attributeConverterDefinitions = new ArrayList<>();
 					}
 					attributeConverterDefinitions.add(
-							AttributeConverterDefinition.from(
-									metamodelBuilder.getBootstrapContext().getClassmateContext(),
-									cls
-							)
+							new ClassBasedConverterDescriptor( cls, metamodelBuilder.getBootstrapContext().getClassmateContext() )
 					);
 				}
 				else {
@@ -782,7 +780,7 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 			MetadataBuilder metamodelBuilder,
 			MergedSettings mergedSettings,
 			StandardServiceRegistry ssr,
-			List<AttributeConverterDefinition> attributeConverterDefinitions) {
+			List<ConverterDescriptor> attributeConverterDescriptors) {
 		( (MetadataBuilderImplementor) metamodelBuilder ).getBootstrapContext().markAsJpaBootstrap();
 
 		if ( persistenceUnit.getTempClassLoader() != null ) {
@@ -808,8 +806,8 @@ public class EntityManagerFactoryBuilderImpl implements EntityManagerFactoryBuil
 			typeContributorList.getTypeContributors().forEach( metamodelBuilder::applyTypes );
 		}
 
-		if ( attributeConverterDefinitions != null ) {
-			attributeConverterDefinitions.forEach( metamodelBuilder::applyAttributeConverter );
+		if ( attributeConverterDescriptors != null ) {
+			attributeConverterDescriptors.forEach( metamodelBuilder::applyAttributeConverter );
 		}
 	}
 

@@ -22,7 +22,7 @@ import org.hibernate.query.spi.QueryImplementor;
 public abstract class AbstractNamedQueryMemento implements NamedQueryMemento {
 	private final String name;
 
-	private final List<ParameterDescriptor> parameterDescriptors;
+	private final List<ParameterMemento> parameterMementos;
 
 	private final Boolean cacheable;
 	private final String cacheRegion;
@@ -42,7 +42,7 @@ public abstract class AbstractNamedQueryMemento implements NamedQueryMemento {
 
 	public AbstractNamedQueryMemento(
 			String name,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterMemento> parameterMementos,
 			Boolean cacheable,
 			String cacheRegion,
 			CacheMode cacheMode,
@@ -54,7 +54,7 @@ public abstract class AbstractNamedQueryMemento implements NamedQueryMemento {
 			String comment,
 			Map<String, Object> hints) {
 		this.name = name;
-		this.parameterDescriptors = parameterDescriptors;
+		this.parameterMementos = parameterMementos;
 		this.cacheable = cacheable;
 		this.cacheRegion = cacheRegion;
 		this.cacheMode = cacheMode;
@@ -72,8 +72,8 @@ public abstract class AbstractNamedQueryMemento implements NamedQueryMemento {
 		return name;
 	}
 
-	public List<ParameterDescriptor> getParameterDescriptors() {
-		return parameterDescriptors;
+	public List<ParameterMemento> getParameterMementos() {
+		return parameterMementos;
 	}
 
 	@Override

@@ -146,7 +146,7 @@ public class ScanningCoordinatorTest extends BaseUnitTestCase {
 		assertEquals( 1, scanEnvironment.getExplicitlyListedClassNames().size() );
 		assertEquals( "a.b.C", scanEnvironment.getExplicitlyListedClassNames().get(0) );
 
-		assertEquals( true, managedResources.getAttributeConverterDefinitions().isEmpty() );
+		assertEquals( true, managedResources.getAttributeConverterDescriptors().isEmpty() );
 		assertEquals( true, managedResources.getAnnotatedClassReferences().isEmpty() );
 		assertEquals( expectedIsManagedResourcesEmpty, managedResources.getAnnotatedClassNames().isEmpty() );
 		assertEquals( expectedIsManagedResourcesEmpty, managedResources.getAnnotatedPackageNames().isEmpty() );

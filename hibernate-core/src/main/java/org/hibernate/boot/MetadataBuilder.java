@@ -15,10 +15,10 @@ import org.hibernate.boot.archive.scan.spi.Scanner;
 import org.hibernate.boot.archive.spi.ArchiveDescriptorFactory;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.TypeContributor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.MetadataSourceType;
 import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
@@ -355,18 +355,8 @@ public interface MetadataBuilder {
 	 *
 	 * @return {@code this} for method chaining
 	 *
-	 * @deprecated (since 5.3) AttributeConverterDefinition forces early
-	 * access to the AttributeConverter instance which precludes the
-	 * possibility to resolve the converter from CDI, etc.  Instead use
-	 * one of:
-	 *
-	 * 		* {@link #applyAttributeConverter(Class)}
-	 * 		* {@link #applyAttributeConverter(Class, boolean)}
-	 * 		* {@link #applyAttributeConverter(AttributeConverter)}
-	 * 		* {@link #applyAttributeConverter(AttributeConverter, boolean)}
 	 */
-	@Deprecated
-	MetadataBuilder applyAttributeConverter(AttributeConverterDefinition definition);
+	MetadataBuilder applyAttributeConverter(ConverterDescriptor definition);
 
 	/**
 	 * Adds an AttributeConverter by its Class.

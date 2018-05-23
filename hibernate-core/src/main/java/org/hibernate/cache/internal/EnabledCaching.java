@@ -225,7 +225,7 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 			return false;
 		}
 
-		final Object key = cacheAccess.generateCacheKey( identifier, entityDescriptor, sessionFactory, null );
+		final Object key = cacheAccess.generateCacheKey( identifier, entityDescriptor.getHierarchy(), sessionFactory, null );
 		return cacheAccess.contains( key );
 	}
 
@@ -249,7 +249,7 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 			);
 		}
 
-		final Object key = cacheAccess.generateCacheKey( identifier, entityDescriptor, sessionFactory, null );
+		final Object key = cacheAccess.generateCacheKey( identifier, entityDescriptor.getHierarchy(), sessionFactory, null );
 		cacheAccess.evict( key );
 	}
 

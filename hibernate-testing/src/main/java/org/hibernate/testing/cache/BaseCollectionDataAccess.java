@@ -15,6 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class BaseCollectionDataAccess
 		extends AbstractCachedDomainDataAccess
 		implements CollectionDataAccess {
@@ -27,6 +28,7 @@ public abstract class BaseCollectionDataAccess
 		this.collectionDescriptor = collectionDescriptor;
 	}
 
+	@SuppressWarnings("unused")
 	public PersistentCollectionDescriptor getCollectionDescriptor() {
 		return collectionDescriptor;
 	}

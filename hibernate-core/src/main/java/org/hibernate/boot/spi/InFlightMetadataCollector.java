@@ -17,6 +17,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
+import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
 import org.hibernate.boot.model.convert.internal.InstanceBasedConverterDescriptor;
@@ -30,7 +31,6 @@ import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
 import org.hibernate.cfg.AnnotatedClassType;
-import org.hibernate.cfg.AttributeConverterDefinition;
 import org.hibernate.cfg.JPAIndexHolder;
 import org.hibernate.cfg.PropertyData;
 import org.hibernate.cfg.SecondPass;
@@ -224,30 +224,11 @@ public interface InFlightMetadataCollector extends MetadataImplementor {
 
 	void addIdentifierGenerator(IdentifierGeneratorDefinition generatorDefinition);
 
-
-	/**
-	 * @deprecated AttributeConverterDefinition forces early resolution of the
-	 * AttributeConverter instance, which precludes resolution of the converter
-	 * from {@link org.hibernate.resource.beans.spi.ManagedBeanRegistry} (CDI, etc).
-	 * Instead one of:
-	 * * {@link #addAttributeConverter(ConverterDescriptor)}
-	 * * {@link #addAttributeConverter(Class)}
-	 * * {@link #addAttributeConverter(Class)}
-	 */
-	@Deprecated
-	default void addAttributeConverter(AttributeConverterDefinition converter) {
-		addAttributeConverter(
-				new InstanceBasedConverterDescriptor(
-						converter.getAttributeConverter(),
-						getBootstrapContext().getClassmateContext()
-				)
-		);
-	}
-
 	void addAttributeConverter(ConverterDescriptor descriptor);
 
-
-	<O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> converterClass);
+	default <O, R> void addAttributeConverter(Class<? extends AttributeConverter<O, R>> converterClass) {
+		addAttributeConverter( new ClassBasedConverterDescriptor( converterClass, getBootstrapContext().getClassmateContext() ) );
+	}
 
 	ConverterAutoApplyHandler getAttributeConverterAutoApplyHandler();
 

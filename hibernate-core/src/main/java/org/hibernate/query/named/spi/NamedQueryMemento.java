@@ -23,7 +23,7 @@ public interface NamedQueryMemento {
 
 	String getQueryString();
 
-	List<ParameterDescriptor> getParameterDescriptors();
+	List<ParameterMemento> getParameterMementos();
 
 	Boolean getCacheable();
 

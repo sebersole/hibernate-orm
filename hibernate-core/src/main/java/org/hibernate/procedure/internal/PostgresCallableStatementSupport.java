@@ -6,12 +6,17 @@
  */
 package org.hibernate.procedure.internal;
 
+import javax.persistence.ParameterMode;
+
+import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.procedure.spi.CallableStatementSupport;
+import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.procedure.spi.ProcedureParamBindings;
 import org.hibernate.procedure.spi.ProcedureParameterMetadata;
 import org.hibernate.sql.exec.spi.JdbcCall;
+import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 
 /**
  * @author Steve Ebersole
@@ -37,63 +42,54 @@ public class PostgresCallableStatementSupport implements CallableStatementSuppor
 	 */
 	public static final PostgresCallableStatementSupport INSTANCE = new PostgresCallableStatementSupport();
 
-//	@Override
-//	public String renderCallableStatement(
-//			String procedureName,
-//			ProcedureParameterMetadata parameterMetadata,
-//			ProcedureParamBindings paramBindings,
-//			SharedSessionContractImplementor session) {
-//		return null;
-//	}
-//
-//	@Override
-//	public String renderCallableStatement(
-//			String procedureName,
-//			ParameterStrategy parameterStrategy,
-//			List<ParameterRegistrationImplementor<?>> parameterRegistrations,
-//			SharedSessionContractImplementor session) {
-//		// if there are any parameters, see if the first is REF_CURSOR
-//		final boolean firstParamIsRefCursor = ! parameterRegistrations.isEmpty()
-//				&& parameterRegistrations.get( 0 ).getMode() == ParameterMode.REF_CURSOR;
-//
-//		if ( firstParamIsRefCursor ) {
-//			// validate that the parameter strategy is positional (cannot mix, and REF_CURSOR is inherently positional)
-//			if ( parameterStrategy == ParameterStrategy.NAMED ) {
-//				throw new HibernateException( "Cannot mix named parameters and REF_CURSOR parameter on PostgreSQL" );
-//			}
-//		}
-//
-//		final StringBuilder buffer;
-//		if ( firstParamIsRefCursor ) {
-//			buffer = new StringBuilder().append( "{? = call " );
-//		}
-//		else {
-//			buffer = new StringBuilder().append( "{call " );
-//		}
-//
-//		buffer.append( procedureName ).append( "(" );
-//
-//		String sep = "";
-//
-//		// skip the first registration if it was a REF_CURSOR
-//		final int startIndex = firstParamIsRefCursor ? 1 : 0;
-//		for ( int i = startIndex; i < parameterRegistrations.size(); i++ ) {
-//			final ParameterRegistrationImplementor parameter = parameterRegistrations.get( i );
-//
-//			// any additional REF_CURSOR parameter registrations are an error
-//			if ( parameter.getMode() == ParameterMode.REF_CURSOR ) {
-//				throw new HibernateException( "PostgreSQL supports only one REF_CURSOR parameter, but multiple were registered" );
-//			}
-//
-//			for ( int ignored : parameter.getSqlTypes() ) {
-//				buffer.append( sep ).append( "?" );
-//				sep = ",";
-//			}
-//		}
-//
-//		return buffer.append( ")}" ).toString();
-//	}
-//
+	@Override
+	public String renderCallableStatement(
+			String procedureName,
+			JdbcCall jdbcCall,
+			ProcedureParamBindings paramBindings,
+			SharedSessionContractImplementor session) {
+		// if there are any parameters, see if the first is REF_CURSOR
+		final boolean firstParamIsRefCursor = ! jdbcCall.getParameterRegistrations().isEmpty()
+				&& jdbcCall.getParameterRegistrations().get( 0 ).getParameterMode() == ParameterMode.REF_CURSOR;
+
+		if ( firstParamIsRefCursor ) {
+			// validate that the parameter strategy is positional (cannot mix, and REF_CURSOR is inherently positional)
+			if ( paramBindings.getParameterMetadata().getParameterStrategy() == ParameterStrategy.NAMED ) {
+				throw new HibernateException( "Cannot mix named parameters and REF_CURSOR parameter on PostgreSQL" );
+			}
+		}
+
+		final StringBuilder buffer;
+		if ( firstParamIsRefCursor ) {
+			buffer = new StringBuilder().append( "{? = call " );
+		}
+		else {
+			buffer = new StringBuilder().append( "{call " );
+		}
+
+		buffer.append( procedureName ).append( "(" );
+
+		String sep = "";
+
+		// skip the first registration if it was a REF_CURSOR
+		final int startIndex = firstParamIsRefCursor ? 1 : 0;
+		for ( int i = startIndex; i < jdbcCall.getParameterRegistrations().size(); i++ ) {
+			final JdbcCallParameterRegistration parameter = jdbcCall.getParameterRegistrations().get( i );
+
+			// any additional REF_CURSOR parameter registrations are an error
+			if ( parameter.getParameterMode() == ParameterMode.REF_CURSOR ) {
+				throw new HibernateException( "PostgreSQL supports only one REF_CURSOR parameter, but multiple were registered" );
+			}
+
+			for ( int x = 0, max = parameter.getParameterType().getNumberOfJdbcParametersToBind(); x < max; x++ ) {
+				buffer.append( sep ).append( "?" );
+				sep = ",";
+			}
+		}
+
+		return buffer.append( ")}" ).toString();
+	}
+
 //	@Override
 //	public void registerParameters(
 //			String procedureName,

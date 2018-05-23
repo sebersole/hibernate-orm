@@ -7,6 +7,8 @@
 package org.hibernate.id.uuid;
 
 
+import org.hibernate.type.descriptor.java.internal.UUIDJavaDescriptor;
+
 /**
  * @author Steve Ebersole
  */
@@ -15,7 +17,7 @@ public class LocalObjectUuidHelper {
 	}
 
 	public static String generateLocalObjectUuid() {
-		return UUIDTypeDescriptor.ToStringTransformer.INSTANCE.transform(
+		return UUIDJavaDescriptor.ToStringTransformer.INSTANCE.transform(
 				StandardRandomStrategy.INSTANCE.generateUUID( null )
 		);
 	}

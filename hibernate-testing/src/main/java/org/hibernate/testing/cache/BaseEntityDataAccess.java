@@ -15,6 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class BaseEntityDataAccess
 		extends AbstractCachedDomainDataAccess
 		implements EntityDataAccess {
@@ -25,6 +26,7 @@ public abstract class BaseEntityDataAccess
 		this.entityHierarchy = entityHierarchy;
 	}
 
+	@SuppressWarnings("unused")
 	protected EntityHierarchy getEntityHierarchy() {
 		return entityHierarchy;
 	}

@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.boot.AttributeConverterInfo;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.internal.InFlightMetadataCollectorImpl;
 import org.hibernate.boot.internal.MetadataBuildingContextRootImpl;
@@ -38,7 +37,6 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.BasicTypeRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.jandex.IndexView;
@@ -128,11 +126,7 @@ public class MetadataBuildingProcess {
 				metadataCollector
 		);
 
-		for ( AttributeConverterInfo converterInfo : managedResources.getAttributeConverterDefinitions() ) {
-			metadataCollector.addAttributeConverter(
-					converterInfo.toConverterDescriptor( rootMetadataBuildingContext )
-			);
-		}
+		managedResources.getAttributeConverterDescriptors().forEach( metadataCollector::addAttributeConverter );
 
 		bootstrapContext.getTypeConfiguration().scope( rootMetadataBuildingContext );
 

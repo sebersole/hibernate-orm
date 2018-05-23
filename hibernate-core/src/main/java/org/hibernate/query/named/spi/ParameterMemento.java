@@ -12,6 +12,6 @@ import org.hibernate.query.QueryParameter;
 /**
  * @author Steve Ebersole
  */
-public interface ParameterDescriptor {
+public interface ParameterMemento {
 	QueryParameter toQueryParameter(SharedSessionContractImplementor session);
 }

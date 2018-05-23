@@ -6,6 +6,7 @@
  */
 package org.hibernate.testing.cache;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -13,11 +14,17 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class CollectionNonStrictReadWriteAccess extends BaseCollectionDataAccess {
 	public CollectionNonStrictReadWriteAccess(
 			DomainDataRegionImpl region,
 			PersistentCollectionDescriptor collectionDescriptor) {
 		super( region, collectionDescriptor );
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.NONSTRICT_READ_WRITE;
 	}
 
 	@Override

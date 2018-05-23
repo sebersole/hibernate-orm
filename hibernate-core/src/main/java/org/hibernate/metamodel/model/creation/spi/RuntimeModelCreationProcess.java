@@ -43,9 +43,9 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -499,7 +499,7 @@ public class RuntimeModelCreationProcess {
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder  builder = locateBuilder( bootDescriptor.getNaturalIdCacheRegionName() );
-			builder.addEntityConfig( runtimeDescriptor.getHierarchy(), accessType );
+			builder.addEntityConfig( bootDescriptor, accessType );
 		}
 
 		private DomainDataRegionConfigImpl.Builder  locateBuilder(String regionName) {
@@ -514,7 +514,7 @@ public class RuntimeModelCreationProcess {
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
-			configBuilder.addNaturalIdConfig( runtimeDescriptor.getHierarchy(), accessType );
+			configBuilder.addNaturalIdConfig( bootDescriptor, accessType );
 		}
 
 		@Override
@@ -553,7 +553,7 @@ public class RuntimeModelCreationProcess {
 				Collection bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
-			configBuilder.addCollectionConfig( runtimeDescriptor, accessType );
+			configBuilder.addCollectionConfig( bootDescriptor, accessType );
 		}
 	}
 }

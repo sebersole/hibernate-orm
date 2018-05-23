@@ -120,7 +120,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 			);
 			cacheEntry = entityDescriptor.getCacheEntryStructure().structure( ce );
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
-			final Object ck = cache.generateCacheKey( id, entityDescriptor, factory, session.getTenantIdentifier() );
+			final Object ck = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
 
 			final boolean put = cacheInsert( entityDescriptor, ck );
 
@@ -225,11 +225,11 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		if ( success && isCachePutEnabled( entityDescriptor, getSession() ) ) {
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final SessionFactoryImplementor factory = session.getFactory();
-			final Object ck = cache.generateCacheKey( getId(), entityDescriptor, factory, session.getTenantIdentifier() );
+			final Object ck = cache.generateCacheKey( getId(), entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
 			final boolean put = cacheAfterInsert( cache, ck );
 
 			if ( put && factory.getStatistics().isStatisticsEnabled() ) {
-				getSession().getFactory().getStatisticsImplementor().entityCachePut(
+				getSession().getFactory().getStatistics().entityCachePut(
 						entityDescriptor.getNavigableRole(),
 						cache.getRegion().getName()
 				);

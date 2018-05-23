@@ -11,12 +11,12 @@ import java.util.Comparator;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class NaturalIdReadWriteAccess extends AbstractReadWriteAccess implements NaturalIdDataAccess {
 	private final EntityHierarchy entityHierarchy;
 
@@ -40,9 +40,9 @@ public class NaturalIdReadWriteAccess extends AbstractReadWriteAccess implements
 	@Override
 	public Object generateCacheKey(
 			Object[] naturalIdValues,
-			EntityDescriptor persister,
+			EntityHierarchy entityHierarchy,
 			SharedSessionContractImplementor session) {
-		return getRegion().getEffectiveKeysFactory().createNaturalIdKey( naturalIdValues, persister.getHierarchy(), session );
+		return getRegion().getEffectiveKeysFactory().createNaturalIdKey( naturalIdValues, entityHierarchy, session );
 	}
 
 	@Override

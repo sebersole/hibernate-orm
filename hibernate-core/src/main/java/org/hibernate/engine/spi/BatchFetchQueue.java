@@ -19,8 +19,8 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.internal.CacheHelper;
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -228,7 +228,7 @@ public class BatchFetchQueue {
 		EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		final Object key = cacheAccess.generateCacheKey(
 				entityKey.getIdentifier(),
-				entityDescriptor,
+				entityDescriptor.getHierarchy(),
 				session.getFactory(),
 				session.getTenantIdentifier()
 		);

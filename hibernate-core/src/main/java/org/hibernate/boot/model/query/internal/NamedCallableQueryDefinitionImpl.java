@@ -21,7 +21,7 @@ import org.hibernate.procedure.internal.ProcedureParameterImpl;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedCallableQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * @author Steve Ebersole
@@ -126,7 +126,7 @@ public class NamedCallableQueryDefinitionImpl
 			return new ParameterDefinition() {
 				@Override
 				@SuppressWarnings("unchecked")
-				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+				public ParameterMemento resolve(SessionFactoryImplementor factory) {
 					return session -> new ProcedureParameterImpl(
 							label,
 							mode,
@@ -144,7 +144,7 @@ public class NamedCallableQueryDefinitionImpl
 			return new ParameterDefinition() {
 				@Override
 				@SuppressWarnings("unchecked")
-				public ParameterDescriptor resolve(SessionFactoryImplementor factory) {
+				public ParameterMemento resolve(SessionFactoryImplementor factory) {
 					return session -> new ProcedureParameterImpl(
 							name,
 							mode,

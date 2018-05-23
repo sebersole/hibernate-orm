@@ -19,6 +19,7 @@ import org.jboss.logging.Logger;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class AbstractCachedDomainDataAccess implements CachedDomainDataAccess, AbstractDomainDataRegion.Destructible {
 	private static final Logger log = Logger.getLogger( AbstractCachedDomainDataAccess.class );
 
@@ -55,6 +56,11 @@ public abstract class AbstractCachedDomainDataAccess implements CachedDomainData
 		if ( data != null ) {
 			data.remove( key );
 		}
+	}
+
+	@Override
+	public void removeAll(SharedSessionContractImplementor session) {
+		data.clear();
 	}
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
@@ -110,11 +116,6 @@ public abstract class AbstractCachedDomainDataAccess implements CachedDomainData
 	@Override
 	public void remove(SharedSessionContractImplementor session, Object key) {
 		removeFromCache( key );
-	}
-
-	@Override
-	public void removeAll() {
-		clearCache();
 	}
 
 	@Override

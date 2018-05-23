@@ -6,15 +6,22 @@
  */
 package org.hibernate.testing.cache;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * @author Chris Cranford
  */
+@SuppressWarnings("unused")
 public class CollectionReadWriteAccess extends BaseCollectionDataAccess {
 	public CollectionReadWriteAccess(
 			DomainDataRegionImpl region,
 			PersistentCollectionDescriptor collectionDescriptor) {
 		super( region, collectionDescriptor );
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.READ_WRITE;
 	}
 }

@@ -386,7 +386,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 		if ( entityDescriptor.canWriteToCache() ) {
 			ck = cacheAccess.generateCacheKey(
 					event.getEntityId(),
-					entityDescriptor,
+					entityDescriptor.getHierarchy(),
 					source.getFactory(),
 					source.getTenantIdentifier()
 			);
@@ -643,7 +643,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		final Object ck = cacheAccess.generateCacheKey(
 				event.getEntityId(),
-				entityDescriptor,
+				entityDescriptor.getHierarchy(),
 				source.getFactory(),
 				source.getTenantIdentifier()
 		);

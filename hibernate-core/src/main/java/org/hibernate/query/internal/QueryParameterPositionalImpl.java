@@ -8,7 +8,7 @@
 package org.hibernate.query.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
 
 /**
@@ -61,7 +61,7 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 	}
 
 	@Override
-	public ParameterDescriptor toMemento() {
+	public ParameterMemento toMemento() {
 		return session -> new QueryParameterPositionalImpl( getPosition(), allowsMultiValuedBinding(), getHibernateType() );
 	}
 }

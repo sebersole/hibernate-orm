@@ -55,6 +55,8 @@ import org.hibernate.testing.transaction.TransactionUtil2;
 import org.junit.After;
 import org.junit.Before;
 
+import org.jboss.logging.Logger;
+
 import static org.hibernate.testing.transaction.TransactionUtil.doInHibernate;
 import static org.junit.Assert.fail;
 
@@ -68,6 +70,8 @@ import static org.junit.Assert.fail;
  */
 public class BaseNonConfigCoreFunctionalTestCase {
 	public static final String VALIDATE_DATA_CLEANUP = "hibernate.test.validateDataCleanup";
+
+	private static final Logger log = Logger.getLogger( BaseNonConfigCoreFunctionalTestCase.class );
 
 	private StandardServiceRegistry serviceRegistry;
 	private MetadataImplementor metadata;

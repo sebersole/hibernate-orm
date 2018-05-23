@@ -8,10 +8,8 @@ package org.hibernate.cfg.annotations;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.persistence.FlushModeType;
 import javax.persistence.NamedStoredProcedureQuery;
 import javax.persistence.ParameterMode;
@@ -32,9 +30,7 @@ import org.hibernate.procedure.internal.Util;
 import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.query.named.internal.NamedCallableQueryMementoImpl;
 import org.hibernate.query.named.spi.NamedCallableQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
-import org.hibernate.query.spi.ResultSetMappingDescriptor;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.query.named.spi.ParameterMemento;
 
 /**
  * Holds all the information needed from a named procedure call declaration in order to create a
@@ -82,67 +78,7 @@ public class NamedProcedureCallDefinition {
 		return procedureName;
 	}
 
-	// todo (6.0) : (reminder) - I believe both ProcedureCallMemento and NamedProcedureCallDefinition are replaced and should be removed
-	//		replaced by:
-	//			* NamedCallableQueryDefinition
-	//			* NamedCallableQueryDescriptor
-
-	public NamedCallableQueryMemento toMemento(
-			final SessionFactoryImplementor sessionFactory,
-			final Map<String,ResultSetMappingDescriptor> resultSetMappingDefinitions) {
-		final List<QueryResult> collQueryResults = new ArrayList<>();
-		final Set<String> collectedQuerySpaces = new HashSet<>();
-
-		final boolean specifiesResultClasses = resultClasses != null && resultClasses.length > 0;
-		final boolean specifiesResultSetMappings = resultSetMappings != null && resultSetMappings.length > 0;
-
-		if ( specifiesResultClasses ) {
-			Util.resolveResultClasses(
-					new Util.ResultClassesResolutionContext() {
-						@Override
-						public SessionFactoryImplementor getSessionFactory() {
-							return sessionFactory;
-						}
-
-						@Override
-						public void addQueryResult(QueryResult... queryReturns) {
-							Collections.addAll( collQueryResults, queryReturns );
-						}
-
-						@Override
-						public void addQuerySpaces(String... spaces) {
-							Collections.addAll( collectedQuerySpaces, spaces );
-						}
-					},
-					resultClasses
-			);
-		}
-		else if ( specifiesResultSetMappings ) {
-			Util.resolveResultSetMappings(
-					new Util.ResultSetMappingResolutionContext() {
-						@Override
-						public SessionFactoryImplementor getSessionFactory() {
-							return sessionFactory;
-						}
-
-						@Override
-						public ResultSetMappingDescriptor findResultSetMapping(String name) {
-							return resultSetMappingDefinitions.get( name );
-						}
-
-						@Override
-						public void addQueryReturns(QueryResult... queryReturns) {
-							Collections.addAll( collQueryResults, queryReturns );
-						}
-
-						@Override
-						public void addQuerySpaces(String... spaces) {
-							Collections.addAll( collectedQuerySpaces, spaces );
-						}
-					},
-					resultSetMappings
-			);
-		}
+	public NamedCallableQueryMemento toMemento(SessionFactoryImplementor sessionFactory) {
 
 		final boolean isCacheable = isCacheable( hints, sessionFactory );
 
@@ -153,14 +89,18 @@ public class NamedProcedureCallDefinition {
 				parameterDefinitions.toMementos( sessionFactory ),
 				resultClasses,
 				resultSetMappings,
-				collectedQuerySpaces,
+				Collections.emptySet(),
 				isCacheable,
 				isCacheable ? determineCacheRegion( hints, sessionFactory ) : null,
 				isCacheable ? determineCacheMode( hints, sessionFactory ) : null,
 				determineFlushMode( hints, sessionFactory ),
 				ConfigurationHelper.getBoolean( QueryHints.HINT_READONLY, hints, false ),
 				LockOptions.NONE,
-				ConfigurationHelper.getInt( QueryHints.SPEC_HINT_TIMEOUT, hints, 0 ),
+				ConfigurationHelper.getInt(
+						QueryHints.SPEC_HINT_TIMEOUT,
+						hints,
+						ConfigurationHelper.getInt( QueryHints.HINT_TIMEOUT, hints, 0 ) * 1000
+				) / 1000,
 				0,
 				null,
 				Util.copy( hints )
@@ -248,8 +188,8 @@ public class NamedProcedureCallDefinition {
 			return parameterStrategy;
 		}
 
-		public List<ParameterDescriptor> toMementos(SessionFactoryImplementor sessionFactory) {
-			final List<ParameterDescriptor > mementos = new ArrayList<>();
+		public List<ParameterMemento> toMementos(SessionFactoryImplementor sessionFactory) {
+			final List<ParameterMemento> mementos = new ArrayList<>();
 			for ( ParameterDefinition definition : parameterDefinitions ) {
 				mementos.add( definition.toMemento( sessionFactory ) );
 			}
@@ -306,7 +246,7 @@ public class NamedProcedureCallDefinition {
 		}
 
 		@SuppressWarnings({"UnnecessaryUnboxing", "unchecked"})
-		public ParameterDescriptor toMemento(SessionFactoryImplementor sessionFactory) {
+		public ParameterMemento toMemento(SessionFactoryImplementor sessionFactory) {
 			final boolean initialPassNullSetting = explicitPassNullSetting != null
 					? explicitPassNullSetting.booleanValue()
 					: sessionFactory.getSessionFactoryOptions().isProcedureParameterNullPassingEnabled();

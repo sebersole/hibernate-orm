@@ -1845,7 +1845,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				Object[] naturalIdValues,
 				Object[] previousNaturalIdValues,
 				CachedNaturalIdValueSource source) {
-			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor, session );
+			final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor.getHierarchy(), session );
 
 			final SessionFactoryImplementor factory = session.getFactory();
 
@@ -1901,7 +1901,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 					break;
 				}
 				case UPDATE: {
-					final Object previousCacheKey = cacheAccess.generateCacheKey( previousNaturalIdValues, descriptor, session );
+					final Object previousCacheKey = cacheAccess.generateCacheKey( previousNaturalIdValues, descriptor.getHierarchy(), session );
 					if ( naturalIdCacheKey.equals( previousCacheKey ) ) {
 						// prevent identical re-caching, solves HHH-7309
 						return;
@@ -1990,7 +1990,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				//		2) should prefer session-cached values if any (requires interaction from removeLocalNaturalIdCrossReference
 
 				descriptor = locateProperDescriptor( descriptor );
-				final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor, session );
+				final Object naturalIdCacheKey = cacheAccess.generateCacheKey( naturalIdValues, descriptor.getHierarchy(), session );
 				cacheAccess.evict( naturalIdCacheKey );
 			}
 

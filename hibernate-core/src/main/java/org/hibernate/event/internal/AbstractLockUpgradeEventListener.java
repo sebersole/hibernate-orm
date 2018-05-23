@@ -67,7 +67,7 @@ public abstract class AbstractLockUpgradeEventListener extends AbstractReassocia
 				if ( cachingEnabled ) {
 					ck = entityDescriptor.getHierarchy().getEntityCacheAccess().generateCacheKey(
 							entry.getId(),
-							entityDescriptor,
+							entityDescriptor.getHierarchy(),
 							source.getFactory(),
 							source.getTenantIdentifier()
 					);

@@ -189,18 +189,6 @@ public interface SessionFactoryImplementor
 		throw new UnsupportedOperationException( "Access to of query return aliases via Sessionfactory is no longer supported" );
 	}
 
-
-
-	/**
-	 * @deprecated (since 5.2) Just use {@link #getStatistics} (with covariant return here as {@link StatisticsImplementor}).
-	 */
-	@Deprecated
-	default StatisticsImplementor getStatisticsImplementor() {
-		return getStatistics();
-	}
-
-
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// NamedQueryRepository
 

@@ -17,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class EntityReadWriteAccess extends AbstractReadWriteAccess implements EntityDataAccess {
 	private final EntityHierarchy entityHierarchy;
 

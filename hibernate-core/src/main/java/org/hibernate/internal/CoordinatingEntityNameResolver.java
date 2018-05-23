@@ -9,17 +9,17 @@ package org.hibernate.internal;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Interceptor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
 public class CoordinatingEntityNameResolver implements EntityNameResolver {
-	private final TypeConfiguration typeConfiguration;
+	private final SessionFactoryImplementor sessionFactory;
 	private final Interceptor interceptor;
 
+	@SuppressWarnings("WeakerAccess")
 	public CoordinatingEntityNameResolver(SessionFactoryImplementor sessionFactory, Interceptor interceptor) {
-		this.typeConfiguration = sessionFactory.getMetamodel().getTypeConfiguration();
+		this.sessionFactory = sessionFactory;
 		this.interceptor = interceptor;
 	}
 
@@ -30,7 +30,7 @@ public class CoordinatingEntityNameResolver implements EntityNameResolver {
 			return entityName;
 		}
 
-		for ( EntityNameResolver resolver : typeConfiguration.getEntityNameResolvers() ) {
+		for ( EntityNameResolver resolver : sessionFactory.getMetamodel().getEntityNameResolvers() ) {
 			entityName = resolver.resolveEntityName( entity );
 			if ( entityName != null ) {
 				break;

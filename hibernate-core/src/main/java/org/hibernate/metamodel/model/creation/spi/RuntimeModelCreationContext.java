@@ -26,6 +26,8 @@ import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -55,6 +57,17 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 	}
 
 	PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver();
+
+	@Override
+	default ManagedBeanRegistry getManagedBeanRegistry() {
+		return getSessionFactory().getServiceRegistry().getService( ManagedBeanRegistry.class );
+	}
+
+	@Override
+	default JavaTypeDescriptorRegistry getJavaTypeDescriptorRegistry() {
+		return getTypeConfiguration().getJavaTypeDescriptorRegistry();
+	}
+
 
 	// todo (6.0) : replace these with InFlightRuntimeModel?
 

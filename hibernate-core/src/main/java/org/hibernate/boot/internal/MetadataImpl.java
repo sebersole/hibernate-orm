@@ -313,12 +313,11 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 
 	@Override
 	public NamedQueryRepository buildNamedQueryRepository(SessionFactoryImplementor sessionFactory) {
-		final Map<String, ResultSetMappingDescriptor> resolvedResultSetMappings = buildSqlResultSetMappings( sessionFactory );
 		return new NamedQueryRepositoryImpl(
 				buildNamedHqlDescriptorMap( sessionFactory ),
 				buildNamedNativeDescriptorMap( sessionFactory ),
-				resolvedResultSetMappings,
-				buildProcedureCallMementos( sessionFactory, resolvedResultSetMappings )
+				buildSqlResultSetMappings( sessionFactory ),
+				buildProcedureCallMementos( sessionFactory )
 		);
 
 	}
@@ -374,15 +373,13 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return converted;
 	}
 
-	private Map<String, NamedCallableQueryMemento> buildProcedureCallMementos(
-			SessionFactoryImplementor sessionFactory,
-			Map<String, ResultSetMappingDescriptor> resolvedResultSetMappings) {
+	private Map<String, NamedCallableQueryMemento> buildProcedureCallMementos(SessionFactoryImplementor sessionFactory) {
 		final Map<String, NamedCallableQueryMemento> rtn = new HashMap<>();
 		if ( namedProcedureCallMap != null ) {
 			for ( NamedProcedureCallDefinition procedureCallDefinition : namedProcedureCallMap.values() ) {
 				rtn.put(
 						procedureCallDefinition.getRegisteredName(),
-						procedureCallDefinition.toMemento( sessionFactory, resolvedResultSetMappings )
+						procedureCallDefinition.toMemento( sessionFactory )
 				);
 			}
 		}

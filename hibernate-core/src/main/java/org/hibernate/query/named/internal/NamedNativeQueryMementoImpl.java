@@ -16,7 +16,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.named.spi.AbstractNamedQueryMemento;
 import org.hibernate.query.named.spi.NamedNativeQueryMemento;
-import org.hibernate.query.named.spi.ParameterDescriptor;
+import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
 
@@ -30,7 +30,7 @@ public class NamedNativeQueryMementoImpl extends AbstractNamedQueryMemento imple
 
 	public NamedNativeQueryMementoImpl(
 			String name,
-			List<ParameterDescriptor> parameterDescriptors,
+			List<ParameterMemento> parameterMementos,
 			String sqlString,
 			String resultSetMappingName,
 			Set<String> querySpaces,
@@ -46,7 +46,7 @@ public class NamedNativeQueryMementoImpl extends AbstractNamedQueryMemento imple
 			Map<String,Object> hints) {
 		super(
 				name,
-				parameterDescriptors,
+				parameterMementos,
 				cacheable,
 				cacheRegion,
 				cacheMode,
@@ -87,7 +87,7 @@ public class NamedNativeQueryMementoImpl extends AbstractNamedQueryMemento imple
 	public NamedNativeQueryMemento makeCopy(String name) {
 		return new NamedNativeQueryMementoImpl(
 				name,
-				getParameterDescriptors(),
+				getParameterMementos(),
 				sqlString,
 				resultSetMappingName,
 				getQuerySpaces(),

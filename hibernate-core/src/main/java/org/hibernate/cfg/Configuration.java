@@ -31,6 +31,9 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.internal.ClassmateContext;
 import org.hibernate.boot.model.TypeContributor;
+import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
+import org.hibernate.boot.model.convert.internal.InstanceBasedConverterDescriptor;
+import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
@@ -102,7 +105,7 @@ public class Configuration {
 
 	private Map<String, SqmFunctionTemplate> sqlFunctions;
 	private List<MappedAuxiliaryDatabaseObject> auxiliaryDatabaseObjectList;
-	private HashMap<Class,AttributeConverterDefinition> attributeConverterDefinitionsByClass;
+	private HashMap<Class,ConverterDescriptor> attributeConverterDescriptorsByClass;
 
 	// used to build SF
 	private StandardServiceRegistryBuilder standardServiceRegistryBuilder;
@@ -683,10 +686,8 @@ public class Configuration {
 				metadataBuilder.applyAuxiliaryDatabaseObject( auxiliaryDatabaseObject );
 			}
 		}
-		if ( attributeConverterDefinitionsByClass != null ) {
-			for ( AttributeConverterDefinition attributeConverterDefinition : attributeConverterDefinitionsByClass.values() ) {
-				metadataBuilder.applyAttributeConverter( attributeConverterDefinition );
-			}
+		if ( attributeConverterDescriptorsByClass != null ) {
+			attributeConverterDescriptorsByClass.values().forEach( metadataBuilder::applyAttributeConverter );
 		}
 
 		metadataBuilder.applyRepresentationStrategySelector( getRepresentationStrategySelector() );
@@ -734,14 +735,14 @@ public class Configuration {
 
 	public void addSqlFunction(String functionName, SqmFunctionTemplate function) {
 		if ( sqlFunctions == null ) {
-			sqlFunctions = new HashMap<String, SqmFunctionTemplate>();
+			sqlFunctions = new HashMap<>();
 		}
 		sqlFunctions.put( functionName, function );
 	}
 
 	public void addAuxiliaryDatabaseObject(MappedAuxiliaryDatabaseObject object) {
 		if ( auxiliaryDatabaseObjectList == null ) {
-			auxiliaryDatabaseObjectList = new ArrayList<MappedAuxiliaryDatabaseObject>();
+			auxiliaryDatabaseObjectList = new ArrayList<>();
 		}
 		auxiliaryDatabaseObjectList.add( object );
 	}
@@ -749,21 +750,21 @@ public class Configuration {
 	/**
 	 * Adds the AttributeConverter Class to this Configuration.
 	 *
-	 * @param attributeConverterClass The AttributeConverter class.
+	 * @param converterClass The AttributeConverter class.
 	 * @param autoApply Should the AttributeConverter be auto applied to property types as specified
 	 * by its "entity attribute" parameterized type?
 	 */
-	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass, boolean autoApply) {
-		addAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass, autoApply ) );
+	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> converterClass, boolean autoApply) {
+		addAttributeConverter( new ClassBasedConverterDescriptor( converterClass, autoApply, classmateContext ) );
 	}
 
 	/**
 	 * Adds the AttributeConverter Class to this Configuration.
 	 *
-	 * @param attributeConverterClass The AttributeConverter class.
+	 * @param converterClass The AttributeConverter class.
 	 */
-	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> attributeConverterClass) {
-		addAttributeConverter( AttributeConverterDefinition.from( attributeConverterClass ) );
+	public <O,R> void addAttributeConverter(Class<? extends AttributeConverter<O,R>> converterClass) {
+		addAttributeConverter( new ClassBasedConverterDescriptor( converterClass, classmateContext ) );
 	}
 
 	/**
@@ -774,7 +775,7 @@ public class Configuration {
 	 * @param attributeConverter The AttributeConverter instance.
 	 */
 	public void addAttributeConverter(AttributeConverter attributeConverter) {
-		addAttributeConverter( AttributeConverterDefinition.from( attributeConverter ) );
+		addAttributeConverter( new InstanceBasedConverterDescriptor( attributeConverter, classmateContext ) );
 	}
 
 	/**
@@ -787,14 +788,14 @@ public class Configuration {
 	 * by its "entity attribute" parameterized type?
 	 */
 	public void addAttributeConverter(AttributeConverter attributeConverter, boolean autoApply) {
-		addAttributeConverter( AttributeConverterDefinition.from( attributeConverter, autoApply ) );
+		addAttributeConverter( new InstanceBasedConverterDescriptor( attributeConverter, autoApply, classmateContext ) );
 	}
 
-	public void addAttributeConverter(AttributeConverterDefinition definition) {
-		if ( attributeConverterDefinitionsByClass == null ) {
-			attributeConverterDefinitionsByClass = new HashMap<Class, AttributeConverterDefinition>();
+	public void addAttributeConverter(ConverterDescriptor converterDescriptor) {
+		if ( attributeConverterDescriptorsByClass == null ) {
+			attributeConverterDescriptorsByClass = new HashMap<>();
 		}
-		attributeConverterDefinitionsByClass.put( definition.getAttributeConverter().getClass(), definition );
+		attributeConverterDescriptorsByClass.put( converterDescriptor.getAttributeConverterClass(), converterDescriptor );
 	}
 
 	/**

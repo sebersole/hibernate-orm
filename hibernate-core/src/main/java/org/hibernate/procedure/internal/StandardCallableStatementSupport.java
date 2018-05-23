@@ -10,10 +10,12 @@ import java.sql.Types;
 import java.util.function.Consumer;
 import javax.persistence.ParameterMode;
 
+import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.procedure.spi.CallableStatementSupport;
+import org.hibernate.procedure.spi.ParameterStrategy;
 import org.hibernate.procedure.spi.ProcedureParamBindings;
 import org.hibernate.procedure.spi.ProcedureParameterBindingImplementor;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
@@ -24,6 +26,7 @@ import org.hibernate.sql.exec.internal.JdbcCallParameterExtractorImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterRegistrationImpl;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 import org.hibernate.sql.exec.spi.JdbcCall;
+import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
 /**
@@ -156,58 +159,58 @@ public class StandardCallableStatementSupport implements CallableStatementSuppor
 //	public boolean shouldUseFunctionSyntax(ParameterRegistry parameterRegistry) {
 //		return false;
 //	}
-//
-//	@Override
-//	public String renderCallableStatement(
-//			String callableName,
-//			ParameterStrategy parameterStrategy,
-//			JdbcCallFunctionReturn functionReturn,
-//			List<JdbcCallParameterRegistration> parameterRegistrations,
-//			SharedSessionContractImplementor session) {
-//		final boolean renderAsFunctionCall = functionReturn != null;
-//
-//		if ( renderAsFunctionCall ) {
-//			// validate that the parameter strategy is positional (cannot mix, and REF_CURSOR is inherently positional)
-//			if ( parameterStrategy == ParameterStrategy.NAMED ) {
-//				throw new HibernateException( "Cannot mix named parameters and REF_CURSOR parameter" );
-//			}
-//		}
-//
-//		final StringBuilder buffer;
-//		if ( renderAsFunctionCall ) {
-//			buffer = new StringBuilder().append( "{? = call " );
-//		}
-//		else {
-//			buffer = new StringBuilder().append( "{call " );
-//		}
-//
-//		buffer.append( callableName ).append( "(" );
-//
-//		String sep = "";
-//
-//		final int startIndex = renderAsFunctionCall ? 1 : 0;
-//		for ( int i = startIndex; i < parameterRegistrations.size(); i++ ) {
-//			final JdbcCallParameterRegistration registration = parameterRegistrations.get( i );
-//
-//			if ( registration.getParameterMode() == ParameterMode.REF_CURSOR ) {
-//				if ( !supportsRefCursors ) {
-//					throw new HibernateException( "Found REF_CURSOR parameter registration, but database does not support REF_CURSOR parameters" );
-//				}
-//			}
-//
-//			// todo (6.0) : again assume basic-valued
-//			/*
-//			for ( int j = 0; j < registration.getJdbcParameterCount(); j++ ) {
-//				buffer.append( sep ).append( "?" );
-//				sep = ",";
-//			}
-//			*/
-//			buffer.append( sep ).append( "?" );
-//		}
-//
-//		return buffer.append( ")}" ).toString();
-//	}
-//
+
+
+	@Override
+	public String renderCallableStatement(
+			String procedureName,
+			JdbcCall jdbcCall,
+			ProcedureParamBindings paramBindings,
+			SharedSessionContractImplementor session) {
+		final boolean renderAsFunctionCall = jdbcCall.getFunctionReturn() != null;
+
+		if ( renderAsFunctionCall ) {
+			// validate that the parameter strategy is positional (cannot mix, and REF_CURSOR is inherently positional)
+			if ( paramBindings.getParameterMetadata().getParameterStrategy() == ParameterStrategy.NAMED ) {
+				throw new HibernateException( "Cannot mix named parameters and REF_CURSOR parameter" );
+			}
+		}
+
+		final StringBuilder buffer;
+		if ( renderAsFunctionCall ) {
+			buffer = new StringBuilder().append( "{? = call " );
+		}
+		else {
+			buffer = new StringBuilder().append( "{call " );
+		}
+
+		buffer.append( procedureName ).append( "(" );
+
+		String sep = "";
+
+		final int startIndex = renderAsFunctionCall ? 1 : 0;
+		for ( int i = startIndex; i < jdbcCall.getParameterRegistrations().size(); i++ ) {
+			final JdbcCallParameterRegistration registration = jdbcCall.getParameterRegistrations().get( i );
+
+			if ( registration.getParameterMode() == ParameterMode.REF_CURSOR ) {
+				if ( !supportsRefCursors ) {
+					throw new HibernateException( "Found REF_CURSOR parameter registration, but database does not support REF_CURSOR parameters" );
+				}
+			}
+
+			// todo (6.0) : again assume basic-valued
+			/*
+			for ( int j = 0; j < registration.getJdbcParameterCount(); j++ ) {
+				buffer.append( sep ).append( "?" );
+				sep = ",";
+			}
+			*/
+			buffer.append( sep ).append( "?" );
+		}
+
+		return buffer.append( ")}" ).toString();
+	}
+
 //	@Override
 //	public void registerParameters(
 //			String procedureName,

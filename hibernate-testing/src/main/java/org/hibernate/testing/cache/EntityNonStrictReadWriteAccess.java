@@ -6,6 +6,7 @@
  */
 package org.hibernate.testing.cache;
 
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
@@ -13,11 +14,16 @@ import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("unused")
 public class EntityNonStrictReadWriteAccess extends BaseEntityDataAccess {
 	public EntityNonStrictReadWriteAccess(DomainDataRegionImpl domainDataRegion, EntityHierarchy entityHierarchy) {
 		super( domainDataRegion, entityHierarchy );
 	}
 
+	@Override
+	public AccessType getAccessType() {
+		return AccessType.NONSTRICT_READ_WRITE;
+	}
 
 	@Override
 	public boolean insert(

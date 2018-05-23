@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.convert.spi;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * Support for basic-value conversions.
@@ -31,4 +32,7 @@ public interface BasicValueConverter<O,R> {
 	 * storage into JDBC
 	 */
 	R toRelationalValue(O domainForm, SharedSessionContractImplementor session);
+
+	BasicJavaDescriptor<O> getDomainJavaDescriptor();
+	BasicJavaDescriptor<R> getRelationalJavaDescriptor();
 }

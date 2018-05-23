@@ -12,6 +12,7 @@ import java.sql.CallableStatement;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 
 /**
@@ -29,4 +30,6 @@ public interface JdbcCallParameterRegistration {
 	JdbcCallParameterExtractor getParameterExtractor();
 
 	JdbcCallRefCursorExtractorImpl getRefCursorExtractor();
+
+	AllowableParameterType getParameterType();
 }
