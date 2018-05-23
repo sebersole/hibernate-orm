@@ -39,13 +39,21 @@ public interface Value<J> extends ValueMapping<J>, Serializable {
 	Table getTable();
 
 	boolean hasFormula();
+
 	boolean isAlternateUniqueKey();
+
 	boolean isNullable();
+
 	boolean[] getColumnUpdateability();
+
 	boolean[] getColumnInsertability();
+
 	boolean isSimpleValue();
+
 	boolean isValid() throws MappingException;
+
 	void setTypeUsingReflection(String className, String propertyName) throws MappingException;
+
 	Object accept(ValueVisitor visitor);
 
 	default ForeignKey createForeignKey() throws MappingException {

@@ -108,7 +108,7 @@ public class PostgreSQL82Dialect extends PostgreSQL81Dialect {
 
 		@Override
 		public <J> BasicJavaDescriptor<J> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<J>) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( UUID.class );
+			return (BasicJavaDescriptor<J>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( UUID.class );
 		}
 
 		@Override
