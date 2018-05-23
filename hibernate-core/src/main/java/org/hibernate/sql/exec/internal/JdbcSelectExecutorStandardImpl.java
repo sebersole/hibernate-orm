@@ -34,9 +34,9 @@ import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.values.DeferredResultSetAccess;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
-import org.hibernate.sql.results.internal.values.JdbcValuesSourceCacheHit;
-import org.hibernate.sql.results.internal.values.JdbcValuesSourceResultSetImpl;
+import org.hibernate.sql.results.internal.values.JdbcValues;
+import org.hibernate.sql.results.internal.values.JdbcValuesCacheHit;
+import org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.ResultSetAccess;
 import org.hibernate.sql.results.spi.ResultSetMapping;
@@ -118,7 +118,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 
 	private interface ResultsConsumer<T,R> {
 		T consume(
-				JdbcValuesSource jdbcValuesSource,
+				JdbcValues jdbcValues,
 				SharedSessionContractImplementor persistenceContext,
 				JdbcValuesSourceProcessingOptions processingOptions,
 				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
@@ -139,15 +139,15 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 
 		@Override
 		public ScrollableResultsImplementor<R> consume(
-				JdbcValuesSource jdbcValuesSource,
+				JdbcValues jdbcValues,
 				SharedSessionContractImplementor persistenceContext,
 				JdbcValuesSourceProcessingOptions processingOptions,
 				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
 				RowProcessingStateStandardImpl rowProcessingState,
 				RowReader<R> rowReader) {
-			if ( containsCollectionFetches( jdbcValuesSource.getResultSetMapping() ) ) {
+			if ( containsCollectionFetches( jdbcValues.getResultSetMapping() ) ) {
 				return new FetchingScrollableResultsImpl<>(
-						jdbcValuesSource,
+						jdbcValues,
 						processingOptions,
 						jdbcValuesSourceProcessingState,
 						rowProcessingState,
@@ -157,7 +157,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			}
 			else {
 				return new ScrollableResultsImpl<>(
-						jdbcValuesSource,
+						jdbcValues,
 						processingOptions,
 						jdbcValuesSourceProcessingState,
 						rowProcessingState,
@@ -185,7 +185,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 
 		@Override
 		public List<R> consume(
-				JdbcValuesSource jdbcValuesSource,
+				JdbcValues jdbcValues,
 				SharedSessionContractImplementor persistenceContext,
 				JdbcValuesSourceProcessingOptions processingOptions,
 				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
@@ -210,7 +210,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			finally {
 				rowReader.finishUp( jdbcValuesSourceProcessingState );
 				jdbcValuesSourceProcessingState.finishUp();
-				jdbcValuesSource.finishUp();
+				jdbcValues.finishUp();
 			}
 		}
 	}
@@ -227,7 +227,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			PreparedStatementCreator statementCreator,
 			ResultsConsumer<T,R> resultsConsumer) {
 
-		final JdbcValuesSource jdbcValuesSource = resolveJdbcValuesSource(
+		final JdbcValues jdbcValues = resolveJdbcValuesSource(
 				jdbcSelect,
 				executionContext,
 				new DeferredResultSetAccess(
@@ -265,15 +265,15 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState =
 				new JdbcValuesSourceProcessingStateStandardImpl( executionContext, processingOptions );
 
-		final RowReader<R> rowReader = Helper.createRowReader( executionContext, rowTransformer, jdbcValuesSource );
+		final RowReader<R> rowReader = Helper.createRowReader( executionContext, rowTransformer, jdbcValues );
 		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
 				jdbcValuesSourceProcessingState,
 				executionContext.getQueryOptions(),
-				jdbcValuesSource
+				jdbcValues
 		);
 
 		return resultsConsumer.consume(
-				jdbcValuesSource,
+				jdbcValues,
 				executionContext.getSession(),
 				processingOptions,
 				jdbcValuesSourceProcessingState,
@@ -283,7 +283,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	}
 
 	@SuppressWarnings("unchecked")
-	private JdbcValuesSource resolveJdbcValuesSource(
+	private JdbcValues resolveJdbcValuesSource(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
 			ResultSetAccess resultSetAccess) {
@@ -343,7 +343,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		}
 
 		if ( cachedResults == null || cachedResults.isEmpty() ) {
-			return new JdbcValuesSourceResultSetImpl(
+			return new JdbcValuesResultSetImpl(
 					resultSetAccess,
 					queryResultsCacheKey,
 					executionContext.getQueryOptions(),
@@ -352,7 +352,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			);
 		}
 		else {
-			return new JdbcValuesSourceCacheHit(
+			return new JdbcValuesCacheHit(
 					cachedResults,
 					resultSetMapping
 			);

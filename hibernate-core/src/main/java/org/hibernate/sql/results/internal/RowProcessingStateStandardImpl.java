@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.results.spi.EntityFetch;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
@@ -26,16 +26,16 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 	private final JdbcValuesSourceProcessingStateStandardImpl resultSetProcessingState;
 	private final QueryOptions queryOptions;
 
-	private final JdbcValuesSource jdbcValuesSource;
+	private final JdbcValues jdbcValues;
 	private Object[] currentRowJdbcValues;
 
 	public RowProcessingStateStandardImpl(
 			JdbcValuesSourceProcessingStateStandardImpl resultSetProcessingState,
 			QueryOptions queryOptions,
-			JdbcValuesSource jdbcValuesSource) {
+			JdbcValues jdbcValues) {
 		this.resultSetProcessingState = resultSetProcessingState;
 		this.queryOptions = queryOptions;
-		this.jdbcValuesSource = jdbcValuesSource;
+		this.jdbcValues = jdbcValues;
 	}
 
 	@Override
@@ -44,8 +44,8 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 	}
 
 	public boolean next() throws SQLException {
-		if ( jdbcValuesSource.next( this ) ) {
-			currentRowJdbcValues = jdbcValuesSource.getCurrentRowJdbcValues();
+		if ( jdbcValues.next( this ) ) {
+			currentRowJdbcValues = jdbcValues.getCurrentRowValuesArray();
 			return true;
 		}
 		else {

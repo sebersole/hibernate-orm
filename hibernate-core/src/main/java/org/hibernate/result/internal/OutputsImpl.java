@@ -25,7 +25,7 @@ import org.hibernate.sql.exec.internal.Helper;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.values.DirectResultSetAccess;
-import org.hibernate.sql.results.internal.values.JdbcValuesSourceResultSetImpl;
+import org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
@@ -126,7 +126,7 @@ public abstract class OutputsImpl
 	protected List extractResults(ResultSet resultSet, PreparedStatement jdbcStatement) {
 		final DirectResultSetAccess resultSetAccess = new DirectResultSetAccess( context.getSession(), jdbcStatement, resultSet );
 		final ResultSetMapping resultSetMapping = resolveResultSetMapping( resultSetAccess );
-		final JdbcValuesSourceResultSetImpl jdbcValuesSource = new JdbcValuesSourceResultSetImpl(
+		final JdbcValuesResultSetImpl jdbcValuesSource = new JdbcValuesResultSetImpl(
 				resultSetAccess,
 				null,
 				context.getQueryOptions(),

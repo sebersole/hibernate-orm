@@ -14,7 +14,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowReader;
 
@@ -27,14 +27,14 @@ public class ScrollableResultsImpl<R> extends AbstractScrollableResults<R> {
 	private R currentRow;
 
 	public ScrollableResultsImpl(
-			JdbcValuesSource jdbcValuesSource,
+			JdbcValues jdbcValues,
 			JdbcValuesSourceProcessingOptions processingOptions,
 			JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
 			RowProcessingStateStandardImpl rowProcessingState,
 			RowReader<R> rowReader,
 			SharedSessionContractImplementor persistenceContext) {
 		super(
-				jdbcValuesSource,
+				jdbcValues,
 				processingOptions,
 				jdbcValuesSourceProcessingState,
 				rowProcessingState,
@@ -103,7 +103,7 @@ public class ScrollableResultsImpl<R> extends AbstractScrollableResults<R> {
 	@Override
 	public boolean next() {
 		try {
-			final boolean result = getJdbcValuesSource().next( getRowProcessingState() );
+			final boolean result = getJdbcValues().next( getRowProcessingState() );
 			prepareCurrentRow( result );
 			return result;
 		}

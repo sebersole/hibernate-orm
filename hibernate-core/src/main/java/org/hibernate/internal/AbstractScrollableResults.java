@@ -11,7 +11,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.RowReader;
@@ -22,7 +22,7 @@ import org.hibernate.sql.results.spi.RowReader;
  * @author Steve Ebersole
  */
 public abstract class AbstractScrollableResults<R> implements ScrollableResultsImplementor<R> {
-	private final JdbcValuesSource jdbcValuesSource;
+	private final JdbcValues jdbcValues;
 	private final JdbcValuesSourceProcessingOptions processingOptions;
 	private final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState;
 	private final RowProcessingStateStandardImpl rowProcessingState;
@@ -32,13 +32,13 @@ public abstract class AbstractScrollableResults<R> implements ScrollableResultsI
 	private boolean closed;
 
 	public AbstractScrollableResults(
-			JdbcValuesSource jdbcValuesSource,
+			JdbcValues jdbcValues,
 			JdbcValuesSourceProcessingOptions processingOptions,
 			JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
 			RowProcessingStateStandardImpl rowProcessingState,
 			RowReader<R> rowReader,
 			SharedSessionContractImplementor persistenceContext) {
-		this.jdbcValuesSource = jdbcValuesSource;
+		this.jdbcValues = jdbcValues;
 		this.processingOptions = processingOptions;
 		this.jdbcValuesSourceProcessingState = jdbcValuesSourceProcessingState;
 		this.rowProcessingState = rowProcessingState;
@@ -50,13 +50,13 @@ public abstract class AbstractScrollableResults<R> implements ScrollableResultsI
 	//		and relatedly, what is exposed
 
 	protected ResultSetMapping getResultSetMapping() {
-		return jdbcValuesSource.getResultSetMapping();
+		return jdbcValues.getResultSetMapping();
 	}
 
 	protected abstract R getCurrentRow();
 
-	protected JdbcValuesSource getJdbcValuesSource() {
-		return jdbcValuesSource;
+	protected JdbcValues getJdbcValues() {
+		return jdbcValues;
 	}
 
 	protected JdbcValuesSourceProcessingOptions getProcessingOptions() {
@@ -90,7 +90,7 @@ public abstract class AbstractScrollableResults<R> implements ScrollableResultsI
 			return;
 		}
 
-		getJdbcValuesSource().finishUp();
+		getJdbcValues().finishUp();
 		getPersistenceContext().getJdbcCoordinator().afterStatementExecution();
 
 		this.closed = true;

@@ -12,7 +12,7 @@ import java.util.List;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
@@ -25,10 +25,10 @@ public class Helper {
 	public static <R> RowReader<R> createRowReader(
 			ExecutionContext executionContext,
 			RowTransformer<R> rowTransformer,
-			JdbcValuesSource jdbcValuesSource) {
+			JdbcValues jdbcValues) {
 		final List<QueryResultAssembler> returnAssemblers = new ArrayList<>();
 		final List<Initializer> initializers = new ArrayList<>();
-		for ( QueryResult queryResult : jdbcValuesSource.getResultSetMapping().getQueryResults() ) {
+		for ( QueryResult queryResult : jdbcValues.getResultSetMapping().getQueryResults() ) {
 			queryResult.registerInitializers( initializers::add );
 			returnAssemblers.add( queryResult.getResultAssembler() );
 		}

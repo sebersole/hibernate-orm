@@ -14,10 +14,10 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractJdbcValuesSource implements JdbcValuesSource {
+public abstract class AbstractJdbcValues implements JdbcValues {
 	private final QueryCachePutManager queryCachePutManager;
 
-	public AbstractJdbcValuesSource(QueryCachePutManager queryCachePutManager) {
+	public AbstractJdbcValues(QueryCachePutManager queryCachePutManager) {
 		if ( queryCachePutManager == null ) {
 			throw new IllegalArgumentException( "QueryCachePutManager cannot be null" );
 		}
@@ -26,8 +26,8 @@ public abstract class AbstractJdbcValuesSource implements JdbcValuesSource {
 
 	@Override
 	public final boolean next(RowProcessingState rowProcessingState) throws SQLException {
-		if ( getCurrentRowJdbcValues() != null ) {
-			queryCachePutManager.registerJdbcRow( getCurrentRowJdbcValues() );
+		if ( getCurrentRowValuesArray() != null ) {
+			queryCachePutManager.registerJdbcRow( getCurrentRowValuesArray() );
 		}
 		return processNext( rowProcessingState );
 	}

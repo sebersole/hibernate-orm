@@ -27,7 +27,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  *
  * @author Steve Ebersole
  */
-public class JdbcValuesSourceResultSetImpl extends AbstractJdbcValuesSource {
+public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 
 	private final ResultSetAccess resultSetAccess;
 	private final ResultSetMapping resultSetMapping;
@@ -43,7 +43,7 @@ public class JdbcValuesSourceResultSetImpl extends AbstractJdbcValuesSource {
 
 	private Object[] currentRowJdbcValues;
 
-	public JdbcValuesSourceResultSetImpl(
+	public JdbcValuesResultSetImpl(
 			ResultSetAccess resultSetAccess,
 			QueryKey queryCacheKey,
 			QueryOptions queryOptions,
@@ -156,7 +156,7 @@ public class JdbcValuesSourceResultSetImpl extends AbstractJdbcValuesSource {
 	}
 
 	@Override
-	public Object[] getCurrentRowJdbcValues() {
+	public Object[] getCurrentRowValuesArray() {
 		return currentRowJdbcValues;
 	}
 }

@@ -10,7 +10,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
-import org.hibernate.sql.results.internal.values.JdbcValuesSource;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowReader;
 
@@ -26,14 +26,14 @@ public class FetchingScrollableResultsImpl<R> extends AbstractScrollableResults<
 	private Integer maxPosition;
 
 	public FetchingScrollableResultsImpl(
-			JdbcValuesSource jdbcValuesSource,
+			JdbcValues jdbcValues,
 			JdbcValuesSourceProcessingOptions processingOptions,
 			JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
 			RowProcessingStateStandardImpl rowProcessingState,
 			RowReader<R> rowReader,
 			SharedSessionContractImplementor persistenceContext) {
 		super(
-				jdbcValuesSource,
+				jdbcValues,
 				processingOptions,
 				jdbcValuesSourceProcessingState,
 				rowProcessingState,

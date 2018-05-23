@@ -19,7 +19,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  *
  * @author Steve Ebersole
  */
-public interface JdbcValuesSource {
+public interface JdbcValues {
 	ResultSetMapping getResultSetMapping();
 
 	// todo : ? - add ResultSet.previous() and ResultSet.absolute(int) style methods (to support ScrollableResults)?
@@ -30,9 +30,9 @@ public interface JdbcValuesSource {
 	 * cursor beyond the set of available results.
 	 *
 	 * @return {@code true} indicates the call did not position the cursor beyond
-	 * the available results ({@link #getCurrentRowJdbcValues} will not return
+	 * the available results ({@link #getCurrentRowValuesArray} will not return
 	 * null); false indicates we are now beyond the end of the available results
-	 * ({@link #getCurrentRowJdbcValues} will return null)
+	 * ({@link #getCurrentRowValuesArray} will return null)
 	 */
 	boolean next(RowProcessingState rowProcessingState) throws SQLException;
 
@@ -43,7 +43,7 @@ public interface JdbcValuesSource {
 	 * @return The current row's JDBC values, or {@code null} if the position
 	 * is beyond the end of the available results.
 	 */
-	Object[] getCurrentRowJdbcValues();
+	Object[] getCurrentRowValuesArray();
 
 	// todo : ? - is this needed?
 	//		^^ it's supposed to give impls a chance to write to the query cache

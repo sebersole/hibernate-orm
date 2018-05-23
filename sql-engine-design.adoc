@@ -580,13 +580,39 @@ Previously all Types worked on the ResultSet directly.  To read a value from a R
 type of assemble/resolve it (or nullSafeGet).  This has a major drawback in that we cannot hydrate
 results from query-cache or ResultSet using the same code.
 
-The design here is to abstract the actual source of "JDBC values" as `JdbcValuesSource`.  There
-are 2 implementations of `JdbcValuesSource`:
+The design here is too abstract access to the JDBC results as
+`org.hibernate.sql.results.internal.values.JdbcValues`, which will be discussed below.  We
+then have 2 implementations of this interface:
 
-* JdbcValuesSourceResultSetImpl - implements the JdbcValuesSource contract in terms of extracting
-	those values from a JDBC ResultSet
-* JdbcValuesSourceCacheHit - implements the JdbcValuesSource contract in terms of values found in the
-	query cache
+`org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl`::
+	JdbcValues wrapping ResultSet access
+`org.hibernate.sql.results.internal.values.JdbcValuesCacheHit`::
+	JdbcValues wrapping cached query results
+
+This allows the same code to be used to process results from either seamlessly.
+
+
+=== JDBC results versus domain results
+
+When a Query is executed, the user gets back a "domain result" - a List (typically) of domain-level
+values (entities, composites, scalars, etc).  The structure of each "row" in these domain results
+is described by a `org.hibernate.sql.results.spi.QueryResult` / `org.hibernate.sql.results.spi.Fetch`
+graph
+
+To create this Query result, Hibernate executes a query via JDBC and processes the ResultSet
+to transform the JDBC results into the domain results.
+
+
+=== JdbcValues, SqlSelection
+
+When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates, including:
+
+`org.hibernate.sql.results.internal.values.JdbcValues`::
+	Wraps access to the ResultSet, exposing it as a collection of `Object[]` (see `JdbcValues#getCurrentRowValuesArray`)
+
+`org.hibernate.sql.results.spi.SqlSelection`::
+	Represents a single selection in the JDBC ResultSet.  Used to access values from the JdbcValues current row
+
 
 The main premise of `JdbcValuesSource` is to expose access to the values as a simple `Object[]` row.
 This is where `SqlSelection` comes back into the picture.  We already discussed how `SqlSelection` knows
@@ -598,21 +624,35 @@ from the `JdbcValuesSource` and ultimately exposed as `RowProcessingStateStandar
 level readers to access.
 
 
-[IMPORTANT]
-====
-It is important to grok the flow of values to/from the query cache.  This handling individual
-`Object[]` rows makes that seamless.  We've already seen the "from" aspect with `JdbcValuesSourceCacheHit`.
-There is also a "to" component abstracted as `QueryCachePutManager`.  Again, this is all handled
-seamlessly behind the scenes via `JdbcValuesSource` and `RowProcessingState`.
-====
 
-Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
-object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they
-are still under active dev/design.  But they hearken back to load-plan work as well, so the initial
-work here follows the lead of the load-plan initializers.
+=== RowReader, QueryResultAssembler, Initializer, FetchInitializer
 
-Finally a ReturnAssembler is responsible for assembling the actual Object to be put in the Query result
-for a given Return.
+When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates.  The main ones include:
+
+`org.hibernate.sql.results.spi.RowReader`::
+	Coordinates all of the processing of each row
+
+`org.hibernate.sql.results.spi.QueryResultAssembler`::
+	responsible for assembling the actual Object to be put in the Query result
+    for a given Return
+
+`org.hibernate.sql.results.spi.Initializer`::
+	Responsible for performing all of the work that needs to happen in order for `QueryResultAssembler` to do its thing.
+	See `org.hibernate.sql.results.spi.EntityInitializer`, `org.hibernate.sql.results.spi.PluralAttributeInitializer`
+	and `org.hibernate.sql.results.spi.CompositeInitializer`
+
+FetchInitializer::
+	Specifically `org.hibernate.sql.results.internal.EntityFetchInitializer` and
+	`org.hibernate.sql.results.internal.PluralAttributeFetchInitializer`.  Same responsibilities
+	as a normal `Initializer`, plus the added responsibility of managing fetch-related activities.
+	Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
+	object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they
+	are still under active dev/design.  But they hearken back to load-plan work as well, so the initial
+	work here follows the lead of the load-plan initializers.
+
+
+todo (6.0) : add example from discussion  with Andrea yesterday wrt jdbc-results -> domain-results
+
 
 
 
@@ -621,49 +661,6 @@ for a given Return.
 Collection of open questions regarding various aspects of the design of this work.
 
 
-=== Better naming for the various representations of AttributeConverter
-
-As of the latest work on wip/6.0 we currently we have the following:
-
-org.hibernate.cfg.AttributeConverterDefinition::
-[source]
-----
-/*
- * Representation of an {@link AttributeConverter} from externalized sources.  Generally
- * speaking these are contributed from:<ul>
- *     <li>converters discovered via {@link Converter} discovery</li>
- *     <li>application / integration contributions - {@link org.hibernate.boot.MetadataBuilder#applyAttributeConverter}</li>
- * </ul>
- * <p/>
- * Regardless of how they are known, the set of AttributeConverterDefinition instances
- * as known to {@link org.hibernate.boot.spi.MetadataBuildingOptions#getAttributeConverters()}
- * represents the complete set of "a priori converters".  After that point the only additional
- * converters recognized would come from local {@link javax.persistence.Convert} annotations.
- */
-----
-
-org.hibernate.target.converter.spi.AttributeConverterDefinition::
-[source]
-----
-/*
- * Internal descriptor for an AttributeConverter implementation, with the intent of being
- * incorporated into a {@link org.hibernate.target.spi.BasicType}
- */
-----
-
-So essentially the same information as `org.hibernate.cfg.AttributeConverterDefinition` but with a
-a slight different intent of being incorporated int o the BasicType
-
-org.hibernate.boot.spi.AttributeConverterDescriptor::
-[source]
-----
-/**
- * Internal descriptor for an AttributeConverter implementation.
- */
-----
-
-Is created from a `org.hibernate.cfg.AttributeConverterDefinition` or directly from a
-	`javax.persistence.AttributeConverter` instance.  Used to determine auto-application
 
 
 === Consider adding Return/Fetch graph as part of SQM

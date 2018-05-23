@@ -18,13 +18,13 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  *
  * @author Steve Ebersole
  */
-public class JdbcValuesSourceCacheHit extends AbstractJdbcValuesSource {
+public class JdbcValuesCacheHit extends AbstractJdbcValues {
 	private Object[][] cachedData;
 	private final int numberOfRows;
 	private ResultSetMapping resolvedResultSetMapping;
 	private int position = -1;
 
-	public JdbcValuesSourceCacheHit(Object[][] cachedData, ResultSetMapping resolvedResultSetMapping) {
+	public JdbcValuesCacheHit(Object[][] cachedData, ResultSetMapping resolvedResultSetMapping) {
 		// if we have a cache hit we should not be writting back to the cache.
 		// its silly because the state would always be the same.
 		super( QueryCachePutManagerDisabledImpl.INSTANCE );
@@ -33,7 +33,7 @@ public class JdbcValuesSourceCacheHit extends AbstractJdbcValuesSource {
 		this.resolvedResultSetMapping = resolvedResultSetMapping;
 	}
 
-	public JdbcValuesSourceCacheHit(List<Object[]> cachedResults, ResultSetMapping resolvedResultSetMapping) {
+	public JdbcValuesCacheHit(List<Object[]> cachedResults, ResultSetMapping resolvedResultSetMapping) {
 		this( (Object[][]) cachedResults.toArray(), resolvedResultSetMapping );
 	}
 
@@ -59,7 +59,7 @@ public class JdbcValuesSourceCacheHit extends AbstractJdbcValuesSource {
 	}
 
 	@Override
-	public Object[] getCurrentRowJdbcValues() {
+	public Object[] getCurrentRowValuesArray() {
 		if ( isExhausted() ) {
 			return null;
 		}

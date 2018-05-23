@@ -30,7 +30,7 @@ public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T> 
 	//		now encapsulates AttributeConverter, so this is appropriate.
 	//
 	// 		However	value extraction is a 2-part process:
-	//			1) extract the "raw" SQL value - pushed into JdbcValuesSource#getCurrentRowJdbcValues()
+	//			1) extract the "raw" SQL value - pushed into JdbcValues#getCurrentRowValuesArray()
 	//			2) use ExpressableType to access the "current row JDBC value"
 
 
