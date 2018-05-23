@@ -11,9 +11,13 @@ import java.util.List;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
+ * An anonymous call block (sometimes called an anonymous procedure) to be executed
+ * on the database.  The format of this various by database, but it is essentially an
+ * unnamed procedure without OUT, INOUT or REF_CURSOR type parameters
+ *
  * @author Steve Ebersole
  */
-public interface JdbcAnonCall extends JdbcOperation {
+public interface JdbcAnonBlock extends JdbcOperation {
 	/**
 	 * Get the list of any parameter registrations we need to register
 	 * against the generated CallableStatement

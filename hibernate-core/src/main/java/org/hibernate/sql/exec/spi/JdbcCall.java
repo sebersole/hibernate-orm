@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author Steve Ebersole
  */
-public interface JdbcCall extends JdbcAnonCall {
+public interface JdbcCall extends JdbcAnonBlock {
 	/**
 	 * If the call is a function, returns the function return descriptor
 	 */
