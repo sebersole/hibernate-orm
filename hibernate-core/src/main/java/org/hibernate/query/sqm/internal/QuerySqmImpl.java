@@ -97,8 +97,8 @@ public class QuerySqmImpl<R>
 	}
 
 	private static ParameterMetadataImpl buildParameterMetadata(SqmStatement sqm) {
-		Map<String, QueryParameterImplementor> namedQueryParameters = null;
-		Map<Integer, QueryParameterImplementor> positionalQueryParameters = null;
+		Map<String, QueryParameterImplementor<?>> namedQueryParameters = null;
+		Map<Integer, QueryParameterImplementor<?>> positionalQueryParameters = null;
 
 		for ( SqmParameter parameter : sqm.getQueryParameters() ) {
 			if ( parameter.getName() != null ) {

@@ -8,9 +8,13 @@ package org.hibernate.procedure.internal;
 
 import javax.persistence.ParameterMode;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
+import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQueryParameter;
+import org.hibernate.query.internal.QueryParameterNamedImpl;
+import org.hibernate.query.named.spi.ParameterDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -22,6 +26,8 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 	private final ParameterMode mode;
 
 	private final Class<T> javaType;
+
+	private final boolean passNulls;
 
 
 	public ProcedureParameterImpl(
@@ -36,6 +42,7 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 		this.position = null;
 		this.mode = mode;
 		this.javaType = javaType;
+		this.passNulls = passNulls;
 	}
 
 	public ProcedureParameterImpl(
@@ -50,6 +57,7 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 		this.position = position;
 		this.mode = mode;
 		this.javaType = javaType;
+		this.passNulls = passNulls;
 	}
 
 	@Override
@@ -72,4 +80,25 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 		return javaType;
 	}
 
+	@Override
+	public ParameterDescriptor toMemento() {
+		if ( getName() != null ) {
+			return session -> new ProcedureParameterImpl(
+					getName(),
+					getMode(),
+					getParameterType(),
+					getHibernateType(),
+					passNulls
+			);
+		}
+		else {
+			return session -> new ProcedureParameterImpl(
+					getPosition(),
+					getMode(),
+					getParameterType(),
+					getHibernateType(),
+					passNulls
+			);
+		}
+	}
 }
