@@ -3163,7 +3163,7 @@ public final class SessionImpl
 		try {
 			final NamedCallableQueryMemento namedCallableQueryDescriptor = getFactory().getQueryEngine()
 					.getNamedQueryRepository()
-					.getNamedCallableQueryDescriptor( name );
+					.getCallableQueryMemento( name );
 			if ( namedCallableQueryDescriptor == null ) {
 				throw new IllegalArgumentException( "No @NamedStoredProcedureQuery was found with that name : " + name );
 			}

@@ -76,7 +76,7 @@ public class CollectionElementEntityImpl<J>
 			);
 		}
 
-		return creationContext.getSessionFactory().getMetamodel().findEntityDescriptor( elementEntityName );
+		return creationContext.getInFlightRuntimeModel().findEntityDescriptor( elementEntityName );
 	}
 
 	@Override

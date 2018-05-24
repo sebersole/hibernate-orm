@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.persistence.metamodel.ManagedType;
 
@@ -76,6 +77,15 @@ public interface ManagedTypeDescriptor<T>
 	List<NonIdPersistentAttribute> getPersistentAttributes();
 
 	List<NonIdPersistentAttribute> getDeclaredPersistentAttributes();
+
+	default void controlledVisitAttributes(Function<NonIdPersistentAttribute,Boolean> action) {
+		for ( NonIdPersistentAttribute attribute : getPersistentAttributes() ) {
+			final Boolean keepGoing = action.apply( attribute );
+			if ( ! keepGoing ) {
+				break;
+			}
+		}
+	}
 
 	default void visitAttributes(Consumer<NonIdPersistentAttribute> consumer) {
 		for ( NonIdPersistentAttribute attribute : getPersistentAttributes() ) {

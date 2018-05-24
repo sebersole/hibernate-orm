@@ -316,8 +316,8 @@ public class MetadataImpl implements MetadataImplementor, Serializable {
 		return new NamedQueryRepositoryImpl(
 				buildNamedHqlDescriptorMap( sessionFactory ),
 				buildNamedNativeDescriptorMap( sessionFactory ),
-				buildSqlResultSetMappings( sessionFactory ),
-				buildProcedureCallMementos( sessionFactory )
+				buildProcedureCallMementos( sessionFactory ),
+				buildSqlResultSetMappings( sessionFactory )
 		);
 
 	}

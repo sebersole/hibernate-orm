@@ -80,11 +80,13 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 		this.mappedSuperclassDescriptorMap = Collections.unmodifiableMap( mappedSuperclassDescriptorMap );
 		this.embeddedDescriptorMap = Collections.unmodifiableMap( embeddedDescriptorMap );
 		this.collectionDescriptorMap = Collections.unmodifiableMap( collectionDescriptorMap );
-		this.nameImportMap = Collections.unmodifiableMap( nameImportMap );
 		this.entityNameResolvers = Collections.unmodifiableSet( entityNameResolvers );
 
 		// NOTE : EntityGraph map is mutable during runtime
 		this.entityGraphMap = new ConcurrentHashMap<>( entityGraphMap );
+
+		// NOTE : currently this needs to be mutable, but can''t these really all be known up front?
+		this.nameImportMap = new ConcurrentHashMap<>( nameImportMap );
 	}
 
 

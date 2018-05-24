@@ -57,7 +57,7 @@ public class BasicCollectionElementImpl<J>
 		// todo (6.0) : resolve SimpleValue -> BasicType
 		this.basicType = ( (BasicValueMapping) bootCollectionMapping.getElement() ).resolveType();
 
-		this.valueConverter = simpleElementValueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
+		this.valueConverter = simpleElementValueMapping.resolveValueConverter( creationContext, basicType );
 
 		if ( valueConverter != null ) {
 			log.debugf(

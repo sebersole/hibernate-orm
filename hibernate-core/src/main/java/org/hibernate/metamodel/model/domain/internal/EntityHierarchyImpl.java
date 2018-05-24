@@ -378,7 +378,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	@Override
 	public EntityDataAccess getEntityCacheAccess() {
 		if ( caching == null ) {
-			caching = rootEntityDescriptor.getFactory().getCache().getEntityRegionAccess( identifierDescriptor.getNavigableRole()  );
+			caching = rootEntityDescriptor.getFactory().getCache().getEntityRegionAccess( rootEntityDescriptor.getNavigableRole()  );
 		}
 		return caching;
 	}

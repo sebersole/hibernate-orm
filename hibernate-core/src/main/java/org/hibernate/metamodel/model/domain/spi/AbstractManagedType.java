@@ -72,6 +72,9 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		this.javaTypeDescriptor = javaTypeDescriptor;
 
 		this.typeConfiguration = creationContext.getTypeConfiguration();
+
+		this.representationStrategy = creationContext.getRepresentationStrategySelector()
+				.resolveStrategy( bootDescriptor, this, creationContext );
 	}
 
 	@Override
@@ -129,9 +132,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			contributor.setStateArrayPosition( stateArrayContributors.size() );
 			stateArrayContributors.add( contributor );
 		}
-
-		this.representationStrategy = creationContext.getRepresentationStrategySelector()
-				.resolveStrategy( bootDescriptor, this, creationContext );
 	}
 
 

@@ -7,6 +7,7 @@
 package org.hibernate.boot.spi;
 
 import java.util.List;
+import javax.persistence.EnumType;
 import javax.persistence.SharedCacheMode;
 
 import org.hibernate.MultiTenancyStrategy;
@@ -129,5 +130,10 @@ public interface MetadataBuildingOptions {
 
 	default String getSchemaCharset() {
 		return null;
+	}
+
+	default EnumType getImplicitEnumType() {
+		// todo (6.0) : make this configurable
+		return EnumType.ORDINAL;
 	}
 }

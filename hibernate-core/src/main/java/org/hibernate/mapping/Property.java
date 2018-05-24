@@ -336,7 +336,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 
 	@Override
 	public EntityMapping getEntity(){
-		return getEntity();
+		return persistentClass;
 	}
 
 	@Override

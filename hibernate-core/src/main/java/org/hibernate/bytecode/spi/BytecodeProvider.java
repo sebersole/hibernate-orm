@@ -8,6 +8,7 @@ package org.hibernate.bytecode.spi;
 
 import org.hibernate.bytecode.enhance.spi.EnhancementContext;
 import org.hibernate.bytecode.enhance.spi.Enhancer;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -40,6 +41,7 @@ public interface BytecodeProvider {
 	 * @return The reflection optimization delegate.
 	 */
 	ReflectionOptimizer getReflectionOptimizer(Class clazz, String[] getterNames, String[] setterNames, JavaTypeDescriptor[] types);
+//	ReflectionOptimizer getReflectionOptimizer(ManagedTypeDescriptor managedType);
 
 	/**
 	 * Returns a byte code enhancer that implements the enhancements described in the supplied enhancement context.

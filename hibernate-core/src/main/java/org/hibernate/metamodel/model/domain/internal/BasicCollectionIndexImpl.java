@@ -58,7 +58,7 @@ public class BasicCollectionIndexImpl<J>
 
 		this.basicType = valueMapping.resolveType();
 
-		this.valueConverter = valueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
+		this.valueConverter = valueMapping.resolveValueConverter( creationContext, basicType );
 
 		if ( valueConverter != null ) {
 			log.debugf(

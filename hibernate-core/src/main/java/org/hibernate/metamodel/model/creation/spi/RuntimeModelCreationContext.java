@@ -44,6 +44,8 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 	TypeConfiguration getTypeConfiguration();
 	MetadataImplementor getMetadata();
 
+	InFlightRuntimeModel getInFlightRuntimeModel();
+
 	DatabaseModel getDatabaseModel();
 	DatabaseObjectResolver getDatabaseObjectResolver();
 

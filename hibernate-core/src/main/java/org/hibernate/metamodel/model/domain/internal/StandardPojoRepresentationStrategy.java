@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
@@ -36,28 +37,30 @@ import org.jboss.logging.Logger;
 public class StandardPojoRepresentationStrategy implements ManagedTypeRepresentationStrategy {
 	private static final Logger log = Logger.getLogger( StandardPojoRepresentationStrategy.class );
 
-	private final ReflectionOptimizer reflectionOptimizer;
+	private Supplier<ReflectionOptimizer> reflectionOptimizerAccess;
 
 	public StandardPojoRepresentationStrategy(
-			ManagedTypeMapping bootMapping,
+			ManagedTypeMapping bootDescriptor,
 			ManagedTypeDescriptor runtimeDescriptor,
 			RuntimeModelCreationContext creationContext) {
-		this.reflectionOptimizer = resolveReflectionOptimizer(
-				bootMapping,
-				runtimeDescriptor,
-				creationContext,
-				Environment.getBytecodeProvider()
-		);
+//		if ( runtimeDescriptor.getJavaTypeDescriptor().getJavaType() == null ) {
+//			// todo (6.0) : is this legal?  pojo with no java-type?!?
+//			this.reflectionOptimizerAccess = null;
+//		}
+//		else {
+//			this.reflectionOptimizerAccess = () -> buildReflectionOptimizer( bootDescriptor, runtimeDescriptor, creationContext, Environment.getBytecodeProvider() );
+//		}
 
-		log.tracef( "StandardPojoRepresentationStrategy created for [%s] with ReflectionOptimizer `%s`", runtimeDescriptor, reflectionOptimizer );
+		log.tracef( "StandardPojoRepresentationStrategy created for [%s]", runtimeDescriptor );
 	}
 
-	private static ReflectionOptimizer resolveReflectionOptimizer(
-			ManagedTypeMapping bootModel,
+	private static ReflectionOptimizer buildReflectionOptimizer(
+			ManagedTypeMapping bootDescriptor,
 			ManagedTypeDescriptor runtimeDescriptor,
 			RuntimeModelCreationContext creationContext,
 			BytecodeProvider bytecodeProvider) {
 		if ( runtimeDescriptor.getJavaTypeDescriptor().getJavaType() == null ) {
+			// todo (6.0) : is this legal?  pojo with no java-type?!?
 			return null;
 		}
 
@@ -98,14 +101,19 @@ public class StandardPojoRepresentationStrategy implements ManagedTypeRepresenta
 	@Override
 	@SuppressWarnings("unchecked")
 	public <J> Instantiator<J> resolveInstantiator(
-			ManagedTypeMapping bootModel,
-			ManagedTypeDescriptor runtimeModel,
+			ManagedTypeMapping bootDescriptor,
+			ManagedTypeDescriptor runtimeDescriptor,
 			BytecodeProvider bytecodeProvider) {
+		final ReflectionOptimizer reflectionOptimizer = reflectionOptimizerAccess == null ? null : reflectionOptimizerAccess.get();
+
 		if ( reflectionOptimizer != null && reflectionOptimizer.getInstantiationOptimizer() != null ) {
-			return new OptimizedPojoInstantiatorImpl<>( runtimeModel.getJavaTypeDescriptor(), reflectionOptimizer );
+			return new OptimizedPojoInstantiatorImpl<>(
+					runtimeDescriptor.getJavaTypeDescriptor(),
+					reflectionOptimizer
+			);
 		}
 		else {
-			return new PojoInstantiatorImpl<>( runtimeModel.getJavaTypeDescriptor() );
+			return new PojoInstantiatorImpl<>( runtimeDescriptor.getJavaTypeDescriptor() );
 		}
 	}
 

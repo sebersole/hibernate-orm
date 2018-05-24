@@ -7,7 +7,10 @@
 package org.hibernate.mapping;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.EnumType;
+import javax.persistence.TemporalType;
 
+import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
@@ -22,8 +25,14 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.metamodel.model.convert.internal.NamedEnumValueConverter;
+import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -36,13 +45,21 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 
 	private boolean isNationalized;
 	private boolean isLob;
+	private EnumType enumType;
+	private TemporalType temporalType;
+	private boolean mutable;
+	private SqlTypeDescriptor sqlType;
+
 	private ConverterDescriptor attributeConverterDescriptor;
+
 	private BasicTypeResolver basicTypeResolver;
 	private JavaTypeMapping javaTypeMapping;
 	private BasicType basicType;
 
 	public BasicValue(MetadataBuildingContext buildingContext, MappedTable table) {
 		super( buildingContext, table );
+
+		this.enumType = buildingContext.getBuildingOptions().getImplicitEnumType();
 	}
 
 	@Override
@@ -277,4 +294,35 @@ public class BasicValue extends SimpleValue implements BasicValueMapping {
 		}
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public BasicValueConverter resolveValueConverter(
+			RuntimeModelCreationContext creationContext,
+			BasicType basicType) {
+		if ( getAttributeConverterDescriptor() != null ) {
+			return getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
+		}
+
+//		final JavaTypeDescriptor jtd = javaTypeMapping.resolveJavaTypeDescriptor();
+		final JavaTypeDescriptor jtd = basicType.getJavaTypeDescriptor();
+
+		if ( jtd instanceof EnumJavaDescriptor ) {
+			switch ( enumType ) {
+				case STRING: {
+					return new NamedEnumValueConverter( (EnumJavaDescriptor) jtd );
+				}
+				case ORDINAL: {
+					return new OrdinalEnumValueConverter( (EnumJavaDescriptor) jtd );
+				}
+				default: {
+					throw new HibernateException( "Unknown EnumType : " + enumType );
+				}
+			}
+		}
+
+		// todo (6.0) : other conversions?
+		// 		- how is temporalType going to be handled?  during resolution of BasicType?
+
+		return null;
+	}
 }

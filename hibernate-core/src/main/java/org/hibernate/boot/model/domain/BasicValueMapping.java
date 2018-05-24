@@ -13,6 +13,8 @@ import org.hibernate.boot.jaxb.Origin;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -47,4 +49,8 @@ public interface BasicValueMapping<J> extends ValueMapping<J> {
 	BasicType<J> resolveType();
 
 	ConverterDescriptor getAttributeConverterDescriptor();
+
+	BasicValueConverter resolveValueConverter(
+			RuntimeModelCreationContext creationContext,
+			BasicType basicType);
 }

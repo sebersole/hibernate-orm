@@ -208,6 +208,9 @@ public class RuntimeModelCreationProcess {
 
 		mappingMetadata.getNamedEntityGraphs().values().forEach( this::applyNamedEntityGraph );
 
+		// todo (6.0) : this needs to happen earlier
+		//		specifically, needs to happen before we start creating the descriptors.  ideally
+		//		the descriptors can just get it from the context, etc
 		sessionFactory.getCache().prime(
 				regionConfigBuilders.values()
 						.stream()
@@ -424,6 +427,7 @@ public class RuntimeModelCreationProcess {
 			return bootstrapContext;
 		}
 
+
 		@Override
 		public SessionFactoryImplementor getSessionFactory() {
 			return sessionFactory;
@@ -442,6 +446,11 @@ public class RuntimeModelCreationProcess {
 		@Override
 		public DatabaseObjectResolver getDatabaseObjectResolver() {
 			return dbObjectResolver;
+		}
+
+		@Override
+		public InFlightRuntimeModel getInFlightRuntimeModel() {
+			return inFlightRuntimeModel;
 		}
 
 		@Override
@@ -483,13 +492,13 @@ public class RuntimeModelCreationProcess {
 				// prepare both the entity and natural-id second level cache access for this hierarchy
 				final RootClass rootBootMapping = (RootClass) bootDescriptor;
 				final AccessType accessType = AccessType.fromExternalName( rootBootMapping.getCacheConcurrencyStrategy() );
-				if ( accessType != null ) {
-					addEntityCachingConfig( runtimeDescriptor, rootBootMapping, accessType );
 
-					if ( runtimeDescriptor.getHierarchy().getNaturalIdDescriptor() != null
-							&& rootBootMapping.getNaturalIdCacheRegionName() != null ) {
-						addNaturalIdCachingConfig( runtimeDescriptor, rootBootMapping, accessType );
-					}
+				if ( accessType != null && rootBootMapping.isCached() ) {
+					addEntityCachingConfig( runtimeDescriptor, rootBootMapping, accessType );
+				}
+
+				if ( rootBootMapping.hasNaturalId() && accessType != null && rootBootMapping.getNaturalIdCacheRegionName() != null ) {
+					addNaturalIdCachingConfig( runtimeDescriptor, rootBootMapping, accessType );
 				}
 			}
 		}
@@ -498,7 +507,7 @@ public class RuntimeModelCreationProcess {
 				EntityDescriptor runtimeDescriptor,
 				RootClass bootDescriptor,
 				AccessType accessType) {
-			final DomainDataRegionConfigImpl.Builder  builder = locateBuilder( bootDescriptor.getNaturalIdCacheRegionName() );
+			final DomainDataRegionConfigImpl.Builder  builder = locateBuilder( bootDescriptor.getCacheRegionName() );
 			builder.addEntityConfig( bootDescriptor, accessType );
 		}
 

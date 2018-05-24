@@ -763,7 +763,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		// first see if it is a named HQL query
 		final NamedHqlQueryMemento namedHqlDescriptor = getFactory().getQueryEngine()
 				.getNamedQueryRepository()
-				.getNamedHqlDescriptor( queryName );
+				.getHqlQueryMemento( queryName );
 
 		if ( namedHqlDescriptor != null ) {
 			return namedHqlDescriptor.toQuery( this, resultType );
@@ -772,7 +772,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		// otherwise, see if it is a named native query
 		final NamedNativeQueryMemento namedNativeDescriptor = getFactory().getQueryEngine()
 				.getNamedQueryRepository()
-				.getNamedNativeDescriptor( queryName );
+				.getNativeQueryMemento( queryName );
 
 		if ( namedNativeDescriptor != null ) {
 			return namedNativeDescriptor.toQuery( this, resultType );
@@ -803,7 +803,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			delayedAfterCompletion();
 
 			final NamedNativeQueryMemento namedQueryDescriptor = factory.getQueryEngine().getNamedQueryRepository()
-					.getNamedNativeDescriptor( name );
+					.getNativeQueryMemento( name );
 			if ( namedQueryDescriptor != null ) {
 				return namedQueryDescriptor.toQuery( this, null );
 			}
@@ -822,7 +822,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 
 		final NamedCallableQueryMemento memento = factory.getQueryEngine()
 				.getNamedQueryRepository()
-				.getNamedCallableQueryDescriptor( name );
+				.getCallableQueryMemento( name );
 		if ( memento == null ) {
 			throw new IllegalArgumentException(
 					"Could not find named stored procedure call with that registration name : " + name

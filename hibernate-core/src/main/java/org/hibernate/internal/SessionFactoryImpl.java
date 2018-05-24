@@ -80,7 +80,6 @@ import org.hibernate.envers.internal.reader.AuditReaderImpl;
 import org.hibernate.event.service.spi.EventListenerGroup;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
-import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
@@ -761,7 +760,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		try {
 			final ProcedureCallImplementor unwrapped = query.unwrap( ProcedureCallImplementor.class );
 			if ( unwrapped != null ) {
-				getQueryEngine().getNamedQueryRepository().registerNamedCallableQueryDescriptor(
+				getQueryEngine().getNamedQueryRepository().registerCallableQueryMemento(
 						name,
 						unwrapped.toMemento( name, this )
 				);
@@ -776,7 +775,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		try {
 			final HqlQueryImplementor hqlQuery = query.unwrap( HqlQueryImplementor.class );
 			if ( hqlQuery != null ) {
-				getQueryEngine().getNamedQueryRepository().registerNamedHqlQueryDescriptor(
+				getQueryEngine().getNamedQueryRepository().registerHqlQueryMemento(
 						name,
 						hqlQuery.toMemento( name, this )
 				);
@@ -792,7 +791,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		try {
 			final NativeQueryImplementor nativeQuery = query.unwrap( NativeQueryImplementor.class );
 			if ( nativeQuery != null ) {
-				getQueryEngine().getNamedQueryRepository().registerNamedNativeQueryDescriptor(
+				getQueryEngine().getNamedQueryRepository().registerNativeQueryMemento(
 						name,
 						nativeQuery.toMemento( name, this )
 				);

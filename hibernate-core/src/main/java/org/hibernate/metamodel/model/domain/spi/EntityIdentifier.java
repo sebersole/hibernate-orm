@@ -13,7 +13,6 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
 
 /**
@@ -26,7 +25,7 @@ import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
  * 		is the abstract base class ({@link AbstractSingularPersistentAttribute}) and what we can pass
  * 		to its ctor - ideally we'd pass the boot-model form
  * 		({@link org.hibernate.boot.model.domain.PersistentAttributeMapping}) which does not exist
- * 		for this 3rd ide form.
+ * 		for this 3rd id form.
  *
  * @author Steve Ebersole
  */

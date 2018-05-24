@@ -69,7 +69,7 @@ public class BasicSingularPersistentAttribute<O, J>
 		this.boundColumn = context.getDatabaseObjectResolver().resolveColumn( basicValueMapping.getMappedColumn() );
 		this.basicType = basicValueMapping.resolveType();
 
-		this.valueConverter = basicValueMapping.getAttributeConverterDescriptor().createJpaAttributeConverter( context );
+		this.valueConverter = basicValueMapping.resolveValueConverter( context, basicType );
 
 		if ( valueConverter != null ) {
 			log.debugf(

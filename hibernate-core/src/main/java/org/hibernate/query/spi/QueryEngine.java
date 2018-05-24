@@ -11,13 +11,11 @@ import java.util.Map;
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.query.internal.QueryInterpretationsImpl;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.produce.internal.SemanticQueryProducerImpl;
 import org.hibernate.query.sqm.produce.spi.SemanticQueryProducer;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * Aggregation and encapsulation of the components Hibernate uses
@@ -91,10 +89,24 @@ public class QueryEngine {
 	}
 
 	public void close() {
-		namedQueryRepository.close();
-		criteriaBuilder.close();
-		semanticQueryProducer.close();
-		queryInterpretations.close();
-		sqmFunctionRegistry.close();
+		if ( namedQueryRepository != null ) {
+			namedQueryRepository.close();
+		}
+
+		if ( criteriaBuilder != null ) {
+			criteriaBuilder.close();
+		}
+
+		if ( semanticQueryProducer != null ) {
+			semanticQueryProducer.close();
+		}
+
+		if ( queryInterpretations != null ) {
+			queryInterpretations.close();
+		}
+
+		if ( sqmFunctionRegistry != null ) {
+			sqmFunctionRegistry.close();
+		}
 	}
 }

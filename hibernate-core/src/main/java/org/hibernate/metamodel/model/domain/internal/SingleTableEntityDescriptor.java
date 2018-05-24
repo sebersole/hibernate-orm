@@ -26,6 +26,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
@@ -380,9 +381,26 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	}
 
+	Boolean hasCollections;
+
 	@Override
 	public boolean hasCollections() {
-		throw new NotYetImplementedException(  );
+		// todo (6.0) : do this init up front?
+		if ( hasCollections == null ) {
+			hasCollections = false;
+			controlledVisitAttributes(
+					attr -> {
+						if ( attr instanceof PluralPersistentAttribute ) {
+							hasCollections = true;
+							return false;
+						}
+
+						return true;
+					}
+			);
+		}
+
+		return hasCollections;
 	}
 
 	@Override
