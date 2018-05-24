@@ -388,7 +388,9 @@ public final class SessionImpl
 	}
 
 	public void closeWithoutOpenChecks() throws HibernateException {
-		log.tracef( "Closing session [%s]", getSessionIdentifier() );
+		if ( TRACE_ENABLED ) {
+			log.tracef( "Closing session [%s]", getSessionIdentifier() );
+		}
 
 		// todo : we want this check if usage is JPA, but not native Hibernate usage
 		if ( getSessionFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
@@ -3349,7 +3351,9 @@ public final class SessionImpl
 	 * @throws IOException Indicates a general IO stream exception
 	 */
 	private void writeObject(ObjectOutputStream oos) throws IOException {
-		log.tracef( "Serializing Session [%s]", getSessionIdentifier() );
+		if ( TRACE_ENABLED ) {
+			log.tracef( "Serializing Session [%s]", getSessionIdentifier() );
+		}
 
 		oos.defaultWriteObject();
 
@@ -3368,7 +3372,9 @@ public final class SessionImpl
 	 * @throws ClassNotFoundException Indicates a class resolution issue
 	 */
 	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException, SQLException {
-		log.tracef( "Deserializing Session [%s]", getSessionIdentifier() );
+		if ( TRACE_ENABLED ) {
+			log.tracef( "Deserializing Session [%s]", getSessionIdentifier() );
+		}
 
 		ois.defaultReadObject();
 
