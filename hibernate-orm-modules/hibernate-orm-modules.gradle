@@ -26,8 +26,6 @@ apply plugin: 'idea'
 project.tasks.jar.enabled = false
 project.tasks.javadoc.enabled = false
 
-test.enabled = false
-
 ext {
 	// NOTE : `wildflyVersion` comes from libraries.gradle...
 
