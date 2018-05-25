@@ -94,11 +94,13 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> BasicJavaDescriptor<T> getBasicJavaDescriptor(Class<T> javaType) {
-		return (BasicJavaDescriptor<T>) getDescriptor(
+	public <T> JavaTypeDescriptor<T> getOrMakeJavaDescriptor(Class<T> javaType) {
+		return getDescriptor(
 				javaType,
 				(s, registry) -> {
+					// the fallback will always be a basic type
 					final BasicJavaDescriptor fallbackDescriptor;
+
 					if ( javaType.isEnum() ) {
 						fallbackDescriptor = new EnumJavaDescriptor( javaType );
 					}
@@ -112,6 +114,22 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 					registry.addDescriptor( fallbackDescriptor );
 
 					return fallbackDescriptor;
+				}
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> JavaTypeDescriptor<T> getOrMakeJavaDescriptor(Class<T> javaType, BiFunction<String,JavaTypeDescriptorRegistry,JavaTypeDescriptor> fallback) {
+		return getDescriptor(
+				javaType,
+				(s, registry) -> {
+					final JavaTypeDescriptor suppliedFallback = fallback.apply( s, registry );
+					if ( suppliedFallback != null ) {
+						registry.addDescriptor( suppliedFallback );
+						return suppliedFallback;
+					}
+
+					return getOrMakeJavaDescriptor( javaType );
 				}
 		);
 	}

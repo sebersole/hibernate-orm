@@ -19,6 +19,8 @@ import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.internal.BasicTypeImpl;
 
+import org.jboss.logging.Logger;
+
 /**
  * Registry for BasicType instances.  Lookup is primarily done by Java type
  * (Class), but can be adjusted by JDBC type-code and/or MutabilityPlan.
@@ -33,6 +35,8 @@ import org.hibernate.type.internal.BasicTypeImpl;
  */
 @Incubating
 public class BasicTypeRegistry {
+	private static final Logger log = Logger.getLogger( BasicTypeRegistry.class );
+
 	private final TypeConfiguration typeConfiguration;
 
 	private final Map<String,BasicType> registry = new ConcurrentHashMap<>();
@@ -194,8 +198,7 @@ public class BasicTypeRegistry {
 				}
 			}
 		}
-
-		if ( parameters.getTemporalPrecision() != null ) {
+		else if ( parameters.getTemporalPrecision() != null ) {
 			// we have a specified temporal precision, which is another hint as to types...
 			if ( javaTypeDescriptor == null ) {
 				javaTypeDescriptor = determineJavaDescriptorForTemporalPrecision( parameters.getTemporalPrecision() );

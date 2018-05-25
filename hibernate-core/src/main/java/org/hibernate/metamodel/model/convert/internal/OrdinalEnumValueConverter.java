@@ -14,6 +14,7 @@ import java.sql.Types;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -33,10 +34,12 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	private final EnumJavaDescriptor<E> enumJavaDescriptor;
 	private final BasicJavaDescriptor<Integer> relationalJavaDescriptor;
 
-	public OrdinalEnumValueConverter(EnumJavaDescriptor<E> enumJavaDescriptor) {
+	public OrdinalEnumValueConverter(
+			EnumJavaDescriptor<E> enumJavaDescriptor,
+			RuntimeModelCreationContext creationContext) {
 		this.enumJavaDescriptor = enumJavaDescriptor;
 
-		final TypeConfiguration typeConfiguration = ( (TypeConfigurationAware) enumJavaDescriptor ).getTypeConfiguration();
+		final TypeConfiguration typeConfiguration = creationContext.getTypeConfiguration();
 		this.relationalJavaDescriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
 				.getDescriptor( getJdbcTypeCode() )
 				.getJdbcRecommendedJavaTypeMapping( typeConfiguration );

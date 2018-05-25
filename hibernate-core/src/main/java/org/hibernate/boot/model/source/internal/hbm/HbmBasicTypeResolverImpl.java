@@ -43,6 +43,11 @@ public class HbmBasicTypeResolverImpl extends BasicTypeResolverSupport
 	}
 
 	@Override
+	protected Class getReflectedValueJavaType() {
+		return javaTypeDescriptor.getJavaType();
+	}
+
+	@Override
 	public BasicJavaDescriptor getJavaTypeDescriptor() {
 		return javaTypeDescriptor;
 	}

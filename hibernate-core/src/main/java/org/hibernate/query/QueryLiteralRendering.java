@@ -43,57 +43,42 @@ public enum QueryLiteralRendering {
 	}
 
 	public static QueryLiteralRendering fromExternalForm(Object externalValue) {
-		if ( externalValue == null ) {
-			return null;
-		}
+		if ( externalValue != null ) {
 
-		if ( externalValue instanceof QueryLiteralRendering ) {
-			return (QueryLiteralRendering) externalValue;
-		}
+			if ( externalValue instanceof QueryLiteralRendering ) {
+				return (QueryLiteralRendering) externalValue;
+			}
 
-		if ( externalValue instanceof LiteralHandlingMode ) {
-			switch ( (LiteralHandlingMode) externalValue ) {
-				case AUTO:
-					return QueryLiteralRendering.AUTO;
-				case BIND:
-					return QueryLiteralRendering.AS_PARAM;
-				case INLINE:
-					return QueryLiteralRendering.AS_LITERAL;
+			if ( externalValue instanceof LiteralHandlingMode ) {
+				return ( (LiteralHandlingMode) externalValue ).getCounterpart();
+			}
+
+			final String externalValueString = externalValue.toString().trim().toLowerCase( Locale.ROOT );
+			if ( externalValueString.isEmpty() ) {
+				return null;
+			}
+
+			if ( AS_LITERAL.externalForm.equals( externalValueString ) ) {
+				return AS_LITERAL;
+			}
+
+			if ( AS_PARAM.externalForm.equals( externalValueString ) ) {
+				return AS_PARAM;
+			}
+
+			if ( AS_PARAM_OUTSIDE_SELECT.externalForm.equals( externalValueString ) ) {
+				return AS_PARAM_OUTSIDE_SELECT;
+			}
+
+			try {
+				final LiteralHandlingMode legacy = LiteralHandlingMode.interpret( externalValue );
+				return legacy.getCounterpart();
+			}
+			catch (Exception ignore) {
 			}
 		}
 
-		final String externalValueString = externalValue.toString().trim().toLowerCase( Locale.ROOT );
-		if ( externalValueString.isEmpty() ) {
-			return null;
-		}
-
-		if ( AS_LITERAL.externalForm.equals( externalValueString ) ) {
-			return AS_LITERAL;
-		}
-
-		if ( AS_PARAM.externalForm.equals( externalValueString ) ) {
-			return AS_PARAM;
-		}
-
-		if ( AS_PARAM_OUTSIDE_SELECT.externalForm.equals( externalValueString ) ) {
-			return AS_PARAM_OUTSIDE_SELECT;
-		}
-
-		if ( LiteralHandlingMode.AUTO.equals( externalValue ) ) {
-			return AUTO;
-		}
-
-		if ( LiteralHandlingMode.BIND.equals( externalValue ) ) {
-			return AS_PARAM;
-		}
-
-		if ( LiteralHandlingMode.INLINE.equals( externalValue ) ) {
-			return AS_LITERAL;
-		}
-
-		throw new IllegalArgumentException(
-				"Unrecognized QueryLiteralRendering external form [" + externalValueString +
-						"], expecting 'literal', 'param' or 'param-outside-select'"
-		);
+		// the default...
+		return AS_PARAM_OUTSIDE_SELECT;
 	}
 }

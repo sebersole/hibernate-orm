@@ -28,10 +28,19 @@ import org.hibernate.query.QueryLiteralRendering;
  */
 @Deprecated
 public enum LiteralHandlingMode {
+	AUTO( QueryLiteralRendering.AUTO ),
+	BIND( QueryLiteralRendering.AS_PARAM_OUTSIDE_SELECT ),
+	INLINE( QueryLiteralRendering.AS_LITERAL );
 
-	AUTO,
-	BIND,
-	INLINE;
+	private final QueryLiteralRendering counterpart;
+
+	LiteralHandlingMode(QueryLiteralRendering counterpart) {
+		this.counterpart = counterpart;
+	}
+
+	public QueryLiteralRendering getCounterpart() {
+		return counterpart;
+	}
 
 	/**
 	 * Interpret the configured literalHandlingMode value.

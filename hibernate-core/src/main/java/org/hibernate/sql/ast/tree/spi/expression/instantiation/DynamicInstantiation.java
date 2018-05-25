@@ -200,7 +200,7 @@ public class DynamicInstantiation<T> implements QueryResultProducer {
 					final JavaTypeDescriptor argumentTypeDescriptor = creationContext.getSessionFactory()
 							.getTypeConfiguration()
 							.getJavaTypeDescriptorRegistry()
-							.getDescriptor( constructor.getParameterTypes()[i] );
+							.getOrMakeJavaDescriptor( constructor.getParameterTypes()[i] );
 
 					final boolean assignmentCompatible = Compatibility.areAssignmentCompatible(
 							argumentTypeDescriptor,

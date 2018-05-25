@@ -66,4 +66,6 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 	 * @return The appropriate extractor
 	 */
 	<X> ValueExtractor<X> getExtractor(JavaTypeDescriptor<X> javaTypeDescriptor);
+
+	// todo (6.0) : write a base class and define `#toString()` based on type-code
 }

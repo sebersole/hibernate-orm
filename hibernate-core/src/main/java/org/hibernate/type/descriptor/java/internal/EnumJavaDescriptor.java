@@ -7,6 +7,7 @@
 package org.hibernate.type.descriptor.java.internal;
 
 import java.sql.Types;
+import java.util.Locale;
 import javax.persistence.EnumType;
 
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
@@ -93,5 +94,10 @@ public class EnumJavaDescriptor<T extends Enum> extends AbstractBasicJavaDescrip
 			return null;
 		}
 		return domainForm.name();
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(" + getJavaType().getName() + ")";
 	}
 }

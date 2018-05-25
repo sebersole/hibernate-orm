@@ -66,6 +66,7 @@ public class RuntimeModelCreationProcess {
 			SessionFactoryImplementor sessionFactory,
 			BootstrapContext bootstrapContext,
 			MetadataBuildingContext metadataBuildingContext) {
+		// todo (6.0) : Access to the finalized MetadataImplementor would be good
 		return new RuntimeModelCreationProcess( sessionFactory, bootstrapContext, metadataBuildingContext ).execute();
 	}
 
@@ -95,7 +96,7 @@ public class RuntimeModelCreationProcess {
 		this.bootstrapContext = bootstrapContext;
 		this.metadataBuildingContext = metadataBuildingContext;
 
-		this.inFlightRuntimeModel = new InFlightRuntimeModel();
+		this.inFlightRuntimeModel = new InFlightRuntimeModel( metadataBuildingContext );
 
 		this.descriptorFactory = sessionFactory.getServiceRegistry().getService( RuntimeModelDescriptorFactory.class );
 	}

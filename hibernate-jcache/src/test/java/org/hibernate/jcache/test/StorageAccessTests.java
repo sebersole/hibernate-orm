@@ -17,8 +17,7 @@ import org.hibernate.cache.spi.support.DomainDataRegionTemplate;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.service.spi.ServiceException;
 
-import org.hibernate.testing.junit4.BaseUnitTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.hamcrest.CoreMatchers;
 
@@ -34,7 +33,8 @@ import static org.junit.Assert.fail;
  *
  * @author Steve Ebersole
  */
-public class StorageAccessTests extends BaseUnitTestCase {
+@SuppressWarnings({"WeakerAccess","unused"})
+public class StorageAccessTests {
 
 	public static final String NON_CACHE_NAME = "not-a-cache";
 
@@ -68,6 +68,7 @@ public class StorageAccessTests extends BaseUnitTestCase {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testBasicStorageAccessUse() {
 		try (final SessionFactoryImplementor sessionFactory = TestHelper.buildStandardSessionFactory( true ) ) {
 			final Region region = sessionFactory.getCache().getRegion( TestHelper.entityRegionNames[0] );
@@ -91,7 +92,7 @@ public class StorageAccessTests extends BaseUnitTestCase {
 	}
 
 	@Test
-	@SuppressWarnings({"EmptyTryBlock", "unused"})
+	@SuppressWarnings("EmptyTryBlock")
 	public void testCachesReleasedOnSessionFactoryClose() {
 		try (SessionFactoryImplementor sessionFactory = TestHelper.buildStandardSessionFactory( true ) ) {
 		}

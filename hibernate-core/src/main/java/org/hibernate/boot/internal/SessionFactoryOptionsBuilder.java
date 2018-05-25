@@ -501,6 +501,14 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 				configurationSettings,
 				false
 		);
+
+		this.queryLiteralRendering = QueryLiteralRendering.fromExternalForm(
+				ConfigurationHelper.extract(
+						configurationSettings,
+						AvailableSettings.QUERY_LITERAL_RENDERING,
+						(map, s) -> configurationSettings.get( AvailableSettings.CRITERIA_LITERAL_HANDLING_MODE )
+				)
+		);
 	}
 
 	private IdTableStrategy resolveIdTableStrategy(

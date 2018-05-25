@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Lob;
@@ -233,6 +234,8 @@ public class BasicValueBinder<T> {
 								isLob,
 								isNationalized
 						);
+
+						mapKeySupplementalDetails( navigableXProperty, buildingContext );
 					}
 					else {
 						basicTypeResolver = new BasicTypeResolverListIndexImpl( buildingContext, navigableXProperty );
@@ -248,6 +251,7 @@ public class BasicValueBinder<T> {
 							isLob,
 							isNationalized
 					);
+					normalSupplementalDetails( navigableXProperty, buildingContext );
 					break;
 				}
 				default: {
@@ -260,11 +264,39 @@ public class BasicValueBinder<T> {
 							isLob,
 							isNationalized
 					);
+					normalSupplementalDetails( navigableXProperty, buildingContext );
 				}
 			}
 		}
 
 		this.typeParameters = typeParameters;
+	}
+
+	private void mapKeySupplementalDetails(
+			XProperty navigableXProperty,
+			MetadataBuildingContext buildingContext) {
+		final MapKeyEnumerated mapKeyEnumeratedAnn = navigableXProperty.getAnnotation( MapKeyEnumerated.class );
+		if ( mapKeyEnumeratedAnn != null ) {
+			enumType = mapKeyEnumeratedAnn.value();
+		}
+
+		final MapKeyTemporal mapKeyTemporalAnn = navigableXProperty.getAnnotation( MapKeyTemporal.class );
+		if ( mapKeyTemporalAnn != null ) {
+			temporalPrecision = mapKeyTemporalAnn.value();
+		}
+	}
+	private void normalSupplementalDetails(
+			XProperty navigableXProperty,
+			MetadataBuildingContext buildingContext) {
+		final Enumerated mapKeyEnumeratedAnn = navigableXProperty.getAnnotation( Enumerated.class );
+		if ( mapKeyEnumeratedAnn != null ) {
+			enumType = mapKeyEnumeratedAnn.value();
+		}
+
+		final Temporal mapKeyTemporalAnn = navigableXProperty.getAnnotation( Temporal.class );
+		if ( mapKeyTemporalAnn != null ) {
+			temporalPrecision = mapKeyTemporalAnn.value();
+		}
 	}
 
 	private static Class resolveJavaType(XClass returnedClassOrElement, MetadataBuildingContext buildingContext) {
@@ -359,6 +391,15 @@ public class BasicValueBinder<T> {
 		if ( isLob ) {
 			basicValue.makeLob();
 		}
+		if ( enumType != null ) {
+			basicValue.setEnumType( enumType );
+		}
+		if ( temporalPrecision != null ) {
+			basicValue.setTemporalPrecision( temporalPrecision );
+		}
+		// todo (6.0) : explicit SqlTypeDescriptor / JDBC type-code
+		// todo (6.0) : explicit mutability / immutable
+		// todo (6.0) : explicit Comparator
 
 		linkWithValue();
 
@@ -436,10 +477,16 @@ public class BasicValueBinder<T> {
 	}
 
 	private class BasicTypeResolverCollectionIdImpl extends BasicTypeResolverSupport {
+		private Class reflectedValueJavaType;
+
 		public BasicTypeResolverCollectionIdImpl(
 				MetadataBuildingContext buildingContext,
 				XProperty collectionAttributeDescriptor) {
 			super( buildingContext );
+
+			this.reflectedValueJavaType = buildingContext.getBootstrapContext()
+					.getReflectionManager()
+					.toClass( collectionAttributeDescriptor.getElementClass() );
 
 			// todo (6.0) : ? not yet sure how to do that because this actually comes from the owner - SecondPass probably?
 
@@ -453,6 +500,11 @@ public class BasicValueBinder<T> {
 		@Override
 		public SqlTypeDescriptor getSqlTypeDescriptor() {
 			return null;
+		}
+
+		@Override
+		protected Class getReflectedValueJavaType() {
+			return reflectedValueJavaType;
 		}
 	}
 
@@ -483,10 +535,10 @@ public class BasicValueBinder<T> {
 			final Class javaType = buildingContext.getBootstrapContext()
 					.getReflectionManager()
 					.toClass( mapAttribute.getMapKey() );
-			javaDescriptor = buildingContext.getBootstrapContext()
+			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getBasicJavaDescriptor( javaType );
+					.getOrMakeJavaDescriptor( javaType );
 
 			final MapKeyType mapKeyTypeAnn = mapAttribute.getAnnotation( MapKeyType.class );
 			if ( mapKeyTypeAnn != null ) {
@@ -538,6 +590,11 @@ public class BasicValueBinder<T> {
 		}
 
 		@Override
+		protected Class getReflectedValueJavaType() {
+			return javaDescriptor.getJavaType();
+		}
+
+		@Override
 		public TemporalType getTemporalPrecision() {
 			return temporalPrecision;
 		}
@@ -574,16 +631,20 @@ public class BasicValueBinder<T> {
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
-		public BasicJavaDescriptor<Integer> getJavaTypeDescriptor() {
-			return getTypeConfiguration().getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Integer.class );
+		protected void resolveJavaAndSqlTypeDescriptors() {
+			setJavaTypeDescriptor(
+					(BasicJavaDescriptor) getTypeConfiguration().getJavaTypeDescriptorRegistry()
+					.getOrMakeJavaDescriptor( Integer.class )
+			);
+			setSqlTypeDescriptor(
+					getJavaTypeDescriptor().getJdbcRecommendedSqlType( this )
+			);
 		}
 
+
 		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			// ATM we have no way to specify the SQL type in annotations.
-			//		I have proposed a @SqlType annotation, we shall see
-			return null;
+		protected Class<Integer> getReflectedValueJavaType() {
+			return getJavaTypeDescriptor() == null ? null : getJavaTypeDescriptor().getJavaType();
 		}
 
 		@Override
@@ -618,15 +679,15 @@ public class BasicValueBinder<T> {
 					.getReflectionManager()
 					.toClass( elementJavaType );
 
-			javaDescriptor = buildingContext.getBootstrapContext()
+			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getBasicJavaDescriptor( javaType );
+					.getOrMakeJavaDescriptor( javaType );
 
 			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
 			if ( temporalAnn != null ) {
-				temporalPrecision = temporalAnn.value();
-				if ( temporalPrecision == null ) {
+				this.temporalPrecision = temporalAnn.value();
+				if ( this.temporalPrecision == null ) {
 					throw new IllegalStateException(
 							"No javax.persistence.TemporalType defined for @javax.persistence.Temporal " +
 									"associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
@@ -635,17 +696,17 @@ public class BasicValueBinder<T> {
 				}
 			}
 			else {
-				temporalPrecision = null;
+				this.temporalPrecision = null;
 			}
 
 			if ( javaType.isEnum() ) {
 				final Enumerated enumeratedAnn = attributeDescriptor.getAnnotation( Enumerated.class );
 				if ( enumeratedAnn == null ) {
-					enumType = javax.persistence.EnumType.ORDINAL;
+					this.enumType = javax.persistence.EnumType.ORDINAL;
 				}
 				else {
-					enumType = enumeratedAnn.value();
-					if ( enumType == null ) {
+					this.enumType = enumeratedAnn.value();
+					if ( this.enumType == null ) {
 						throw new IllegalStateException(
 								"javax.persistence.EnumType was null on @javax.persistence.Enumerated " +
 										" associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
@@ -655,8 +716,18 @@ public class BasicValueBinder<T> {
 				}
 			}
 			else {
-				enumType = null;
+				this.enumType = null;
 			}
+		}
+
+		@Override
+		public EnumType getEnumType() {
+			return super.getEnumType();
+		}
+
+		@Override
+		protected Class getReflectedValueJavaType() {
+			return getJavaTypeDescriptor().getJavaType();
 		}
 
 		@Override
@@ -710,10 +781,10 @@ public class BasicValueBinder<T> {
 			final Class javaType = buildingContext.getBootstrapContext()
 					.getReflectionManager()
 					.toClass( elementJavaType );
-			javaDescriptor = buildingContext.getBootstrapContext()
+			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
 					.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
-					.getBasicJavaDescriptor( javaType );
+					.getOrMakeJavaDescriptor( javaType );
 
 			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
 			if ( temporalAnn != null ) {
@@ -749,6 +820,11 @@ public class BasicValueBinder<T> {
 			else {
 				enumType = null;
 			}
+		}
+
+		@Override
+		protected Class getReflectedValueJavaType() {
+			return getJavaTypeDescriptor().getJavaType();
 		}
 
 		@Override

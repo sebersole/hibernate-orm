@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.AvailableSettings;
@@ -503,5 +504,16 @@ public final class ConfigurationHelper {
 				.getJdbcEnvironment()
 				.getDialect()
 				.getPreferredSqlTypeCodeForBoolean();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T extract(Map values, String key, BiFunction<Map,String,T> fallback) {
+		if ( values != null ) {
+			final Object value = values.get( key );
+			if ( value != null ) {
+				return (T) value;
+			}
+		}
+		return fallback.apply( values, key );
 	}
 }

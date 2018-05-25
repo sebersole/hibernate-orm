@@ -97,7 +97,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			);
 		}
 
-		this.entityDescriptor = context.getSessionFactory().getMetamodel().findEntityDescriptor( valueMapping.getReferencedEntityName() );
+		this.entityDescriptor = context.getInFlightRuntimeModel().findEntityDescriptor( valueMapping.getReferencedEntityName() );
 		if ( entityDescriptor == null ) {
 			throw new MappingException(
 					String.format(

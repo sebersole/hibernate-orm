@@ -166,7 +166,10 @@ public class BasicSingularPersistentAttribute<O, J>
 			Object hydratedForm,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
-		return valueConverter.toDomainValue( hydratedForm, session );
+		if ( valueConverter != null ) {
+			return valueConverter.toDomainValue( hydratedForm, session );
+		}
+		return hydratedForm;
 	}
 
 }

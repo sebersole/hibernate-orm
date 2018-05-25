@@ -127,7 +127,9 @@ public final class BasicMetadataGenerator {
 		final Element propMapping = MetadataTools.addProperty(
 				parent,
 				propertyAuditingData.getName(),
-				isAddNestedType( value ) ? null : value.getJavaTypeMapping().getTypeName(),
+				isAddNestedType( value )
+						? null
+						: value.getJavaTypeMapping().getTypeName(),
 				propertyAuditingData.isForceInsertable() || insertable,
 				key
 		);

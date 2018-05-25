@@ -90,4 +90,6 @@ public class CharacterJavaDescriptor extends AbstractBasicJavaDescriptor<Charact
 	public Character getDefaultValue() {
 		throw new UnsupportedOperationException( "char has no non-null default" );
 	}
+
+
 }

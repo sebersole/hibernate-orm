@@ -343,7 +343,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getOrMakeJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -450,7 +450,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getOrMakeJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -550,7 +550,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getOrMakeJavaDescriptor( Clob.class );
 		}
 
 		@Override
@@ -646,7 +646,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 		@Override
 		public <T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration) {
-			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getBasicJavaDescriptor( Clob.class );
+			return (BasicJavaDescriptor<T>) typeConfiguration.getJavaTypeDescriptorRegistry().getOrMakeJavaDescriptor( Clob.class );
 		}
 
 		@Override

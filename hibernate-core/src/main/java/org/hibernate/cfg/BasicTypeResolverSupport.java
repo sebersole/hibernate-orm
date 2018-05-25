@@ -7,13 +7,18 @@
 package org.hibernate.cfg;
 
 import java.util.Comparator;
+import javax.persistence.EnumType;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.BasicTypeParameters;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -25,6 +30,11 @@ public abstract class BasicTypeResolverSupport<T>
 		implements BasicTypeResolver, JdbcRecommendedSqlTypeMappingContext, BasicTypeParameters {
 	private final MetadataBuildingContext buildingContext;
 
+	private BasicJavaDescriptor javaTypeDescriptor;
+	private SqlTypeDescriptor sqlTypeDescriptor;
+
+	private BasicType basicType;
+
 	public BasicTypeResolverSupport(MetadataBuildingContext buildingContext) {
 		this.buildingContext = buildingContext;
 	}
@@ -35,12 +45,63 @@ public abstract class BasicTypeResolverSupport<T>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> BasicType<T> resolveBasicType() {
-		return getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
-				this,
-				this
-		);
+	public BasicType<T> resolveBasicType() {
+		if ( basicType == null ) {
+			resolveJavaAndSqlTypeDescriptors();
+			basicType = getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
+					this,
+					this
+			);
+		}
+		return basicType;
 	}
+
+	@Override
+	public BasicJavaDescriptor getJavaTypeDescriptor() {
+		return javaTypeDescriptor;
+	}
+
+	protected void setJavaTypeDescriptor(BasicJavaDescriptor javaTypeDescriptor) {
+		this.javaTypeDescriptor = javaTypeDescriptor;
+	}
+
+	@Override
+	public SqlTypeDescriptor getSqlTypeDescriptor() {
+		return sqlTypeDescriptor;
+	}
+
+	protected void setSqlTypeDescriptor(SqlTypeDescriptor sqlTypeDescriptor) {
+		this.sqlTypeDescriptor = sqlTypeDescriptor;
+	}
+
+	protected void resolveJavaAndSqlTypeDescriptors() {
+		final TypeConfiguration typeConfiguration = getBuildingContext().getBootstrapContext().getTypeConfiguration();
+		final JavaTypeDescriptorRegistry jtdRegistry = typeConfiguration.getJavaTypeDescriptorRegistry();
+
+		sqlTypeDescriptor = getExplicitSqlTypeDescriptor();
+
+		if ( getAttributeConverterDescriptor() != null ) {
+			final Class<?> domainJavaType = getAttributeConverterDescriptor().getDomainValueResolvedType().getErasedType();
+			javaTypeDescriptor = (BasicJavaDescriptor) jtdRegistry.getOrMakeJavaDescriptor( domainJavaType );
+
+			if ( sqlTypeDescriptor == null ) {
+				final Class<?> relationalJavaType = getAttributeConverterDescriptor().getRelationalValueResolvedType()
+						.getErasedType();
+				final JavaTypeDescriptor<?> relationalJavaDescriptor = jtdRegistry.getOrMakeJavaDescriptor(
+						relationalJavaType );
+				sqlTypeDescriptor = relationalJavaDescriptor.getJdbcRecommendedSqlType( this );
+			}
+		}
+		else {
+			javaTypeDescriptor = (BasicJavaDescriptor) jtdRegistry.getOrMakeJavaDescriptor( getReflectedValueJavaType() );
+		}
+
+		if ( sqlTypeDescriptor == null ) {
+			sqlTypeDescriptor = javaTypeDescriptor.getJdbcRecommendedSqlType( this );
+		}
+	}
+
+	protected abstract Class<T> getReflectedValueJavaType();
 
 	@Override
 	public ConverterDescriptor getAttributeConverterDescriptor() {
@@ -59,6 +120,11 @@ public abstract class BasicTypeResolverSupport<T>
 
 	@Override
 	public TemporalType getTemporalPrecision() {
+		return getTemporalType();
+	}
+
+	@Override
+	public TemporalType getTemporalType() {
 		return null;
 	}
 
@@ -67,9 +133,19 @@ public abstract class BasicTypeResolverSupport<T>
 		return false;
 	}
 
+
 	@Override
 	public boolean isLob() {
 		return false;
+	}
+
+	@Override
+	public EnumType getEnumeratedType() {
+		return getEnumType();
+	}
+
+	public EnumType getEnumType() {
+		return buildingContext.getBuildingOptions().getImplicitEnumType();
 	}
 
 	@Override

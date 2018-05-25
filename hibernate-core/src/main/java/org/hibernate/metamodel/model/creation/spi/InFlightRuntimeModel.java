@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.creation.spi;
 
+import java.util.Map;
 import javax.persistence.EntityGraph;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -28,7 +29,13 @@ import org.jboss.logging.Logger;
 public class InFlightRuntimeModel extends AbstractRuntimeModel {
 	private static final Logger log = Logger.getLogger( InFlightRuntimeModel.class );
 
-	public InFlightRuntimeModel() {
+	public InFlightRuntimeModel(Map<String,String> hqlNameImports) {
+		super();
+		hqlNameImports.forEach( (k, v) -> getNameImportMap().putIfAbsent( k, v ) );
+	}
+
+	public InFlightRuntimeModel(MetadataBuildingContext metadataBuildingContext) {
+		this( metadataBuildingContext.getMetadataCollector().getImports() );
 	}
 
 	public void addEntityHierarchy(EntityHierarchy hierarchy) {

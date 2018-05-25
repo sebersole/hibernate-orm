@@ -9,7 +9,6 @@ package org.hibernate.jcache.test;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.MutableConfiguration;
@@ -23,13 +22,12 @@ import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.support.RegionNameQualifier;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.jcache.test.domain.Event;
 import org.hibernate.jcache.test.domain.Item;
 import org.hibernate.jcache.test.domain.VersionedItem;
-import org.hibernate.jcache.test.domain.Event;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.tool.schema.Action;
@@ -39,6 +37,7 @@ import static org.hibernate.cache.jcache.JCacheHelper.locateStandardCacheManager
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public class TestHelper {
 	public static String[] entityRegionNames = new String[] {
 			Item.class.getName(),
@@ -130,6 +129,7 @@ public class TestHelper {
 
 		final CacheManager cacheManager = locateStandardCacheManager();
 
+		//noinspection deprecation
 		for ( PersistentClass persistentClass : metadata.getEntityBindings() ) {
 			if ( persistentClass.getRootClass().isCached() ) {
 				if ( ! names.add( persistentClass.getRootClass().getCacheRegionName() ) ) {

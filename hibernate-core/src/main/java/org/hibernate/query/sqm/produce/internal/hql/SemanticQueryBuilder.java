@@ -614,7 +614,7 @@ public class SemanticQueryBuilder
 				final JavaTypeDescriptor jtd = getSessionFactory()
 						.getTypeConfiguration()
 						.getJavaTypeDescriptorRegistry()
-						.getDescriptor( targetJavaType );
+						.getOrMakeJavaDescriptor( targetJavaType );
 				dynamicInstantiation = SqmDynamicInstantiation.forClassInstantiation( jtd );
 			}
 			catch (ClassLoadingException e) {

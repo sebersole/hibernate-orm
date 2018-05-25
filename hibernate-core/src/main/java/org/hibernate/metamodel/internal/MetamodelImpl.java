@@ -333,7 +333,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 			return (EntityValuedExpressableType<T>) getEntityDescriptorMap().get( javaType.getName() );
 		}
 
-		final JavaTypeDescriptor<T> jtd = typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( javaType );
+		final JavaTypeDescriptor<T> jtd = typeConfiguration.getJavaTypeDescriptorRegistry().getOrMakeJavaDescriptor( javaType );
 		if ( jtd == null ) {
 			throw new HibernateException( "Could not locate JavaTypeDescriptor : " + javaType.getName() );
 		}

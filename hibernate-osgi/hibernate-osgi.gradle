@@ -10,6 +10,7 @@ apply plugin: 'karaf-featuresgen'
 
 description = 'Support for running Hibernate O/RM in OSGi environments'
 
+test.enabled = false
 
 ext {
 	// MUST use 4.3.1!  4.3.0 was compiled with "-target jsr14".
