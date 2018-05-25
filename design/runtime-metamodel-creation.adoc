@@ -28,8 +28,18 @@ This sub-process is controlled by `org.hibernate.metamodel.model.relational.spi.
 If any auto schema tooling operations should be performed, that happens here.  That is controlled by
 `org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator`
 
+The end result of this phase is a fully resolved `org.hibernate.boot.model.relational.Database`
 
-=== Phase 2 : Create identifiable types
+
+=== Phase 2 : Build InFlightRuntimeModel
+
+Just like when  building the boot metamodel, we keep an "in-flight" view of the runtime metamodel
+as we are building it.  This allows resolving things (managed types, etc) as we go - with the understanding
+that certain parts of the runtime metamodel objects may not be initialized yet - they are mainly used to "link"
+references.
+
+
+==== Create identifiable types
 
 [NOTE]
 ====
