@@ -44,8 +44,7 @@ public class OnLockVisitor extends ReattachVisitor {
 				final PersistentCollectionDescriptor descriptor = session.getFactory()
 						.getMetamodel()
 						.findCollectionDescriptor( attributeCollection.getNavigableName() );
-				if ( isOwnerUnchanged( persistentCollection,
-									   descriptor, extractCollectionKeyFromOwner( descriptor ) ) ) {
+				if ( isOwnerUnchanged( persistentCollection, descriptor, extractCollectionKeyFromOwner( descriptor ) ) ) {
 					// a "detached" collection that originally belonged to the same entity
 					if ( persistentCollection.isDirty() ) {
 						throw new HibernateException( "reassociated object has dirty collection" );

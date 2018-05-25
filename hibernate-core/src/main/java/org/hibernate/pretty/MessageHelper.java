@@ -164,9 +164,11 @@ public final class MessageHelper {
 			s.append( entityDescriptor.getEntityName() );
 			s.append( "#<" );
 			for ( int i=0; i<ids.length; i++ ) {
-				s.append( entityDescriptor.getIdentifierDescriptor()
-								  .getJavaTypeDescriptor()
-								  .extractLoggableRepresentation( ids[i] ) );
+				s.append(
+						entityDescriptor.getIdentifierDescriptor()
+								.getJavaTypeDescriptor()
+								.extractLoggableRepresentation( ids[i] )
+				);
 				if ( i < ids.length-1 ) {
 					s.append( ", " );
 				}

@@ -46,6 +46,7 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 	 *
 	 * @deprecated use {@link #getDescriptor()}
 	 */
+	@Deprecated
 	public EntityDescriptor getPersister() {
 		return descriptor;
 	}

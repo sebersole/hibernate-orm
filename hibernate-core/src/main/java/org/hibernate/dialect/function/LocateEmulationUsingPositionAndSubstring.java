@@ -103,7 +103,7 @@ public class LocateEmulationUsingPositionAndSubstring
 			List<SqmExpression> arguments,
 			AllowableFunctionReturnType impliedResultType) {
 
-		if ( arguments.size() == 2  ){
+		if ( arguments.size() == 2 ) {
 			return build3ArgVariation( arguments, impliedResultType );
 		}
 		else {
@@ -180,8 +180,8 @@ public class LocateEmulationUsingPositionAndSubstring
 				AllowableFunctionReturnType resultType) {
 			super(
 					null,
-				   Arrays.asList( pattern, string ),
-				   resultType == null ? StandardSpiBasicTypes.STRING : resultType
+					Arrays.asList( pattern, string ),
+					resultType == null ? StandardSpiBasicTypes.STRING : resultType
 			);
 		}
 

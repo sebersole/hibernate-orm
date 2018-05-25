@@ -942,7 +942,7 @@ public abstract class PersistentClass
 	}
 
 	/**
-	 * @deprecate since 6.0, use {@link #checkColumnDuplication(Set, List)} instead.
+	 * @deprecated since 6.0, use {@link #checkColumnDuplication(Set, List)} instead.
 	 */
 	@Deprecated
 	protected void checkColumnDuplication(Set distinctColumns, Iterator columns)

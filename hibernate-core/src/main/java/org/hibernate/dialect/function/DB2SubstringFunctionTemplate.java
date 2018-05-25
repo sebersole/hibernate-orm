@@ -47,7 +47,7 @@ public class DB2SubstringFunctionTemplate implements SqmFunctionTemplate {
 		if ( lastArgument != null && possibleStringUnits.contains( lastArgument.toUpperCase() ) ) {
 			return "substring";
 		}
-		else{
+		else {
 			return "substr";
 		}
 	}
@@ -55,14 +55,15 @@ public class DB2SubstringFunctionTemplate implements SqmFunctionTemplate {
 	@Override
 	public SqmExpression makeSqmFunctionExpression(
 			List<SqmExpression> arguments, AllowableFunctionReturnType impliedResultType) {
-		return new DB2SubstringFunction( getRenderedName( arguments ),
-										 StandardSpiBasicTypes.STRING, arguments.get( 1 ),
-										 arguments.get( 2 ),
-										 null
+		return new DB2SubstringFunction(
+				getRenderedName( arguments ),
+				StandardSpiBasicTypes.STRING, arguments.get( 1 ),
+				arguments.get( 2 ),
+				null
 		);
 	}
 
-	public static class DB2SubstringFunction extends SqmSubstringFunction{
+	public static class DB2SubstringFunction extends SqmSubstringFunction {
 
 		String functionName;
 

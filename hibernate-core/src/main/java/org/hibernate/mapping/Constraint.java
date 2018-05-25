@@ -132,6 +132,7 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 	 * are "exportable" (a real, physical constraint).  So we open up the type of
 	 * "columns" we accept here.
 	 */
+	@Deprecated
 	public void addColumn(Column column) {
 		addColumn( (Selectable) column );
 	}

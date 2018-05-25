@@ -295,6 +295,7 @@ public class Table implements MappedTable<Column>, Serializable {
 	/**
 	 * @deprecated since 6.0, use {@link #getMappedColumns()} instead.
 	 */
+	@Deprecated
 	public Iterator getColumnIterator() {
 		return columns.values().iterator();
 	}
@@ -302,6 +303,7 @@ public class Table implements MappedTable<Column>, Serializable {
 	/**
 	 * @deprecated since 6.0, use {@link #getIndexes()} instead.
 	 */
+	@Deprecated
 	public Iterator<MappedIndex> getIndexIterator() {
 		return indexes.values().iterator();
 	}
@@ -318,6 +320,7 @@ public class Table implements MappedTable<Column>, Serializable {
 	/**
 	 * @deprecated since 6.0, use {@link #getForeignKeys()} instead.
 	 */
+	@Deprecated
 	public Iterator getForeignKeyIterator() {
 		return foreignKeyMap.values().iterator();
 	}
@@ -329,6 +332,7 @@ public class Table implements MappedTable<Column>, Serializable {
 	/**
 	 * @deprecated since 6.0, use {@link #getUniqueKeys()} instead.
 	 */
+	@Deprecated
 	public Iterator<MappedUniqueKey> getUniqueKeyIterator() {
 		return getUniqueKeys().iterator();
 	}

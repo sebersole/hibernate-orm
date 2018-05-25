@@ -13,8 +13,14 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 public final class OrphanRemovalAction extends EntityDeleteAction {
 
-	public OrphanRemovalAction(Serializable id, Object[] state, Object version, Object instance,
-							   EntityDescriptor persister, boolean isCascadeDeleteEnabled, SessionImplementor session) {
+	public OrphanRemovalAction(
+			Serializable id,
+			Object[] state,
+			Object version,
+			Object instance,
+			EntityDescriptor persister,
+			boolean isCascadeDeleteEnabled,
+			SessionImplementor session) {
 		super( id, state, version, instance, persister, isCascadeDeleteEnabled, session );
 	}
 }

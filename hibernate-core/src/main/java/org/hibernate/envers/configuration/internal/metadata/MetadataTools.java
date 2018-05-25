@@ -8,8 +8,6 @@ package org.hibernate.envers.configuration.internal.metadata;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import javax.persistence.JoinColumn;
 
 import org.hibernate.boot.model.relational.MappedColumn;
@@ -90,10 +88,14 @@ public final class MetadataTools {
 		return addProperty( parent, name, type, insertable, false, key );
 	}
 
-	public static Element addModifiedFlagProperty(Element parent, String propertyName, String suffix, String modifiedFlagName) {
+	public static Element addModifiedFlagProperty(
+			Element parent,
+			String propertyName,
+			String suffix,
+			String modifiedFlagName) {
 		return addProperty(
 				parent,
-				(modifiedFlagName != null) ? modifiedFlagName : getModifiedFlagPropertyName( propertyName, suffix ),
+				( modifiedFlagName != null ) ? modifiedFlagName : getModifiedFlagPropertyName( propertyName, suffix ),
 				"boolean",
 				true,
 				false,
@@ -193,7 +195,7 @@ public final class MetadataTools {
 		if ( !StringTools.isEmpty( sqlType ) ) {
 			String[] tokens = StringHelper.split( " ", sqlType );
 			if ( tokens.length >= 1 ) {
-				return tokens[ 0 ];
+				return tokens[0];
 			}
 		}
 		return null;
@@ -288,6 +290,7 @@ public final class MetadataTools {
 	/**
 	 * @deprecated since 6.0, use {@link #addColumns(Element, List)}
 	 */
+	@Deprecated
 	public static void addColumns(Element anyMapping, Iterator selectables) {
 		while ( selectables.hasNext() ) {
 			final Selectable selectable = (Selectable) selectables.next();
@@ -394,6 +397,7 @@ public final class MetadataTools {
 	 *
 	 * @deprecated since 6.0, use {@link #addColumnsOrFormulas(Element, List)} instead.
 	 */
+	@Deprecated
 	public static void addColumnsOrFormulas(Element element, Iterator columnIterator) {
 		while ( columnIterator.hasNext() ) {
 			final Object o = columnIterator.next();

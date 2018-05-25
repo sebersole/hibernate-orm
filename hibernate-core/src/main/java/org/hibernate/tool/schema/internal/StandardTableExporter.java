@@ -81,9 +81,10 @@ public class StandardTableExporter implements Exporter<ExportableTable> {
 				if ( dialect.getIdentityColumnSupport().hasDataTypeInIdentityColumn() ) {
 					buf.append( dialect.getTypeName( col.getSqlTypeDescriptor().getJdbcTypeCode() ) );
 				}
-				buf.append( ' ' )
-						.append( dialect.getIdentityColumnSupport()
-										 .getIdentityColumnString( col.getSqlTypeDescriptor().getJdbcTypeCode() ) );
+				buf.append( ' ' ).append(
+						dialect.getIdentityColumnSupport()
+								.getIdentityColumnString( col.getSqlTypeDescriptor().getJdbcTypeCode() )
+				);
 			}
 			else {
 				buf.append( col.getSqlTypeName() );

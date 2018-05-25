@@ -146,7 +146,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 
 	@Override
 	public QueryImplementor<R> setFirstResult(int startPosition) {
-		 getQueryOptions().getLimit().setFirstRow( startPosition );
+		getQueryOptions().getLimit().setFirstRow( startPosition );
 		return this;
 	}
 

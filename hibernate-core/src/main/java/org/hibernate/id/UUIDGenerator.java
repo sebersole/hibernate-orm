@@ -48,13 +48,6 @@ public class UUIDGenerator implements IdentifierGenerator, Configurable {
 	private UUIDGenerationStrategy strategy;
 	private UUIDJavaDescriptor.ValueTransformer valueTransformer;
 
-	public static UUIDGenerator buildSessionFactoryUniqueIdentifierGenerator() {
-		final UUIDGenerator generator = new UUIDGenerator();
-		generator.strategy = StandardRandomStrategy.INSTANCE;
-		generator.valueTransformer = UUIDJavaDescriptor.ToStringTransformer.INSTANCE;
-		return generator;
-	}
-
 	@Override
 	public void configure(JavaTypeDescriptor javaTypeDescriptor, Properties params, ServiceRegistry serviceRegistry) throws MappingException {
 		// check first for the strategy instance
@@ -93,9 +86,10 @@ public class UUIDGenerator implements IdentifierGenerator, Configurable {
 			valueTransformer = UUIDJavaDescriptor.ToBytesTransformer.INSTANCE;
 		}
 		else {
-			throw new HibernateException( "Unanticipated return type [" +
-												  javaTypeDescriptor.getJavaType()
-														  .getName() + "] for UUID conversion" );
+			throw new HibernateException(
+					"Unanticipated return type [" + javaTypeDescriptor.getJavaType().getName() +
+							"] for UUID conversion"
+			);
 		}
 	}
 

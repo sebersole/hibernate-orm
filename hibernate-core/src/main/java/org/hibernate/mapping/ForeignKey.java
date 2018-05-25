@@ -215,7 +215,7 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	/**
 	 * All schema management is managed though exporters
 	 *
-	 * @deprecated
+	 * @deprecated no mas
 	 */
 	@Deprecated
 	public String sqlConstraintString(
@@ -264,7 +264,7 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	/**
 	 * All schema management is managed though exporters
 	 *
-	 * @deprecated
+	 * @deprecated no mas
 	 */
 	@Deprecated
 	public String sqlDropString(Dialect dialect, String defaultCatalog, String defaultSchema) {

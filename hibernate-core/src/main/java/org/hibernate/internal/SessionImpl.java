@@ -2446,9 +2446,10 @@ public final class SessionImpl
 			}
 
 			try {
-				return entityPersister.multiLoad( ids.toArray( new Serializable[ ids.size() ] ),
-												  this,
-												  SessionImpl.this
+				return entityPersister.multiLoad(
+						ids.toArray( new Serializable[ ids.size() ] ),
+						this,
+						SessionImpl.this
 				);
 			}
 			finally {

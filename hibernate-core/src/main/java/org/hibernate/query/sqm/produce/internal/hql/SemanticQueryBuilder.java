@@ -450,14 +450,16 @@ public class SemanticQueryBuilder
 				final SqmExpression limitExpression;
 				if ( ctx.limitClause() != null ) {
 					limitExpression = visitLimitClause( ctx.limitClause() );
-				} else {
+				}
+				else {
 					limitExpression = null;
 				}
 
 				final SqmExpression offsetExpression;
 				if ( ctx.offsetClause() != null ) {
 					offsetExpression = visitOffsetClause( ctx.offsetClause() );
-				} else {
+				}
+				else {
 					offsetExpression = null;
 				}
 

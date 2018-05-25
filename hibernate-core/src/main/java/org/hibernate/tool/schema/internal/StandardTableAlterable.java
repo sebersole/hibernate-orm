@@ -70,8 +70,9 @@ public class StandardTableAlterable implements Alterable<ExportableTable> {
 				}
 
 				if ( physicalColumn.isUnique() ) {
-					alter.append( dialect.getUniqueDelegate()
-										  .getColumnDefinitionUniquenessFragment( physicalColumn ) );
+					alter.append(
+							dialect.getUniqueDelegate().getColumnDefinitionUniquenessFragment( physicalColumn )
+					);
 				}
 
 				if ( physicalColumn.getCheckConstraint() != null && dialect.supportsColumnCheck() ) {

@@ -684,12 +684,18 @@ public interface EntityDescriptor<T>
 	@Remove
 	boolean[] getPropertyInsertability();
 
+	/**
+	 * @deprecated yep
+	 */
 	@Remove
 	@Deprecated
 	ValueInclusion[] getPropertyInsertGenerationInclusions();
 
-	@Deprecated
+	/**
+	 * @deprecated yep
+	 */
 	@Remove
+	@Deprecated
 	ValueInclusion[] getPropertyUpdateGenerationInclusions();
 
 	@Remove

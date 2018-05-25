@@ -25,7 +25,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 final class CacheKeyImplementation implements Serializable {
 	private final Object id;
 	private final JavaTypeDescriptor idJavaTypeDescriptor;
-	private final NavigableRole navigableRole;;
+	private final NavigableRole navigableRole;
 	private final String tenantId;
 	private final int hashCode;
 

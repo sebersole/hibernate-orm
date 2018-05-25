@@ -154,14 +154,16 @@ public final class Cascade {
 							false
 					);
 				}
-				else {if ( action.requiresNoCascadeChecking() ) {
-					action.noCascade(
-							eventSource,
-							parent,
-							descriptor,
-							attribute,
-							i
-					);}
+				else {
+					if ( action.requiresNoCascadeChecking() ) {
+						action.noCascade(
+								eventSource,
+								parent,
+								descriptor,
+								attribute,
+								i
+						);
+					}
 					// If the property is uninitialized, then there cannot be any orphans.
 					if ( action.deleteOrphans() && !isUninitializedProperty ) {
 						cascadeLogicalOneToOneOrphanRemoval(

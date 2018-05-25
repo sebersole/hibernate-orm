@@ -200,7 +200,8 @@ public abstract class AbstractSqlAstWalker
 		final SqmSortOrder sortOrder = sortSpecification.getSortOrder();
 		if ( sortOrder == SqmSortOrder.ASCENDING ) {
 			appendSql( " asc" );
-		} else if ( sortOrder == SqmSortOrder.DESCENDING ) {
+		}
+		else if ( sortOrder == SqmSortOrder.DESCENDING ) {
 			appendSql( " desc" );
 		}
 

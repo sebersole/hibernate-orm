@@ -717,8 +717,8 @@ public interface PersistenceContext {
 	/**
 	 * Provides centralized access to natural-id-related functionality.
 	 */
-	 interface NaturalIdHelper {
-		 Serializable INVALID_NATURAL_ID_REFERENCE = new Serializable() {};
+	interface NaturalIdHelper {
+		Serializable INVALID_NATURAL_ID_REFERENCE = new Serializable() {};
 
 		/**
 		 * Given an array of "full entity state", extract the portions that represent the natural id

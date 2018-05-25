@@ -126,6 +126,9 @@ public interface SessionFactoryImplementor
 
 	EntityNotFoundDelegate getEntityNotFoundDelegate();
 
+	/**
+	 * @deprecated use {@link QueryEngine#getSqmFunctionRegistry()} instead
+	 */
 	@Deprecated
 	default SqmFunctionRegistry getSqmFunctionRegistry() {
 		return getQueryEngine().getSqmFunctionRegistry();

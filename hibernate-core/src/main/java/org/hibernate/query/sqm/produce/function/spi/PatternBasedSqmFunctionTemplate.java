@@ -42,12 +42,13 @@ public class PatternBasedSqmFunctionTemplate extends AbstractSelfRenderingFuncti
 			PatternRenderer renderer,
 			ArgumentsValidator argumentsValidator,
 			FunctionReturnTypeResolver returnTypeResolver) {
-		super( returnTypeResolver,
-			   argumentsValidator != null ?
-					   argumentsValidator :
-					   // If no validator is given, it's still better to validate against the parameter count as given
-					   // by the pattern than accepting every input blindly and producing wrong output
-					   StandardArgumentsValidators.exactly( renderer.getParamCount() )
+		super(
+				returnTypeResolver,
+				argumentsValidator != null
+						? argumentsValidator
+						// If no validator is given, it's still better to validate against the parameter count as given
+						// by the pattern than accepting every input blindly and producing wrong output
+						: StandardArgumentsValidators.exactly( renderer.getParamCount() )
 		);
 		this.renderer = renderer;
 	}

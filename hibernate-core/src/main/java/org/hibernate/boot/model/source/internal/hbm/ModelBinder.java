@@ -3373,8 +3373,10 @@ public class ModelBinder {
 			if ( getPluralAttributeSource().getElementSource() instanceof PluralAttributeElementSourceBasic ) {
 				final PluralAttributeElementSourceBasic elementSource =
 						(PluralAttributeElementSourceBasic) getPluralAttributeSource().getElementSource();
-				final BasicValue elementBinding = new BasicValue( getMappingDocument(),
-																  getCollectionBinding().getCollectionTable() );
+				final BasicValue elementBinding = new BasicValue(
+						getMappingDocument(),
+						getCollectionBinding().getCollectionTable()
+				);
 
 				bindSimpleValueType(
 						getMappingDocument(),
