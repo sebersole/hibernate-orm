@@ -6,21 +6,20 @@
  */
 package org.hibernate.jpamodelgen.test.collectionbasictype;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.sql.Types;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.hibernate.type.descriptor.WrapperOptions;
-import org.hibernate.type.descriptor.java.AbstractTypeDescriptor;
-import org.hibernate.type.descriptor.java.MutableMutabilityPlan;
+import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.java.spi.MutableMutabilityPlan;
+import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * @author Vlad Mihalcea
  */
-public class CommaDelimitedStringMapJavaTypeDescriptor extends AbstractTypeDescriptor<Map> {
+public class CommaDelimitedStringMapJavaTypeDescriptor extends AbstractBasicJavaDescriptor<Map> {
 
     public static final String DELIMITER = ",";
 
@@ -44,6 +43,11 @@ public class CommaDelimitedStringMapJavaTypeDescriptor extends AbstractTypeDescr
     @Override
     public Map fromString(String string) {
         return null;
+    }
+
+    @Override
+    public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
+        return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.VARCHAR );
     }
 
     @Override
