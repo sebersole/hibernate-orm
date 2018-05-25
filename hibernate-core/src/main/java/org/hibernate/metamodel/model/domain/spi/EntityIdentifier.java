@@ -29,7 +29,7 @@ import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
  *
  * @author Steve Ebersole
  */
-public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterType<J> {
+public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterType<J>, Readable, Writeable {
 	String NAVIGABLE_ID = "{id}";
 	String LEGACY_NAVIGABLE_ID = "id";
 

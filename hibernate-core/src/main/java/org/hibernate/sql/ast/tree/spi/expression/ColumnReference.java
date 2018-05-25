@@ -8,6 +8,7 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import java.util.Locale;
+import java.util.Objects;
 
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -27,7 +28,14 @@ public class ColumnReference implements Expression {
 	private final Column column;
 
 	public ColumnReference(ColumnReferenceQualifier qualifier, Column column) {
+		assert qualifier != null;
+
 		this.qualifier = qualifier;
+		this.column = column;
+	}
+
+	public ColumnReference(Column column) {
+		this.qualifier = null;
 		this.column = column;
 	}
 
@@ -65,6 +73,9 @@ public class ColumnReference implements Expression {
 	}
 
 	public String renderSqlFragment() {
+		if ( qualifier == null ) {
+			return column.getExpression();
+		}
 		final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
 		return column.render( tableReference.getIdentificationVariable() );
 	}
@@ -79,14 +90,16 @@ public class ColumnReference implements Expression {
 		}
 
 		final ColumnReference that = (ColumnReference) o;
-		return qualifier.equals( that.qualifier )
+		return Objects.equals( qualifier, that.qualifier )
 				&& getColumn().equals( that.getColumn() );
 	}
 
 	@Override
 	public int hashCode() {
-		int result = qualifier.hashCode();
-		result = 31 * result + getColumn().hashCode();
+		int result = getColumn().hashCode();
+		if ( qualifier != null ) {
+			result = 31 * result + qualifier.hashCode();
+		}
 		return result;
 	}
 

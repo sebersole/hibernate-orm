@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -144,5 +145,15 @@ public class VersionDescriptorImpl<O,J>
 	@Override
 	public ValueExtractor getValueExtractor() {
 		return getBasicType().getValueExtractor();
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
+	}
+
+	@Override
+	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+		return value;
 	}
 }

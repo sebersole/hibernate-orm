@@ -68,4 +68,31 @@ public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
 	default QueryKey.ParameterBindingsMemento generateQueryKeyMemento() {
 		throw new NotYetImplementedFor6Exception(  );
 	}
+
+	QueryParameterBindings NO_PARAM_BINDINGS = new QueryParameterBindings() {
+		@Override
+		public boolean isBound(QueryParameterImplementor parameter) {
+			return false;
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(QueryParameterImplementor parameter) {
+			return null;
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(String name) {
+			return null;
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(int position) {
+			return null;
+		}
+
+		@Override
+		public void validate() {
+		}
+	};
+
 }

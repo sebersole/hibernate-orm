@@ -12,6 +12,9 @@ import java.util.List;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.internal.ForeignKeys;
+import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -64,6 +67,18 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 	@Override
 	public Class getJavaType() {
 		return getJavaTypeDescriptor().getJavaType();
+	}
+
+	@Override
+	public void collectNonNullableTransientEntities(
+			Object value,
+			ForeignKeys.Nullifier nullifier,
+			NonNullableTransientDependencies nonNullableTransientEntities,
+			SharedSessionContractImplementor session) {
+		// todo (6.0) : prior versions essentially skipped collections when doing this process
+		//		verify this is actually correct... the collection can hold non-null, transient entities as
+		//		well and not cascade to them, seems like it should add them.  Did previous versions handle
+		// 		the collection values differently?
 	}
 
 	@Override
@@ -223,5 +238,15 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 				columnMapping.getReferringColumn()
 		);
 		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection( expression );
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
 	}
 }

@@ -68,4 +68,6 @@ public abstract class AbstractPersistentAttribute<O,J> implements PersistentAttr
 	public boolean isIncludedInOptimisticLocking() {
 		return includedInOptimisticLocking;
 	}
+
+
 }

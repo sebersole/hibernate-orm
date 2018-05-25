@@ -7,11 +7,11 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
-
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.EmbeddedValueMapping;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
@@ -29,7 +29,6 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroup;
 import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -132,5 +131,15 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	@Override
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
 	}
 }

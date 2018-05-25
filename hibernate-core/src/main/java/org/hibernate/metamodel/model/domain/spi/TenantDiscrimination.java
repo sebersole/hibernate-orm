@@ -9,7 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 /**
  * @author Steve Ebersole
  */
-public interface TenantDiscrimination extends StateArrayContributor<String>, VirtualNavigable<String>, BasicValuedNavigable<String> {
+public interface TenantDiscrimination extends VirtualNavigable<String>, BasicValuedNavigable<String> {
 	boolean isShared();
 
 	boolean isUseParameterBinding();

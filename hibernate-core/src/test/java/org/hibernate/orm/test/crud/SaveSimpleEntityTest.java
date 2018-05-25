@@ -6,6 +6,8 @@
  */
 package org.hibernate.orm.test.crud;
 
+import java.util.List;
+
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
@@ -22,10 +24,26 @@ public class SaveSimpleEntityTest extends SessionFactoryBasedFunctionalTest {
 		metadataSources.addAnnotatedClass( SimpleEntity.class );
 	}
 
+	@Override
+	protected boolean exportSchema() {
+		return true;
+	}
+
 	@Test
 	public void testEntitySaving() {
+//		sessionFactoryScope().inTransaction(
+//				session -> session.createQuery( "delete SimpleEntity" ).executeUpdate()
+//		);
+
 		final SimpleEntity entity = new SimpleEntity();
 		entity.setId( 1 );
-		sessionFactoryScope().inTransaction( sessionImplementor -> sessionImplementor.save(entity) );
+		entity.setSomeString( "hi" );
+		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final String value = session.createQuery( "select s.someString from SimpleEntity s", String.class ).uniqueResult();
+					assert "hi".equals( value );
+				}
+		);
 	}
 }

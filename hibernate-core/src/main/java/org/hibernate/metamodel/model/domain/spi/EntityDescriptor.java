@@ -16,6 +16,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.cache.spi.entry.CacheEntry;
@@ -45,9 +46,7 @@ import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.EntityMutabilityPlan;
 
 /**
  * Contract describing mapping information and persistence logic for a particular strategy of entity mapping.  A given
@@ -651,22 +650,16 @@ public interface EntityDescriptor<T>
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// todo (6.0) : legacy methods based on the legacy "decomposed attribute state" arrays
 
-	/**
-	 * Get the Hibernate types of the class properties
-	 */
+	@Remove
 	Type[] getPropertyTypes();
 
+	@Remove
 	JavaTypeDescriptor[] getPropertyJavaTypeDescriptors();
 
-	/**
-	 * Get the names of the class properties - doesn't have to be the names of the
-	 * actual Java properties (used for XML generation only)
-	 */
+	@Remove
 	String[] getPropertyNames();
 
-	/**
-	 * Helper method to locate a property type by property name.
-	 */
+	@Remove
 	default Type getPropertyType(String propertyName) {
 		final String[] propertyNames = getPropertyNames();
 		for ( int i = 0; i < propertyNames.length; ++i ) {
@@ -677,6 +670,7 @@ public interface EntityDescriptor<T>
 		return null;
 	}
 
+	@Remove
 	default JavaTypeDescriptor getPropertyJavaTypeDescriptor(String propertyName) {
 		final String[] propertyNames = getPropertyNames();
 		for ( int i = 0; i < propertyNames.length; ++i ) {
@@ -687,54 +681,32 @@ public interface EntityDescriptor<T>
 		return null;
 	}
 
-	/**
-	 * Get the "insertability" of the properties of this class
-	 * (does the property appear in an SQL INSERT)
-	 */
+	@Remove
 	boolean[] getPropertyInsertability();
 
-	/**
-	 * Which of the properties of this class are database generated values on insert?
-	 *
-	 * @deprecated Replaced internally with InMemoryValueGenerationStrategy / InDatabaseValueGenerationStrategy
-	 */
+	@Remove
 	@Deprecated
 	ValueInclusion[] getPropertyInsertGenerationInclusions();
 
-	/**
-	 * Which of the properties of this class are database generated values on update?
-	 *
-	 * @deprecated Replaced internally with InMemoryValueGenerationStrategy / InDatabaseValueGenerationStrategy
-	 */
 	@Deprecated
+	@Remove
 	ValueInclusion[] getPropertyUpdateGenerationInclusions();
 
-	/**
-	 * Get the "updateability" of the properties of this class
-	 * (does the property appear in an SQL UPDATE)
-	 */
+	@Remove
 	boolean[] getPropertyUpdateability();
 
-	/**
-	 * Get the "checkability" of the properties of this class
-	 * (is the property dirty checked, does the cache need
-	 * to be updated)
-	 */
+	@Remove
 	boolean[] getPropertyCheckability();
 
-	/**
-	 * Get the nullability of the properties of this class
-	 */
+	@Remove
 	boolean[] getPropertyNullability();
 
-	/**
-	 * Get the "versionability" of the properties of this class
-	 * (is the property optimistic-locked)
-	 */
+	@Remove
 	boolean[] getPropertyVersionability();
+
+	@Remove
 	boolean[] getPropertyLaziness();
-	/**
-	 * Get the cascade styles of the properties (optional operation)
-	 */
+
+	@Remove
 	CascadeStyle[] getPropertyCascadeStyles();
 }

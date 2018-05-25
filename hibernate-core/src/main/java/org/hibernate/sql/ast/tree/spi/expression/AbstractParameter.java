@@ -45,11 +45,6 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 	}
 
 	@Override
-	public JdbcParameterBinder getParameterBinder() {
-		return this;
-	}
-
-	@Override
 	@SuppressWarnings("unchecked")
 	public int bindParameterValue(
 			PreparedStatement statement,

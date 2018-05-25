@@ -18,7 +18,9 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinder;
  */
 public interface GenericParameter extends ParameterSpec, JdbcParameterBinder, Expression, SqlExpressable, Selectable {
 	@Override
-	JdbcParameterBinder getParameterBinder();
+	default JdbcParameterBinder getParameterBinder() {
+		return this;
+	}
 
 	QueryParameterBinding resolveBinding(ParameterBindingResolutionContext context);
 

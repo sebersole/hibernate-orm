@@ -70,4 +70,6 @@ public abstract class AbstractSingularPersistentAttribute<O,J>
 	public Class<J> getBindableJavaType() {
 		return getJavaTypeDescriptor().getJavaType();
 	}
+
+
 }

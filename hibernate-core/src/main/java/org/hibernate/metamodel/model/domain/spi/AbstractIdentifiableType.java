@@ -46,17 +46,17 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 		// todo (6.0) : determine which "root entity" navigables need to be written to the state array.
 		//		- also, make sure this only happens for the root
 
-		if ( getHierarchy().getDiscriminatorDescriptor() != null ) {
-			consumer.accept( getHierarchy().getDiscriminatorDescriptor() );
-		}
+//		if ( getHierarchy().getDiscriminatorDescriptor() != null ) {
+//			consumer.accept( getHierarchy().getDiscriminatorDescriptor() );
+//		}
 
 		if ( getHierarchy().getVersionDescriptor() != null ) {
 			consumer.accept( getHierarchy().getVersionDescriptor() );
 		}
 
-		if ( getHierarchy().getTenantDiscrimination() != null ) {
-			consumer.accept( getHierarchy().getTenantDiscrimination() );
-		}
+//		if ( getHierarchy().getTenantDiscrimination() != null ) {
+//			consumer.accept( getHierarchy().getTenantDiscrimination() );
+//		}
 
 //		if ( getHierarchy().getRowIdDescriptor() != null ) {
 //			consumer.accept( getHierarchy().getRowIdDescriptor() );

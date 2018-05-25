@@ -43,6 +43,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
@@ -889,5 +890,31 @@ public abstract class AbstractEntityDescriptor<J>
 				getEntityName(),
 				hashCode()
 		);
+	}
+
+
+	@Override
+	public void insert(
+			Serializable id,
+			Object[] fields,
+			Object object,
+			SharedSessionContractImplementor session) {
+		insertInternal( id, fields, object, session );
+	}
+
+	protected Serializable insertInternal(
+			Serializable id,
+			Object[] fields,
+			Object object,
+			SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Serializable insert(
+			Object[] fields,
+			Object object,
+			SharedSessionContractImplementor session) {
+		return insertInternal( null, fields, object, session );
 	}
 }

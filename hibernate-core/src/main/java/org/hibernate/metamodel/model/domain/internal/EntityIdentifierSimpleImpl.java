@@ -12,6 +12,7 @@ import java.util.List;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -163,5 +164,15 @@ public class EntityIdentifierSimpleImpl<O,J>
 	@Override
 	public boolean isOptional() {
 		return false;
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
+	}
+
+	@Override
+	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+		return value;
 	}
 }

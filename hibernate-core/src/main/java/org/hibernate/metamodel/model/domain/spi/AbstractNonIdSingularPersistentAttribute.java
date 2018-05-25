@@ -7,6 +7,9 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.engine.internal.ForeignKeys;
+import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -41,6 +44,11 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 	}
 
 	@Override
+	public int getStateArrayPosition() {
+		return stateArrayPosition;
+	}
+
+	@Override
 	public void setStateArrayPosition(int position) {
 		this.stateArrayPosition = position;
 	}
@@ -51,11 +59,6 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 		// todo (6.0) : determine mutability plan based on JTD & @Immutable
 		//		for now just use the JTD MP
 		this.mutabilityPlan = getJavaTypeDescriptor().getMutabilityPlan();
-	}
-
-	@Override
-	public int getStateArrayPosition() {
-		return stateArrayPosition;
 	}
 
 	@Override
@@ -91,5 +94,14 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 	@Override
 	public MutabilityPlan<J> getMutabilityPlan() {
 		return mutabilityPlan;
+	}
+
+	@Override
+	public void collectNonNullableTransientEntities(
+			Object value,
+			ForeignKeys.Nullifier nullifier,
+			NonNullableTransientDependencies nonNullableTransientEntities,
+			SharedSessionContractImplementor session) {
+		// most implementations have nothing to do here
 	}
 }

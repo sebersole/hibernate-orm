@@ -10,8 +10,10 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
+import org.hibernate.Internal;
 import org.hibernate.TransientObjectException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.engine.spi.EntityEntry;
@@ -21,9 +23,9 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute.SingularAttributeClassification;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 
@@ -32,11 +34,13 @@ import org.hibernate.proxy.LazyInitializer;
  *
  * @author Gavin King
  */
+@Internal
 public final class ForeignKeys<T> {
 
 	/**
 	 * Delegate for handling nullifying ("null"ing-out) non-cascaded associations
 	 */
+	@Internal
 	public static class Nullifier {
 		private final boolean isDelete;
 		private final boolean isEarlyInsert;
@@ -130,8 +134,7 @@ public final class ForeignKeys<T> {
 		 * @param entityName The name of the entity
 		 * @param object The entity instance
 		 */
-		private boolean isNullifiable(final String entityName, Object object)
-				throws HibernateException {
+		public boolean isNullifiable(String entityName, Object object) throws HibernateException {
 			if ( object == LazyPropertyInitializer.UNFETCHED_PROPERTY ) {
 				// this is the best we can do...
 				return false;
@@ -317,84 +320,39 @@ public final class ForeignKeys<T> {
 			Object[] values,
 			boolean isEarlyInsert,
 			SharedSessionContractImplementor session) {
+		if ( values == null ) {
+			return null;
+		}
+
+		final NonNullableTransientDependencies nonNullableTransientEntities = new NonNullableTransientDependencies();
 		final Nullifier nullifier = new Nullifier( entity, false, isEarlyInsert, session );
 		final EntityDescriptor descriptor = session.getEntityPersister( entityName, entity );
-		final String[] propertyNames = descriptor.getPropertyNames();
-		final List<PersistentAttribute<?, ?>> persistentAttributes = descriptor.getPersistentAttributes();
-		final boolean[] nullability = descriptor.getPropertyNullability();
-		final NonNullableTransientDependencies nonNullableTransientEntities = new NonNullableTransientDependencies();
-		int i = 0;
-		for ( PersistentAttribute attribute : persistentAttributes) {
-			collectNonNullableTransientEntities(
-					nullifier,
-					values[i],
-					propertyNames[i],
-					attribute,
-					nullability[i],
-					session,
-					nonNullableTransientEntities
-			);
-		}
-		return nonNullableTransientEntities.isEmpty() ? null : nonNullableTransientEntities;
-	}
 
-	private static void collectNonNullableTransientEntities(
-			Nullifier nullifier,
-			Object value,
-			String propertyName,
-			PersistentAttribute attribute,
-			boolean isNullable,
-			SharedSessionContractImplementor session,
-			NonNullableTransientDependencies nonNullableTransientEntities) {
-		if ( value == null ) {
-			return;
-		}
-		if ( attribute instanceof SingularPersistentAttributeEntity ) {
-			final SingularPersistentAttributeEntity singularPersistentAttribute = (SingularPersistentAttributeEntity) attribute;
-			if ( !isNullable && singularPersistentAttribute.getAttributeTypeClassification() != SingularAttributeClassification.ONE_TO_ONE
-					&& nullifier.isNullifiable( singularPersistentAttribute.getNavigableName(), value ) ) {
-				nonNullableTransientEntities.add( propertyName, value );
-			}
-		}
+		descriptor.visitStateArrayNavigables(
+				new Consumer<StateArrayContributor<?>>() {
+					int i = 0;
 
-		if ( attribute instanceof SingularPersistentAttribute ) {
-			final SingularAttributeClassification attributeClassification =
-					( (SingularPersistentAttribute) attribute ).getAttributeTypeClassification();
-			if ( attribute instanceof SingularPersistentAttributeEntity ) {
-				final SingularPersistentAttributeEntity singularPersistentAttribute = (SingularPersistentAttributeEntity) attribute;
-				if ( !isNullable && attributeClassification != SingularAttributeClassification.ONE_TO_ONE
-						&& nullifier.isNullifiable( singularPersistentAttribute.getNavigableName(), value ) ) {
-					nonNullableTransientEntities.add( propertyName, value );
-				}
-			}
-			else if ( attributeClassification == SingularAttributeClassification.ANY ) {
-				if ( !isNullable && nullifier.isNullifiable( null, value ) ) {
-					nonNullableTransientEntities.add( propertyName, value );
-				}
-			}
-			else if ( attributeClassification == SingularAttributeClassification.EMBEDDED ) {
-				final SingularPersistentAttributeEmbedded embedded = (SingularPersistentAttributeEmbedded) attribute;
-				final EmbeddedTypeDescriptor<?> embeddedDescriptor = embedded.getEmbeddedDescriptor();
-				final boolean[] subValueNullability = embeddedDescriptor.getPropertyNullability();
-				if ( subValueNullability != null ) {
-					final Object[] subValues = embeddedDescriptor.getPropertyValues( value );
+					// todo (6.0) : this is a good example of potential performance trade off - evaluate
+					//		specifically, because the method below *could be* (and partially is) a non-polymorphic call site
+					//		but moving to StateArrayContributor would be polymorphic
+					@Override
+					public void accept(StateArrayContributor<?> stateArrayContributor) {
+						final Object value = values[i++];
+						if ( value == null ) {
+							return;
+						}
 
-					int j = 0;
-					for ( PersistentAttribute<?, ?> subAttribute : embeddedDescriptor.getDeclaredPersistentAttributes() ) {
-						collectNonNullableTransientEntities(
+						stateArrayContributor.collectNonNullableTransientEntities(
+								value,
 								nullifier,
-								subValues[j],
-								subAttribute.getName(),
-								subAttribute,
-								subValueNullability[j],
-								session,
-								nonNullableTransientEntities
+								nonNullableTransientEntities,
+								session
 						);
-						j++;
 					}
 				}
-			}
-		}
+		);
+
+		return nonNullableTransientEntities.isEmpty() ? null : nonNullableTransientEntities;
 	}
 
 	/**

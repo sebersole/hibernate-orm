@@ -87,6 +87,16 @@ public interface ManagedTypeDescriptor<T>
 		}
 	}
 
+	default <O,J> void visitAttributes(Consumer<PersistentAttribute<O,J>> action, Predicate<PersistentAttribute<O,J>> filter) {
+		visitAttributes(
+				attribute -> {
+					if ( filter.test( attribute ) ) {
+						action.accept( attribute );
+					}
+				}
+		);
+	}
+
 	default void visitAttributes(Consumer<NonIdPersistentAttribute> consumer) {
 		for ( NonIdPersistentAttribute attribute : getPersistentAttributes() ) {
 			consumer.accept( attribute );
@@ -200,7 +210,11 @@ public interface ManagedTypeDescriptor<T>
 	 * Return the (loaded) values of the mapped properties of the object (not including backrefs)
 	 */
 	default Object[] getPropertyValues(Object object) {
-		throw new NotYetImplementedFor6Exception();
+		final Object[] values = new Object[ getStateArrayContributors().size() ];
+		visitStateArrayNavigables(
+				contributor -> values[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().get( object )
+		);
+		return values;
 	}
 
 

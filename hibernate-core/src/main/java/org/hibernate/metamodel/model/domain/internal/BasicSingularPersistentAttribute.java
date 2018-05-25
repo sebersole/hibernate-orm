@@ -6,12 +6,12 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.convert.internal.NamedEnumValueConverter;
-import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
-import org.hibernate.metamodel.model.convert.internal.StandardBasicValueConverter;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
@@ -27,11 +27,13 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceBasic;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
+import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -172,4 +174,32 @@ public class BasicSingularPersistentAttribute<O, J>
 		return hydratedForm;
 	}
 
+	@Override
+	public List<Column> getColumns() {
+		return Collections.singletonList( getBoundColumn() );
+	}
+
+	@Override
+	public List<ColumnReference> resolveColumnReferences(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionGroupResolutionContext resolutionContext) {
+		return Collections.singletonList(
+				qualifier.resolveColumnReference( getBoundColumn() )
+		);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+		if ( valueConverter != null ) {
+			return valueConverter.toRelationalValue( value, session );
+		}
+		return value;
+	}
 }

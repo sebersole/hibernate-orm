@@ -8,6 +8,7 @@ package org.hibernate.orm.test.support.domains.gambit;
 
 import java.time.Instant;
 import java.util.Date;
+import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Temporal;

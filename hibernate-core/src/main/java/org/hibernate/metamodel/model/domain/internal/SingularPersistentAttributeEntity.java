@@ -14,6 +14,9 @@ import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.internal.ForeignKeys;
+import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -295,6 +298,16 @@ public class SingularPersistentAttributeEntity<O,J>
 		return joinCollector.generateTableGroup( joinType, tableGroupInfoSource, tableGroupJoinContext );
 	}
 
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
 		private final JoinedTableGroupContext tableGroupJoinContext;
 
@@ -379,5 +392,18 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionGroupResolutionContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception(  );
+	}
+
+	@Override
+	public void collectNonNullableTransientEntities(
+			Object value,
+			ForeignKeys.Nullifier nullifier,
+			NonNullableTransientDependencies nonNullableTransientEntities,
+			SharedSessionContractImplementor session) {
+		if ( isNullable()
+				&& getAttributeTypeClassification() != SingularAttributeClassification.ONE_TO_ONE
+				&& nullifier.isNullifiable( getNavigableName(), value ) ) {
+			nonNullableTransientEntities.add( getNavigableName(), value );
+		}
 	}
 }

@@ -11,6 +11,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -22,6 +23,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggrega
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -63,7 +65,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
-	public EmbeddedTypeDescriptor getEmbeddedDescriptor() {
+	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
 		return embeddedMetadata;
 	}
 
@@ -174,5 +176,29 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	@Override
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
+		getEmbeddedDescriptor().visitStateArrayNavigables(
+				contributor -> {
+					final int index = contributor.getStateArrayPosition();
+					values[index] = contributor.unresolve( values[index], session );
+				}
+		);
+
+		return values;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+		final Object[] values = (Object[]) value;
+		getEmbeddedDescriptor().visitStateArrayNavigables(
+				contributor -> values[ contributor.getStateArrayPosition() ] =
+						contributor.dehydrate( values[ contributor.getStateArrayPosition() ], session )
+		);
+		return values;
 	}
 }

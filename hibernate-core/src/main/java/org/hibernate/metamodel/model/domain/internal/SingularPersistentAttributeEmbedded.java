@@ -8,12 +8,16 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.internal.ForeignKeys;
+import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Component;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -24,6 +28,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -167,5 +172,67 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
+	}
+
+	@Override
+	public void collectNonNullableTransientEntities(
+			Object value,
+			ForeignKeys.Nullifier nullifier,
+			NonNullableTransientDependencies nonNullableTransientEntities,
+			SharedSessionContractImplementor session) {
+		if ( value == null ) {
+			return;
+		}
+
+		final Object[] subValues = (Object[]) value;
+		if ( subValues.length == 0 ) {
+			return;
+		}
+
+		getEmbeddedDescriptor().visitStateArrayNavigables(
+				new Consumer<StateArrayContributor<?>>() {
+					int i = 0;
+
+					@Override
+					public void accept(StateArrayContributor<?> stateArrayContributor) {
+						final Object subValue = subValues[i++];
+
+						if ( subValue == null ) {
+							return;
+						}
+
+						stateArrayContributor.collectNonNullableTransientEntities(
+								subValue,
+								nullifier,
+								nonNullableTransientEntities,
+								session
+						);
+					}
+				}
+		);
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
+		getEmbeddedDescriptor().visitStateArrayNavigables(
+				contributor -> {
+					final int index = contributor.getStateArrayPosition();
+					values[index] = contributor.unresolve( values[index], session );
+				}
+		);
+
+		return values;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+		final Object[] values = (Object[]) value;
+		getEmbeddedDescriptor().visitStateArrayNavigables(
+				contributor -> values[ contributor.getStateArrayPosition() ] =
+						contributor.dehydrate( values[ contributor.getStateArrayPosition() ], session )
+		);
+		return values;
 	}
 }

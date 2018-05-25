@@ -7,6 +7,10 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
@@ -21,16 +25,33 @@ import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
+import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.internal.QueryOptionsImpl;
+import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
+import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.InsertStatement;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
+import org.hibernate.sql.ast.tree.spi.from.TableReference;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcInsert;
+import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -107,17 +128,110 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	}
 
-	@Override
-	public void insert(
-			Serializable id, Object[] fields, Object object, SharedSessionContractImplementor session)
-			throws HibernateException {
+	protected Serializable insertInternal(
+			Serializable id,
+			Object[] fields,
+			Object object,
+			SharedSessionContractImplementor session) {
+		// generate id if needed
+		if ( id == null ) {
+			final IdentifierGenerator generator = getHierarchy().getIdentifierDescriptor().getIdentifierValueGenerator();
+			if ( generator != null ) {
+				id = generator.generate( session, object );
+			}
+		}
 
-	}
+		// for now - just root table
+		// for now - we also regenerate these SQL AST objects each time - we can cache these
 
-	@Override
-	public Serializable insert(
-			Object[] fields, Object object, SharedSessionContractImplementor session) throws HibernateException {
-		return null;
+		final TableReference primaryTableReference = resolvePrimaryTableReference(
+				new SqlAliasBase() {
+					@Override
+					public String getAliasStem() {
+						return SingleTableEntityDescriptor.this.getSqlAliasStem();
+					}
+
+					@Override
+					public String generateNewAlias() {
+						return getAliasStem();
+					}
+				}
+		);
+
+		final InsertStatement insertStatement = new InsertStatement( primaryTableReference );
+
+		final Object dehydrateIdState = getHierarchy().getIdentifierDescriptor().dehydrate(
+				getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+				session
+		);
+		final List<Column> idColumns = getHierarchy().getIdentifierDescriptor().getColumns();
+		assert idColumns.size() == 1;
+		insertStatement.addTargetColumnReference(
+				new ColumnReference( idColumns.get( 0 ) )
+		);
+		insertStatement.addValue( new LiteralParameter( dehydrateIdState, getHierarchy().getIdentifierDescriptor() ) );
+
+		visitStateArrayNavigables(
+				contributor -> {
+					final Object domainValue = fields[ contributor.getStateArrayPosition() ];
+					final Object dehydrateState = contributor.dehydrate(
+							contributor.unresolve( domainValue, session ),
+							session
+					);
+
+					final List<Column> columns = contributor.getColumns();
+					assert columns.size() == 1;
+
+					insertStatement.addTargetColumnReference( new ColumnReference( columns.get( 0 ) ) );
+					insertStatement.addValue(
+							new LiteralParameter( dehydrateState, (AllowableParameterType) contributor )
+					);
+				}
+		);
+
+		final JdbcInsert jdbcInsert = InsertToJdbcInsertConverter.createJdbcInsert( insertStatement, session );
+		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
+				jdbcInsert,
+				new ExecutionContext() {
+					@Override
+					public SharedSessionContractImplementor getSession() {
+						return session;
+					}
+
+					@Override
+					public QueryOptions getQueryOptions() {
+						return new QueryOptionsImpl();
+					}
+
+					@Override
+					public ParameterBindingContext getParameterBindingContext() {
+						return new ParameterBindingContext() {
+							@Override
+							public SharedSessionContractImplementor getSession() {
+								return session;
+							}
+
+							@Override
+							public <T> Collection<T> getLoadIdentifiers() {
+								return Collections.emptyList();
+							}
+
+							@Override
+							public QueryParameterBindings getQueryParameterBindings() {
+								return QueryParameterBindings.NO_PARAM_BINDINGS;
+							}
+						};
+					}
+
+					@Override
+					public Callback getCallback() {
+						return afterLoadAction -> {};
+					}
+				},
+				Connection::prepareStatement
+		);
+
+		return id;
 	}
 
 	@Override
@@ -314,8 +428,18 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public Object[] getPropertyValuesToInsert(
-			Object object, Map mergeMap, SharedSessionContractImplementor session) throws HibernateException {
-		return new Object[0];
+			Object object,
+			Map mergeMap,
+			SharedSessionContractImplementor session) throws HibernateException {
+		final int size = getStateArrayContributors().size();
+		final Object[] valuesToInsert = new Object[size];
+
+		visitStateArrayNavigables(
+				stateArrayContributor -> valuesToInsert[ stateArrayContributor.getStateArrayPosition() ] =
+						stateArrayContributor.getPropertyAccess().getGetter().getForInsert( object, mergeMap, session )
+		);
+
+		return valuesToInsert;
 	}
 
 	@Override
