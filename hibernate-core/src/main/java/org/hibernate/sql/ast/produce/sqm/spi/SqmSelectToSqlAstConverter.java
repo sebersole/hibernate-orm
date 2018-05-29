@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.AssertionFailure;
+import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.spi.AttributeNodeContainer;
 import org.hibernate.internal.util.collections.Stack;
@@ -88,6 +89,11 @@ public class SqmSelectToSqlAstConverter
 				queryResults,
 				affectedTableNames()
 		);
+	}
+
+	@Override
+	public LockOptions getLockOptions() {
+		return getQueryOptions().getLockOptions();
 	}
 
 	@Override

@@ -7,6 +7,8 @@
 package org.hibernate.mapping;
 
 
+import org.hibernate.internal.FilterConfiguration;
+
 /**
  * Defines mapping elements to which filters may be applied.
  *
@@ -15,5 +17,5 @@ package org.hibernate.mapping;
 public interface Filterable {
 	void addFilter(String name, String condition, boolean autoAliasInjection, java.util.Map<String,String> aliasTableMap, java.util.Map<String,String> aliasEntityMap);
 
-	java.util.List getFilters();
+	java.util.List<FilterConfiguration> getFilters();
 }

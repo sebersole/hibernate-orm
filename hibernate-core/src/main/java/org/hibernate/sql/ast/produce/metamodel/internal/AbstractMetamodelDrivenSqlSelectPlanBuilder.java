@@ -154,6 +154,12 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		return buildingContext.getCallback();
 	}
 
+
+	@Override
+	public SqlAstSelectDescriptor buildSqlSelectPlan(NavigableContainer rootNavigable) {
+		return null;
+	}
+
 	private NavigableReferenceInfoImpl createNavigableRefInfo(Navigable navigable) {
 		if ( navigable instanceof NavigableContainer ) {
 			return new NavigableContainerReferenceInfoImpl(
@@ -220,7 +226,7 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 	}
 
 
-	protected Predicate generateRestriction() {
+	protected Predicate generateKeyRestriction() {
 		final Expression restrictionExpression = generateRestrictionExpression();
 		return new RelationalPredicate(
 				RelationalPredicate.Operator.EQUAL,
@@ -229,7 +235,9 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		);
 	}
 
-	protected abstract Expression generateRestrictionExpression();
+	protected Expression generateRestrictionExpression() {
+		throw new UnsupportedOperationException();
+	}
 
 	private boolean shouldContinue(Navigable navigable) {
 		if ( navigable instanceof AssociationKeyProducer ) {

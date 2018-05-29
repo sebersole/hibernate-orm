@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
-import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.LockOptions;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -36,5 +36,5 @@ public interface TableGroupContext {
 	 */
 	JoinType getTableReferenceJoinType();
 
-	QueryOptions getQueryOptions();
+	LockOptions getLockOptions();
 }

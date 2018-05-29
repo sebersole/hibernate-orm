@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.hibernate.LockOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.spi.QueryOptions;
@@ -147,8 +148,8 @@ public class SqmUpdateToSqlAstConverterMultiTable
 					}
 
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 				}
 		);

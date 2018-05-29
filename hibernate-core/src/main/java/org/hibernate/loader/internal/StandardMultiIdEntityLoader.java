@@ -6,14 +6,13 @@
  */
 package org.hibernate.loader.internal;
 
-import java.io.Serializable;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
-import org.hibernate.LockOptions;
-import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.loader.spi.SingleIdEntityLoader;
+import org.hibernate.loader.spi.MultiIdEntityLoader;
+import org.hibernate.loader.spi.MultiIdLoaderSelectors;
+import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
@@ -30,29 +29,38 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 /**
  * @author Steve Ebersole
  */
-public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> {
-	private final EntityDescriptor<T> entityDescriptor;
+public class StandardMultiIdEntityLoader<J>
+		implements MultiIdEntityLoader<J> {
+	private final EntityDescriptor<J> entityDescriptor;
+	private final MultiIdLoaderSelectors selectors;
 
-	public StandardSingleIdEntityLoader(
-			EntityDescriptor<T> entityDescriptor,
-			LockOptions lockOptions,
-			LoadQueryInfluencers loadQueryInfluencers) {
+	public StandardMultiIdEntityLoader(EntityDescriptor entityDescriptor, MultiIdLoaderSelectors selectors) {
 		this.entityDescriptor = entityDescriptor;
-
-		// todo (6.0) : build the select SQL AST
-		//		or build on first use?
+		this.selectors = selectors;
 	}
 
 	@Override
-	public T load(Serializable id, LockOptions lockOptions, SharedSessionContractImplementor session) {
+	public EntityDescriptor<J> getEntityDescriptor() {
+		return entityDescriptor;
+	}
+
+	@Override
+	public List<J> load(
+			Object[] ids,
+			MultiLoadOptions options,
+			SharedSessionContractImplementor session) {
+
+		// todo (6.0) : account for batch size, if one
+
 		final SelectByEntityIdentifierBuilder selectBuilder = new SelectByEntityIdentifierBuilder(
 				session.getSessionFactory(),
 				entityDescriptor
 		);
-		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
-				.generateSelectStatement( 1, session.getLoadQueryInfluencers(), lockOptions );
 
-		final List<Serializable> loadIds = Collections.singletonList( id );
+		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
+				.generateSelectStatement( ids.length, session.getLoadQueryInfluencers(), options.getLockOptions() );
+
+		final List<Object> loadIds = Arrays.asList( ids );
 
 		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
 				selectDescriptor,
@@ -79,7 +87,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			}
 		};
 
-		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
+		return JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
 				new ExecutionContext() {
 					@Override
@@ -104,11 +112,5 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				},
 				RowTransformerSingularReturnImpl.instance()
 		);
-
-		if ( list.isEmpty() ) {
-			return null;
-		}
-
-		return list.get( 0 );
 	}
 }

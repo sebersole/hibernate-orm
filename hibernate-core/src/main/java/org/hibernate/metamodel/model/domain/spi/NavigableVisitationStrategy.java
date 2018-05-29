@@ -25,6 +25,8 @@ public interface NavigableVisitationStrategy {
 	//		Session/SessionFactory#visit(String entityName, NavigableVisitationStrategy visitor)
 	//		Session/SessionFactory#visit(Class entityJavaType, NavigableVisitationStrategy visitor)
 
+	// todo (6.0) : replace this with NavigableContainer#visitNavigables?
+
 	/**
 	 * Notification we are preparing to start visitation.
 	 */

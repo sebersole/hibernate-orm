@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.AbstractSharedSessionContract;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
@@ -19,7 +20,11 @@ import org.hibernate.type.spi.BasicType;
  * An SQL <tt>UPDATE</tt> statement
  *
  * @author Gavin King
+ *
+ * @deprecated Converting to use SQL AST
  */
+@Deprecated
+@Remove
 public class Update {
 
 	private String tableName;

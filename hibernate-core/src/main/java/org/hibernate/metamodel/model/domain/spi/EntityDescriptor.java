@@ -362,7 +362,11 @@ public interface EntityDescriptor<T>
 
 	/**
 	 * Get the identifier type
+	 *
+	 * @deprecated Use {@link EntityIdentifier#getJavaType()}
 	 */
+	@Deprecated
+	@Remove
 	Type getIdentifierType();
 
 	/**

@@ -16,7 +16,6 @@ import org.hibernate.sql.exec.internal.JdbcSelectImpl;
 import org.hibernate.sql.exec.internal.ResultSetMappingDescriptorExplicit;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 
 import org.jboss.logging.Logger;
@@ -42,7 +41,6 @@ public class SqlSelectAstToJdbcSelectConverter
 			SqlAstSelectDescriptor sqlSelectPlan,
 			SharedSessionContractImplementor persistenceContext,
 			QueryParameterBindings parameterBindings,
-			QueryResultCreationContext initializerCreationContext,
 			Collection<?> loadIdentifiers) {
 		final SqlSelectAstToJdbcSelectConverter walker = new SqlSelectAstToJdbcSelectConverter(
 				persistenceContext,

@@ -57,6 +57,7 @@ import org.hibernate.proxy.LazyInitializer;
 public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener implements LoadEventListener {
 	public static final Object REMOVED_ENTITY_MARKER = new Object();
 	public static final Object INCONSISTENT_RTN_CLASS_MARKER = new Object();
+
 	public static final LockMode DEFAULT_LOCK_MODE = LockMode.NONE;
 
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( DefaultLoadEventListener.class );
@@ -67,12 +68,10 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 * Handle the given load event.
 	 *
 	 * @param event The load event to be handled.
-	 *
-	 * @throws HibernateException
 	 */
 	public void onLoad(
 			final LoadEvent event,
-			final LoadEventListener.LoadType loadType) throws HibernateException {
+			final LoadEventListener.LoadType loadType) {
 
 		final EntityDescriptor entityDescriptor = getPersister( event );
 
@@ -80,7 +79,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			throw new HibernateException( "Unable to locate entityDescriptor: " + event.getEntityClassName() );
 		}
 
-		final Class idClass = entityDescriptor.getIdentifierType().getJavaTypeDescriptor().getJavaType();
+		final Class idClass = entityDescriptor.getHierarchy().getIdentifierDescriptor().getJavaType();
 		if ( idClass != null && !idClass.isInstance( event.getEntityId() ) ) {
 			checkIdClass( entityDescriptor, event, loadType, idClass );
 		}
@@ -98,7 +97,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			);
 		}
 		else {
-			return event.getSession().getFactory().getEntityPersister( event.getEntityClassName() );
+			return event.getSession().getFactory().getMetamodel().getEntityDescriptor( event.getEntityClassName() );
 		}
 	}
 

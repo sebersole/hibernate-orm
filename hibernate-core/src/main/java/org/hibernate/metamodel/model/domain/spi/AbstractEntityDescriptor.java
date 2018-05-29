@@ -43,11 +43,11 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
 import org.hibernate.loader.internal.StandardCompositeNaturalIdLoaderImpl;
+import org.hibernate.loader.internal.StandardMultiIdEntityLoader;
 import org.hibernate.loader.internal.StandardSimpleNaturalIdLoaderImpl;
 import org.hibernate.loader.internal.StandardSingleIdEntityLoader;
 import org.hibernate.loader.spi.EntityLocker;
@@ -174,6 +174,9 @@ public abstract class AbstractEntityDescriptor<J>
 			this.canWriteToCache = false;
 			this.canReadFromCache = false;
 		}
+
+		// Handle any filters applied to the class level
+		filterHelper = new FilterHelper( bootMapping.getFilters(), factory );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -417,7 +420,7 @@ public abstract class AbstractEntityDescriptor<J>
 	private EnumMap<LockMode,SingleIdEntityLoader> loaders;
 	private EnumMap<InternalFetchProfileType,SingleIdEntityLoader> internalCascadeLoaders;
 
-	private final FilterHelper filterHelper = null;
+	private final FilterHelper filterHelper;
 	private final Set<String> affectingFetchProfileNames = new HashSet<>();
 
 	@Override
@@ -536,10 +539,6 @@ public abstract class AbstractEntityDescriptor<J>
 		}
 	}
 
-
-	private MultiIdEntityLoader orderedMultiIdLoader;
-	private MultiIdEntityLoader unorderedMultiIdLoader;
-
 	@Override
 	public MultiIdEntityLoader getMultiIdLoader(MultiIdLoaderSelectors selectors) {
 		if ( customQueryLoader != null ) {
@@ -548,26 +547,9 @@ public abstract class AbstractEntityDescriptor<J>
 			);
 		}
 
-		if ( selectors.isOrderReturnEnabled() ) {
-			if ( orderedMultiIdLoader == null ) {
-				orderedMultiIdLoader = createOrderedMultiIdLoader();
-			}
-			return orderedMultiIdLoader;
-		}
+		// todo (6.0) : maybe cache the QueryResult reference?
 
-
-		if ( unorderedMultiIdLoader == null ) {
-			unorderedMultiIdLoader = createUnorderedMultiIdLoader();
-		}
-		return unorderedMultiIdLoader;
-	}
-
-	private MultiIdEntityLoader createOrderedMultiIdLoader() {
-		throw new NotYetImplementedFor6Exception();
-	}
-
-	private MultiIdEntityLoader createUnorderedMultiIdLoader() {
-		throw new NotYetImplementedFor6Exception();
+		return new StandardMultiIdEntityLoader( this, selectors );
 	}
 
 	@Override
@@ -627,7 +609,7 @@ public abstract class AbstractEntityDescriptor<J>
 				info.getUniqueIdentifier(),
 				tableGroupContext.getTableSpace(),
 				this,
-				tableGroupContext.getQueryOptions().getLockOptions().getEffectiveLockMode( info.getIdentificationVariable() ),
+				tableGroupContext.getLockOptions().getEffectiveLockMode( info.getIdentificationVariable() ),
 				new NavigablePath( getEntityName() ),
 				primaryTableReference,
 				joins

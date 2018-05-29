@@ -16,8 +16,16 @@ import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
  * @author Steve Ebersole
  */
 public class LoadIdParameter extends AbstractParameter {
+	private final int idValueIndex;
+
 	public LoadIdParameter(AllowableParameterType type) {
-		super( type );
+		this( 0, type );
+
+	}
+
+	public LoadIdParameter(int idValueIndex, AllowableParameterType restrictedNavigable) {
+		super( restrictedNavigable );
+		this.idValueIndex = idValueIndex;
 	}
 
 	@Override
@@ -30,7 +38,8 @@ public class LoadIdParameter extends AbstractParameter {
 	public QueryParameterBinding resolveBinding(ParameterBindingResolutionContext context) {
 		return new LoadIdParameterBinding(
 				context.getLoadIdentifiers(),
-				getType()
+				getType(),
+				idValueIndex
 		);
 	}
 
@@ -46,6 +55,6 @@ public class LoadIdParameter extends AbstractParameter {
 
 	@Override
 	protected void warnNullBindValue() {
-		throw new IllegalStateException(  );
+//		throw new IllegalStateException(  );
 	}
 }

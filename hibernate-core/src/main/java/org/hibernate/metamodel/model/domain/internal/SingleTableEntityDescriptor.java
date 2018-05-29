@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +211,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							}
 
 							@Override
-							public <T> Collection<T> getLoadIdentifiers() {
+							public <T> List<T> getLoadIdentifiers() {
 								return Collections.emptyList();
 							}
 

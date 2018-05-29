@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.produce.sqm.internal;
 import java.util.HashSet;
 import java.util.List;
 
+import org.hibernate.LockOptions;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.graph.spi.AttributeNodeContainer;
 import org.hibernate.graph.spi.AttributeNodeImplementor;
@@ -17,7 +18,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.EntityGraphQueryHint;
-import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -207,9 +207,10 @@ public class FetchGraphBuilder {
 								return JoinType.INNER;
 							}
 
+
 							@Override
-							public QueryOptions getQueryOptions() {
-								return builder.getQueryOptions();
+							public LockOptions getLockOptions() {
+								return builder.getQueryOptions().getLockOptions();
 							}
 						}
 				);

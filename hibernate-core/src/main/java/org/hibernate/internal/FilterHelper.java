@@ -36,6 +36,9 @@ public class FilterHelper {
 	 * @param factory The session factory
 	 */
 	public FilterHelper(List<FilterConfiguration> filters, SessionFactoryImplementor factory) {
+		// todo (6.0) : "render" these as AST nodes (Predicate of some sort) that we can apply to the overall SQL AST we are building.
+		//		at least initially, those nodes could simply do the rendering done here with `Template.renderWhereStringTemplate`
+
 		int filterCount = filters.size();
 		filterNames = new String[filterCount];
 		filterConditions = new String[filterCount];

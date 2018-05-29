@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import java.util.Collection;
+import java.util.List;
 import javax.persistence.TemporalType;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
@@ -17,12 +18,14 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class LoadIdParameterBinding<T> implements QueryParameterBinding<T> {
-	private final Collection<T> values;
+	private final List<T> values;
 	private final AllowableParameterType<T> type;
+	private final int idValueIndex;
 
-	public LoadIdParameterBinding(Collection<T> values, AllowableParameterType<T> type) {
+	public LoadIdParameterBinding(List<T> values, AllowableParameterType<T> type, int idValueIndex) {
 		this.values = values;
 		this.type = type;
+		this.idValueIndex = idValueIndex;
 	}
 
 	@Override
@@ -32,12 +35,12 @@ public class LoadIdParameterBinding<T> implements QueryParameterBinding<T> {
 
 	@Override
 	public boolean allowsMultiValued() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public boolean isMultiValued() {
-		return values.size() > 1;
+		return false;
 	}
 
 	@Override
@@ -62,7 +65,7 @@ public class LoadIdParameterBinding<T> implements QueryParameterBinding<T> {
 
 	@Override
 	public T getBindValue() {
-		return isMultiValued() ? null : values.iterator().next();
+		return values.get( idValueIndex );
 	}
 
 	@Override
@@ -87,6 +90,6 @@ public class LoadIdParameterBinding<T> implements QueryParameterBinding<T> {
 
 	@Override
 	public Collection<T> getBindValues() {
-		return isMultiValued() ? values : null;
+		return null;
 	}
 }

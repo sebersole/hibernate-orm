@@ -51,7 +51,6 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 				interpretation,
 				executionContext.getSession(),
 				executionContext.getParameterBindingContext().getQueryParameterBindings(),
-				sqmConveter,
 				Collections.emptyList()
 		);
 	}

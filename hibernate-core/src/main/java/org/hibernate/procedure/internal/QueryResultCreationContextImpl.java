@@ -6,8 +6,8 @@
  */
 package org.hibernate.procedure.internal;
 
+import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 
@@ -16,7 +16,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
  */
 public class QueryResultCreationContextImpl implements QueryResultCreationContext {
 	@Override
-	public QueryOptions getQueryOptions() {
+	public LockOptions getLockOptions() {
 		return null;
 	}
 

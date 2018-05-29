@@ -28,9 +28,9 @@ import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
+import org.hibernate.sql.exec.internal.RowTransformerJpaTupleImpl;
 import org.hibernate.sql.exec.internal.RowTransformerPassThruImpl;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
-import org.hibernate.sql.exec.internal.RowTransformerJpaTupleImpl;
 import org.hibernate.sql.exec.internal.RowTransformerTupleTransformerAdapter;
 import org.hibernate.sql.exec.internal.TupleElementImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -176,7 +176,6 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 				interpretation,
 				executionContext.getSession(),
 				executionContext.getParameterBindingContext().getQueryParameterBindings(),
-				sqmConveter,
 				Collections.emptyList()
 		);
 	}

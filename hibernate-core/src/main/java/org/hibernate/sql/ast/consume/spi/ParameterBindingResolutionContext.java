@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.hibernate.query.spi.QueryParameterBindings;
 
@@ -16,7 +16,7 @@ import org.hibernate.query.spi.QueryParameterBindings;
 public interface ParameterBindingResolutionContext extends ConversionContext {
 	// todo (6.0) : consider more deeply this `#getLoadIdentifier` solution.  seems like there must be a better way.
 
-	<T> Collection<T> getLoadIdentifiers();
+	<T> List<T> getLoadIdentifiers();
 
 	QueryParameterBindings getQueryParameterBindings();
 }

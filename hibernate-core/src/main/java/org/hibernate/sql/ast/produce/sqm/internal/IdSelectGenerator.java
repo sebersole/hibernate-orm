@@ -8,6 +8,7 @@ package org.hibernate.sql.ast.produce.sqm.internal;
 
 import java.util.List;
 
+import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.NavigablePath;
@@ -97,8 +98,8 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					}
 
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 				}
 		);
@@ -109,8 +110,8 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 				rootTableGroup,
 				new QueryResultCreationContext() {
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 
 					final NavigablePath path = new NavigablePath();

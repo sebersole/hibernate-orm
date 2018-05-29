@@ -45,5 +45,22 @@ public class SaveSimpleEntityTest extends SessionFactoryBasedFunctionalTest {
 					assert "hi".equals( value );
 				}
 		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity loaded = session.get( SimpleEntity.class, 1 );
+					assert loaded != null;
+					assert "hi".equals( loaded.getSomeString() );
+				}
+		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final List<SimpleEntity> list = session.byMultipleIds( SimpleEntity.class )
+							.multiLoad( 1, 2 );
+					assert list.size() == 1;
+					final SimpleEntity loaded = list.get( 0 );
+					assert loaded != null;
+					assert "hi".equals( loaded.getSomeString() );
+				}
+		);
 	}
 }

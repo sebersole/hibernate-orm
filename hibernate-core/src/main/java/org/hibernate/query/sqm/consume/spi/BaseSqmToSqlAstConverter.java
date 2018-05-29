@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
@@ -75,12 +76,12 @@ import org.hibernate.query.sqm.tree.expression.function.SqmNullifFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmSumFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmTrimFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmUpperFunction;
-import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmCrossJoin;
 import org.hibernate.query.sqm.tree.from.SqmEntityJoin;
 import org.hibernate.query.sqm.tree.from.SqmFromClause;
 import org.hibernate.query.sqm.tree.from.SqmFromElementSpace;
 import org.hibernate.query.sqm.tree.from.SqmJoin;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmRoot;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
@@ -225,6 +226,7 @@ public abstract class BaseSqmToSqlAstConverter
 		this.sqlAstBuildingContext = sqlAstBuildingContext;
 		this.queryOptions = queryOptions;
 	}
+
 
 	public SqlAstBuildingContext getSqlAstBuildingContext() {
 		return sqlAstBuildingContext;
@@ -531,8 +533,8 @@ public abstract class BaseSqmToSqlAstConverter
 					}
 
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 				}
 		);
@@ -614,8 +616,8 @@ public abstract class BaseSqmToSqlAstConverter
 					}
 
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 				}
 		);
@@ -674,8 +676,8 @@ public abstract class BaseSqmToSqlAstConverter
 					}
 
 					@Override
-					public QueryOptions getQueryOptions() {
-						return queryOptions;
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
 					}
 				}
 		);

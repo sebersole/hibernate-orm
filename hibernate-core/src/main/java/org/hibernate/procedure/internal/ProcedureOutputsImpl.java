@@ -11,7 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -264,7 +263,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 	}
 
 	@Override
-	public <T> Collection<T> getLoadIdentifiers() {
+	public <T> List<T> getLoadIdentifiers() {
 		return Collections.emptyList();
 	}
 

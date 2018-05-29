@@ -6,13 +6,12 @@
  */
 package org.hibernate.orm.test.query.sqm.sql;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfBasics;
-import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBinding;
@@ -81,7 +80,7 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 							}
 
 							@Override
-							public <T> Collection<T> getLoadIdentifiers() {
+							public <T> List<T> getLoadIdentifiers() {
 								return Collections.emptyList();
 							}
 

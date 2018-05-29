@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -18,7 +19,11 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * An SQL <tt>INSERT</tt> statement
  *
  * @author Gavin King
+ *
+ * @deprecated Converting to use SQL AST
  */
+@Deprecated
+@Remove
 public class Insert {
 	final private Dialect dialect;
 

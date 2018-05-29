@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.sqm.internal;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -440,7 +439,7 @@ public class QuerySqmImpl<R>
 	}
 
 	@Override
-	public <T> Collection<T> getLoadIdentifiers() {
+	public <T> List<T> getLoadIdentifiers() {
 		return null;
 	}
 

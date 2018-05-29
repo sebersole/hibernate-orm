@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.LockOptions;
 
 /**
  * Contextual information useful when creating a QueryResult.
@@ -16,5 +16,5 @@ import org.hibernate.query.spi.QueryOptions;
  * @author Steve Ebersole
  */
 public interface QueryResultCreationContext extends SqlSelectionGroupResolutionContext {
-	QueryOptions getQueryOptions();
+	LockOptions getLockOptions();
 }

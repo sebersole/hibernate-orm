@@ -7,7 +7,6 @@
 package org.hibernate.sql.ast.produce.ordering.internal;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -105,7 +104,7 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	// ParameterBindingResolutionContext - parameters not allowed
 
 	@Override
-	public <T> Collection<T> getLoadIdentifiers() {
+	public <T> List<T> getLoadIdentifiers() {
 		return Collections.emptyList();
 	}
 

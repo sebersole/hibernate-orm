@@ -8,9 +8,6 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.Collection;
 
-import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
-import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-
 /**
  * Specialization of ManagedTypeImplementor for types for which
  * we support *mapped* inheritance.
@@ -37,6 +34,7 @@ public interface InheritanceCapable<T> extends ManagedTypeDescriptor<T> {
 	 * This form limits the returned Navigables to just those declared on this container.
 	 *
 	 * todo (6.0) : do we ever care about this distinction from query processing?
+	 * 		^^ we might depending on how we decide to model implicit/explicit downcasts
 	 */
 	<N> Navigable<N> findDeclaredNavigable(String navigableName);
 

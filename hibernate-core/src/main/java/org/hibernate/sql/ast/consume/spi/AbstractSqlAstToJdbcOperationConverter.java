@@ -8,6 +8,7 @@ package org.hibernate.sql.ast.consume.spi;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -74,8 +75,8 @@ public class AbstractSqlAstToJdbcOperationConverter
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Collection<T> getLoadIdentifiers() {
-		return (Collection<T>) loadIdentifiers;
+	public <T> List<T> getLoadIdentifiers() {
+		return (List<T>) loadIdentifiers;
 	}
 
 	@Override

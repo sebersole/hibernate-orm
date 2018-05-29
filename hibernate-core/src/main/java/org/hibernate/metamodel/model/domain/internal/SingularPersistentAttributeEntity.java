@@ -253,7 +253,7 @@ public class SingularPersistentAttributeEntity<O,J>
 				fetchParent,
 				qualifier,
 				this,
-				creationContext.getQueryOptions().getLockOptions().getEffectiveLockMode( resultVariable ),
+				creationContext.getLockOptions().getEffectiveLockMode( resultVariable ),
 				fetchParent.getNavigablePath().append( getNavigableName() ),
 				fetchStrategy,
 				creationContext
@@ -377,7 +377,7 @@ public class SingularPersistentAttributeEntity<O,J>
 					tableGroupInfoSource.getUniqueIdentifier(),
 					tableGroupJoinContext.getTableSpace(),
 					SingularPersistentAttributeEntity.this,
-					context.getQueryOptions().getLockOptions().getEffectiveLockMode( tableGroupInfoSource.getIdentificationVariable() ),
+					context.getLockOptions().getEffectiveLockMode( tableGroupInfoSource.getIdentificationVariable() ),
 					context.getNavigablePath(),
 					rootTableReference,
 					tableReferenceJoins,

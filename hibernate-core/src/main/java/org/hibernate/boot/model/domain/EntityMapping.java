@@ -9,11 +9,12 @@ package org.hibernate.boot.model.domain;
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.mapping.Filterable;
 
 /**
  * @author Steve Ebersole
  */
-public interface EntityMapping extends IdentifiableTypeMapping {
+public interface EntityMapping extends IdentifiableTypeMapping, Filterable {
 	String getEntityName();
 
 	String getJpaEntityName();

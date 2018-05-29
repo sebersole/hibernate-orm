@@ -1088,7 +1088,7 @@ public class NativeQueryImpl<R>
 	}
 
 	@Override
-	public <T> Collection<T> getLoadIdentifiers() {
+	public <T> List<T> getLoadIdentifiers() {
 		return null;
 	}
 

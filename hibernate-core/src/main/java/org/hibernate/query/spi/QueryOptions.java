@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.spi;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.CacheMode;
@@ -55,4 +56,79 @@ public interface QueryOptions {
 
 		return false;
 	}
+
+	/**
+	 * Singleton access
+	 */
+	public static final QueryOptions NONE = new QueryOptions() {
+		@Override
+		public Limit getLimit() {
+			return Limit.NONE;
+		}
+
+		@Override
+		public Integer getFetchSize() {
+			return null;
+		}
+
+		@Override
+		public String getComment() {
+			return null;
+		}
+
+		@Override
+		public LockOptions getLockOptions() {
+			return LockOptions.NONE;
+		}
+
+		@Override
+		public List<String> getDatabaseHints() {
+			return Collections.emptyList();
+		}
+
+		@Override
+		public Integer getTimeout() {
+			return null;
+		}
+
+		@Override
+		public FlushMode getFlushMode() {
+			return null;
+		}
+
+		@Override
+		public Boolean isReadOnly() {
+			return null;
+		}
+
+		@Override
+		public CacheMode getCacheMode() {
+			return null;
+		}
+
+		@Override
+		public Boolean isResultCachingEnabled() {
+			return null;
+		}
+
+		@Override
+		public String getResultCacheRegionName() {
+			return null;
+		}
+
+		@Override
+		public EntityGraphQueryHint getEntityGraphQueryHint() {
+			return null;
+		}
+
+		@Override
+		public TupleTransformer getTupleTransformer() {
+			return null;
+		}
+
+		@Override
+		public ResultListTransformer getResultListTransformer() {
+			return null;
+		}
+	};
 }
