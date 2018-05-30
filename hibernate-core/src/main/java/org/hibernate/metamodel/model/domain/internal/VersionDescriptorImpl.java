@@ -77,6 +77,8 @@ public class VersionDescriptorImpl<O,J>
 		else {
 			versionSupport = versionSupportOptional.get();
 		}
+
+		instantiationComplete( bootModelRootEntity.getVersionAttributeMapping(), creationContext );
 	}
 
 	@Override

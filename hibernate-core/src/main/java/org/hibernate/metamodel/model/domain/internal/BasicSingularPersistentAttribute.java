@@ -80,6 +80,8 @@ public class BasicSingularPersistentAttribute<O, J>
 					getNavigableRole()
 			);
 		}
+
+		instantiationComplete( bootAttribute, context );
 	}
 
 	@Override

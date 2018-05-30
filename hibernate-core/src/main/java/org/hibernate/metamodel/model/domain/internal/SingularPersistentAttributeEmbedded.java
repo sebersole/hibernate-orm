@@ -69,6 +69,8 @@ public class SingularPersistentAttributeEmbedded<O,J>
 				disposition,
 				context
 		);
+
+		instantiationComplete( bootModelAttribute, context );
 	}
 
 
