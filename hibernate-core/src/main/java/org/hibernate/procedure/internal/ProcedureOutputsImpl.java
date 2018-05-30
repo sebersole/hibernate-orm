@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.JDBCException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.procedure.ProcedureOutputs;
@@ -142,7 +143,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 				// todo : ok to bind right away?  Or do we need to wait until after all parameters are registered?
 				final JdbcParameterBinder binder = registration.getParameterBinder();
 				if ( binder != null ) {
-					binder.bindParameterValue( callableStatement, jdbcPosition, this );
+					binder.bindParameterValue( callableStatement, jdbcPosition, this, getSession() );
 				}
 
 				final JdbcCallParameterExtractor parameterExtractor = registration.getParameterExtractor();
@@ -183,6 +184,11 @@ public class ProcedureOutputsImpl extends OutputsImpl
 					callString
 			);
 		}
+	}
+
+	@Override
+	public SessionFactoryImplementor getSessionFactory() {
+		return procedureCall.getSession().getFactory();
 	}
 
 	@Override

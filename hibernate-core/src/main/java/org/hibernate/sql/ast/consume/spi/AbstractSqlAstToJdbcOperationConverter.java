@@ -6,17 +6,13 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Table;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -26,19 +22,17 @@ public class AbstractSqlAstToJdbcOperationConverter
 		implements SqlAstToJdbcOperationConverter {
 
 	// pre-req state
-	private final SharedSessionContractImplementor persistenceContext;
-	private final QueryParameterBindings parameterBindings;
-	private final java.util.Collection<?> loadIdentifiers;
+	private final ParameterBindingContext parameterBindingContext;
 
 	private final Set<String> affectedTableNames = new HashSet<>();
 
-	protected AbstractSqlAstToJdbcOperationConverter(
-			SharedSessionContractImplementor persistenceContext,
-			QueryParameterBindings parameterBindings,
-			Collection<?> loadIdentifiers) {
-		this.persistenceContext = persistenceContext;
-		this.parameterBindings = parameterBindings;
-		this.loadIdentifiers = loadIdentifiers;
+	protected AbstractSqlAstToJdbcOperationConverter(ParameterBindingContext parameterBindingContext) {
+		this.parameterBindingContext = parameterBindingContext;
+	}
+
+	@Override
+	protected ParameterBindingContext getParameterBindingContext() {
+		return parameterBindingContext;
 	}
 
 	@Override
@@ -51,41 +45,12 @@ public class AbstractSqlAstToJdbcOperationConverter
 		return affectedTableNames;
 	}
 
+
 	protected void registerAffectedTable(Table table) {
 		affectedTableNames.add( table.getTableExpression() );
 	}
 
 	protected void registerAffectedTable(String tableExpression) {
 		affectedTableNames.add( tableExpression );
-	}
-
-	@Override
-	public SessionFactoryImplementor getSessionFactory() {
-		return persistenceContext.getSessionFactory();
-	}
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// ParameterBindingContext
-
-
-	@Override
-	protected ConversionContext getConversionContext() {
-		return this;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> List<T> getLoadIdentifiers() {
-		return (List<T>) loadIdentifiers;
-	}
-
-	@Override
-	public QueryParameterBindings getQueryParameterBindings() {
-		return parameterBindings;
-	}
-
-	@Override
-	public SharedSessionContractImplementor getSession() {
-		return persistenceContext;
 	}
 }

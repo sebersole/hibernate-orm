@@ -6,18 +6,16 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.tree.spi.InsertStatement;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.exec.spi.JdbcInsert;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -28,8 +26,8 @@ public class InsertToJdbcInsertConverter
 
 	public static JdbcInsert createJdbcInsert(
 			InsertStatement sqlAst,
-			SharedSessionContractImplementor session) {
-		final InsertToJdbcInsertConverter walker = new InsertToJdbcInsertConverter( session );
+			ParameterBindingContext parameterBindingContext) {
+		final InsertToJdbcInsertConverter walker = new InsertToJdbcInsertConverter( parameterBindingContext );
 		walker.processStatement( sqlAst );
 		return new JdbcInsert() {
 			@Override
@@ -54,26 +52,20 @@ public class InsertToJdbcInsertConverter
 		};
 	}
 
-	public InsertToJdbcInsertConverter(
-			SharedSessionContractImplementor session,
-			QueryParameterBindings parameterBindings) {
-		super( session, parameterBindings, Collections.emptyList() );
-	}
-
-	public InsertToJdbcInsertConverter(SharedSessionContractImplementor session) {
-		this( session, QueryParameterBindings.NO_PARAM_BINDINGS );
+	public InsertToJdbcInsertConverter(ParameterBindingContext parameterBindingContext) {
+		super( parameterBindingContext);
 	}
 
 	private void processStatement(InsertStatement sqlAst) {
 		appendSql( "insert into " );
 
 		final PhysicalTable targetTable = (PhysicalTable) sqlAst.getTargetTable().getTable();
-		final String tableName = getSession().getJdbcServices()
+		final String tableName = getSessionFactory().getJdbcServices()
 				.getJdbcEnvironment()
 				.getQualifiedObjectNameFormatter()
 				.format(
 						targetTable.getQualifiedTableName(),
-						getSession().getJdbcServices().getJdbcEnvironment().getDialect()
+						getSessionFactory().getJdbcServices().getJdbcEnvironment().getDialect()
 				);
 
 		appendSql( tableName );

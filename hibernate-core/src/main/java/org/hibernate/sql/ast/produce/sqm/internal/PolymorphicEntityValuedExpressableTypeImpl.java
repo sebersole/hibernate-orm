@@ -816,8 +816,36 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public boolean isAffectedByEnabledFilters(SharedSessionContractImplementor session) {
-		throw new UnsupportedOperationException(  );
+	public boolean isAffectedByEnabledFilters(LoadQueryInfluencers loadQueryInfluencers) {
+		for ( EntityDescriptor<?> implementor : implementors ) {
+			if ( implementor.isAffectedByEnabledFilters( loadQueryInfluencers ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isAffectedByEnabledFetchProfiles(LoadQueryInfluencers loadQueryInfluencers) {
+		for ( EntityDescriptor<?> implementor : implementors ) {
+			if ( implementor.isAffectedByEnabledFetchProfiles( loadQueryInfluencers ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers) {
+		for ( EntityDescriptor<?> implementor : implementors ) {
+			if ( implementor.isAffectedByEntityGraph( loadQueryInfluencers ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Override

@@ -8,7 +8,6 @@ package org.hibernate.sql.ast.consume.spi;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.EnumType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
@@ -77,6 +76,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
@@ -87,7 +87,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public abstract class AbstractSqlAstWalker
-		implements SqlAstWalker, JdbcRecommendedSqlTypeMappingContext, ParameterBindingResolutionContext {
+		implements SqlAstWalker, JdbcRecommendedSqlTypeMappingContext  {
 
 	// pre-req state
 	private final SqlAppender sqlAppender = this::appendSql;
@@ -99,9 +99,6 @@ public abstract class AbstractSqlAstWalker
 	// rendering expressions often has to be done differently if it occurs in certain contexts
 	private boolean currentlyInPredicate;
 	private boolean currentlyInSelections;
-
-	protected abstract ConversionContext getConversionContext();
-
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// for now, for tests
@@ -707,7 +704,7 @@ public abstract class AbstractSqlAstWalker
 		// todo (6.0) : decide which types of ExpressableTypes to support for parameters.  see below in method too
 		// 		for now limit parameters to just basic types.
 
-		final QueryParameterBinding parameterBinding = parameter.resolveBinding( this );
+		final QueryParameterBinding parameterBinding = parameter.resolveBinding( getParameterBindingContext() );
 		if ( parameterBinding == null || !parameterBinding.isBound() ) {
 			throw new SemanticException( "Parameter [" + parameter + "] found in SQL AST had no binding" );
 		}
@@ -733,6 +730,8 @@ public abstract class AbstractSqlAstWalker
 		throw new QueryException( "Unable to determine Type for parameter [" + parameter + "]" );
 
 	}
+
+	protected abstract ParameterBindingContext getParameterBindingContext();
 
 	private BasicType resolveBasicValueType(Object value) {
 		return getSessionFactory().getTypeConfiguration()
@@ -1031,8 +1030,7 @@ public abstract class AbstractSqlAstWalker
 		return getSessionFactory().getTypeConfiguration();
 	}
 
-	@Override
 	public SessionFactoryImplementor getSessionFactory() {
-		return getConversionContext().getSessionFactory();
+		return getParameterBindingContext().getSessionFactory();
 	}
 }

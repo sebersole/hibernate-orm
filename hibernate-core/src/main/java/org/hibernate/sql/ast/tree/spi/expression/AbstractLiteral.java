@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
@@ -86,11 +87,12 @@ public abstract class AbstractLiteral
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context) throws SQLException {
+			ParameterBindingContext context,
+			SharedSessionContractImplementor session) throws SQLException {
 		getType().getBasicType()
 				.getSqlTypeDescriptor()
 				.getBinder( getType().getJavaTypeDescriptor() )
-				.bind( statement, value, startPosition, context.getSession() );
+				.bind( statement, value, startPosition, session );
 		return getType().getNumberOfJdbcParametersToBind();
 	}
 }

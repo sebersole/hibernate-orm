@@ -9,7 +9,6 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.tree.spi.InsertSelectStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
@@ -54,11 +53,7 @@ public class SqlInsertSelectToJdbcInsertSelectConverter
 
 
 	private SqlInsertSelectToJdbcInsertSelectConverter(ExecutionContext executionContext) {
-		super(
-				executionContext.getSession(),
-				executionContext.getParameterBindingContext().getQueryParameterBindings(),
-				executionContext.getParameterBindingContext().getLoadIdentifiers()
-		);
+		super( executionContext.getParameterBindingContext() );
 	}
 
 	private void visitInsertSelectStatement(InsertSelectStatement sqlAst) {

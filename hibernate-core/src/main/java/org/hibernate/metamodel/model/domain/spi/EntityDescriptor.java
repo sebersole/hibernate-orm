@@ -162,6 +162,16 @@ public interface EntityDescriptor<T>
 	 */
 	List<JoinedTableBinding> getSecondaryTableBindings();
 
+	@Override
+	default boolean isAffectedByEnabledFilters(SharedSessionContractImplementor session) {
+		return isAffectedByEnabledFilters( session.getLoadQueryInfluencers() );
+	}
+
+	boolean isAffectedByEnabledFilters(LoadQueryInfluencers loadQueryInfluencers);
+
+	boolean isAffectedByEnabledFetchProfiles(LoadQueryInfluencers loadQueryInfluencers);
+
+	boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

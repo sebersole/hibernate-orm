@@ -7,20 +7,18 @@
 package org.hibernate.sql.ast.produce.ordering.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.consume.spi.AbstractSqlAstWalker;
-import org.hibernate.sql.ast.consume.spi.ConversionContext;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 import org.jboss.logging.Logger;
 
@@ -65,10 +63,9 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	}
 
 	@Override
-	protected ConversionContext getConversionContext() {
+	protected ParameterBindingContext getParameterBindingContext() {
 		return context;
 	}
-
 
 	@Override
 	public void visitColumnReference(ColumnReference columnReference) {
@@ -97,20 +94,6 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	@Override
 	public void visitAssignment(Assignment assignment) {
 		throw new SyntaxException( "Encountered unexpected assignment clause" );
-	}
-
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// ParameterBindingResolutionContext - parameters not allowed
-
-	@Override
-	public <T> List<T> getLoadIdentifiers() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public QueryParameterBindings getQueryParameterBindings() {
-		return QueryParameterBindings.NO_PARAM_BINDINGS;
 	}
 
 }

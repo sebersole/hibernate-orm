@@ -26,9 +26,10 @@ public abstract class AbstractParameterBinder implements JdbcParameterBinder {
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context) throws SQLException {
+			ParameterBindingContext context,
+			SharedSessionContractImplementor session) throws SQLException {
 		final QueryParameterBinding binding = getBinding( context.getQueryParameterBindings() );
-		return bindParameterValue(  statement, startPosition, binding, context.getSession() );
+		return bindParameterValue(  statement, startPosition, binding, session );
 	}
 
 	protected abstract QueryParameterBinding getBinding(QueryParameterBindings queryParameterBindings);
@@ -44,19 +45,17 @@ public abstract class AbstractParameterBinder implements JdbcParameterBinder {
 
 		if ( valueBinding == null ) {
 			warnNoBinding();
-			bindType = null;
-			bindValue = null;
 			return 1;
 		}
-		else {
-			if ( valueBinding.getBindType() == null ) {
-				bindType = null;
-			}
-			else {
-				bindType = valueBinding.getBindType();
-			}
-			bindValue = valueBinding.getBindValue();
+
+		if ( valueBinding.getBindType() == null ) {
+			bindType = null;
 		}
+		else {
+			bindType = valueBinding.getBindType();
+		}
+
+		bindValue = valueBinding.getBindValue();
 
 		if ( bindType == null ) {
 			unresolvedType();

@@ -9,8 +9,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import org.hibernate.QueryException;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.sql.ast.consume.spi.ParameterBindingResolutionContext;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 import org.jboss.logging.Logger;
 
@@ -34,7 +34,7 @@ public class NamedParameter extends AbstractParameter {
 	}
 
 	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingResolutionContext context) {
+	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
 		return context.getQueryParameterBindings().getBinding( name );
 	}
 

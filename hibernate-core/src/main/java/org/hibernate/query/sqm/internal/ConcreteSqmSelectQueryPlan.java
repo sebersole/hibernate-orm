@@ -7,7 +7,6 @@
 package org.hibernate.query.sqm.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
@@ -174,9 +173,7 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 
 		return SqlSelectAstToJdbcSelectConverter.interpret(
 				interpretation,
-				executionContext.getSession(),
-				executionContext.getParameterBindingContext().getQueryParameterBindings(),
-				Collections.emptyList()
+				executionContext.getParameterBindingContext()
 		);
 	}
 

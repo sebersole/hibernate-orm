@@ -6,8 +6,6 @@
  */
 package org.hibernate.orm.test.query.sqm.sql;
 
-import java.util.Collections;
-
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
@@ -49,9 +47,7 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 
 		return SqlSelectAstToJdbcSelectConverter.interpret(
 				interpretation,
-				executionContext.getSession(),
-				executionContext.getParameterBindingContext().getQueryParameterBindings(),
-				Collections.emptyList()
+				executionContext.getParameterBindingContext()
 		);
 	}
 }

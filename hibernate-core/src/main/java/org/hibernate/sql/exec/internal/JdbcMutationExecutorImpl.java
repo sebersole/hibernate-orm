@@ -58,7 +58,8 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 					paramBindingPosition += parameterBinder.bindParameterValue(
 							preparedStatement,
 							paramBindingPosition,
-							executionContext.getParameterBindingContext()
+							executionContext.getParameterBindingContext(),
+							executionContext.getSession()
 					);
 				}
 

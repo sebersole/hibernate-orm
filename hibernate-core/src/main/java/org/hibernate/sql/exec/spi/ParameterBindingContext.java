@@ -6,9 +6,10 @@
  */
 package org.hibernate.sql.exec.spi;
 
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.sql.ast.consume.spi.ParameterBindingResolutionContext;
+import java.util.List;
+
+import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.ast.consume.spi.ConversionContext;
 
 /**
  * Contextual information for performing JDBC parameter binding.  Generally
@@ -16,11 +17,8 @@ import org.hibernate.sql.ast.consume.spi.ParameterBindingResolutionContext;
  *
  * @author Steve Ebersole
  */
-public interface ParameterBindingContext extends ParameterBindingResolutionContext {
-	SharedSessionContractImplementor getSession();
+public interface ParameterBindingContext extends ConversionContext {
+	<T> List<T> getLoadIdentifiers();
 
-	@Override
-	default SessionFactoryImplementor getSessionFactory() {
-		return getSession().getFactory();
-	}
+	QueryParameterBindings getQueryParameterBindings();
 }

@@ -8,16 +8,20 @@ package org.hibernate.loader.internal;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 
+import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
+import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -33,51 +37,31 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> {
 	private final EntityDescriptor<T> entityDescriptor;
 
-	public StandardSingleIdEntityLoader(
-			EntityDescriptor<T> entityDescriptor,
-			LockOptions lockOptions,
-			LoadQueryInfluencers loadQueryInfluencers) {
+	private EnumMap<LockMode,JdbcSelect> selectByLockMode = new EnumMap<>( LockMode.class );
+	private EnumMap<InternalFetchProfileType,JdbcSelect> selectByInternalCascadeProfile;
+
+	public StandardSingleIdEntityLoader(EntityDescriptor<T> entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 
-		// todo (6.0) : build the select SQL AST
-		//		or build on first use?
+// todo (6.0) : re-enable this pre-caching after model processing is more fully complete
+//		ParameterBindingContext context = new TemplateParameterBindingContext( entityDescriptor.getFactory(), 1 );
+//		final JdbcSelect base = createJdbcSelect( LockOptions.READ, LoadQueryInfluencers.NONE, context );
+//
+//		selectByLockMode.put( LockMode.NONE, base );
+//		selectByLockMode.put( LockMode.READ, base );
 	}
 
 	@Override
 	public T load(Serializable id, LockOptions lockOptions, SharedSessionContractImplementor session) {
-		final SelectByEntityIdentifierBuilder selectBuilder = new SelectByEntityIdentifierBuilder(
-				session.getSessionFactory(),
-				entityDescriptor
-		);
-		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
-				.generateSelectStatement( 1, session.getLoadQueryInfluencers(), lockOptions );
-
 		final List<Serializable> loadIds = Collections.singletonList( id );
 
-		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
-				selectDescriptor,
-				session,
+		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
+				session.getFactory(),
 				QueryParameterBindings.NO_PARAM_BINDINGS,
 				loadIds
 		);
 
-		final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
-			@Override
-			public SharedSessionContractImplementor getSession() {
-				return session;
-			}
-
-			@Override
-			@SuppressWarnings("unchecked")
-			public List getLoadIdentifiers() {
-				return loadIds;
-			}
-
-			@Override
-			public QueryParameterBindings getQueryParameterBindings() {
-				return QueryParameterBindings.NO_PARAM_BINDINGS;
-			}
-		};
+		final JdbcSelect jdbcSelect = resolveJdbcSelect( id, lockOptions, parameterBindingContext, session );
 
 		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
@@ -110,5 +94,82 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 		}
 
 		return list.get( 0 );
+	}
+
+	private JdbcSelect resolveJdbcSelect(
+			Serializable id,
+			LockOptions lockOptions,
+			ParameterBindingContext parameterBindingContext,
+			SharedSessionContractImplementor session) {
+		final LoadQueryInfluencers loadQueryInfluencers = session.getLoadQueryInfluencers();
+		if ( entityDescriptor.isAffectedByEnabledFilters( session ) ) {
+			// special case of not-cacheable based on enabled filters effecting this load.
+			//
+			// This case is special because the filters need to be applied in order to
+			// 		properly restrict the SQL/JDBC results.  For this reason it has higher
+			// 		precedence than even "internal" fetch profiles.
+			return createJdbcSelect( lockOptions, loadQueryInfluencers, parameterBindingContext );
+		}
+
+		if ( loadQueryInfluencers.getEnabledInternalFetchProfileType() != null ) {
+			if ( LockMode.UPGRADE.greaterThan( lockOptions.getLockMode() ) ) {
+				if ( selectByInternalCascadeProfile == null ) {
+					selectByInternalCascadeProfile = new EnumMap<>( InternalFetchProfileType.class );
+				}
+				return selectByInternalCascadeProfile.computeIfAbsent(
+						loadQueryInfluencers.getEnabledInternalFetchProfileType(),
+						internalFetchProfileType -> createJdbcSelect( lockOptions, loadQueryInfluencers, parameterBindingContext )
+				);
+			}
+		}
+
+		// otherwise see if the loader for the requested load can be cached - which
+		// 		also means we should look in the cache for an existing one
+
+		final boolean cacheable = determineIfCacheable( lockOptions, loadQueryInfluencers );
+
+		if ( cacheable ) {
+			return selectByLockMode.computeIfAbsent(
+					lockOptions.getLockMode(),
+					lockMode -> createJdbcSelect( lockOptions, loadQueryInfluencers, parameterBindingContext )
+			);
+		}
+
+		return createJdbcSelect(
+				lockOptions,
+				loadQueryInfluencers,
+				parameterBindingContext
+		);
+
+	}
+
+	private JdbcSelect createJdbcSelect(
+			LockOptions lockOptions,
+			LoadQueryInfluencers queryInfluencers,
+			ParameterBindingContext parameterBindingContext ) {
+		final SelectByEntityIdentifierBuilder selectBuilder = new SelectByEntityIdentifierBuilder(
+				entityDescriptor.getFactory(),
+				entityDescriptor
+		);
+		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
+				.generateSelectStatement( 1, queryInfluencers, lockOptions );
+
+
+		return SqlSelectAstToJdbcSelectConverter.interpret(
+				selectDescriptor,
+				parameterBindingContext
+		);
+	}
+	@SuppressWarnings("RedundantIfStatement")
+	private boolean determineIfCacheable(LockOptions lockOptions, LoadQueryInfluencers loadQueryInfluencers) {
+		if ( entityDescriptor.isAffectedByEntityGraph( loadQueryInfluencers ) ) {
+			return false;
+		}
+
+		if ( lockOptions.getTimeOut() == LockOptions.WAIT_FOREVER ) {
+			return false;
+		}
+
+		return true;
 	}
 }

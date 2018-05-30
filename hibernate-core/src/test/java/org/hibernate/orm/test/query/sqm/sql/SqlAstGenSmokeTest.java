@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfBasics;
 import org.hibernate.query.internal.QueryOptionsImpl;
@@ -75,8 +76,8 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 						};
 						private final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
 							@Override
-							public SharedSessionContractImplementor getSession() {
-								return session;
+							public SessionFactoryImplementor getSessionFactory() {
+								return sessionFactory();
 							}
 
 							@Override

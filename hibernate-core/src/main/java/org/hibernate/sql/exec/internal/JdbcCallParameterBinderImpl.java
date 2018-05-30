@@ -10,6 +10,7 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
@@ -44,10 +45,12 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context) throws SQLException {
+			ParameterBindingContext context,
+			SharedSessionContractImplementor session) throws SQLException {
 		final QueryParameterBinding binding;
 		if ( parameterName != null ) {
 			binding = context.getQueryParameterBindings().getBinding( parameterName );
@@ -92,7 +95,7 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 						(CallableStatement) statement,
 						bindValue,
 						parameterName,
-						context.getSession()
+						session
 				);
 			}
 			else {
@@ -100,7 +103,7 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 						statement,
 						bindValue,
 						startPosition,
-						context.getSession()
+						session
 				);
 			}
 		}

@@ -17,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -62,30 +63,16 @@ public class StandardMultiIdEntityLoader<J>
 
 		final List<Object> loadIds = Arrays.asList( ids );
 
-		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
-				selectDescriptor,
-				session,
+		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
+				session.getFactory(),
 				QueryParameterBindings.NO_PARAM_BINDINGS,
 				loadIds
 		);
 
-		final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
-			@Override
-			public SharedSessionContractImplementor getSession() {
-				return session;
-			}
-
-			@Override
-			@SuppressWarnings("unchecked")
-			public List getLoadIdentifiers() {
-				return loadIds;
-			}
-
-			@Override
-			public QueryParameterBindings getQueryParameterBindings() {
-				return QueryParameterBindings.NO_PARAM_BINDINGS;
-			}
-		};
+		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
+				selectDescriptor,
+				parameterBindingContext
+		);
 
 		return JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,

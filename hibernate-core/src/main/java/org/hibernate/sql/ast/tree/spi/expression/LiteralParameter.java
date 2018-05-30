@@ -9,12 +9,11 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collection;
-
 import javax.persistence.TemporalType;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.sql.ast.consume.spi.ParameterBindingResolutionContext;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
@@ -34,7 +33,7 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	}
 
 	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingResolutionContext context) {
+	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
 		return this;
 	}
 
@@ -117,11 +116,13 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context) throws SQLException {
-		type.getValueBinder().bind( statement, value, startPosition, context.getSession() );
+			ParameterBindingContext context,
+			SharedSessionContractImplementor session) throws SQLException {
+		type.getValueBinder().bind( statement, value, startPosition, session );
 		return 1;
 	}
 }

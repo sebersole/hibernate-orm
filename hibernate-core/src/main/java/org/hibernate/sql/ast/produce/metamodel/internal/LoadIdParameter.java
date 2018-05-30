@@ -8,9 +8,9 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.sql.ast.consume.spi.ParameterBindingResolutionContext;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -35,7 +35,7 @@ public class LoadIdParameter extends AbstractParameter {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public QueryParameterBinding resolveBinding(ParameterBindingResolutionContext context) {
+	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
 		return new LoadIdParameterBinding(
 				context.getLoadIdentifiers(),
 				getType(),

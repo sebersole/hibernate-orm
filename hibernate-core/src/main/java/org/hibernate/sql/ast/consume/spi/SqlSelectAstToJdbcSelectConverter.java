@@ -6,10 +6,6 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
-import java.util.Collection;
-
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.exec.internal.JdbcSelectImpl;
@@ -29,7 +25,7 @@ import org.jboss.logging.Logger;
  */
 public class SqlSelectAstToJdbcSelectConverter
 		extends AbstractSqlAstToJdbcOperationConverter
-		implements SqlSelectAstWalker, ParameterBindingContext, JdbcRecommendedSqlTypeMappingContext {
+		implements SqlSelectAstWalker, JdbcRecommendedSqlTypeMappingContext {
 	private static final Logger log = Logger.getLogger( SqlSelectAstToJdbcSelectConverter.class );
 
 	/**
@@ -39,14 +35,11 @@ public class SqlSelectAstToJdbcSelectConverter
 	 */
 	public static JdbcSelect interpret(
 			SqlAstSelectDescriptor sqlSelectPlan,
-			SharedSessionContractImplementor persistenceContext,
-			QueryParameterBindings parameterBindings,
-			Collection<?> loadIdentifiers) {
+			ParameterBindingContext parameterBindingContext) {
 		final SqlSelectAstToJdbcSelectConverter walker = new SqlSelectAstToJdbcSelectConverter(
-				persistenceContext,
-				parameterBindings,
-				loadIdentifiers
+				parameterBindingContext
 		);
+
 		walker.visitSelectQuery( sqlSelectPlan.getSqlAstStatement() );
 		return new JdbcSelectImpl(
 				walker.getSql(),
@@ -59,11 +52,8 @@ public class SqlSelectAstToJdbcSelectConverter
 		);
 	}
 
-	private SqlSelectAstToJdbcSelectConverter(
-			SharedSessionContractImplementor persistenceContext,
-			QueryParameterBindings parameterBindings,
-			java.util.Collection<?> loadIdentifiers) {
-		super( persistenceContext, parameterBindings, loadIdentifiers );
+	private SqlSelectAstToJdbcSelectConverter(ParameterBindingContext parameterBindingContext) {
+		super( parameterBindingContext );
 	}
 
 	@Override

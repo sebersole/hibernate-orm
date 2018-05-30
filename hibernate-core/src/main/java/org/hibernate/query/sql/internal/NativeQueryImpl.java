@@ -193,6 +193,11 @@ public class NativeQueryImpl<R>
 	}
 
 	@Override
+	public SessionFactoryImplementor getSessionFactory() {
+		return getSession().getFactory();
+	}
+
+	@Override
 	public Callback getCallback() {
 		return null;
 	}

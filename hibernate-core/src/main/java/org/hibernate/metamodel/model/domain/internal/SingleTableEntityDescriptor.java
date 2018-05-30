@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,13 +18,13 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.FilterAliasGenerator;
+import org.hibernate.loader.internal.TemplateParameterBindingContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
@@ -35,7 +34,6 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
@@ -188,7 +186,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				}
 		);
 
-		final JdbcInsert jdbcInsert = InsertToJdbcInsertConverter.createJdbcInsert( insertStatement, session );
+		final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
+
+		final JdbcInsert jdbcInsert = InsertToJdbcInsertConverter.createJdbcInsert( insertStatement, parameterBindingContext );
+
 		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
 				jdbcInsert,
 				new ExecutionContext() {
@@ -204,22 +205,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 					@Override
 					public ParameterBindingContext getParameterBindingContext() {
-						return new ParameterBindingContext() {
-							@Override
-							public SharedSessionContractImplementor getSession() {
-								return session;
-							}
-
-							@Override
-							public <T> List<T> getLoadIdentifiers() {
-								return Collections.emptyList();
-							}
-
-							@Override
-							public QueryParameterBindings getQueryParameterBindings() {
-								return QueryParameterBindings.NO_PARAM_BINDINGS;
-							}
-						};
+						return parameterBindingContext;
 					}
 
 					@Override
@@ -524,10 +510,5 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		}
 
 		return hasCollections;
-	}
-
-	@Override
-	public boolean isAffectedByEnabledFilters(SharedSessionContractImplementor session) {
-		throw new NotYetImplementedException(  );
 	}
 }

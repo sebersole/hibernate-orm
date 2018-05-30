@@ -9,6 +9,8 @@ package org.hibernate.sql.exec.spi;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+
 /**
  * Performs parameter value binding to a JDBC PreparedStatement.
  *
@@ -19,6 +21,7 @@ public interface JdbcParameterBinder {
 	int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context) throws SQLException;
+			ParameterBindingContext context,
+			SharedSessionContractImplementor session) throws SQLException;
 
 }

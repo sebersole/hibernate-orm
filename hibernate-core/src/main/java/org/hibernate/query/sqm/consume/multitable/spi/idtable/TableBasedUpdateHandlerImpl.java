@@ -75,8 +75,7 @@ public class TableBasedUpdateHandlerImpl
 
 			final JdbcUpdate jdbcUpdate = SqlUpdateToJdbcUpdateConverter.interpret(
 					updateDescriptor,
-					executionContext.getSession(),
-					executionContext.getParameterBindingContext().getQueryParameterBindings()
+					executionContext.getParameterBindingContext()
 			);
 
 			JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
