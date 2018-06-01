@@ -6,8 +6,6 @@
  */
 package org.hibernate.engine.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -74,7 +72,7 @@ public final class Collections {
 					session.getSessionFactory()
 			);
 
-			Serializable ownerId = ownerEntityDescriptor.getIdentifier( coll.getOwner(), session );
+			Object ownerId = ownerEntityDescriptor.getIdentifier( coll.getOwner(), session );
 			if ( ownerId == null ) {
 				// the owning entity may have been deleted and its identifier unset due to
 				// identifier-rollback; in which case, try to look up its identifier from

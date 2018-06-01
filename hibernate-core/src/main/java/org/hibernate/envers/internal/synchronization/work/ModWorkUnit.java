@@ -6,7 +6,6 @@
  */
 package org.hibernate.envers.internal.synchronization.work;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +30,7 @@ public class ModWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			SessionImplementor sessionImplementor,
 			String entityName,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			EntityDescriptor entityPersister,
 			Object[] newState,
 			Object[] oldState) {

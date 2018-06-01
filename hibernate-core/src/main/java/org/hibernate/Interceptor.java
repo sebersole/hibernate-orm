@@ -54,12 +54,27 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	boolean onLoad(
+	default boolean onLoad(
+			Object entity,
+			Object id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return onLoad( entity, (Serializable) id, state, propertyNames, javaTypeDescriptors );
+	}
+
+	/**
+	 * @deprecated Use {@link #onLoad(Object, Object, Object[], String[], JavaTypeDescriptor[])} instead
+	 */
+	@Deprecated
+	default boolean onLoad(
 			Object entity,
 			Serializable id,
 			Object[] state,
 			String[] propertyNames,
-			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return false;
+	}
 
 	/**
 	 * Called when an object is detected to be dirty, during a flush. The interceptor may modify the detected
@@ -82,13 +97,36 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	boolean onFlushDirty(
+	default boolean onFlushDirty(
+			Object entity,
+			Object id,
+			Object[] currentState,
+			Object[] previousState,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return onFlushDirty(
+				entity,
+				(Serializable) id,
+				currentState,
+				previousState,
+				propertyNames,
+				javaTypeDescriptors
+		);
+	}
+
+	/**
+	 * @deprecated Use {@link #onFlushDirty(Object, Object, Object[], Object[], String[], JavaTypeDescriptor[])} instead
+	 */
+	@Deprecated
+	default boolean onFlushDirty(
 			Object entity,
 			Serializable id,
 			Object[] currentState,
 			Object[] previousState,
 			String[] propertyNames,
-			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return false;
+	}
 
 	/**
 	 * Called before an object is saved. The interceptor may modify the <tt>state</tt>, which will be used for
@@ -104,15 +142,30 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	boolean onSave(
+	default boolean onSave(
+			Object entity,
+			Object id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return onSave( entity, (Serializable) id, state, propertyNames, javaTypeDescriptors );
+	}
+
+	/**
+	 * @deprecated Use {@link #onSave(Object, Object, Object[], String[], JavaTypeDescriptor[])} instead
+	 */
+	@Deprecated
+	default boolean onSave(
 			Object entity,
 			Serializable id,
 			Object[] state,
 			String[] propertyNames,
-			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		return false;
+	}
 
 	/**
-	 *  Called before an object is deleted. It is not recommended that the interceptor modify the <tt>state</tt>.
+	 * Called before an object is deleted. It is not recommended that the interceptor modify the <tt>state</tt>.
 	 *
 	 * @param entity The entity instance being deleted
 	 * @param id The identifier of the entity
@@ -122,12 +175,26 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	void onDelete(
+	default void onDelete(
+			Object entity,
+			Object id,
+			Object[] state,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+		onDelete( entity, (Serializable) id, state, propertyNames, javaTypeDescriptors );
+	}
+
+	/**
+	 * @deprecated Use {@link #onDelete(Object, Object, Object[], String[], JavaTypeDescriptor[])} instead
+	 */
+	@Deprecated
+	default void onDelete(
 			Object entity,
 			Serializable id,
 			Object[] state,
 			String[] propertyNames,
-			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) throws CallbackException {
+	}
 
 	/**
 	 * Called before a collection is (re)created.
@@ -137,7 +204,16 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	void onCollectionRecreate(Object collection, Serializable key) throws CallbackException;
+	default void onCollectionRecreate(Object collection, Object key) throws CallbackException {
+		onCollectionRecreate( collection, (Serializable) key );
+	}
+
+	/**
+	 * @deprecated Use {@link #onCollectionRecreate(Object, Object)} instead
+	 */
+	@Deprecated
+	default void onCollectionRecreate(Object collection, Serializable key) throws CallbackException {
+	}
 
 	/**
 	 * Called before a collection is deleted.
@@ -147,7 +223,16 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	void onCollectionRemove(Object collection, Serializable key) throws CallbackException;
+	default void onCollectionRemove(Object collection, Object key) throws CallbackException {
+		onCollectionRemove( collection, (Serializable) key );
+	}
+
+	/**
+	 * @deprecated Use {@link #onCollectionRemove(Object, Object)} instead
+	 */
+	@Deprecated
+	default void onCollectionRemove(Object collection, Serializable key) throws CallbackException {
+	}
 
 	/**
 	 * Called before a collection is updated.
@@ -157,7 +242,16 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	void onCollectionUpdate(Object collection, Serializable key) throws CallbackException;
+	default void onCollectionUpdate(Object collection, Object key) throws CallbackException {
+		onCollectionUpdate( collection, (Serializable) key );
+	}
+
+	/**
+	 * @deprecated Use {@link #onCollectionUpdate(Object, Object)} instead
+	 */
+	@Deprecated
+	default void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
+	}
 
 	/**
 	 * Called before a flush.
@@ -211,31 +305,36 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	int[] findDirty(
+	default int[] findDirty(
+			Object entity,
+			Object id,
+			Object[] currentState,
+			Object[] previousState,
+			String[] propertyNames,
+			JavaTypeDescriptor[] javaTypeDescriptors) {
+		return findDirty(
+				entity,
+				(Serializable) id,
+				currentState,
+				previousState,
+				propertyNames,
+				javaTypeDescriptors
+		);
+	}
+
+	/**
+	 * @deprecated Use {@link #onCollectionUpdate(Object, Object)} instead
+	 */
+	@Deprecated
+	default int[] findDirty(
 			Object entity,
 			Serializable id,
 			Object[] currentState,
 			Object[] previousState,
 			String[] propertyNames,
-			JavaTypeDescriptor[] javaTypeDescriptors);
-
-	/**
-	 * Instantiate the entity class. Return <tt>null</tt> to indicate that Hibernate should use
-	 * the default constructor of the class. The identifier property of the returned instance
-	 * should be initialized with the given identifier.
-	 *
-	 * @param entityName the name of the entity
-	 * @param entityMode The domain model representation (pojo, map, etc)
-	 * @param id the identifier of the new instance
-	 *
-	 * @return an instance of the class, or <tt>null</tt> to choose default behaviour
-	 *
-	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
-	 *
-	 * @deprecated (since 6.0) Use {@link #instantiate(String, RepresentationMode, Serializable)} instead
-	 */
-	@Deprecated
-	Object instantiate(String entityName, EntityMode entityMode, Serializable id) throws CallbackException;
+			JavaTypeDescriptor[] javaTypeDescriptors) {
+		return null;
+	}
 
 	/**
 	 * Instantiate the entity class. Return <tt>null</tt> to indicate that Hibernate should use
@@ -250,8 +349,16 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	default Object instantiate(String entityName, RepresentationMode modelRepresentation, Serializable id) throws CallbackException {
-		return instantiate( entityName, EntityMode.fromRepresentation( modelRepresentation ), id );
+	default Object instantiate(String entityName, RepresentationMode modelRepresentation, Object id) throws CallbackException {
+		return instantiate( entityName, EntityMode.fromRepresentation( modelRepresentation ), (Serializable) id );
+	}
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #instantiate(String, RepresentationMode, Object)} instead
+	 */
+	@Deprecated
+	default Object instantiate(String entityName, EntityMode entityMode, Serializable id) throws CallbackException {
+		return null;
 	}
 
 	/**
@@ -275,8 +382,20 @@ public interface Interceptor {
 	 *
 	 * @throws CallbackException Thrown if the interceptor encounters any problems handling the callback.
 	 */
-	Object getEntity(String entityName, Serializable id) throws CallbackException;
-	
+	default Object getEntity(String entityName, Object id) throws CallbackException {
+		// make this the default because we are generally calling user/application code here
+		// which would implement the Serializable form - they will be warned about the deprecation
+		return getEntity( entityName, (Serializable) id );
+	}
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #getEntity(String, Object)} instead
+	 */
+	@Deprecated
+	default Object getEntity(String entityName, Serializable id) throws CallbackException {
+		return null;
+	}
+
 	/**
 	 * Called when a Hibernate transaction is begun via the Hibernate <tt>Transaction</tt> 
 	 * API. Will not be called if transactions are being controlled via some other 
@@ -299,15 +418,4 @@ public interface Interceptor {
 	 * @param tx The Hibernate transaction facade object
 	 */
 	void afterTransactionCompletion(Transaction tx);
-
-	/**
-	 * Called when sql string is being prepared. 
-	 * @param sql sql to be prepared
-	 * @return original or modified sql
-	 *
-	 * @deprecated Supply a {@link org.hibernate.resource.jdbc.spi.StatementInspector} instead, if you wish
-	 * to inspect and alter SQL statements.
-	 */
-	@Deprecated
-	String onPrepareStatement(String sql);
 }

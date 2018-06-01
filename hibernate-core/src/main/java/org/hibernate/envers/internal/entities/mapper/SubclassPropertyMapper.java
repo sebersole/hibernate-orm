@@ -89,7 +89,7 @@ public class SubclassPropertyMapper implements ExtendedPropertyMapper {
 	public List<PersistentCollectionChangeData> mapCollectionChanges(
 			SessionImplementor session, String referencingPropertyName,
 			PersistentCollection newColl,
-			Serializable oldColl, Serializable id) {
+			Serializable oldColl, Object id) {
 		final List<PersistentCollectionChangeData> parentCollectionChanges = parentMapper.mapCollectionChanges(
 				session,
 				referencingPropertyName,

@@ -23,6 +23,6 @@ public interface RevisionInfoGenerator {
 	 * @see org.hibernate.envers.EntityTrackingRevisionListener#entityChanged(Class, String, Serializable, RevisionType, Object)
 	 */
 	void entityChanged(
-			Class entityClass, String entityName, Serializable entityId, RevisionType revisionType,
+			Class entityClass, String entityName, Object entityId, RevisionType revisionType,
 			Object revisionEntity);
 }

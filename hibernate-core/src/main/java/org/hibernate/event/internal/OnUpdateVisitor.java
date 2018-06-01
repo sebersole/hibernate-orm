@@ -26,7 +26,7 @@ import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
  */
 public class OnUpdateVisitor extends ReattachVisitor {
 
-	OnUpdateVisitor(EventSource session, Serializable key, Object owner) {
+	OnUpdateVisitor(EventSource session, Object key, Object owner) {
 		super( session, key, owner );
 	}
 

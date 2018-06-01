@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.internal;
 
+import java.util.List;
+
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -41,10 +43,18 @@ public abstract class AbstractMetamodelSelectBuilder implements MetamodelSelectB
 			int numberOfKeysToLoad,
 			LoadQueryInfluencers loadQueryInfluencers,
 			LockOptions lockOptions) {
+		return generateSelectStatement( numberOfKeysToLoad, null, loadQueryInfluencers, lockOptions );
+	}
 
+	protected SqlAstSelectDescriptor generateSelectStatement(
+			int numberOfKeysToLoad,
+			List<Navigable<?>> navigablesToBeSelected,
+			LoadQueryInfluencers loadQueryInfluencers,
+			LockOptions lockOptions) {
 		return MetamodelSelectBuilderProcess.createSelect(
 				sessionFactory,
 				rootNavigable,
+				navigablesToBeSelected,
 				restrictedNavigable,
 				// allow passing in a QueryResult (readers) already built
 				null,

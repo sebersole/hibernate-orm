@@ -148,7 +148,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 				EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 				if ( entry == null ) {
 					EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
-					Serializable id = entityDescriptor.getIdentifier( entity, source );
+					Object id = entityDescriptor.getIdentifier( entity, source );
 					if ( id != null ) {
 						final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 						final Object managedEntity = source.getPersistenceContext().getEntity( key );
@@ -218,7 +218,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final String entityName = event.getEntityName();
 		final EntityDescriptor entityDescriptor = source.getEntityPersister( entityName, entity );
 
-		final Serializable id = EntityIdentifierSimple.class.isInstance( entityDescriptor.getHierarchy().getIdentifierDescriptor() ) ?
+		final Object id = EntityIdentifierSimple.class.isInstance( entityDescriptor.getHierarchy().getIdentifierDescriptor() ) ?
 				entityDescriptor.getIdentifier( entity, source ) :
 				null;
 		if ( copyCache.containsKey( entity ) ) {
@@ -272,14 +272,14 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
 		final String entityName = entityDescriptor.getEntityName();
 
-		Serializable id = event.getRequestedId();
+		Object id = event.getRequestedId();
 		if ( id == null ) {
 			id = entityDescriptor.getIdentifier( entity, source );
 		}
 		else {
 			// check that entity id = requestedId
-			Serializable entityId = entityDescriptor.getIdentifier( entity, source );
-			if ( !entityDescriptor.getIdentifierType().getJavaTypeDescriptor().areEqual( id, entityId ) ) {
+			Object entityId = entityDescriptor.getIdentifier( entity, source );
+			if ( !entityDescriptor.getHierarchy().getIdentifierDescriptor().getJavaTypeDescriptor().areEqual( id, entityId ) ) {
 				throw new HibernateException( "merge requested with id not matching id of passed entity" );
 			}
 		}
@@ -386,7 +386,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	private boolean existsInDatabase(Object entity, EventSource source, EntityDescriptor entityDescriptor) {
 		EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 		if ( entry == null ) {
-			Serializable id = entityDescriptor.getIdentifier( entity, source );
+			Object id = entityDescriptor.getIdentifier( entity, source );
 			if ( id != null ) {
 				final EntityKey key = source.generateEntityKey( id, entityDescriptor );
 				final Object managedEntity = source.getPersistenceContext().getEntity( key );

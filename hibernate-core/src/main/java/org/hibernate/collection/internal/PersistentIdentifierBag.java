@@ -18,9 +18,9 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.NotYetImplementedFor6Exception;
 
 /**
  * An <tt>IdentifierBag</tt> implements "bag" semantics more efficiently than
@@ -371,7 +371,7 @@ public class PersistentIdentifierBag extends AbstractPersistentCollection implem
 			final Integer loc = i++;
 			if ( !identifiers.containsKey( loc ) ) {
 				//TODO: native ids
-				final Serializable id = persister.getIdDescriptor().getGenerator().generate( getSession(), entry );
+				final Object id = persister.getIdDescriptor().getGenerator().generate( getSession(), entry );
 				identifiers.put( loc, id );
 			}
 		}

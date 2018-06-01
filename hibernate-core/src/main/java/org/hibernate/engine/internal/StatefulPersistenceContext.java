@@ -58,9 +58,11 @@ import org.hibernate.internal.util.collections.ConcurrentReferenceHashMap;
 import org.hibernate.internal.util.collections.IdentityMap;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
+import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor.NaturalIdAttributeInfo;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
@@ -316,7 +318,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object[] getDatabaseSnapshot(Serializable id, EntityDescriptor descriptor) throws HibernateException {
+	public Object[] getDatabaseSnapshot(Object id, EntityDescriptor descriptor) throws HibernateException {
 		final EntityKey key = session.generateEntityKey( id, descriptor );
 		final Object cached = entitySnapshotsByKey.get( key );
 		if ( cached != null ) {
@@ -331,7 +333,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Object[] getNaturalIdSnapshot(Serializable id, EntityDescriptor descriptor) throws HibernateException {
+	public Object[] getNaturalIdSnapshot(Object id, EntityDescriptor descriptor) throws HibernateException {
 		final NaturalIdDescriptor naturalIdDescriptor = descriptor.getHierarchy().getNaturalIdDescriptor();
 
 		if ( naturalIdDescriptor == null ) {
@@ -365,7 +367,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				return null;
 			}
 
-			final Object[] naturalIdSnapshotSubSet = new Object[ naturalIdDescriptor.getPersistentAttributes().size() ];
+			final Object[] naturalIdSnapshotSubSet = new Object[ naturalIdDescriptor.getAttributeInfos().size() ];
 
 			int i = 0;
 
@@ -378,7 +380,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				// Must be a better way to indicate this.  Maybe an extended `PersistentAttribute.Nature`
 				//		for NATURAL_ID in addition to NORMAL, ID, VERSION.  IN terms of JPA's ENUM
 				//		we'd just translate NATURAL_ID as its NORMAL.
-				if ( naturalIdDescriptor.getPersistentAttributes().contains( singularAttribute ) ) {
+				if ( naturalIdDescriptor.getAttributeInfos().contains( singularAttribute ) ) {
 					assert StateArrayContributor.class.isInstance( singularAttribute );
 					final StateArrayContributor contributor = (StateArrayContributor) singularAttribute;
 					naturalIdSnapshotSubSet[i++] = entitySnapshot[contributor.getStateArrayPosition()];
@@ -514,7 +516,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 			final Status status,
 			final Object[] loadedState,
 			final Object rowId,
-			final Serializable id,
+			final Object id,
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
@@ -608,7 +610,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public void reassociateProxy(Object value, Serializable id) throws MappingException {
+	public void reassociateProxy(Object value, Object id) throws MappingException {
 		if ( value instanceof HibernateProxy ) {
 			LOG.debugf( "Setting proxy identifier: %s", id );
 			final HibernateProxy proxy = (HibernateProxy) value;
@@ -746,7 +748,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public Object getCollectionOwner(Serializable key, PersistentCollectionDescriptor descriptor) throws MappingException {
+	public Object getCollectionOwner(Object key, PersistentCollectionDescriptor descriptor) throws MappingException {
 		throw new NotYetImplementedFor6Exception();
 
 
@@ -1161,7 +1163,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public Serializable getOwnerId(String entityName, String propertyName, Object childEntity, Map mergeMap) {
+	public Object getOwnerId(String entityName, String propertyName, Object childEntity, Map mergeMap) {
 		final String collectionRole = entityName + '.' + propertyName;
 		final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( entityName );
 		final PersistentCollectionDescriptor collectionDescriptor = session.getFactory().getMetamodel().findCollectionDescriptor( collectionRole );
@@ -1274,7 +1276,10 @@ public class StatefulPersistenceContext implements PersistenceContext {
 			EntityDescriptor entityDescriptor,
 			PersistentCollectionDescriptor collectionDescriptor,
 			Object potentialParent) {
-		final Object collection = entityDescriptor.getPropertyValue( potentialParent, property );
+		final NonIdPersistentAttribute attribute = entityDescriptor.findPersistentAttribute( property );
+		assert attribute instanceof PluralAttributeCollection;
+
+		final Object collection = attribute.getPropertyAccess().getGetter().get( potentialParent );
 		return collection != null
 				&& Hibernate.isInitialized( collection )
 				&& collectionDescriptor.contains( collection, childEntity );
@@ -1439,7 +1444,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public void replaceDelayedEntityIdentityInsertKeys(EntityKey oldKey, Serializable generatedId) {
+	public void replaceDelayedEntityIdentityInsertKeys(EntityKey oldKey, Object generatedId) {
 		final Object entity = entitiesByKey.remove( oldKey );
 		final EntityEntry oldEntry = entityEntryContext.removeEntityEntry( entity );
 		parentsByChild.clear();
@@ -1698,17 +1703,17 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	// INSERTED KEYS HANDLING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	private HashMap<String,List<Serializable>> insertedKeysMap;
+	private HashMap<String,List<Object>> insertedKeysMap;
 
 	@Override
-	public void registerInsertedKey(EntityDescriptor entityDescriptor, Serializable id) {
+	public void registerInsertedKey(EntityDescriptor entityDescriptor, Object id) {
 		// we only are worried about registering these if the entityDescriptor defines caching
 		if ( entityDescriptor.canWriteToCache() ) {
 			if ( insertedKeysMap == null ) {
 				insertedKeysMap = new HashMap<>();
 			}
 			final String rootEntityName = entityDescriptor.getHierarchy().getRootEntityType().getEntityName();
-			List<Serializable> insertedEntityIds = insertedKeysMap.get( rootEntityName );
+			List<Object> insertedEntityIds = insertedKeysMap.get( rootEntityName );
 			if ( insertedEntityIds == null ) {
 				insertedEntityIds = new ArrayList<>();
 				insertedKeysMap.put( rootEntityName, insertedEntityIds );
@@ -1718,11 +1723,11 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public boolean wasInsertedDuringTransaction(EntityDescriptor descriptor, Serializable id) {
+	public boolean wasInsertedDuringTransaction(EntityDescriptor descriptor, Object id) {
 		// again, we only really care if the entity is cached
 		if ( descriptor.canWriteToCache() ) {
 			if ( insertedKeysMap != null ) {
-				final List<Serializable> insertedEntityIds = insertedKeysMap.get(
+				final List<Object> insertedEntityIds = insertedKeysMap.get(
 						descriptor.getHierarchy().getRootEntityType().getEntityName()
 				);
 				if ( insertedEntityIds != null ) {
@@ -1749,7 +1754,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		@Override
 		public void cacheNaturalIdCrossReferenceFromLoad(
 				EntityDescriptor descriptor,
-				Serializable id,
+				Object id,
 				Object[] naturalIdValues) {
 			if ( descriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
 				// nothing to do
@@ -1785,7 +1790,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		@Override
 		public void manageLocalNaturalIdCrossReference(
 				EntityDescriptor descriptor,
-				Serializable id,
+				Object id,
 				Object[] state,
 				Object[] previousState,
 				CachedNaturalIdValueSource source) {
@@ -1804,7 +1809,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		@Override
 		public void manageSharedNaturalIdCrossReference(
 				EntityDescriptor descriptor,
-				final Serializable id,
+				final Object id,
 				Object[] state,
 				Object[] previousState,
 				CachedNaturalIdValueSource source) {
@@ -1841,7 +1846,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		private void managedSharedCacheEntries(
 				EntityDescriptor descriptor,
 				NaturalIdDataAccess cacheAccess,
-				final Serializable id,
+				final Object id,
 				Object[] naturalIdValues,
 				Object[] previousNaturalIdValues,
 				CachedNaturalIdValueSource source) {
@@ -1951,7 +1956,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		}
 
 		@Override
-		public Object[] removeLocalNaturalIdCrossReference(EntityDescriptor descriptor, Serializable id, Object[] state) {
+		public Object[] removeLocalNaturalIdCrossReference(EntityDescriptor descriptor, Object id, Object[] state) {
 			if ( descriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
 				// nothing to do
 				return null;
@@ -1970,7 +1975,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		}
 
 		@Override
-		public void removeSharedNaturalIdCrossReference(EntityDescriptor descriptor, Serializable id, Object[] naturalIdValues) {
+		public void removeSharedNaturalIdCrossReference(EntityDescriptor descriptor, Object id, Object[] naturalIdValues) {
 			if ( descriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
 				// nothing to do
 				return;
@@ -2002,19 +2007,19 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		}
 
 		@Override
-		public Object[] findCachedNaturalId(EntityDescriptor descriptor, Serializable pk) {
+		public Object[] findCachedNaturalId(EntityDescriptor descriptor, Object pk) {
 			return naturalIdXrefDelegate.findCachedNaturalId( locateProperDescriptor( descriptor ), pk );
 		}
 
 		@Override
-		public Serializable findCachedNaturalIdResolution(EntityDescriptor descriptor, Object[] naturalIdValues) {
+		public Object findCachedNaturalIdResolution(EntityDescriptor descriptor, Object[] naturalIdValues) {
 			return naturalIdXrefDelegate.findCachedNaturalIdResolution( locateProperDescriptor( descriptor ), naturalIdValues );
 		}
 
 		@Override
 		public Object[] extractNaturalIdValues(Object[] state, EntityDescriptor entityDescriptor) {
-			final NaturalIdDescriptor naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
-			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getPersistentAttributes().size();
+			final NaturalIdDescriptor<?> naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getAttributeInfos().size();
 
 			if ( numberOfNaturalIdAttributes == state.length ) {
 				// state just so happens to contain just the natural-id values
@@ -2023,7 +2028,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 			final Object[] naturalIdValues = new Object[ numberOfNaturalIdAttributes ];
 			int naturalIdIndex = 0;
-			for ( NonIdPersistentAttribute attribute : naturalIdDescriptor.getPersistentAttributes() ) {
+			for ( NaturalIdAttributeInfo attribute : naturalIdDescriptor.getAttributeInfos() ) {
 				naturalIdValues[ naturalIdIndex++ ] = state[ attribute.getStateArrayPosition() ];
 			}
 
@@ -2040,25 +2045,25 @@ public class StatefulPersistenceContext implements PersistenceContext {
 				throw new AssertionFailure( "EntityDescriptor to use in extracting natural id value(s) cannot be null" );
 			}
 
-			final NaturalIdDescriptor naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
-			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getPersistentAttributes().size();
+			final NaturalIdDescriptor<?> naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getAttributeInfos().size();
 
 			final Object[] naturalIdValues = new Object[ numberOfNaturalIdAttributes ];
 			int naturalIdIndex = 0;
-			for ( NonIdPersistentAttribute attribute : naturalIdDescriptor.getPersistentAttributes() ) {
-				naturalIdValues[ naturalIdIndex++ ] = attribute.getPropertyAccess().getGetter().get( entity );
+			for ( NaturalIdAttributeInfo attribute : naturalIdDescriptor.getAttributeInfos() ) {
+				naturalIdValues[ naturalIdIndex++ ] = attribute.getUnderlyingAttributeDescriptor().getPropertyAccess().getGetter().get( entity );
 			}
 
 			return naturalIdValues;
 		}
 
 		@Override
-		public Collection<Serializable> getCachedPkResolutions(EntityDescriptor descriptor) {
+		public Collection<Object> getCachedPkResolutions(EntityDescriptor descriptor) {
 			return naturalIdXrefDelegate.getCachedPkResolutions( descriptor );
 		}
 
 		@Override
-		public void handleSynchronization(EntityDescriptor descriptor, Serializable pk, Object entity) {
+		public void handleSynchronization(EntityDescriptor descriptor, Object pk, Object entity) {
 			if ( descriptor.getHierarchy().getNaturalIdDescriptor() == null  ) {
 				// nothing to do
 				return;
@@ -2092,7 +2097,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 		}
 
 		@Override
-		public void handleEviction(Object object, EntityDescriptor descriptor, Serializable identifier) {
+		public void handleEviction(Object object, EntityDescriptor descriptor, Object identifier) {
 			naturalIdXrefDelegate.removeNaturalIdCrossReference(
 					descriptor,
 					identifier,
@@ -2107,12 +2112,12 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	private Object[] getNaturalIdValues(Object[] state, EntityDescriptor entityDescriptor) {
-		final NaturalIdDescriptor naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
-		final int numberOfNaturalIdAttributes = naturalIdDescriptor.getPersistentAttributes().size();
+		final NaturalIdDescriptor<?> naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+		final int numberOfNaturalIdAttributes = naturalIdDescriptor.getAttributeInfos().size();
 
 		final Object[] naturalIdValues = new Object[ numberOfNaturalIdAttributes ];
 		int naturalIdIndex = 0;
-		for ( NonIdPersistentAttribute attribute : naturalIdDescriptor.getPersistentAttributes() ) {
+		for ( NaturalIdAttributeInfo attribute : naturalIdDescriptor.getAttributeInfos() ) {
 			naturalIdValues[ naturalIdIndex++ ] = state[ attribute.getStateArrayPosition() ];
 		}
 

@@ -48,7 +48,7 @@ public final class CollectionUpdateAction extends CollectionAction {
 
 	@Override
 	public void execute() throws HibernateException {
-		final Serializable id = getKey();
+		final Object id = getKey();
 		final SharedSessionContractImplementor session = getSession();
 		final PersistentCollectionDescriptor collectionDescriptor = getPersistentCollectionDescriptor();
 		final PersistentCollection collection = getCollection();

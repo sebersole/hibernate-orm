@@ -22,26 +22,25 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 
 	private final PersistentCollection collection;
 	private final Object affectedOwner;
-	private final Serializable affectedOwnerId;
+	private final Object affectedOwnerId;
 	private final String affectedOwnerEntityName;
 
 	/**
 	 * Constructs an AbstractCollectionEvent object.
-	 *
-	 * @param collection - the collection
+	 *  @param collection - the collection
 	 * @param source - the Session source
 	 * @param affectedOwner - the owner that is affected by this event;
-	 * can be null if unavailable
+ * can be null if unavailable
 	 * @param affectedOwnerId - the ID for the owner that is affected
-	 * by this event; can be null if unavailable
-	 * that is affected by this event; can be null if unavailable
+* by this event; can be null if unavailable
 	 */
-	public AbstractCollectionEvent( PersistentCollectionDescriptor collectionPersister,
-					PersistentCollection collection,
-					EventSource source,
-					Object affectedOwner,
-					Serializable affectedOwnerId) {
-		super(source);
+	public AbstractCollectionEvent(
+			PersistentCollectionDescriptor collectionPersister,
+			PersistentCollection collection,
+			EventSource source,
+			Object affectedOwner,
+			Object affectedOwnerId) {
+		super( source );
 		this.collection = collection;
 		this.affectedOwner = affectedOwner;
 		this.affectedOwnerId = affectedOwnerId;
@@ -62,7 +61,7 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 		return source.getPersistenceContext().getLoadedCollectionOwnerIdOrNull( collection );
 	}
 
-	protected static Serializable getOwnerIdOrNull( Object owner, EventSource source ) {
+	protected static Object getOwnerIdOrNull(Object owner, EventSource source ) {
 		EntityEntry ownerEntry = source.getPersistenceContext().getEntry( owner );
 		return ( ownerEntry == null ? null : ownerEntry.getId() );
 	}
@@ -103,7 +102,7 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 	 * from the collection's loaded key (e.g., a property-ref is used for the
 	 * collection and does not include the entity's ID)
 	 */
-	public Serializable getAffectedOwnerIdOrNull() {
+	public Object getAffectedOwnerIdOrNull() {
 		return affectedOwnerId;
 	}
 

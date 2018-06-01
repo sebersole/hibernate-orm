@@ -38,6 +38,7 @@ public class SaveSimpleEntityTest extends SessionFactoryBasedFunctionalTest {
 		final SimpleEntity entity = new SimpleEntity();
 		entity.setId( 1 );
 		entity.setSomeString( "hi" );
+		entity.setSomeInteger( 2 );
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 		sessionFactoryScope().inTransaction(
 				session -> {
@@ -58,6 +59,14 @@ public class SaveSimpleEntityTest extends SessionFactoryBasedFunctionalTest {
 							.multiLoad( 1, 2 );
 					assert list.size() == 1;
 					final SimpleEntity loaded = list.get( 0 );
+					assert loaded != null;
+					assert "hi".equals( loaded.getSomeString() );
+				}
+		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity loaded = session.bySimpleNaturalId( SimpleEntity.class )
+							.load( 2 );
 					assert loaded != null;
 					assert "hi".equals( loaded.getSomeString() );
 				}

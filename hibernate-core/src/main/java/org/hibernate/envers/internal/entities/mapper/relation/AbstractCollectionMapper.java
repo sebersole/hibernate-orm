@@ -101,7 +101,7 @@ public abstract class AbstractCollectionMapper<T> implements PropertyMapper {
 
 	private void addCollectionChanges(
 			SessionImplementor session, List<PersistentCollectionChangeData> collectionChanges,
-			Set<Object> changed, RevisionType revisionType, Serializable id) {
+			Set<Object> changed, RevisionType revisionType, Object id) {
 		int ordinal = 0;
 
 		for ( Object changedObj : changed ) {
@@ -133,10 +133,11 @@ public abstract class AbstractCollectionMapper<T> implements PropertyMapper {
 			SessionImplementor session,
 			String referencingPropertyName,
 			PersistentCollection newColl,
-			Serializable oldColl, Serializable id) {
-		if ( !commonCollectionMapperData.getCollectionReferencingPropertyData().getName().equals(
-				referencingPropertyName
-		) ) {
+			Serializable oldColl,
+			Object id) {
+		if ( !commonCollectionMapperData.getCollectionReferencingPropertyData()
+				.getName()
+				.equals( referencingPropertyName ) ) {
 			return null;
 		}
 
@@ -290,7 +291,7 @@ public abstract class AbstractCollectionMapper<T> implements PropertyMapper {
 			SessionImplementor session,
 			PersistentCollection newColl,
 			Serializable oldColl,
-			Serializable id) {
+			Object id) {
 		final List<PersistentCollectionChangeData> collectionChanges = new ArrayList<>();
 
 		// Comparing new and old collection content.
@@ -335,7 +336,7 @@ public abstract class AbstractCollectionMapper<T> implements PropertyMapper {
 			SessionImplementor session,
 			PersistentCollection newColl,
 			Serializable oldColl,
-			Serializable id,
+			Object id,
 			PersistentCollectionDescriptor collectionPersister) {
 
 		final List<PersistentCollectionChangeData> collectionChanges = new ArrayList<>();

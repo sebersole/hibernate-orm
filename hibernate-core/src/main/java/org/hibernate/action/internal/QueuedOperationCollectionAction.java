@@ -6,8 +6,6 @@
  */
 package org.hibernate.action.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -24,8 +22,7 @@ public final class QueuedOperationCollectionAction extends CollectionAction {
 	
 	/**
 	 * Constructs a CollectionUpdateAction
-	 *
-	 * @param collection The collection to update
+	 *  @param collection The collection to update
 	 * @param persister The collection persister
 	 * @param id The collection key
 	 * @param session The session
@@ -33,7 +30,7 @@ public final class QueuedOperationCollectionAction extends CollectionAction {
 	public QueuedOperationCollectionAction(
 			final PersistentCollection collection,
 			final PersistentCollectionDescriptor persister,
-			final Serializable id,
+			final Object id,
 			final SharedSessionContractImplementor session) {
 		super( persister, collection, id, session );
 	}

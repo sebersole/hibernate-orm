@@ -6,8 +6,6 @@
  */
 package org.hibernate.action.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.cache.CacheException;
@@ -49,8 +47,7 @@ public final class EntityUpdateAction extends EntityAction {
 
 	/**
 	 * Constructs an EntityUpdateAction
-	 *
-	 * @param id The entity identifier
+	 *  @param id The entity identifier
 	 * @param state The current (extracted) entity state
 	 * @param dirtyProperties The indexes (in reference to state) properties with dirty state
 	 * @param hasDirtyCollection Were any collections dirty?
@@ -63,7 +60,7 @@ public final class EntityUpdateAction extends EntityAction {
 	 * @param session The session
 	 */
 	public EntityUpdateAction(
-			final Serializable id,
+			final Object id,
 			final Object[] state,
 			final int[] dirtyProperties,
 			final boolean hasDirtyCollection,
@@ -97,7 +94,7 @@ public final class EntityUpdateAction extends EntityAction {
 			EntityDescriptor entityDescriptor,
 			Object[] previousState,
 			SharedSessionContractImplementor session,
-			Serializable id) {
+			Object id) {
 		if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
 			return null;
 		}
@@ -111,7 +108,7 @@ public final class EntityUpdateAction extends EntityAction {
 
 	@Override
 	public void execute() throws HibernateException {
-		final Serializable id = getId();
+		final Object id = getId();
 		final EntityDescriptor entityDescriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();

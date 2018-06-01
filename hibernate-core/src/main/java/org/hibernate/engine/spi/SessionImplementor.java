@@ -62,7 +62,15 @@ public interface SessionImplementor extends Session, SharedSessionContractImplem
 
 	ActionQueue getActionQueue();
 
-	Object instantiate(EntityDescriptor persister, Serializable id) throws HibernateException;
+	Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException;
+
+	/**
+	 * @deprecated Use {@link #instantiate(EntityDescriptor, Object)}
+	 */
+	@Deprecated
+	default Object instantiate(EntityDescriptor entityDescriptor, Serializable id) throws HibernateException {
+		return instantiate( entityDescriptor, (Object) id );
+	}
 
 	void forceFlush(EntityEntry e) throws HibernateException;
 

@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -19,15 +17,14 @@ public class PostInsertEvent extends AbstractEvent {
 	private Object entity;
 	private EntityDescriptor persister;
 	private Object[] state;
-	private Serializable id;
+	private Object id;
 	
 	public PostInsertEvent(
-			Object entity, 
-			Serializable id,
+			Object entity,
+			Object id,
 			Object[] state,
 			EntityDescriptor persister,
-			EventSource source
-	) {
+			EventSource source) {
 		super(source);
 		this.entity = entity;
 		this.id = id;
@@ -38,12 +35,15 @@ public class PostInsertEvent extends AbstractEvent {
 	public Object getEntity() {
 		return entity;
 	}
-	public Serializable getId() {
+
+	public Object getId() {
 		return id;
 	}
+
 	public EntityDescriptor getPersister() {
 		return persister;
 	}
+
 	public Object[] getState() {
 		return state;
 	}

@@ -6,33 +6,131 @@
  */
 package org.hibernate.loader.internal;
 
+import java.util.List;
+
+import org.hibernate.HibernateException;
+import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.loader.spi.CompositeNaturalIdLoader;
+import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
+import org.hibernate.sql.ast.produce.metamodel.internal.SelectByNaturalIdBuilder;
+import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
+import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcSelect;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
-public class StandardCompositeNaturalIdLoaderImpl implements CompositeNaturalIdLoader {
-	private static final Logger log = Logger.getLogger( StandardCompositeNaturalIdLoaderImpl.class );
+public class StandardNaturalIdLoader implements NaturalIdLoader {
+	private static final Logger log = Logger.getLogger( StandardNaturalIdLoader.class );
 
 	private final EntityDescriptor entityDescriptor;
 
-	public StandardCompositeNaturalIdLoaderImpl(EntityDescriptor entityDescriptor) {
+	private Boolean simple;
+	private JdbcSelect xrefSelect;
+
+	public StandardNaturalIdLoader(EntityDescriptor entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 	}
 
 	@Override
-	public Object resolveIdentifier(Object[] naturalIdValues, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+	public Object resolveNaturalIdToEntity(
+			Object naturalIdToLoad,
+			LockOptions lockOptions,
+			SharedSessionContractImplementor session) {
+		if ( naturalIdToLoad == null ) {
+			throw new HibernateException( "Natural-id to load cannot be null" );
+		}
+
+		this.simple = entityDescriptor.getHierarchy().getNaturalIdDescriptor().getAttributeInfos().size() == 1;
+
+		if ( simple ) {
+			if ( naturalIdToLoad instanceof Object[] ) {
+				naturalIdToLoad = ( (Object[]) naturalIdToLoad )[0];
+			}
+		}
+		else {
+			if ( ! Object[].class.isInstance( naturalIdToLoad ) ) {
+				naturalIdToLoad = new Object[] { naturalIdToLoad };
+			}
+		}
+
+		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
+				session.getFactory(),
+				QueryParameterBindings.NO_PARAM_BINDINGS,
+				naturalIdToLoad
+		);
+
+		if ( xrefSelect == null ) {
+			xrefSelect = generatePkByNaturalIdSelect( parameterBindingContext );
+		}
+
+		final ExecutionContext executionContext = new ExecutionContext() {
+			@Override
+			public SharedSessionContractImplementor getSession() {
+				return session;
+			}
+
+			@Override
+			public QueryOptions getQueryOptions() {
+				return QueryOptions.NONE;
+			}
+
+			@Override
+			public ParameterBindingContext getParameterBindingContext() {
+				return parameterBindingContext;
+			}
+
+			@Override
+			public Callback getCallback() {
+				return null;
+			}
+		};
+
+		final List list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
+				xrefSelect,
+				executionContext,
+				RowTransformerSingularReturnImpl.instance()
+		);
+
+		if ( list.isEmpty() ) {
+			return null;
+		}
+
+		return list.get( 0 );
+	}
+
+	private JdbcSelect generatePkByNaturalIdSelect(ParameterBindingContext parameterBindingContext) {
+		final SelectByNaturalIdBuilder selectBuilder = new SelectByNaturalIdBuilder(
+				entityDescriptor.getFactory(),
+				entityDescriptor
+		);
+		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
+				.generateSelectStatement( 1, LoadQueryInfluencers.NONE, LockOptions.NONE );
+
+
+		return SqlSelectAstToJdbcSelectConverter.interpret(
+				selectDescriptor,
+				parameterBindingContext
+		);
 	}
 
 	@Override
-	public Object loadEntity(Object[] naturalIdValues, SharedSessionContractImplementor session) {
+	public Object load(Object naturalIdToLoad, LoadOptions options, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
+	}
 
 //		if ( log.isTraceEnabled() ) {
 //			log.tracef(
@@ -91,7 +189,7 @@ public class StandardCompositeNaturalIdLoaderImpl implements CompositeNaturalIdL
 //					sqlEntityIdByNaturalIdString
 //			);
 //		}
-	}
+//	}
 
 
 

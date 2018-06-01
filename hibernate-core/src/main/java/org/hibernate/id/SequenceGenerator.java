@@ -6,7 +6,6 @@
  */
 package org.hibernate.id;
 
-import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,15 +15,15 @@ import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.naming.ObjectNameNormalizer;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.boot.model.relational.MappedSequence;
 import org.hibernate.boot.model.relational.MappedNamespace;
-import org.hibernate.naming.spi.QualifiedName;
-import org.hibernate.naming.spi.QualifiedNameParser;
+import org.hibernate.boot.model.relational.MappedSequence;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.naming.spi.QualifiedName;
+import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -105,7 +104,7 @@ public class SequenceGenerator
 	}
 
 	@Override
-	public Serializable generate(SharedSessionContractImplementor session, Object obj) {
+	public Object generate(SharedSessionContractImplementor session, Object obj) {
 		return generateHolder( session ).makeValue();
 	}
 

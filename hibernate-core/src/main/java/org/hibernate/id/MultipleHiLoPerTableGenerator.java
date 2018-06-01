@@ -6,7 +6,6 @@
  */
 package org.hibernate.id;
 
-import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,13 +16,9 @@ import java.util.Properties;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.MappingException;
-import org.hibernate.mapping.PrimaryKey;
-import org.hibernate.naming.Identifier;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.relational.MappedNamespace;
-import org.hibernate.naming.spi.QualifiedName;
-import org.hibernate.naming.spi.QualifiedNameParser;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.internal.FormatStyle;
@@ -40,6 +35,10 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.jdbc.AbstractReturningWork;
 import org.hibernate.jdbc.WorkExecutorVisitable;
 import org.hibernate.mapping.Column;
+import org.hibernate.mapping.PrimaryKey;
+import org.hibernate.naming.Identifier;
+import org.hibernate.naming.spi.QualifiedName;
+import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
@@ -109,7 +108,7 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 	private Class returnClass;
 	private int keySize;
 
-	public synchronized Serializable generate(final SharedSessionContractImplementor session, Object obj) {
+	public synchronized Object generate(final SharedSessionContractImplementor session, Object obj) {
 		DeprecationLogger.DEPRECATION_LOGGER.deprecatedTableGenerator( getClass().getName() );
 
 		final SqlStatementLogger statementLogger = session.getFactory().getServiceRegistry()

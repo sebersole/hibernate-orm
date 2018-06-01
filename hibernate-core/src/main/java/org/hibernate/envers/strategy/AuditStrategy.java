@@ -6,8 +6,6 @@
  */
 package org.hibernate.envers.strategy;
 
-import java.io.Serializable;
-
 import org.hibernate.Session;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.boot.spi.AuditServiceOptions;
@@ -27,8 +25,7 @@ import org.hibernate.envers.internal.tools.query.QueryBuilder;
 public interface AuditStrategy {
 	/**
 	 * Perform the persistence of audited data for regular entities.
-	 *
-	 * @param session Session, which can be used to persist the data.
+	 *  @param session Session, which can be used to persist the data.
 	 * @param entityName Name of the entity, in which the audited change happens
 	 * @param auditService The AuditService
 	 * @param id Id of the entity.
@@ -39,7 +36,7 @@ public interface AuditStrategy {
 			Session session,
 			String entityName,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			Object data,
 			Object revision
 	);

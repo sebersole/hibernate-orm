@@ -16,10 +16,11 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public class PreCollectionRemoveEvent extends AbstractCollectionEvent {
 
-	public PreCollectionRemoveEvent(PersistentCollectionDescriptor collectionPersister,
-									PersistentCollection collection,
-									EventSource source,
-									Object loadedOwner) {
+	public PreCollectionRemoveEvent(
+			PersistentCollectionDescriptor collectionPersister,
+			PersistentCollection collection,
+			EventSource source,
+			Object loadedOwner) {
 		super( collectionPersister, collection, source,
 				loadedOwner,
 				getOwnerIdOrNull( loadedOwner, source ) );

@@ -42,8 +42,8 @@ import org.hibernate.SharedSessionBuilder;
 import org.hibernate.SimpleNaturalIdLoadAccess;
 import org.hibernate.Transaction;
 import org.hibernate.UnknownProfileException;
-import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.cache.spi.CacheTransactionSynchronization;
+import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.LobCreator;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
@@ -129,7 +129,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Serializable id, EntityDescriptor persister) {
+	public EntityKey generateEntityKey(Object id, EntityDescriptor persister) {
 		return delegate.generateEntityKey( id, persister );
 	}
 
@@ -158,12 +158,12 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Object internalLoad(String entityName, Serializable id, boolean eager, boolean nullable) throws HibernateException {
+	public Object internalLoad(String entityName, Object id, boolean eager, boolean nullable) throws HibernateException {
 		return delegate.internalLoad( entityName, id, eager, nullable );
 	}
 
 	@Override
-	public Object immediateLoad(String entityName, Serializable id) throws HibernateException {
+	public Object immediateLoad(String entityName, Object id) throws HibernateException {
 		return delegate.immediateLoad( entityName, id );
 	}
 
@@ -173,8 +173,8 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public EntityDescriptor getEntityPersister(String entityName, Object object) throws HibernateException {
-		return delegate.getEntityPersister( entityName, object );
+	public EntityDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException {
+		return delegate.getEntityDescriptor( entityName, object );
 	}
 
 	@Override
@@ -183,7 +183,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Serializable getContextEntityIdentifier(Object object) {
+	public Object getContextEntityIdentifier(Object object) {
 		return delegate.getContextEntityIdentifier( object );
 	}
 
@@ -198,7 +198,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Object instantiate(String entityName, Serializable id) throws HibernateException {
+	public Object instantiate(String entityName, Object id) throws HibernateException {
 		return delegate.instantiate( entityName, id );
 	}
 
@@ -622,7 +622,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Serializable getIdentifier(Object object) {
+	public Object getIdentifier(Object object) {
 		return delegate.getIdentifier( object );
 	}
 
@@ -682,12 +682,12 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id) {
+	public Object load(String entityName, Object id) {
 		return delegate.load( entityName, id );
 	}
 
 	@Override
-	public void load(Object object, Serializable id) {
+	public void load(Object object, Object id) {
 		delegate.load( object, id );
 	}
 
@@ -702,12 +702,12 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Serializable save(Object object) {
+	public Object save(Object object) {
 		return delegate.save( object );
 	}
 
 	@Override
-	public Serializable save(String entityName, Object object) {
+	public Object save(String entityName, Object object) {
 		return delegate.save( entityName, object );
 	}
 
@@ -862,32 +862,32 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public <T> T get(Class<T> theClass, Serializable id) {
+	public <T> T get(Class<T> theClass, Object id) {
 		return delegate.get( theClass, id );
 	}
 
 	@Override
-	public <T> T get(Class<T> theClass, Serializable id, LockMode lockMode) {
+	public <T> T get(Class<T> theClass, Object id, LockMode lockMode) {
 		return delegate.get( theClass, id, lockMode );
 	}
 
 	@Override
-	public <T> T get(Class<T> theClass, Serializable id, LockOptions lockOptions) {
+	public <T> T get(Class<T> theClass, Object id, LockOptions lockOptions) {
 		return delegate.get( theClass, id, lockOptions );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id) {
+	public Object get(String entityName, Object id) {
 		return delegate.get( entityName, id );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id, LockMode lockMode) {
+	public Object get(String entityName, Object id, LockMode lockMode) {
 		return delegate.get( entityName, id, lockMode );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id, LockOptions lockOptions) {
+	public Object get(String entityName, Object id, LockOptions lockOptions) {
 		return delegate.get( entityName, id, lockOptions );
 	}
 
@@ -1017,8 +1017,8 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Object instantiate(EntityDescriptor persister, Serializable id) throws HibernateException {
-		return delegate.instantiate( persister, id );
+	public Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException {
+		return delegate.instantiate( entityDescriptor, id );
 	}
 
 	@Override

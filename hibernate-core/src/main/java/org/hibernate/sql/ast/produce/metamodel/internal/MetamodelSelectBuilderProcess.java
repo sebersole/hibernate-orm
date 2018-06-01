@@ -14,14 +14,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.sqm.produce.internal.UniqueIdGenerator;
@@ -45,6 +50,11 @@ import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
+import org.hibernate.sql.ast.tree.spi.expression.domain.BasicValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
@@ -65,6 +75,7 @@ public class MetamodelSelectBuilderProcess
 	public static SqlAstSelectDescriptor createSelect(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigableContainer,
+			List<Navigable<?>> navigablesToSelect,
 			Navigable restrictedNavigable,
 			QueryResult queryResult,
 			int numberOfKeysToLoad,
@@ -73,6 +84,7 @@ public class MetamodelSelectBuilderProcess
 		final MetamodelSelectBuilderProcess process = new MetamodelSelectBuilderProcess(
 				sessionFactory,
 				rootNavigableContainer,
+				navigablesToSelect,
 				restrictedNavigable,
 				queryResult,
 				numberOfKeysToLoad,
@@ -85,6 +97,7 @@ public class MetamodelSelectBuilderProcess
 
 	private final SessionFactoryImplementor sessionFactory;
 	private final NavigableContainer rootNavigableContainer;
+	private final List<Navigable<?>> navigablesToSelect;
 	private final Navigable restrictedNavigable;
 	private final QueryResult queryResult;
 	private final int numberOfKeysToLoad;
@@ -94,6 +107,7 @@ public class MetamodelSelectBuilderProcess
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigableContainer,
+			List<Navigable<?>> navigablesToSelect,
 			Navigable restrictedNavigable,
 			QueryResult queryResult,
 			int numberOfKeysToLoad,
@@ -101,6 +115,7 @@ public class MetamodelSelectBuilderProcess
 			LockOptions lockOptions) {
 		this.sessionFactory = sessionFactory;
 		this.rootNavigableContainer = rootNavigableContainer;
+		this.navigablesToSelect = navigablesToSelect;
 		this.restrictedNavigable = restrictedNavigable;
 		this.queryResult = queryResult;
 		this.numberOfKeysToLoad = numberOfKeysToLoad;
@@ -132,22 +147,45 @@ public class MetamodelSelectBuilderProcess
 		rootTableSpace.setRootTableGroup( rootTableGroup );
 		tableGroupStack.push( rootTableGroup );
 
-		// use the one passed to the constructor or create one (maybe always create and pass?)
-		//		allows re-use as they can be re-used to save on memory - they
-		//		do not share state between
-		final QueryResult queryResult = this.queryResult != null
+		final List<QueryResult> queryResults;
+
+		if ( navigablesToSelect != null && ! navigablesToSelect.isEmpty() ) {
+			queryResults = new ArrayList<>();
+			int jdbcSelectionCount = 0;
+			for ( Navigable navigable : navigablesToSelect ) {
+				final NavigableReference navigableReference = makeNavigableReference( rootTableGroup, navigable );
+				queryResults.add(
+						navigable.createQueryResult(
+								navigableReference,
+								null,
+								this
+						)
+				);
+			}
+		}
+		else {
+			// use the one passed to the constructor or create one (maybe always create and pass?)
+			//		allows re-use as they can be re-used to save on memory - they
+			//		do not share state between
+			final QueryResult queryResult;
+			if ( this.queryResult != null ) {
 				// used the one passed to the constructor
-				? this.queryResult
+				queryResult = this.queryResult;
+			}
+			else {
 				// create one
-				: rootNavigableContainer.createQueryResult(
-				rootTableSpace.getRootTableGroup().getNavigableReference(),
-				null,
-				this
-		);
+				queryResult = rootNavigableContainer.createQueryResult(
+						rootTableSpace.getRootTableGroup().getNavigableReference(),
+						null,
+						this
+				);
+			}
 
-		fetchParentStack.push( (FetchParent) queryResult );
+			queryResults = Collections.singletonList( queryResult );
 
-		// todo (6.0) : process fetches & entity-graphs
+			// todo (6.0) : process fetches & entity-graphs
+			fetchParentStack.push( (FetchParent) queryResult );
+		}
 
 
 		// add the id/uk/fk restriction
@@ -187,9 +225,41 @@ public class MetamodelSelectBuilderProcess
 
 		return new SqlAstSelectDescriptorImpl(
 				selectStatement,
-				Collections.singletonList( queryResult ),
+				queryResults,
 				affectedTables
 		);
+	}
+
+	private NavigableReference makeNavigableReference(TableGroup rootTableGroup, Navigable navigable) {
+		if ( navigable instanceof BasicValuedNavigable ) {
+			return new BasicValuedNavigableReference(
+					(NavigableContainerReference) rootTableGroup.getNavigableReference(),
+					(BasicValuedNavigable) navigable,
+					rootTableGroup.getNavigableReference().getNavigablePath().append( navigable.getNavigableName() )
+			);
+		}
+
+		if ( navigable instanceof EmbeddedValuedNavigable ) {
+			return new EmbeddableValuedNavigableReference(
+					(NavigableContainerReference) rootTableGroup.getNavigableReference(),
+					(EmbeddedValuedNavigable) navigable,
+					rootTableGroup.getNavigableReference().getNavigablePath().append( navigable.getNavigableName() ),
+					LockMode.NONE
+			);
+		}
+
+		if ( navigable instanceof EntityValuedNavigable ) {
+			// todo (6.0) : join?
+			return new EntityValuedNavigableReference(
+					(NavigableContainerReference) rootTableGroup.getNavigableReference(),
+					(EntityValuedNavigable) navigable,
+					rootTableGroup.getNavigableReference().getNavigablePath().append( navigable.getNavigableName() ),
+					rootTableGroup,
+					LockMode.NONE
+			);
+		}
+
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	private TableGroup makeRootTableGroup(

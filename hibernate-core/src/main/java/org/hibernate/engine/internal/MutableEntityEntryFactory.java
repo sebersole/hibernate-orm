@@ -7,8 +7,6 @@
 
 package org.hibernate.engine.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.LockMode;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityEntryFactory;
@@ -37,7 +35,7 @@ public class MutableEntityEntryFactory implements EntityEntryFactory {
 			Status status,
 			Object[] loadedState,
 			Object rowId,
-			Serializable id,
+			Object id,
 			Object version,
 			LockMode lockMode,
 			boolean existsInDatabase,
