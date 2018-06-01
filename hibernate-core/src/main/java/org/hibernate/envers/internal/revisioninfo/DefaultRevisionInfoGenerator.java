@@ -6,7 +6,6 @@
  */
 package org.hibernate.envers.internal.revisioninfo;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 
 import org.hibernate.MappingException;
@@ -90,7 +89,7 @@ public class DefaultRevisionInfoGenerator implements RevisionInfoGenerator {
 	public void entityChanged(
 			Class entityClass,
 			String entityName,
-			Serializable entityId,
+			Object entityId,
 			RevisionType revisionType,
 			Object revisionInfo) {
 		if ( listener instanceof EntityTrackingRevisionListener ) {

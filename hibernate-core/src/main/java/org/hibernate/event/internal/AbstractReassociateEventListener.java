@@ -46,7 +46,7 @@ public abstract class AbstractReassociateEventListener implements Serializable {
 	protected final EntityEntry reassociate(
 			AbstractEvent event,
 			Object object,
-			Serializable id,
+			Object id,
 			EntityDescriptor entityDescriptor) {
 
 		if ( log.isTraceEnabled() ) {

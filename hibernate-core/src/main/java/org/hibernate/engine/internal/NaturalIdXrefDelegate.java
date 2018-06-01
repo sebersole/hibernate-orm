@@ -21,7 +21,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
-import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor.NaturalIdAttributeInfo;
 import org.hibernate.stat.internal.StatsHelper;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -72,7 +72,7 @@ public class NaturalIdXrefDelegate {
 	 *
 	 * @return {@code true} if a new entry was actually added; {@code false} otherwise.
 	 */
-	public boolean cacheNaturalIdCrossReference(EntityDescriptor persister, Serializable pk, Object[] naturalIdValues) {
+	public boolean cacheNaturalIdCrossReference(EntityDescriptor persister, Object pk, Object[] naturalIdValues) {
 		validateNaturalId( persister, naturalIdValues );
 
 		NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
@@ -95,7 +95,7 @@ public class NaturalIdXrefDelegate {
 	 * 
 	 * @return The cached values, if any.  May be different from incoming values.
 	 */
-	public Object[] removeNaturalIdCrossReference(EntityDescriptor entityDescriptor, Serializable pk, Object[] naturalIdValues) {
+	public Object[] removeNaturalIdCrossReference(EntityDescriptor entityDescriptor, Object pk, Object[] naturalIdValues) {
 		entityDescriptor = locatePersisterForKey( entityDescriptor );
 		validateNaturalId( entityDescriptor, naturalIdValues );
 
@@ -134,7 +134,7 @@ public class NaturalIdXrefDelegate {
 	 * 
 	 * @return {@code true} if the given naturalIdValues match the current cached values; {@code false} otherwise.
 	 */
-	public boolean sameAsCached(EntityDescriptor persister, Serializable pk, Object[] naturalIdValues) {
+	public boolean sameAsCached(EntityDescriptor persister, Object pk, Object[] naturalIdValues) {
 		final NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
 		return entityNaturalIdResolutionCache != null
 				&& entityNaturalIdResolutionCache.sameAsCached( pk, naturalIdValues );
@@ -167,7 +167,7 @@ public class NaturalIdXrefDelegate {
 		if ( persister.getHierarchy().getNaturalIdDescriptor() == null  ) {
 			throw new IllegalArgumentException( "Entity did not define a natural-id" );
 		}
-		if ( persister.getHierarchy().getNaturalIdDescriptor().getPersistentAttributes().size() != naturalIdValues.length ) {
+		if ( persister.getHierarchy().getNaturalIdDescriptor().getAttributeInfos().size() != naturalIdValues.length ) {
 			throw new IllegalArgumentException( "Mismatch between expected number of natural-id values and found." );
 		}
 	}
@@ -180,7 +180,7 @@ public class NaturalIdXrefDelegate {
 	 * 
 	 * @return The corresponding cross-referenced natural id values, or {@code null} if none 
 	 */
-	public Object[] findCachedNaturalId(EntityDescriptor persister, Serializable pk) {
+	public Object[] findCachedNaturalId(EntityDescriptor persister, Object pk) {
 		persister = locatePersisterForKey( persister );
 		final NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
 		if ( entityNaturalIdResolutionCache == null ) {
@@ -207,13 +207,13 @@ public class NaturalIdXrefDelegate {
 	 * 		{@link PersistenceContext.NaturalIdHelper#INVALID_NATURAL_ID_REFERENCE},
 	 * 		or {@code null} if none 
 	 */
-	public Serializable findCachedNaturalIdResolution(EntityDescriptor entityDescriptor, Object[] naturalIdValues) {
+	public Object findCachedNaturalIdResolution(EntityDescriptor entityDescriptor, Object[] naturalIdValues) {
 		entityDescriptor = locatePersisterForKey( entityDescriptor );
 		validateNaturalId( entityDescriptor, naturalIdValues );
 
 		NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( entityDescriptor );
 
-		Serializable pk = null;
+		Object pk = null;
 		final CachedNaturalId cachedNaturalId = new CachedNaturalId( entityDescriptor, naturalIdValues );
 		if ( entityNaturalIdResolutionCache != null ) {
 			pk = entityNaturalIdResolutionCache.naturalIdToPkMap.get( cachedNaturalId );
@@ -311,10 +311,10 @@ public class NaturalIdXrefDelegate {
 	 * 
 	 * @see org.hibernate.NaturalIdLoadAccess#setSynchronizationEnabled
 	 */
-	public Collection<Serializable> getCachedPkResolutions(EntityDescriptor persister) {
+	public Collection<Object> getCachedPkResolutions(EntityDescriptor persister) {
 		persister = locatePersisterForKey( persister );
 
-		Collection<Serializable> pks = null;
+		Collection<Object> pks = null;
 
 		final NaturalIdResolutionCache entityNaturalIdResolutionCache = naturalIdResolutionCacheMap.get( persister );
 		if ( entityNaturalIdResolutionCache != null ) {
@@ -379,15 +379,15 @@ public class NaturalIdXrefDelegate {
 			int hashCodeCalculation = 1;
 			hashCodeCalculation = prime * hashCodeCalculation + entityDescriptor.hashCode();
 
-			final NaturalIdDescriptor naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
-			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getPersistentAttributes().size();
+			final NaturalIdDescriptor<?> naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+			final int numberOfNaturalIdAttributes = naturalIdDescriptor.getAttributeInfos().size();
 
 			naturalIdTypes = new JavaTypeDescriptor[ numberOfNaturalIdAttributes ];
 			int i = 0;
-			for ( NonIdPersistentAttribute attribute : naturalIdDescriptor.getPersistentAttributes() ) {
-				naturalIdTypes[ i ] = attribute.getJavaTypeDescriptor();
+			for ( NaturalIdAttributeInfo attribute : naturalIdDescriptor.getAttributeInfos() ) {
+				naturalIdTypes[ i ] = attribute.getUnderlyingAttributeDescriptor().getJavaTypeDescriptor();
 
-				final int elementHashCode = values[i] == null ? 0 : attribute.getJavaTypeDescriptor().extractHashCode( values[i] );
+				final int elementHashCode = values[i] == null ? 0 : attribute.getUnderlyingAttributeDescriptor().getJavaTypeDescriptor().extractHashCode( values[i] );
 				hashCodeCalculation = prime * hashCodeCalculation + elementHashCode;
 				i++;
 			}
@@ -439,8 +439,8 @@ public class NaturalIdXrefDelegate {
 	private static class NaturalIdResolutionCache implements Serializable {
 		private final EntityDescriptor persister;
 
-		private Map<Serializable, CachedNaturalId> pkToNaturalIdMap = new ConcurrentHashMap<>();
-		private Map<CachedNaturalId, Serializable> naturalIdToPkMap = new ConcurrentHashMap<>();
+		private Map<Object, CachedNaturalId> pkToNaturalIdMap = new ConcurrentHashMap<>();
+		private Map<CachedNaturalId, Object> naturalIdToPkMap = new ConcurrentHashMap<>();
 
 		private List<CachedNaturalId> invalidNaturalIdList;
 
@@ -452,7 +452,7 @@ public class NaturalIdXrefDelegate {
 			return persister;
 		}
 
-		public boolean sameAsCached(Serializable pk, Object[] naturalIdValues) {
+		public boolean sameAsCached(Object pk, Object[] naturalIdValues) {
 			if ( pk == null ) {
 				return false;
 			}
@@ -460,7 +460,7 @@ public class NaturalIdXrefDelegate {
 			return initial != null && initial.isSame( naturalIdValues );
 		}
 
-		public boolean cache(Serializable pk, Object[] naturalIdValues) {
+		public boolean cache(Object pk, Object[] naturalIdValues) {
 			if ( pk == null ) {
 				return false;
 			}

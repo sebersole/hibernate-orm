@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.spi;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
@@ -15,7 +14,7 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor.NaturalIdAttributeInfo;
 
 /**
  * Defines an event class for the resolving of an entity id from the entity's natural-id
@@ -31,7 +30,7 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 	private final Object[] orderedNaturalIdValues;
 	private final LockOptions lockOptions;
 
-	private Serializable entityId;
+	private Object entityId;
 
 	public ResolveNaturalIdEvent(
 			Map<String, Object> naturalIdValues,
@@ -59,13 +58,13 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 			throw new IllegalArgumentException( "natural-id to load is required" );
 		}
 
-		final NaturalIdDescriptor naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
-		if ( naturalIdDescriptor.getPersistentAttributes().size() != naturalIdValues.size() ) {
+		final NaturalIdDescriptor<?> naturalIdDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+		if ( naturalIdDescriptor.getAttributeInfos().size() != naturalIdValues.size() ) {
 			throw new HibernateException(
 					String.format(
 							"Entity [%s] defines its natural-id with %d properties but only %d were specified",
 							entityDescriptor.getEntityName(),
-							naturalIdDescriptor.getPersistentAttributes().size(),
+							naturalIdDescriptor.getAttributeInfos().size(),
 							naturalIdValues.size()
 					)
 			);
@@ -82,12 +81,12 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 		this.naturalIdValues = naturalIdValues;
 		this.lockOptions = lockOptions;
 
-		this.orderedNaturalIdValues = new Object[ naturalIdDescriptor.getPersistentAttributes().size() ];
+		this.orderedNaturalIdValues = new Object[ naturalIdDescriptor.getAttributeInfos().size() ];
 
 		int i = 0;
-		for ( PersistentAttribute naturalIdAttribute : naturalIdDescriptor.getPersistentAttributes() ) {
+		for ( NaturalIdAttributeInfo naturalIdAttribute : naturalIdDescriptor.getAttributeInfos() ) {
 			// todo (6.0) : still need to figure out ordering of array elements for "value arrays"
-			final String attributeName = naturalIdAttribute.getName();
+			final String attributeName = naturalIdAttribute.getUnderlyingAttributeDescriptor().getName();
 			if ( ! naturalIdValues.containsKey( attributeName ) ) {
 				throw new HibernateException(
 						String.format(
@@ -121,11 +120,11 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 		return lockOptions;
 	}
 
-	public Serializable getEntityId() {
+	public Object getEntityId() {
 		return entityId;
 	}
 
-	public void setEntityId(Serializable entityId) {
+	public void setEntityId(Object entityId) {
 		this.entityId = entityId;
 	}
 }

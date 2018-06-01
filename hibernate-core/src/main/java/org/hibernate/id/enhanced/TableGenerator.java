@@ -6,7 +6,6 @@
  */
 package org.hibernate.id.enhanced;
 
-import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,14 +19,10 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.mapping.PrimaryKey;
-import org.hibernate.naming.Identifier;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.InitCommand;
-import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.relational.MappedNamespace;
-import org.hibernate.naming.spi.QualifiedName;
-import org.hibernate.naming.spi.QualifiedNameParser;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.config.spi.ConfigurationService;
@@ -49,6 +44,10 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.jdbc.AbstractReturningWork;
 import org.hibernate.mapping.Column;
+import org.hibernate.mapping.PrimaryKey;
+import org.hibernate.naming.Identifier;
+import org.hibernate.naming.spi.QualifiedName;
+import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
@@ -560,7 +559,7 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	}
 
 	@Override
-	public Serializable generate(final SharedSessionContractImplementor session, final Object obj) {
+	public Object generate(final SharedSessionContractImplementor session, final Object obj) {
 		final SqlStatementLogger statementLogger = session.getFactory().getServiceRegistry()
 				.getService( JdbcServices.class )
 				.getSqlStatementLogger();

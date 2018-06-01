@@ -17,7 +17,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.ValueHolder;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
-import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
@@ -48,12 +48,12 @@ public class NaturalIdCacheKey implements Serializable {
 			final Object[] naturalIdValues,
 			EntityHierarchy entityHierarchy,
 			final SharedSessionContractImplementor session) {
-		if ( naturalIdValues.length != entityHierarchy.getNaturalIdDescriptor().getPersistentAttributes().size() ) {
+		if ( naturalIdValues.length != entityHierarchy.getNaturalIdDescriptor().getAttributeInfos().size() ) {
 			throw new HibernateException(
 					String.format(
 							"Number of natural-id values [%s] did not match the number of mapped natural-id attributes [%s]",
 							naturalIdValues.length,
-							entityHierarchy.getNaturalIdDescriptor().getPersistentAttributes().size()
+							entityHierarchy.getNaturalIdDescriptor().getAttributeInfos().size()
 					)
 			);
 		}
@@ -67,11 +67,10 @@ public class NaturalIdCacheKey implements Serializable {
 		int result = 1;
 		result = prime * result + ( ( this.entityName == null ) ? 0 : this.entityName.hashCode() );
 		result = prime * result + ( ( this.tenantId == null ) ? 0 : this.tenantId.hashCode() );
-		final List<NonIdPersistentAttribute> persistentAttributes = entityHierarchy.getNaturalIdDescriptor()
-				.getPersistentAttributes();
+		final List<NaturalIdDescriptor.NaturalIdAttributeInfo> persistentAttributes = entityHierarchy.getNaturalIdDescriptor().getAttributeInfos();
 		for ( int i = 0; i < naturalIdValues.length; i++ ) {
 			final Object value = naturalIdValues[i];
-			JavaTypeDescriptor javaTypeDescriptor = persistentAttributes.get( i ).getJavaTypeDescriptor();
+			JavaTypeDescriptor javaTypeDescriptor = persistentAttributes.get( i ).getUnderlyingAttributeDescriptor().getJavaTypeDescriptor();
 
 			result = prime * result + (value != null ? javaTypeDescriptor.extractHashCode( value ) : 0);
 			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

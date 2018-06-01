@@ -6,15 +6,11 @@
  */
 package org.hibernate.id.enhanced;
 
-import java.io.Serializable;
 import java.util.Properties;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
-import org.hibernate.naming.Identifier;
 import org.hibernate.boot.model.relational.Database;
-import org.hibernate.naming.spi.QualifiedName;
-import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.config.spi.ConfigurationService;
@@ -28,6 +24,9 @@ import org.hibernate.id.PersistentIdentifierGenerator;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.naming.Identifier;
+import org.hibernate.naming.spi.QualifiedName;
+import org.hibernate.naming.spi.QualifiedNameParser;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -491,7 +490,7 @@ public class SequenceStyleGenerator
 	// IdentifierGenerator implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	@Override
-	public Serializable generate(SharedSessionContractImplementor session, Object object) throws HibernateException {
+	public Object generate(SharedSessionContractImplementor session, Object object) throws HibernateException {
 		return optimizer.generate( databaseStructure.buildCallback( session ) );
 	}
 

@@ -216,11 +216,6 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	private StatementInspector interpret(StatementInspector statementInspector) {
-		if ( statementInspector == null ) {
-			// If there is no StatementInspector specified, map to the call
-			//		to the (deprecated) Interceptor #onPrepareStatement method
-			return (StatementInspector) interceptor::onPrepareStatement;
-		}
 		return statementInspector;
 	}
 
@@ -505,7 +500,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Serializable id, EntityDescriptor persister) {
+	public EntityKey generateEntityKey(Object id, EntityDescriptor persister) {
 		return new EntityKey( id, persister );
 	}
 
@@ -833,7 +828,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		return procedureCall;
 	}
 
-	protected abstract Object load(String entityName, Serializable identifier);
+	protected abstract Object load(String entityName, Object identifier);
 
 	@Override
 	public ExceptionConverter getExceptionConverter(){

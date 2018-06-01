@@ -35,7 +35,7 @@ public class PersistentCollectionChangeWorkUnit extends AbstractAuditWorkUnit im
 			PersistentCollection collection,
 			CollectionEntry collectionEntry,
 			Serializable snapshot,
-			Serializable id,
+			Object id,
 			String referencingPropertyName) {
 		super(
 				sessionImplementor,
@@ -57,7 +57,7 @@ public class PersistentCollectionChangeWorkUnit extends AbstractAuditWorkUnit im
 			SessionImplementor sessionImplementor,
 			String entityName,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			List<PersistentCollectionChangeData> collectionChanges,
 			String referencingPropertyName) {
 		super( sessionImplementor, entityName, auditService, id, RevisionType.MOD );
@@ -200,10 +200,10 @@ public class PersistentCollectionChangeWorkUnit extends AbstractAuditWorkUnit im
 	public static class PersistentCollectionChangeWorkUnitId implements Serializable {
 		private static final long serialVersionUID = -8007831518629167537L;
 
-		private final Serializable ownerId;
+		private final Object ownerId;
 		private final String role;
 
-		public PersistentCollectionChangeWorkUnitId(Serializable ownerId, String role) {
+		public PersistentCollectionChangeWorkUnitId(Object ownerId, String role) {
 			this.ownerId = ownerId;
 			this.role = role;
 		}
@@ -237,7 +237,7 @@ public class PersistentCollectionChangeWorkUnit extends AbstractAuditWorkUnit im
 			return result;
 		}
 
-		public Serializable getOwnerId() {
+		public Object getOwnerId() {
 			return ownerId;
 		}
 	}

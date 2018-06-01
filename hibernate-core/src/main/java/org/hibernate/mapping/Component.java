@@ -6,17 +6,15 @@
  */
 package org.hibernate.mapping;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.MappingException;
@@ -502,8 +500,11 @@ public class Component extends SimpleValue
 		}
 
 		@Override
-		public Serializable locateGenerationContext(SharedSessionContractImplementor session, Object incomingObject) {
-			return session.getEntityPersister( entityName, incomingObject ).getIdentifier( incomingObject, session );
+		public Object locateGenerationContext(SharedSessionContractImplementor session, Object incomingObject) {
+			return session.getEntityPersister( entityName, incomingObject )
+					.getHierarchy()
+					.getIdentifierDescriptor()
+					.extractIdentifier( incomingObject, session );
 		}
 	}
 

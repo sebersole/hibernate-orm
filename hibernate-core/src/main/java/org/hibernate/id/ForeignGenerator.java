@@ -6,7 +6,6 @@
  */
 package org.hibernate.id;
 
-import java.io.Serializable;
 import java.util.Properties;
 
 import org.hibernate.MappingException;
@@ -81,7 +80,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 	}
 
 	@Override
-	public Serializable generate(SharedSessionContractImplementor sessionImplementor, Object object) {
+	public Object generate(SharedSessionContractImplementor sessionImplementor, Object object) {
 		// needs to be a Session for the #save and #contains calls below...
 		final Session session = ( Session ) sessionImplementor;
 
@@ -95,7 +94,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 
 		final String entityName = retrieveEntityName( persister );
 
-		Serializable id;
+		Object id;
 		try {
 			id = ForeignKeys.getEntityIdentifierIfNotUnsaved(
 					entityName,

@@ -6,8 +6,6 @@
  */
 package org.hibernate.loader.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -17,7 +15,10 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @author Steve Ebersole
  */
 public interface SingleIdEntityLoader<T> extends Loader {
-	// todo (6.0) : have this extend IdentifierLoadAccess
+	interface LoadOptions {
+		LockOptions getLockOptions();
+		Object getInstanceToLoad();
+	}
 
-	T load(Serializable id, LockOptions lockOptions, SharedSessionContractImplementor session);
+	T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session);
 }

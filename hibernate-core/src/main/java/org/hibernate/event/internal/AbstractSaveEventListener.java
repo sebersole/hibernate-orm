@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +32,6 @@ import org.hibernate.id.IdentifierGenerationException;
 import org.hibernate.id.IdentifierGeneratorHelper;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.jpa.event.spi.CallbackRegistry;
-import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -79,9 +76,9 @@ public abstract class AbstractSaveEventListener
 	 *
 	 * @return The id used to save the entity.
 	 */
-	protected Serializable saveWithRequestedId(
+	protected Object saveWithRequestedId(
 			Object entity,
-			Serializable requestedId,
+			Object requestedId,
 			String entityName,
 			Object anything,
 			EventSource source) {
@@ -113,7 +110,7 @@ public abstract class AbstractSaveEventListener
 	 * @return The id used to save the entity; may be null depending on the
 	 *         type of id generator used and the requiresImmediateIdAccess value
 	 */
-	protected Serializable saveWithGeneratedId(
+	protected Object saveWithGeneratedId(
 			Object entity,
 			String entityName,
 			Object anything,
@@ -128,7 +125,7 @@ public abstract class AbstractSaveEventListener
 		final EntityDescriptor entityDescriptor = source.getEntityPersister( entityName, entity );
 		final EntityIdentifier<Object, Object> identifierDescriptor = entityDescriptor.getHierarchy()
 				.getIdentifierDescriptor();
-		Serializable generatedId = identifierDescriptor
+		Object generatedId = identifierDescriptor
 				.getIdentifierValueGenerator()
 				.generate( source, entity );
 		if ( generatedId == null ) {
@@ -172,9 +169,9 @@ public abstract class AbstractSaveEventListener
 	 * @return The id used to save the entity; may be null depending on the
 	 *         type of id generator used and the requiresImmediateIdAccess value
 	 */
-	protected Serializable performSave(
+	protected Object performSave(
 			Object entity,
-			Serializable id,
+			Object id,
 			EntityDescriptor persister,
 			boolean useIdentityColumn,
 			Object anything,
@@ -247,7 +244,7 @@ public abstract class AbstractSaveEventListener
 	 * @return The id used to save the entity; may be null depending on the
 	 *         type of id generator used and the requiresImmediateIdAccess value
 	 */
-	protected Serializable performSaveOrReplicate(
+	protected Object performSaveOrReplicate(
 			Object entity,
 			EntityKey key,
 			EntityDescriptor entityDescriptor,
@@ -256,7 +253,7 @@ public abstract class AbstractSaveEventListener
 			EventSource source,
 			boolean requiresImmediateIdAccess) {
 
-		Serializable id = key == null ? null : key.getIdentifier();
+		Object id = key == null ? null : key.getIdentifier();
 
 		boolean shouldDelayIdentityInserts = shouldDelayIdentityInserts( requiresImmediateIdAccess, source );
 
@@ -355,7 +352,7 @@ public abstract class AbstractSaveEventListener
 
 	private AbstractEntityInsertAction addInsertAction(
 			Object[] values,
-			Serializable id,
+			Object id,
 			Object entity,
 			EntityDescriptor persister,
 			boolean useIdentityColumn,
@@ -395,7 +392,7 @@ public abstract class AbstractSaveEventListener
 
 	protected boolean visitCollectionsBeforeSave(
 			Object entity,
-			Serializable id,
+			Object id,
 			Object[] values,
 			List<PersistentAttribute> attributes,
 			EventSource source) {
@@ -420,7 +417,7 @@ public abstract class AbstractSaveEventListener
 	 */
 	protected boolean substituteValuesIfNecessary(
 			Object entity,
-			Serializable id,
+			Object id,
 			Object[] values,
 			EntityDescriptor entityDescriptor,
 			SessionImplementor source) {

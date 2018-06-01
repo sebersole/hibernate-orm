@@ -6,15 +6,13 @@
  */
 package org.hibernate.action.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 public final class OrphanRemovalAction extends EntityDeleteAction {
 
 	public OrphanRemovalAction(
-			Serializable id,
+			Object id,
 			Object[] state,
 			Object version,
 			Object instance,

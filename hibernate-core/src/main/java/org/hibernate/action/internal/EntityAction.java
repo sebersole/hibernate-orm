@@ -35,7 +35,7 @@ public abstract class EntityAction
 	private static final Logger LOG = Logger.getLogger(EntityAction.class);
 
 	private final String entityName;
-	private final Serializable id;
+	private final Object id;
 
 	private transient Object instance;
 	private transient SharedSessionContractImplementor session;
@@ -45,13 +45,12 @@ public abstract class EntityAction
 
 	/**
 	 * Instantiate an action.
-	 *
-	 * @param session The session from which this action is coming.
+	 *  @param session The session from which this action is coming.
 	 * @param id The id of the entity
 	 * @param instance The entity instance
 	 * @param entityDescriptor The entity entityDescriptor
 	 */
-	protected EntityAction(SharedSessionContractImplementor session, Serializable id, Object instance, EntityDescriptor entityDescriptor) {
+	protected EntityAction(SharedSessionContractImplementor session, Object id, Object instance, EntityDescriptor entityDescriptor) {
 		this.entityName = entityDescriptor.getEntityName();
 		this.id = id;
 		this.instance = instance;
@@ -99,7 +98,7 @@ public abstract class EntityAction
 	 *
 	 * @return The entity id
 	 */
-	public final Serializable getId() {
+	public final Object getId() {
 		if ( id instanceof DelayedPostInsertIdentifier ) {
 			final EntityEntry entry = session.getPersistenceContext().getEntry( instance );
 			if ( entry == null ) {
@@ -113,7 +112,7 @@ public abstract class EntityAction
 				// does not contain anymore an entry.
 				return null;
 			}
-			final Serializable eeId = entry.getId();
+			final Object eeId = entry.getId();
 			return eeId instanceof DelayedPostInsertIdentifier ? null : eeId;
 		}
 		return id;

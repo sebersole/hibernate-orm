@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -26,7 +24,7 @@ import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
  */
 public class OnLockVisitor extends ReattachVisitor {
 
-	public OnLockVisitor(EventSource session, Serializable key, Object owner) {
+	public OnLockVisitor(EventSource session, Object key, Object owner) {
 		super( session, key, owner );
 	}
 

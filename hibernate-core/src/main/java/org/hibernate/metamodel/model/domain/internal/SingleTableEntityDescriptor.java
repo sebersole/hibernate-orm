@@ -103,21 +103,15 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Serializable loadEntityIdByNaturalId(
-			Object[] naturalIdValues, LockOptions lockOptions, SharedSessionContractImplementor session) {
-		return null;
-	}
-
-	@Override
 	public void lock(
-			Serializable id, Object version, Object object, LockMode lockMode, SharedSessionContractImplementor session)
+			Object id, Object version, Object object, LockMode lockMode, SharedSessionContractImplementor session)
 			throws HibernateException {
 
 	}
 
 	@Override
 	public void lock(
-			Serializable id,
+			Object id,
 			Object version,
 			Object object,
 			LockOptions lockOptions,
@@ -125,8 +119,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	}
 
-	protected Serializable insertInternal(
-			Serializable id,
+	protected Object insertInternal(
+			Object id,
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {
@@ -221,14 +215,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public void delete(
-			Serializable id, Object version, Object object, SharedSessionContractImplementor session)
+			Object id, Object version, Object object, SharedSessionContractImplementor session)
 			throws HibernateException {
 
 	}
 
 	@Override
 	public void update(
-			Serializable id,
+			Object id,
 			Object[] fields,
 			int[] dirtyFields,
 			boolean hasDirtyCollection,
@@ -347,7 +341,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object[] getDatabaseSnapshot(Serializable id, SharedSessionContractImplementor session)
+	public Object[] getDatabaseSnapshot(Object id, SharedSessionContractImplementor session)
 			throws HibernateException {
 		return new Object[0];
 	}
@@ -359,14 +353,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object getCurrentVersion(Serializable id, SharedSessionContractImplementor session)
+	public Object getCurrentVersion(Object id, SharedSessionContractImplementor session)
 			throws HibernateException {
 		return null;
 	}
 
 	@Override
 	public Object forceVersionIncrement(
-			Serializable id, Object currentVersion, SharedSessionContractImplementor session)
+			Object id, Object currentVersion, SharedSessionContractImplementor session)
 			throws HibernateException {
 		return null;
 	}
@@ -402,7 +396,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object createProxy(Serializable id, SharedSessionContractImplementor session) throws HibernateException {
+	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
 		return null;
 	}
 
@@ -429,13 +423,13 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public void processInsertGeneratedProperties(
-			Serializable id, Object entity, Object[] state, SharedSessionContractImplementor session) {
+			Object id, Object entity, Object[] state, SharedSessionContractImplementor session) {
 
 	}
 
 	@Override
 	public void processUpdateGeneratedProperties(
-			Serializable id, Object entity, Object[] state, SharedSessionContractImplementor session) {
+			Object id, Object entity, Object[] state, SharedSessionContractImplementor session) {
 
 	}
 

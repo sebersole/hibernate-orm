@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -42,6 +43,16 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	 */
 	default boolean hasSingleIdAttribute() {
 		return this instanceof SingularPersistentAttribute;
+	}
+
+	@SuppressWarnings("unchecked")
+	default <E extends O> J extractIdentifier(E entityInstance, SharedSessionContractImplementor session) {
+		// todo (6.0) : EntityIdentifierCompositeNonAggregated is not a PersistentAttribute
+		return (J) asAttribute( getJavaType() ).getPropertyAccess().getGetter().get( entityInstance );
+	}
+
+	default void injectIdentifier(J entity, J id, SharedSessionContractImplementor session) {
+		asAttribute( getJavaType() ).getPropertyAccess().getSetter().set( entity, id, session.getFactory() );
 	}
 
 	/**

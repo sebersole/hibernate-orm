@@ -358,8 +358,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public SingleIdEntityLoader getSingleIdLoader(
-			LockOptions lockOptions, LoadQueryInfluencers loadQueryInfluencers) {
+	public SingleIdEntityLoader getSingleIdLoader() {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -369,13 +368,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public NaturalIdLoader getNaturalIdLoader(LockOptions lockOptions) {
-		throw new UnsupportedOperationException(  );
-	}
-
-	@Override
-	public Serializable loadEntityIdByNaturalId(
-			Object[] naturalIdValues, LockOptions lockOptions, SharedSessionContractImplementor session) {
+	public NaturalIdLoader getNaturalIdLoader() {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -393,7 +386,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void lock(
-			Serializable id,
+			Object id,
 			Object version,
 			Object object,
 			LockMode lockMode,
@@ -403,7 +396,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void lock(
-			Serializable id,
+			Object id,
 			Object version,
 			Object object,
 			LockOptions lockOptions,
@@ -452,7 +445,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void insert(
-			Serializable id,
+			Object id,
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {
@@ -460,7 +453,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Serializable insert(
+	public Object insert(
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {
@@ -469,7 +462,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void delete(
-			Serializable id,
+			Object id,
 			Object version,
 			Object object,
 			SharedSessionContractImplementor session) {
@@ -478,7 +471,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void update(
-			Serializable id,
+			Object id,
 			Object[] fields,
 			int[] dirtyFields,
 			boolean hasDirtyCollection,
@@ -540,7 +533,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Object[] getDatabaseSnapshot(Serializable id, SharedSessionContractImplementor session) {
+	public Object[] getDatabaseSnapshot(Object id, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -553,13 +546,13 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Object getCurrentVersion(Serializable id, SharedSessionContractImplementor session) {
+	public Object getCurrentVersion(Object id, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
 	public Object forceVersionIncrement(
-			Serializable id,
+			Object id,
 			Object currentVersion,
 			SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
@@ -596,7 +589,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Object createProxy(Serializable id, SharedSessionContractImplementor session) throws HibernateException {
+	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -615,7 +608,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void processInsertGeneratedProperties(
-			Serializable id,
+			Object id,
 			Object entity,
 			Object[] state,
 			SharedSessionContractImplementor session) {
@@ -624,7 +617,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public void processUpdateGeneratedProperties(
-			Serializable id,
+			Object id,
 			Object entity,
 			Object[] state,
 			SharedSessionContractImplementor session) {
@@ -652,7 +645,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public void setIdentifier(Object entity, Serializable id, SharedSessionContractImplementor session) {
+	public void setIdentifier(Object entity, Object id, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -662,7 +655,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Object instantiate(Serializable id, SharedSessionContractImplementor session) {
+	public Object instantiate(Object id, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -679,7 +672,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	@Override
 	public void resetIdentifier(
 			Object entity,
-			Serializable currentId,
+			Object currentId,
 			Object currentVersion,
 			SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );

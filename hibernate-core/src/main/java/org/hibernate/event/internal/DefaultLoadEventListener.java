@@ -210,7 +210,12 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 								)
 				);
 			}
-			entityDescriptor.setIdentifier( event.getInstanceToLoad(), event.getEntityId(), event.getSession() );
+
+			entityDescriptor.getHierarchy().getIdentifierDescriptor().injectIdentifier(
+					event.getInstanceToLoad(),
+					event.getEntityId(),
+					event.getSession()
+			);
 		}
 
 		final Object entity = doLoad( event, entityDescriptor, keyToLoad, options );
@@ -502,12 +507,8 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	private Object loadFromDatasource(
 			final LoadEvent event,
 			final EntityDescriptor entityDescriptor) {
-		Object entity = entityDescriptor.load(
-				event.getEntityId(),
-				event.getInstanceToLoad(),
-				event.getLockOptions(),
-				event.getSession()
-		);
+		Object entity = entityDescriptor.getSingleIdLoader()
+				.load( event.getEntityId(), event, event.getSession() );
 
 		if ( event.isAssociationFetch() && event.getSession().getFactory().getStatistics().isStatisticsEnabled() ) {
 			event.getSession().getFactory().getStatistics().fetchEntity( event.getEntityClassName() );
@@ -710,7 +711,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 
 	private Object convertCacheEntryToEntity(
 			CacheEntry entry,
-			Serializable entityId,
+			Object entityId,
 			EntityDescriptor entityDescriptor,
 			LoadEvent event,
 			EntityKey entityKey) {

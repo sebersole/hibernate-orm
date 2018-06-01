@@ -27,6 +27,20 @@ public interface EntityTrackingRevisionListener extends RevisionListener {
 	 * @param revisionEntity An instance of the entity annotated with {@link RevisionEntity}.
 	 */
 	void entityChanged(
-			Class entityClass, String entityName, Serializable entityId, RevisionType revisionType,
+			Class entityClass,
+			String entityName,
+			Object entityId,
+			RevisionType revisionType,
+			Object revisionEntity);
+
+	/**
+	 * @deprecated (since 6.0) - Use {@link #entityChanged(Class, String, Object, RevisionType, Object)} instead
+	 */
+	@Deprecated
+	void entityChanged(
+			Class entityClass,
+			String entityName,
+			Serializable entityId,
+			RevisionType revisionType,
 			Object revisionEntity);
 }

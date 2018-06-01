@@ -8,11 +8,12 @@ package org.hibernate.orm.test.support.domains.gambit;
 
 import java.time.Instant;
 import java.util.Date;
-import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import org.hibernate.annotations.NaturalId;
 
 /**
  * @author Steve Ebersole
@@ -43,6 +44,7 @@ public class SimpleEntity {
 		this.someString = someString;
 	}
 
+	@NaturalId
 	public Integer getSomeInteger() {
 		return someInteger;
 	}
