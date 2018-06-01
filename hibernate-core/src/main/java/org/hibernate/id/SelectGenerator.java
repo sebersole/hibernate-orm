@@ -56,7 +56,7 @@ public class SelectGenerator extends AbstractPostInsertGenerator implements Conf
 			return supplied;
 		}
 
-		final NaturalIdDescriptor naturalIdDescriptor = persister.getHierarchy().getNaturalIdDescriptor();
+		final NaturalIdDescriptor<?> naturalIdDescriptor = persister.getHierarchy().getNaturalIdDescriptor();
 		if ( naturalIdDescriptor == null ) {
 			throw new IdentifierGenerationException(
 					"no natural-id property defined; need to specify [key] in " +
@@ -64,15 +64,16 @@ public class SelectGenerator extends AbstractPostInsertGenerator implements Conf
 			);
 		}
 
-		if ( naturalIdDescriptor.getPersistentAttributes().size() > 1 ) {
+		if ( naturalIdDescriptor.getAttributeInfos().size() > 1 ) {
 			throw new IdentifierGenerationException(
 					"select generator does not currently support composite " +
 							"natural-id properties; need to specify [key] in generator parameters"
 			);
 		}
 
-		final ValueGenerationStrategy generationStrategy = naturalIdDescriptor.getPersistentAttributes()
+		final ValueGenerationStrategy generationStrategy = naturalIdDescriptor.getAttributeInfos()
 				.get( 0 )
+				.getUnderlyingAttributeDescriptor()
 				.getValueGenerationStrategy();
 		if ( generationStrategy.getGenerationTiming() != GenerationTiming.NEVER ) {
 			throw new IdentifierGenerationException(
@@ -81,7 +82,7 @@ public class SelectGenerator extends AbstractPostInsertGenerator implements Conf
 			);
 		}
 
-		return naturalIdDescriptor.getPersistentAttributes().get( 0 ).getAttributeName();
+		return naturalIdDescriptor.getAttributeInfos().get( 0 ).getUnderlyingAttributeDescriptor().getAttributeName();
 	}
 
 

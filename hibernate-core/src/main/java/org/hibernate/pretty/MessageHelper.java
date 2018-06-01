@@ -12,8 +12,8 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -31,15 +31,7 @@ public final class MessageHelper {
 
 	// entities ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	/**
-	 * Generate an info message string relating to a particular entity,
-	 * based on the given entityName and id.
-	 *
-	 * @param entityName The defined entity name.
-	 * @param id The entity id value.
-	 * @return An info string, in the form [FooBar#1].
-	 */
-	public static String infoString(String entityName, Serializable id) {
+	public static String infoString(String entityName, Object id) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
 		if( entityName == null ) {
@@ -59,6 +51,14 @@ public final class MessageHelper {
 		s.append( ']' );
 
 		return s.toString();
+	}
+
+	/**
+	 * @deprecated Use {@link #infoString(String, Object)}
+	 */
+	@Deprecated
+	public static String infoString(String entityName, Serializable id) {
+		return infoString( entityName, (Object) id );
 	}
 
 	/**
@@ -241,10 +241,10 @@ public final class MessageHelper {
 	 * @param session The session
 	 * @return An info string, in the form [Foo.bars#1]
 	 */
-	public static String collectionInfoString( 
+	public static String collectionInfoString(
 			PersistentCollectionDescriptor collectionDescriptor,
 			PersistentCollection collection,
-			Serializable collectionKey,
+			Object collectionKey,
 			SharedSessionContractImplementor session ) {
 		
 		StringBuilder s = new StringBuilder();
@@ -258,7 +258,7 @@ public final class MessageHelper {
 
 			JavaTypeDescriptor ownerIdentifierJavaTypeDescriptor = collectionDescriptor.getCollectionKeyDescriptor()
 					.getJavaTypeDescriptor();
-			Serializable ownerKey;
+			Object ownerKey;
 			// TODO: Is it redundant to attempt to use the collectionKey,
 			// or is always using the owner id sufficient?
 			if ( collectionKey.getClass().isAssignableFrom( 
@@ -277,6 +277,14 @@ public final class MessageHelper {
 		return s.toString();
 	}
 
+	public static String collectionInfoString(
+			PersistentCollectionDescriptor collectionDescriptor,
+			PersistentCollection collection,
+			Serializable collectionKey,
+			SharedSessionContractImplementor session ) {
+		return collectionInfoString( collectionDescriptor, collection, (Object) collectionKey, session );
+	}
+
 	/**
 	 * Generate an info message string relating to a series of managed
 	 * collections.
@@ -288,7 +296,7 @@ public final class MessageHelper {
 	 */
 	public static String collectionInfoString(
 			PersistentCollectionDescriptor collectionDescriptor,
-			Serializable[] ids, 
+			Object[] ids,
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
@@ -311,6 +319,17 @@ public final class MessageHelper {
 	}
 
 	/**
+	 * @deprecated Use {@link #collectionInfoString(PersistentCollectionDescriptor, Object[], SessionFactoryImplementor)} instead
+	 */
+	@Deprecated
+	public static String collectionInfoString(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Serializable[] ids,
+			SessionFactoryImplementor factory) {
+		return collectionInfoString( collectionDescriptor, (Object[] ) ids, factory );
+	}
+
+	/**
 	 * Generate an info message string relating to a particular managed
 	 * collection.
 	 *
@@ -321,7 +340,7 @@ public final class MessageHelper {
 	 */
 	public static String collectionInfoString(
 			PersistentCollectionDescriptor collectionDescriptor,
-			Serializable id, 
+			Object id,
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
@@ -343,10 +362,21 @@ public final class MessageHelper {
 
 		return s.toString();
 	}
-	
-	private static void addIdToCollectionInfoString(
+
+	/**
+	 * @deprecated Use {@link #collectionInfoString(PersistentCollectionDescriptor, Object, SessionFactoryImplementor)} instead
+	 */
+	@Deprecated
+	public static String collectionInfoString(
 			PersistentCollectionDescriptor collectionDescriptor,
 			Serializable id,
+			SessionFactoryImplementor factory) {
+		return collectionInfoString( collectionDescriptor, (Object) id, factory );
+	}
+
+	private static void addIdToCollectionInfoString(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object id,
 			SessionFactoryImplementor factory,
 			StringBuilder s ) {
 		// Need to use the identifier type of the collection owner

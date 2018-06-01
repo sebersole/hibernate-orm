@@ -23,8 +23,8 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.LobCreationContext;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 import org.hibernate.query.spi.QueryProducerImplementor;
@@ -197,7 +197,7 @@ public interface SharedSessionContractImplementor
 	 *
 	 * @return The entity key
 	 */
-	EntityKey generateEntityKey(Serializable id, EntityDescriptor persister);
+	EntityKey generateEntityKey(Object id, EntityDescriptor persister);
 
 	/**
 	 * Retrieves the interceptor currently in use by this event source.
@@ -230,14 +230,14 @@ public interface SharedSessionContractImplementor
 	 * <p/>
 	 * When <tt>eager</tt> is enabled, the object is eagerly fetched
 	 */
-	Object internalLoad(String entityName, Serializable id, boolean eager, boolean nullable)
+	Object internalLoad(String entityName, Object id, boolean eager, boolean nullable)
 			throws HibernateException;
 
 	/**
 	 * Load an instance immediately. This method is only called when lazily initializing a proxy.
 	 * Do not return the proxy.
 	 */
-	Object immediateLoad(String entityName, Serializable id) throws HibernateException;
+	Object immediateLoad(String entityName, Object id) throws HibernateException;
 
 	/**
 	 * Get the <tt>EntityPersister</tt> for any instance
@@ -245,7 +245,11 @@ public interface SharedSessionContractImplementor
 	 * @param entityName optional entity name
 	 * @param object the entity instance
 	 */
-	EntityDescriptor getEntityPersister(String entityName, Object object) throws HibernateException;
+	default EntityDescriptor getEntityPersister(String entityName, Object object) throws HibernateException {
+		return getEntityDescriptor( entityName, object );
+	}
+
+	EntityDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException;
 
 	/**
 	 * Get the entity instance associated with the given <tt>Key</tt>,
@@ -257,7 +261,7 @@ public interface SharedSessionContractImplementor
 	 * Return the identifier of the persistent object, or null if
 	 * not associated with the session
 	 */
-	Serializable getContextEntityIdentifier(Object object);
+	Object getContextEntityIdentifier(Object object);
 
 	/**
 	 * The best guess entity name for an entity not in an association
@@ -272,7 +276,15 @@ public interface SharedSessionContractImplementor
 	/**
 	 * Instantiate the entity class, initializing with the given identifier
 	 */
-	Object instantiate(String entityName, Serializable id) throws HibernateException;
+	Object instantiate(String entityName, Object id) throws HibernateException;
+
+	/**
+	 * @deprecated Use {@link #instantiate(String, Object)} instead
+	 */
+	@Deprecated
+	default Object instantiate(String entityName, Serializable id) throws HibernateException {
+		return instantiate( entityName, (Object) id );
+	}
 
 	boolean isDefaultReadOnly();
 

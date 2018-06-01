@@ -6,7 +6,6 @@
  */
 package org.hibernate.proxy.pojo.javassist;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
@@ -33,7 +32,7 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 			String entityName,
 			Class persistentClass,
 			Class[] interfaces,
-			Serializable id,
+			Object id,
 			Boolean readOnly,
 			Method getIdentifierMethod,
 			Method setIdentifierMethod,
@@ -70,7 +69,7 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 	}
 
 	@Override
-	protected Serializable getId() {
+	protected Object getId() {
 		return super.getId();
 	}
 

@@ -63,7 +63,7 @@ public abstract class AbstractToOneMapper implements PropertyMapper {
 			String referencingPropertyName,
 			PersistentCollection newColl,
 			Serializable oldColl,
-			Serializable id) {
+			Object id) {
 		return null;
 	}
 

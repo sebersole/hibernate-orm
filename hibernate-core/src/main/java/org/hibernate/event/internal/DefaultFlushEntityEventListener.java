@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,7 +59,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 	/**
 	 * make sure user didn't mangle the id
 	 */
-	public void checkId(Object object, EntityDescriptor entityDescriptor, Serializable id, SessionImplementor session)
+	public void checkId(Object object, EntityDescriptor entityDescriptor, Object id, SessionImplementor session)
 			throws HibernateException {
 
 		if ( id != null && id instanceof DelayedPostInsertIdentifier ) {
@@ -72,7 +71,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		// todo (6.0) : iirc we removed the ability to define an entity whose class does not contain the id
 		//		so `canExtractIdOutOfEntity` should always be true
 		//if ( entityDescriptor.canExtractIdOutOfEntity() ) {
-			Serializable oid = entityDescriptor.getIdentifier( object, session );
+			Object oid = entityDescriptor.getIdentifier( object, session );
 			if ( id == null ) {
 				throw new AssertionFailure( "null id in " + entityDescriptor.getEntityName() + " entry (don't flush the Session after an exception occurs)" );
 			}
@@ -94,7 +93,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 			SessionImplementor session) {
 		// mainly we are checking that the value of a natural-id defined as
 		// immutable has not been changed
-		final NaturalIdDescriptor naturalIdentifierDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
+		final NaturalIdDescriptor<?> naturalIdentifierDescriptor = entityDescriptor.getHierarchy().getNaturalIdDescriptor();
 
 		if ( naturalIdentifierDescriptor == null || entry.getStatus() == Status.READ_ONLY ) {
 			// no natural-id or the entity was loaded as read-only: nothing else to check
@@ -110,38 +109,27 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 				? session.getPersistenceContext().getNaturalIdSnapshot( entry.getId(), entityDescriptor )
 				: session.getPersistenceContext().getNaturalIdHelper().extractNaturalIdValues( loaded, entityDescriptor );
 
-		// todo (6.0) : as-is this block assumes that the orders are the same - which is not necessarily accurate
-		int i = -1;
+		naturalIdentifierDescriptor.visitPersistentAttributes(
+				naturalIdAttributeInfo -> {
+					final Object previousAttributeValue = snapshot[ naturalIdAttributeInfo.getStateArrayPosition() ];
+					final Object currentAttributeValue = current[ naturalIdAttributeInfo.getStateArrayPosition() ];
 
-		for ( PersistentAttribute persistentAttribute : naturalIdentifierDescriptor.getPersistentAttributes() ) {
-			i++;
-
-			// todo (6.0) : see the 6.0-todo doc "open question" regarding `@NaturalId#mutable`
-			//		here we assume that naturalIdentifierDescriptor.isMutable() check above
-			//		already verifies that (since the natural-id is considered immutable if we
-			//		get here) the attributes are also immutable
-			//if ( persistentAttribute.isMutable() ) {
-			//	continue;
-			//}
-
-			final Object previousAttributeValue = snapshot[i];
-			final Object currentAttributeValue = current[i];
-
-			final boolean changed = !persistentAttribute.getJavaTypeDescriptor().areEqual(
-					previousAttributeValue,
-					currentAttributeValue
-			);
-			if ( changed ) {
-				throw new HibernateException(
-						String.format(
-								"An immutable natural identifier of entity %s was altered from %s to %s",
-								entityDescriptor.getEntityName(),
-								persistentAttribute.getJavaTypeDescriptor().extractLoggableRepresentation( previousAttributeValue ),
-								persistentAttribute.getJavaTypeDescriptor().extractLoggableRepresentation( currentAttributeValue )
-						)
-				);
-			}
-		}
+					final boolean changed = !naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().getJavaTypeDescriptor().areEqual(
+							previousAttributeValue,
+							currentAttributeValue
+					);
+					if ( changed ) {
+						throw new HibernateException(
+								String.format(
+										"An immutable natural identifier of entity %s was altered from %s to %s",
+										entityDescriptor.getEntityName(),
+										naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation( previousAttributeValue ),
+										naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation( currentAttributeValue )
+								)
+						);
+					}
+				}
+		);
 	}
 
 	/**
@@ -533,7 +521,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		final SessionImplementor session = event.getSession();
 		final EntityEntry entry = event.getEntityEntry();
 		final EntityDescriptor entityDescriptor = entry.getDescriptor();
-		final Serializable id = entry.getId();
+		final Object id = entry.getId();
 		final Object[] loadedState = entry.getLoadedState();
 
 		int[] dirtyProperties = session.getInterceptor().findDirty(
@@ -715,7 +703,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		}
 	}
 
-	private void logDirtyProperties(Serializable id, int[] dirtyProperties, EntityDescriptor entityDescriptor) {
+	private void logDirtyProperties(Object id, int[] dirtyProperties, EntityDescriptor entityDescriptor) {
 		if ( dirtyProperties != null && dirtyProperties.length > 0 && LOG.isTraceEnabled() ) {
 			final String[] allPropertyNames = entityDescriptor.getPropertyNames();
 			final String[] dirtyPropertyNames = new String[dirtyProperties.length];
@@ -730,7 +718,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		}
 	}
 
-	private Object[] getDatabaseSnapshot(SessionImplementor session, EntityDescriptor entityDescriptor, Serializable id) {
+	private Object[] getDatabaseSnapshot(SessionImplementor session, EntityDescriptor entityDescriptor, Object id) {
 		if ( entityDescriptor.isSelectBeforeUpdateRequired() ) {
 			Object[] snapshot = session.getPersistenceContext()
 					.getDatabaseSnapshot( id, entityDescriptor );

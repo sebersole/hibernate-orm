@@ -175,12 +175,12 @@ public class BatchFetchQueue {
 	 * @return an array of identifiers, of length batchSize (possibly padded with nulls)
 	 */
 	@SuppressWarnings("unchecked")
-	public Serializable[] getEntityBatch(
+	public Object[] getEntityBatch(
 			final EntityDescriptor entityDescriptor,
-			final Serializable id,
+			final Object id,
 			final int batchSize,
 			final EntityMode entityMode) {
-		Serializable[] ids = new Serializable[batchSize];
+		Object[] ids = new Serializable[batchSize];
 		ids[0] = id; //first element of array is reserved for the actual instance we are loading!
 		int i = 1;
 		int end = -1;

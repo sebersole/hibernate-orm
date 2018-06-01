@@ -6,8 +6,6 @@
  */
 package org.hibernate.envers.strategy;
 
-import java.io.Serializable;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,7 +33,6 @@ import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.jdbc.ReturningWork;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -94,7 +91,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			final Session session,
 			final String entityName,
 			final AuditService auditService,
-			final Serializable id,
+			final Object id,
 			final Object data,
 			final Object revision) {
 		final String auditedEntityName = auditService.getAuditEntityName( entityName );
@@ -295,7 +292,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		// e.revision <= _revision and (e.endRevision > _revision or e.endRevision is null)
 		Parameters subParm = rootParameters.addSubParameters( "or" );
 		rootParameters.addWhereWithNamedParam( revisionProperty, addAlias, inclusive ? "<=" : "<", REVISION_PARAMETER );
-		subParm.addWhereWithNamedParam( revisionEndProperty + ".id", addAlias, inclusive ? ">" : ">=", REVISION_PARAMETER );
+		subParm.addWhereWithNamedParam(
+				revisionEndProperty + ".id",
+				addAlias,
+				inclusive ? ">" : ">=",
+				REVISION_PARAMETER
+		);
 		subParm.addWhere( revisionEndProperty, addAlias, "is", "null", false );
 	}
 
@@ -361,6 +363,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 *
 	 * @param session The session.
 	 * @param updateContext The UpdateContext.
+	 *
 	 * @return the number of rows affected.
 	 */
 	private int executeUpdate(SessionImplementor session, UpdateContext updateContext) {
@@ -368,20 +371,17 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		final JdbcCoordinator jdbcCoordinator = session.getJdbcCoordinator();
 		final PreparedStatement preparedStatement = jdbcCoordinator.getStatementPreparer().prepareStatement( updateSql );
 		return session.doReturningWork(
-				new ReturningWork<Integer>() {
-					@Override
-					public Integer execute(Connection connection) throws SQLException {
-						try {
-							int index = 1;
-							for ( QueryParameterBinding binding : updateContext.getBindings() ) {
-								index += binding.bind( index, preparedStatement, session );
-							}
-							return jdbcCoordinator.getResultSetReturn().executeUpdate( preparedStatement );
+				connection -> {
+					try {
+						int index = 1;
+						for ( QueryParameterBinding binding : updateContext.getBindings() ) {
+							index += binding.bind( index, preparedStatement, session );
 						}
-						finally {
-							jdbcCoordinator.getLogicalConnection().getResourceRegistry().release( preparedStatement );
-							jdbcCoordinator.afterStatementExecution();
-						}
+						return jdbcCoordinator.getResultSetReturn().executeUpdate( preparedStatement );
+					}
+					finally {
+						jdbcCoordinator.getLogicalConnection().getResourceRegistry().release( preparedStatement );
+						jdbcCoordinator.afterStatementExecution();
 					}
 				}
 		);
@@ -400,11 +400,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 *
 	 * @return list of {@link UpdateContext}s.  Should always contain a minimum of 1 element.
 	 */
-	private List<UpdateContext> getUpdateContexts(String entityName,
+	private List<UpdateContext> getUpdateContexts(
+			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			Object revision) {
 		final AuditServiceOptions options = auditService.getOptions();
 
@@ -467,13 +468,15 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 * @param auditService The AuditService.
 	 * @param id The entity identifier.
 	 * @param revision The revision entity.
+	 *
 	 * @return The {@link UpdateContext} instance.
 	 */
-	private UpdateContext getUpdateContext(String entityName,
+	private UpdateContext getUpdateContext(
+			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			Object revision) {
 
 		final SessionFactoryImplementor sessionFactory = session.getSessionFactory();
@@ -495,12 +498,21 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		// UPDATE audit_ent
 		final UpdateContext update = new UpdateContext( sessionFactory );
-		update.setTableName( getUpdateTableName( rootEntityDescriptor, rootAuditedEntityDescriptor, auditedEntityDescriptor ) );
+		update.setTableName(
+				getUpdateTableName(
+						rootEntityDescriptor,
+						rootAuditedEntityDescriptor,
+						auditedEntityDescriptor
+				)
+		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// SET REVEND = ?
 		final Number revisionNumber = auditService.getRevisionInfoNumberReader().getRevisionNumber( revision );
-		final BasicValuedNavigable rootAuditedRevisionEndNavigable = getNavigableByPath( rootAuditedEntityDescriptor, options.getRevisionEndFieldName() );
+		final BasicValuedNavigable rootAuditedRevisionEndNavigable = getNavigableByPath(
+				rootAuditedEntityDescriptor,
+				options.getRevisionEndFieldName()
+		);
 		update.addColumn( rootAuditedRevisionEndNavigable.getBoundColumn().getExpression() );
 		update.bind( revisionNumber, rootAuditedRevisionEndNavigable.getBasicType() );
 
@@ -512,14 +524,27 @@ public class ValidityAuditStrategy implements AuditStrategy {
 					options.getRevisionEndTimestampFieldName()
 			);
 			update.addColumn( rootAuditedRevisionEndTimestampNavigable.getBoundColumn().getExpression() );
-			update.bind( getRevisionEndTimestampValue( revision, options ), rootAuditedRevisionEndTimestampNavigable.getBasicType() );
+			update.bind(
+					getRevisionEndTimestampValue( revision, options ),
+					rootAuditedRevisionEndTimestampNavigable.getBasicType()
+			);
 		}
 
-		applyUpdateContextWhereCommon( update, rootEntityDescriptor, rootAuditedEntityDescriptor, options, id, revisionNumber );
+		applyUpdateContextWhereCommon(
+				update,
+				rootEntityDescriptor,
+				rootAuditedEntityDescriptor,
+				options,
+				id,
+				revisionNumber
+		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REVEND is null
-		final BasicValuedNavigable auditedRevisionEndNavigable = getNavigableByPath( auditedEntityDescriptor, options.getRevisionEndFieldName() );
+		final BasicValuedNavigable auditedRevisionEndNavigable = getNavigableByPath(
+				auditedEntityDescriptor,
+				options.getRevisionEndFieldName()
+		);
 		update.addWhereColumn( auditedRevisionEndNavigable.getBoundColumn().getExpression(), " is null" );
 
 		return update;
@@ -527,7 +552,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 	/**
 	 * Creates the update context used to modify the revision end timestamp values for a non root entity.
-	 *
+	 * <p>
 	 * IMPL NOTE: This is only used to set the revision end timestamp for joined inheritance non-root entity tables.
 	 *
 	 * @param entityName The entity name.
@@ -539,11 +564,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 *
 	 * @return The {@link UpdateContext} instance.
 	 */
-	private UpdateContext getNonRootUpdateContext(String entityName,
+	private UpdateContext getNonRootUpdateContext(
+			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			Object revision) {
 
 		// The expected output from this method is an UPDATE statement that follows:
@@ -591,11 +617,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 * @param id The entity identifier.
 	 * @param revisionNumber The revision number.
 	 */
-	private void applyUpdateContextWhereCommon(UpdateContext updateContext,
+	private void applyUpdateContextWhereCommon(
+			UpdateContext updateContext,
 			EntityDescriptor entityDescriptor,
 			EntityDescriptor auditedEntityDescriptor,
 			AuditServiceOptions options,
-			Serializable id,
+			Object id,
 			Number revisionNumber) {
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// WHERE (entity_id) = ? AND REV <> ? AND REVEND is null
@@ -610,7 +637,10 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REV <> ? (REV is on the auditedEntityDescriptor)
-		final BasicValuedNavigable revisionNumberPath = getNavigableByPath( auditedEntityDescriptor, options.getRevisionNumberPath() );
+		final BasicValuedNavigable revisionNumberPath = getNavigableByPath(
+				auditedEntityDescriptor,
+				options.getRevisionNumberPath()
+		);
 		updateContext.addWhereColumn( revisionNumberPath.getBoundColumn().getExpression(), " <> ?" );
 		updateContext.bind( revisionNumber, revisionNumberPath.getBasicType() );
 	}
@@ -621,9 +651,9 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 	private String[] getEntityDescriptorPrimaryKeyColumnNames(EntityDescriptor entityDescriptor) {
 		final List<PhysicalColumn> primaryKeyColumns = entityDescriptor.getPrimaryTable().getPrimaryKey().getColumns();
-		final String[] columns = new String[ primaryKeyColumns.size() ];
+		final String[] columns = new String[primaryKeyColumns.size()];
 		for ( int i = 0; i < primaryKeyColumns.size(); ++i ) {
-			columns[ i ] = primaryKeyColumns.get( i ).getName().render();
+			columns[i] = primaryKeyColumns.get( i ).getName().render();
 		}
 		return columns;
 	}
@@ -634,6 +664,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	 * @param rootEntityDescriptor The root entity descriptor.
 	 * @param rootAuditedEntityDescriptor The root audited entity descriptor.
 	 * @param auditedEntityDescriptor The audited entity descriptor.
+	 *
 	 * @return the update table name.
 	 */
 	private String getUpdateTableName(
@@ -723,7 +754,9 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		 * @param index the index to be bound.
 		 * @param ps The prepared statement.
 		 * @param options The wrapper options
+		 *
 		 * @return the number of column spans based on this binding.
+		 *
 		 * @throws SQLException Thrown if a SQL exception occured.
 		 */
 		public int bind(int index, PreparedStatement ps, WrapperOptions options) throws SQLException {

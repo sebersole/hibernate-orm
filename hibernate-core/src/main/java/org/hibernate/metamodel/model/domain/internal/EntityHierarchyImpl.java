@@ -135,7 +135,18 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		else {
 			return new EntityMutabilityPlanImpl(
 					rootRuntimeDescriptor,
-					ImmutableEntityEntry::new,
+					(status, loadedState, rowId, id, version, lockMode, existsInDatabase, persister, disableVersionIncrement, persistenceContext) -> new ImmutableEntityEntry(
+							status,
+							loadedState,
+							rowId,
+							id,
+							version,
+							lockMode,
+							existsInDatabase,
+							persister,
+							disableVersionIncrement,
+							persistenceContext
+					),
 					false
 			);
 		}
@@ -290,6 +301,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		}
 
 		return new NaturalIdDescriptorImpl(
+				entityHierarchy,
 				entityHierarchy.getRootEntityType()
 						.getFactory()
 						.getCache()

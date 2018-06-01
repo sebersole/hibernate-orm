@@ -336,7 +336,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 	@Override
 	public void resolveEntityState(RowProcessingState rowProcessingState) {
-		final Serializable entityIdentifier = entityKey.getIdentifier();
+		final Object entityIdentifier = entityKey.getIdentifier();
 
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState()
 				.getPersistenceContext();

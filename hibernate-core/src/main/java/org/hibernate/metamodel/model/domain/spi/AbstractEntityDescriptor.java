@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,9 +43,8 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
-import org.hibernate.loader.internal.StandardCompositeNaturalIdLoaderImpl;
 import org.hibernate.loader.internal.StandardMultiIdEntityLoader;
-import org.hibernate.loader.internal.StandardSimpleNaturalIdLoaderImpl;
+import org.hibernate.loader.internal.StandardNaturalIdLoader;
 import org.hibernate.loader.internal.StandardSingleIdEntityLoader;
 import org.hibernate.loader.spi.EntityLocker;
 import org.hibernate.loader.spi.MultiIdEntityLoader;
@@ -424,7 +422,7 @@ public abstract class AbstractEntityDescriptor<J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public SingleIdEntityLoader getSingleIdLoader(LockOptions lockOptions, LoadQueryInfluencers loadQueryInfluencers) {
+	public SingleIdEntityLoader getSingleIdLoader() {
 		if ( 	customQueryLoader != null ) {
 			// if the user specified that we should use a custom query for loading this entity, we need
 			// 		to always use that custom loader.
@@ -463,13 +461,13 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public NaturalIdLoader getNaturalIdLoader(LockOptions lockOptions) {
-		if ( getHierarchy().getNaturalIdDescriptor().getPersistentAttributes().size() > 1 ) {
-			return new StandardCompositeNaturalIdLoaderImpl( this );
+	public NaturalIdLoader getNaturalIdLoader() {
+		if ( ! hasNaturalIdentifier() ) {
+			throw new UnsupportedOperationException( "Entity [" + getEntityName() + "] does not define a natural-id" );
 		}
-		else {
-			return new StandardSimpleNaturalIdLoaderImpl( this );
-		}
+
+		// todo (6.0) : can this be cached like `singleIdLoader`?
+		return new StandardNaturalIdLoader( this );
 	}
 
 	@Override
@@ -481,6 +479,7 @@ public abstract class AbstractEntityDescriptor<J>
 		}
 
 		// todo (6.0) : maybe cache the QueryResult reference?
+		// todo (6.0) : or cache the StandardMultiIdEntityLoader and have it cache things appropriately internally
 
 		return new StandardMultiIdEntityLoader( this, selectors );
 	}
@@ -737,7 +736,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public Object instantiate(Serializable id, SharedSessionContractImplementor session) {
+	public Object instantiate(Object id, SharedSessionContractImplementor session) {
 		final J instance = instantiator.instantiate( session );
 		setIdentifier( instance, id, session );
 		return instance;
@@ -755,37 +754,9 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public Serializable getIdentifier(Object entity) throws HibernateException {
-		// todo (6.0) : for now we assume a basic identifier or aggregated composite
-		//		one with a single attribute
-		return (Serializable) ( (SingularPersistentAttribute) getHierarchy().getIdentifierDescriptor() )
-				.getPropertyAccess()
-				.getGetter()
-				.get( entity );
-	}
-
-	@Override
-	public Serializable getIdentifier(Object entity, SharedSessionContractImplementor session) {
-		return getIdentifier( entity );
-	}
-
-	@Override
-	public void setIdentifier(
-			Object entity,
-			Serializable id,
-			SharedSessionContractImplementor session) {
-		// todo (6.0) : for now we assume a basic identifier or aggregated composite
-		//		one with a single attribute
-		( (SingularPersistentAttribute) getHierarchy().getIdentifierDescriptor() )
-				.getPropertyAccess()
-				.getSetter()
-				.set( entity, id, session.getFactory() );
-	}
-
-	@Override
 	public void resetIdentifier(
 			Object entity,
-			Serializable currentId,
+			Object currentId,
 			Object currentVersion,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
@@ -810,15 +781,15 @@ public abstract class AbstractEntityDescriptor<J>
 
 	@Override
 	public void insert(
-			Serializable id,
+			Object id,
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {
 		insertInternal( id, fields, object, session );
 	}
 
-	protected Serializable insertInternal(
-			Serializable id,
+	protected Object insertInternal(
+			Object id,
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {
@@ -826,7 +797,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public Serializable insert(
+	public Object insert(
 			Object[] fields,
 			Object object,
 			SharedSessionContractImplementor session) {

@@ -129,7 +129,7 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			String referencingPropertyName,
 			PersistentCollection newColl,
 			Serializable oldColl,
-			Serializable id) {
+			Object id) {
 		return null;
 	}
 

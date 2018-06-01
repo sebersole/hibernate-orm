@@ -130,6 +130,7 @@ import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
 import org.hibernate.loader.spi.MultiLoadOptions;
+import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
@@ -658,16 +659,16 @@ public final class SessionImpl
 	// save() operations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	@Override
-	public Serializable save(Object obj) throws HibernateException {
+	public Object save(Object obj) throws HibernateException {
 		return save( null, obj );
 	}
 
 	@Override
-	public Serializable save(String entityName, Object object) throws HibernateException {
+	public Object save(String entityName, Object object) throws HibernateException {
 		return fireSave( new SaveOrUpdateEvent( entityName, object, this ) );
 	}
 
-	private Serializable fireSave(SaveOrUpdateEvent event) {
+	private Object fireSave(SaveOrUpdateEvent event) {
 		checkOpen();
 		checkTransactionSynchStatus();
 		checkNoUnresolvedActionsBeforeOperation();
@@ -1018,7 +1019,7 @@ public final class SessionImpl
 	// load()/get() operations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	@Override
-	public void load(Object object, Serializable id) throws HibernateException {
+	public void load(Object object, Object id) throws HibernateException {
 		LoadEvent event = loadEvent;
 		loadEvent = null;
 		if ( event == null ) {
@@ -1050,17 +1051,17 @@ public final class SessionImpl
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id) throws HibernateException {
+	public Object load(String entityName, Object id) throws HibernateException {
 		return this.byId( entityName ).getReference( id );
 	}
 
 	@Override
-	public <T> T get(Class<T> entityClass, Serializable id) throws HibernateException {
+	public <T> T get(Class<T> entityClass, Object id) throws HibernateException {
 		return this.byId( entityClass ).load( id );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id) throws HibernateException {
+	public Object get(String entityName, Object id) throws HibernateException {
 		return this.byId( entityName ).load( id );
 	}
 
@@ -1070,7 +1071,7 @@ public final class SessionImpl
 	 * Do NOT return a proxy.
 	 */
 	@Override
-	public Object immediateLoad(String entityName, Serializable id) throws HibernateException {
+	public Object immediateLoad(String entityName, Object id) throws HibernateException {
 		if ( log.isDebugEnabled() ) {
 			EntityDescriptor persister = getFactory().getMetamodel().findEntityDescriptor( entityName );
 			log.debugf( "Initializing proxy: %s", MessageHelper.infoString( persister, id, getFactory() ) );
@@ -1091,7 +1092,7 @@ public final class SessionImpl
 	}
 
 	@Override
-	public final Object internalLoad(String entityName, Serializable id, boolean eager, boolean nullable)
+	public final Object internalLoad(String entityName, Object id, boolean eager, boolean nullable)
 			throws HibernateException {
 		// todo : remove
 		LoadEventListener.LoadType type = nullable
@@ -1121,7 +1122,7 @@ public final class SessionImpl
 	/**
 	 * Helper to avoid creating many new instances of LoadEvent: it's an allocation hot spot.
 	 */
-	private LoadEvent recycleEventInstance(final LoadEvent event, final Serializable id, final String entityName) {
+	private LoadEvent recycleEventInstance(final LoadEvent event, final Object id, final String entityName) {
 		if ( event == null ) {
 			return new LoadEvent( id, entityName, true, this );
 		}
@@ -1157,22 +1158,22 @@ public final class SessionImpl
 	}
 
 	@Override
-	public <T> T get(Class<T> entityClass, Serializable id, LockMode lockMode) throws HibernateException {
+	public <T> T get(Class<T> entityClass, Object id, LockMode lockMode) throws HibernateException {
 		return this.byId( entityClass ).with( new LockOptions( lockMode ) ).load( id );
 	}
 
 	@Override
-	public <T> T get(Class<T> entityClass, Serializable id, LockOptions lockOptions) throws HibernateException {
+	public <T> T get(Class<T> entityClass, Object id, LockOptions lockOptions) throws HibernateException {
 		return this.byId( entityClass ).with( lockOptions ).load( id );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id, LockMode lockMode) throws HibernateException {
+	public Object get(String entityName, Object id, LockMode lockMode) throws HibernateException {
 		return this.byId( entityName ).with( new LockOptions( lockMode ) ).load( id );
 	}
 
 	@Override
-	public Object get(String entityName, Serializable id, LockOptions lockOptions) throws HibernateException {
+	public Object get(String entityName, Object id, LockOptions lockOptions) throws HibernateException {
 		return this.byId( entityName ).with( lockOptions ).load( id );
 	}
 
@@ -1455,31 +1456,31 @@ public final class SessionImpl
 
 
 	@Override
-	public Object instantiate(String entityName, Serializable id) throws HibernateException {
-		return instantiate( getFactory().getMetamodel().findEntityDescriptor( entityName ), id );
+	public Object instantiate(String entityName, Object id) throws HibernateException {
+		return instantiate( getFactory().getMetamodel().getEntityDescriptor( entityName ), id );
 	}
 
 	/**
 	 * give the interceptor an opportunity to override the default instantiation
 	 */
 	@Override
-	public Object instantiate(EntityDescriptor persister, Serializable id) throws HibernateException {
+	public Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException {
 		checkOpenOrWaitingForAutoClose();
 		checkTransactionSynchStatus();
 		Object result = getInterceptor().instantiate(
-				persister.getEntityName(),
-				persister.getRepresentationStrategy().getMode(),
+				entityDescriptor.getEntityName(),
+				entityDescriptor.getRepresentationStrategy().getMode(),
 				id
 		);
 		if ( result == null ) {
-			result = persister.instantiate( id, this );
+			result = entityDescriptor.instantiate( id, this );
 		}
 		delayedAfterCompletion();
 		return result;
 	}
 
 	@Override
-	public EntityDescriptor getEntityPersister(final String entityName, final Object object) {
+	public EntityDescriptor getEntityDescriptor(final String entityName, final Object object) {
 		checkOpenOrWaitingForAutoClose();
 		if ( entityName == null ) {
 			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );
@@ -1491,7 +1492,7 @@ public final class SessionImpl
 			// influence this decision if we were not able to based on the
 			// given entityName
 			try {
-				return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
+				return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityDescriptor( object, getFactory() );
 			}
 			catch (HibernateException e) {
 				try {
@@ -1506,7 +1507,7 @@ public final class SessionImpl
 
 	// not for internal use:
 	@Override
-	public Serializable getIdentifier(Object object) throws HibernateException {
+	public Object getIdentifier(Object object) throws HibernateException {
 		checkOpen();
 		checkTransactionSynchStatus();
 		if ( object instanceof HibernateProxy ) {
@@ -1530,7 +1531,7 @@ public final class SessionImpl
 	 * is a bit stricter than getEntityIdentifierIfNotUnsaved().
 	 */
 	@Override
-	public Serializable getContextEntityIdentifier(Object object) {
+	public Object getContextEntityIdentifier(Object object) {
 		checkOpenOrWaitingForAutoClose();
 		if ( object instanceof HibernateProxy ) {
 			return getProxyIdentifier( object );
@@ -1541,7 +1542,7 @@ public final class SessionImpl
 		}
 	}
 
-	private Serializable getProxyIdentifier(Object proxy) {
+	private Object getProxyIdentifier(Object proxy) {
 		return ( (HibernateProxy) proxy ).getHibernateLazyInitializer().getIdentifier();
 	}
 
@@ -2225,7 +2226,7 @@ public final class SessionImpl
 		}
 
 		@Override
-		public final T getReference(Serializable id) {
+		public final T getReference(Object id) {
 			CacheMode sessionCacheMode = getCacheMode();
 			boolean cacheModeChanged = false;
 			if ( cacheMode != null ) {
@@ -2249,7 +2250,7 @@ public final class SessionImpl
 		}
 
 		@SuppressWarnings("unchecked")
-		protected T doGetReference(Serializable id) {
+		protected T doGetReference(Object id) {
 			if ( this.lockOptions != null ) {
 				LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), lockOptions, SessionImpl.this );
 				fireLoad( event, LoadEventListener.LOAD );
@@ -2275,7 +2276,7 @@ public final class SessionImpl
 		}
 
 		@Override
-		public final T load(Serializable id) {
+		public final T load(Object id) {
 			CacheMode sessionCacheMode = getCacheMode();
 			boolean cacheModeChanged = false;
 			if ( cacheMode != null ) {
@@ -2304,7 +2305,7 @@ public final class SessionImpl
 		}
 
 		@SuppressWarnings("unchecked")
-		protected final T doLoad(Serializable id) {
+		protected final T doLoad(Object id) {
 			if ( this.lockOptions != null ) {
 				LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), lockOptions, SessionImpl.this );
 				fireLoad( event, LoadEventListener.GET );
@@ -2421,7 +2422,7 @@ public final class SessionImpl
 			}
 
 			try {
-				return entityPersister.multiLoad( ids, this, SessionImpl.this );
+				return entityPersister.getMultiIdLoader( this ).load( ids, this, SessionImpl.this );
 			}
 			finally {
 				if ( cacheModeChanged ) {
@@ -2446,8 +2447,8 @@ public final class SessionImpl
 			}
 
 			try {
-				return entityPersister.multiLoad(
-						ids.toArray( new Serializable[ ids.size() ] ),
+				return entityPersister.getMultiIdLoader( this ).load(
+						ids.toArray( new Serializable[0] ),
 						this,
 						SessionImpl.this
 				);
@@ -2469,17 +2470,17 @@ public final class SessionImpl
 		return getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
-	private abstract class BaseNaturalIdLoadAccessImpl<T> {
-		private final EntityDescriptor entityPersister;
+	private abstract class BaseNaturalIdLoadAccessImpl<T> implements NaturalIdLoader.LoadOptions {
+		private final EntityDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private boolean synchronizationEnabled = true;
 
-		private BaseNaturalIdLoadAccessImpl(EntityDescriptor entityPersister) {
-			this.entityPersister = entityPersister;
+		private BaseNaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+			this.entityDescriptor = entityDescriptor;
 
-			if ( entityPersister.getHierarchy().getNaturalIdDescriptor() == null ) {
+			if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
 				throw new HibernateException(
-						String.format( "Entity [%s] did not define a natural id", entityPersister.getEntityName() )
+						String.format( "Entity [%s] did not define a natural id", entityDescriptor.getEntityName() )
 				);
 			}
 		}
@@ -2493,11 +2494,11 @@ public final class SessionImpl
 			this.synchronizationEnabled = synchronizationEnabled;
 		}
 
-		protected final Serializable resolveNaturalId(Map<String, Object> naturalIdParameters) {
+		protected final Object resolveNaturalId(Map<String, Object> naturalIdParameters) {
 			performAnyNeededCrossReferenceSynchronizations();
 
 			final ResolveNaturalIdEvent event =
-					new ResolveNaturalIdEvent( naturalIdParameters, entityPersister, SessionImpl.this );
+					new ResolveNaturalIdEvent( naturalIdParameters, entityDescriptor, SessionImpl.this );
 			fireResolveNaturalId( event );
 
 			if ( event.getEntityId() == PersistenceContext.NaturalIdHelper.INVALID_NATURAL_ID_REFERENCE ) {
@@ -2513,8 +2514,8 @@ public final class SessionImpl
 				// synchronization (this process) was disabled
 				return;
 			}
-			if ( entityPersister.getHierarchy().getNaturalIdDescriptor() != null
-					|| !entityPersister.getHierarchy().getNaturalIdDescriptor().isMutable() ) {
+			if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() != null
+					|| !entityDescriptor.getHierarchy().getNaturalIdDescriptor().isMutable() ) {
 				// only mutable natural-ids need this processing
 				return;
 			}
@@ -2524,9 +2525,9 @@ public final class SessionImpl
 			}
 
 			final boolean debugEnabled = log.isDebugEnabled();
-			for ( Serializable pk : getPersistenceContext().getNaturalIdHelper()
-					.getCachedPkResolutions( entityPersister ) ) {
-				final EntityKey entityKey = generateEntityKey( pk, entityPersister );
+			for ( Object pk : getPersistenceContext().getNaturalIdHelper()
+					.getCachedPkResolutions( entityDescriptor ) ) {
+				final EntityKey entityKey = generateEntityKey( pk, entityDescriptor );
 				final Object entity = getPersistenceContext().getEntity( entityKey );
 				final EntityEntry entry = getPersistenceContext().getEntry( entity );
 
@@ -2534,7 +2535,7 @@ public final class SessionImpl
 					if ( debugEnabled ) {
 						log.debug(
 								"Cached natural-id/pk resolution linked to null EntityEntry in persistence context : "
-										+ MessageHelper.infoString( entityPersister, pk, getFactory() )
+										+ MessageHelper.infoString( entityDescriptor, pk, getFactory() )
 						);
 					}
 					continue;
@@ -2550,7 +2551,7 @@ public final class SessionImpl
 				}
 
 				getPersistenceContext().getNaturalIdHelper().handleSynchronization(
-						entityPersister,
+						entityDescriptor,
 						pk,
 						entity
 				);
@@ -2558,15 +2559,33 @@ public final class SessionImpl
 		}
 
 		protected final IdentifierLoadAccess getIdentifierLoadAccess() {
-			final IdentifierLoadAccessImpl identifierLoadAccess = new IdentifierLoadAccessImpl( entityPersister );
+			final IdentifierLoadAccessImpl identifierLoadAccess = new IdentifierLoadAccessImpl( entityDescriptor );
 			if ( this.lockOptions != null ) {
 				identifierLoadAccess.with( lockOptions );
 			}
 			return identifierLoadAccess;
 		}
 
+		/**
+		 * @deprecated (since 6.0) Use {@link #entityDescriptor()} instead
+		 */
+		@Deprecated
 		protected EntityDescriptor entityPersister() {
-			return entityPersister;
+			return entityDescriptor;
+		}
+
+		protected EntityDescriptor entityDescriptor() {
+			return entityDescriptor;
+		}
+
+		@Override
+		public LockOptions getLockOptions() {
+			return null;
+		}
+
+		@Override
+		public boolean isSynchronizationEnabled() {
+			return false;
 		}
 	}
 
@@ -2605,17 +2624,13 @@ public final class SessionImpl
 		@Override
 		@SuppressWarnings("unchecked")
 		public final T getReference() {
-			final Serializable entityId = resolveNaturalId( this.naturalIdParameters );
-			if ( entityId == null ) {
-				return null;
-			}
-			return (T) this.getIdentifierLoadAccess().getReference( entityId );
+			return (T) entityDescriptor().getNaturalIdLoader().load( this.naturalIdParameters, this, SessionImpl.this );
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
 		public final T load() {
-			final Serializable entityId = resolveNaturalId( this.naturalIdParameters );
+			final Object entityId = resolveNaturalId( this.naturalIdParameters );
 			if ( entityId == null ) {
 				return null;
 			}
@@ -2641,7 +2656,7 @@ public final class SessionImpl
 		private SimpleNaturalIdLoadAccessImpl(EntityDescriptor entityPersister) {
 			super( entityPersister );
 
-			final NaturalIdDescriptor naturalIdentifierDescriptor = entityPersister.getHierarchy()
+			final NaturalIdDescriptor<?> naturalIdentifierDescriptor = entityPersister.getHierarchy()
 					.getNaturalIdDescriptor();
 
 			if ( naturalIdentifierDescriptor == null ) {
@@ -2653,7 +2668,7 @@ public final class SessionImpl
 				);
 			}
 
-			if ( naturalIdentifierDescriptor.getPersistentAttributes().size() != 1 ) {
+			if ( naturalIdentifierDescriptor.getAttributeInfos().size() != 1 ) {
 				throw new HibernateException(
 						String.format(
 								"Natural0id defined for entity [%s] is not simple (1 attribute)",
@@ -2662,7 +2677,7 @@ public final class SessionImpl
 				);
 			}
 
-			final PersistentAttribute persistentAttribute = naturalIdentifierDescriptor.getPersistentAttributes().iterator().next();
+			final PersistentAttribute persistentAttribute = naturalIdentifierDescriptor.getAttributeInfos().iterator().next().getUnderlyingAttributeDescriptor();
 			this.naturalIdAttributeName = persistentAttribute.getAttributeName();
 		}
 
@@ -2692,7 +2707,7 @@ public final class SessionImpl
 		@Override
 		@SuppressWarnings("unchecked")
 		public T getReference(Object naturalIdValue) {
-			final Serializable entityId = resolveNaturalId( getNaturalIdParameters( naturalIdValue ) );
+			final Object entityId = resolveNaturalId( getNaturalIdParameters( naturalIdValue ) );
 			if ( entityId == null ) {
 				return null;
 			}
@@ -2702,7 +2717,7 @@ public final class SessionImpl
 		@Override
 		@SuppressWarnings("unchecked")
 		public T load(Object naturalIdValue) {
-			final Serializable entityId = resolveNaturalId( getNaturalIdParameters( naturalIdValue ) );
+			final Object entityId = resolveNaturalId( getNaturalIdParameters( naturalIdValue ) );
 			if ( entityId == null ) {
 				return null;
 			}

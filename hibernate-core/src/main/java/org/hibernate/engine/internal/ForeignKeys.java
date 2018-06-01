@@ -6,7 +6,6 @@
  */
 package org.hibernate.engine.internal;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,7 +271,7 @@ public final class ForeignKeys<T> {
 	 *
 	 * @throws TransientObjectException if the entity is transient (does not yet have an identifier)
 	 */
-	public static Serializable getEntityIdentifierIfNotUnsaved(
+	public static Object getEntityIdentifierIfNotUnsaved(
 			final String entityName,
 			final Object object,
 			final SharedSessionContractImplementor session) throws TransientObjectException {
@@ -280,7 +279,7 @@ public final class ForeignKeys<T> {
 			return null;
 		}
 		else {
-			Serializable id = session.getContextEntityIdentifier( object );
+			Object id = session.getContextEntityIdentifier( object );
 			if ( id == null ) {
 				// context-entity-identifier returns null explicitly if the entity
 				// is not associated with the persistence context; so make some
@@ -291,7 +290,9 @@ public final class ForeignKeys<T> {
 									(entityName == null ? session.guessEntityName( object ) : entityName)
 					);
 				}
-				id = session.getEntityPersister( entityName, object ).getIdentifier( object, session );
+				id = session.getEntityPersister( entityName, object ).getHierarchy()
+						.getIdentifierDescriptor()
+						.extractIdentifier( object, session );
 			}
 			return id;
 		}

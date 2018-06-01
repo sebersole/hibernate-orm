@@ -6,7 +6,6 @@
  */
 package org.hibernate.envers.internal.synchronization.work;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +23,7 @@ import org.hibernate.envers.boot.AuditService;
 public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
 	protected final SessionImplementor sessionImplementor;
 	protected final AuditService auditService;
-	protected final Serializable id;
+	protected final Object id;
 	protected final String entityName;
 	protected final RevisionType revisionType;
 
@@ -34,7 +33,7 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
 			SessionImplementor sessionImplementor,
 			String entityName,
 			AuditService auditService,
-			Serializable id,
+			Object id,
 			RevisionType revisionType) {
 		this.sessionImplementor = sessionImplementor;
 		this.auditService = auditService;
@@ -68,7 +67,7 @@ public abstract class AbstractAuditWorkUnit implements AuditWorkUnit {
 	}
 
 	@Override
-	public Serializable getEntityId() {
+	public Object getEntityId() {
 		return id;
 	}
 

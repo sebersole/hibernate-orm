@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
@@ -35,11 +34,8 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.collections.IdentitySet;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
-import org.hibernate.jpa.event.spi.CallbackRegistry;
-import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.internal.TypeHelper;
 
@@ -93,7 +89,7 @@ public class DefaultDeleteEventListener implements DeleteEventListener, Callback
 
 		EntityEntry entityEntry = persistenceContext.getEntry( entity );
 		final EntityDescriptor persister;
-		final Serializable id;
+		final Object id;
 		final Object version;
 
 		if ( entityEntry == null ) {
@@ -194,7 +190,7 @@ public class DefaultDeleteEventListener implements DeleteEventListener, Callback
 		EventSource source = event.getSession();
 		String entityName = event.getEntityName();
 		EntityDescriptor descriptor = source.getEntityPersister( entityName, event.getObject() );
-		Serializable id =  descriptor.getIdentifier( event.getObject(), source );
+		Object id =  descriptor.getIdentifier( event.getObject(), source );
 		entityName = entityName == null ? source.guessEntityName( event.getObject() ) : entityName;
 		throw new IllegalArgumentException( "Removing a detached instance " + entityName + "#" + id );
 	}

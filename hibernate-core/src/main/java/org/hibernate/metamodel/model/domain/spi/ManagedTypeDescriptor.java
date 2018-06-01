@@ -15,6 +15,7 @@ import javax.persistence.metamodel.ManagedType;
 
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -221,6 +222,7 @@ public interface ManagedTypeDescriptor<T>
 	/**
 	 * @deprecated Use the attribute's {@link org.hibernate.property.access.spi.PropertyAccess} instead
 	 */
+	@Remove
 	@Deprecated
 	default void setPropertyValue(Object object, int i, Object value) {
 		throw new NotYetImplementedFor6Exception();
@@ -229,16 +231,23 @@ public interface ManagedTypeDescriptor<T>
 	/**
 	 * @deprecated Use the attribute's {@link org.hibernate.property.access.spi.PropertyAccess} instead
 	 */
+	@Remove
 	@Deprecated
 	default Object getPropertyValue(Object object, int i) throws HibernateException {
+		// todo (6.0) : this is interesting - do we need this?
+		//		It is interesting because it implies an ordering amongst the attributes.  I've discussed
+		//		this with Luis a few times in regards to bytecode enhancement.  If the order were
+		//				1. well defined (alphabetical, super classes first)
+		//				2. ideally. easily calculable - probably a Helper class
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	/**
 	 * @deprecated Use the attribute's {@link org.hibernate.property.access.spi.PropertyAccess} instead
 	 */
+	@Remove
 	@Deprecated
 	default Object getPropertyValue(Object object, String propertyName) {
-		throw new NotYetImplementedFor6Exception();
+		return findPersistentAttribute( propertyName ).getPropertyAccess().getGetter().get( object );
 	}
 }

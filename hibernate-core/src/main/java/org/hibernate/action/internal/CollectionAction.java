@@ -34,13 +34,13 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 	private transient SharedSessionContractImplementor session;
 	private final PersistentCollection collection;
 
-	private final Serializable key;
+	private final Object key;
 	private final String collectionRole;
 
 	protected CollectionAction(
 			final PersistentCollectionDescriptor collectionDescriptor,
 			final PersistentCollection collection, 
-			final Serializable key, 
+			final Object key,
 			final SharedSessionContractImplementor session) {
 		this.collectionDescriptor = collectionDescriptor;
 		this.session = session;
@@ -110,8 +110,8 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 		return collectionDescriptor;
 	}
 
-	protected final Serializable getKey() {
-		Serializable finalKey = key;
+	protected final Object getKey() {
+		Object finalKey = key;
 		if ( key instanceof DelayedPostInsertIdentifier ) {
 			// need to look it up from the persistence-context
 			finalKey = session.getPersistenceContext().getEntry( collection.getOwner() ).getId();
@@ -161,11 +161,11 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 	}
 
 	private static class CacheCleanupProcess implements AfterTransactionCompletionProcess {
-		private final Serializable key;
+		private final Object key;
 		private final PersistentCollectionDescriptor collectionDescriptor;
 		private final SoftLock lock;
 
-		private CacheCleanupProcess(Serializable key, PersistentCollectionDescriptor collectionDescriptor, SoftLock lock) {
+		private CacheCleanupProcess(Object key, PersistentCollectionDescriptor collectionDescriptor, SoftLock lock) {
 			this.key = key;
 			this.collectionDescriptor = collectionDescriptor;
 			this.lock = lock;

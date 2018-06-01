@@ -35,7 +35,7 @@ public abstract class BasicLazyInitializer extends AbstractLazyInitializer {
 	protected BasicLazyInitializer(
 			String entityName,
 			Class persistentClass,
-			Serializable id,
+			Object id,
 			Method getIdentifierMethod,
 			Method setIdentifierMethod,
 			EmbeddedTypeDescriptor componentIdType,

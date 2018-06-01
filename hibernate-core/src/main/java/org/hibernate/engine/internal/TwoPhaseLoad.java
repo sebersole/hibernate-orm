@@ -12,6 +12,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.CacheMode;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.annotations.Remove;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.profile.Fetch;
@@ -49,6 +50,7 @@ import org.jboss.logging.Logger;
  * @deprecated to be removed in 6.0 (this was always considered an internal class); two-phase loading is
  * handled via {@link org.hibernate.sql.results.spi.Initializer} and friends
  */
+@Remove
 @Deprecated
 public final class TwoPhaseLoad {
 
@@ -144,7 +146,7 @@ public final class TwoPhaseLoad {
 			final PreLoadEvent preLoadEvent) throws HibernateException {
 		final PersistenceContext persistenceContext = session.getPersistenceContext();
 		final EntityDescriptor<?> entityDescriptor = entityEntry.getDescriptor();
-		final Serializable id = entityEntry.getId();
+		final Object id = entityEntry.getId();
 		final Object[] hydratedState = entityEntry.getLoadedState();
 
 		final boolean debugEnabled = LOG.isDebugEnabled();

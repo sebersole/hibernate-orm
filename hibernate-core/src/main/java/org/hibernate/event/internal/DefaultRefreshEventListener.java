@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ import org.hibernate.event.spi.RefreshEvent;
 import org.hibernate.event.spi.RefreshEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
+import org.hibernate.loader.internal.StandardLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
@@ -81,7 +81,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 
 		final EntityEntry e = source.getPersistenceContext().getEntry( object );
 		final EntityDescriptor entityDescriptor;
-		final Serializable id;
+		final Object id;
 
 		if ( e == null ) {
 			entityDescriptor = source.getEntityPersister(
@@ -110,7 +110,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			if ( LOG.isTraceEnabled() ) {
 				LOG.tracev(
 						"Refreshing ", MessageHelper.infoString(
-						e.getPersister(),
+						e.getDescriptor(),
 						e.getId(),
 						source.getFactory()
 				)
@@ -123,7 +123,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				);
 			}
 
-			entityDescriptor = e.getPersister();
+			entityDescriptor = e.getDescriptor();
 			id = e.getId();
 		}
 
@@ -205,7 +205,9 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			}
 		}
 
-		final Object result = entityDescriptor.load( id, object, lockOptionsToUse, source );
+		final StandardLoadOptions loadOptions = new StandardLoadOptions( lockOptionsToUse, object );
+
+		final Object result = entityDescriptor.getSingleIdLoader().load( id, loadOptions, source );
 
 		if ( result != null ) {
 			// apply `postRefreshLockMode`, if needed
@@ -229,12 +231,12 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		UnresolvableObjectException.throwIfNull( result, id, entityDescriptor.getEntityName() );
 	}
 
-	private void evictCachedCollections(EntityDescriptor entityDescriptor, Serializable id, EventSource source) {
+	private void evictCachedCollections(EntityDescriptor entityDescriptor, Object id, EventSource source) {
 		evictCachedCollections( entityDescriptor.getPersistentAttributes(), id, source );
 	}
 
 	@SuppressWarnings("unchecked")
-	private void evictCachedCollections(List<PersistentAttribute> persistentAttributes, Serializable id, EventSource source)
+	private void evictCachedCollections(List<PersistentAttribute> persistentAttributes, Object id, EventSource source)
 			throws HibernateException {
 		for ( PersistentAttribute attribute : persistentAttributes ) {
 			if ( PluralPersistentAttribute.class.isInstance( attribute ) ) {

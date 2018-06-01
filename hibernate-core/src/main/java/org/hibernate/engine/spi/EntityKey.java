@@ -31,7 +31,7 @@ import org.hibernate.pretty.MessageHelper;
  */
 public final class EntityKey implements Serializable {
 
-	private final Serializable identifier;
+	private final Object identifier;
 	private final int hashCode;
 	private final EntityDescriptor entityDescriptor;
 
@@ -45,7 +45,7 @@ public final class EntityKey implements Serializable {
 	 * @param id The entity id
 	 * @param entityDescriptor The entity entityDescriptor
 	 */
-	public EntityKey(Serializable id, EntityDescriptor entityDescriptor) {
+	public EntityKey(Object id, EntityDescriptor entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 		if ( id == null ) {
 			throw new AssertionFailure( "null identifier" );
@@ -68,7 +68,7 @@ public final class EntityKey implements Serializable {
 		return entityDescriptor.isBatchLoadable();
 	}
 
-	public Serializable getIdentifier() {
+	public Object getIdentifier() {
 		return identifier;
 	}
 

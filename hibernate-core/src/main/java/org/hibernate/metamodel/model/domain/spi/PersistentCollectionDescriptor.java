@@ -356,7 +356,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	/**
 	 * Completely remove the persistent state of the collection
 	 */
-	default void remove(Serializable id, SharedSessionContractImplementor session) {
+	default void remove(Object id, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
@@ -365,7 +365,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	default void recreate(
 			PersistentCollection collection,
-			Serializable key,
+			Object key,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
@@ -376,7 +376,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	default void deleteRows(
 			PersistentCollection collection,
-			Serializable key,
+			Object key,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
@@ -386,7 +386,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	default void updateRows(
 			PersistentCollection collection,
-			Serializable key,
+			Object key,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
@@ -396,7 +396,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	default void insertRows(
 			PersistentCollection collection,
-			Serializable key,
+			Object key,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
@@ -406,7 +406,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 */
 	default void processQueuedOps(
 			PersistentCollection collection,
-			Serializable key,
+			Object key,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}

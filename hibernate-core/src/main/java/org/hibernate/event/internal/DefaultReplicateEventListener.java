@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.List;
 
 import org.hibernate.HibernateException;
@@ -73,7 +72,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 		/*if ( entityDescriptor.isUnsaved(entity, source) ) {
 			throw new TransientObjectException("transient instance passed to replicate()");
 		}*/
-		Serializable id = entityDescriptor.getIdentifier( entity, source );
+		Object id = entityDescriptor.getIdentifier( entity, source );
 		if ( id == null ) {
 			throw new TransientObjectException( "instance with null id passed to replicate()" );
 		}
@@ -87,7 +86,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 		}
 		else {
 			//what is the version on the database?
-			oldVersion = entityDescriptor.getCurrentVersion( id, source );
+			oldVersion = entityDescriptor.getHierarchy().getVersionDescriptor().getPropertyAccess().getGetter().get( id );
 		}
 
 		final boolean traceEnabled = LOG.isTraceEnabled();
@@ -152,7 +151,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 	@Override
 	protected boolean visitCollectionsBeforeSave(
 			Object entity,
-			Serializable id,
+			Object id,
 			Object[] values,
 			List<PersistentAttribute> navigables,
 			EventSource source) {
@@ -165,7 +164,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 	@Override
 	protected boolean substituteValuesIfNecessary(
 			Object entity,
-			Serializable id,
+			Object id,
 			Object[] values,
 			EntityDescriptor entityDescriptor,
 			SessionImplementor source) {
@@ -179,7 +178,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 
 	private void performReplication(
 			Object entity,
-			Serializable id,
+			Object id,
 			Object version,
 			EntityDescriptor entityDescriptor,
 			ReplicationMode replicationMode,

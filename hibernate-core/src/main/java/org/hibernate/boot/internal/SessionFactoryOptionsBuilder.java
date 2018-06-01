@@ -73,6 +73,7 @@ import static org.hibernate.cfg.AvailableSettings.AUTO_SESSION_EVENTS_LISTENER;
 import static org.hibernate.cfg.AvailableSettings.BATCH_FETCH_STYLE;
 import static org.hibernate.cfg.AvailableSettings.BATCH_VERSIONED_DATA;
 import static org.hibernate.cfg.AvailableSettings.CACHE_REGION_PREFIX;
+import static org.hibernate.cfg.AvailableSettings.CALLABLE_NAMED_PARAMS_ENABLED;
 import static org.hibernate.cfg.AvailableSettings.CHECK_NULLABILITY;
 import static org.hibernate.cfg.AvailableSettings.COLLECTION_JOIN_SUBQUERY;
 import static org.hibernate.cfg.AvailableSettings.CONNECTION_HANDLING;
@@ -99,6 +100,7 @@ import static org.hibernate.cfg.AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLV
 import static org.hibernate.cfg.AvailableSettings.ORDER_INSERTS;
 import static org.hibernate.cfg.AvailableSettings.ORDER_UPDATES;
 import static org.hibernate.cfg.AvailableSettings.PREFER_USER_TRANSACTION;
+import static org.hibernate.cfg.AvailableSettings.PROCEDURE_NULL_PARAM_PASSING;
 import static org.hibernate.cfg.AvailableSettings.QUERY_CACHE_FACTORY;
 import static org.hibernate.cfg.AvailableSettings.QUERY_STARTUP_CHECKING;
 import static org.hibernate.cfg.AvailableSettings.QUERY_SUBSTITUTIONS;
@@ -120,8 +122,6 @@ import static org.hibernate.cfg.AvailableSettings.USE_SQL_COMMENTS;
 import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 import static org.hibernate.cfg.AvailableSettings.VALIDATE_QUERY_PARAMETERS;
 import static org.hibernate.cfg.AvailableSettings.WRAP_RESULT_SETS;
-import static org.hibernate.cfg.AvailableSettings.PROCEDURE_NULL_PARAM_PASSING;
-import static org.hibernate.cfg.AvailableSettings.CALLABLE_NAMED_PARAMS_ENABLED;
 import static org.hibernate.engine.config.spi.StandardConverters.BOOLEAN;
 import static org.hibernate.internal.util.NullnessHelper.coalesce;
 import static org.hibernate.jpa.AvailableSettings.DISCARD_PC_ON_CLOSE;
@@ -139,6 +139,13 @@ import static org.hibernate.jpa.AvailableSettings.DISCARD_PC_ON_CLOSE;
 @SuppressWarnings("WeakerAccess")
 public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	private static final Logger log = Logger.getLogger( SessionFactoryOptionsBuilder.class );
+
+	private static final StatementInspector DEFAULT_STATEMENT_INSPECTOR = new StatementInspector() {
+		@Override
+		public String inspect(String sql) {
+			return sql;
+		}
+	};
 
 	private final String uuid = LocalObjectUuidHelper.generateLocalObjectUuid();
 	private final StandardServiceRegistry serviceRegistry;
@@ -291,9 +298,10 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		this.statisticsEnabled = cfgService.getSetting( GENERATE_STATISTICS, BOOLEAN, false );
 		this.interceptor = determineInterceptor( configurationSettings, strategySelector );
 		this.statelessInterceptorSupplier = determineStatelessInterceptor( configurationSettings, strategySelector );
-		this.statementInspector = strategySelector.resolveStrategy(
+		this.statementInspector = strategySelector.resolveDefaultableStrategy(
 				StatementInspector.class,
-				configurationSettings.get( STATEMENT_INSPECTOR )
+				configurationSettings.get( STATEMENT_INSPECTOR ),
+				DEFAULT_STATEMENT_INSPECTOR
 		);
 
 		// todo : expose this from builder?

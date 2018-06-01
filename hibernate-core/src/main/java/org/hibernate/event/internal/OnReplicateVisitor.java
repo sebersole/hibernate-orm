@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.event.spi.EventSource;
@@ -29,7 +27,7 @@ public class OnReplicateVisitor extends ReattachVisitor {
 
 	private boolean isUpdate;
 
-	OnReplicateVisitor(EventSource session, Serializable key, Object owner, boolean isUpdate) {
+	OnReplicateVisitor(EventSource session, Object key, Object owner, boolean isUpdate) {
 		super( session, key, owner );
 		this.isUpdate = isUpdate;
 	}

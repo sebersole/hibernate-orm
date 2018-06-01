@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -18,12 +16,12 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public class PostDeleteEvent extends AbstractEvent {
 	private Object entity;
 	private EntityDescriptor persister;
-	private Serializable id;
+	private Object id;
 	private Object[] deletedState;
 	
 	public PostDeleteEvent(
-			Object entity, 
-			Serializable id,
+			Object entity,
+			Object id,
 			Object[] deletedState,
 			EntityDescriptor persister,
 			EventSource source
@@ -35,15 +33,18 @@ public class PostDeleteEvent extends AbstractEvent {
 		this.deletedState = deletedState;
 	}
 	
-	public Serializable getId() {
+	public Object getId() {
 		return id;
 	}
+
 	public EntityDescriptor getPersister() {
 		return persister;
 	}
+
 	public Object getEntity() {
 		return entity;
 	}
+
 	public Object[] getDeletedState() {
 		return deletedState;
 	}

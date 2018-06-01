@@ -6,7 +6,6 @@
  */
 package org.hibernate.engine.internal;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,7 +15,6 @@ import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -314,7 +312,7 @@ public final class Cascade {
 						if ( valueEntry != null ) {
 							final String entityName = valueEntry.getDescriptor().getEntityName();
 							if ( LOG.isTraceEnabled() ) {
-								final Serializable id = valueEntry.getDescriptor().getIdentifier( loadedValue, eventSource );
+								final Object id = valueEntry.getDescriptor().getIdentifier( loadedValue, eventSource );
 								final String description = MessageHelper.infoString( entityName, id );
 								LOG.tracev( "Deleting orphaned entity instance: {0}", description );
 							}

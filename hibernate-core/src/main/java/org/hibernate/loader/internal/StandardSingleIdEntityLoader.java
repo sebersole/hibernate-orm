@@ -6,7 +6,6 @@
  */
 package org.hibernate.loader.internal;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -52,8 +51,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 	}
 
 	@Override
-	public T load(Serializable id, LockOptions lockOptions, SharedSessionContractImplementor session) {
-		final List<Serializable> loadIds = Collections.singletonList( id );
+	public T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session) {
+		final List<Object> loadIds = Collections.singletonList( id );
 
 		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
 				session.getFactory(),
@@ -61,7 +60,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				loadIds
 		);
 
-		final JdbcSelect jdbcSelect = resolveJdbcSelect( id, lockOptions, parameterBindingContext, session );
+		final JdbcSelect jdbcSelect = resolveJdbcSelect( id, loadOptions.getLockOptions(), parameterBindingContext, session );
 
 		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
@@ -97,7 +96,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 	}
 
 	private JdbcSelect resolveJdbcSelect(
-			Serializable id,
+			Object id,
 			LockOptions lockOptions,
 			ParameterBindingContext parameterBindingContext,
 			SharedSessionContractImplementor session) {

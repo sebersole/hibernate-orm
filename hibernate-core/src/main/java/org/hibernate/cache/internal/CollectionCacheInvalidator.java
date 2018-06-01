@@ -6,8 +6,6 @@
  */
 package org.hibernate.cache.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.HibernateException;
 import org.hibernate.action.internal.CollectionAction;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
@@ -116,14 +114,14 @@ public class CollectionCacheInvalidator
 						&& !mappedBy.isEmpty() ) {
 					final NonIdPersistentAttribute attribute = entityDescriptor.findPersistentAttribute( mappedBy );
 					int i = attribute.getStateArrayPosition();
-					Serializable oldId = null;
+					Object oldId = null;
 					if ( oldState != null ) {
 						// in case of updating an entity we perhaps have to decache 2 entity collections, this is the
 						// old one
 						oldId = getIdentifier( session, oldState[i] );
 					}
 					Object ref = entityDescriptor.getPropertyValue( entity, i );
-					Serializable id = getIdentifier( session, ref );
+					Object id = getIdentifier( session, ref );
 
 					// only evict if the related entity has changed
 					if ( ( id != null && !id.equals( oldId ) ) || ( oldId != null && !oldId.equals( id ) ) ) {
@@ -154,8 +152,8 @@ public class CollectionCacheInvalidator
 		}
 	}
 
-	private Serializable getIdentifier(EventSource session, Object obj) {
-		Serializable id = null;
+	private Object getIdentifier(EventSource session, Object obj) {
+		Object id = null;
 		if ( obj != null ) {
 			id = session.getContextEntityIdentifier( obj );
 			if ( id == null ) {
@@ -165,7 +163,7 @@ public class CollectionCacheInvalidator
 		return id;
 	}
 
-	private void evict(Serializable id, PersistentCollectionDescriptor collectionPersister, EventSource session) {
+	private void evict(Object id, PersistentCollectionDescriptor collectionPersister, EventSource session) {
 		if ( LOG.isDebugEnabled() ) {
 			LOG.debug( "Evict CollectionRegion " + collectionPersister.getNavigableRole().getFullPath() + " for id " + id );
 		}
@@ -183,7 +181,7 @@ public class CollectionCacheInvalidator
 		protected CollectionEvictCacheAction(
 				PersistentCollectionDescriptor collectionDescriptor,
 				PersistentCollection collection,
-				Serializable key,
+				Object key,
 				SharedSessionContractImplementor session) {
 			super( collectionDescriptor, collection, key, session );
 		}

@@ -38,7 +38,7 @@ import org.hibernate.pretty.MessageHelper;
  * @author Sanne Grinovero  <sanne@hibernate.org>
  */
 public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
-	protected final Serializable id;
+	protected final Object id;
 	protected Object[] loadedState;
 	protected Object version;
 	protected final EntityDescriptor descriptor; // permanent but we only need the entityName state in a non transient way
@@ -78,7 +78,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 			final Status status,
 			final Object[] loadedState,
 			final Object rowId,
-			final Serializable id,
+			final Object id,
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
@@ -171,7 +171,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 	}
 
 	@Override
-	public Serializable getId() {
+	public Object getId() {
 		return id;
 	}
 

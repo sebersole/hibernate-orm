@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 public abstract class AbstractSerializableProxy implements Serializable {
 	private String entityName;
-	private Serializable id;
+	private Object id;
 	private Boolean readOnly;
 
 	/**
@@ -23,7 +23,7 @@ public abstract class AbstractSerializableProxy implements Serializable {
 	protected AbstractSerializableProxy() {
 	}
 
-	protected AbstractSerializableProxy(String entityName, Serializable id, Boolean readOnly) {
+	protected AbstractSerializableProxy(String entityName, Object id, Boolean readOnly) {
 		this.entityName = entityName;
 		this.id = id;
 		this.readOnly = readOnly;
@@ -33,7 +33,7 @@ public abstract class AbstractSerializableProxy implements Serializable {
 		return entityName;
 	}
 
-	protected Serializable getId() {
+	protected Object getId() {
 		return id;
 	}
 
