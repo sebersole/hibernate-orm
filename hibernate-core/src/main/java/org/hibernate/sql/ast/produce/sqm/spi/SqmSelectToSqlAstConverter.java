@@ -16,6 +16,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.spi.AttributeNodeContainer;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.QueryOptions;
@@ -59,9 +60,9 @@ public class SqmSelectToSqlAstConverter
 	// todo (6.0) : SqmSelectToSqlAstConverter needs to account for the EntityGraph hint
 	private FetchGraphBuilder fetchGraphBuilder;
 
-	private final Stack<Shallowness> shallownessStack = new Stack<>( Shallowness.NONE );
-	private final Stack<NavigableReference> navigableReferenceStack = new Stack<>();
-	private final Stack<Expression> currentSelectedExpression = new Stack<>();
+	private final Stack<Shallowness> shallownessStack = new StandardStack<>( Shallowness.NONE );
+	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
+	private final Stack<Expression> currentSelectedExpression = new StandardStack<>();
 
 	private final Map<Expression,SqlSelection> sqlSelectionByExpressionMap = new HashMap<>();
 
@@ -143,11 +144,11 @@ public class SqmSelectToSqlAstConverter
 
 	private final int fetchDepthLimit;
 
-	private Stack<FetchParent> fetchParentStack = new Stack<>();
-	private Stack<NavigablePath> navigablePathStack = new Stack<>();
-	private final Stack<TableGroup> tableGroupStack = new Stack<>();
-	private Stack<SqmFrom> sqmFromStack = new Stack<>();
-	private Stack<AttributeNodeContainer> entityGraphNodeStack = new Stack<>();
+	private Stack<FetchParent> fetchParentStack = new StandardStack<>();
+	private Stack<NavigablePath> navigablePathStack = new StandardStack<>();
+	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
+	private Stack<SqmFrom> sqmFromStack = new StandardStack<>();
+	private Stack<AttributeNodeContainer> entityGraphNodeStack = new StandardStack<>();
 
 	@Override
 	public Void visitSelection(SqmSelection sqmSelection) {

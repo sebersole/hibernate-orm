@@ -20,6 +20,7 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.NavigablePath;
@@ -211,11 +212,11 @@ public abstract class BaseSqmToSqlAstConverter
 
 	private final FromClauseIndex fromClauseIndex = new FromClauseIndex();
 
-	private final Stack<Clause> currentClauseStack = new Stack<>();
-	private final Stack<QuerySpec> querySpecStack = new Stack<>();
-	private final Stack<TableGroup> tableGroupStack = new Stack<>();
-	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new Stack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
-	private final Stack<NavigableReference> navigableReferenceStack = new Stack<>();
+	private final Stack<Clause> currentClauseStack = new StandardStack<>();
+	private final Stack<QuerySpec> querySpecStack = new StandardStack<>();
+	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
+	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new StandardStack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
+	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
 
 	private final Set<String> affectedTableNames = new HashSet<>();
 
@@ -471,7 +472,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return null;
 	}
 
-	final Stack<FromClause> fromClauseStack = new Stack<>();
+	final Stack<FromClause> fromClauseStack = new StandardStack<>();
 	private TableSpace tableSpace;
 
 	@Override

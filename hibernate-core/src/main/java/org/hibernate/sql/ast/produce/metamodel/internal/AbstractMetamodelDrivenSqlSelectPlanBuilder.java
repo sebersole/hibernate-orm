@@ -16,6 +16,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
@@ -100,9 +101,9 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 
 
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
-	private final Stack<FetchParent> fetchParentStack = new Stack<>();
-	private final Stack<NavigableContainerReferenceInfoImpl> navigableContainerInfoStack = new Stack<>();
-	private final Stack<TableGroup> tableGroupStack = new Stack<>();
+	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
+	private final Stack<NavigableContainerReferenceInfoImpl> navigableContainerInfoStack = new StandardStack<>();
+	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
 
 	private final Map<FetchParent,NavigableContainerReference> fetchParentNavigableContainerReferenceMap = new HashMap<>();
 	private final Map<NavigableContainerReference,FetchParent>  navigableContainerReferenceFetchParentHashMap= new HashMap<>();

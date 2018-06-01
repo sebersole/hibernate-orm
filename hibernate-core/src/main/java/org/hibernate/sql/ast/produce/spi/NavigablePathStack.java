@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.spi;
 
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 
@@ -22,14 +23,23 @@ import org.jboss.logging.MDC;
  * beneficial to see exactly where we are in the graph walking as part of log messages.
  * This MDC hook provides this capability.
  */
-public class NavigablePathStack {
+public class NavigablePathStack implements Stack<NavigablePath> {
 	private static final Logger log = Logger.getLogger( NavigablePathStack.class );
 	private static final boolean TRACE_ENABLED = log.isTraceEnabled();
 
 	private static final String MDC_KEY = "hibernateSqlSelectPlanWalkPath";
-	public static final String NO_PATH = "<no-path>";
+	private static final String NO_PATH = "<no-path>";
 
-	private Stack<NavigablePath> internalStack = new Stack<>();
+	private Stack<NavigablePath> internalStack = new StandardStack<>();
+
+	@Override
+	public void push(NavigablePath navigablePath) {
+		assert navigablePath != null;
+
+		internalStack.push( navigablePath );
+
+		MDC.put( MDC_KEY, navigablePath.getFullPath() );
+	}
 
 	public void push(Navigable navigable) {
 		assert navigable != null;
@@ -50,12 +60,11 @@ public class NavigablePathStack {
 		else {
 			navigablePath = internalStack.getCurrent().append( navigableName );
 		}
-		internalStack.push( navigablePath );
 
-		MDC.put( MDC_KEY, navigablePath.getFullPath() );
+		push( navigablePath );
 	}
 
-	public void pop() {
+	public NavigablePath pop() {
 		assert !internalStack.isEmpty();
 
 		final NavigablePath previous = internalStack.pop();
@@ -71,10 +80,26 @@ public class NavigablePathStack {
 
 		final String mdcRep = newHead == null ? NO_PATH : newHead.getFullPath();
 		MDC.put( MDC_KEY, mdcRep );
+		return previous;
 	}
 
 	public NavigablePath getCurrent() {
 		return internalStack.getCurrent();
+	}
+
+	@Override
+	public NavigablePath getPrevious() {
+		return internalStack.getPrevious();
+	}
+
+	@Override
+	public int depth() {
+		return internalStack.depth();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return internalStack.isEmpty();
 	}
 
 	public void clear() {

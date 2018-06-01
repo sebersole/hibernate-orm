@@ -25,6 +25,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.CollectionElement;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -214,16 +215,16 @@ public class SemanticQueryBuilder
 
 	private final SqmFromBuilderStandard standardSqmFromBuilder = new SqmFromBuilderStandard( this );
 
-	private final Stack<SemanticPathPart> semanticPathPartStack = new Stack<>( new SemanticPathPartRoot() );
-	private final Stack<SqmFromBuilder> fromBuilderStack = new Stack<>( standardSqmFromBuilder );
-	private final Stack<TreatHandler> treatHandlerStack = new Stack<>( new TreatHandlerNormal() );
+	private final Stack<SemanticPathPart> semanticPathPartStack = new StandardStack<>( new SemanticPathPartRoot() );
+	private final Stack<SqmFromBuilder> fromBuilderStack = new StandardStack<>( standardSqmFromBuilder );
+	private final Stack<TreatHandler> treatHandlerStack = new StandardStack<>( new TreatHandlerNormal() );
 
 	private SqmFromElementSpace currentFromElementSpace;
 
 	private Map<NavigablePath,SqmNavigableReference> navigableReferenceByPath;
 
-	private final Stack<ParameterDeclarationContext> parameterDeclarationContextStack = new Stack<>();
-	private final Stack<QuerySpecProcessingState> querySpecProcessingStateStack = new Stack<>();
+	private final Stack<ParameterDeclarationContext> parameterDeclarationContextStack = new StandardStack<>();
+	private final Stack<QuerySpecProcessingState> querySpecProcessingStateStack = new StandardStack<>();
 
 	private ParameterCollector parameterCollector;
 

@@ -18,6 +18,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -107,9 +108,9 @@ public class MetamodelSelectBuilderProcess
 		this.lockOptions = lockOptions != null ? lockOptions : LockOptions.NONE;
 	}
 
-	private final Stack<TableSpace> tableSpaceStack = new Stack<>();
-	private final Stack<TableGroup> tableGroupStack = new Stack<>();
-	private final Stack<FetchParent> fetchParentStack = new Stack<>();
+	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
+	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
+	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
 	private final Set<String> affectedTables = new HashSet<>();
 
