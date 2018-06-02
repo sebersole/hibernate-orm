@@ -88,6 +88,7 @@ public interface ManagedTypeDescriptor<T>
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	default <O,J> void visitAttributes(Consumer<PersistentAttribute<O,J>> action, Predicate<PersistentAttribute<O,J>> filter) {
 		visitAttributes(
 				attribute -> {

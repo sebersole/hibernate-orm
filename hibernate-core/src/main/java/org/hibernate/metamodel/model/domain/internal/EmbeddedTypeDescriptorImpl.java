@@ -6,9 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -27,12 +31,17 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -135,10 +144,93 @@ public class EmbeddedTypeDescriptorImpl<T>
 		throw new UnsupportedOperationException(  );
 	}
 
+	private List<Column> collectedColumns;
+
 	@Override
 	public List<Column> collectColumns() {
-//		throw new NotYetImplementedException(  );
-		return null;
+		if ( collectedColumns == null ) {
+			collectedColumns = new ArrayList<>();
+			visitAttributes(
+					persistentAttribute -> {
+						collectedColumns.addAll( persistentAttribute.getColumns() );
+					}
+			);
+		}
+
+		return collectedColumns;
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersToBind() {
+		return collectColumns().size();
+	}
+
+	private final ValueBinder binder = new ValueBinder() {
+		@Override
+		public void bind(
+				PreparedStatement st,
+				Object value,
+				int index,
+				WrapperOptions options) throws SQLException {
+			final Object[] values = extractValues( value );
+
+			int position = 0;
+			for ( StateArrayContributor contributor : getStateArrayContributors() ) {
+				final Object subValue = values[contributor.getStateArrayPosition() ];
+
+				contributor.getValueBinder().bind(
+						st,
+						contributor.dehydrate( subValue,  ),
+						index,
+						options
+				);
+
+				contributor.
+			}
+
+		}
+
+		private Object[] extractValues(Object value) {
+			assert value instanceof Object[];
+
+
+			final Object[] values = (Object[]) value;
+			assert values.length == getStateArrayContributors().size();
+
+			return values;
+		}
+
+		@Override
+		public void bind(
+				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
+
+		}
+	};
+
+	@Override
+	public ValueBinder getValueBinder() {
+		return binder;
+	}
+
+	@Override
+	public ValueExtractor getValueExtractor() {
+		return new ValueExtractor() {
+			@Override
+			public Object extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
+				return null;
+			}
+
+			@Override
+			public Object extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
+				return null;
+			}
+
+			@Override
+			public Object extract(
+					CallableStatement statement, String name, WrapperOptions options) throws SQLException {
+				return null;
+			}
+		};
 	}
 
 	@Override
@@ -156,18 +248,18 @@ public class EmbeddedTypeDescriptorImpl<T>
 	}
 
 	@Override
-	public Object[] getPropertyValues(Object object) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
 	public Object getPropertyValue(Object object, int i) throws HibernateException {
-		throw new NotYetImplementedFor6Exception(  );
+		return getPersistentAttributes().get( i ).getPropertyAccess().getGetter().get( object );
 	}
 
 	@Override
 	public Object getPropertyValue(Object object, String propertyName) {
-		throw new NotYetImplementedFor6Exception(  );
+		final NonIdPersistentAttribute<? super T, ?> attribute = findPersistentAttribute( propertyName );
+		if ( attribute == null ) {
+			throw new HibernateException( "No persistent attribute named [" + propertyName + "] on embeddable [" + getRoleName() + ']' );
+		}
+
+		return attribute.getPropertyAccess().getGetter().get( object );
 	}
 
 	@Override

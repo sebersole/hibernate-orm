@@ -24,6 +24,13 @@ public class Component {
 	public static class Nested {
 		private String nestedValue;
 
+		public Nested() {
+		}
+
+		public Nested(String nestedValue) {
+			this.nestedValue = nestedValue;
+		}
+
 		public String getNestedValue() {
 			return nestedValue;
 		}
@@ -31,6 +38,22 @@ public class Component {
 		public void setNestedValue(String nestedValue) {
 			this.nestedValue = nestedValue;
 		}
+	}
+
+	public Component() {
+	}
+
+	public Component(
+			String basicString,
+			Integer basicInteger,
+			Long basicLong,
+			int basicPrimitiveInt,
+			Nested nested) {
+		this.basicString = basicString;
+		this.basicInteger = basicInteger;
+		this.basicLong = basicLong;
+		this.basicPrimitiveInt = basicPrimitiveInt;
+		this.nested = nested;
 	}
 
 	public String getBasicString() {

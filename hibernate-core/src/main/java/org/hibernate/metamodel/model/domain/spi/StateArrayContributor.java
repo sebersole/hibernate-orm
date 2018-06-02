@@ -20,6 +20,7 @@ import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * Optional contract for a Navigable that can be part of it's container's
@@ -42,10 +43,14 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	void setStateArrayPosition(int position);
 
 	default List<Column> getColumns() {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass().getName() );
 	}
 
 	PropertyAccess getPropertyAccess();
+
+	default ValueBinder<J> getValueBinder() {
+		throw new NotYetImplementedFor6Exception( getClass().getName() );
+	}
 
 	/**
 	 * Is this value nullable?

@@ -7,11 +7,12 @@
 
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
-
 import javax.persistence.TemporalType;
 
+import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
@@ -29,6 +30,7 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -172,6 +174,16 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	}
 
 	@Override
+	public List<Column> getColumns() {
+		return getEmbeddedDescriptor().collectColumns();
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersForRestriction() {
+		return getColumns().size();
+	}
+
+	@Override
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
 	}
@@ -186,7 +198,17 @@ public class SingularPersistentAttributeEmbedded<O,J>
 			return;
 		}
 
-		final Object[] subValues = (Object[]) value;
+		final Object[] subValues;
+		if ( value instanceof Object[] ) {
+			subValues = (Object[]) value;
+		}
+		else if ( getEmbeddedDescriptor().getJavaTypeDescriptor().isInstance( value ) ) {
+			subValues = getEmbeddedDescriptor().getPropertyValues( value );
+		}
+		else {
+			throw new HibernateException( "Unexpected value : " + value );
+		}
+
 		if ( subValues.length == 0 ) {
 			return;
 		}

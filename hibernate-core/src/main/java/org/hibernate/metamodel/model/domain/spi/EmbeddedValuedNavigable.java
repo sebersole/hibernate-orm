@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.metamodel.Type;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -22,8 +21,6 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 
 /**
  * Describes parts of the domain model that can be composite values.
@@ -80,17 +77,7 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	}
 
 	@Override
-	default ValueBinder getValueBinder() {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
-	default ValueExtractor getValueExtractor() {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
 	default int getNumberOfJdbcParametersToBind() {
-		throw new NotYetImplementedFor6Exception(  );
+		return getEmbeddedDescriptor().getNumberOfJdbcParametersToBind();
 	}
 }

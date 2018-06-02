@@ -171,9 +171,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					);
 
 					final List<Column> columns = contributor.getColumns();
-					assert columns.size() == 1;
+					for ( int i = 0; i < columns.size(); i++ ) {
+						insertStatement.addTargetColumnReference( new ColumnReference( columns.get( i ) ) );
+					}
 
-					insertStatement.addTargetColumnReference( new ColumnReference( columns.get( 0 ) ) );
 					insertStatement.addValue(
 							new LiteralParameter( dehydrateState, (AllowableParameterType) contributor )
 					);

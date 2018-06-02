@@ -197,12 +197,21 @@ public class RuntimeModelCreationProcess {
 			runtimeRootEntity.getHierarchy().finishInitialization( creationContext, bootRootEntity );
 		}
 
-		for ( Map.Entry<EmbeddedValueMappingImplementor, EmbeddedTypeDescriptor> entry : embeddableRuntimeByBoot.entrySet() ) {
-			entry.getValue().finishInitialization( entry.getKey(), creationContext );
-		}
+		boolean moreEmbeddables = ! embeddableRuntimeByBoot.isEmpty();
+		boolean moreCollections = ! collectonRuntimeByBoot.isEmpty();
 
-		for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectonRuntimeByBoot.entrySet() ) {
-			entry.getValue().finishInitialization( entry.getKey(), creationContext );
+		while ( moreEmbeddables || moreCollections ) {
+			final int initialEmbeddableCount = embeddableRuntimeByBoot.size();
+			for ( Map.Entry<EmbeddedValueMappingImplementor, EmbeddedTypeDescriptor> entry : embeddableRuntimeByBoot.entrySet() ) {
+				entry.getValue().finishInitialization( entry.getKey(), creationContext );
+				moreEmbeddables = embeddableRuntimeByBoot.size() > initialEmbeddableCount;
+			}
+
+			final int initialCollectionCount = collectonRuntimeByBoot.size();
+			for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectonRuntimeByBoot.entrySet() ) {
+				entry.getValue().finishInitialization( entry.getKey(), creationContext );
+				moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
+			}
 		}
 
 		descriptorFactory.finishUp( creationContext );

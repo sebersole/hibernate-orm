@@ -711,7 +711,7 @@ public abstract class AbstractSqlAstWalker
 
 		// todo (6.0) : depending on decision for above, these casts should be moved to use those as the return types for Parameter#getType and ParameterBinding#getBindType
 		if ( parameterBinding.getBindType() != null ) {
-			return (AllowableParameterType) parameterBinding.getBindType();
+			return parameterBinding.getBindType();
 		}
 
 		if ( parameter.getType() != null ) {
