@@ -7,14 +7,14 @@
 package org.hibernate.sql.results.internal;
 
 import org.hibernate.LockMode;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.EntityFetch;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.InitializerCollector;
@@ -29,7 +29,7 @@ public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch 
 	private final FetchStrategy fetchStrategy;
 	private final LockMode lockMode;
 
-	private final EntitySqlSelectionMappings sqlSelectionMappings;
+	private final EntitySqlSelectionGroup sqlSelectionMappings;
 
 	public EntityFetchImpl(
 			FetchParent fetchParent,
@@ -43,7 +43,7 @@ public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch 
 		this.fetchParent = fetchParent;
 		this.qualifier = qualifier;
 		this.lockMode = lockMode;
-		this.sqlSelectionMappings = EntitySqlSelectionMappingsBuilder.buildSqlSelectionMappings(
+		this.sqlSelectionMappings = EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
 				getEntityDescriptor(),
 				qualifier,
 				creationContext

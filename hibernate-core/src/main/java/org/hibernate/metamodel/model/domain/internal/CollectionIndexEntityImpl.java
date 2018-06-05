@@ -32,7 +32,7 @@ import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.EntityQueryResultImpl;
-import org.hibernate.sql.results.internal.EntitySqlSelectionMappingsBuilder;
+import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -121,7 +121,7 @@ public class CollectionIndexEntityImpl<J>
 		return new EntityQueryResultImpl(
 				entityReference.getNavigable(),
 				resultVariable,
-				EntitySqlSelectionMappingsBuilder.buildSqlSelectionMappings(
+				EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
 						getEntityDescriptor(),
 						entityReference.getSqlExpressionQualifier(),
 						creationContext

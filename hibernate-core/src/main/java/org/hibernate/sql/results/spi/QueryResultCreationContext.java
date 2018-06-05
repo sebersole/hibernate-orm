@@ -15,6 +15,6 @@ import org.hibernate.LockOptions;
  *
  * @author Steve Ebersole
  */
-public interface QueryResultCreationContext extends SqlSelectionGroupResolutionContext {
+public interface QueryResultCreationContext extends SqlSelectionResolutionContext {
 	LockOptions getLockOptions();
 }

@@ -9,7 +9,7 @@ package org.hibernate.sql.results.internal;
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.sql.results.spi.EntityFetch;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
@@ -22,7 +22,7 @@ public class EntityFetchInitializer extends AbstractEntityInitializer {
 	public EntityFetchInitializer(
 			FetchParentAccess parentAccess,
 			EntityFetch entityReference,
-			EntitySqlSelectionMappings sqlSelectionMappings,
+			EntitySqlSelectionGroup sqlSelectionMappings,
 			LockMode lockMode,
 			boolean isShallow) {
 		super( entityReference.getEntityDescriptor(), sqlSelectionMappings, lockMode, isShallow );

@@ -9,6 +9,12 @@ package org.hibernate.sql.results.spi;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 
 /**
+ * Represents a selection at the SQL/JDBC level.  Essentially made up of:
+ *
+ * 		{@link #getSqlSelectionReader}:: How to read a value from JDBC (conceptually similar to a method reference)
+ * 		{@link #getValuesArrayPosition}:: The position for this selection in relation to the "JDBC values array" (see {@link RowProcessingState#getJdbcValue})
+ * 		{@link #getJdbcResultSetIndex()}:: The position for this selection in relation to the JDBC object (ResultSet, etc)
+ *
  * @author Steve Ebersole
  */
 public interface SqlSelection {
@@ -23,12 +29,12 @@ public interface SqlSelection {
 	//		so that we can render the SQL select clause
 
 	/**
-	 * Get the position within the values array (0-based)
+	 * Get the position within the "JDBC values" array (0-based)
 	 */
 	int getValuesArrayPosition();
 
 	/**
-	 * Get the JDBC parameter position (1-based)
+	 * Get the JDBC position (1-based)
 	 */
 	default int getJdbcResultSetIndex() {
 		return getValuesArrayPosition() + 1;

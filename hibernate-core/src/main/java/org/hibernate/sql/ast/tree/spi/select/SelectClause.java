@@ -6,10 +6,11 @@
  */
 package org.hibernate.sql.ast.tree.spi.select;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import org.hibernate.internal.util.collections.UniqueList;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.SqlAstNode;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -19,7 +20,7 @@ import org.hibernate.sql.results.spi.SqlSelection;
  */
 public class SelectClause implements SqlAstNode {
 	private boolean distinct;
-	private final List<SqlSelection> sqlSelections = new ArrayList<>();
+	private final UniqueList<SqlSelection> sqlSelections = new UniqueList<>();
 
 	public SelectClause() {
 	}
@@ -32,8 +33,12 @@ public class SelectClause implements SqlAstNode {
 		return distinct;
 	}
 
-	public List<SqlSelection> getSqlSelections() {
+	public List<SqlSelection> getSqlSelectionList() {
 		return Collections.unmodifiableList( sqlSelections );
+	}
+
+	public Set<SqlSelection> getSqlSelections() {
+		return Collections.unmodifiableSet( sqlSelections );
 	}
 
 	public void addSqlSelection(SqlSelection sqlSelection) {

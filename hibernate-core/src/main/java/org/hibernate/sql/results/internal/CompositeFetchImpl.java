@@ -11,7 +11,7 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.CompositeFetch;
-import org.hibernate.sql.results.spi.CompositeSqlSelectionMappings;
+import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.InitializerCollector;
@@ -26,7 +26,7 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 	private final SingularPersistentAttributeEmbedded fetchedNavigable;
 	private final FetchStrategy fetchStrategy;
 
-	private final CompositeSqlSelectionMappings sqlSelectionMappings;
+	private final CompositeSqlSelectionGroup sqlSelectionMappings;
 
 	public CompositeFetchImpl(
 			FetchParent fetchParent,
@@ -43,8 +43,9 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 		this.fetchedNavigable = fetchedNavigable;
 		this.fetchStrategy = fetchStrategy;
 
-		this.sqlSelectionMappings = CompositeSqlSelectionMappingsBuilder.generateMappings(
+		this.sqlSelectionMappings = CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup(
 				fetchedNavigable.getEmbeddedDescriptor(),
+				qualifier,
 				creationContext
 		);
 	}
@@ -83,11 +84,6 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 	public void registerInitializers(
 			FetchParentAccess parentAccess,
 			InitializerCollector collector) {
-		final CompositeInitializerImpl initializer = new CompositeInitializerImpl(
-				parentAccess,
-				sqlSelectionMappings
-		);
-		collector.addInitializer( initializer );
 		// todo (6.0) : wrong parent-access
 		registerFetchInitializers( parentAccess, collector );
 	}

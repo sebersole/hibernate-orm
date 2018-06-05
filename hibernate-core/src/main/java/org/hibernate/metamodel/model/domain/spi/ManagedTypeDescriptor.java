@@ -54,7 +54,7 @@ public interface ManagedTypeDescriptor<T>
 
 	ManagedTypeRepresentationStrategy getRepresentationStrategy();
 
-	List<StateArrayContributor> getStateArrayContributors();
+	List<StateArrayContributor<?>> getStateArrayContributors();
 
 	/**
 	 * Return this managed type's persistent attributes, including those

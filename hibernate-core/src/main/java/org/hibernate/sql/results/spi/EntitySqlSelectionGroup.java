@@ -8,23 +8,17 @@ package org.hibernate.sql.results.spi;
 
 import java.util.List;
 
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-
 /**
  * Used in {@link EntityInitializer} implementations
  *
  * @author Steve Ebersole
  */
-public interface EntitySqlSelectionMappings {
+public interface EntitySqlSelectionGroup extends SqlSelectionGroup {
+	List<SqlSelection> getIdSqlSelections();
+
 	SqlSelection getRowIdSqlSelection();
-
-	// todo (6.0) : as discussed elsewhere, drop SqlSelectionGroup and just use List<SqlSelection>
-
-	List<SqlSelection> getIdSqlSelectionGroup();
 
 	SqlSelection getDiscriminatorSqlSelection();
 
 	SqlSelection getTenantDiscriminatorSqlSelection();
-
-	List<SqlSelection> getAttributeSqlSelectionGroup(PersistentAttribute attribute);
 }

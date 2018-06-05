@@ -33,7 +33,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -165,6 +165,11 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
+	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
+		return jdbcValues;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
 			Object hydratedForm,
@@ -184,7 +189,7 @@ public class BasicSingularPersistentAttribute<O, J>
 	@Override
 	public List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		return Collections.singletonList(
 				qualifier.resolveColumnReference( getBoundColumn() )
 		);

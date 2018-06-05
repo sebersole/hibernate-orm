@@ -30,6 +30,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
+import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
@@ -41,7 +42,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.Limit;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
@@ -64,12 +64,8 @@ import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.spi.SelectQueryPlan;
-import org.hibernate.query.sql.spi.FetchBuilder;
 import org.hibernate.query.sql.spi.NativeSelectQueryDefinition;
 import org.hibernate.query.sql.spi.NonSelectInterpretationsKey;
-import org.hibernate.query.sql.spi.QueryResultBuilder;
-import org.hibernate.query.sql.spi.QueryResultBuilderRootEntity;
-import org.hibernate.query.sql.spi.QueryResultBuilderScalar;
 import org.hibernate.query.sql.spi.SelectInterpretationsKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -88,9 +84,8 @@ public class NativeQueryImpl<R>
 		implements NativeQueryImplementor<R>, ParameterBindingContext, ExecutionContext {
 	private final String sqlString;
 
-	private List<QueryResultBuilder> resultBuilders;
-	private List<FetchBuilder> fetchBuilders;
-	private boolean resultSetMappingUsed;
+	private LegacyResultSetMappingDescriptor legacyResultSetMappingDescriptor;
+	private ResultSetMappingDescriptor resultSetMappingDescriptor;
 
 	private final ParameterMetadataImpl parameterMetadata;
 	private final QueryParameterBindings parameterBindings;
@@ -116,9 +111,7 @@ public class NativeQueryImpl<R>
 	}
 
 	private void applyResultSetMapping(ResultSetMappingDescriptor resultSetMappingDescriptor) {
-		resultSetMappingUsed = true;
-		resultBuilders = new ArrayList<>( resultSetMappingDescriptor.getResultBuilders() );
-		fetchBuilders = new ArrayList<>( resultSetMappingDescriptor.getFetchBuilders() );
+		this.resultSetMappingDescriptor = resultSetMappingDescriptor;
 	}
 
 	public NativeQueryImpl(
@@ -245,27 +238,25 @@ public class NativeQueryImpl<R>
 
 	@Override
 	public NativeQueryImplementor<R> addScalar(String columnAlias, BasicValuedExpressableType type) {
-		addReturnBuilder( new QueryResultBuilderScalar( columnAlias, type) );
+		if ( resultSetMappingDescriptor != null ) {
+			throw new HibernateException( "NativeQuery already has ResultSetMapping associated with it" );
+		}
+
+		resolveLegacyResultSetMappingDescriptor().makeScalarRoot( columnAlias, type.getJavaTypeDescriptor() );
+
 		return this;
 	}
 
-	@SuppressWarnings("WeakerAccess")
-	protected void addReturnBuilder(QueryResultBuilder builder) {
-		if ( resultBuilders == null ) {
-			resultBuilders = new ArrayList<>();
+	protected LegacyResultSetMappingDescriptor resolveLegacyResultSetMappingDescriptor() {
+		if ( legacyResultSetMappingDescriptor == null ) {
+			legacyResultSetMappingDescriptor = new LegacyResultSetMappingDescriptor( getSessionFactory().getTypeConfiguration() );
 		}
-
-		resultBuilders.add( builder );
+		return legacyResultSetMappingDescriptor;
 	}
 
 	@Override
 	public RootReturn addRoot(String tableAlias, String entityName) {
-		final EntityDescriptor entityDescriptor = getPersistenceContext().getFactory()
-				.getMetamodel()
-				.findEntityDescriptor( entityName );
-		QueryResultBuilderRootEntity builder = new QueryResultBuilderRootEntity( tableAlias, entityDescriptor );
-		addReturnBuilder( builder );
-		return builder;
+		return resolveLegacyResultSetMappingDescriptor().makeEntityRoot( entityName, tableAlias );
 	}
 
 	@Override
@@ -307,9 +298,7 @@ public class NativeQueryImpl<R>
 
 	@Override
 	public FetchReturn addFetch(String tableAlias, String ownerTableAlias, String joinPropertyName) {
-		final FetchBuilder builder = new FetchBuilder( tableAlias, ownerTableAlias, joinPropertyName );
-		fetchBuilders.add( builder );
-		return builder;
+		return resolveLegacyResultSetMappingDescriptor().makeFetch( ownerTableAlias, joinPropertyName, tableAlias );
 	}
 
 	@Override

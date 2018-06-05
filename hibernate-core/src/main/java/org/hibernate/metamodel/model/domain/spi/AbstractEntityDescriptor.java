@@ -83,8 +83,8 @@ import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.results.internal.EntityQueryResultImpl;
-import org.hibernate.sql.results.internal.EntitySqlSelectionMappingsImpl;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -646,64 +646,14 @@ public abstract class AbstractEntityDescriptor<J>
 	//		* how deep (associations) comes down to fetching
 
 
-	private EntitySqlSelectionMappings buildSqlSelectionMappings(
+	private EntitySqlSelectionGroup buildSqlSelectionMappings(
 			NavigableReference selectedExpression,
 			QueryResultCreationContext resolutionContext) {
-		final EntitySqlSelectionMappingsImpl.Builder mappings = new EntitySqlSelectionMappingsImpl.Builder();
-
-		if ( getHierarchy().getRowIdDescriptor() != null ) {
-			mappings.applyRowIdSqlSelection(
-					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-									selectedExpression.getSqlExpressionQualifier(),
-									getHierarchy().getRowIdDescriptor().getBoundColumn()
-							)
-					)
-			);
-		}
-
-		if ( getHierarchy().getDiscriminatorDescriptor() != null ) {
-			mappings.applyDiscriminatorSqlSelection(
-					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-									selectedExpression.getSqlExpressionQualifier(),
-									getHierarchy().getDiscriminatorDescriptor().getBoundColumn()
-							)
-					)
-			);
-		}
-
-		if ( getHierarchy().getTenantDiscrimination() != null ) {
-			mappings.applyTenantDiscriminatorSqlSelection(
-					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-									selectedExpression.getSqlExpressionQualifier(),
-									getHierarchy().getTenantDiscrimination().getBoundColumn()
-							)
-					)
-			);
-		}
-
-		mappings.applyIdSqlSelectionGroup(
-				getHierarchy().getIdentifierDescriptor().resolveSqlSelectionGroup(
-						selectedExpression.getSqlExpressionQualifier(),
-						resolutionContext
-				)
+		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
+				this,
+				selectedExpression.getSqlExpressionQualifier(),
+				resolutionContext
 		);
-
-		getPersistentAttributes().forEach(
-				persistentAttribute -> {
-					mappings.applyAttributeSqlSelectionGroup(
-							persistentAttribute,
-							persistentAttribute.resolveSqlSelectionGroup(
-									selectedExpression.getSqlExpressionQualifier(),
-									resolutionContext
-							)
-					);
-				}
-		);
-
-		return mappings.create();
 	}
 
 	@Override

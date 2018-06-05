@@ -9,5 +9,5 @@ package org.hibernate.sql.results.spi;
 /**
  * @author Steve Ebersole
  */
-public interface InitializerCreationContext extends SqlSelectionGroupResolutionContext {
+public interface InitializerCreationContext extends SqlSelectionResolutionContext {
 }

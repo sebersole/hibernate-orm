@@ -9,8 +9,10 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.List;
 import javax.persistence.metamodel.EmbeddableType;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.engine.spi.CascadeStyle;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
@@ -77,7 +79,9 @@ public interface EmbeddedTypeDescriptor<T>
 		return false;
 	}
 
-
+	default T instantiate(SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

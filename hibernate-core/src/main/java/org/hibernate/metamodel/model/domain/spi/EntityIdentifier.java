@@ -14,7 +14,7 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * Descriptor for an entity's identifier
@@ -84,7 +84,7 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	@Override
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		final ArrayList<ColumnReference> columnRefs = new ArrayList<>();
 		for ( Column column : getColumns() ) {
 			columnRefs.add(

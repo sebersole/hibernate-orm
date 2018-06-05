@@ -442,15 +442,36 @@ results by the first selection item (p.id).
 
 There are quite a few actors involved in processing results and assembling the query returns.
 
-First it is important to understand a major paradigm change in how JDBC results are obtained
+[IMPORTANT]
+====
+It is important to understand a major paradigm change in how JDBC results are processed
 in current Hibernate versions versus this 6.0 work.
 
-Previously all Types worked on the ResultSet directly.  To read a value from a ResultSet we'd ask the
-type of assemble/resolve it (or nullSafeGet).  This has a major drawback in that we cannot hydrate
-results from query-cache or ResultSet using the same code.
+Prior to 6.0, all Types worked on the ResultSet directly.  To read a value from a ResultSet we'd ask the
+Type to assemble and then resolve its (or nullSafeGet for simple types) value.  This has a major drawback in
+that we cannot hydrate results from query-cache or ResultSet using the same code.
+====
+
+=== Overview
+
+
+[IMPORTANT]
+.JDBC results versus domain results
+====
+When a Query is executed or an entity is loaded, the user gets back a "domain result" - a List (typically) or Object
+of domain-level values (entities, composites, scalars, etc).  The structure of each "row" in these domain results
+is described by a `org.hibernate.sql.results.spi.QueryResult` / `org.hibernate.sql.results.spi.Fetch`
+graph
+
+To create this Query result, Hibernate executes a query via JDBC and processes the ResultSet
+to transform the JDBC results into the domain results.
+====
+
+Basically speaking, we receive "JDBC values" and transform them into domain values.
+
 
 The design here is to abstract access to the JDBC results as
-`org.hibernate.sql.results.internal.values.JdbcValues`, which will be discussed below.  We
+`org.hibernate.sql.results.internal.values.JdbcValues`.  We
 then have 2 implementations of this interface:
 
 `org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl`::
@@ -458,18 +479,10 @@ then have 2 implementations of this interface:
 `org.hibernate.sql.results.internal.values.JdbcValuesCacheHit`::
 	JdbcValues wrapping cached query results
 
-This allows the same code to be used to process results from either seamlessly.
+This allows the same code to be used to process results from either seamlessly.  We will discuss
+`JdbcValues` in more detail later.
 
 
-=== JDBC results versus domain results
-
-When a Query is executed, the user gets back a "domain result" - a List (typically) of domain-level
-values (entities, composites, scalars, etc).  The structure of each "row" in these domain results
-is described by a `org.hibernate.sql.results.spi.QueryResult` / `org.hibernate.sql.results.spi.Fetch`
-graph
-
-To create this Query result, Hibernate executes a query via JDBC and processes the ResultSet
-to transform the JDBC results into the domain results.
 
 
 === JdbcValues, SqlSelection
@@ -477,7 +490,9 @@ to transform the JDBC results into the domain results.
 When processing a ResultSet, Hibernate will create (or use from cache) a number of delegates, including:
 
 `org.hibernate.sql.results.internal.values.JdbcValues`::
-	Wraps access to the ResultSet, exposing it as a collection of `Object[]` (see `JdbcValues#getCurrentRowValuesArray`)
+	Wraps access to the ResultSet, exposing it as a collection of `Object[]` (see `JdbcValues#getCurrentRowValuesArray`).
+	Is an interface and can also represent results from the `QueryResultCache` in the same format.  Conceptually
+	either source is easily
 
 `org.hibernate.sql.results.spi.SqlSelection`::
 	Represents a single selection in the JDBC ResultSet.  Used to access values from the JdbcValues current row

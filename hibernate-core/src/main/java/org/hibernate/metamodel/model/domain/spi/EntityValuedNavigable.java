@@ -17,8 +17,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroup;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -48,9 +47,9 @@ public interface EntityValuedNavigable<J>
 	}
 
 	@Override
-	default List<SqlSelection> resolveSqlSelectionGroup(
+	default List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 }

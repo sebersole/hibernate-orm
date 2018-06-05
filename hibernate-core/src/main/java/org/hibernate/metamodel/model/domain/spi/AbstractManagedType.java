@@ -57,7 +57,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	private List<NonIdPersistentAttribute> declaredAttributes;
 	private List<NonIdPersistentAttribute> attributes;
 
-	private List<StateArrayContributor> stateArrayContributors;
+	private List<StateArrayContributor<?>> stateArrayContributors;
 
 	// a cache to more easily find the PersistentAttribute by name
 	private Map<String,NonIdPersistentAttribute> declaredAttributesByName;
@@ -594,7 +594,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	}
 
 	@Override
-	public List<StateArrayContributor> getStateArrayContributors() {
+	public List<StateArrayContributor<?>> getStateArrayContributors() {
 		return stateArrayContributors;
 	}
 }

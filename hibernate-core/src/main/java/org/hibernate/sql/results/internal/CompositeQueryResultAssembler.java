@@ -8,12 +8,13 @@ package org.hibernate.sql.results.internal;
 
 import java.util.List;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -21,17 +22,16 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  */
 public class CompositeQueryResultAssembler implements QueryResultAssembler {
 	private final CompositeQueryResultImpl returnComposite;
-	private final List<SqlSelection> sqlSelections;
-	private final EmbeddedTypeDescriptor embeddedPersister;
+	private final CompositeSqlSelectionGroup sqlSelectionGroup;
+	private final EmbeddedTypeDescriptor<?> embeddedDescriptor;
 
 	public CompositeQueryResultAssembler(
 			CompositeQueryResultImpl returnComposite,
-			List<SqlSelection> sqlSelections,
+			CompositeSqlSelectionGroup sqlSelectionGroup,
 			EmbeddedTypeDescriptor embeddedPersister) {
-
 		this.returnComposite = returnComposite;
-		this.sqlSelections = sqlSelections;
-		this.embeddedPersister = embeddedPersister;
+		this.sqlSelectionGroup = sqlSelectionGroup;
+		this.embeddedDescriptor = embeddedPersister;
 	}
 
 	@Override
@@ -41,20 +41,36 @@ public class CompositeQueryResultAssembler implements QueryResultAssembler {
 
 	@Override
 	public Object assemble(RowProcessingState rowProcessingState, JdbcValuesSourceProcessingOptions options) {
-		// for now has to be a very basic CompositeType (aka one-level && attributes of BasicType)
-		final Object[] values = new Object[ sqlSelections.size() ];
-		for ( int i = 0; i < sqlSelections.size(); i++ ) {
-			values[i] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
-		}
+		final Object[] values = new Object[ embeddedDescriptor.getStateArrayContributors().size() ];
 
-		throw new NotYetImplementedFor6Exception(  );
-//		try {
-//			final Object result = embeddedPersister.getReturnedClass().newInstance();
-//			embeddedPersister.setPropertyValues( result, values, EntityMode.POJO );
-//			return result;
-//		}
-//		catch (Exception e) {
-//			throw new RuntimeException( "Unable to instantiate composite : " +  embeddedPersister.getReturnedClass().getName(), e );
-//		}
+		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState()
+				.getPersistenceContext();
+
+		embeddedDescriptor.visitStateArrayNavigables(
+				contributor -> {
+					final List<SqlSelection> sqlSelections = sqlSelectionGroup.getSqlSelections( contributor );
+					final Object subValue;
+					if ( sqlSelections.isEmpty() ) {
+						subValue = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
+					}
+					else {
+						final Object[] subValues = new Object[ sqlSelections.size() ];
+						for ( int i = 0; i < sqlSelections.size(); i++ ) {
+							subValues[ i ] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
+						}
+						subValue = subValues;
+					}
+
+					values[ contributor.getStateArrayPosition() ] = contributor.hydrate( subValue, persistenceContext );
+				}
+		);
+		embeddedDescriptor.visitStateArrayNavigables(
+				contributor -> values[ contributor.getStateArrayPosition() ] =
+						contributor.resolveHydratedState( values, persistenceContext, null )
+		);
+
+		final Object instance = embeddedDescriptor.instantiate( persistenceContext );
+		embeddedDescriptor.setPropertyValues( instance, values );
+		return instance;
 	}
 }

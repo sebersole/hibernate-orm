@@ -26,7 +26,7 @@ public class EntityResultDefinitionImpl implements ResultSetMappingDefinition.En
 
 	public EntityResultDefinitionImpl(String entityName, String entityClassName, String tableAlias) {
 		if ( StringHelper.isEmpty( entityName ) && StringHelper.isEmpty( entityClassName ) ) {
-			throw new HibernateException( "Native-query entity result must specify either rentity class name or entity name" );
+			throw new HibernateException( "Native-query entity result must specify either entity class name or entity name" );
 		}
 
 		this.entityName = entityName;

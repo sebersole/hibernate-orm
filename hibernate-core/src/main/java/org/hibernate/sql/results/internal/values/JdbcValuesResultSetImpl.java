@@ -9,18 +9,19 @@ package org.hibernate.sql.results.internal.values;
 import java.sql.SQLException;
 
 import org.hibernate.CacheMode;
-import org.hibernate.cache.spi.QueryResultsCache;
 import org.hibernate.cache.spi.QueryKey;
+import org.hibernate.cache.spi.QueryResultsCache;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.Limit;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.sql.results.spi.ResultSetMapping;
-import org.hibernate.sql.results.spi.ResultSetAccess;
 import org.hibernate.sql.exec.ExecutionException;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManager;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManagerDisabledImpl;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManagerEnabledImpl;
+import org.hibernate.sql.results.spi.ResultSetAccess;
+import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.RowProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
  * JdbcValuesSource implementation for a JDBC ResultSet as the source
@@ -135,11 +136,11 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 	private Object[] readCurrentRowValues(RowProcessingState rowProcessingState) throws SQLException {
 		final int numberOfSqlSelections = resultSetMapping.getSqlSelections().size();
 		final Object[] row = new Object[numberOfSqlSelections];
-		for ( int i = 0; i < numberOfSqlSelections; i++ ) {
-			row[i] = resultSetMapping.getSqlSelections().get( i ).getSqlSelectionReader().read(
+		for ( SqlSelection sqlSelection : resultSetMapping.getSqlSelections() ) {
+			row[ sqlSelection.getValuesArrayPosition() ] = sqlSelection.getSqlSelectionReader().read(
 					resultSetAccess.getResultSet(),
 					rowProcessingState.getJdbcValuesSourceProcessingState(),
-					resultSetMapping.getSqlSelections().get( i )
+					sqlSelection
 			);
 		}
 		return row;

@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
-import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -40,28 +38,6 @@ public interface QueryResult extends ResultSetMappingNode {
 	default JavaTypeDescriptor getJavaTypeDescriptor() {
 		return getResultAssembler().getJavaTypeDescriptor();
 	}
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// todo (6.0) : Consider a single "resolution" phase for QueryResult
-	// 		Ultimately the best solution seems to be to allow the QueryResult to
-	//		"resolve" itself at once in terms of building the proper
-	//		Initializers and QueryResultAssembler.
-	//
-	// 		Potentially something like:
-	/*
-	ResolveResult resolve(QueryResultResolutionContext context, ???);
-
-	interface QueryResultResolutionContext {
-		SqlExpressionResolver getSqlExpressionResolver();
-	}
-
-	interface ResolveResult {
-		void registerInitializers(InitializerCollector collector);
-		QueryResultAssembler getResultAssembler();
-	}
-	*/
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	/**
 	 * Register any `Initializer`s needed by this result object, potentially

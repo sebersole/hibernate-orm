@@ -15,16 +15,11 @@ import java.util.Map;
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.QueryException;
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
-import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggregated;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeNonAggregated;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -34,16 +29,13 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.results.internal.AbstractFetchParent;
-import org.hibernate.sql.results.internal.EntityQueryResultAssembler;
-import org.hibernate.sql.results.internal.EntityRootInitializer;
-import org.hibernate.sql.results.internal.EntitySqlSelectionMappingsBuilder;
+import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntityQueryResult;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -57,6 +49,7 @@ public class QueryResultBuilderRootEntity
 	private final EntityDescriptor entityDescriptor ;
 	private LockMode lockMode = LockMode.READ;
 
+	private EntitySqlSelectionGroupOverridableBuilder sqlSelectionGroupBuilder;
 	private List<String> idColumnAliases;
 	private String discriminatorColumnAlias;
 
@@ -65,6 +58,7 @@ public class QueryResultBuilderRootEntity
 	public QueryResultBuilderRootEntity(String tableAlias, EntityDescriptor entityDescriptor ) {
 		this.tableAlias = tableAlias;
 		this.entityDescriptor = entityDescriptor;
+//		sqlSelectionGroupBuilder = new EntitySqlSelectionGroupOverridableBuilder(  );
 	}
 
 	@Override
@@ -166,8 +160,8 @@ public class QueryResultBuilderRootEntity
 		private final EntityDescriptor entityDescriptor;
 		private final String queryResultVariable;
 
-		private final EntityRootInitializer initializer;
-		private final EntityQueryResultAssembler assembler;
+//		private final EntityRootInitializer initializer;
+//		private final EntityQueryResultAssembler assembler;
 
 		public EntityQueryResultImpl(
 				EntityDescriptor entityDescriptor,
@@ -184,28 +178,29 @@ public class QueryResultBuilderRootEntity
 			this.queryResultVariable = queryResultVariable;
 
 
-			this.initializer = new EntityRootInitializer(
-					entityDescriptor,
-					EntitySqlSelectionMappingsOverridableBuilder.buildSqlSelectionMappings(
-							entityDescriptor,
-							qualifier,
-							// row-id
-							null,
-							explicitIdColumnAliases,
-							explicitDiscriminatorColumnAlias,
-							// tenant-discriminator
-							null,
-							explicitAttributeMapping,
-							resolutionContext
-					),
-					lockMode,
-					false
-			);
 
-			this.assembler = new EntityQueryResultAssembler(
-					entityDescriptor.getJavaTypeDescriptor(),
-					initializer
-			);
+//			this.initializer = new EntityRootInitializer(
+//					entityDescriptor,
+//					EntitySqlSelectionMappingsOverridableBuilder(
+//							entityDescriptor,
+//							qualifier,
+//							// row-id
+//							null,
+//							explicitIdColumnAliases,
+//							explicitDiscriminatorColumnAlias,
+//							// tenant-discriminator
+//							null,
+//							explicitAttributeMapping,
+//							resolutionContext
+//					),
+//					lockMode,
+//					false
+//			);
+//
+//			this.assembler = new EntityQueryResultAssembler(
+//					entityDescriptor.getJavaTypeDescriptor(),
+//					initializer
+//			);
 		}
 
 		@Override
@@ -225,7 +220,8 @@ public class QueryResultBuilderRootEntity
 
 		@Override
 		public QueryResultAssembler getResultAssembler() {
-			return assembler;
+			throw new NotYetImplementedFor6Exception( getClass() );
+//			return assembler;
 		}
 
 
@@ -243,39 +239,15 @@ public class QueryResultBuilderRootEntity
 
 	// todo (6.0 - need some form of SqlSelection, etc distinctions here to support duplicated columns - including fetches (potential duplicated unqualified column name which need to  be unique).
 
-	private static class EntitySqlSelectionMappingsOverridableBuilder extends EntitySqlSelectionMappingsBuilder {
-		static EntitySqlSelectionMappings buildSqlSelectionMappings(
-				EntityDescriptor entityDescriptor,
-				ColumnReferenceQualifier qualifier,
-				String explicitRowIdColumnAlias,
-				List<String> explicitIdColumnAliases,
-				String explicitDiscriminatorColumnAlias,
-				String explicitTenantDiscriminatorColumnAlias,
-				Map<String, AttributeMapping> explicitAttributeMapping,
-				NodeResolutionContext nodeResolutionContext) {
-			EntitySqlSelectionMappingsOverridableBuilder strategy = new EntitySqlSelectionMappingsOverridableBuilder(
-					entityDescriptor,
-					qualifier,
-					explicitRowIdColumnAlias,
-					explicitIdColumnAliases,
-					explicitDiscriminatorColumnAlias,
-					explicitTenantDiscriminatorColumnAlias,
-					explicitAttributeMapping,
-					nodeResolutionContext
-			);
-			entityDescriptor.visitNavigables( strategy );
-			return strategy.buildSqlSelectionMappings();
-		}
-
-		private final EntityDescriptor entityDescriptor;
-
-		private final String explicitRowIdColumnAlias;
+	private static class EntitySqlSelectionGroupOverridableBuilder extends EntitySqlSelectionGroupImpl.Builder {
 		private final List<String> explicitIdColumnAliases;
 		private final String explicitDiscriminatorColumnAlias;
 		private final String explicitTenantDiscriminatorColumnAlias;
+		private final String explicitRowIdColumnAlias;
 		private final Map<String, AttributeMapping> explicitAttributeMapping;
 
-		public EntitySqlSelectionMappingsOverridableBuilder(
+
+		public EntitySqlSelectionGroupOverridableBuilder(
 				EntityDescriptor entityDescriptor,
 				ColumnReferenceQualifier qualifier,
 				String explicitRowIdColumnAlias,
@@ -284,8 +256,7 @@ public class QueryResultBuilderRootEntity
 				String explicitTenantDiscriminatorColumnAlias,
 				Map<String, AttributeMapping> explicitAttributeMapping,
 				NodeResolutionContext nodeResolutionContext) {
-			super( qualifier, nodeResolutionContext );
-			this.entityDescriptor = entityDescriptor;
+			super( entityDescriptor );
 			this.explicitRowIdColumnAlias = explicitRowIdColumnAlias;
 			this.explicitIdColumnAliases = explicitIdColumnAliases;
 			this.explicitDiscriminatorColumnAlias = explicitDiscriminatorColumnAlias;
@@ -294,84 +265,70 @@ public class QueryResultBuilderRootEntity
 		}
 
 		@Override
-		public EntitySqlSelectionMappings buildSqlSelectionMappings() {
-			return super.buildSqlSelectionMappings();
-		}
-
-		@Override
-		public void prepareForVisitation() {
-		}
-
-		@Override
-		public void visitRowIdDescriptor(RowIdDescriptor rowIdDescriptor) {
-			throw new NotYetImplementedFor6Exception(  );
-		}
-
-		@Override
-		public void visitTenantTenantDiscrimination(TenantDiscrimination tenantDiscrimination) {
-			throw new NotYetImplementedFor6Exception(  );
-		}
-
-		@Override
-		public void visitSimpleIdentifier(EntityIdentifierSimple identifier) {
+		protected void applyIdSqlSelections(
+				EntityIdentifier identifierDescriptor,
+				ColumnReferenceQualifier qualifier,
+				QueryResultCreationContext creationContext) {
 			if ( explicitIdColumnAliases == null || explicitIdColumnAliases.isEmpty() ) {
-				super.visitSimpleIdentifier( identifier );
+				super.applyIdSqlSelections( identifierDescriptor, qualifier, creationContext );
+				return;
 			}
-			else {
-				// user explicitly mapped the id column - use that explicit info
 
-				// make sure they gave us just one column...
-				if ( explicitIdColumnAliases.size() > 1 ) {
-					throw new QueryException(
-							String.format(
-									Locale.ROOT,
-									"NativeQuery result-set-mapping included explicit id mapping for entity [%s] - " +
-											"but explicit mapping defined %s columns while entity has single id column",
-									entityDescriptor.getEntityName(),
-									explicitIdColumnAliases.size()
-							)
-					);
-				}
+			// user explicitly mapped the id column - use that explicit info
 
-				setIdSqlSelectionGroup(
-						identifier.resolveSqlSelectionGroup( getQualifier(), getCreationContext() )
+			// make sure they gave us the right number of columns...
+			if ( explicitIdColumnAliases.size() != identifierDescriptor.getColumns().size() ) {
+				throw new QueryException(
+						String.format(
+								Locale.ROOT,
+								"NativeQuery result-set-mapping included explicit id mapping for entity [%s] " +
+										"but explicit mapping defined %s columns while the entity id defines %s",
+								getEntityDescriptor().getEntityName(),
+								explicitIdColumnAliases.size(),
+								identifierDescriptor.getColumns().size()
+						)
 				);
 			}
+
+			// todo (6.0) : hook in the explicit mapping bits specified by the user
+			throw new NotYetImplementedFor6Exception();
 		}
 
 		@Override
-		public void visitAggregateCompositeIdentifier(EntityIdentifierCompositeAggregated identifier) {
-			setIdSqlSelectionGroup( identifier.resolveSqlSelectionGroup( getQualifier(), getCreationContext() ) );
+		protected void applyContributorSqlSelections(
+				StateArrayContributor<?> contributor,
+				ColumnReferenceQualifier qualifier,
+				QueryResultCreationContext creationContext) {
+			// todo (6.0) : hook in the explicit mapping bits specified by the user
+			super.applyContributorSqlSelections( contributor, qualifier, creationContext );
 		}
 
 		@Override
-		public void visitNonAggregateCompositeIdentifier(EntityIdentifierCompositeNonAggregated identifier) {
-			setIdSqlSelectionGroup( identifier.resolveSqlSelectionGroup( getQualifier(), getCreationContext() ) );
+		protected void applyDiscriminatorSqlSelection(
+				DiscriminatorDescriptor discriminatorDescriptor,
+				ColumnReferenceQualifier qualifier,
+				QueryResultCreationContext creationContext) {
+			// todo (6.0) : hook in the explicit mapping bits specified by the user
+			super.applyDiscriminatorSqlSelection( discriminatorDescriptor, qualifier, creationContext );
 		}
 
 		@Override
-		public void visitDiscriminator(DiscriminatorDescriptor discriminator) {
-			setDiscriminatorSqlSelection( discriminator.resolveSqlSelection( getQualifier(), getCreationContext() ) );
+		protected void applyTenantDiscriminatorSqlSelection(
+				TenantDiscrimination tenantDiscrimination,
+				ColumnReferenceQualifier qualifier,
+				QueryResultCreationContext creationContext) {
+			// todo (6.0) : hook in the explicit mapping bits specified by the user
+			super.applyTenantDiscriminatorSqlSelection( tenantDiscrimination, qualifier, creationContext );
 		}
 
 		@Override
-		public void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
-			throw new NotYetImplementedFor6Exception(  );
+		protected void applyRowIdSqlSelection(
+				RowIdDescriptor rowIdDescriptor,
+				ColumnReferenceQualifier qualifier,
+				QueryResultCreationContext creationContext) {
+			// todo (6.0) : hook in the explicit mapping bits specified by the user
+			super.applyRowIdSqlSelection( rowIdDescriptor, qualifier, creationContext );
 		}
 
-		@Override
-		public void visitSingularAttributeEmbedded(SingularPersistentAttributeEmbedded attribute) {
-			throw new NotYetImplementedFor6Exception(  );
-		}
-
-		@Override
-		public void visitSingularAttributeEntity(SingularPersistentAttributeEntity attribute) {
-			throw new NotYetImplementedFor6Exception(  );
-		}
-
-		@Override
-		public void visitPluralAttribute(PluralPersistentAttribute attribute) {
-			throw new NotYetImplementedFor6Exception(  );
-		}
 	}
 }

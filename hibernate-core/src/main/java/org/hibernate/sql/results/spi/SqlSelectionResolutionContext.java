@@ -12,7 +12,7 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 /**
  * @author Steve Ebersole
  */
-public interface SqlSelectionGroupResolutionContext {
+public interface SqlSelectionResolutionContext {
 	SessionFactoryImplementor getSessionFactory();
 
 	SqlExpressionResolver getSqlSelectionResolver();

@@ -25,7 +25,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * @author Steve Ebersole
@@ -128,9 +128,9 @@ public class MappedSuperclassImpl<J>
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelectionGroup(
+	public List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		// todo (6.0) : we'd have to know all subclasses to be able to generate selection-clause all columns we possibly need for all subtypes
 		throw new NotYetImplementedFor6Exception(  );
 	}

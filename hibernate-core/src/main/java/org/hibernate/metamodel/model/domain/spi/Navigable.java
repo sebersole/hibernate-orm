@@ -20,7 +20,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * Models a "piece" of the application's domain model that can be navigated
@@ -70,13 +70,13 @@ public interface Navigable<T> extends DomainType<T> {
 
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
-	List<SqlSelection> resolveSqlSelectionGroup(
+	List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext);
+			SqlSelectionResolutionContext resolutionContext);
 
 	/**
 	 * Obtain a loggable representation.

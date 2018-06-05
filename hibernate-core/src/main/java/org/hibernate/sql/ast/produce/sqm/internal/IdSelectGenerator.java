@@ -106,7 +106,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 		entityIdSelectionTableSpace.setRootTableGroup( rootTableGroup );
 
-		final List sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelectionGroup(
+		final List sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
 				rootTableGroup,
 				new QueryResultCreationContext() {
 					@Override

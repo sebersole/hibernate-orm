@@ -42,7 +42,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.InSubQueryPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 import org.jboss.logging.Logger;
 
@@ -50,7 +50,7 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public class SqmUpdateToSqlAstConverterMultiTable
-		extends BaseSqmToSqlAstConverter implements SqlSelectionGroupResolutionContext {
+		extends BaseSqmToSqlAstConverter implements SqlSelectionResolutionContext {
 	private static final Logger log = Logger.getLogger( SqmUpdateToSqlAstConverterMultiTable.class );
 
 	public static List<SqlAstUpdateDescriptor> interpret(

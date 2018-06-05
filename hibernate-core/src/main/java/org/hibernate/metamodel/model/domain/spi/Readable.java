@@ -10,9 +10,12 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
- * @author Steve Ebersole
+ *
+ * @param <V> The data's JDBC values array form
+ * @param <H> The data's
+ * @param <D>
  */
-public interface Readable<R,I,D> {
+public interface Readable<V,H,D> {
 
 	// todo (6.0) : "hydrate" relies on SqlSelection and jdbc value processing uses those to build the hydrated values itself.
 	//		seems like this contract should define a `hydrateState` method, but implementing
@@ -24,8 +27,10 @@ public interface Readable<R,I,D> {
 	// something like:
 
 	/**
+	 * An array shaping method.
+	 *
 	 * @apiNote The incoming `jdbcValues` might be a single object or an array of objects
-	 * depending on whether this navigable/contributor reported one or more SqlSelections.
+	 * depending on whether this Readable reported one or more SqlSelections.
 	 * The return follows the same rules.  For a composite-value, an `Object[]` would be returned
 	 * representing the composite's "simple state".  For entity-value, the return would
 	 * be its id's "simple state" : again a single `Object` for simple ids, an array for
@@ -34,12 +39,12 @@ public interface Readable<R,I,D> {
 	 * todo (6.0) : this may not be true for ANY mappings - verify
 	 * 		- those may return the (id,discriminator) tuple
 	 */
-	default I hydrate(R jdbcValues, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+	default H hydrate(V jdbcValues, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
-	 * Given a hydrated representation of this navigable/contributor, resolve its
+	 * Given a hydrated representation of this Readable, resolve its
 	 * domain representation.
 	 * <p>
 	 * E.g. for a composite, the hydrated form is an Object[] representing the
@@ -49,9 +54,9 @@ public interface Readable<R,I,D> {
 	 * @apiNote
 	 */
 	default D resolveHydratedState(
-			I hydratedForm,
+			H hydratedForm,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 }

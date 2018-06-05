@@ -31,15 +31,12 @@ import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.sql.exec.ExecutionException;
 import org.hibernate.sql.results.spi.EntityInitializer;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.LoadingEntityEntry;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -63,13 +60,13 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	// 		these
 
 	private final EntityDescriptor<?> entityDescriptor;
-	private final EntitySqlSelectionMappings sqlSelectionMappings;
+	private final EntitySqlSelectionGroup sqlSelectionMappings;
 	private final LockMode lockMode;
 	private final boolean isShallow;
 
 	// in-flight processing state.  reset after each row
 	private Object identifierHydratedState;
-	private EntityDescriptor concretePersister;
+	private EntityDescriptor <?>concretePersister;
 	private EntityKey entityKey;
 	private Object[] hydratedEntityState;
 	private Object entityInstance;
@@ -78,7 +75,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractEntityInitializer(
 			EntityDescriptor entityDescriptor,
-			EntitySqlSelectionMappings sqlSelectionMappings,
+			EntitySqlSelectionGroup sqlSelectionMappings,
 			LockMode lockMode,
 			boolean isShallow) {
 		this.entityDescriptor = entityDescriptor;
@@ -119,7 +116,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	}
 
 	private Object buildIdentifierHydratedForm(RowProcessingState rowProcessingState) {
-		final List<SqlSelection> idSqlSelections = sqlSelectionMappings.getIdSqlSelectionGroup();
+		final List<SqlSelection> idSqlSelections = sqlSelectionMappings.getIdSqlSelections();
 		if ( idSqlSelections.size() == 1 ) {
 			return rowProcessingState.getJdbcValue( idSqlSelections.get( 0 ) );
 		}
@@ -193,13 +190,10 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			return;
 		}
 
-		int numberOfNonIdentifierAttributes = concretePersister.getPersistentAttributes().size();
-
 		final Object rowId;
 		if ( concretePersister.getHierarchy().getRowIdDescriptor() != null ) {
 			final SqlSelection rowIdSqlSelection = sqlSelectionMappings.getRowIdSqlSelection();
 
-			numberOfNonIdentifierAttributes -= 1;
 			rowId = rowProcessingState.getJdbcValue( rowIdSqlSelection );
 
 			if ( rowId == null ) {
@@ -212,47 +206,35 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			rowId = null;
 		}
 
-		hydratedEntityState = new Object[ numberOfNonIdentifierAttributes ];
-		int i = 0;
-		for ( PersistentAttribute<?,?> persistentAttribute : ( (EntityDescriptor<?>) concretePersister ).getPersistentAttributes() ) {
-			// todo : need to account for non-eager entities by calling something other than Type#resolve (which loads the entity)
-			//		something akin to org.hibernate.persister.entity.AbstractEntityPersister.hydrate() but that operates on Object[], not ResultSet
-			//
-			//		really at this point any fetches are known which should help - here we'd simply get the instance for that fetch's
-			// 		initializer and that fetch's initializer would take care of initializing the state
-			//
-			//		alternative is something like: AttributeDescriptor#getHydrator#hydrate(Object[] jdbcValues, ...)
-			//		and later something like: AttributeDescriptor#getResolver#resolve(Object[] hydratedValues, ...)
+		hydratedEntityState = new Object[ concretePersister.getStateArrayContributors().size() ];
+		for ( StateArrayContributor stateArrayContributor : concretePersister.getStateArrayContributors() ) {
+			final List<SqlSelection> sqlSelections = sqlSelectionMappings.getSqlSelections( stateArrayContributor );
 
-			final Object hydratedValue;
-			if ( persistentAttribute instanceof PluralPersistentAttribute ) {
-				hydratedValue = NOT_NULL_COLLECTION;
+			final int contributorPosition = stateArrayContributor.getStateArrayPosition();
+
+			if ( sqlSelections == null || sqlSelections.isEmpty() ) {
+				// not selected (lazy group, etc)
+				hydratedEntityState[ contributorPosition ] = LazyPropertyInitializer.UNFETCHED_PROPERTY;
 			}
 			else {
-				SingularPersistentAttribute singularAttribute = (SingularPersistentAttribute) persistentAttribute;
-				final List<SqlSelection> sqlSelections = sqlSelectionMappings.getAttributeSqlSelectionGroup( singularAttribute );
-				if ( sqlSelections == null ) {
-					// not selected (lazy group, etc)
-					hydratedValue = LazyPropertyInitializer.UNFETCHED_PROPERTY;
+				final Object hydratedState;
+
+				if ( sqlSelections.size() == 1 ) {
+					hydratedState = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
 				}
 				else {
-					final int numberOfSelections = sqlSelections.size();
-					if ( numberOfSelections == 1 ) {
-						hydratedValue = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
+					final Object[] subValues = new Object[ sqlSelections.size() ];
+					for ( int i = 0; i < sqlSelections.size(); i++ ) {
+						subValues[i] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
 					}
-					else {
-						final Object[] sliceValues = new Object[ numberOfSelections ];
-						for ( int x = 0; x < numberOfSelections; x++ ) {
-							sliceValues[x] = rowProcessingState.getJdbcValue( sqlSelections.get( x ) );
-						}
-						hydratedValue = sliceValues;
-					}
+					hydratedState = subValues;
 				}
+
+				hydratedEntityState[ contributorPosition ] = stateArrayContributor.hydrate(
+						hydratedState,
+						rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext()
+				);
 			}
-
-
-			hydratedEntityState[i] = hydratedValue;
-			i++;
 		}
 
 		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext();

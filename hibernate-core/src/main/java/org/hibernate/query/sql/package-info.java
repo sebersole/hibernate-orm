@@ -16,5 +16,12 @@
  * is a Java keyword.
  *
  * @see org.hibernate.query.NativeQuery
+ *
+ * todo (6.0) : I think native-query QueryResult builders will need to work on a much different delayed paradigm...
+ * 		the reason being the use of aliases by the user to "map" the JDBC results - I think this means we will
+ * 		need the ResultSetMetadata to calculate names-to-positions.
+ *
+ * 		However, given that solution reading results back from the QueryResultCache can get tricky (strictly position based)
+ * 		meaning we'd have to make sure that the "resolved" form of the resullt-mapping is kept.
  */
 package org.hibernate.query.sql;

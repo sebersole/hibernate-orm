@@ -11,7 +11,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.EntityQueryResult;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -30,7 +30,7 @@ public class EntityQueryResultImpl extends AbstractFetchParent implements Entity
 	public EntityQueryResultImpl(
 			EntityValuedNavigable navigable,
 			String resultVariable,
-			EntitySqlSelectionMappings sqlSelectionMappings,
+			EntitySqlSelectionGroup sqlSelectionMappings,
 			LockMode lockMode,
 			NavigablePath navigablePath,
 			QueryResultCreationContext creationContext) {

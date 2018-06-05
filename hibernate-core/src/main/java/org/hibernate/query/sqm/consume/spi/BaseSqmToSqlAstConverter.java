@@ -181,7 +181,7 @@ import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 
@@ -192,7 +192,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseSqmToSqlAstConverter
 		extends BaseSemanticQueryWalker
-		implements SqmToSqlAstConverter, SqlExpressionResolver, SqlSelectionGroupResolutionContext {
+		implements SqmToSqlAstConverter, SqlExpressionResolver, SqlSelectionResolutionContext {
 
 	private static final Logger log = Logger.getLogger( BaseSqmToSqlAstConverter.class );
 

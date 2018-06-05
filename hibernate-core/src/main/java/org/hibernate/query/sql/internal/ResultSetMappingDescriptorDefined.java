@@ -7,11 +7,13 @@
 package org.hibernate.query.sql.internal;
 
 import java.util.List;
+import java.util.Set;
 
+import org.hibernate.sql.results.internal.StandardResultSetMapping;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
+import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
  * ResultSetMapping for handling selections for a {@link org.hibernate.query.NativeQuery}
@@ -26,18 +28,8 @@ import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 public class ResultSetMappingDescriptorDefined implements ResultSetMappingDescriptor {
 	private final ResultSetMapping resolvedMapping;
 
-	public ResultSetMappingDescriptorDefined(List<SqlSelection> selections, List<QueryResult> queryResults) {
-		resolvedMapping  = new ResultSetMapping() {
-			@Override
-			public List<SqlSelection> getSqlSelections() {
-				return selections;
-			}
-
-			@Override
-			public List<QueryResult> getQueryResults() {
-				return queryResults;
-			}
-		};
+	public ResultSetMappingDescriptorDefined(Set<SqlSelection> selections, List<QueryResult> queryResults) {
+		resolvedMapping  = new StandardResultSetMapping( selections, queryResults );
 	}
 
 	@Override

@@ -17,6 +17,27 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface ResultSetMappingDescriptor {
+
+	// todo (6.0) : ? have a specific impl for "consuming" JPA SqlResultSetMapping?
+	//		there are 5 cases for defining result mappings:
+	//			1) JPA SqlResultSetMapping
+	//			2) JPA Class-based mapping
+	//			3) Hibernate's legacy XML-defined mapping
+	//			4) Hibernate's legacy Query-specific mapping (`NativeQuery#addScalar`, etc).
+	//			5)
+	//
+	// (1), (2) and (3) can really all be handled by the same impl - they are all
+	//		known/resolved up-front.  These cases can all be represented as
+	//		`ResultSetMappingDescriptorDefined`
+	//
+	// (4) is unique though in that it is not know up
+	// 		front and needs to wait until there is a ResultSet available to complete
+	//		its "resolution".  This case is represented as `ResultSetMappingDescriptorUndefined`
+	//
+	// Both `ResultSetMappingDescriptorDefined` and `ResultSetMappingDescriptorUndefined` could
+	// 		definitely use better names
+
+
 	/**
 	 * Access to information about the underlying JDBC values
 	 * such as type, position, column name, etc

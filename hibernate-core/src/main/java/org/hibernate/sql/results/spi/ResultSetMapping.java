@@ -7,16 +7,27 @@
 package org.hibernate.sql.results.spi;
 
 import java.util.List;
+import java.util.Set;
 
 /**
- * The "resolved" form of {@link ResultSetMappingDescriptor} providing access to JDBC
- * results ({@link SqlSelection}) and object results ({@link QueryResult}).
+ * The "resolved" form of {@link ResultSetMappingDescriptor} providing access
+ * to resolved JDBC results ({@link SqlSelection}) descriptors and resolved
+ * domain results ({@link QueryResult}) descriptors.
  *
  * @see ResultSetMappingDescriptor#resolve
  *
  * @author Steve Ebersole
  */
 public interface ResultSetMapping {
-	List<SqlSelection> getSqlSelections();
+	/**
+	 * The JDBC selection descriptors.  Used to read ResultSet values and build
+	 * the "JDBC values array"
+	 */
+	Set<SqlSelection> getSqlSelections();
+
+	/**
+	 * The domain selection descriptors,  Used to construct/shape the domain
+	 * result(s).
+	 */
 	List<QueryResult> getQueryResults();
 }

@@ -13,7 +13,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -31,9 +31,9 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 	}
 
 	@Override
-	default List<SqlSelection> resolveSqlSelectionGroup(
+	default List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		return Collections.singletonList(
 				resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 						resolutionContext.getSqlSelectionResolver().resolveSqlExpression(

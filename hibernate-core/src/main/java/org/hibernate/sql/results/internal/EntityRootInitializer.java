@@ -9,7 +9,7 @@ package org.hibernate.sql.results.internal;
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.sql.results.spi.EntityInitializer;
-import org.hibernate.sql.results.spi.EntitySqlSelectionMappings;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 
 /**
  * InitializerEntity for root
@@ -20,7 +20,7 @@ public class EntityRootInitializer
 		implements EntityInitializer {
 	public EntityRootInitializer(
 			EntityDescriptor entityDescriptor,
-			EntitySqlSelectionMappings sqlSelectionMappings,
+			EntitySqlSelectionGroup sqlSelectionMappings,
 			LockMode lockMode,
 			boolean isShallow) {
 		super( entityDescriptor, sqlSelectionMappings, lockMode, isShallow );

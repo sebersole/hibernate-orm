@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.internal;
 
-import javax.persistence.AttributeConverter;
-
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -35,6 +33,8 @@ public class ScalarQueryResultImpl implements ScalarQueryResult {
 
 		// todo (6.0) : consider using `org.hibernate.metamodel.model.domain.spi.BasicValueConverter` instead
 		//		I'd like to get rid of exposing the AttributeConverter from the model
+
+		/// todo (6.0) : actually, conversions ought to occur as part of
 		BasicValueConverter valueConverter = null;
 		if ( expressableType instanceof ConvertibleNavigable ) {
 			valueConverter = ( (ConvertibleNavigable) expressableType ).getValueConverter();

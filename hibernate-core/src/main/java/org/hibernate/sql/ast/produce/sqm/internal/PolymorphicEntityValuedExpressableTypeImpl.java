@@ -69,7 +69,7 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -285,9 +285,9 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelectionGroup(
+	public List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
@@ -308,7 +308,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public List<StateArrayContributor> getStateArrayContributors() {
+	public List<StateArrayContributor<?>> getStateArrayContributors() {
 		throw new UnsupportedOperationException(  );
 	}
 

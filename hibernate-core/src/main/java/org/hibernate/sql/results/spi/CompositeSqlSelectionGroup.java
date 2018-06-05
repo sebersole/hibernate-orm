@@ -6,11 +6,8 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-
 /**
  * @author Steve Ebersole
  */
-public interface CompositeSqlSelectionMappings {
-	SqlSelectionGroup getAttributeSqlSelectionGroup(PersistentAttribute attribute);
+public interface CompositeSqlSelectionGroup extends SqlSelectionGroup {
 }

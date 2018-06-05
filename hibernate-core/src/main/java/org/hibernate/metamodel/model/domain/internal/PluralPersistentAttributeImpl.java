@@ -36,7 +36,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -210,9 +210,9 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelectionGroup(
+	public List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
 				.getJoinForeignKey()
 				.getColumnMappings()
@@ -231,7 +231,7 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 
 	private SqlSelection resolveSqlSelection(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext,
+			SqlSelectionResolutionContext resolutionContext,
 			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
 		final Expression expression = resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 				qualifier,

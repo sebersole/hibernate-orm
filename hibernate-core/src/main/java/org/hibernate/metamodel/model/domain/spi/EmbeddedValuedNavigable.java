@@ -16,12 +16,11 @@ import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.CompositeQueryResultImpl;
-import org.hibernate.sql.results.internal.SqlSelectionGroupImpl;
+import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroup;
-import org.hibernate.sql.results.spi.SqlSelectionGroupResolutionContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -53,7 +52,8 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 		return new CompositeQueryResultImpl(
 				resultVariable,
 				getEmbeddedDescriptor(),
-				resolveSqlSelectionGroup(
+				CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup(
+						getEmbeddedDescriptor(),
 						navigableReference.getSqlExpressionQualifier(),
 						creationContext
 				)
@@ -61,9 +61,9 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	}
 
 	@Override
-	default List<SqlSelection> resolveSqlSelectionGroup(
+	default List<SqlSelection> resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionGroupResolutionContext resolutionContext) {
+			SqlSelectionResolutionContext resolutionContext) {
 		final List<SqlSelection> group = new ArrayList<>();
 		for ( Column column : getEmbeddedDescriptor().collectColumns() ) {
 			group.add(

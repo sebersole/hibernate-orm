@@ -16,6 +16,10 @@ public class NotYetImplementedFor6Exception extends RuntimeException {
 		super( message );
 	}
 
+	public NotYetImplementedFor6Exception(Class clazz) {
+		super( clazz.getName() );
+	}
+
 	public NotYetImplementedFor6Exception() {
 		super( "Not yet implemented" );
 	}
