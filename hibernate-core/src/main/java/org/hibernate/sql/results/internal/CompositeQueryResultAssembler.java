@@ -6,15 +6,12 @@
  */
 package org.hibernate.sql.results.internal;
 
-import java.util.List;
-
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -41,35 +38,33 @@ public class CompositeQueryResultAssembler implements QueryResultAssembler {
 
 	@Override
 	public Object assemble(RowProcessingState rowProcessingState, JdbcValuesSourceProcessingOptions options) {
-		final Object[] values = new Object[ embeddedDescriptor.getStateArrayContributors().size() ];
-
-		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState()
+		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState()
 				.getPersistenceContext();
-
-		embeddedDescriptor.visitStateArrayNavigables(
-				contributor -> {
-					final List<SqlSelection> sqlSelections = sqlSelectionGroup.getSqlSelections( contributor );
-					final Object subValue;
-					if ( sqlSelections.isEmpty() ) {
-						subValue = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
-					}
-					else {
-						final Object[] subValues = new Object[ sqlSelections.size() ];
-						for ( int i = 0; i < sqlSelections.size(); i++ ) {
-							subValues[ i ] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
-						}
-						subValue = subValues;
-					}
-
-					values[ contributor.getStateArrayPosition() ] = contributor.hydrate( subValue, persistenceContext );
-				}
-		);
-		embeddedDescriptor.visitStateArrayNavigables(
+		final Object[] values = (Object[]) sqlSelectionGroup.hydrateStateArray( rowProcessingState );
+//		embeddedDescriptor.visitStateArrayNavigables(
+//				contributor -> {
+//					final List<SqlSelection> sqlSelections = sqlSelectionGroup.getSqlSelections( contributor );
+//					final Object subValue;
+//					if ( sqlSelections.isEmpty() ) {
+//						subValue = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
+//					}
+//					else {
+//						final Object[] subValues = new Object[ sqlSelections.size() ];
+//						for ( int i = 0; i < sqlSelections.size(); i++ ) {
+//							subValues[ i ] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
+//						}
+//						subValue = subValues;
+//					}
+//
+//					values[ contributor.getStateArrayPosition() ] = contributor.hydrate( subValue, session );
+//				}
+//		);
+		embeddedDescriptor.visitStateArrayContributors(
 				contributor -> values[ contributor.getStateArrayPosition() ] =
-						contributor.resolveHydratedState( values, persistenceContext, null )
+						contributor.resolveHydratedState( values[ contributor.getStateArrayPosition() ], session, null )
 		);
 
-		final Object instance = embeddedDescriptor.instantiate( persistenceContext );
+		final Object instance = embeddedDescriptor.instantiate( session );
 		embeddedDescriptor.setPropertyValues( instance, values );
 		return instance;
 	}

@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,7 +16,6 @@ import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
@@ -36,7 +34,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public interface ManagedTypeDescriptor<T>
-		extends ManagedType<T>, NavigableContainer<T>, EmbeddedContainer<T>, ExpressableType<T> {
+		extends ManagedType<T>, NavigableContainer<T>, EmbeddedContainer<T>, ExpressableType<T>, StateArrayContributorContainer {
 
 	/**
 	 * Opportunity to perform any final tasks as part of initialization of the
@@ -53,8 +51,6 @@ public interface ManagedTypeDescriptor<T>
 	ManagedJavaDescriptor<T> getJavaTypeDescriptor();
 
 	ManagedTypeRepresentationStrategy getRepresentationStrategy();
-
-	List<StateArrayContributor<?>> getStateArrayContributors();
 
 	/**
 	 * Return this managed type's persistent attributes, including those
@@ -105,88 +101,6 @@ public interface ManagedTypeDescriptor<T>
 		}
 	}
 
-	default void visitStateArrayNavigables(Consumer<StateArrayContributor<?>> consumer) {
-		for ( StateArrayContributor contributor : getStateArrayContributors() ) {
-			consumer.accept( contributor );
-		}
-	}
-
-
-	/**
-	 * Reduce an instance of the described entity into its "values array" -
-	 * an array whose length is equal to the number of attributes where the
-	 * `includeCondition` tests {@code true}.  Each element corresponds to either:
-	 *
-	 * 		* if the passed `swapCondition` tests {@code true}, then
-	 * 			the value passed as `swapValue`
-	 * 		* otherwise the attribute's extracted value
-	 *
-	 * In more specific terms, this method is responsible for extracting the domain
-	 * object's value state array - which is the form we use in many places such
-	 * EntityEntry#loadedState, L2 cache entry, etc.
-	 *
-	 * @param instance An instance of the described type (this)
-	 * @param includeCondition Predicate to see if the given sub-Navigable should create
-	 * an index in the array being built.
-	 * @param swapCondition Predicate to see if the sub-Navigable's reduced state or
-	 * the passed `swapValue` should be used for that sub-Navigable's value as its
-	 * element in the array being built
-	 * @param swapValue The value to use if the passed `swapCondition` tests {@code true}
-	 * @param session The session :)
-	 */
-	default Object[] reduceToValuesArray(
-			T instance,
-			Predicate<NonIdPersistentAttribute> includeCondition,
-			Predicate<NonIdPersistentAttribute> swapCondition,
-			Object swapValue,
-			SharedSessionContractImplementor session) {
-		final ArrayList<Object> values = new ArrayList<>();
-
-		// todo (6.0) : the real trick here is deciding which values to put in the array.
-		//		specifically how to handle values like version, discriminator, etc
-		//
-		//		do we put that onus on the `includeCondition` completely (external)?
-		//		or is this something that the descriptor should handle? maybe a method
-		//
-		//		generally speaking callers only care about the `swapCondition` which is
-		//		where the "insertability", "laziness", etc comes into play
-
-		// todo (6.0) : one option for this (^^) is to define `includeCondition` and `swapCondition` as `Predicate<Navigable` instead
-		//		ManagedTypeDescriptor's implementation of that would walk these Navigables[1]
-		//
-		// [1] whichever Navigables we decide needs to be there in whatever order we decide.. it just needs to be consistent in usage[2]
-		// [2] possibly (hopefully!)this (^^) can hold true for our enhancement needs as well.  A possible solution for would be
-		// 		to just "reserve" the first few elements of this array for root-entity state such as id, version, discriminator, etc
-
-		// todo (7.0) : bytecode enhancement should use some facilities to build a `org.hibernate.boot.Metadata` reference to determine its strategy for enhancement.
-		//		this is related to the 2 6.0 todo comments above
-		//
-		//		drawback to this approach is that it would miss any provided XML overrides/additions.  - is that reasonable?
-		//		maybe a comprise is to say that we can enhance anything for which there are XML *overrides*, but not additions
-		// 		such as adding new entity definitions (the new ones would not be hooked
-
-		visitAttributes(
-				attribute -> {
-					if ( includeCondition.test( attribute ) ) {
-						values.add(
-								swapCondition.test( attribute )
-										? swapValue
-										: attribute.getPropertyAccess().getGetter().get( instance )
-						);
-					}
-				}
-		);
-		return values.toArray();
-	}
-
-	default Object extractAttributeValue(T instance, NonIdPersistentAttribute attribute) {
-		return attribute.getPropertyAccess().getGetter().get( instance );
-	}
-
-	default void injectAttributeValue(T instance, NonIdPersistentAttribute attribute, Object value) {
-		attribute.getPropertyAccess().getSetter().set( instance, value, getTypeConfiguration().getSessionFactory() );
-	}
-
 	default boolean hasMutableProperties() {
 		throw new NotYetImplementedFor6Exception();
 	}
@@ -196,7 +110,7 @@ public interface ManagedTypeDescriptor<T>
 	 * Set the given values to the mapped properties of the given object
 	 */
 	default void setPropertyValues(Object object, Object[] values) {
-		visitStateArrayNavigables(
+		visitStateArrayContributors(
 				contributor -> {
 					if ( PersistentAttribute.class.isInstance( contributor ) ) {
 						final Object value = values[ contributor.getStateArrayPosition() ];
@@ -213,7 +127,7 @@ public interface ManagedTypeDescriptor<T>
 	 */
 	default Object[] getPropertyValues(Object object) {
 		final Object[] values = new Object[ getStateArrayContributors().size() ];
-		visitStateArrayNavigables(
+		visitStateArrayContributors(
 				contributor -> values[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().get( object )
 		);
 		return values;

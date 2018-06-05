@@ -7,8 +7,8 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * Binding of the discriminator in a entity hierarchy
@@ -27,7 +27,7 @@ public interface DiscriminatorDescriptor<J>
 	 */
 	DiscriminatorMappings getDiscriminatorMappings();
 
-	SqlSelection resolveSqlSelection(ColumnReferenceQualifier qualifier, QueryResultCreationContext creationContext);
+	SqlSelection resolveSqlSelection(ColumnReferenceQualifier qualifier, SqlSelectionResolutionContext resolutionContext);
 
 	@Override
 	default PersistenceType getPersistenceType() {

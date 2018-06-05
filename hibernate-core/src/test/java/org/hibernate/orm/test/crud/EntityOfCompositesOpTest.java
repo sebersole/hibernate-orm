@@ -13,7 +13,6 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,7 +33,6 @@ public class EntityOfCompositesOpTest extends SessionFactoryBasedFunctionalTest 
 	}
 
 	@Test
-	@FailureExpected( "temporarily disable" )
 	public void testOperations() {
 
 		final EntityOfComposites entity = new EntityOfComposites(
@@ -53,7 +51,7 @@ public class EntityOfCompositesOpTest extends SessionFactoryBasedFunctionalTest 
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 		sessionFactoryScope().inTransaction(
 				session -> {
-					final String value = session.createQuery( "select s.basicString from EntityOfComposites s", String.class ).uniqueResult();
+					final String value = session.createQuery( "select s.component.basicString from EntityOfComposites s", String.class ).uniqueResult();
 					assert "the string".equals( value );
 				}
 		);

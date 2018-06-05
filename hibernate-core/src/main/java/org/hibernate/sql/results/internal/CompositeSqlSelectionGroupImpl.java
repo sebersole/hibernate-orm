@@ -7,38 +7,48 @@
 package org.hibernate.sql.results.internal;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * @author Steve Ebersole
  */
 public class CompositeSqlSelectionGroupImpl extends AbstractSqlSelectionGroup implements CompositeSqlSelectionGroup {
 
+	private final EmbeddedTypeDescriptor<?> embeddedDescriptor;
+
 	public static CompositeSqlSelectionGroup buildSqlSelectionGroup(
 			EmbeddedTypeDescriptor<?> embeddedDescriptor,
 			ColumnReferenceQualifier qualifier,
-			QueryResultCreationContext creationContext) {
-		final Map<StateArrayContributor<?>,List<SqlSelection>> sqlSelectionsByContributor = new HashMap<>();
+			SqlSelectionResolutionContext resolutionContext) {
+		final Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor = new HashMap<>();
 
 		for ( StateArrayContributor<?> stateArrayContributor : embeddedDescriptor.getStateArrayContributors() ) {
-			sqlSelectionsByContributor.put(
+			selectionNodesByContributor.put(
 					stateArrayContributor,
-					stateArrayContributor.resolveSqlSelections( qualifier, creationContext )
+					stateArrayContributor.resolveSqlSelections( qualifier, resolutionContext )
 			);
 		}
 
-		return new CompositeSqlSelectionGroupImpl( sqlSelectionsByContributor );
+		return new CompositeSqlSelectionGroupImpl( embeddedDescriptor, selectionNodesByContributor );
 	}
 
-	public CompositeSqlSelectionGroupImpl(Map<StateArrayContributor<?>, List<SqlSelection>> sqlSelectionsByContributor) {
-		super( sqlSelectionsByContributor );
+	public CompositeSqlSelectionGroupImpl(
+			EmbeddedTypeDescriptor<?> embeddedDescriptor,
+			Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor) {
+		super( selectionNodesByContributor );
+		this.embeddedDescriptor = embeddedDescriptor;
+	}
+
+	@Override
+	protected StateArrayContributorContainer getContributorContainer() {
+		return embeddedDescriptor;
 	}
 }

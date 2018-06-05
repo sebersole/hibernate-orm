@@ -21,6 +21,7 @@ import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.engine.spi.CascadeStyle;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -29,6 +30,7 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
+import org.hibernate.metamodel.model.domain.spi.Instantiator;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
@@ -36,6 +38,10 @@ import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
@@ -47,15 +53,17 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * @author Steve Ebersole
  */
-public class EmbeddedTypeDescriptorImpl<T>
-		extends AbstractManagedType<T>
-		implements EmbeddedTypeDescriptor<T> {
+public class EmbeddedTypeDescriptorImpl<J>
+		extends AbstractManagedType<J>
+		implements EmbeddedTypeDescriptor<J> {
 	private final EmbeddedContainer container;
 	private final NavigableRole navigableRole;
 
 	private final SingularPersistentAttribute.Disposition compositeDisposition;
 
 	private ManagedTypeRepresentationStrategy representationStrategy;
+	private Instantiator<J> instantiator;
+
 
 	@SuppressWarnings("unchecked")
 	public EmbeddedTypeDescriptorImpl(
@@ -116,6 +124,7 @@ public class EmbeddedTypeDescriptorImpl<T>
 		this.representationStrategy = creationContext.getMetadata().getMetadataBuildingOptions()
 				.getManagedTypeRepresentationResolver()
 				.resolveStrategy( bootDescriptor, this, creationContext);
+		this.instantiator = representationStrategy.resolveInstantiator( bootDescriptor, this, creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider() );
 	}
 
 	@Override
@@ -124,14 +133,19 @@ public class EmbeddedTypeDescriptorImpl<T>
 	}
 
 	@Override
-	public EmbeddedTypeDescriptor<T> getEmbeddedDescriptor() {
+	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
 		return this;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public EmbeddableJavaDescriptor<T> getJavaTypeDescriptor() {
-		return (EmbeddableJavaDescriptor<T>) super.getJavaTypeDescriptor();
+	public EmbeddableJavaDescriptor<J> getJavaTypeDescriptor() {
+		return (EmbeddableJavaDescriptor<J>) super.getJavaTypeDescriptor();
+	}
+
+	@Override
+	public J instantiate(SharedSessionContractImplementor session) {
+		return instantiator.instantiate( session );
 	}
 
 	@Override
@@ -142,6 +156,13 @@ public class EmbeddedTypeDescriptorImpl<T>
 	@Override
 	public void visitNavigable(NavigableVisitationStrategy visitor) {
 		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public CompositeSqlSelectionGroup resolveSqlSelections(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionResolutionContext resolutionContext) {
+		return CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
 	}
 
 	private List<Column> collectedColumns;
@@ -174,16 +195,17 @@ public class EmbeddedTypeDescriptorImpl<T>
 				WrapperOptions options) throws SQLException {
 			final Object[] values = extractValues( value );
 
-			int position = 0;
+			int position = index;
 			for ( StateArrayContributor contributor : getStateArrayContributors() ) {
 				final Object subValue = values[ contributor.getStateArrayPosition() ];
 
 				contributor.getValueBinder().bind(
 						st,
 						contributor.dehydrate( subValue, options.getSession() ),
-						index,
+						position,
 						options
 				);
+				position += contributor.getColumns().size();
 			}
 
 		}
@@ -232,7 +254,7 @@ public class EmbeddedTypeDescriptorImpl<T>
 	}
 
 	@Override
-	public List<InheritanceCapable<? extends T>> getSubclassTypes() {
+	public List<InheritanceCapable<? extends J>> getSubclassTypes() {
 		return Collections.emptyList();
 	}
 
@@ -252,7 +274,7 @@ public class EmbeddedTypeDescriptorImpl<T>
 
 	@Override
 	public Object getPropertyValue(Object object, String propertyName) {
-		final NonIdPersistentAttribute<? super T, ?> attribute = findPersistentAttribute( propertyName );
+		final NonIdPersistentAttribute<? super J, ?> attribute = findPersistentAttribute( propertyName );
 		if ( attribute == null ) {
 			throw new HibernateException( "No persistent attribute named [" + propertyName + "] on embeddable [" + getRoleName() + ']' );
 		}

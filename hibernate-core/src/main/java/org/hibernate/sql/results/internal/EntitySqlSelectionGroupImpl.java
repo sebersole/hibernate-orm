@@ -6,10 +6,7 @@
  */
 package org.hibernate.sql.results.internal;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
@@ -19,11 +16,13 @@ import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * @author Steve Ebersole
@@ -33,23 +32,26 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 	public static EntitySqlSelectionGroup buildSqlSelectionGroup(
 			EntityDescriptor<?> entityDescriptor,
 			ColumnReferenceQualifier qualifier,
-			QueryResultCreationContext creationContext) {
-		return new Builder( entityDescriptor ).create( qualifier, creationContext );
+			SqlSelectionResolutionContext resolutionContext) {
+		return new Builder( entityDescriptor ).create( qualifier, resolutionContext );
 	}
 
+	private final EntityDescriptor<?> entityDescriptor;
 
-	private final List<SqlSelection> idSqlSelectionGroup;
-	private final SqlSelection discriminatorSqlSelection;
-	private final SqlSelection tenantDiscriminatorSqlSelection;
-	private final SqlSelection rowIdSqlSelection;
+	private final SqlSelectionGroupNode idSqlSelectionGroup;
+	private final SqlSelectionGroupNode discriminatorSqlSelection;
+	private final SqlSelectionGroupNode tenantDiscriminatorSqlSelection;
+	private final SqlSelectionGroupNode rowIdSqlSelection;
 
 	private EntitySqlSelectionGroupImpl(
-			SqlSelection rowIdSqlSelection,
-			List<SqlSelection> idSqlSelectionGroup,
-			SqlSelection discriminatorSqlSelection,
-			SqlSelection tenantDiscriminatorSqlSelection,
-			Map<StateArrayContributor<?>, List<SqlSelection>> sqlSelectionsByContributor) {
+			EntityDescriptor<?> entityDescriptor,
+			SqlSelectionGroupNode idSqlSelectionGroup,
+			SqlSelectionGroupNode discriminatorSqlSelection,
+			SqlSelectionGroupNode tenantDiscriminatorSqlSelection,
+			SqlSelectionGroupNode rowIdSqlSelection,
+			Map<StateArrayContributor<?>, SqlSelectionGroupNode> sqlSelectionsByContributor) {
 		super( sqlSelectionsByContributor );
+		this.entityDescriptor = entityDescriptor;
 		this.rowIdSqlSelection = rowIdSqlSelection;
 		this.idSqlSelectionGroup = idSqlSelectionGroup;
 		this.discriminatorSqlSelection = discriminatorSqlSelection;
@@ -57,22 +59,27 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 	}
 
 	@Override
-	public List<SqlSelection> getIdSqlSelections() {
+	protected StateArrayContributorContainer getContributorContainer() {
+		return entityDescriptor;
+	}
+
+	@Override
+	public SqlSelectionGroupNode getIdSqlSelections() {
 		return idSqlSelectionGroup;
 	}
 
 	@Override
-	public SqlSelection getDiscriminatorSqlSelection() {
+	public SqlSelectionGroupNode getDiscriminatorSqlSelection() {
 		return discriminatorSqlSelection;
 	}
 
 	@Override
-	public SqlSelection getTenantDiscriminatorSqlSelection() {
+	public SqlSelectionGroupNode getTenantDiscriminatorSqlSelection() {
 		return tenantDiscriminatorSqlSelection;
 	}
 
 	@Override
-	public SqlSelection getRowIdSqlSelection() {
+	public SqlSelectionGroupNode getRowIdSqlSelection() {
 		return rowIdSqlSelection;
 	}
 
@@ -80,11 +87,11 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 	public static class Builder {
 		private final EntityDescriptor<?> entityDescriptor;
 
-		private List<SqlSelection> idSqlSelections;
-		private SqlSelection discriminatorSqlSelection;
-		private SqlSelection tenantDiscriminatorSqlSelection;
-		private SqlSelection rowIdSqlSelection;
-		private Map<StateArrayContributor<?>, List<SqlSelection>> sqlSelectionsByContributor;
+		private SqlSelectionGroupNode idSqlSelections;
+		private SqlSelectionGroupNode discriminatorSqlSelection;
+		private SqlSelectionGroupNode tenantDiscriminatorSqlSelection;
+		private SqlSelectionGroupNode rowIdSqlSelection;
+		private Map<StateArrayContributor<?>, SqlSelectionGroupNode> sqlSelectionsByContributor;
 
 		public Builder(EntityDescriptor<?> entityDescriptor) {
 			this.entityDescriptor = entityDescriptor;
@@ -101,24 +108,15 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		protected void applyIdSqlSelections(
 				EntityIdentifier identifierDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
-			applyIdSqlSelections( identifierDescriptor.resolveSqlSelections( qualifier, creationContext ) );
+				SqlSelectionResolutionContext resolutionContext) {
+			applyIdSqlSelections( identifierDescriptor.resolveSqlSelections( qualifier, resolutionContext ) );
 		}
 
-		protected final void applyIdSqlSelections(Collection<SqlSelection> idSqlSelectionGroup) {
+		protected final void applyIdSqlSelections(SqlSelectionGroupNode idSqlSelectionGroup) {
 			if ( this.idSqlSelections != null ) {
 				throw new HibernateException( "Multiple calls to set entity id SqlSelections" );
 			}
-			this.idSqlSelections = asList( idSqlSelectionGroup );
-		}
-
-		private List<SqlSelection> asList(Collection<SqlSelection> selections) {
-			if ( selections instanceof List ) {
-				return (List<SqlSelection>) selections;
-			}
-			else {
-				return new ArrayList<>( selections );
-			}
+			this.idSqlSelections = idSqlSelectionGroup;
 		}
 
 
@@ -128,8 +126,8 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		protected void applyDiscriminatorSqlSelection(
 				DiscriminatorDescriptor discriminatorDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
-			applyDiscriminatorSqlSelection( discriminatorDescriptor.resolveSqlSelection( qualifier, creationContext ) );
+				SqlSelectionResolutionContext resolutionContext) {
+			applyDiscriminatorSqlSelection( discriminatorDescriptor.resolveSqlSelection( qualifier, resolutionContext ) );
 		}
 
 		protected final void applyDiscriminatorSqlSelection(SqlSelection discriminatorSqlSelection) {
@@ -146,10 +144,10 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		protected void applyTenantDiscriminatorSqlSelection(
 				TenantDiscrimination tenantDiscrimination,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			applyTenantDiscriminatorSqlSelection(
-					creationContext.getSqlSelectionResolver().resolveSqlSelection(
-							creationContext.getSqlSelectionResolver().resolveSqlExpression(
+					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 									qualifier,
 									tenantDiscrimination.getBoundColumn()
 							)
@@ -171,10 +169,10 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		protected void applyRowIdSqlSelection(
 				RowIdDescriptor rowIdDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			applyRowIdSqlSelection(
-					creationContext.getSqlSelectionResolver().resolveSqlSelection(
-							creationContext.getSqlSelectionResolver().resolveSqlExpression(
+					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 									qualifier,
 									rowIdDescriptor.getBoundColumn()
 							)
@@ -193,37 +191,34 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		protected void applyContributorSqlSelections(
 				StateArrayContributor<?> contributor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			applyContributorSqlSelections(
 					contributor,
-					contributor.resolveSqlSelections(
-							qualifier,
-							creationContext
-					)
+					contributor.resolveSqlSelections( qualifier, resolutionContext )
 			);
 		}
 
-		protected final void applyContributorSqlSelections(StateArrayContributor<?> contributor, Collection<SqlSelection> sqlSelections) {
+		protected final void applyContributorSqlSelections(StateArrayContributor<?> contributor, SqlSelectionGroupNode sqlSelections) {
 			if ( sqlSelectionsByContributor == null ) {
 				sqlSelectionsByContributor = new HashMap<>();
 			}
-			sqlSelectionsByContributor.put( contributor, asList( sqlSelections ) );
+			sqlSelectionsByContributor.put( contributor, sqlSelections );
 		}
 
-		public EntitySqlSelectionGroupImpl create(ColumnReferenceQualifier qualifier, QueryResultCreationContext creationContext) {
+		public EntitySqlSelectionGroupImpl create(ColumnReferenceQualifier qualifier, SqlSelectionResolutionContext resolutionContext) {
 			final EntityHierarchy hierarchy = entityDescriptor.getHierarchy();
 
 			applyIdSqlSelections(
 					hierarchy.getIdentifierDescriptor(),
 					qualifier,
-					creationContext
+					resolutionContext
 			);
 
 			if ( hierarchy.getDiscriminatorDescriptor() != null ) {
 				applyDiscriminatorSqlSelection(
 						hierarchy.getDiscriminatorDescriptor(),
 						qualifier,
-						creationContext
+						resolutionContext
 				);
 			}
 
@@ -231,7 +226,7 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 				applyTenantDiscriminatorSqlSelection(
 						hierarchy.getTenantDiscrimination(),
 						qualifier,
-						creationContext
+						resolutionContext
 				);
 			}
 
@@ -239,7 +234,7 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 				applyRowIdSqlSelection(
 						hierarchy.getRowIdDescriptor(),
 						qualifier,
-						creationContext
+						resolutionContext
 				);
 			}
 
@@ -247,15 +242,16 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 				applyContributorSqlSelections(
 						contributor,
 						qualifier,
-						creationContext
+						resolutionContext
 				);
 			}
 
 			return new EntitySqlSelectionGroupImpl(
-					rowIdSqlSelection,
+					entityDescriptor,
 					idSqlSelections,
 					discriminatorSqlSelection,
 					tenantDiscriminatorSqlSelection,
+					rowIdSqlSelection,
 					sqlSelectionsByContributor
 			);
 		}

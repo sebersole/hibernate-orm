@@ -329,7 +329,7 @@ public final class ForeignKeys<T> {
 		final Nullifier nullifier = new Nullifier( entity, false, isEarlyInsert, session );
 		final EntityDescriptor descriptor = session.getEntityPersister( entityName, entity );
 
-		descriptor.visitStateArrayNavigables(
+		descriptor.visitStateArrayContributors(
 				new Consumer<StateArrayContributor<?>>() {
 					int i = 0;
 

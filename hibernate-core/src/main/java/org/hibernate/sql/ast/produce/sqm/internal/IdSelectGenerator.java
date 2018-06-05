@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.ast.produce.sqm.internal;
 
-import java.util.List;
-
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -31,7 +29,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
  * Specialized SqmSelectToSqlAstConverter extension to help in generating the
@@ -106,7 +104,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 		entityIdSelectionTableSpace.setRootTableGroup( rootTableGroup );
 
-		final List sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
+		final SqlSelectionGroupNode sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
 				rootTableGroup,
 				new QueryResultCreationContext() {
 					@Override
@@ -133,10 +131,9 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 				}
 		);
 
-		//noinspection unchecked
-		for ( SqlSelection sqlSelection : (List<SqlSelection>) sqlSelectionGroup ) {
-			entityIdSelection.getSelectClause().addSqlSelection( sqlSelection );
-		}
+		sqlSelectionGroup.visitSqlSelections(
+				sqlSelection -> entityIdSelection.getSelectClause().addSqlSelection( sqlSelection )
+		);
 
 		applyQueryRestrictions(
 				entityDescriptor,

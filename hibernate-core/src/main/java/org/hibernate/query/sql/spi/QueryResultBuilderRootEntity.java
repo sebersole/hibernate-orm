@@ -35,7 +35,7 @@ import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntityQueryResult;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -268,9 +268,9 @@ public class QueryResultBuilderRootEntity
 		protected void applyIdSqlSelections(
 				EntityIdentifier identifierDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			if ( explicitIdColumnAliases == null || explicitIdColumnAliases.isEmpty() ) {
-				super.applyIdSqlSelections( identifierDescriptor, qualifier, creationContext );
+				super.applyIdSqlSelections( identifierDescriptor, qualifier, resolutionContext );
 				return;
 			}
 
@@ -298,36 +298,37 @@ public class QueryResultBuilderRootEntity
 		protected void applyContributorSqlSelections(
 				StateArrayContributor<?> contributor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			// todo (6.0) : hook in the explicit mapping bits specified by the user
-			super.applyContributorSqlSelections( contributor, qualifier, creationContext );
+			super.applyContributorSqlSelections( contributor, qualifier, resolutionContext );
 		}
+
 
 		@Override
 		protected void applyDiscriminatorSqlSelection(
 				DiscriminatorDescriptor discriminatorDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			// todo (6.0) : hook in the explicit mapping bits specified by the user
-			super.applyDiscriminatorSqlSelection( discriminatorDescriptor, qualifier, creationContext );
+			super.applyDiscriminatorSqlSelection( discriminatorDescriptor, qualifier, resolutionContext );
 		}
 
 		@Override
 		protected void applyTenantDiscriminatorSqlSelection(
 				TenantDiscrimination tenantDiscrimination,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			// todo (6.0) : hook in the explicit mapping bits specified by the user
-			super.applyTenantDiscriminatorSqlSelection( tenantDiscrimination, qualifier, creationContext );
+			super.applyTenantDiscriminatorSqlSelection( tenantDiscrimination, qualifier, resolutionContext );
 		}
 
 		@Override
 		protected void applyRowIdSqlSelection(
 				RowIdDescriptor rowIdDescriptor,
 				ColumnReferenceQualifier qualifier,
-				QueryResultCreationContext creationContext) {
+				SqlSelectionResolutionContext resolutionContext) {
 			// todo (6.0) : hook in the explicit mapping bits specified by the user
-			super.applyRowIdSqlSelection( rowIdDescriptor, qualifier, creationContext );
+			super.applyRowIdSqlSelection( rowIdDescriptor, qualifier, resolutionContext );
 		}
 
 	}

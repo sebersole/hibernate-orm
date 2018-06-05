@@ -41,7 +41,7 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 	}
 
 	@Override
-	public void visitStateArrayNavigables(Consumer<StateArrayContributor<?>> consumer) {
+	public void visitStateArrayContributors(Consumer<StateArrayContributor<?>> consumer) {
 
 		// todo (6.0) : determine which "root entity" navigables need to be written to the state array.
 		//		- also, make sure this only happens for the root
@@ -62,7 +62,7 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 //			consumer.accept( getHierarchy().getRowIdDescriptor() );
 //		}
 
-		super.visitStateArrayNavigables( consumer );
+		super.visitStateArrayContributors( consumer );
 	}
 
 	@Override

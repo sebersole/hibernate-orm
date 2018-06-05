@@ -19,7 +19,7 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
@@ -74,7 +74,7 @@ public interface Navigable<T> extends DomainType<T> {
 		throw new NotYetImplementedFor6Exception();
 	}
 
-	List<SqlSelection> resolveSqlSelections(
+	SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext);
 

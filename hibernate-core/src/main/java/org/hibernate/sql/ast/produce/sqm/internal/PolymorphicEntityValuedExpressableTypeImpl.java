@@ -66,9 +66,10 @@ import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
@@ -285,10 +286,10 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
+	public EntitySqlSelectionGroup resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception();
+		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
 	}
 
 
@@ -333,7 +334,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public void visitStateArrayNavigables(Consumer consumer) {
+	public void visitStateArrayContributors(Consumer consumer) {
 		throw new UnsupportedOperationException(  );
 	}
 

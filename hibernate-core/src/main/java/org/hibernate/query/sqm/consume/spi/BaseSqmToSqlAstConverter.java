@@ -21,8 +21,10 @@ import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
@@ -481,7 +483,7 @@ public abstract class BaseSqmToSqlAstConverter
 		try {
 			visitRootEntityFromElement( fromElementSpace.getRoot() );
 			for ( SqmJoin sqmJoin : fromElementSpace.getJoins() ) {
-				tableSpace.addJoinedTableGroup( (TableGroupJoin) sqmJoin.accept( this ) );
+				sqmJoin.accept( this );
 			}
 			return tableSpace;
 		}
@@ -567,14 +569,16 @@ public abstract class BaseSqmToSqlAstConverter
 		}
 
 		final QuerySpec querySpec = currentQuerySpec();
-		final TableGroupJoinProducer joinableAttribute = (TableGroupJoinProducer) joinedFromElement.getAttributeReference()
-				.getReferencedNavigable();
-
 		final TableGroup lhsTableGroup = fromClauseIndex.findResolvedTableGroup( joinedFromElement.getLhs() );
 
+		final PersistentAttribute joinedAttribute = joinedFromElement.getAttributeReference().getReferencedNavigable();
+		if ( joinedAttribute instanceof SingularPersistentAttributeEmbedded ) {
+			return lhsTableGroup;
+		}
 
+		final TableGroupJoinProducer joinProducer = (TableGroupJoinProducer) joinedAttribute;
 
-		final TableGroupJoin tableGroupJoin = joinableAttribute.createTableGroupJoin(
+		final TableGroupJoin tableGroupJoin = joinProducer.createTableGroupJoin(
 				joinedFromElement,
 				joinedFromElement.getJoinType().getCorrespondingSqlJoinType(),
 				new JoinedTableGroupContext() {
@@ -629,6 +633,8 @@ public abstract class BaseSqmToSqlAstConverter
 					(Predicate) joinedFromElement.getOnClausePredicate().accept( this )
 			);
 		}
+
+		tableSpace.addJoinedTableGroup( tableGroupJoin );
 
 		tableGroupStack.push( tableGroupJoin.getJoinedGroup() );
 		fromClauseIndex.crossReference( joinedFromElement, tableGroupJoin.getJoinedGroup() );

@@ -167,6 +167,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	public boolean isSubclassTypeName(String name) {
+
 		return subClassEntityNames.contains( name );
 	}
 
@@ -244,7 +245,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	}
 
 	@Override
-	public void visitStateArrayNavigables(Consumer<StateArrayContributor<?>> consumer) {
+	public void visitStateArrayContributors(Consumer<StateArrayContributor<?>> consumer) {
 		visitAttributes(
 				attribute -> {
 					if ( attribute != null ) {

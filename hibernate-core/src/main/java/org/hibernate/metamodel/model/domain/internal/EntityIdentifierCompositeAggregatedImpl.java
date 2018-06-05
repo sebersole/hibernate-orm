@@ -25,12 +25,9 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -146,13 +143,6 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
 	public <N> Navigable<N> findNavigable(String navigableName) {
 		return getEmbeddedDescriptor().findNavigable( navigableName );
 	}
@@ -180,7 +170,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
-		getEmbeddedDescriptor().visitStateArrayNavigables(
+		getEmbeddedDescriptor().visitStateArrayContributors(
 				contributor -> {
 					final int index = contributor.getStateArrayPosition();
 					values[index] = contributor.unresolve( values[index], session );
@@ -194,7 +184,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	@SuppressWarnings("unchecked")
 	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
 		final Object[] values = (Object[]) value;
-		getEmbeddedDescriptor().visitStateArrayNavigables(
+		getEmbeddedDescriptor().visitStateArrayContributors(
 				contributor -> values[ contributor.getStateArrayPosition() ] =
 						contributor.dehydrate( values[ contributor.getStateArrayPosition() ], session )
 		);

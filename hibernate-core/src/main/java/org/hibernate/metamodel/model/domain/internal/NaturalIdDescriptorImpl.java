@@ -24,7 +24,8 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
@@ -128,12 +129,12 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
+	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
-		final List<SqlSelection> selections = new ArrayList<>();
-		attributes.forEach( attributeInfo -> selections.addAll( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, resolutionContext ) ) );
-		return selections;
+		final List<SqlSelectionGroupNode> selections = new ArrayList<>();
+		attributes.forEach( attributeInfo -> selections.add( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, resolutionContext ) ) );
+		return new AggregateSqlSelectionGroupNode( selections );
 	}
 
 	@Override

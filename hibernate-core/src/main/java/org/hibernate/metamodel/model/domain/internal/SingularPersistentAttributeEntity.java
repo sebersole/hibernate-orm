@@ -60,7 +60,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
@@ -388,7 +388,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
+	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception(  );

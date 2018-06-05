@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.NotYetImplementedFor6Exception;
@@ -32,10 +31,12 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReferenc
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -210,7 +211,7 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
+	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
@@ -219,14 +220,14 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 				.getColumnMappings();
 
 		if ( columnMappings.size() == 1 ) {
-			return Collections.singletonList( resolveSqlSelection( qualifier, resolutionContext, columnMappings.get( 0 ) ) );
+			return resolveSqlSelection( qualifier, resolutionContext, columnMappings.get( 0 ) );
 		}
 
 		final List<SqlSelection> sqlSelections = new ArrayList<>();
 		for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping : columnMappings ) {
 			sqlSelections.add( resolveSqlSelection( qualifier, resolutionContext, columnMapping ) );
 		}
-		return sqlSelections;
+		return new AggregateSqlSelectionGroupNode( sqlSelections );
 	}
 
 	private SqlSelection resolveSqlSelection(

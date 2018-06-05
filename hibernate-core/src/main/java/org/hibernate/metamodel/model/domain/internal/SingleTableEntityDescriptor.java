@@ -162,7 +162,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		);
 		insertStatement.addValue( new LiteralParameter( dehydrateIdState, getHierarchy().getIdentifierDescriptor() ) );
 
-		visitStateArrayNavigables(
+		visitStateArrayContributors(
 				contributor -> {
 					final Object domainValue = fields[ contributor.getStateArrayPosition() ];
 					final Object dehydrateState = contributor.dehydrate(
@@ -414,7 +414,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		final int size = getStateArrayContributors().size();
 		final Object[] valuesToInsert = new Object[size];
 
-		visitStateArrayNavigables(
+		visitStateArrayContributors(
 				stateArrayContributor -> valuesToInsert[ stateArrayContributor.getStateArrayPosition() ] =
 						stateArrayContributor.getPropertyAccess().getGetter().getForInsert( object, mergeMap, session )
 		);

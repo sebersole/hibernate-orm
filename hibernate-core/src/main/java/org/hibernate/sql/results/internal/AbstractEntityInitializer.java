@@ -7,12 +7,10 @@
 package org.hibernate.sql.results.internal;
 
 import java.io.Serializable;
-import java.util.List;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.WrongClassException;
-import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.internal.Versioning;
@@ -39,7 +37,6 @@ import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.LoadingEntityEntry;
 import org.hibernate.sql.results.spi.RowProcessingState;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.internal.TypeHelper;
 
 import org.jboss.logging.Logger;
@@ -116,17 +113,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	}
 
 	private Object buildIdentifierHydratedForm(RowProcessingState rowProcessingState) {
-		final List<SqlSelection> idSqlSelections = sqlSelectionMappings.getIdSqlSelections();
-		if ( idSqlSelections.size() == 1 ) {
-			return rowProcessingState.getJdbcValue( idSqlSelections.get( 0 ) );
-		}
-
-		final int selectionsConsumed = idSqlSelections.size();
-		final Object[] rawValues = new Object[selectionsConsumed];
-		for ( int i = 0; i < selectionsConsumed; i++ ){
-			rawValues[i] = rowProcessingState.getJdbcValue( idSqlSelections.get( i ) );
-		}
-		return rawValues;
+		return sqlSelectionMappings.getIdSqlSelections().hydrateStateArray( rowProcessingState );
 	}
 
 	@Override
@@ -192,9 +179,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 		final Object rowId;
 		if ( concretePersister.getHierarchy().getRowIdDescriptor() != null ) {
-			final SqlSelection rowIdSqlSelection = sqlSelectionMappings.getRowIdSqlSelection();
-
-			rowId = rowProcessingState.getJdbcValue( rowIdSqlSelection );
+			rowId = sqlSelectionMappings.getRowIdSqlSelection().hydrateStateArray( rowProcessingState );
 
 			if ( rowId == null ) {
 				throw new HibernateException(
@@ -206,36 +191,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			rowId = null;
 		}
 
-		hydratedEntityState = new Object[ concretePersister.getStateArrayContributors().size() ];
-		for ( StateArrayContributor stateArrayContributor : concretePersister.getStateArrayContributors() ) {
-			final List<SqlSelection> sqlSelections = sqlSelectionMappings.getSqlSelections( stateArrayContributor );
-
-			final int contributorPosition = stateArrayContributor.getStateArrayPosition();
-
-			if ( sqlSelections == null || sqlSelections.isEmpty() ) {
-				// not selected (lazy group, etc)
-				hydratedEntityState[ contributorPosition ] = LazyPropertyInitializer.UNFETCHED_PROPERTY;
-			}
-			else {
-				final Object hydratedState;
-
-				if ( sqlSelections.size() == 1 ) {
-					hydratedState = rowProcessingState.getJdbcValue( sqlSelections.get( 0 ) );
-				}
-				else {
-					final Object[] subValues = new Object[ sqlSelections.size() ];
-					for ( int i = 0; i < sqlSelections.size(); i++ ) {
-						subValues[i] = rowProcessingState.getJdbcValue( sqlSelections.get( i ) );
-					}
-					hydratedState = subValues;
-				}
-
-				hydratedEntityState[ contributorPosition ] = stateArrayContributor.hydrate(
-						hydratedState,
-						rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext()
-				);
-			}
-		}
+		hydratedEntityState = (Object[]) sqlSelectionMappings.hydrateStateArray( rowProcessingState );
 
 		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext();
 
@@ -271,9 +227,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			return persister;
 		}
 
-		final Object discriminatorValue = rowProcessingState.getJdbcValue(
-				sqlSelectionMappings.getDiscriminatorSqlSelection()
-		);
+		final Object discriminatorValue = sqlSelectionMappings.getDiscriminatorSqlSelection().hydrateStateArray( rowProcessingState );
 
 		final EntityDescriptor legacyLoadable = persister.getEntityDescriptor();
 		final String result = legacyLoadable.getHierarchy()

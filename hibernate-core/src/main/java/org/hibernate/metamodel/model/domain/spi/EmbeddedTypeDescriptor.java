@@ -15,6 +15,9 @@ import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 
 /**
@@ -82,6 +85,12 @@ public interface EmbeddedTypeDescriptor<T>
 	default T instantiate(SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
+
+	@Override
+	CompositeSqlSelectionGroup resolveSqlSelections(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionResolutionContext resolutionContext);
+
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

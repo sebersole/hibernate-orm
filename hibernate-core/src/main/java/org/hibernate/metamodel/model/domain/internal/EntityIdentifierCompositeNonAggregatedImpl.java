@@ -24,12 +24,9 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -114,13 +111,6 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 				resultVariable,
 				creationContext
 		);
-	}
-
-	@Override
-	public List<SqlSelection> resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception(  );
 	}
 
 	@Override

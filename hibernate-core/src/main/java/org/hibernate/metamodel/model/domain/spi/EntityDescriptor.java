@@ -40,9 +40,12 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -149,7 +152,6 @@ public interface EntityDescriptor<T>
 	 */
 	BytecodeEnhancementMetadata getBytecodeEnhancementMetadata();
 
-
 	/**
 	 * Access to the root table for this entity.
 	 */
@@ -171,6 +173,11 @@ public interface EntityDescriptor<T>
 	boolean isAffectedByEnabledFetchProfiles(LoadQueryInfluencers loadQueryInfluencers);
 
 	boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers);
+
+	@Override
+	EntitySqlSelectionGroup resolveSqlSelections(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionResolutionContext resolutionContext);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

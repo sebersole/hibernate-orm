@@ -164,10 +164,10 @@ public class BasicSingularPersistentAttribute<O, J>
 		return basicType.getValueExtractor();
 	}
 
-	@Override
-	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
-		return jdbcValues;
-	}
+//	@Override
+//	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
+//		return jdbcValues;
+//	}
 
 	@Override
 	@SuppressWarnings("unchecked")

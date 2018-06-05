@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.util.List;
 import java.util.Set;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
@@ -22,9 +21,8 @@ import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
-import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
@@ -128,7 +126,7 @@ public class MappedSuperclassImpl<J>
 	}
 
 	@Override
-	public List<SqlSelection> resolveSqlSelections(
+	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		// todo (6.0) : we'd have to know all subclasses to be able to generate selection-clause all columns we possibly need for all subtypes
@@ -143,10 +141,5 @@ public class MappedSuperclassImpl<J>
 	@Override
 	public IdentifiableTypeDescriptor<? super J> getSupertype() {
 		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
-	public void injectAttributeValue(J instance, NonIdPersistentAttribute attribute, Object value) {
-		throw new NotYetImplementedFor6Exception();
 	}
 }

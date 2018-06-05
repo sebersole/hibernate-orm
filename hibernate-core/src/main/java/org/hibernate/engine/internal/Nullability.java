@@ -133,7 +133,7 @@ public final class Nullability {
 		  * sure a limitation.
 		  */
 
-		managedTypeDescriptor.visitStateArrayNavigables(
+		managedTypeDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final boolean check;
 					switch ( checkType ) {

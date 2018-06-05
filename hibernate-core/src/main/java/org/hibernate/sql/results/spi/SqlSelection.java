@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.results.spi;
 
+import java.util.function.Consumer;
+
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 
 /**
@@ -17,7 +19,7 @@ import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
  *
  * @author Steve Ebersole
  */
-public interface SqlSelection {
+public interface SqlSelection extends SqlSelectionGroupNode {
 
 	/**
 	 * Get the reader used to read values for this selection
@@ -46,6 +48,15 @@ public interface SqlSelection {
 		// By default we have nothing to do.  Here as a hook for NativeQuery mapping resolutions
 	}
 
+	@Override
+	default Object hydrateStateArray(RowProcessingState currentRowState) {
+		return currentRowState.getJdbcValue( this );
+	}
+
+	@Override
+	default void visitSqlSelections(Consumer<SqlSelection> action) {
+		action.accept( this );
+	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// todo (6.0) : remove methods below

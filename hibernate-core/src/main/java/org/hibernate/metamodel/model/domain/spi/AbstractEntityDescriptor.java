@@ -87,6 +87,7 @@ import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
@@ -634,7 +635,7 @@ public abstract class AbstractEntityDescriptor<J>
 		return new EntityQueryResultImpl(
 				(EntityValuedNavigable) navigableReference.getNavigable(),
 				resultVariable,
-				buildSqlSelectionMappings( navigableReference, creationContext ),
+				resolveSqlSelections( navigableReference.getSqlExpressionQualifier(), creationContext ),
 				( (EntityValuedNavigableReference) navigableReference ).getLockMode(),
 				navigableReference.getNavigablePath(),
 				creationContext
@@ -646,14 +647,12 @@ public abstract class AbstractEntityDescriptor<J>
 	//		* how deep (associations) comes down to fetching
 
 
-	private EntitySqlSelectionGroup buildSqlSelectionMappings(
-			NavigableReference selectedExpression,
-			QueryResultCreationContext resolutionContext) {
-		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
-				this,
-				selectedExpression.getSqlExpressionQualifier(),
-				resolutionContext
-		);
+
+	@Override
+	public EntitySqlSelectionGroup resolveSqlSelections(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionResolutionContext resolutionContext) {
+		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
 	}
 
 	@Override

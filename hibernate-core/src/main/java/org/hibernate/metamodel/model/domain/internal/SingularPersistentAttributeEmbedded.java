@@ -46,6 +46,7 @@ import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -180,8 +181,32 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public ValueBinder<J> getValueBinder() {
 		return getEmbeddedDescriptor().getValueBinder();
+	}
+
+	@Override
+	public ValueExtractor getValueExtractor() {
+		return getEmbeddedDescriptor().getValueExtractor();
+	}
+
+	@Override
+	public Object resolveHydratedState(
+			Object hydratedForm,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		final J instance = embeddedDescriptor.instantiate( session );
+		final Object[] hydratedValues = (Object[]) hydratedForm;
+		embeddedDescriptor.visitStateArrayContributors(
+				contributor -> {
+					final Object subHydratedForm = hydratedValues[ contributor.getStateArrayPosition() ];
+					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm, session, containerInstance );
+					hydratedValues[ contributor.getStateArrayPosition() ] = subResolvedForm;
+				}
+		);
+		embeddedDescriptor.setPropertyValues( instance, (Object[]) hydratedForm );
+		return instance;
 	}
 
 	@Override
@@ -219,7 +244,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 			return;
 		}
 
-		getEmbeddedDescriptor().visitStateArrayNavigables(
+		getEmbeddedDescriptor().visitStateArrayContributors(
 				new Consumer<StateArrayContributor<?>>() {
 					int i = 0;
 
@@ -245,7 +270,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
-		getEmbeddedDescriptor().visitStateArrayNavigables(
+		getEmbeddedDescriptor().visitStateArrayContributors(
 				contributor -> {
 					final int index = contributor.getStateArrayPosition();
 					values[index] = contributor.unresolve( values[index], session );
@@ -259,7 +284,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@SuppressWarnings("unchecked")
 	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
 		final Object[] values = (Object[]) value;
-		getEmbeddedDescriptor().visitStateArrayNavigables(
+		getEmbeddedDescriptor().visitStateArrayContributors(
 				contributor -> values[ contributor.getStateArrayPosition() ] =
 						contributor.dehydrate( values[ contributor.getStateArrayPosition() ], session )
 		);

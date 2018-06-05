@@ -6,19 +6,17 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.util.List;
-
 /**
  * Used in {@link EntityInitializer} implementations
  *
  * @author Steve Ebersole
  */
 public interface EntitySqlSelectionGroup extends SqlSelectionGroup {
-	List<SqlSelection> getIdSqlSelections();
+	SqlSelectionGroupNode getIdSqlSelections();
 
-	SqlSelection getRowIdSqlSelection();
+	SqlSelectionGroupNode getRowIdSqlSelection();
 
-	SqlSelection getDiscriminatorSqlSelection();
+	SqlSelectionGroupNode getDiscriminatorSqlSelection();
 
-	SqlSelection getTenantDiscriminatorSqlSelection();
+	SqlSelectionGroupNode getTenantDiscriminatorSqlSelection();
 }
