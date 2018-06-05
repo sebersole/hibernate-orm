@@ -6,8 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.util.List;
-
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
@@ -21,7 +19,6 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
-import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmCollectionElementReferenceEmbedded;
@@ -40,7 +37,6 @@ public class CollectionElementEmbeddedImpl<J>
 		implements CollectionElementEmbedded<J> {
 
 	private final EmbeddedTypeDescriptor<J> embeddedPersister;
-	private final List<Column> columnList;
 
 	public CollectionElementEmbeddedImpl(
 			PersistentCollectionDescriptor persister,
@@ -56,7 +52,6 @@ public class CollectionElementEmbeddedImpl<J>
 				SingularPersistentAttribute.Disposition.NORMAL,
 				creationContext
 		);
-		this.columnList = embeddedPersister.collectColumns();
 	}
 
 	@Override

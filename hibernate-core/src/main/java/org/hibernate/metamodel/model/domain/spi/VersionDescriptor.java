@@ -10,6 +10,7 @@ import java.lang.reflect.Member;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.type.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * Information about the entity (hierarchy wide) version
@@ -31,6 +32,11 @@ public interface VersionDescriptor<O,J>
 	}
 
 	VersionSupport getVersionSupport();
+
+	@Override
+	default ValueBinder<J> getValueBinder() {
+		return getBasicType().getValueBinder();
+	}
 
 	@Override
 	default Disposition getDisposition() {

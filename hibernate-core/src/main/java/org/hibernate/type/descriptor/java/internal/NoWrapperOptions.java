@@ -9,6 +9,7 @@ package org.hibernate.type.descriptor.java.internal;
 import java.util.TimeZone;
 
 import org.hibernate.engine.jdbc.LobCreator;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
@@ -39,5 +40,10 @@ public class NoWrapperOptions implements WrapperOptions {
 	@Override
 	public TimeZone getJdbcTimeZone() {
 		return TimeZone.getDefault();
+	}
+
+	@Override
+	public SharedSessionContractImplementor getSession() {
+		throw new UnsupportedOperationException( "No Session" );
 	}
 }

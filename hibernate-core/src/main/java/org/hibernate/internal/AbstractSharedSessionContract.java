@@ -225,6 +225,11 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@Override
+	public SharedSessionContractImplementor getSession() {
+		return this;
+	}
+
+	@Override
 	public Interceptor getInterceptor() {
 		return interceptor;
 	}

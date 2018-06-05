@@ -13,6 +13,7 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
 
+import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -33,6 +34,7 @@ public class EntityOfCompositesOpTest extends SessionFactoryBasedFunctionalTest 
 	}
 
 	@Test
+	@FailureExpected( "temporarily disable" )
 	public void testOperations() {
 
 		final EntityOfComposites entity = new EntityOfComposites(

@@ -25,4 +25,8 @@ public abstract class AbstractSessionImpl
 		super( factory, options );
 	}
 
+	@Override
+	public SessionImplementor getSession() {
+		return this;
+	}
 }

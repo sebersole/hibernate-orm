@@ -176,16 +176,14 @@ public class EmbeddedTypeDescriptorImpl<T>
 
 			int position = 0;
 			for ( StateArrayContributor contributor : getStateArrayContributors() ) {
-				final Object subValue = values[contributor.getStateArrayPosition() ];
+				final Object subValue = values[ contributor.getStateArrayPosition() ];
 
 				contributor.getValueBinder().bind(
 						st,
-						contributor.dehydrate( subValue,  ),
+						contributor.dehydrate( subValue, options.getSession() ),
 						index,
 						options
 				);
-
-				contributor.
 			}
 
 		}

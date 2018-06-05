@@ -10,7 +10,9 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.engine.jdbc.LobCreator;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -19,7 +21,11 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  * @todo Definitely could use a better name
  *
  * @author Steve Ebersole
+ *
+ * @deprecated Just replace with Session
  */
+@Remove
+@Deprecated
 public interface WrapperOptions {
 	/**
 	 * Should streams be used for binding LOB values.
@@ -54,4 +60,6 @@ public interface WrapperOptions {
 	 * @return JDBC {@link TimeZone}
 	 */
 	TimeZone getJdbcTimeZone();
+
+	SharedSessionContractImplementor getSession();
 }

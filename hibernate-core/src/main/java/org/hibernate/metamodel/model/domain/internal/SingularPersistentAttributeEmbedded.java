@@ -45,6 +45,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
+import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -176,6 +177,11 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public List<Column> getColumns() {
 		return getEmbeddedDescriptor().collectColumns();
+	}
+
+	@Override
+	public ValueBinder<J> getValueBinder() {
+		return getEmbeddedDescriptor().getValueBinder();
 	}
 
 	@Override

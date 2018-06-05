@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.sql.ast.tree.spi.InsertStatement;
 
 /**
  * Represents a value that can ultimately be written to the database.  The process of
@@ -21,12 +20,12 @@ import org.hibernate.sql.ast.tree.spi.InsertStatement;
  */
 public interface Writeable<D,I,R> {
 	/**
-	 * Produce a multi-dimensional array of simple value
+	 * Produce a multi-dimensional array of extracted simple value
 	 */
 	I unresolve(D value, SharedSessionContractImplementor session);
 
 	/**
-	 * Produce a flattened array of dehydrated stat
+	 * Produce a flattened array from dehydrated state
 	 */
 	R dehydrate(I values, SharedSessionContractImplementor session);
 }

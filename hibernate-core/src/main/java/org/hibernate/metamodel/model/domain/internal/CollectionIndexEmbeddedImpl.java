@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
-
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
@@ -39,7 +38,6 @@ public class CollectionIndexEmbeddedImpl<J>
 		extends AbstractCollectionIndex<J>
 		implements CollectionIndexEmbedded<J> {
 	private final EmbeddedTypeDescriptor<J> embeddedPersister;
-	private final List<Column> columns;
 
 	public CollectionIndexEmbeddedImpl(
 			PersistentCollectionDescriptor persister,
@@ -55,9 +53,6 @@ public class CollectionIndexEmbeddedImpl<J>
 				SingularPersistentAttribute.Disposition.NORMAL,
 				creationContext
 		);
-
-		this.columns = getEmbeddedDescriptor().collectColumns();
-
 	}
 
 	@Override
@@ -83,7 +78,7 @@ public class CollectionIndexEmbeddedImpl<J>
 
 	@Override
 	public List<Column> getColumns() {
-		return columns;
+		return getEmbeddedDescriptor().collectColumns();
 	}
 
 	@Override

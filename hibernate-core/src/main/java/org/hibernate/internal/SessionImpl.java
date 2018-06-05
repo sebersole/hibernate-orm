@@ -3015,11 +3015,6 @@ public final class SessionImpl
 	}
 
 	@Override
-	public SessionImplementor getSession() {
-		return this;
-	}
-
-	@Override
 	public LockOptions buildLockOptions(LockModeType lockModeType, Map<String, Object> properties) {
 		LockOptions lockOptions = new LockOptions();
 		LockOptions.copy( this.lockOptions, lockOptions );
