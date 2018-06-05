@@ -1046,7 +1046,7 @@ public final class SessionImpl
 	}
 
 	@Override
-	public <T> T load(Class<T> entityClass, Serializable id) throws HibernateException {
+	public <T> T load(Class<T> entityClass, Object id) throws HibernateException {
 		return this.byId( entityClass ).getReference( id );
 	}
 
@@ -1138,22 +1138,22 @@ public final class SessionImpl
 	}
 
 	@Override
-	public <T> T load(Class<T> entityClass, Serializable id, LockMode lockMode) throws HibernateException {
+	public <T> T load(Class<T> entityClass, Object id, LockMode lockMode) throws HibernateException {
 		return this.byId( entityClass ).with( new LockOptions( lockMode ) ).getReference( id );
 	}
 
 	@Override
-	public <T> T load(Class<T> entityClass, Serializable id, LockOptions lockOptions) throws HibernateException {
+	public <T> T load(Class<T> entityClass, Object id, LockOptions lockOptions) throws HibernateException {
 		return this.byId( entityClass ).with( lockOptions ).getReference( id );
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id, LockMode lockMode) throws HibernateException {
+	public Object load(String entityName, Object id, LockMode lockMode) throws HibernateException {
 		return this.byId( entityName ).with( new LockOptions( lockMode ) ).getReference( id );
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id, LockOptions lockOptions) throws HibernateException {
+	public Object load(String entityName, Object id, LockOptions lockOptions) throws HibernateException {
 		return this.byId( entityName ).with( lockOptions ).getReference( id );
 	}
 
@@ -1184,12 +1184,12 @@ public final class SessionImpl
 
 	@Override
 	public <T> IdentifierLoadAccessImpl<T> byId(Class<T> entityClass) {
-		return new IdentifierLoadAccessImpl<T>( entityClass );
+		return new IdentifierLoadAccessImpl<>( entityClass );
 	}
 
 	@Override
 	public <T> MultiIdentifierLoadAccess<T> byMultipleIds(Class<T> entityClass) {
-		return new MultiIdentifierLoadAccessImpl<T>( locateEntityPersister( entityClass ) );
+		return new MultiIdentifierLoadAccessImpl<>( locateEntityPersister( entityClass ) );
 	}
 
 	@Override
@@ -1204,7 +1204,7 @@ public final class SessionImpl
 
 	@Override
 	public <T> NaturalIdLoadAccess<T> byNaturalId(Class<T> entityClass) {
-		return new NaturalIdLoadAccessImpl<T>( entityClass );
+		return new NaturalIdLoadAccessImpl<>( entityClass );
 	}
 
 	@Override
@@ -1214,7 +1214,7 @@ public final class SessionImpl
 
 	@Override
 	public <T> SimpleNaturalIdLoadAccess<T> bySimpleNaturalId(Class<T> entityClass) {
-		return new SimpleNaturalIdLoadAccessImpl<T>( entityClass );
+		return new SimpleNaturalIdLoadAccessImpl<>( entityClass );
 	}
 
 	private void fireLoad(LoadEvent event, LoadType loadType) {

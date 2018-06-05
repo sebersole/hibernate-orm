@@ -279,7 +279,7 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 * Return the persistent instance of the given entity class with the given identifier,
 	 * obtaining the specified lock mode, assuming the instance exists.
 	 * <p/>
-	 * Convenient form of {@link #load(Class, Serializable, LockOptions)}
+	 * Convenient form of {@link #load(Class, Object, LockOptions)}
 	 *
 	 * @param theClass a persistent class
 	 * @param id a valid identifier of an existing persistent instance of the class
@@ -287,9 +287,17 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 *
 	 * @return the persistent instance or proxy
 	 *
-	 * @see #load(Class, Serializable, LockOptions)
+	 * @see #load(Class, Object, LockOptions)
 	 */
-	<T> T load(Class<T> theClass, Serializable id, LockMode lockMode);
+	<T> T load(Class<T> theClass, Object id, LockMode lockMode);
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #load(Class,Object,LockMode)} instead
+	 */
+	@Deprecated
+	default <T> T load(Class<T> theClass, Serializable id, LockMode lockMode) {
+		return load( theClass, (Object) id, lockMode );
+	}
 
 	/**
 	 * Return the persistent instance of the given entity class with the given identifier,
@@ -300,13 +308,21 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 * @param lockOptions contains the lock level
 	 * @return the persistent instance or proxy
 	 */
-	<T> T load(Class<T> theClass, Serializable id, LockOptions lockOptions);
+	<T> T load(Class<T> theClass, Object id, LockOptions lockOptions);
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #load(Class, Object, LockOptions)} instead
+	 */
+	@Deprecated
+	default <T> T load(Class<T> theClass, Serializable id, LockOptions lockOptions) {
+		return load( theClass, (Object) id, lockOptions );
+	}
 
 	/**
 	 * Return the persistent instance of the given entity class with the given identifier,
 	 * obtaining the specified lock mode, assuming the instance exists.
 	 * <p/>
-	 * Convenient form of {@link #load(String, Serializable, LockOptions)}
+	 * Convenient form of {@link #load(String, Object, LockOptions)}
 	 *
 	 * @param entityName a persistent class
 	 * @param id a valid identifier of an existing persistent instance of the class
@@ -314,9 +330,17 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 *
 	 * @return the persistent instance or proxy
 	 *
-	 * @see #load(String, Serializable, LockOptions)
+	 * @see #load(String, Object, LockOptions)
 	 */
-	Object load(String entityName, Serializable id, LockMode lockMode);
+	Object load(String entityName, Object id, LockMode lockMode);
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #load(String, Object, LockMode)} instead
+	 */
+	@Deprecated
+	default Object load(String entityName, Serializable id, LockMode lockMode) {
+		return load( entityName, (Object) id, lockMode );
+	}
 
 	/**
 	 * Return the persistent instance of the given entity class with the given identifier,
@@ -328,7 +352,15 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 *
 	 * @return the persistent instance or proxy
 	 */
-	Object load(String entityName, Serializable id, LockOptions lockOptions);
+	Object load(String entityName, Object id, LockOptions lockOptions);
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #load(String, Object, LockOptions)} instead
+	 */
+	@Deprecated
+	default Object load(String entityName, Serializable id, LockOptions lockOptions) {
+		return load( entityName, (Object) id, lockOptions );
+	}
 
 	/**
 	 * Return the persistent instance of the given entity class with the given identifier,
@@ -344,7 +376,15 @@ public interface Session extends SharedSessionContract, EntityManager, AutoClose
 	 *
 	 * @return the persistent instance or proxy
 	 */
-	<T> T load(Class<T> theClass, Serializable id);
+	<T> T load(Class<T> theClass, Object id);
+
+	/**
+	 * @deprecated (since 6.0) Use {@link #load(Class, Object)}
+	 */
+	@Deprecated
+	default <T> T load(Class<T> theClass, Serializable id) {
+		return load( theClass, (Object) id );
+	}
 
 	/**
 	 * Return the persistent instance of the given entity class with the given identifier,

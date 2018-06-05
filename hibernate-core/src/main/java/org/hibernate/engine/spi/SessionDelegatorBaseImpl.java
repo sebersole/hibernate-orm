@@ -6,7 +6,6 @@
  */
 package org.hibernate.engine.spi;
 
-import java.io.Serializable;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
@@ -657,27 +656,27 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public <T> T load(Class<T> theClass, Serializable id, LockMode lockMode) {
+	public <T> T load(Class<T> theClass, Object id, LockMode lockMode) {
 		return delegate.load( theClass, id, lockMode );
 	}
 
 	@Override
-	public <T> T load(Class<T> theClass, Serializable id, LockOptions lockOptions) {
+	public <T> T load(Class<T> theClass, Object id, LockOptions lockOptions) {
 		return delegate.load( theClass, id, lockOptions );
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id, LockMode lockMode) {
+	public Object load(String entityName, Object id, LockMode lockMode) {
 		return delegate.load( entityName, id, lockMode );
 	}
 
 	@Override
-	public Object load(String entityName, Serializable id, LockOptions lockOptions) {
+	public Object load(String entityName, Object id, LockOptions lockOptions) {
 		return delegate.load( entityName, id, lockOptions );
 	}
 
 	@Override
-	public <T> T load(Class<T> theClass, Serializable id) {
+	public <T> T load(Class<T> theClass, Object id) {
 		return delegate.load( theClass, id );
 	}
 
