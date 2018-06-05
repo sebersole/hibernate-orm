@@ -151,7 +151,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 				.assemble( (Serializable) identifierHydratedState );
 
 		//		2) build and register an EntityKey
-		this.entityKey = new EntityKey( (Serializable) id, concretePersister.getEntityDescriptor() );
+		this.entityKey = new EntityKey( id, concretePersister.getEntityDescriptor() );
 
 		//		3) schedule the EntityKey for batch loading, if possible
 		if ( shouldBatchFetch() && concretePersister.getEntityDescriptor().isBatchLoadable() ) {
@@ -241,7 +241,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 		// this isEntityReturn bit is just for entity loaders, not hql/criteria
 		if ( isEntityReturn() ) {
-			final Serializable requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
+			final Object requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
 			if ( requestedEntityId != null && requestedEntityId.equals( entityKey.getIdentifier() ) ) {
 				entityInstance = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalObject();
 			}
