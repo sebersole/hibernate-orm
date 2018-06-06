@@ -64,14 +64,18 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener i
 	private Object[] postUpdateDBState(PostUpdateEvent event) {
 		final Object[] newDbState = event.getState().clone();
 		if ( event.getOldState() != null ) {
-			final EntityDescriptor entityPersister = event.getPersister();
-			for ( int i = 0; i < entityPersister.getPropertyNames().length; ++i ) {
-				if ( !entityPersister.getPropertyUpdateability()[i] ) {
-					// Assuming that PostUpdateEvent#getOldState() returns database state of the record beforeQuery modification.
-					// Otherwise, we would have to execute SQL query to be sure of @Column(updatable = false) column value.
-					newDbState[i] = event.getOldState()[i];
-				}
-			}
+			final EntityDescriptor<?> entityDescriptor = event.getPersister();
+			entityDescriptor.visitStateArrayContributors(
+					contributor -> {
+						int index = contributor.getStateArrayPosition();
+						if ( !contributor.isUpdatable() ) {
+							// Assuming that PostUpdateEvent#getOldState() returns database state of the record before
+							// modification. Otherwise, we would have to execute SQL query to be sure of
+							// @Column(updatable = false) column value.
+							newDbState[ index ] = event.getOldState()[ index ];
+						}
+					}
+			);
 		}
 		return newDbState;
 	}

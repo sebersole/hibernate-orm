@@ -13,6 +13,7 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.tools.ArraysTools;
+import org.hibernate.envers.internal.tools.EntityTools;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -22,7 +23,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class DelWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit {
 	private final Object[] state;
-	private final EntityDescriptor entityPersister;
+	private final EntityDescriptor entityDescriptor;
 	private final String[] propertyNames;
 
 	public DelWorkUnit(
@@ -30,13 +31,13 @@ public class DelWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			String entityName,
 			AuditService auditService,
 			Object id,
-			EntityDescriptor entityPersister,
+			EntityDescriptor entityDescriptor,
 			Object[] state) {
 		super( sessionImplementor, entityName, auditService, id, RevisionType.DEL );
 
 		this.state = state;
-		this.entityPersister = entityPersister;
-		this.propertyNames = entityPersister.getPropertyNames();
+		this.entityDescriptor = entityDescriptor;
+		this.propertyNames = EntityTools.getPropertyNames( entityDescriptor );
 	}
 
 	@Override
@@ -77,7 +78,15 @@ public class DelWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			// Return null if object's state has not changed.
 			return null;
 		}
-		return new ModWorkUnit( sessionImplementor, entityName, auditService, id, entityPersister, second.getState(), state );
+		return new ModWorkUnit(
+				sessionImplementor,
+				entityName,
+				auditService,
+				id,
+				entityDescriptor,
+				second.getState(),
+				state
+		);
 	}
 
 	@Override

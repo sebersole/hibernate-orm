@@ -88,8 +88,8 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	}
 
 	default Object replace(
-			Object originalValue,
-			Object targetValue,
+			J originalValue,
+			J targetValue,
 			Object owner,
 			Map copyCache,
 			SessionImplementor session) {
