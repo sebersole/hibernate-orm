@@ -260,6 +260,8 @@ public abstract class AbstractSaveEventListener
 		// Put a placeholder in entries, so we don't recurse back and try to save() the
 		// same object again. QUESTION: should this be done before onSave() is called?
 		// likewise, should it be done before onUpdate()?
+
+		// todo (6.0) : Should we do something here like `org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState#registerLoadingEntity` ?
 		EntityEntry original = source.getPersistenceContext().addEntry(
 				entity,
 				Status.SAVING,

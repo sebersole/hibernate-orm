@@ -133,6 +133,8 @@ public class ForeignKey implements Exportable {
 					.collect( Collectors.toList() );
 		}
 
+		Column findReferringColumn(Column targetColumn);
+
 		interface ColumnMapping {
 			Column getReferringColumn();
 			Column getTargetColumn();

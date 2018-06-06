@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -152,6 +151,11 @@ public class ProcedureCallImpl<R>
 					}
 
 					@Override
+					public void addQuerySpaces(Collection<String> spaces) {
+						querySpaces.addAll( spaces );
+					}
+
+					@Override
 					public void addQueryResult(QueryResult... queryResults) {
 						for ( QueryResult queryResult : queryResults ) {
 							queryResult.registerInitializers( initializers::add );
@@ -274,6 +278,11 @@ public class ProcedureCallImpl<R>
 						@Override
 						public void addQuerySpaces(String... spaces) {
 							Collections.addAll( querySpaces, spaces );
+						}
+
+						@Override
+						public void addQuerySpaces(Collection<String> spaces) {
+							querySpaces.addAll( spaces );
 						}
 
 						@Override
@@ -557,8 +566,8 @@ public class ProcedureCallImpl<R>
 	}
 
 	@SuppressWarnings("WeakerAccess")
-	protected void addSynchronizedQuerySpaces(EntityDescriptor persister) {
-		synchronizedQuerySpaces().addAll( Arrays.asList( persister.getAffectedTableNames() ) );
+	protected void addSynchronizedQuerySpaces(EntityDescriptor<?> descriptor) {
+		synchronizedQuerySpaces().addAll( descriptor.getAffectedTableNames() );
 	}
 
 	@Override
@@ -617,7 +626,7 @@ public class ProcedureCallImpl<R>
 	public boolean execute() {
 		try {
 			final Output rtn = outputs().getCurrent();
-			return rtn != null && ResultSetOutput.class.isInstance( rtn );
+			return ResultSetOutput.class.isInstance( rtn );
 		}
 		catch (NoMoreOutputsException e) {
 			return false;

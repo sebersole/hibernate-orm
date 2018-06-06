@@ -21,11 +21,31 @@ import org.hibernate.annotations.NaturalId;
 @Entity
 public class SimpleEntity {
 	private Integer id;
-	private String someString;
-	private Integer someInteger;
-	private Long someLong;
+
+	// NOTE : alphabetical
 	private Date someDate;
 	private Instant someInstant;
+	private Integer someInteger;
+	private Long someLong;
+	private String someString;
+
+	public SimpleEntity() {
+	}
+
+	public SimpleEntity(
+			Integer id,
+			Date someDate,
+			Instant someInstant,
+			Integer someInteger,
+			Long someLong,
+			String someString) {
+		this.id = id;
+		this.someDate = someDate;
+		this.someInstant = someInstant;
+		this.someInteger = someInteger;
+		this.someLong = someLong;
+		this.someString = someString;
+	}
 
 	@Id
 	public Integer getId() {

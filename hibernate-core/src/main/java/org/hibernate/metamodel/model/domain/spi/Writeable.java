@@ -6,7 +6,9 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.relational.spi.Column;
 
 /**
  * Represents a value that can ultimately be written to the database.  The process of
@@ -16,9 +18,12 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  *		* For components, this is (1) splits the composite into the individual sub-values array and then (2)
  *			applies any value conversions on these...
  *
+ * <D> The domain representation of the writable
+ * <I> The "intermediate" or hydrated form of the writeable - this is typically `Object` or `Object[]`
+ *
  * @author Steve Ebersole
  */
-public interface Writeable<D,I,R> {
+public interface Writeable<D,I> {
 	/**
 	 * Produce a multi-dimensional array of extracted simple value
 	 */
@@ -27,5 +32,15 @@ public interface Writeable<D,I,R> {
 	/**
 	 * Produce a flattened array from dehydrated state
 	 */
-	R dehydrate(I values, SharedSessionContractImplementor session);
+	default void dehydrate(
+			I value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@FunctionalInterface
+	interface JdbcValueCollector {
+		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
+	}
 }

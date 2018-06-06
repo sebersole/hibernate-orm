@@ -245,9 +245,4 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
-
-	@Override
-	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
-	}
 }

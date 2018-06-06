@@ -6,29 +6,58 @@
  */
 package org.hibernate.loader.internal;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
-import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
+import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
+import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
+import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
+import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
+import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
+import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
+import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.ast.tree.spi.SelectStatement;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
+import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.ast.tree.spi.from.TableSpace;
+import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
+import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
+import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
+import org.hibernate.sql.exec.internal.LoadParameterBindingContext;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * @author Steve Ebersole
@@ -36,11 +65,15 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> {
 	private final EntityDescriptor<T> entityDescriptor;
 
+	private final SqlAstSelectDescriptor databaseSnapshotSelectAst;
+
 	private EnumMap<LockMode,JdbcSelect> selectByLockMode = new EnumMap<>( LockMode.class );
 	private EnumMap<InternalFetchProfileType,JdbcSelect> selectByInternalCascadeProfile;
 
 	public StandardSingleIdEntityLoader(EntityDescriptor<T> entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
+
+		this.databaseSnapshotSelectAst = generateDatabaseSnapshotSelect( entityDescriptor );
 
 // todo (6.0) : re-enable this pre-caching after model processing is more fully complete
 //		ParameterBindingContext context = new TemplateParameterBindingContext( entityDescriptor.getFactory(), 1 );
@@ -54,9 +87,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 	public T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session) {
 		final List<Object> loadIds = Collections.singletonList( id );
 
-		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
+		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
 				session.getFactory(),
-				QueryParameterBindings.NO_PARAM_BINDINGS,
 				loadIds
 		);
 
@@ -170,5 +202,200 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 		}
 
 		return true;
+	}
+
+	@Override
+	public Object[] loadDatabaseSnapshot(Object id, SharedSessionContractImplementor session) {
+		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
+				session.getFactory(),
+				id
+		);
+
+		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
+				databaseSnapshotSelectAst,
+				parameterBindingContext
+		);
+
+		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
+				jdbcSelect,
+				new ExecutionContext() {
+					@Override
+					public SharedSessionContractImplementor getSession() {
+						return session;
+					}
+
+					@Override
+					public QueryOptions getQueryOptions() {
+						return QueryOptions.NONE;
+					}
+
+					@Override
+					public ParameterBindingContext getParameterBindingContext() {
+						return parameterBindingContext;
+					}
+
+					@Override
+					public Callback getCallback() {
+						return null;
+					}
+				},
+				null
+		);
+
+		if ( list.isEmpty() ) {
+			return null;
+		}
+
+		return (Object[]) list.get( 0 );
+	}
+
+	private static SqlAstSelectDescriptor generateDatabaseSnapshotSelect(EntityDescriptor<?> entityDescriptor) {
+		final QuerySpec rootQuerySpec = new QuerySpec( true );
+		final SelectStatement selectStatement = new SelectStatement( rootQuerySpec );
+
+		final TableSpace rootTableSpace = rootQuerySpec.getFromClause().makeTableSpace();
+
+		final SqlAliasBaseGenerator aliasBaseGenerator = new SqlAliasBaseManager();
+
+		final EntityTableGroup rootTableGroup = entityDescriptor.createRootTableGroup(
+				new TableGroupInfo() {
+					@Override
+					public String getUniqueIdentifier() {
+						return "root";
+					}
+
+					@Override
+					public String getIdentificationVariable() {
+						return null;
+					}
+
+					@Override
+					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+						return entityDescriptor;
+					}
+				},
+				new RootTableGroupContext() {
+					@Override
+					public void addRestriction(Predicate predicate) {
+						rootQuerySpec.addRestriction( predicate );
+					}
+
+					@Override
+					public QuerySpec getQuerySpec() {
+						return rootQuerySpec;
+					}
+
+					@Override
+					public TableSpace getTableSpace() {
+						return rootTableSpace;
+					}
+
+					@Override
+					public SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
+						return aliasBaseGenerator;
+					}
+
+					@Override
+					public JoinType getTableReferenceJoinType() {
+						return null;
+					}
+
+					@Override
+					public LockOptions getLockOptions() {
+						return LockOptions.NONE;
+					}
+				}
+		);
+
+		final SelectClause selectClause = rootQuerySpec.getSelectClause();
+		final List<QueryResult> queryResults = new ArrayList<>();
+
+		final SqlExpressionResolver sqlExpressionResolver = new SqlExpressionResolver() {
+			private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
+
+			@Override
+			public Expression resolveSqlExpression(
+					ColumnReferenceQualifier qualifier,
+					QualifiableSqlExpressable sqlSelectable) {
+				return qualifier.qualify( sqlSelectable );
+			}
+
+			@Override
+			public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
+				return sqlSelectable.createExpression();
+			}
+
+			@Override
+			public SqlSelection resolveSqlSelection(Expression expression) {
+				final SqlSelection existing;
+				if ( sqlSelectionMap == null ) {
+					sqlSelectionMap = new HashMap<>();
+					existing = null;
+				}
+				else {
+					existing = sqlSelectionMap.get( expression.getExpressable() );
+				}
+
+				if ( existing != null ) {
+					return existing;
+				}
+
+				final SqlSelection sqlSelection = expression.createSqlSelection( sqlSelectionMap.size() );
+				selectClause.addSqlSelection( sqlSelection );
+				sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
+
+				queryResults.add(
+						new ScalarQueryResultImpl(
+								null,
+								sqlSelection,
+								(BasicValuedExpressableType) expression.getType()
+						)
+				);
+
+				return sqlSelection;
+			}
+		};
+
+		final SqlSelectionResolutionContext resolutionContext = new SqlSelectionResolutionContext() {
+			@Override
+			public SessionFactoryImplementor getSessionFactory() {
+				return entityDescriptor.getFactory();
+			}
+
+			@Override
+			public SqlExpressionResolver getSqlSelectionResolver() {
+				return sqlExpressionResolver;
+			}
+
+			@Override
+			public boolean shouldCreateShallowEntityResult() {
+				return true;
+			}
+		};
+
+		final List columnReferences = entityDescriptor.getHierarchy()
+				.getIdentifierDescriptor()
+				.resolveColumnReferences( rootTableGroup, resolutionContext );
+		final Expression idExpression;
+		if ( columnReferences.size() == 1 ) {
+			idExpression = (Expression) columnReferences.get( 0 );
+		}
+		else {
+			idExpression = new SqlTuple( columnReferences );
+		}
+
+		rootQuerySpec.addRestriction(
+				new RelationalPredicate(
+						RelationalPredicate.Operator.EQUAL,
+						idExpression,
+						new LoadIdParameter( entityDescriptor.getHierarchy().getIdentifierDescriptor() )
+				)
+		);
+
+		return new SqlAstSelectDescriptorImpl(
+				selectStatement,
+				queryResults,
+				entityDescriptor.getAffectedTableNames()
+		);
 	}
 }

@@ -71,6 +71,16 @@ public class ColumnMappingsImpl implements ForeignKey.ColumnMappings {
 		return columnMappings;
 	}
 
+	@Override
+	public Column findReferringColumn(Column targetColumn) {
+		for ( ColumnMapping columnMapping : columnMappings ) {
+			if ( columnMapping.getTargetColumn() == targetColumn ) {
+				return columnMapping.getReferringColumn();
+			}
+		}
+		throw new IllegalArgumentException( targetColumn + " is not a know targetColumn for this ForeignKey " + toString() );
+	}
+
 	private List<PhysicalColumn> getColumns(Function<ColumnMapping, PhysicalColumn> mapper) {
 		return columnMappings
 				.stream()

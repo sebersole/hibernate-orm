@@ -18,9 +18,42 @@ import javax.persistence.ManyToOne;
 @SuppressWarnings("unused")
 public class EntityWithManyToOneSelfReference {
 	private Integer id;
+
+	// alphabetical
 	private String name;
-	private Integer someInteger;
 	private EntityWithManyToOneSelfReference other;
+	private Integer someInteger;
+
+	private EntityWithManyToOneSelfReference() {
+	}
+
+	public EntityWithManyToOneSelfReference(Integer id, String name, Integer someInteger) {
+		this.id = id;
+		this.name = name;
+		this.someInteger = someInteger;
+	}
+
+	public EntityWithManyToOneSelfReference(
+			Integer id,
+			String name,
+			Integer someInteger,
+			EntityWithManyToOneSelfReference other) {
+		this.id = id;
+		this.name = name;
+		this.someInteger = someInteger;
+		this.other = other;
+	}
+
+	public EntityWithManyToOneSelfReference(
+			Integer id,
+			String name,
+			EntityWithManyToOneSelfReference other,
+			Integer someInteger) {
+		this.id = id;
+		this.name = name;
+		this.other = other;
+		this.someInteger = someInteger;
+	}
 
 	@Id
 	public Integer getId() {
@@ -47,5 +80,13 @@ public class EntityWithManyToOneSelfReference {
 
 	public void setOther(EntityWithManyToOneSelfReference other) {
 		this.other = other;
+	}
+
+	public Integer getSomeInteger() {
+		return someInteger;
+	}
+
+	public void setSomeInteger(Integer someInteger) {
+		this.someInteger = someInteger;
 	}
 }

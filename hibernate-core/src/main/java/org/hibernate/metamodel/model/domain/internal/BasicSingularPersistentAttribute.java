@@ -202,11 +202,13 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
 		if ( valueConverter != null ) {
-			return valueConverter.toRelationalValue( value, session );
+			value = valueConverter.toRelationalValue( value, session );
 		}
-		return value;
+		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
 }

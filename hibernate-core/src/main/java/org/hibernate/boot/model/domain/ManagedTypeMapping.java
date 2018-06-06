@@ -7,7 +7,6 @@
 package org.hibernate.boot.model.domain;
 
 import java.util.List;
-
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.metamodel.model.domain.RepresentationMode;
@@ -24,6 +23,10 @@ public interface ManagedTypeMapping {
 	 * The name of this managed type.  Generally the class name.
 	 */
 	String getName();
+
+	default Object getDiscriminatorValue() {
+		return null;
+	}
 
 	JavaTypeMapping getJavaTypeMapping();
 

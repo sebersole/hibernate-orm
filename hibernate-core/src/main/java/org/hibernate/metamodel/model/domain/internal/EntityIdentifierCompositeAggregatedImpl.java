@@ -181,13 +181,17 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
 		final Object[] values = (Object[]) value;
 		getEmbeddedDescriptor().visitStateArrayContributors(
-				contributor -> values[ contributor.getStateArrayPosition() ] =
-						contributor.dehydrate( values[ contributor.getStateArrayPosition() ], session )
+				contributor -> contributor.dehydrate(
+						values[ contributor.getStateArrayPosition() ],
+						jdbcValueCollector,
+						session
+				)
 		);
-		return values;
 	}
 }

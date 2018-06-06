@@ -7,6 +7,7 @@
 package org.hibernate.action.internal;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
@@ -102,7 +103,7 @@ public abstract class CollectionAction implements Executable, Serializable, Comp
 	}
 
 	@Override
-	public String[] getPropertySpaces() {
+	public Set<String> getPropertySpaces() {
 		return collectionDescriptor.getCollectionSpaces();
 	}
 

@@ -7,6 +7,7 @@
 package org.hibernate.action.internal;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.action.spi.AfterTransactionCompletionProcess;
@@ -152,7 +153,7 @@ public abstract class EntityAction
 	}
 
 	@Override
-	public final String[] getPropertySpaces() {
+	public final Set<String> getPropertySpaces() {
 		return entityDescriptor.getAffectedTableNames();
 	}
 

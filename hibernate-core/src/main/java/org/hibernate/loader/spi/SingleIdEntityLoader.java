@@ -21,4 +21,6 @@ public interface SingleIdEntityLoader<T> extends Loader {
 	}
 
 	T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session);
+
+	Object[] loadDatabaseSnapshot(Object id, SharedSessionContractImplementor session);
 }

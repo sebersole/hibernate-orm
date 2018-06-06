@@ -25,6 +25,7 @@ import javax.persistence.metamodel.Attribute;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.PropertyValueException;
 import org.hibernate.action.internal.AbstractEntityInsertAction;
 import org.hibernate.action.internal.BulkOperationCleanupAction;
@@ -48,8 +49,6 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.Type;
 
 /**
@@ -576,8 +575,7 @@ public class ActionQueue {
 
 	private static boolean areTablesToBeUpdated(UnresolvedEntityInsertActions actions, @SuppressWarnings("rawtypes") Set tableSpaces) {
 		for ( Executable action : actions.getDependentEntityInsertActions() ) {
-			final Serializable[] spaces = action.getPropertySpaces();
-			for ( Serializable space : spaces ) {
+			for ( Serializable space : action.getPropertySpaces() ) {
 				if ( tableSpaces.contains( space ) ) {
 					LOG.debugf( "Changes must be flushed to space: %s", space );
 					return true;

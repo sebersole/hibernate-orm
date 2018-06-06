@@ -126,12 +126,12 @@ public class ExecutableList<E extends Executable & Comparable & Serializable> im
 	public Set<String> getQuerySpaces() {
 		if ( querySpaces == null ) {
 			for ( E e : executables ) {
-				String[] propertySpaces = e.getPropertySpaces();
-				if ( propertySpaces != null && propertySpaces.length > 0 ) {
+				Set<String> propertySpaces = e.getPropertySpaces();
+				if ( CollectionHelper.isNotEmpty( propertySpaces ) ) {
 					if( querySpaces == null ) {
 						querySpaces = new HashSet<>();
 					}
-					Collections.addAll( querySpaces, propertySpaces );
+					this.querySpaces.addAll( propertySpaces );
 				}
 			}
 			if( querySpaces == null ) {
@@ -166,7 +166,7 @@ public class ExecutableList<E extends Executable & Comparable & Serializable> im
 		//
 		// An alternative here is to use a "multiset" which is a specialized set that keeps a reference count
 		// associated to each entry.  But that is likely overkill here.
-		if ( e.getPropertySpaces() != null && e.getPropertySpaces().length > 0 ) {
+		if ( e.getPropertySpaces() != null && e.getPropertySpaces().size() > 0 ) {
 			querySpaces = null;
 		}
 		return e;
@@ -190,7 +190,7 @@ public class ExecutableList<E extends Executable & Comparable & Serializable> im
 		if ( n > 0 ) {
 			int size = executables.size();
 			for ( Executable e : executables.subList( size - n, size ) ) {
-				if ( e.getPropertySpaces() != null && e.getPropertySpaces().length > 0 ) {
+				if ( e.getPropertySpaces() != null && e.getPropertySpaces().size() > 0 ) {
 					// querySpaces could now be incorrect
 					querySpaces = null;
 					break;
@@ -230,9 +230,12 @@ public class ExecutableList<E extends Executable & Comparable & Serializable> im
 			}
 		}
 
-		String[] querySpaces = executable.getPropertySpaces();
-		if ( this.querySpaces != null && querySpaces != null ) {
-			Collections.addAll( this.querySpaces, querySpaces );
+		final Set<String> querySpaces = executable.getPropertySpaces();
+		if ( ! CollectionHelper.isEmpty( querySpaces ) ) {
+			if ( this.querySpaces == null ) {
+				this.querySpaces = new HashSet<>();
+			}
+			this.querySpaces.addAll( querySpaces );
 		}
 
 		return added;

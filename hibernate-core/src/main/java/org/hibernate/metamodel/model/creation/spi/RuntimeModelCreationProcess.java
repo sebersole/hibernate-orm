@@ -204,14 +204,14 @@ public class RuntimeModelCreationProcess {
 			final int initialEmbeddableCount = embeddableRuntimeByBoot.size();
 			for ( Map.Entry<EmbeddedValueMappingImplementor, EmbeddedTypeDescriptor> entry : embeddableRuntimeByBoot.entrySet() ) {
 				entry.getValue().finishInitialization( entry.getKey(), creationContext );
-				moreEmbeddables = embeddableRuntimeByBoot.size() > initialEmbeddableCount;
 			}
+			moreEmbeddables = embeddableRuntimeByBoot.size() > initialEmbeddableCount;
 
 			final int initialCollectionCount = collectonRuntimeByBoot.size();
 			for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectonRuntimeByBoot.entrySet() ) {
 				entry.getValue().finishInitialization( entry.getKey(), creationContext );
-				moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
 			}
+			moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
 		}
 
 		descriptorFactory.finishUp( creationContext );

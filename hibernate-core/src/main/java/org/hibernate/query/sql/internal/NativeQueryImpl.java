@@ -597,6 +597,15 @@ public class NativeQueryImpl<R>
 		return this;
 	}
 
+	protected void addQuerySpaces(Collection<String> spaces) {
+		if ( spaces != null ) {
+			if ( affectedTableNames == null ) {
+				affectedTableNames = new HashSet<>();
+			}
+			affectedTableNames.addAll( spaces );
+		}
+	}
+
 	protected void addQuerySpaces(String... spaces) {
 		if ( spaces != null ) {
 			if ( affectedTableNames == null ) {

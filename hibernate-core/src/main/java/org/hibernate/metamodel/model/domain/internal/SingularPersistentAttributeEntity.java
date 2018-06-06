@@ -6,10 +6,15 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import javax.persistence.TemporalType;
 
+import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
@@ -21,6 +26,7 @@ import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
@@ -28,6 +34,7 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey.ColumnMappings;
 import org.hibernate.property.access.spi.PropertyAccess;
@@ -55,14 +62,20 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
+import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.internal.EntityFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.spi.TypeConfiguration;
 
 
 /**
@@ -70,7 +83,7 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
  */
 public class SingularPersistentAttributeEntity<O,J>
 		extends AbstractNonIdSingularPersistentAttribute<O,J>
-		implements JoinablePersistentAttribute<O,J>, EntityValuedNavigable<J>, Fetchable<J>, TableGroupJoinProducer {
+		implements JoinablePersistentAttribute<O,J>, EntityValuedNavigable<J>, Fetchable<J>, AllowableParameterType<J>, TableGroupJoinProducer {
 
 	private final SingularAttributeClassification classification;
 	private final PersistentAttributeType persistentAttributeType;
@@ -300,12 +313,38 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		if ( value == null ) {
+			return null;
+		}
+
+		if ( ! getEntityDescriptor().isInstance( value ) ) {
+			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
+		}
+
+		// todo (6.0) : assumes FK refers to owner's PK which is not always true
+		return getEntityDescriptor().getIdentifier( value, session );
 	}
 
 	@Override
-	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		// todo (6.0) (fk-to-id) : another place where we assume association fks point to the pks
+		getEntityDescriptor().getHierarchy().getIdentifierDescriptor().dehydrate(
+				value,
+				(jdbcValue, type, targetColumn) -> jdbcValueCollector.collect(
+						jdbcValue,
+						getEntityDescriptor().getHierarchy().getIdentifierDescriptor(),
+						foreignKey.getColumnMappings().findReferringColumn( targetColumn )
+				),
+				session
+		);
+	}
+
+	@Override
+	public List<Column> getColumns() {
+		return foreignKey.getColumnMappings().getReferringColumns();
 	}
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
@@ -391,7 +430,43 @@ public class SingularPersistentAttributeEntity<O,J>
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		// todo (6.0) : handle fetching here?  or at a "higher level"?
+		//
+		// 		for now we just load the FK
+		if ( foreignKey.getColumnMappings().getReferringColumns().size() == 1 ) {
+			return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+					resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+							qualifier,
+							foreignKey.getColumnMappings().getReferringColumns().get( 0 )
+					)
+			);
+		}
+
+		final List<SqlSelection> selections = new ArrayList<>();
+		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
+			selections.add(
+					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+									qualifier,
+									column
+							)
+					)
+			);
+		}
+
+		return new AggregateSqlSelectionGroupNode( selections );
+	}
+
+	@Override
+	public Object resolveHydratedState(
+			Object hydratedForm,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		if ( hydratedForm == null ) {
+			return null;
+		}
+
+		return null;
 	}
 
 	@Override
@@ -402,8 +477,53 @@ public class SingularPersistentAttributeEntity<O,J>
 			SharedSessionContractImplementor session) {
 		if ( isNullable()
 				&& getAttributeTypeClassification() != SingularAttributeClassification.ONE_TO_ONE
-				&& nullifier.isNullifiable( getNavigableName(), value ) ) {
-			nonNullableTransientEntities.add( getNavigableName(), value );
+				&& nullifier.isNullifiable( getEntityDescriptor().getEntityName(), value ) ) {
+			nonNullableTransientEntities.add( getEntityDescriptor().getEntityName(), value );
 		}
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// AllowableParameterType
+
+
+	private final ValueBinder valueBinder = new ValueBinder() {
+		@Override
+		@SuppressWarnings("unchecked")
+		public void bind(
+				PreparedStatement st, Object value, int index, WrapperOptions options) throws SQLException {
+			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
+			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, index, options );
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public void bind(
+				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
+			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
+			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, name, options );
+		}
+	};
+
+	@Override
+	public ValueBinder<J> getValueBinder() {
+		return valueBinder;
+	}
+
+	@Override
+	public ValueExtractor getValueExtractor() {
+		return null;
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersToBind() {
+		return foreignKey.getColumnMappings().getColumnMappings().size();
+	}
+
+	@Override
+	public AllowableParameterType resolveTemporalPrecision(
+			TemporalType temporalType,
+			TypeConfiguration typeConfiguration) {
+		throw new UnsupportedOperationException( "ManyToOne cannot be treated as temporal type" );
 	}
 }

@@ -7,8 +7,9 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.io.Serializable;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
@@ -105,7 +106,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private final org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor keyJavaTypeDescriptor;
 
-	private final String[] spaces;
+	private final Set<String> spaces;
 
 	private final int batchSize;
 
@@ -144,16 +145,13 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		cacheAccess = sessionFactory.getCache().getCollectionRegionAccess( getNavigableRole() );
 
 		int spacesSize = 1 + collectionBinding.getSynchronizedTables().size();
-		spaces = new String[spacesSize];
-		spaces[0] = collectionBinding
-				.getMappedTable()
-				.getNameIdentifier()
-				.render( sessionFactory.getServiceRegistry().getService( JdbcServices.class ).getDialect() );
-
-		Iterator iter = collectionBinding.getSynchronizedTables().iterator();
-		for ( int i = 1; i < spacesSize; i++ ) {
-			spaces[i] = (String) iter.next();
-		}
+		spaces = new HashSet<>( spacesSize );
+		spaces.add(
+				collectionBinding.getMappedTable()
+						.getNameIdentifier()
+						.render( sessionFactory.getServiceRegistry().getService( JdbcServices.class ).getDialect() )
+		);
+		spaces.addAll( collectionBinding.getSynchronizedTables() );
 
 		this.keyJavaTypeDescriptor = collectionBinding.getKey().getJavaTypeMapping().resolveJavaTypeDescriptor();
 
@@ -197,10 +195,16 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		return descriptor;
 	}
 
+	private boolean fullyInitialized;
+
 	@Override
 	public void finishInitialization(
 			Collection collectionBinding,
 			RuntimeModelCreationContext creationContext) {
+
+		if ( fullyInitialized ) {
+			return;
+		}
 
 		// todo (6.0) : this is technically not the `separateCollectionTable` as for one-to-many it returns the element entity's table.
 		//		need to decide how we want to model tables for collections.
@@ -242,6 +246,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.elementDescriptor = resolveElementDescriptor( this, collectionBinding, separateCollectionTable, creationContext );
 
 		this.javaTypeDescriptor = resolveCollectionJtd( creationContext );
+
+		this.fullyInitialized = true;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -359,7 +365,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public String[] getCollectionSpaces() {
+	public Set<String> getCollectionSpaces() {
 		return spaces;
 	}
 

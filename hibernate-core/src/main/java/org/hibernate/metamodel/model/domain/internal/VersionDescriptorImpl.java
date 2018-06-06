@@ -155,7 +155,10 @@ public class VersionDescriptorImpl<O,J>
 	}
 
 	@Override
-	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
-		return value;
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
 }

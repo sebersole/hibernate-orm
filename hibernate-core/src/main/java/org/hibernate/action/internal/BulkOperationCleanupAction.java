@@ -7,8 +7,6 @@
 package org.hibernate.action.internal;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,7 +23,6 @@ import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -41,7 +38,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  * @author Steve Ebersole
  */
 public class BulkOperationCleanupAction implements Executable, Serializable {
-	private final String[] affectedTableSpaces;
+	private final Set<String> affectedTableSpaces;
 
 	private final Set<EntityCleanup> entityCleanups = new HashSet<>();
 	private final Set<CollectionCleanup> collectionCleanups = new HashSet<>();
@@ -58,11 +55,10 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 		final SessionFactoryImplementor factory = session.getFactory();
 		final LinkedHashSet<String> spacesList = new LinkedHashSet<>();
 		for ( EntityDescriptor entityDescriptor : affectedEntities ) {
-			spacesList.addAll( Arrays.asList( (String[]) entityDescriptor.getAffectedTableNames() ) );
+			spacesList.addAll( entityDescriptor.getAffectedTableNames() );
 
 			final EntityDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
-			final String[] entityTableNames = rootEntityDescriptor.getAffectedTableNames();
-			Collections.addAll( spacesList, entityTableNames );
+			spacesList.addAll(  rootEntityDescriptor.getAffectedTableNames() );
 
 			if ( entityDescriptor.canWriteToCache() ) {
 				final EntityDataAccess entityDataAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
@@ -90,7 +86,7 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 			}
 		}
 
-		this.affectedTableSpaces = spacesList.toArray( new String[ spacesList.size() ] );
+		this.affectedTableSpaces = new HashSet<>( spacesList );
 	}
 
 	/**
@@ -116,9 +112,9 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 		factory.getMetamodel().visitEntityHierarchies(
 				entityHierarchy -> {
 					final EntityDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
-					final String[] affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
+					final Set<String> affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
 					if ( affectedEntity( tableSpaces, affectedTableNames ) ) {
-						spacesList.addAll( Arrays.asList( affectedTableNames ) );
+						spacesList.addAll( affectedTableNames );
 
 						if ( rootEntityDescriptor.canWriteToCache() ) {
 							entityCleanups.add( new EntityCleanup( entityHierarchy.getEntityCacheAccess(), session ) );
@@ -140,7 +136,7 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 				}
 		);
 
-		this.affectedTableSpaces = spacesList.toArray( new String[ spacesList.size() ] );
+		this.affectedTableSpaces = new HashSet<>( spacesList );
 	}
 
 
@@ -169,8 +165,21 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 		return false;
 	}
 
+	private boolean affectedEntity(Set affectedTableSpaces, Set checkTableSpaces) {
+		if ( affectedTableSpaces == null || affectedTableSpaces.isEmpty() ) {
+			return true;
+		}
+
+		for ( Object checkTableSpace : checkTableSpaces ) {
+			if ( affectedTableSpaces.contains( checkTableSpace ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
-	public String[] getPropertySpaces() {
+	public Set<String> getPropertySpaces() {
 		return affectedTableSpaces;
 	}
 

@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.persistence.metamodel.EntityType;
 
 import org.hibernate.EntityNameResolver;
@@ -243,7 +244,7 @@ public interface EntityDescriptor<T>
 	EntityTableGroup createRootTableGroup(TableGroupInfo info, RootTableGroupContext tableGroupContext);
 
 
-	String[] getAffectedTableNames();
+	Set<String> getAffectedTableNames();
 
 
 

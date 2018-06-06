@@ -230,7 +230,7 @@ public class MetamodelSelectBuilderProcess
 		);
 	}
 
-	private NavigableReference makeNavigableReference(TableGroup rootTableGroup, Navigable navigable) {
+	public static NavigableReference makeNavigableReference(TableGroup rootTableGroup, Navigable navigable) {
 		if ( navigable instanceof BasicValuedNavigable ) {
 			return new BasicValuedNavigableReference(
 					(NavigableContainerReference) rootTableGroup.getNavigableReference(),

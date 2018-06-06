@@ -92,7 +92,7 @@ public final class EntityKey implements Serializable {
 	}
 
 	private boolean sameIdentifier(final EntityKey otherKey) {
-		return entityDescriptor.getIdentifierType().getJavaTypeDescriptor().areEqual(
+		return entityDescriptor.getHierarchy().getIdentifierDescriptor().getJavaTypeDescriptor().areEqual(
 				otherKey.identifier,
 				this.identifier
 		);

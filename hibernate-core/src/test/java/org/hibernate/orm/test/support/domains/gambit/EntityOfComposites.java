@@ -17,6 +17,7 @@ import javax.persistence.Id;
 @Entity
 public class EntityOfComposites {
 	private Integer id;
+	private String name;
 	private Component component;
 
 	public EntityOfComposites() {
@@ -31,6 +32,12 @@ public class EntityOfComposites {
 		this.component = component;
 	}
 
+	public EntityOfComposites(Integer id, String name, Component component) {
+		this.id = id;
+		this.name = name;
+		this.component = component;
+	}
+
 	@Id
 	public Integer getId() {
 		return id;
@@ -38,6 +45,14 @@ public class EntityOfComposites {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Embedded

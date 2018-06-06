@@ -45,6 +45,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	private final Set<InheritanceCapable<? extends J>> subclassTypes = ConcurrentHashMap.newKeySet();
 	private final Set<String> subClassEntityNames = ConcurrentHashMap.newKeySet();
 
+	private final Object discriminatorValue;
+
 
 	// todo (6.0) : we need some kind of callback after all Navigables have been added to all containers
 	//		use that callback to build these 2 lists - they are cached resolutions
@@ -71,17 +73,25 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		this.superTypeDescriptor = superTypeDescriptor;
 		this.javaTypeDescriptor = javaTypeDescriptor;
 
+		this.discriminatorValue = bootDescriptor.getDiscriminatorValue();
+
 		this.typeConfiguration = creationContext.getTypeConfiguration();
 
 		this.representationStrategy = creationContext.getRepresentationStrategySelector()
 				.resolveStrategy( bootDescriptor, this, creationContext );
 	}
 
+	private boolean fullyInitialized;
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public void finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
+		if ( fullyInitialized ) {
+			return;
+		}
+
 		final int declaredAttributeCount = bootDescriptor.getDeclaredPersistentAttributes().size();
 
 		declaredAttributes = CollectionHelper.arrayList( declaredAttributeCount );
@@ -132,6 +142,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			contributor.setStateArrayPosition( stateArrayContributors.size() );
 			stateArrayContributors.add( contributor );
 		}
+
+		fullyInitialized = true;
 	}
 
 
@@ -169,6 +181,11 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	public boolean isSubclassTypeName(String name) {
 
 		return subClassEntityNames.contains( name );
+	}
+
+	@Override
+	public Object getDiscriminatorValue() {
+		return discriminatorValue;
 	}
 
 	@Override

@@ -27,6 +27,8 @@ public interface InheritanceCapable<T> extends ManagedTypeDescriptor<T> {
 	 */
 	Collection<InheritanceCapable<? extends T>> getSubclassTypes();
 
+	Object getDiscriminatorValue();
+
 	/**
 	 * Find a declared Navigable by name.  Returns {@code null} if a Navigable of the given
 	 * name cannot be found.

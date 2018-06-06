@@ -104,6 +104,7 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private final NavigableRole navigableRole;
 
+
 	private final Table rootTable;
 	private final List<JoinedTableBinding> secondaryTableBindings;
 

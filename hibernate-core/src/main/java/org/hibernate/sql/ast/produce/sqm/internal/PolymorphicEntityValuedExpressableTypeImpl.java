@@ -159,6 +159,11 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
+	public Object getDiscriminatorValue() {
+		return null;
+	}
+
+	@Override
 	public String getEntityName() {
 		return getJavaType().getName();
 	}
@@ -412,7 +417,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public String[] getAffectedTableNames() {
+	public Set<String> getAffectedTableNames() {
 		throw new UnsupportedOperationException(  );
 	}
 

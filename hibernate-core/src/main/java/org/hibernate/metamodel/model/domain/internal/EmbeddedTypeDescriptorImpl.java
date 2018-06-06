@@ -115,16 +115,24 @@ public class EmbeddedTypeDescriptorImpl<J>
 		return jtd;
 	}
 
+	private boolean fullyInitialized;
+
 	@Override
 	public void finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
+		if ( this.fullyInitialized ) {
+			return;
+		}
+
 		super.finishInitialization( bootDescriptor, creationContext );
 
 		this.representationStrategy = creationContext.getMetadata().getMetadataBuildingOptions()
 				.getManagedTypeRepresentationResolver()
 				.resolveStrategy( bootDescriptor, this, creationContext);
 		this.instantiator = representationStrategy.resolveInstantiator( bootDescriptor, this, creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider() );
+
+		this.fullyInitialized = true;
 	}
 
 	@Override
@@ -201,7 +209,7 @@ public class EmbeddedTypeDescriptorImpl<J>
 
 				contributor.getValueBinder().bind(
 						st,
-						contributor.dehydrate( subValue, options.getSession() ),
+						values[ position ],
 						position,
 						options
 				);

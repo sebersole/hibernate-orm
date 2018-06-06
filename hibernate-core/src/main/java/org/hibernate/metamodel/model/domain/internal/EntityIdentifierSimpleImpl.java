@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.Environment;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
@@ -172,7 +171,10 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
-	public Object dehydrate(Object value, SharedSessionContractImplementor session) {
-		return value;
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
 }

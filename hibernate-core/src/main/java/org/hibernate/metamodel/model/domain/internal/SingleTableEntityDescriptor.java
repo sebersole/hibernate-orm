@@ -8,8 +8,9 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
@@ -27,11 +28,9 @@ import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.loader.internal.TemplateParameterBindingContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -81,8 +80,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public String[] getAffectedTableNames() {
-		return new String[0];
+	public Set<String> getAffectedTableNames() {
+		return Collections.emptySet();
 	}
 
 	@Override
@@ -151,32 +150,52 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		final InsertStatement insertStatement = new InsertStatement( primaryTableReference );
 
-		final Object dehydrateIdState = getHierarchy().getIdentifierDescriptor().dehydrate(
+		// todo (6.0) : account for non-generated identifiers
+		getHierarchy().getIdentifierDescriptor().dehydrate(
 				getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+				(jdbcValue, type, boundColumn) -> {
+					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+					insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+				},
 				session
 		);
-		final List<Column> idColumns = getHierarchy().getIdentifierDescriptor().getColumns();
-		assert idColumns.size() == 1;
-		insertStatement.addTargetColumnReference(
-				new ColumnReference( idColumns.get( 0 ) )
-		);
-		insertStatement.addValue( new LiteralParameter( dehydrateIdState, getHierarchy().getIdentifierDescriptor() ) );
+
+		if ( getHierarchy().getDiscriminatorDescriptor() != null ) {
+			insertStatement.addTargetColumnReference(
+					new ColumnReference( getHierarchy().getDiscriminatorDescriptor().getBoundColumn() )
+			);
+			insertStatement.addValue(
+					new LiteralParameter(
+							getDiscriminatorValue(),
+							getHierarchy().getDiscriminatorDescriptor()
+					)
+			);
+		}
+
+		if ( getHierarchy().getTenantDiscrimination() != null ) {
+			insertStatement.addTargetColumnReference(
+					new ColumnReference( getHierarchy().getTenantDiscrimination().getBoundColumn() )
+			);
+			insertStatement.addValue(
+					new LiteralParameter(
+							session.getTenantIdentifier(),
+							getHierarchy().getTenantDiscrimination()
+					)
+			);
+		}
 
 		visitStateArrayContributors(
 				contributor -> {
-					final Object domainValue = fields[ contributor.getStateArrayPosition() ];
-					final Object dehydrateState = contributor.dehydrate(
+					int position = contributor.getStateArrayPosition();
+					final Object domainValue = fields[position];
+
+					contributor.dehydrate(
 							contributor.unresolve( domainValue, session ),
+							(jdbcValue, type, boundColumn) -> {
+								insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+								insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+							},
 							session
-					);
-
-					final List<Column> columns = contributor.getColumns();
-					for ( int i = 0; i < columns.size(); i++ ) {
-						insertStatement.addTargetColumnReference( new ColumnReference( columns.get( i ) ) );
-					}
-
-					insertStatement.addValue(
-							new LiteralParameter( dehydrateState, (AllowableParameterType) contributor )
 					);
 				}
 		);
@@ -411,15 +430,22 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			Object object,
 			Map mergeMap,
 			SharedSessionContractImplementor session) throws HibernateException {
-		final int size = getStateArrayContributors().size();
-		final Object[] valuesToInsert = new Object[size];
-
+//		final Object[] values = getPropertyValues( object );
+//
+//		assert values.length == getStateArrayContributors().size();
+//
+		final Object[] stateArray = new Object[ getStateArrayContributors().size() ];
 		visitStateArrayContributors(
-				stateArrayContributor -> valuesToInsert[ stateArrayContributor.getStateArrayPosition() ] =
-						stateArrayContributor.getPropertyAccess().getGetter().getForInsert( object, mergeMap, session )
+				contributor -> {
+					stateArray[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().getForInsert(
+							object,
+							mergeMap,
+							session
+					);
+				}
 		);
 
-		return valuesToInsert;
+		return stateArray;
 	}
 
 	@Override

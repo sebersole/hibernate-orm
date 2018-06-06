@@ -7,7 +7,9 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
@@ -99,8 +101,8 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public String[] getAffectedTableNames() {
-		return new String[0];
+	public Set<String> getAffectedTableNames() {
+		return Collections.emptySet();
 	}
 
 	@Override

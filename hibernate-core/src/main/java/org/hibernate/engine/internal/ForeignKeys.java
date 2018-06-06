@@ -9,7 +9,6 @@ package org.hibernate.engine.internal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Internal;
@@ -24,7 +23,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute.SingularAttributeClassification;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 
@@ -329,27 +327,22 @@ public final class ForeignKeys<T> {
 		final Nullifier nullifier = new Nullifier( entity, false, isEarlyInsert, session );
 		final EntityDescriptor descriptor = session.getEntityPersister( entityName, entity );
 
+		// todo (6.0) : this is a good example of potential performance trade off - evaluate
+//		specifically, because the method below *could be* (and partially is) a non-polymorphic call site
+//		but moving to StateArrayContributor would be polymorphic
 		descriptor.visitStateArrayContributors(
-				new Consumer<StateArrayContributor<?>>() {
-					int i = 0;
-
-					// todo (6.0) : this is a good example of potential performance trade off - evaluate
-					//		specifically, because the method below *could be* (and partially is) a non-polymorphic call site
-					//		but moving to StateArrayContributor would be polymorphic
-					@Override
-					public void accept(StateArrayContributor<?> stateArrayContributor) {
-						final Object value = values[i++];
-						if ( value == null ) {
-							return;
-						}
-
-						stateArrayContributor.collectNonNullableTransientEntities(
-								value,
-								nullifier,
-								nonNullableTransientEntities,
-								session
-						);
+				stateArrayContributor -> {
+					final Object value = values[ stateArrayContributor.getStateArrayPosition() ];
+					if ( value == null ) {
+						return;
 					}
+
+					stateArrayContributor.collectNonNullableTransientEntities(
+							value,
+							nullifier,
+							nonNullableTransientEntities,
+							session
+					);
 				}
 		);
 

@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
@@ -440,7 +441,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	/**
 	 * Get the "space" that holds the persistent state
 	 */
-	String[] getCollectionSpaces();
+	Set<String> getCollectionSpaces();
 
 	default boolean hasCache() {
 		return getCacheAccess() != null;

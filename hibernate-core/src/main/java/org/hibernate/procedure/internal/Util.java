@@ -6,26 +6,26 @@
  */
 package org.hibernate.procedure.internal;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.LockMode;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.results.internal.EntityQueryResultImpl;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.SqlSelectionReaderImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.internal.SqlSelectionReaderImpl;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -149,6 +149,7 @@ public class Util {
 		 * @param querySpaces The query spaces
 		 */
 		void addQuerySpaces(String... querySpaces);
+		void addQuerySpaces(Collection<String> querySpaces);
 
 		QueryResultCreationContext getQueryResultCreationContext();
 	}

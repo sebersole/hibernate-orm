@@ -129,7 +129,18 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	}
 
 	@Override
-	public Object dehydrate(Object values, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		final Object[] values = (Object[]) value;
+		getEmbeddedDescriptor().visitStateArrayContributors(
+				contributor -> contributor.dehydrate(
+						values[ contributor.getStateArrayPosition() ],
+						jdbcValueCollector,
+						session
+				)
+		);
 	}
+
 }

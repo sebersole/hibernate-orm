@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Steve Ebersole
  */
-public class EntityOfCompositesOpTest extends SessionFactoryBasedFunctionalTest {
+public class EntityOfCompositesCrudTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
 		super.applyMetadataSources( metadataSources );
@@ -39,11 +39,12 @@ public class EntityOfCompositesOpTest extends SessionFactoryBasedFunctionalTest 
 				1,
 				new Component(
 						"the string",
-						1,
-						2L,
-						3,
+						2,
+						4L,
+						6,
 						new Component.Nested(
-								"the nested string"
+								"the nested string",
+								"the second nested string"
 						)
 				)
 		);

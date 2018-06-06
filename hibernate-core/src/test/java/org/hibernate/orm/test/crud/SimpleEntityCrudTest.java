@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Andrea Boriero
  */
-public class SaveSimpleEntityTest extends SessionFactoryBasedFunctionalTest {
+public class SimpleEntityCrudTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
 		super.applyMetadataSources( metadataSources );
