@@ -12,6 +12,7 @@ import java.util.Map;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
+import org.hibernate.envers.internal.tools.EntityTools;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -22,7 +23,7 @@ public class ModWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 	private final Map<String, Object> data;
 	private final boolean changes;
 
-	private final EntityDescriptor entityPersister;
+	private final EntityDescriptor entityDescriptor;
 	private final Object[] oldState;
 	private final Object[] newState;
 
@@ -31,12 +32,12 @@ public class ModWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			String entityName,
 			AuditService auditService,
 			Object id,
-			EntityDescriptor entityPersister,
+			EntityDescriptor entityDescriptor,
 			Object[] newState,
 			Object[] oldState) {
 		super( sessionImplementor, entityName, auditService, id, RevisionType.MOD );
 
-		this.entityPersister = entityPersister;
+		this.entityDescriptor = entityDescriptor;
 		this.oldState = oldState;
 		this.newState = newState;
 		this.data = new HashMap<>();
@@ -45,7 +46,7 @@ public class ModWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 				.getPropertyMapper().map(
 						sessionImplementor,
 						data,
-						entityPersister.getPropertyNames(),
+						EntityTools.getPropertyNames( entityDescriptor ),
 						newState,
 						oldState
 				);
@@ -81,7 +82,7 @@ public class ModWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 				second.getEntityName(),
 				second.auditService,
 				second.id,
-				second.entityPersister,
+				second.entityDescriptor,
 				second.newState,
 				this.oldState
 		);

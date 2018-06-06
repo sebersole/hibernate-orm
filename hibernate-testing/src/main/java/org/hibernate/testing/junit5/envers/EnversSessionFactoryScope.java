@@ -6,8 +6,14 @@
  */
 package org.hibernate.testing.junit5.envers;
 
+import java.util.function.Consumer;
+
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
 
 import org.jboss.logging.Logger;
 
@@ -54,4 +60,72 @@ public class EnversSessionFactoryScope implements SessionFactoryAccess {
 		return (SessionFactoryImplementor) sessionFactory;
 	}
 
+	public void inSession(Consumer<SessionImplementor> action) {
+		log.trace( "#inSession(action)" );
+		inSession( getSessionFactory(), action );
+	}
+
+	public void inTransaction(Consumer<SessionImplementor> action) {
+		log.trace( "#inTransaction(action)" );
+		inTransaction( getSessionFactory(), action );
+	}
+
+	public void inSession(SessionFactoryImplementor sfi, Consumer<SessionImplementor> action) {
+		log.trace( "##inSession(SF,action)" );
+		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			log.trace( "Session opened, calling action" );
+			action.accept( session );
+			log.trace( "called action" );
+		}
+		finally {
+			log.trace( "Session close - auto-close lock" );
+		}
+	}
+
+	public void inTransaction(SessionFactoryImplementor sfi, Consumer<SessionImplementor> action) {
+		log.trace( "#inTransaction(SF,action)" );
+		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			log.trace( "Session opened, calling action" );
+			inTransaction( session, action );
+			log.trace( "called action" );
+		}
+		finally {
+			log.trace( "Session close - auto-close lock" );
+		}
+	}
+
+	public void inTransaction(SessionImplementor session, Consumer<SessionImplementor> action) {
+		log.trace( "#inTransaction(session,action)" );
+
+		final Transaction trx = session.beginTransaction();
+		try {
+			log.trace( "Transaction started, calling action." );
+			action.accept( session );
+			log.trace( "Action called, attempting to commit transaction." );
+			trx.commit();
+			log.trace( "Commit successful." );
+		}
+		catch ( Exception e ) {
+			log.tracef( "Error calling action: %s (%s) - rolling back", e.getClass().getName(), e.getMessage() );
+			try {
+				trx.rollback();
+			}
+			catch ( Exception ignored ) {
+				log.trace( "Was unable to rollback transaction." );
+			}
+			throw e;
+		}
+	}
+
+	public void inAuditReader(Consumer<AuditReader> action) {
+		log.trace( "#inAuditReader" );
+		inAuditReader( getSessionFactory(), action );
+	}
+
+	public void inAuditReader(SessionFactoryImplementor sfi, Consumer<AuditReader> action) {
+		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			AuditReader auditReader = AuditReaderFactory.get( session );
+			action.accept( auditReader );
+		}
+	}
 }

@@ -6,6 +6,11 @@
  */
 package org.hibernate.envers.internal.tools;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.persistence.metamodel.Attribute;
+
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -86,7 +91,23 @@ public abstract class EntityTools {
 	 * @return Java class mapped to specified entity name.
 	 */
 	public static Class getEntityClass(SessionImplementor sessionImplementor, String entityName) {
-		final EntityDescriptor entityPersister = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
-		return entityPersister.getMappedClass();
+		return sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName ).getMappedClass();
+	}
+
+	/**
+	 * Introduce legacy behavior of fetching property names from an {@link EntityDescriptor}.
+	 *
+	 * @param entityDescriptor The entity descriptor.
+	 * @return A string array of property names.
+	 */
+	public static String[] getPropertyNames(EntityDescriptor entityDescriptor) {
+		// todo (6.0) - Rework usage sites of this
+		//		For now this was added to get functionality working.
+		//		Since this is internal tooling, this won't affect any API/SPI.
+		final Set<? extends Attribute> attributes = entityDescriptor.getAttributes();
+		return attributes.stream()
+				.map( Attribute::getName )
+				.collect( Collectors.toList() )
+				.toArray( new String[ attributes.size() ] );
 	}
 }

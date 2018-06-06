@@ -13,6 +13,7 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.tools.ArraysTools;
+import org.hibernate.envers.internal.tools.EntityTools;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -28,7 +29,7 @@ public class AddWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			SessionImplementor sessionImplementor,
 			String entityName,
 			AuditService auditService,
-			Object id, EntityDescriptor entityPersister, Object[] state) {
+			Object id, EntityDescriptor entityDescriptor, Object[] state) {
 		super( sessionImplementor, entityName, auditService, id, RevisionType.ADD );
 
 		this.data = new HashMap<>();
@@ -37,7 +38,7 @@ public class AddWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 				.map(
 						sessionImplementor,
 						data,
-						entityPersister.getPropertyNames(),
+						EntityTools.getPropertyNames( entityDescriptor ),
 						state,
 						null
 				);
@@ -51,11 +52,12 @@ public class AddWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			Map<String, Object> data) {
 		super( sessionImplementor, entityName, enversMetadataService, id, RevisionType.ADD );
 
+		final EntityDescriptor entityDescriptor = sessionImplementor.getFactory()
+				.getMetamodel()
+				.findEntityDescriptor( getEntityName() );
+
 		this.data = data;
-		final String[] propertyNames = sessionImplementor.getFactory()
-				.getMetamodel().findEntityDescriptor( getEntityName() )
-				.getPropertyNames();
-		this.state = ArraysTools.mapToArray( data, propertyNames );
+		this.state = ArraysTools.mapToArray( data, EntityTools.getPropertyNames( entityDescriptor ) );
 	}
 
 	@Override
