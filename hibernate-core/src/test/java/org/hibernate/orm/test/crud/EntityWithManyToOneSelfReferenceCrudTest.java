@@ -87,12 +87,12 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 		);
 
 		// todo (6.0) : the restriction here uses the wrong table alias...
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final String value = session.createQuery( "select e.name from EntityWithManyToOneSelfReference e where e.other.name = 'first'", String.class ).uniqueResult();
-//					assertThat( value, equalTo( "second") );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final String value = session.createQuery( "select e.name from EntityWithManyToOneSelfReference e where e.other.name = 'first'", String.class ).uniqueResult();
+					assertThat( value, equalTo( "second") );
+				}
+		);
 	}
 
 }

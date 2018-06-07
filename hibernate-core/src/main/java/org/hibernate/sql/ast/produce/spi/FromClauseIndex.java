@@ -15,9 +15,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.sql.ast.produce.ConversionException;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupResolver;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -107,7 +108,16 @@ public class FromClauseIndex implements TableGroupResolver {
 	}
 
 	public TableGroup findResolvedTableGroup(SqmFrom fromElement) {
-		return tableGroupBySqmFromXref.get( fromElement );
+		// todo (6.0) : this is a hacky solution/workaround to the fact that SQM creates joins for composites/embeddables whereas we do not in the SQL-AST
+		//		so the cross referencing is off
+		TableGroup tableGroup = tableGroupBySqmFromXref.get( fromElement );
+		while ( tableGroup == null
+				&& fromElement != null
+				&& fromElement.getNavigableReference().getReferencedNavigable() instanceof EmbeddedValuedNavigable ) {
+			fromElement = fromElement.getNavigableReference().getSourceReference().getExportedFromElement();
+			tableGroup = tableGroupBySqmFromXref.get( fromElement );
+		}
+		return tableGroup;
 	}
 
 	public SqmFrom findSqmFromByUniqueIdentifier(String uniqueIdentifier) {

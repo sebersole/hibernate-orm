@@ -103,6 +103,7 @@ import org.hibernate.query.sqm.tree.predicate.RelationalSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
 import org.hibernate.query.sqm.tree.select.SqmSelectClause;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.ConversionException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.ordering.internal.SqmColumnReference;
@@ -639,6 +640,8 @@ public abstract class BaseSqmToSqlAstConverter
 		tableGroupStack.push( tableGroupJoin.getJoinedGroup() );
 		fromClauseIndex.crossReference( joinedFromElement, tableGroupJoin.getJoinedGroup() );
 
+		navigableReferenceStack.push( tableGroupJoin.getJoinedGroup().getNavigableReference() );
+
 		return tableGroupJoin;
 	}
 
@@ -694,7 +697,11 @@ public abstract class BaseSqmToSqlAstConverter
 		tableGroupStack.push( group );
 		fromClauseIndex.crossReference( joinedFromElement, group );
 
-		return new TableGroupJoin( JoinType.CROSS, group, null );
+		TableGroupJoin tableGroupJoin = new TableGroupJoin( JoinType.CROSS, group, null );
+
+		navigableReferenceStack.push( tableGroupJoin.getJoinedGroup().getNavigableReference() );
+
+		return tableGroupJoin;
 	}
 
 	@Override
@@ -726,8 +733,13 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public QueryResultProducer visitEntityIdentifierReference(SqmEntityIdentifierReference expression) {
+		final TableGroup resolvedTableGroup = getFromClauseIndex().findResolvedTableGroup( expression.getExportedFromElement() );
+		if ( resolvedTableGroup == null ) {
+			throw new ConversionException( "Could not find matching resolved TableGroup : " + expression.getExportedFromElement() );
+		}
+
 		return new EntityIdentifierReference(
-				(EntityValuedNavigableReference) navigableReferenceStack.getCurrent(),
+				(EntityValuedNavigableReference) resolvedTableGroup.getNavigableReference(),
 				expression.getReferencedNavigable(),
 				expression.getNavigablePath()
 		);
@@ -735,8 +747,15 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public BasicValuedNavigableReference visitBasicValuedSingularAttribute(SqmSingularAttributeReferenceBasic sqmAttributeReference) {
+		final TableGroup resolvedTableGroup = getFromClauseIndex().findResolvedTableGroup( sqmAttributeReference.getExportedFromElement() );
+		if ( resolvedTableGroup == null ) {
+			throw new ConversionException(
+					"Could not find matching resolved TableGroup for " + sqmAttributeReference + " : " + sqmAttributeReference.getExportedFromElement().getUniqueIdentifier()
+			);
+		}
+
 		return new BasicValuedNavigableReference(
-				(NavigableContainerReference) navigableReferenceStack.getCurrent(),
+				(NavigableContainerReference) resolvedTableGroup.getNavigableReference(),
 				sqmAttributeReference.getReferencedNavigable(),
 				sqmAttributeReference.getNavigablePath()
 		);
@@ -762,9 +781,15 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public EmbeddableValuedNavigableReference visitEmbeddableValuedSingularAttribute(SqmSingularAttributeReferenceEmbedded sqmAttributeReference) {
-		final NavigableContainerReference containerReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
+		final TableGroup resolvedTableGroup = getFromClauseIndex().findResolvedTableGroup( sqmAttributeReference.getExportedFromElement() );
+		if ( resolvedTableGroup == null ) {
+			throw new ConversionException( "Could not find matching resolved TableGroup : " + sqmAttributeReference.getExportedFromElement() );
+		}
+
+		// todo (6.0) : this may not be correct in all situations
+		//		may need n "embeddable TableGroup"
 		return new EmbeddableValuedNavigableReference(
-				containerReference,
+				(NavigableContainerReference) resolvedTableGroup.getNavigableReference(),
 				sqmAttributeReference.getReferencedNavigable(),
 				sqmAttributeReference.getNavigablePath(),
 				LockMode.READ
@@ -773,12 +798,16 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public AnyValuedNavigableReference visitAnyValuedSingularAttribute(SqmSingularAttributeReferenceAny sqmAttributeReference) {
-		final NavigableContainerReference containerReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
+		final TableGroup resolvedTableGroup = getFromClauseIndex().findResolvedTableGroup( sqmAttributeReference.getExportedFromElement() );
+		if ( resolvedTableGroup == null ) {
+			throw new ConversionException( "Could not find matching resolved TableGroup : " + sqmAttributeReference.getExportedFromElement() );
+		}
+
 		return new AnyValuedNavigableReference(
-				containerReference,
+				(NavigableContainerReference) resolvedTableGroup.getNavigableReference(),
 				sqmAttributeReference.getReferencedNavigable(),
 				sqmAttributeReference.getNavigablePath(),
-				containerReference.getSqlExpressionQualifier()
+				resolvedTableGroup
 		);
 	}
 

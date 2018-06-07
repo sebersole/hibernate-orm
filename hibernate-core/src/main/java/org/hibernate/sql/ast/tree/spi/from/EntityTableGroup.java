@@ -72,11 +72,13 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 		else {
 			qualifier = new CompositeColumnReferenceQualifier(
 					uid,
-					additionalQualifier,
-					this
+					this,
+					additionalQualifier
 			);
 		}
 		this.entityReference = new EntityValuedNavigableReference(
+				// todo (6.0) : need the container (if one) to pass along
+				//		happens for joins
 				null,
 				navigable,
 				navigablePath,
