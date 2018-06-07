@@ -6,9 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.Map;
+
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.property.access.spi.PropertyAccess;
@@ -103,5 +107,22 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 			NonNullableTransientDependencies nonNullableTransientEntities,
 			SharedSessionContractImplementor session) {
 		// most implementations have nothing to do here
+	}
+
+	@Override
+	public Object replace(J originalValue, J targetValue, Object owner, Map copyCache, SessionImplementor session) {
+		if ( LazyPropertyInitializer.UNFETCHED_PROPERTY == originalValue ) {
+			return targetValue;
+		}
+		else {
+			if ( !mutabilityPlan.isMutable() ||
+					( targetValue != LazyPropertyInitializer.UNFETCHED_PROPERTY &&
+							getJavaTypeDescriptor().areEqual( originalValue, targetValue ) ) ) {
+				return originalValue;
+			}
+			else {
+				return mutabilityPlan.deepCopy( originalValue );
+			}
+		}
 	}
 }

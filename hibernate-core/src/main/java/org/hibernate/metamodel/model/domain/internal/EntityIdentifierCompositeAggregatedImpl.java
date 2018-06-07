@@ -7,9 +7,12 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
@@ -20,6 +23,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractSingularPersistentAttrib
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggregated;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
@@ -38,6 +42,8 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 		extends AbstractSingularPersistentAttribute<O,J>
 		implements EntityIdentifierCompositeAggregated<O,J> {
 	private final EmbeddedTypeDescriptor<J> embeddedMetadata;
+	private final IdentifierGenerator identifierGenerator;
+	private final List<Column> columns;
 
 	@SuppressWarnings("unchecked")
 	public EntityIdentifierCompositeAggregatedImpl(
@@ -51,13 +57,19 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 				embeddedMetadata.getRepresentationStrategy().generatePropertyAccess(
 						bootModelRootEntity,
 						bootModelRootEntity.getIdentifierProperty(),
-						embeddedMetadata,
+						(ManagedTypeDescriptor<?>) embeddedMetadata.getContainer(),
 						Environment.getBytecodeProvider()
 				),
 				Disposition.ID
 		);
 
 		this.embeddedMetadata = embeddedMetadata;
+		this.identifierGenerator = creationContext.getSessionFactory().getIdentifierGenerator( bootModelRootEntity.getEntityName() );
+
+		final ValueMapping<?> valueMapping = bootModelRootEntity.getIdentifierAttributeMapping().getValueMapping();
+		this.columns = valueMapping.getMappedColumns().stream()
+				.map( creationContext.getDatabaseObjectResolver()::resolveColumn )
+				.collect( Collectors.toList() );
 	}
 
 	@Override
@@ -134,12 +146,12 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 
 	@Override
 	public IdentifierGenerator getIdentifierValueGenerator() {
-		throw new NotYetImplementedFor6Exception(  );
+		return identifierGenerator;
 	}
 
 	@Override
 	public List<Column> getColumns() {
-		throw new NotYetImplementedFor6Exception(  );
+		return columns;
 	}
 
 	@Override

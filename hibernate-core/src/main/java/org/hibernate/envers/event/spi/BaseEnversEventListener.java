@@ -43,7 +43,7 @@ public abstract class BaseEnversEventListener implements EnversListener {
 
 	protected final void generateBidirectionalCollectionChangeWorkUnits(
 			AuditProcess auditProcess,
-			EntityDescriptor entityPersister,
+			EntityDescriptor entityDescriptor,
 			String entityName,
 			Object[] newState,
 			Object[] oldState,
@@ -57,7 +57,7 @@ public abstract class BaseEnversEventListener implements EnversListener {
 		// Checks every property of the entity, if it is an "owned" to-one relation to another entity.
 		// If the value of that property changed, and the relation is bi-directional, a new revision
 		// for the related entity is generated.
-		final String[] propertyNames = entityPersister.getPropertyNames();
+		final String[] propertyNames = EntityTools.getPropertyNames( entityDescriptor );
 
 		for ( int i = 0; i < propertyNames.length; i++ ) {
 			final String propertyName = propertyNames[i];

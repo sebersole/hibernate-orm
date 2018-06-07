@@ -53,6 +53,8 @@ public class BasicSingularPersistentAttribute<O, J>
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
 	private final BasicValueConverter valueConverter;
+	private final ValueBinder valueBinder;
+	private final ValueExtractor valueExtractor;
 
 	@SuppressWarnings("unchecked")
 	public BasicSingularPersistentAttribute(
@@ -80,6 +82,13 @@ public class BasicSingularPersistentAttribute<O, J>
 					valueConverter,
 					getNavigableRole()
 			);
+
+			valueBinder = basicType.getSqlTypeDescriptor().getBinder( valueConverter.getRelationalJavaDescriptor() );
+			valueExtractor = basicType.getSqlTypeDescriptor().getExtractor( valueConverter.getDomainJavaDescriptor() );
+		}
+		else {
+			valueBinder = basicType.getValueBinder();
+			valueExtractor = basicType.getValueExtractor();
 		}
 
 		instantiationComplete( bootAttribute, context );
@@ -157,12 +166,12 @@ public class BasicSingularPersistentAttribute<O, J>
 
 	@Override
 	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
+		return valueBinder;
 	}
 
 	@Override
 	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
+		return valueExtractor;
 	}
 
 //	@Override
