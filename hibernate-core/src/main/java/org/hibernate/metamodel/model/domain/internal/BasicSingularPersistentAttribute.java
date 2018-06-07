@@ -156,11 +156,17 @@ public class BasicSingularPersistentAttribute<O, J>
 
 	@Override
 	public ValueBinder getValueBinder() {
+		if ( valueConverter != null ) {
+			return basicType.getSqlTypeDescriptor().getBinder( valueConverter.getRelationalJavaDescriptor() );
+		}
 		return basicType.getValueBinder();
 	}
 
 	@Override
 	public ValueExtractor getValueExtractor() {
+		if ( valueConverter != null ) {
+			return basicType.getSqlTypeDescriptor().getExtractor( valueConverter.getDomainJavaDescriptor() );
+		}
 		return basicType.getValueExtractor();
 	}
 
