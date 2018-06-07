@@ -46,5 +46,7 @@ public interface JdbcValuesSourceProcessingState {
 			EntityKey entityKey,
 			Function<EntityKey,LoadingEntityEntry> entryProducer);
 
+	LoadingEntityEntry findLoadingEntry(EntityKey entityKey);
+
 	void finishUp();
 }

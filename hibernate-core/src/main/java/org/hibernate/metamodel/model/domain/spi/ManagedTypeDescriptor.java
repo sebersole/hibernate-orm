@@ -112,12 +112,12 @@ public interface ManagedTypeDescriptor<T>
 	default void setPropertyValues(Object object, Object[] values) {
 		visitStateArrayContributors(
 				contributor -> {
-					if ( PersistentAttribute.class.isInstance( contributor ) ) {
-						final Object value = values[ contributor.getStateArrayPosition() ];
-						PersistentAttribute.class.cast( contributor ).getPropertyAccess()
-								.getSetter()
-								.set( object, value, getTypeConfiguration().getSessionFactory() );
-					}
+					final Object value = values[ contributor.getStateArrayPosition() ];
+					contributor.getPropertyAccess().getSetter().set(
+							object,
+							value,
+							getTypeConfiguration().getSessionFactory()
+					);
 				}
 		);
 	}

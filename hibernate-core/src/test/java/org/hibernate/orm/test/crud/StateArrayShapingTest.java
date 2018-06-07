@@ -12,6 +12,7 @@ import java.util.Date;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Readable;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
@@ -253,10 +254,30 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 			Object entityInstance,
 			Object[] stateArray,
 			SharedSessionContractImplementor session) {
+		injectStateArray(
+				entityDescriptor,
+				entityInstance,
+				stateArray,
+				(entityKey, eager) -> null,
+				session
+		);
+	}
+
+	private void injectStateArray(
+			EntityDescriptor entityDescriptor,
+			Object entityInstance,
+			Object[] stateArray,
+			Readable.ResolutionContext resolutionContext,
+			SharedSessionContractImplementor session) {
 		entityDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final int position = contributor.getStateArrayPosition();
-					stateArray[ position ] = contributor.resolveHydratedState( stateArray[ position ], session, entityInstance );
+					stateArray[ position ] = contributor.resolveHydratedState(
+							stateArray[ position ],
+							resolutionContext,
+							session,
+							entityInstance
+					);
 				}
 		);
 

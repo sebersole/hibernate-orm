@@ -20,6 +20,18 @@ public interface SingleIdEntityLoader<T> extends Loader {
 		Object getInstanceToLoad();
 	}
 
+	LoadOptions NO_LOAD_OPTIONS = new LoadOptions() {
+		@Override
+		public LockOptions getLockOptions() {
+			return null;
+		}
+
+		@Override
+		public Object getInstanceToLoad() {
+			return null;
+		}
+	};
+
 	T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session);
 
 	Object[] loadDatabaseSnapshot(Object id, SharedSessionContractImplementor session);

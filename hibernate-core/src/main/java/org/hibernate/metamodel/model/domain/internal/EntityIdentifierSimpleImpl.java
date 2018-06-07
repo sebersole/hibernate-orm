@@ -177,4 +177,13 @@ public class EntityIdentifierSimpleImpl<O,J>
 			SharedSessionContractImplementor session) {
 		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
+
+	@Override
+	public Object resolveHydratedState(
+			Object hydratedForm,
+			ResolutionContext resolutionContext,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		return hydratedForm;
+	}
 }

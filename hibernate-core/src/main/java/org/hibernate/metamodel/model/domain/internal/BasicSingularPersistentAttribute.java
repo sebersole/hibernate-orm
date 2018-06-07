@@ -19,6 +19,7 @@ import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.Readable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -173,6 +174,7 @@ public class BasicSingularPersistentAttribute<O, J>
 	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
 			Object hydratedForm,
+			Readable.ResolutionContext resolutionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		if ( valueConverter != null ) {

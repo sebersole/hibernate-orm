@@ -60,8 +60,15 @@ public class CompositeQueryResultAssembler implements QueryResultAssembler {
 //				}
 //		);
 		embeddedDescriptor.visitStateArrayContributors(
-				contributor -> values[ contributor.getStateArrayPosition() ] =
-						contributor.resolveHydratedState( values[ contributor.getStateArrayPosition() ], session, null )
+				contributor -> {
+					final int position = contributor.getStateArrayPosition();
+					values[ position ] = contributor.resolveHydratedState(
+							values[position],
+							rowProcessingState,
+							session,
+							null
+					);
+				}
 		);
 
 		final Object instance = embeddedDescriptor.instantiate( session );

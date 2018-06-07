@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -21,6 +22,7 @@ import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -76,6 +78,8 @@ import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
+
+import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
 
 
 /**
@@ -460,13 +464,56 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
+			ResolutionContext resolutionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		if ( hydratedForm == null ) {
 			return null;
 		}
 
-		return null;
+		// todo (6.0) : WrongClassException?
+
+
+		// step 1 - generate EntityKey based on hydrated id form
+		final Object resolvedIdentifier = getEntityDescriptor().getHierarchy().getIdentifierDescriptor().resolveHydratedState(
+				hydratedForm,
+				resolutionContext,
+				session,
+				null
+		);
+		final EntityKey entityKey = new EntityKey( resolvedIdentifier, getEntityDescriptor() );
+
+
+		// step 2 - look for a matching entity (by EntityKey) on the context
+		//		NOTE - we pass `! isOptional()` as `eager` to `resolveEntityInstance` because
+		//		if it were being fetched dynamically (join fetch) that would have lead to an
+		//		EntityInitializer for this entity being created and it would be available in the
+		//		`resolutionContext`
+		final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, ! isOptional() );
+		if ( entityInstance != null ) {
+			return entityInstance;
+		}
+
+		// try loading it...
+		J loaded = getEntityDescriptor().getSingleIdLoader().load(
+				resolvedIdentifier,
+				NO_LOAD_OPTIONS,
+				session
+		);
+
+		if ( loaded != null ) {
+			return loaded;
+		}
+
+		throw new EntityNotFoundException(
+				String.format(
+						Locale.ROOT,
+						"Unable to resolve entity-valued association [%s] foreign key value [%s] to associated entity instance of type [%s]",
+						getNavigableRole(),
+						resolvedIdentifier,
+						getEntityDescriptor().getJavaTypeDescriptor()
+				)
+		);
 	}
 
 	@Override

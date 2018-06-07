@@ -109,6 +109,11 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
+	public LoadingEntityEntry findLoadingEntry(EntityKey entityKey) {
+		return loadingEntityMap == null ? null : loadingEntityMap.get( entityKey );
+	}
+
+	@Override
 	public SharedSessionContractImplementor getPersistenceContext() {
 		return executionContext.getSession();
 	}

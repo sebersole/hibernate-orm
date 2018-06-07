@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -55,8 +56,13 @@ public interface Readable<V,H,D> {
 	 */
 	default D resolveHydratedState(
 			H hydratedForm,
+			ResolutionContext resolutionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	interface ResolutionContext {
+		Object resolveEntityInstance(EntityKey entityKey, boolean eager);
 	}
 }

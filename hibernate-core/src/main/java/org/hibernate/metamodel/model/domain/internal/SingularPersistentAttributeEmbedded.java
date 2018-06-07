@@ -194,6 +194,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
+			ResolutionContext resolutionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		final J instance = embeddedDescriptor.instantiate( session );
@@ -201,7 +202,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		embeddedDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final Object subHydratedForm = hydratedValues[ contributor.getStateArrayPosition() ];
-					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm, session, containerInstance );
+					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm, resolutionContext, session, containerInstance );
 					hydratedValues[ contributor.getStateArrayPosition() ] = subResolvedForm;
 				}
 		);

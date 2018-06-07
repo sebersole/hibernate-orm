@@ -8,21 +8,15 @@ package org.hibernate.engine.internal;
 
 import java.io.Serializable;
 
-import org.hibernate.AssertionFailure;
 import org.hibernate.CacheMode;
-import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.annotations.Remove;
-import org.hibernate.cache.spi.access.EntityDataAccess;
-import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.profile.Fetch;
 import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.PersistenceContext;
-import org.hibernate.engine.spi.SessionEventListenerManager;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.event.service.spi.EventListenerGroup;
@@ -30,14 +24,8 @@ import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
-import org.hibernate.event.spi.PreLoadEvent;
-import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.pretty.MessageHelper;
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.type.internal.TypeHelper;
 
 import org.jboss.logging.Logger;
 
@@ -109,213 +97,213 @@ public final class TwoPhaseLoad {
 		}
 	}
 
-	/**
-	 * Perform the second step of 2-phase load. Fully initialize the entity
-	 * instance.
-	 * <p/>
-	 * After processing a JDBC result set, we "resolve" all the associations
-	 * between the entities which were instantiated and had their state
-	 * "hydrated" into an array
-	 *
-	 * @param entity The entity being loaded
-	 * @param readOnly Is the entity being loaded as read-only
-	 * @param session The Session
-	 * @param preLoadEvent The (re-used) pre-load event
-	 */
-	public static void initializeEntity(
-			final Object entity,
-			final boolean readOnly,
-			final SharedSessionContractImplementor session,
-			final PreLoadEvent preLoadEvent) {
-
-		// todo (6.0) : see org.hibernate.sql.results.internal.AbstractEntityInitializer#resolveEntityState
-
-		final PersistenceContext persistenceContext = session.getPersistenceContext();
-		final EntityEntry entityEntry = persistenceContext.getEntry( entity );
-		if ( entityEntry == null ) {
-			throw new AssertionFailure( "possible non-threadsafe access to the session" );
-		}
-		doInitializeEntity( entity, entityEntry, readOnly, session, preLoadEvent );
-	}
-
-	private static void doInitializeEntity(
-			final Object entity,
-			final EntityEntry entityEntry,
-			final boolean readOnly,
-			final SharedSessionContractImplementor session,
-			final PreLoadEvent preLoadEvent) throws HibernateException {
-		final PersistenceContext persistenceContext = session.getPersistenceContext();
-		final EntityDescriptor<?> entityDescriptor = entityEntry.getDescriptor();
-		final Object id = entityEntry.getId();
-		final Object[] hydratedState = entityEntry.getLoadedState();
-
-		final boolean debugEnabled = LOG.isDebugEnabled();
-		if ( debugEnabled ) {
-			LOG.debugf(
-					"Resolving associations for %s",
-					MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
-			);
-		}
-
-		for ( StateArrayContributor<?> contributor : entityDescriptor.getStateArrayContributors() ) {
-			final int position = contributor.getStateArrayPosition();
-			final Object value = hydratedState[position];
-
-// todo (6.0) - this "overriding eager" block was added in 5.x and we need to
-// make sure that the logic makes it into the 6.0 solution as well.
-//			Boolean overridingEager = getOverridingEager( session, entityName, propertyNames[i], types[i] );
-//			if ( value == LazyPropertyInitializer.UNFETCHED_PROPERTY ) {
-//				// IMPLEMENTATION NOTE: This is a lazy property on a bytecode-enhanced entity.
-//				// hydratedState[i] needs to remain LazyPropertyInitializer.UNFETCHED_PROPERTY so that
-//				// setPropertyValues() below (ultimately AbstractEntityTuplizer#setPropertyValues) works properly
-//				// No resolution is necessary, unless the lazy property is a collection.
-//				if ( types[i].isCollectionType() ) {
-//					// IMPLEMENTATION NOTE: this is a lazy collection property on a bytecode-enhanced entity.
-//					// HHH-10989: We need to resolve the collection so that a CollectionReference is added to StatefulPersistentContext.
-//					// As mentioned above, hydratedState[i] needs to remain LazyPropertyInitializer.UNFETCHED_PROPERTY
-//					// so do not assign the resolved, unitialized PersistentCollection back to hydratedState[i].
-//					types[i].resolve( value, session, entity, overridingEager );
+//	/**
+//	 * Perform the second step of 2-phase load. Fully initialize the entity
+//	 * instance.
+//	 * <p/>
+//	 * After processing a JDBC result set, we "resolve" all the associations
+//	 * between the entities which were instantiated and had their state
+//	 * "hydrated" into an array
+//	 *
+//	 * @param entity The entity being loaded
+//	 * @param readOnly Is the entity being loaded as read-only
+//	 * @param session The Session
+//	 * @param preLoadEvent The (re-used) pre-load event
+//	 */
+//	public static void initializeEntity(
+//			final Object entity,
+//			final boolean readOnly,
+//			final SharedSessionContractImplementor session,
+//			final PreLoadEvent preLoadEvent) {
+//
+//		// todo (6.0) : see org.hibernate.sql.results.internal.AbstractEntityInitializer#resolveEntityState
+//
+//		final PersistenceContext persistenceContext = session.getPersistenceContext();
+//		final EntityEntry entityEntry = persistenceContext.getEntry( entity );
+//		if ( entityEntry == null ) {
+//			throw new AssertionFailure( "possible non-threadsafe access to the session" );
+//		}
+//		doInitializeEntity( entity, entityEntry, readOnly, session, preLoadEvent );
+//	}
+//
+//	private static void doInitializeEntity(
+//			final Object entity,
+//			final EntityEntry entityEntry,
+//			final boolean readOnly,
+//			final SharedSessionContractImplementor session,
+//			final PreLoadEvent preLoadEvent) throws HibernateException {
+//		final PersistenceContext persistenceContext = session.getPersistenceContext();
+//		final EntityDescriptor<?> entityDescriptor = entityEntry.getDescriptor();
+//		final Object id = entityEntry.getId();
+//		final Object[] hydratedState = entityEntry.getLoadedState();
+//
+//		final boolean debugEnabled = LOG.isDebugEnabled();
+//		if ( debugEnabled ) {
+//			LOG.debugf(
+//					"Resolving associations for %s",
+//					MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
+//			);
+//		}
+//
+//		for ( StateArrayContributor<?> contributor : entityDescriptor.getStateArrayContributors() ) {
+//			final int position = contributor.getStateArrayPosition();
+//			final Object value = hydratedState[position];
+//
+//// todo (6.0) - this "overriding eager" block was added in 5.x and we need to
+//// make sure that the logic makes it into the 6.0 solution as well.
+////			Boolean overridingEager = getOverridingEager( session, entityName, propertyNames[i], types[i] );
+////			if ( value == LazyPropertyInitializer.UNFETCHED_PROPERTY ) {
+////				// IMPLEMENTATION NOTE: This is a lazy property on a bytecode-enhanced entity.
+////				// hydratedState[i] needs to remain LazyPropertyInitializer.UNFETCHED_PROPERTY so that
+////				// setPropertyValues() below (ultimately AbstractEntityTuplizer#setPropertyValues) works properly
+////				// No resolution is necessary, unless the lazy property is a collection.
+////				if ( types[i].isCollectionType() ) {
+////					// IMPLEMENTATION NOTE: this is a lazy collection property on a bytecode-enhanced entity.
+////					// HHH-10989: We need to resolve the collection so that a CollectionReference is added to StatefulPersistentContext.
+////					// As mentioned above, hydratedState[i] needs to remain LazyPropertyInitializer.UNFETCHED_PROPERTY
+////					// so do not assign the resolved, unitialized PersistentCollection back to hydratedState[i].
+////					types[i].resolve( value, session, entity, overridingEager );
+////				}
+////			}
+////			else if ( value != PropertyAccessStrategyBackRefImpl.UNKNOWN ) {
+////				// we know value != LazyPropertyInitializer.UNFETCHED_PROPERTY
+////				hydratedState[i] = types[i].resolve( value, session, entity, overridingEager );
+////			}
+//
+//			hydratedState[ contributor.getStateArrayPosition() ] = contributor.resolveHydratedState(
+//					value,
+//					session,
+//					// the container ("owner")... for now just pass null.
+//					// ultimately we need to account for fetch parent if the
+//					// current sub-contributor is a fetch
+//					null
+//			);
+//		}
+//
+//		//Must occur after resolving identifiers!
+//		if ( session.isEventSource() ) {
+//			preLoadEvent.setEntity( entity ).setState( hydratedState ).setId( id ).setDescriptor( entityDescriptor );
+//
+//			final EventListenerGroup<PreLoadEventListener> listenerGroup = session
+//					.getFactory()
+//					.getServiceRegistry()
+//					.getService( EventListenerRegistry.class )
+//					.getEventListenerGroup( EventType.PRE_LOAD );
+//			for ( PreLoadEventListener listener : listenerGroup.listeners() ) {
+//				listener.onPreLoad( preLoadEvent );
+//			}
+//		}
+//
+//		entityDescriptor.setPropertyValues( entity, hydratedState );
+//
+//		final SessionFactoryImplementor factory = session.getFactory();
+//		if ( entityDescriptor.canWriteToCache() && session.getCacheMode().isPutEnabled() ) {
+//
+//			if ( debugEnabled ) {
+//				LOG.debugf(
+//						"Adding entity to second-level cache: %s",
+//						MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
+//				);
+//			}
+//
+//			final Object version = Versioning.getVersion( hydratedState, entityDescriptor );
+//			final CacheEntry entry = entityDescriptor.buildCacheEntry( entity, hydratedState, version, session );
+//			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
+//			final Object cacheKey = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
+//
+//			// explicit handling of caching for rows just inserted and then somehow forced to be read
+//			// from the database *within the same transaction*.  usually this is done by
+//			// 		1) Session#refresh, or
+//			// 		2) Session#clear + some form of load
+//			//
+//			// we need to be careful not to clobber the lock here in the cache so that it can be rolled back if need be
+//			if ( session.getPersistenceContext().wasInsertedDuringTransaction( entityDescriptor, id ) ) {
+//				cache.update(
+//						session,
+//						cacheKey,
+//						entityDescriptor.getCacheEntryStructure().structure( entry ),
+//						version,
+//						version
+//				);
+//			}
+//			else {
+//				final SessionEventListenerManager eventListenerManager = session.getEventListenerManager();
+//				try {
+//					eventListenerManager.cachePutStart();
+//					final boolean put = cache.putFromLoad(
+//							session,
+//							cacheKey,
+//							entityDescriptor.getCacheEntryStructure().structure( entry ),
+//							version,
+//							useMinimalPuts( session, entityEntry )
+//					);
+//
+//					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
+//						factory.getStatistics().entityCachePut(
+//								entityDescriptor.getNavigableRole(),
+//								cache.getRegion().getName()
+//						);
+//					}
+//				}
+//				finally {
+//					eventListenerManager.cachePutEnd();
 //				}
 //			}
-//			else if ( value != PropertyAccessStrategyBackRefImpl.UNKNOWN ) {
-//				// we know value != LazyPropertyInitializer.UNFETCHED_PROPERTY
-//				hydratedState[i] = types[i].resolve( value, session, entity, overridingEager );
+//		}
+//
+//		if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() != null ) {
+//			persistenceContext.getNaturalIdHelper().cacheNaturalIdCrossReferenceFromLoad(
+//					entityDescriptor,
+//					id,
+//					persistenceContext.getNaturalIdHelper().extractNaturalIdValues( hydratedState, entityDescriptor )
+//			);
+//		}
+//
+//		boolean isReallyReadOnly = readOnly;
+//		if ( !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+//			isReallyReadOnly = true;
+//		}
+//		else {
+//			final Object proxy = persistenceContext.getProxy( entityEntry.getEntityKey() );
+//			if ( proxy != null ) {
+//				// there is already a proxy for this impl
+//				// only set the status to read-only if the proxy is read-only
+//				isReallyReadOnly = ( (HibernateProxy) proxy ).getHibernateLazyInitializer().isReadOnly();
 //			}
-
-			hydratedState[ contributor.getStateArrayPosition() ] = contributor.resolveHydratedState(
-					value,
-					session,
-					// the container ("owner")... for now just pass null.
-					// ultimately we need to account for fetch parent if the
-					// current sub-contributor is a fetch
-					null
-			);
-		}
-
-		//Must occur after resolving identifiers!
-		if ( session.isEventSource() ) {
-			preLoadEvent.setEntity( entity ).setState( hydratedState ).setId( id ).setDescriptor( entityDescriptor );
-
-			final EventListenerGroup<PreLoadEventListener> listenerGroup = session
-					.getFactory()
-					.getServiceRegistry()
-					.getService( EventListenerRegistry.class )
-					.getEventListenerGroup( EventType.PRE_LOAD );
-			for ( PreLoadEventListener listener : listenerGroup.listeners() ) {
-				listener.onPreLoad( preLoadEvent );
-			}
-		}
-
-		entityDescriptor.setPropertyValues( entity, hydratedState );
-
-		final SessionFactoryImplementor factory = session.getFactory();
-		if ( entityDescriptor.canWriteToCache() && session.getCacheMode().isPutEnabled() ) {
-
-			if ( debugEnabled ) {
-				LOG.debugf(
-						"Adding entity to second-level cache: %s",
-						MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
-				);
-			}
-
-			final Object version = Versioning.getVersion( hydratedState, entityDescriptor );
-			final CacheEntry entry = entityDescriptor.buildCacheEntry( entity, hydratedState, version, session );
-			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
-			final Object cacheKey = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
-
-			// explicit handling of caching for rows just inserted and then somehow forced to be read
-			// from the database *within the same transaction*.  usually this is done by
-			// 		1) Session#refresh, or
-			// 		2) Session#clear + some form of load
-			//
-			// we need to be careful not to clobber the lock here in the cache so that it can be rolled back if need be
-			if ( session.getPersistenceContext().wasInsertedDuringTransaction( entityDescriptor, id ) ) {
-				cache.update(
-						session,
-						cacheKey,
-						entityDescriptor.getCacheEntryStructure().structure( entry ),
-						version,
-						version
-				);
-			}
-			else {
-				final SessionEventListenerManager eventListenerManager = session.getEventListenerManager();
-				try {
-					eventListenerManager.cachePutStart();
-					final boolean put = cache.putFromLoad(
-							session,
-							cacheKey,
-							entityDescriptor.getCacheEntryStructure().structure( entry ),
-							version,
-							useMinimalPuts( session, entityEntry )
-					);
-
-					if ( put && factory.getStatistics().isStatisticsEnabled() ) {
-						factory.getStatistics().entityCachePut(
-								entityDescriptor.getNavigableRole(),
-								cache.getRegion().getName()
-						);
-					}
-				}
-				finally {
-					eventListenerManager.cachePutEnd();
-				}
-			}
-		}
-
-		if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() != null ) {
-			persistenceContext.getNaturalIdHelper().cacheNaturalIdCrossReferenceFromLoad(
-					entityDescriptor,
-					id,
-					persistenceContext.getNaturalIdHelper().extractNaturalIdValues( hydratedState, entityDescriptor )
-			);
-		}
-
-		boolean isReallyReadOnly = readOnly;
-		if ( !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
-			isReallyReadOnly = true;
-		}
-		else {
-			final Object proxy = persistenceContext.getProxy( entityEntry.getEntityKey() );
-			if ( proxy != null ) {
-				// there is already a proxy for this impl
-				// only set the status to read-only if the proxy is read-only
-				isReallyReadOnly = ( (HibernateProxy) proxy ).getHibernateLazyInitializer().isReadOnly();
-			}
-		}
-		if ( isReallyReadOnly ) {
-			//no need to take a snapshot - this is a
-			//performance optimization, but not really
-			//important, except for entities with huge
-			//mutable property values
-			persistenceContext.setEntryStatus( entityEntry, Status.READ_ONLY );
-		}
-		else {
-			//take a snapshot
-			TypeHelper.deepCopy(
-					entityDescriptor,
-					hydratedState,
-					// after setting values to object
-					hydratedState,
-					StateArrayContributor::isUpdatable
-			);
-			persistenceContext.setEntryStatus( entityEntry, Status.MANAGED );
-		}
-
-		entityDescriptor.afterInitialize( entity, session );
-
-		if ( debugEnabled ) {
-			LOG.debugf(
-					"Done materializing entity %s",
-					MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
-			);
-		}
-
-		if ( factory.getStatistics().isStatisticsEnabled() ) {
-			factory.getStatistics().loadEntity( entityDescriptor.getEntityName() );
-		}
-	}
-
+//		}
+//		if ( isReallyReadOnly ) {
+//			//no need to take a snapshot - this is a
+//			//performance optimization, but not really
+//			//important, except for entities with huge
+//			//mutable property values
+//			persistenceContext.setEntryStatus( entityEntry, Status.READ_ONLY );
+//		}
+//		else {
+//			//take a snapshot
+//			TypeHelper.deepCopy(
+//					entityDescriptor,
+//					hydratedState,
+//					// after setting values to object
+//					hydratedState,
+//					StateArrayContributor::isUpdatable
+//			);
+//			persistenceContext.setEntryStatus( entityEntry, Status.MANAGED );
+//		}
+//
+//		entityDescriptor.afterInitialize( entity, session );
+//
+//		if ( debugEnabled ) {
+//			LOG.debugf(
+//					"Done materializing entity %s",
+//					MessageHelper.infoString( entityDescriptor, id, session.getFactory() )
+//			);
+//		}
+//
+//		if ( factory.getStatistics().isStatisticsEnabled() ) {
+//			factory.getStatistics().loadEntity( entityDescriptor.getEntityName() );
+//		}
+//	}
+//
 //	/**
 //	 * Check if eager of the association is overriden by anything.
 //	 *

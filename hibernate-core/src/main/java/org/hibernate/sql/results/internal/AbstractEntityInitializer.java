@@ -288,6 +288,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 			hydratedEntityState[ position ] = contributor.resolveHydratedState(
 					value,
+					rowProcessingState,
 					session,
 					// the container ("owner")... for now just pass null.
 					// ultimately we need to account for fetch parent if the
