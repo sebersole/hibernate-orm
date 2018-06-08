@@ -6,11 +6,15 @@
  */
 package org.hibernate.query.sqm.tree.from;
 
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.SqmJoinType;
 import org.hibernate.query.sqm.tree.expression.domain.SqmAttributeReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.predicate.SqmPredicate;
+import org.hibernate.sql.ast.produce.ConversionException;
+import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
+import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
@@ -92,5 +96,20 @@ public class SqmNavigableJoin
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
 		return navigableReference.getJavaTypeDescriptor();
+	}
+
+	@Override
+	public TableGroup locateMapping(FromClauseIndex fromClauseIndex) {
+		if ( getNavigableReference().getReferencedNavigable() instanceof EmbeddedValuedNavigable ) {
+			return fromClauseIndex.findResolvedTableGroup( getLhs() );
+		}
+
+		try {
+			return fromClauseIndex.resolveTableGroup( getUniqueIdentifier() );
+		}
+		catch (ConversionException e) {
+			// our uid is not yet known.. we should create the TableGroup here - at least initiate it
+			return null;
+		}
 	}
 }

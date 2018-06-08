@@ -13,11 +13,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.persistence.Transient;
 
 import org.hibernate.AssertionFailure;
+import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.PropertyNotFoundException;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
@@ -25,8 +28,8 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.property.access.internal.PropertyAccessStrategyMixedImpl;
 import org.hibernate.property.access.spi.Getter;
-import org.hibernate.type.descriptor.java.spi.Primitive;
 import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.Primitive;
 
 /**
  * Utility class for various reflection operations.
@@ -387,7 +390,17 @@ public final class ReflectHelper {
 			return;
 		}
 
-		accessibleObject.setAccessible( true );
+		try {
+			AccessController.doPrivileged(
+					(PrivilegedAction<Void>) () -> {
+						accessibleObject.setAccessible( true );
+						return null;
+					}
+			);
+		}
+		catch (SecurityException e) {
+			throw new HibernateException( "Unable to make reference accessible for reflection [" + accessibleObject + "]", e );
+		}
 	}
 
 	private static Field locateField(Class clazz, String propertyName) {

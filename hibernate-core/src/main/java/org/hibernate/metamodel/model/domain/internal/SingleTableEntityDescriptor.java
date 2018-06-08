@@ -151,6 +151,9 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		final InsertStatement insertStatement = new InsertStatement( primaryTableReference );
 
 		// todo (6.0) : account for non-generated identifiers
+
+
+
 		getHierarchy().getIdentifierDescriptor().dehydrate(
 				getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
 				(jdbcValue, type, boundColumn) -> {

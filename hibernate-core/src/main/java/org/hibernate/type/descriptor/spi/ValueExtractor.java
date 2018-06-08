@@ -32,7 +32,7 @@ public interface ValueExtractor<X> {
 	 */
 	X extract(ResultSet rs, int position, WrapperOptions options) throws SQLException;
 
-	X extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException;
+	X extract(CallableStatement statement, int position, WrapperOptions options) throws SQLException;
 
 	X extract(CallableStatement statement, String name, WrapperOptions options) throws SQLException;
 }

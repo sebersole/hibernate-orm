@@ -6,6 +6,10 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +42,7 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.Logger;
@@ -47,12 +52,14 @@ import org.jboss.logging.Logger;
  */
 public class BasicSingularPersistentAttribute<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J> {
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder<J>, ValueExtractor<J> {
 	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
 
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
 	private final BasicValueConverter valueConverter;
+	private final ValueBinder realBinder;
+	private final ValueExtractor realExtractor;
 
 	@SuppressWarnings("unchecked")
 	public BasicSingularPersistentAttribute(
@@ -80,6 +87,18 @@ public class BasicSingularPersistentAttribute<O, J>
 					valueConverter,
 					getNavigableRole()
 			);
+
+			realBinder = basicType.getSqlTypeDescriptor().getBinder(
+					valueConverter.getRelationalJavaDescriptor()
+			);
+
+			realExtractor = basicType.getSqlTypeDescriptor().getExtractor(
+					valueConverter.getDomainJavaDescriptor()
+			);
+		}
+		else {
+			realBinder = basicType.getValueBinder();
+			realExtractor = basicType.getValueExtractor();
 		}
 
 		instantiationComplete( bootAttribute, context );
@@ -157,12 +176,14 @@ public class BasicSingularPersistentAttribute<O, J>
 
 	@Override
 	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
+//		return basicType.getValueBinder();
+		return this;
 	}
 
 	@Override
 	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
+//		return basicType.getValueExtractor();
+		return this;
 	}
 
 //	@Override
@@ -208,9 +229,70 @@ public class BasicSingularPersistentAttribute<O, J>
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
 			SharedSessionContractImplementor session) {
-		if ( valueConverter != null ) {
-			value = valueConverter.toRelationalValue( value, session );
-		}
+//		if ( valueConverter != null ) {
+//			value = valueConverter.toRelationalValue( value, session );
+//		}
 		jdbcValueCollector.collect( value, this, getBoundColumn() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void bind(
+			PreparedStatement st,
+			J value,
+			int index,
+			WrapperOptions options) throws SQLException {
+		final Object bindValue = valueConverter == null
+				? value
+				: valueConverter.toRelationalValue( value, options.getSession() );
+
+		realBinder.bind( st, bindValue, index, options );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void bind(
+			CallableStatement st,
+			J value,
+			String name,
+			WrapperOptions options) throws SQLException {
+		final Object bindValue = valueConverter == null
+				? value
+				: valueConverter.toRelationalValue( value, options.getSession() );
+
+		realBinder.bind( st, bindValue, name, options );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public J extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
+		final Object value = realExtractor.extract( rs, position, options );
+		return (J) (valueConverter == null
+						? value
+						: valueConverter.toDomainValue( value, options.getSession() ) );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public J extract(
+			CallableStatement statement,
+			int position,
+			WrapperOptions options) throws SQLException {
+		final Object value = realExtractor.extract( statement, position, options );
+		return (J) (valueConverter == null
+				? value
+				: valueConverter.toDomainValue( value, options.getSession() ) );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public J extract(
+			CallableStatement statement,
+			String name,
+			WrapperOptions options) throws SQLException {
+		final Object value = realExtractor.extract( statement, name, options );
+		return (J) (valueConverter == null
+				? value
+				: valueConverter.toDomainValue( value, options.getSession() ) );
 	}
 }
