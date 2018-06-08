@@ -174,7 +174,7 @@ public class OneToOneSecondPass implements SecondPass {
 			}
 			else if ( otherSideProperty.getValue() instanceof ManyToOne ) {
 				final Optional<Join> otherSideJoin = otherSide.getJoins().stream()
-						.filter( otherSideJoinValue -> otherSideJoinValue.containsProperty( otherSideProperty ) )
+						.filter( otherSideJoinValue -> otherSideJoinValue.containsPersistentAttributeMapping( otherSideProperty ) )
 						.findFirst();
 				if ( otherSideJoin.isPresent() ) {
 					//@OneToOne @JoinTable

@@ -39,7 +39,7 @@ public abstract class AbstractEntityInsertAction extends EntityAction {
 	 * @param instance - the entity
 	 * @param isVersionIncrementDisabled - true, if version increment should
 *                                     be disabled; false, otherwise
-	 * @param persister - the entity persister
+	 * @param entityDescriptor - the entity entityDescriptor
 	 * @param session - the session
 	 */
 	protected AbstractEntityInsertAction(
@@ -47,9 +47,9 @@ public abstract class AbstractEntityInsertAction extends EntityAction {
 			Object[] state,
 			Object instance,
 			boolean isVersionIncrementDisabled,
-			EntityDescriptor persister,
+			EntityDescriptor entityDescriptor,
 			SharedSessionContractImplementor session) {
-		super( session, id, instance, persister );
+		super( session, id, instance, entityDescriptor );
 		this.state = state;
 		this.isVersionIncrementDisabled = isVersionIncrementDisabled;
 		this.isExecuted = false;
