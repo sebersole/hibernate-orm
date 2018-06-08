@@ -6,6 +6,9 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
@@ -90,6 +93,16 @@ public class NavigablePathStack implements Stack<NavigablePath> {
 	@Override
 	public NavigablePath getPrevious() {
 		return internalStack.getPrevious();
+	}
+
+	@Override
+	public void visitCurrentFirst(Consumer<NavigablePath> action) {
+		internalStack.visitCurrentFirst( action );
+	}
+
+	@Override
+	public <X> X findCurrentFirst(Function<NavigablePath, X> function) {
+		return internalStack.findCurrentFirst( function );
 	}
 
 	@Override

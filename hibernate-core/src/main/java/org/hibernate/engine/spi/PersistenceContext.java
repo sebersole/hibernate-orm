@@ -15,10 +15,10 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.MappingException;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.loading.internal.LoadContexts;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.sql.results.spi.LoadContexts;
 
 /**
  * Represents the state of "stuff" Hibernate is tracking, including (not exhaustive):
@@ -632,7 +632,7 @@ public interface PersistenceContext {
 	 *
 	 * To override this session's read-only/modifiable setting for entities
 	 * and proxies loaded by a Query:
-	 * @see org.hibernate.Query#setReadOnly(boolean)
+	 * @see org.hibernate.query.Query#setReadOnly(boolean)
 	 *
 	 * @param readOnly true, the default for loaded entities/proxies is read-only;
 	 *                 false, the default for loaded entities/proxies is modifiable
@@ -675,7 +675,7 @@ public interface PersistenceContext {
 	 *
 	 * @see org.hibernate.Session#setDefaultReadOnly
 	 * @see org.hibernate.Session#setReadOnly
-	 * @see org.hibernate.Query#setReadOnly
+	 * @see org.hibernate.query.Query#setReadOnly
 	 */
 	void setReadOnly(Object entityOrProxy, boolean readOnly);
 

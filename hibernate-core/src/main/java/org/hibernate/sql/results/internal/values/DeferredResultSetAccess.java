@@ -115,16 +115,6 @@ public class DeferredResultSetAccess extends AbstractResultSetAccess {
 	@Override
 	public void release() {
 		if ( resultSet != null ) {
-			try {
-				getPersistenceContext().getPersistenceContext().getLoadContexts().cleanup( resultSet );
-			}
-			catch (Throwable ignore) {
-				// just log the problem
-				if ( log.isTraceEnabled() ) {
-					log.tracef( "Exception trying to cleanup ResultSet from Session LoadContext : {0}", ignore.getMessage() );
-				}
-			}
-
 			getPersistenceContext().getJdbcCoordinator()
 					.getLogicalConnection()
 					.getResourceRegistry()

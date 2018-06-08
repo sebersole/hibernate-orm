@@ -7,11 +7,13 @@
 package org.hibernate.sql.results.spi;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PreLoadEvent;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 
 /**
@@ -46,7 +48,14 @@ public interface JdbcValuesSourceProcessingState {
 			EntityKey entityKey,
 			Function<EntityKey,LoadingEntityEntry> entryProducer);
 
-	LoadingEntityEntry findLoadingEntry(EntityKey entityKey);
+	LoadingEntityEntry findLoadingEntryLocally(EntityKey entityKey);
+
+	LoadingCollectionEntry registerLoadingCollection(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object collectionKey,
+			Supplier<LoadingCollectionEntry> entryProducer);
+
+	LoadingCollectionEntry findLoadingCollectionLocally(PersistentCollectionDescriptor collectionDescriptor, Object key);
 
 	void finishUp();
 }

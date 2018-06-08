@@ -9,16 +9,19 @@ package org.hibernate.sql.results.internal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PreLoadEvent;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.LoadingCollectionEntry;
 import org.hibernate.sql.results.spi.LoadingEntityEntry;
 
 import org.jboss.logging.Logger;
@@ -33,7 +36,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	private final JdbcValuesSourceProcessingOptions processingOptions;
 
 	private Map<EntityKey,LoadingEntityEntry> loadingEntityMap;
-	private Map<Object,EntityKey> hydratedEntityKeys;
+	private Map<PersistentCollectionDescriptor,Map<Object,LoadingCollectionEntry>> loadingCollectionMap;
 
 	private final PreLoadEvent preLoadEvent;
 	private final PostLoadEvent postLoadEvent;
@@ -83,7 +86,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 				(key, existingValue) -> {
 					if ( existingValue == null ) {
 						log.debugf(
-								"Generating LoadingEntity registration : %s[id=%s]",
+								"Generating LoadingEntityEntry registration : %s[id=%s]",
 								entityKey.getEntityName(),
 								entityKey.getIdentifier()
 						);
@@ -91,7 +94,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 					}
 					else {
 						log.debugf(
-								"Attempt to add duplicate LoadingEntity registration for same EntityKey [%s]",
+								"Attempt to add duplicate LoadingEntityEntry registration for same EntityKey [%s]",
 								entityKey
 						);
 						return existingValue;
@@ -99,18 +102,66 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 				}
 		);
 
-		if ( hydratedEntityKeys == null ) {
-			hydratedEntityKeys = new HashMap<>();
-		}
-
-		hydratedEntityKeys.put( loadingEntity.getEntityInstance(), entityKey );
-
 		return loadingEntity;
 	}
 
 	@Override
-	public LoadingEntityEntry findLoadingEntry(EntityKey entityKey) {
+	public LoadingEntityEntry findLoadingEntryLocally(EntityKey entityKey) {
 		return loadingEntityMap == null ? null : loadingEntityMap.get( entityKey );
+	}
+
+	@Override
+	public LoadingCollectionEntry registerLoadingCollection(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object collectionKey,
+			Supplier<LoadingCollectionEntry> entryProducer) {
+		Map<Object, LoadingCollectionEntry> entryByKeyMap;
+		final LoadingCollectionEntry existing;
+		if ( loadingCollectionMap == null ) {
+			loadingCollectionMap = new HashMap<>();
+			entryByKeyMap = null;
+			existing = null;
+		}
+		else {
+			entryByKeyMap = loadingCollectionMap.get( collectionDescriptor );
+			existing = entryByKeyMap.get( collectionKey );
+		}
+
+		if ( entryByKeyMap == null ) {
+			entryByKeyMap = new HashMap<>();
+			loadingCollectionMap.put( collectionDescriptor, entryByKeyMap );
+		}
+
+		if ( existing != null ) {
+			log.debugf(
+					"Attempt to add duplicate LoadingCollectionEntry registration for same key [%s#%s]",
+					collectionDescriptor.getNavigableRole().getFullPath(),
+					collectionKey
+			);
+
+			return existing;
+		}
+		else {
+			final LoadingCollectionEntry produced = entryProducer.get();
+			entryByKeyMap.put( collectionKey, produced );
+			return produced;
+		}
+	}
+
+	@Override
+	public LoadingCollectionEntry findLoadingCollectionLocally(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object key) {
+		if ( loadingCollectionMap == null ) {
+			return null;
+		}
+
+		final Map<Object, LoadingCollectionEntry> entryMap = loadingCollectionMap.get( collectionDescriptor );
+		if ( entryMap == null ) {
+			return null;
+		}
+
+		return entryMap.get( key );
 	}
 
 	@Override
@@ -120,15 +171,22 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 	@Override
 	public void finishUp() {
-		// for arrays, we should end the collection load beforeQuery resolving the entities, since the
-		// actual array instances are not instantiated during loading
-		finishLoadingArrays();
+		executionContext.getPersistenceContext().getPersistenceContext().getLoadContexts().register( this );
 
-		// now finish loading the entities (2-phase load)
-		performTwoPhaseLoad();
+		try {
+			// for arrays, we should end the collection load beforeQuery resolving the entities, since the
+			// actual array instances are not instantiated during loading
+			finishLoadingArrays();
 
-		// now we can finalize loading collections
-		finishLoadingCollections();
+			// now finish loading the entities (2-phase load)
+			performTwoPhaseLoad();
+
+			// now we can finalize loading collections
+			finishLoadingCollections();
+		}
+		finally {
+			executionContext.getSession().getPersistenceContext().getLoadContexts().deregister( this );
+		}
 	}
 
 	private void finishLoadingArrays() {
@@ -165,7 +223,8 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 //			initializer.endLoading( context );
 //		}
 
-		// todo (6.0) : need something like org.hibernate.engine.loading.internal.LoadingCollectionEntry
+		// todo (6.0) : need something like org.hibernate.sql.results.spi.LoadingCollectionEntry
+		//		^^ see new `org.hibernate.sql.results.spi.LoadContexts` &&
 
 //		throw new NotYetImplementedFor6Exception(  );
 	}

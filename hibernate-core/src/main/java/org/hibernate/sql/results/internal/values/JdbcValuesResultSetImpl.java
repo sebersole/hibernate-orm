@@ -32,7 +32,7 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 
 	private final ResultSetAccess resultSetAccess;
 	private final ResultSetMapping resultSetMapping;
-	private final SharedSessionContractImplementor persistenceContext;
+	private final SharedSessionContractImplementor session;
 
 	// todo (6.0) - manage limit-based skips
 
@@ -49,13 +49,13 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 			QueryKey queryCacheKey,
 			QueryOptions queryOptions,
 			ResultSetMapping resultSetMapping,
-			SharedSessionContractImplementor persistenceContext) {
+			SharedSessionContractImplementor session) {
 		super(
-				resolveQueryCachePutManager( persistenceContext, queryOptions, queryCacheKey )
+				resolveQueryCachePutManager( session, queryOptions, queryCacheKey )
 		);
 		this.resultSetAccess = resultSetAccess;
 		this.resultSetMapping = resultSetMapping;
-		this.persistenceContext = persistenceContext;
+		this.session = session;
 
 		// todo (6.0) : decide how to handle paged/limited results
 		this.numberOfRowsToProcess = interpretNumberOfRowsToProcess( queryOptions );
@@ -126,7 +126,7 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 	private ExecutionException makeExecutionException(String message, SQLException cause) {
 		return new ExecutionException(
 				message,
-				persistenceContext.getJdbcServices().getSqlExceptionHelper().convert(
+				session.getJdbcServices().getSqlExceptionHelper().convert(
 						cause,
 						message
 				)

@@ -49,7 +49,11 @@ public interface RowProcessingState extends Readable.ResolutionContext {
 		}
 
 		// Next, check currently loading entities
-		final LoadingEntityEntry loadingEntry = getJdbcValuesSourceProcessingState().findLoadingEntry( entityKey );
+		final LoadingEntityEntry loadingEntry = getJdbcValuesSourceProcessingState()
+				.getPersistenceContext()
+				.getPersistenceContext()
+				.getLoadContexts()
+				.findLoadingEntityEntry( entityKey );
 		if ( loadingEntry != null ) {
 			return loadingEntry.getEntityInstance();
 		}

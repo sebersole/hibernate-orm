@@ -7,9 +7,11 @@
 package org.hibernate.internal.util.collections;
 
 import java.util.LinkedList;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
- * A general-purpose stack impl for use in parsing.
+ * A general-purpose stack impl.
  *
  * @param <T> The type of things stored in the stack
  *
@@ -61,5 +63,21 @@ public class StandardStack<T> implements Stack<T> {
 	@Override
 	public void clear() {
 		internalStack.clear();
+	}
+
+	@Override
+	public void visitCurrentFirst(Consumer<T> action) {
+		internalStack.forEach( action );
+	}
+
+	@Override
+	public <X> X findCurrentFirst(Function<T, X> function) {
+		for ( T t : internalStack ) {
+			final X result = function.apply( t );
+			if ( result != null ) {
+				return result;
+			}
+		}
+		return null;
 	}
 }

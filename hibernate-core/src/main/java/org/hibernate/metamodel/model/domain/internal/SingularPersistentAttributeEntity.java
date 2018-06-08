@@ -495,6 +495,13 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 
 		// try loading it...
+		//
+		// todo (6.0) : need to make sure that the "JdbcValues" we are processing here have been added to the Session's stack of "load contexts"
+		//		that allows the loader(s) to resolve entity's that are being loaded here.
+		//
+		//		NOTE : this is how we get around having to register a "holder" EntityEntry with the PersistenceContext
+		//		but still letting other (recursive) loads find references we are loading.
+
 		J loaded = getEntityDescriptor().getSingleIdLoader().load(
 				resolvedIdentifier,
 				NO_LOAD_OPTIONS,
