@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
+import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
@@ -111,41 +112,14 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			attributes = CollectionHelper.arrayList( declaredAttributeCount );
 		}
 
-		final List<PersistentAttributeMapping> sortedAttributeMappings = new ArrayList<>( bootDescriptor.getDeclaredPersistentAttributes() );
-		sortedAttributeMappings.sort( Comparator.comparing( PersistentAttributeMapping::getName ) );
+		addDeclaredAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes() );
 
-		for ( PersistentAttributeMapping attributeMapping : sortedAttributeMappings ) {
-			final PersistentAttribute persistentAttribute = attributeMapping.makeRuntimeAttribute(
-					this,
-					bootDescriptor,
-					SingularPersistentAttribute.Disposition.NORMAL,
-					creationContext
-			);
-
-			if ( !NonIdPersistentAttribute.class.isInstance( persistentAttribute ) ) {
-				throw new HibernateException(
-						String.format(
-								Locale.ROOT,
-								"Boot-time attribute descriptor [%s] made non-NonIdPersistentAttribute, " +
-										"while a NonIdPersistentAttribute was expected : %s",
-								attributeMapping,
-								persistentAttribute
-						)
-				);
-			}
-
-			attributes.add( (NonIdPersistentAttribute) persistentAttribute );
-			declaredAttributes.add( (NonIdPersistentAttribute) persistentAttribute );
-			declaredAttributesByName.put( persistentAttribute.getAttributeName(), (NonIdPersistentAttribute) persistentAttribute );
-
-			final StateArrayContributor contributor = (StateArrayContributor) persistentAttribute;
-			contributor.setStateArrayPosition( stateArrayContributors.size() );
-			stateArrayContributors.add( contributor );
+		if ( bootDescriptor instanceof IdentifiableTypeMapping ) {
+			addJoinsDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext );
 		}
 
 		fullyInitialized = true;
 	}
-
 
 	public void addSubclassDescriptor(InheritanceCapable<? extends J> subclassType) {
 		log.debugf(
@@ -276,7 +250,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	// todo (6.0) : make sure we are only iterating the attributes once to do all of these kinds of initialization
 
-	Boolean hasMutableProperties;
+	private Boolean hasMutableProperties;
 
 	@Override
 	public boolean hasMutableProperties() {
@@ -614,5 +588,64 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	@Override
 	public List<StateArrayContributor<?>> getStateArrayContributors() {
 		return stateArrayContributors;
+	}
+
+	private void addJoinsDeclaredAttributes(
+			IdentifiableTypeMapping bootDescriptor,
+			RuntimeModelCreationContext creationContext) {
+		final List<PersistentAttributeMapping> declaredPersistentAttributes = new ArrayList<>();
+
+		bootDescriptor.getMappedJoins().forEach( tableJoin ->
+														 declaredPersistentAttributes.addAll( tableJoin.getDeclaredPersistentAttributes() )
+		);
+
+		addDeclaredAttributes( bootDescriptor, creationContext, declaredPersistentAttributes );
+	}
+
+	private void addDeclaredAttributes(
+			ManagedTypeMapping bootContainer,
+			RuntimeModelCreationContext creationContext,
+			List<PersistentAttributeMapping> declaredPersistentAttributes) {
+		final List<PersistentAttributeMapping> sortedAttributeMappings = new ArrayList<>( declaredPersistentAttributes );
+		sortedAttributeMappings.sort( Comparator.comparing( PersistentAttributeMapping::getName ) );
+
+		sortedAttributeMappings.forEach(
+				attributeMapping -> addDeclaredAttribute(
+						attributeMapping,
+						bootContainer,
+						creationContext
+				)
+		);
+	}
+
+	private void addDeclaredAttribute(
+			PersistentAttributeMapping attributeMapping,
+			ManagedTypeMapping bootContainer,
+			RuntimeModelCreationContext creationContext) {
+		PersistentAttribute<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
+				this,
+				bootContainer,
+				SingularPersistentAttribute.Disposition.NORMAL,
+				creationContext
+		);
+		if ( !NonIdPersistentAttribute.class.isInstance( attribute ) ) {
+			throw new HibernateException(
+					String.format(
+							Locale.ROOT,
+							"Boot-time attribute descriptor [%s] made non-NonIdPersistentAttribute, " +
+									"while a NonIdPersistentAttribute was expected : %s",
+							attributeMapping,
+							attribute
+					)
+			);
+		}
+
+		final NonIdPersistentAttribute persistentAttribute = (NonIdPersistentAttribute) attribute;
+		persistentAttribute.setStateArrayPosition( getStateArrayContributors().size() );
+
+		this.attributes.add( persistentAttribute );
+		this.declaredAttributes.add( persistentAttribute );
+		this.declaredAttributesByName.putIfAbsent( attribute.getName(), persistentAttribute );
+		stateArrayContributors.add( persistentAttribute );
 	}
 }

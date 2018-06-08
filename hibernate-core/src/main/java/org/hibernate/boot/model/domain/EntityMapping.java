@@ -23,7 +23,6 @@ public interface EntityMapping extends IdentifiableTypeMapping, Filterable {
 
 	void setEntityPersisterClass(Class entityPersisterClass);
 
-
 	@Override
 	default PersistenceType getPersistenceType() {
 		return PersistenceType.ENTITY;

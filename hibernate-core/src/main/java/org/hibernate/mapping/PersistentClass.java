@@ -22,7 +22,7 @@ import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
-import org.hibernate.boot.model.domain.MappedTableJoin;
+import org.hibernate.boot.model.domain.MappedJoin;
 import org.hibernate.boot.model.domain.internal.AbstractIdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.spi.EntityMappingHierarchyImplementor;
 import org.hibernate.boot.model.domain.spi.EntityMappingImplementor;
@@ -79,14 +79,13 @@ public abstract class PersistentClass
 	private int batchSize = -1;
 	private boolean selectBeforeUpdate;
 	private java.util.Map metaAttributes;
-	private ArrayList<Join> joins = new ArrayList<Join>();
+	private ArrayList<Join> joins = new ArrayList<>();
 	private final ArrayList<Join> subclassJoins = new ArrayList();
 	private final ArrayList<FilterConfiguration> filters = new ArrayList();
 	protected final HashSet<String> synchronizedTables = new HashSet();
 	private String loaderName;
 	private Boolean isAbstract;
 	private boolean hasSubselectLoadableCollections;
-	private EmbeddedValueMapping identifierEmbeddedValueMapping;
 
 	// Custom SQL
 	private String customSQLInsert;
@@ -431,7 +430,7 @@ public abstract class PersistentClass
 	}
 
 	@Override
-	public Collection<MappedTableJoin> getSecondaryTables() {
+	public Collection<MappedJoin> getMappedJoins() {
 		final Collection<Join> joins = getJoins();
 
 		if ( joins.size() <= 0 ) {
@@ -795,7 +794,7 @@ public abstract class PersistentClass
 		Iterator iter = getSubclassJoinClosureIterator();
 		while ( iter.hasNext() ) {
 			Join join = (Join) iter.next();
-			if ( join.containsProperty( prop ) ) {
+			if ( join.containsPersistentAttributeMapping( prop ) ) {
 				return result;
 			}
 			result++;

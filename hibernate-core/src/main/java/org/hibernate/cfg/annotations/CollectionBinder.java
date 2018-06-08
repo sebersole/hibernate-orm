@@ -1676,7 +1676,7 @@ public abstract class CollectionBinder {
 				KeyValue key = null;
 				Optional<Join> join = referencedEntity.getJoins()
 						.stream()
-						.filter( j -> j.containsProperty( property ) )
+						.filter( j -> j.containsPersistentAttributeMapping( property ) )
 						.findFirst();
 				if ( join.isPresent() ) {
 					key = join.get().getKey();
