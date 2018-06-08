@@ -32,8 +32,23 @@ likely a 6-week timebox schedule.
 
 As always the "trigger" for Beta1 is (relatively) stable API.
 
-
 === Alpha1
+
+* Mappings
+** ManyToOne
+	*** Bidirectional
+** OneToMany
+** ManyToMany
+** OneToOne
+** Inheritance
+
+* Cascading
+* Batching
+* RepresentationMode
+
+* CRUD
+** Delete
+** Update
 
 * [.line-through]#Drop `Query#iterate` support (shallow queries)?#
 * [.line-through]#Determine how to deal with `JpaExpression#getExpressionSqmType`.
