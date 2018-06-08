@@ -36,8 +36,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	private static final Logger log = Logger.getLogger( AbstractManagedType.class );
 
-	// todo (6.0) : I think we can just drop the mutabilityPlan and comparator for managed types
-
 	private final ManagedJavaDescriptor<J> javaTypeDescriptor;
 
 	private final TypeConfiguration typeConfiguration;
@@ -47,13 +45,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	private final Set<String> subClassEntityNames = ConcurrentHashMap.newKeySet();
 
 	private final Object discriminatorValue;
-
-
-	// todo (6.0) : we need some kind of callback after all Navigables have been added to all containers
-	//		use that callback to build these 2 lists - they are cached resolutions
-	//		for performance rather that "recalculating" each time
-	//
-	//		see `#getNavigables` and `#getDeclaredNavigables` below.
 
 	private ManagedTypeRepresentationStrategy representationStrategy;
 
@@ -112,10 +103,23 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			attributes = CollectionHelper.arrayList( declaredAttributeCount );
 		}
 
-		addDeclaredAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes() );
+
+		final List<NonIdPersistentAttribute> collectedAttributes = new ArrayList<>();
+
+		createAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes(), collectedAttributes::add );
 
 		if ( bootDescriptor instanceof IdentifiableTypeMapping ) {
-			addJoinsDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext );
+			addJoinDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext, collectedAttributes::add );
+		}
+
+		collectedAttributes.sort( Comparator.comparing( NonIdPersistentAttribute::getName ) );
+
+		for ( NonIdPersistentAttribute attribute : collectedAttributes ) {
+			attribute.setStateArrayPosition( getStateArrayContributors().size() );
+			this.attributes.add( attribute );
+			this.declaredAttributes.add( attribute );
+			this.declaredAttributesByName.putIfAbsent( attribute.getName(), attribute );
+			this.stateArrayContributors.add( attribute );
 		}
 
 		fullyInitialized = true;
@@ -590,38 +594,39 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		return stateArrayContributors;
 	}
 
-	private void addJoinsDeclaredAttributes(
+	private void addJoinDeclaredAttributes(
 			IdentifiableTypeMapping bootDescriptor,
-			RuntimeModelCreationContext creationContext) {
+			RuntimeModelCreationContext creationContext,
+			Consumer<NonIdPersistentAttribute<J,?>> collector) {
 		final List<PersistentAttributeMapping> declaredPersistentAttributes = new ArrayList<>();
 
-		bootDescriptor.getMappedJoins().forEach( tableJoin ->
-														 declaredPersistentAttributes.addAll( tableJoin.getDeclaredPersistentAttributes() )
+		bootDescriptor.getMappedJoins().forEach(
+				tableJoin -> declaredPersistentAttributes.addAll( tableJoin.getDeclaredPersistentAttributes() )
 		);
 
-		addDeclaredAttributes( bootDescriptor, creationContext, declaredPersistentAttributes );
+		createAttributes( bootDescriptor, creationContext, declaredPersistentAttributes, collector );
 	}
 
-	private void addDeclaredAttributes(
+	private void createAttributes(
 			ManagedTypeMapping bootContainer,
 			RuntimeModelCreationContext creationContext,
-			List<PersistentAttributeMapping> declaredPersistentAttributes) {
-		final List<PersistentAttributeMapping> sortedAttributeMappings = new ArrayList<>( declaredPersistentAttributes );
-		sortedAttributeMappings.sort( Comparator.comparing( PersistentAttributeMapping::getName ) );
-
-		sortedAttributeMappings.forEach(
-				attributeMapping -> addDeclaredAttribute(
+			List<PersistentAttributeMapping> attributes,
+			Consumer<NonIdPersistentAttribute<J,?>> collector) {
+		attributes.forEach(
+				attributeMapping -> createAttribute(
 						attributeMapping,
 						bootContainer,
-						creationContext
+						creationContext,
+						collector
 				)
 		);
 	}
 
-	private void addDeclaredAttribute(
+	private void createAttribute(
 			PersistentAttributeMapping attributeMapping,
 			ManagedTypeMapping bootContainer,
-			RuntimeModelCreationContext creationContext) {
+			RuntimeModelCreationContext creationContext,
+			Consumer<NonIdPersistentAttribute<J, ?>> collector) {
 		PersistentAttribute<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
 				this,
 				bootContainer,
@@ -640,12 +645,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			);
 		}
 
-		final NonIdPersistentAttribute persistentAttribute = (NonIdPersistentAttribute) attribute;
-		persistentAttribute.setStateArrayPosition( getStateArrayContributors().size() );
-
-		this.attributes.add( persistentAttribute );
-		this.declaredAttributes.add( persistentAttribute );
-		this.declaredAttributesByName.putIfAbsent( attribute.getName(), persistentAttribute );
-		stateArrayContributors.add( persistentAttribute );
+		collector.accept( (NonIdPersistentAttribute<J, ?>) attribute );
 	}
+
 }
