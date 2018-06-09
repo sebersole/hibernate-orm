@@ -23,7 +23,7 @@ import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.JoinType;
-import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
@@ -186,7 +186,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				.generateSelectStatement( 1, queryInfluencers, lockOptions );
 
 
-		return SqlSelectAstToJdbcSelectConverter.interpret(
+		return SqlAstSelectToJdbcSelectConverter.interpret(
 				selectDescriptor,
 				parameterBindingContext
 		);
@@ -211,7 +211,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				id
 		);
 
-		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
+		final JdbcSelect jdbcSelect = SqlAstSelectToJdbcSelectConverter.interpret(
 				databaseSnapshotSelectAst,
 				parameterBindingContext
 		);

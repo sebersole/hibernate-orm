@@ -34,11 +34,6 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 
 	@Test
 	public void testOperations() {
-
-//		sessionFactoryScope().inTransaction(
-//				session -> session.createQuery( "delete SimpleEntity" ).executeUpdate()
-//		);
-
 		final EntityWithManyToOneSelfReference entity1 = new EntityWithManyToOneSelfReference( 1, "first", Integer.MAX_VALUE );
 		final EntityWithManyToOneSelfReference entity2 = new EntityWithManyToOneSelfReference( 2, "second", Integer.MAX_VALUE, entity1 );
 

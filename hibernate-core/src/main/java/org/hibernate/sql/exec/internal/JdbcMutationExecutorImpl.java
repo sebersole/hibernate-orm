@@ -22,6 +22,8 @@ import org.hibernate.sql.exec.spi.PreparedStatementCreator;
  * @author Steve Ebersole
  */
 public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
+	public static final JdbcMutationExecutorImpl CALL_AFTER_INSTANCE = new JdbcMutationExecutorImpl( true );
+	public static final JdbcMutationExecutorImpl NO_CALL_AFTER_INSTANCE = new JdbcMutationExecutorImpl( false );
 
 	private final boolean callAfterStatement;
 

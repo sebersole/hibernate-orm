@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.consume.multitable.spi.Handler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
@@ -75,7 +74,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		this.tableHelper = idTableHelper;
 	}
 
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityDescriptor<?> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -200,6 +199,9 @@ public abstract class AbstractTableBasedHandler implements Handler {
 			EntityDescriptor entityDescriptor,
 			SqmDeleteOrUpdateStatement sqmUpdateStatement,
 			HandlerExecutionContext executionContext) {
+		// todo (6.0) : we are parsing the SQM multiple times here:
+		//		1) generateEntityIdSelect
+		//		2) generateIdTableInsertSelect
 		return IdSelectGenerator.generateEntityIdSelect(
 				entityDescriptor,
 				sqmUpdateStatement,

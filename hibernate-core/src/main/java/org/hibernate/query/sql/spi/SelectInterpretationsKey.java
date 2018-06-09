@@ -9,13 +9,13 @@ package org.hibernate.query.sql.spi;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
-import org.hibernate.query.spi.QueryInterpretations;
+import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class SelectInterpretationsKey implements QueryInterpretations.Key {
+public class SelectInterpretationsKey implements QueryPlanCache.Key {
 	private final String sql;
 	private final ResultSetMappingDescriptor resultSetMapping;
 

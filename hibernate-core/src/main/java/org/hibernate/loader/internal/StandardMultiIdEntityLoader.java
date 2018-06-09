@@ -16,7 +16,7 @@ import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
-import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
@@ -69,7 +69,7 @@ public class StandardMultiIdEntityLoader<J>
 				loadIds
 		);
 
-		final JdbcSelect jdbcSelect = SqlSelectAstToJdbcSelectConverter.interpret(
+		final JdbcSelect jdbcSelect = SqlAstSelectToJdbcSelectConverter.interpret(
 				selectDescriptor,
 				parameterBindingContext
 		);

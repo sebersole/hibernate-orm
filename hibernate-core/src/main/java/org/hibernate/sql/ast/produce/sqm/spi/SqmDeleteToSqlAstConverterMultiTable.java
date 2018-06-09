@@ -6,18 +6,120 @@
  */
 package org.hibernate.sql.ast.produce.sqm.spi;
 
+import java.util.List;
+
+import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
+import org.hibernate.query.sqm.tree.SqmDeleteStatement;
+import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
+import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
+import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.ast.tree.spi.from.TableSpace;
+import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 
 /**
  * @author Steve Ebersole
  */
 public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConverter {
 
+	private final QuerySpec idTableSelect;
+	private final EntityDescriptor entityDescriptor;
+	private final EntityTableGroup entityTableGroup;
+
+	public static List<SqlAstUpdateDescriptor> interpret(
+			SqmDeleteStatement sqmStatement,
+			QuerySpec idTableSelect,
+			QueryOptions queryOptions,
+			SqlAstBuildingContext sqlAstBuildingContext) {
+
+		final SqmDeleteToSqlAstConverterMultiTable walker = new SqmDeleteToSqlAstConverterMultiTable(
+				sqmStatement,
+				idTableSelect,
+				queryOptions,
+				sqlAstBuildingContext
+		);
+
+		walker.visitDeleteStatement( sqmStatement );
+
+		// todo (6.0) : finish this code
+		// see SqmUpdateToSqlAstConverterMultiTable#interpret
+//		return walker.updateStatementBuilderMap.entrySet().stream()
+//				.map( entry -> entry.getValue().createUpdateDescriptor() )
+//				.collect( Collectors.toList() );
+		throw new NotYetImplementedFor6Exception();
+	}
+
 	public SqmDeleteToSqlAstConverterMultiTable(
-			SqlAstBuildingContext sqlAstBuildingContext,
-			QueryOptions queryOptions) {
+			SqmDeleteStatement sqmStatement,
+			QuerySpec idTableSelect,
+			QueryOptions queryOptions,
+			SqlAstBuildingContext sqlAstBuildingContext) {
 		super( sqlAstBuildingContext, queryOptions );
+		this.idTableSelect = idTableSelect;
+
+		this.entityDescriptor = sqmStatement.getEntityFromElement()
+				.getNavigableReference()
+				.getExpressableType()
+				.getEntityDescriptor();
+
+
+		this.entityTableGroup = entityDescriptor.createRootTableGroup(
+				new TableGroupInfo() {
+					@Override
+					public String getUniqueIdentifier() {
+						return sqmStatement.getEntityFromElement().getUniqueIdentifier();
+					}
+
+					@Override
+					public String getIdentificationVariable() {
+						return sqmStatement.getEntityFromElement().getIdentificationVariable();
+					}
+
+					@Override
+					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+						return sqmStatement.getEntityFromElement().getIntrinsicSubclassEntityMetadata();
+					}
+				},
+				new RootTableGroupContext() {
+					@Override
+					public void addRestriction(Predicate predicate) {
+					}
+
+					@Override
+					public QuerySpec getQuerySpec() {
+						return null;
+					}
+
+					@Override
+					public TableSpace getTableSpace() {
+						return null;
+					}
+
+					@Override
+					public SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
+						return getSqlAliasBaseManager();
+					}
+
+					@Override
+					public JoinType getTableReferenceJoinType() {
+						return JoinType.INNER;
+					}
+
+					@Override
+					public LockOptions getLockOptions() {
+						return queryOptions.getLockOptions();
+					}
+				}
+		);
+
+		getFromClauseIndex().crossReference( sqmStatement.getEntityFromElement(), entityTableGroup );
 	}
 }

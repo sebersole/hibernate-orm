@@ -12,7 +12,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.criteria.HibernateCriteriaBuilder;
-import org.hibernate.query.internal.QueryInterpretationsImpl;
+import org.hibernate.query.internal.QueryPlanCacheImpl;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.produce.internal.SemanticQueryProducerImpl;
 import org.hibernate.query.sqm.produce.spi.SemanticQueryProducer;
@@ -30,7 +30,7 @@ public class QueryEngine {
 	private final NamedQueryRepository namedQueryRepository;
 	private final HibernateCriteriaBuilder criteriaBuilder;
 	private final SemanticQueryProducer semanticQueryProducer;
-	private final QueryInterpretations queryInterpretations;
+	private final QueryPlanCache queryPlanCache;
 	private final SqmFunctionRegistry sqmFunctionRegistry;
 
 	public QueryEngine(
@@ -45,7 +45,7 @@ public class QueryEngine {
 		//this.criteriaBuilder = new CriteriaBuilderImpl( sessionFactory );
 		this.criteriaBuilder = null;
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		this.queryInterpretations = new QueryInterpretationsImpl( sessionFactory );
+		this.queryPlanCache = new QueryPlanCacheImpl( sessionFactory );
 		this.sqmFunctionRegistry = sqmFunctionRegistry;
 
 		//checking for named queries
@@ -80,8 +80,8 @@ public class QueryEngine {
 		return semanticQueryProducer;
 	}
 
-	public QueryInterpretations getQueryInterpretations() {
-		return queryInterpretations;
+	public QueryPlanCache getQueryPlanCache() {
+		return queryPlanCache;
 	}
 
 	public SqmFunctionRegistry getSqmFunctionRegistry() {
@@ -101,8 +101,8 @@ public class QueryEngine {
 			semanticQueryProducer.close();
 		}
 
-		if ( queryInterpretations != null ) {
-			queryInterpretations.close();
+		if ( queryPlanCache != null ) {
+			queryPlanCache.close();
 		}
 
 		if ( sqmFunctionRegistry != null ) {

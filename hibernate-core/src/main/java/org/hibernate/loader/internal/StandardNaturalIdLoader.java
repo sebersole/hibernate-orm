@@ -17,7 +17,7 @@ import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
-import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByNaturalIdBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
@@ -121,7 +121,7 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 				.generateSelectStatement( 1, LoadQueryInfluencers.NONE, LockOptions.NONE );
 
 
-		return SqlSelectAstToJdbcSelectConverter.interpret(
+		return SqlAstSelectToJdbcSelectConverter.interpret(
 				selectDescriptor,
 				parameterBindingContext
 		);

@@ -34,6 +34,7 @@ public class EntityOfCompositesCrudTest extends SessionFactoryBasedFunctionalTes
 
 	@Test
 	public void testOperations() {
+		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfComposites" ).executeUpdate() );
 
 		final EntityOfComposites entity = new EntityOfComposites(
 				1,

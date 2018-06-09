@@ -22,6 +22,14 @@ public class DeleteStatement implements MutationStatement {
 		this.restriction = restriction;
 	}
 
+	public TableReference getTargetTable() {
+		return targetTable;
+	}
+
+	public Predicate getRestriction() {
+		return restriction;
+	}
+
 	public static class DeleteStatementBuilder {
 		private final TableReference targetTable;
 		private Predicate restriction;

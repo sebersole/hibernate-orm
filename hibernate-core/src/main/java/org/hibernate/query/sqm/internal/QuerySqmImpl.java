@@ -37,10 +37,10 @@ import org.hibernate.query.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.ParameterMetadataImplementor;
-import org.hibernate.query.spi.QueryInterpretations;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
+import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.spi.SelectQueryPlan;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
@@ -269,15 +269,15 @@ public class QuerySqmImpl<R>
 
 		SelectQueryPlan<R> queryPlan = null;
 
-		final QueryInterpretations.Key cacheKey = SqmInterpretationsKey.generateFrom( this );
+		final QueryPlanCache.Key cacheKey = SqmInterpretationsKey.generateFrom( this );
 		if ( cacheKey != null ) {
-			queryPlan = getSession().getFactory().getQueryEngine().getQueryInterpretations().getSelectQueryPlan( cacheKey );
+			queryPlan = getSession().getFactory().getQueryEngine().getQueryPlanCache().getSelectQueryPlan( cacheKey );
 		}
 
 		if ( queryPlan == null ) {
 			queryPlan = buildSelectQueryPlan();
 			if ( cacheKey != null ) {
-				getSession().getFactory().getQueryEngine().getQueryInterpretations().cacheSelectQueryPlan( cacheKey, queryPlan );
+				getSession().getFactory().getQueryEngine().getQueryPlanCache().cacheSelectQueryPlan( cacheKey, queryPlan );
 			}
 		}
 
@@ -338,6 +338,7 @@ public class QuerySqmImpl<R>
 		return resolveSelectQueryPlan().performScroll( scrollMode, this );
 	}
 
+
 	@Override
 	protected int doExecuteUpdate() {
 		SqmUtil.verifyIsNonSelectStatement( getSqmStatement() );
@@ -355,15 +356,15 @@ public class QuerySqmImpl<R>
 
 		NonSelectQueryPlan queryPlan = null;
 
-		final QueryInterpretations.Key cacheKey = SqmInterpretationsKey.generateNonSelectKey( this );
+		final QueryPlanCache.Key cacheKey = SqmInterpretationsKey.generateNonSelectKey( this );
 		if ( cacheKey != null ) {
-			queryPlan = getSession().getFactory().getQueryEngine().getQueryInterpretations().getNonSelectQueryPlan( cacheKey );
+			queryPlan = getSession().getFactory().getQueryEngine().getQueryPlanCache().getNonSelectQueryPlan( cacheKey );
 		}
 
 		if ( queryPlan == null ) {
 			queryPlan = buildNonSelectQueryPlan();
 			if ( cacheKey != null ) {
-				getSession().getFactory().getQueryEngine().getQueryInterpretations().cacheNonSelectQueryPlan( cacheKey, queryPlan );
+				getSession().getFactory().getQueryEngine().getQueryPlanCache().cacheNonSelectQueryPlan( cacheKey, queryPlan );
 			}
 		}
 

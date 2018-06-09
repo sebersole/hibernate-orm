@@ -9,7 +9,7 @@ package org.hibernate.orm.test.query.sqm.sql;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
-import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -45,7 +45,7 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 
 		final SqlAstSelectDescriptor interpretation = sqmConveter.interpret( sqm );
 
-		return SqlSelectAstToJdbcSelectConverter.interpret(
+		return SqlAstSelectToJdbcSelectConverter.interpret(
 				interpretation,
 				executionContext.getParameterBindingContext()
 		);

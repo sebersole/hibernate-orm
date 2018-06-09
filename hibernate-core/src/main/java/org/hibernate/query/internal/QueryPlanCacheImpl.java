@@ -8,7 +8,7 @@ package org.hibernate.query.internal;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
-import org.hibernate.query.spi.QueryInterpretations;
+import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.query.spi.SelectQueryPlan;
 
 /**
@@ -16,10 +16,10 @@ import org.hibernate.query.spi.SelectQueryPlan;
  *
  * @author Steve Ebersole
  */
-public class QueryInterpretationsImpl implements QueryInterpretations {
+public class QueryPlanCacheImpl implements QueryPlanCache {
 	private final SessionFactoryImplementor sessionFactory;
 
-	public QueryInterpretationsImpl(SessionFactoryImplementor sessionFactory) {
+	public QueryPlanCacheImpl(SessionFactoryImplementor sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
 

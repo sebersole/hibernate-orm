@@ -6,11 +6,28 @@
  */
 package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 
+import java.sql.Connection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import org.hibernate.dialect.Dialect;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
+import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
+import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
+import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.exec.spi.JdbcMutation;
+import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
+import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
 * @author Steve Ebersole
@@ -56,6 +73,88 @@ public class TableBasedDeleteHandlerImpl
 		// todo (6.0) : see TableBasedUpdateHandlerImpl#performMutations for general guideline
 
 		// todo (6.0) : who is responsible for injecting any strategy-specific restrictions (i.e., session-uid)?
+
+		final QuerySpec idTableSelectSubQuerySpec = generateIdTableSelect( executionContext );
+
+		String idTableSelectSubQuery = SqlAstSelectToJdbcSelectConverter.interpret(
+				idTableSelectSubQuerySpec,
+				new ParameterBindingContext() {
+					@Override
+					public <T> List<T> getLoadIdentifiers() {
+						return Collections.emptyList();
+					}
+
+					@Override
+					public QueryParameterBindings getQueryParameterBindings() {
+						return QueryParameterBindings.NO_PARAM_BINDINGS;
+					}
+
+					@Override
+					public SessionFactoryImplementor getSessionFactory() {
+						return getEntityDescriptor().getFactory();
+					}
+				}
+		).getSql();
+
+		for ( JoinedTableBinding joinedTable : getEntityDescriptor().getSecondaryTableBindings() ) {
+			deleteFrom( joinedTable.getTargetTable(), idTableSelectSubQuery, executionContext );
+		}
+
+		deleteFrom( getEntityDescriptor().getPrimaryTable(), idTableSelectSubQuery, executionContext );
+	}
+
+	private void deleteFrom(Table table, String idTableSelectSubQuery, HandlerExecutionContext executionContext) {
+		final StringBuilder sqlBuffer = new StringBuilder(  );
+		sqlBuffer.append( "delete from " )
+				.append( table.getTableExpression() )
+				.append( " where " );
+
+		final Dialect dialect = executionContext.getSessionFactory().getJdbcServices().getDialect();
+		if ( table.getPrimaryKey().getColumns().size() == 1 ) {
+			sqlBuffer.append( table.getPrimaryKey().getColumns().get( 0 ).getName().render( dialect ) )
+					.append( "= (" )
+					.append( idTableSelectSubQuery )
+					.append( ")" );
+		}
+		else {
+			sqlBuffer.append( "(" );
+			boolean firstPass = true;
+			for ( PhysicalColumn physicalColumn : table.getPrimaryKey().getColumns() ) {
+				if ( firstPass ) {
+					firstPass = false;
+				}
+				else {
+					sqlBuffer.append( "," );
+				}
+				sqlBuffer.append( physicalColumn.getName().render( dialect ) );
+			}
+			sqlBuffer.append( ") = (" )
+					.append( idTableSelectSubQuery )
+					.append( ")" );
+		}
+
+		final String deleteStatement = sqlBuffer.toString();
+
+		JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
+				new JdbcMutation() {
+					@Override
+					public String getSql() {
+						return deleteStatement;
+					}
+
+					@Override
+					public List<JdbcParameterBinder> getParameterBinders() {
+						return Collections.emptyList();
+					}
+
+					@Override
+					public Set<String> getAffectedTableNames() {
+						return Collections.singleton( table.getTableExpression() );
+					}
+				},
+				executionContext,
+				Connection::prepareStatement
+		);
 	}
 
 	public static class Builder {

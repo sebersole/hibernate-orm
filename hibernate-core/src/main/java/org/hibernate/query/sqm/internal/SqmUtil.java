@@ -18,6 +18,7 @@ import org.hibernate.query.sqm.tree.SqmStatement;
  *
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public class SqmUtil {
 	private SqmUtil() {
 	}

@@ -772,9 +772,11 @@ public class SemanticQueryBuilder
 			parameterCollector = deleteStatement;
 
 			try {
-				deleteStatement.getWhereClause().setPredicate( (SqmPredicate) ctx.whereClause()
-						.predicate()
-						.accept( this ) );
+				if ( ctx.whereClause() != null && ctx.whereClause().predicate() != null ) {
+					deleteStatement.getWhereClause().setPredicate(
+							(SqmPredicate) ctx.whereClause().predicate().accept( this )
+					);
+				}
 			}
 			finally {
 				deleteStatement.wrapUp();

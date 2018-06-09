@@ -61,6 +61,11 @@ public class TableBasedUpdateHandlerImpl
 
 	@Override
 	protected void performMutations(HandlerExecutionContext executionContext) {
+		boolean hasNoSecondaryTables = getSqmDeleteOrUpdateStatement().getEntityFromElement()
+				.getNavigableReference()
+				.getEntityDescriptor()
+				.getSecondaryTableBindings()
+				.isEmpty();
 
 		final List<SqlAstUpdateDescriptor> updateDescriptors = SqmUpdateToSqlAstConverterMultiTable.interpret(
 				getSqmDeleteOrUpdateStatement(),

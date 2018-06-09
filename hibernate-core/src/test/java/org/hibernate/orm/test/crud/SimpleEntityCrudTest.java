@@ -31,9 +31,9 @@ public class SimpleEntityCrudTest extends SessionFactoryBasedFunctionalTest {
 
 	@Test
 	public void testEntitySaving() {
-//		sessionFactoryScope().inTransaction(
-//				session -> session.createQuery( "delete SimpleEntity" ).executeUpdate()
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> session.createQuery( "delete SimpleEntity" ).executeUpdate()
+		);
 
 		final SimpleEntity entity = new SimpleEntity();
 		entity.setId( 1 );

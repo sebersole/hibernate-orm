@@ -6,11 +6,24 @@
  */
 package org.hibernate.query.sqm.internal;
 
+import java.sql.Connection;
+import java.util.Collections;
+import java.util.Set;
+
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
-import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
+import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.produce.sqm.spi.SqmDeleteToSqlAstConverterSimple;
+import org.hibernate.sql.ast.tree.spi.DeleteStatement;
+import org.hibernate.sql.exec.internal.JdbcMutationExecutorImpl;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
@@ -27,9 +40,67 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 
 	@Override
 	public int executeUpdate(
-			SharedSessionContractImplementor persistenceContext,
+			SharedSessionContractImplementor session,
 			QueryOptions queryOptions,
 			ParameterBindingContext parameterBindingContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		final DeleteStatement deleteStatement = SqmDeleteToSqlAstConverterSimple.interpret(
+				sqmStatement,
+				queryOptions,
+				new SqlAstBuildingContext() {
+					@Override
+					public SessionFactoryImplementor getSessionFactory() {
+						return session.getFactory();
+					}
+
+					@Override
+					public Callback getCallback() {
+						return afterLoadAction -> {
+						};
+					}
+				}
+		);
+
+		final JdbcMutation jdbcDelete = SqlDeleteToJdbcDeleteConverter.interpret(
+				new SqlAstDeleteDescriptor() {
+					@Override
+					public DeleteStatement getSqlAstStatement() {
+						return deleteStatement;
+					}
+
+					@Override
+					public Set<String> getAffectedTableNames() {
+						return Collections.singleton(
+								deleteStatement.getTargetTable().getTable().getTableExpression()
+						);
+					}
+				},
+				parameterBindingContext
+		);
+
+		return JdbcMutationExecutorImpl.CALL_AFTER_INSTANCE.execute(
+				jdbcDelete,
+				new ExecutionContext() {
+					@Override
+					public SharedSessionContractImplementor getSession() {
+						return session;
+					}
+
+					@Override
+					public QueryOptions getQueryOptions() {
+						return queryOptions;
+					}
+
+					@Override
+					public ParameterBindingContext getParameterBindingContext() {
+						return parameterBindingContext;
+					}
+
+					@Override
+					public Callback getCallback() {
+						return afterLoadAction -> {};
+					}
+				},
+				Connection::prepareStatement
+		);
 	}
 }

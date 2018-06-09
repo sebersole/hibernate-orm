@@ -9,6 +9,7 @@ package org.hibernate.orm.test.crud;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Shirt;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,6 +35,7 @@ public class EntityWithEnumTest extends SessionFactoryBasedFunctionalTest {
 		shirt.setColor( Shirt.Color.TAN );
 		shirt.setSize( Shirt.Size.MEDIUM );
 
+		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete Shirt" ).executeUpdate() );
 		sessionFactoryScope().inTransaction( session -> session.save( shirt ) );
 	}
 }

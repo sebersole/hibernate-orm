@@ -8,14 +8,14 @@ package org.hibernate.query.sql.spi;
 
 import java.util.Collection;
 
-import org.hibernate.query.spi.QueryInterpretations;
+import org.hibernate.query.spi.QueryPlanCache;
 
 /**
  * QueryInterpretations key for non-select NativeQuery instances
  *
  * @author Steve Ebersole
  */
-public class NonSelectInterpretationsKey implements QueryInterpretations.Key {
+public class NonSelectInterpretationsKey implements QueryPlanCache.Key {
 	private final String sql;
 	private final Collection<String> querySpaces;
 

@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.consume.spi;
 
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
+import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.exec.internal.JdbcSelectImpl;
 import org.hibernate.sql.exec.internal.StandardResultSetMappingDescriptor;
@@ -23,10 +24,10 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class SqlSelectAstToJdbcSelectConverter
+public class SqlAstSelectToJdbcSelectConverter
 		extends AbstractSqlAstToJdbcOperationConverter
 		implements SqlSelectAstWalker, JdbcRecommendedSqlTypeMappingContext {
-	private static final Logger log = Logger.getLogger( SqlSelectAstToJdbcSelectConverter.class );
+	private static final Logger log = Logger.getLogger( SqlAstSelectToJdbcSelectConverter.class );
 
 	/**
 	 * Perform interpretation of a select query, returning the SqlSelectInterpretation
@@ -34,9 +35,28 @@ public class SqlSelectAstToJdbcSelectConverter
 	 * @return The interpretation result
 	 */
 	public static JdbcSelect interpret(
+			QuerySpec querySpec,
+			ParameterBindingContext parameterBindingContext) {
+		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter(
+				parameterBindingContext
+		);
+		walker.visitQuerySpec( querySpec );
+		return new JdbcSelectImpl(
+				walker.getSql(),
+				walker.getParameterBinders(),
+//				new StandardResultSetMappingDescriptor(
+//						querySpec.getSelectClause().getSqlSelections(),
+//						Collections.emptyList()
+//				),
+				null,
+				null
+		);
+	}
+
+	public static JdbcSelect interpret(
 			SqlAstSelectDescriptor sqlSelectPlan,
 			ParameterBindingContext parameterBindingContext) {
-		final SqlSelectAstToJdbcSelectConverter walker = new SqlSelectAstToJdbcSelectConverter(
+		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter(
 				parameterBindingContext
 		);
 
@@ -52,7 +72,7 @@ public class SqlSelectAstToJdbcSelectConverter
 		);
 	}
 
-	private SqlSelectAstToJdbcSelectConverter(ParameterBindingContext parameterBindingContext) {
+	private SqlAstSelectToJdbcSelectConverter(ParameterBindingContext parameterBindingContext) {
 		super( parameterBindingContext );
 	}
 

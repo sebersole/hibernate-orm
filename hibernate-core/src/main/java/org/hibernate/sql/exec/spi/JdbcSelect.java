@@ -6,11 +6,11 @@
  */
 package org.hibernate.sql.exec.spi;
 
-import org.hibernate.sql.ast.consume.spi.SqlSelectAstToJdbcSelectConverter;
+import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
- * Represents the {@link SqlSelectAstToJdbcSelectConverter}'s interpretation of a select query
+ * Represents the {@link SqlAstSelectToJdbcSelectConverter}'s interpretation of a select query
  *
  * @author Steve Ebersole
  */
