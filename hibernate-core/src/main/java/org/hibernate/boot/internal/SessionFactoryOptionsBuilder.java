@@ -140,12 +140,7 @@ import static org.hibernate.jpa.AvailableSettings.DISCARD_PC_ON_CLOSE;
 public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 	private static final Logger log = Logger.getLogger( SessionFactoryOptionsBuilder.class );
 
-	private static final StatementInspector DEFAULT_STATEMENT_INSPECTOR = new StatementInspector() {
-		@Override
-		public String inspect(String sql) {
-			return sql;
-		}
-	};
+	private static final StatementInspector DEFAULT_STATEMENT_INSPECTOR = (StatementInspector) sql -> sql;
 
 	private final String uuid = LocalObjectUuidHelper.generateLocalObjectUuid();
 	private final StandardServiceRegistry serviceRegistry;
@@ -298,7 +293,7 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		this.statisticsEnabled = cfgService.getSetting( GENERATE_STATISTICS, BOOLEAN, false );
 		this.interceptor = determineInterceptor( configurationSettings, strategySelector );
 		this.statelessInterceptorSupplier = determineStatelessInterceptor( configurationSettings, strategySelector );
-		this.statementInspector = strategySelector.resolveDefaultableStrategy(
+		this.statementInspector = strategySelector.resolveStrategy(
 				StatementInspector.class,
 				configurationSettings.get( STATEMENT_INSPECTOR ),
 				DEFAULT_STATEMENT_INSPECTOR
@@ -315,7 +310,7 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		final boolean logSessionMetrics = cfgService.getSetting( LOG_SESSION_METRICS, BOOLEAN, statisticsEnabled );
 		this.baselineSessionEventsListenerBuilder = new BaselineSessionEventsListenerBuilder( logSessionMetrics, autoSessionEventsListener );
 
-		this.customEntityDirtinessStrategy = strategySelector.resolveDefaultableStrategy(
+		this.customEntityDirtinessStrategy = strategySelector.resolveStrategy(
 				CustomEntityDirtinessStrategy.class,
 				configurationSettings.get( CUSTOM_ENTITY_DIRTINESS_STRATEGY ),
 				DefaultCustomEntityDirtinessStrategy.INSTANCE
@@ -360,7 +355,7 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 		if ( !NoCachingRegionFactory.class.isInstance( regionFactory ) ) {
 			this.secondLevelCacheEnabled = cfgService.getSetting( USE_SECOND_LEVEL_CACHE, BOOLEAN, true );
 			this.queryCacheEnabled = cfgService.getSetting( USE_QUERY_CACHE, BOOLEAN, false );
-			this.timestampsCacheFactory = strategySelector.resolveDefaultableStrategy(
+			this.timestampsCacheFactory = strategySelector.resolveStrategy(
 					TimestampsCacheFactory.class,
 					configurationSettings.get( QUERY_CACHE_FACTORY ),
 					StandardTimestampsCacheFactory.INSTANCE
@@ -531,7 +526,7 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 			DeprecationLogger.DEPRECATION_LOGGER.deprecatedSetting( HQL_BULK_ID_STRATEGY, ID_TABLE_STRATEGY );
 		}
 
-		return strategySelector.resolveDefaultableStrategy(
+		return strategySelector.resolveStrategy(
 				IdTableStrategy.class,
 				coalesce( idTableStrategy, legacyIdTableStrategy),
 				(Supplier<IdTableStrategy>) () -> jdbcServices.getJdbcEnvironment().getDialect().getDefaultIdTableStrategy()

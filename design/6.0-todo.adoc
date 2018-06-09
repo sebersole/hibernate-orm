@@ -41,7 +41,7 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 * [.line-through]#split concept of NavigablePath and NavigableRole (PropertyPath renamed).  NavigablePath
 	represents an ongoing path in a query; NavigableRole represents the static role of an attribute
 	in relation to a root entity#
-* find all usage of `LoadPlan` and replace it with
+* [.line-through]#find all usage of `LoadPlan` and replace it with
 	`org.hibernate.sql.ast.produce.spi.SqlSelectPlan` / `org.hibernate.sql.exec.spi.JdbcSelect`.  This will
 	include the following (and more probably) replacements:
 	** `AssociationVisitationStrategy` -> `NavigableVisitationStrategy`
@@ -56,7 +56,7 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 	** `org.hibernate.loader.plan.spi.QuerySpaces` -> `org.hibernate.sql.ast.tree.spi.from.FromClause` ?
 		*** `org.hibernate.loader.plan.spi.QuerySpace` -> `org.hibernate.sql.ast.tree.spi.from.TableSpace`
 		*** etc..
-	** etc..
+	** etc..#
 * need to investigate the impact on counter-parts for "result assembly".
 * be sure to test bi-directional "key-many-to-one" references.  That is something LoadPlan code does a lot of
 	work to handle properly.  Need to find the test that Gail wrote for this.
@@ -277,63 +277,24 @@ Unresolved/undecided design questions.
 		// anything else?  element comparator, etc?
 	}
 --
-* Should `VirtualPersistentAttribute` logically be a `VirtualNavigable`?  By very nature of
-	the fact that it is virtual means it is not a "real" attribute - so why does it make
-	sense to model as such.  TBH I think that idea was added before Navigable was developed.
-	E.g. this comes up in 3 places:
-	** `NonAggregatedCompositeEntityIdentifier`
-	** `DiscriminatorDescriptor`
-	** back-refs
-* consider allowing some Dialect decisions to be contextual, meaning giving it access to
-		information about the underlying database (DatabaseMetaData?) based on which it can
-		configure itself differently.  The idea is to help cut down on the explosion of
-		dialect classes just to handle some minor change in version X to version Y for
-		database Z - e.g. have just one OracleDialect that configures itself based on the
-		passed DatabaseMetadata.  I'd really love to see something like:
+* support for Dialect "self initialization" - giving it access to information about the underlying database
+		based on which it can configure itself differently.  The idea is to help cut down on the explosion of
+		dialect classes just to handle some minor change in version X to version Y for database Z - e.g.
+		have just one OracleDialect that configures itself based on the passed DatabaseMetadata.  Something like:
 +
 ----
-package org.hibernate.boot.jdbc.spi;
+package org.hibernate.engine.jdbc.dialect.spi;
 
-// suggestion for package ^^
-//		note new `boot` package `jdbc`..
+public interface DialectResolutionContext {
+	DialectResolutionInfo getDialectResolutionInfo();
 
-public interface DatabaseInformation {
-    // Similar to org.hibernate.engine.jdbc.env.spi.ExtractedDatabaseMetaData
-    // 		and org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo
-    //
-    // 		Would be a good idea to keep those around for now and have
-    //		this interface extend them and possibly deprecate those..?
-    //		Keeping them, even if just for the short term, helps existing
-    //		code to keep working with no changes for what ever that term
-
-    // probably with default impls...
-
-	String getConnectionCatalogName();
-	String getConnectionSchemaName();
-	LinkedHashSet<TypeInfo> getTypeInfoSet();
-	Set<String> getExtraKeywords();
-	boolean supportsNamedParameters();
-	boolean supportsRefCursors();
-	...
+	ExtractedDatabaseMetaData getExtractedDatabaseMetaData();
 }
 ----
 +
-This is the best option IMO as it
-	* does not tie us to actually having around a JDBC Connection to access
-	 		the JDBC DatabaseMetaData
-	* allows us to mingle in settings from anywhere else we want (settings, etc)
-	* allows easy testing - no more mocking JDBC for testing boot code
-+
-Ultimately the call to the Dialect is something like
-+
-----
-Dialect dialect = ...;
-DatabaseInformation dbInfo = ...;
-dialect.initialize( dbInfo );
-----
-* For UPDATE and DELETE it might be better to have the "persister" generate the SQM and
-	process from that point.  The reason being that this would allow us to hook
-	into the normal `org.hibernate.hql.spi.id.MultiTableBulkIdStrategy` handling
+Dialect impls could optionally choose to define a constructor accepting this `DialectResolutionContext`
+to configure themselves.  However, we will not always have the "real" ExtractedDatabaseMetaData, e.g.
+if configured to not acquire JDBC `DatabaseMetaData` (`hibernate.temp.use_jdbc_metadata_defaults`).
 
 
 

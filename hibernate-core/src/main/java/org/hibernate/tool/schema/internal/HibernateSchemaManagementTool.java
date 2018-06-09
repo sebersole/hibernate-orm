@@ -113,7 +113,7 @@ public class HibernateSchemaManagementTool implements SchemaManagementTool, Serv
 		final Object configuredOption = ( options == null )
 				? null
 				: options.get( AvailableSettings.HBM2DDL_FILTER_PROVIDER );
-		return serviceRegistry.getService( StrategySelector.class ).resolveDefaultableStrategy(
+		return serviceRegistry.getService( StrategySelector.class ).resolveStrategy(
 				SchemaFilterProvider.class,
 				configuredOption,
 				DefaultSchemaFilterProvider.INSTANCE

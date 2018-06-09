@@ -13,11 +13,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
-import org.hibernate.boot.registry.selector.spi.StrategyCreator;
 import org.hibernate.boot.registry.selector.spi.StrategySelectionException;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
 
@@ -31,18 +31,12 @@ import org.jboss.logging.Logger;
 public class StrategySelectorImpl implements StrategySelector {
 	private static final Logger log = Logger.getLogger( StrategySelectorImpl.class );
 
+	private static final StandardCreator STANDARD_CREATOR = new StandardCreator();
 
-	public static StrategyCreator STANDARD_STRATEGY_CREATOR = strategyClass -> {
-		try {
-			return strategyClass.newInstance();
-		}
-		catch (Exception e) {
-			throw new StrategySelectionException(
-					String.format( "Could not instantiate named strategy class [%s]", strategyClass.getName() ),
-					e
-			);
-		}
-	};
+	@SuppressWarnings("unchecked")
+	public static <I> StandardCreator<I> getStandardCreator() {
+		return STANDARD_CREATOR;
+	}
 
 	private final Map<Class,Map<String,Class>> namedStrategyImplementorByStrategyMap = new ConcurrentHashMap<>();
 
@@ -117,12 +111,22 @@ public class StrategySelectorImpl implements StrategySelector {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Class<? extends T> selectStrategyImplementor(Class<T> strategy, String name) {
+	public Collection getRegisteredStrategyImplementors(Class strategy) {
+		final Map<String, Class> registrations = namedStrategyImplementorByStrategyMap.get( strategy );
+		if ( registrations == null ) {
+			return Collections.emptySet();
+		}
+		return new HashSet( registrations.values() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T, I extends T> Class<I> selectStrategyImplementor(Class<T> strategy, String name) {
 		final Map<String,Class> namedStrategyImplementorMap = namedStrategyImplementorByStrategyMap.get( strategy );
 		if ( namedStrategyImplementorMap != null ) {
 			final Class registered = namedStrategyImplementorMap.get( name );
 			if ( registered != null ) {
-				return (Class<T>) registered;
+				return registered;
 			}
 		}
 
@@ -137,17 +141,147 @@ public class StrategySelectorImpl implements StrategySelector {
 	}
 
 	@Override
-	public <T> T resolveStrategy(Class<T> strategy, Object strategyReference) {
-		return resolveDefaultableStrategy( strategy, strategyReference, (T) null );
+	public <T, I extends T> I resolveStrategy(Class<T> strategy, Object strategyReference) {
+		return resolveStrategy( strategy, strategyReference, getStandardCreator() );
+	}
+
+	@Override
+	public <T, I extends T> I resolveStrategy(Class<T> strategy, Object strategyReference, I defaultValue) {
+		return resolveStrategy(
+				strategy,
+				strategyReference,
+				(Supplier<I>) () -> defaultValue,
+				getStandardCreator()
+		);
+	}
+
+	@Override
+	public <T, I extends T> I resolveStrategy(Class<T> strategy, Object strategyReference, Supplier<I> defaultValueSupplier) {
+		return resolveStrategy(
+				strategy,
+				strategyReference,
+				defaultValueSupplier,
+				getStandardCreator()
+		);
+	}
+
+	@Override
+	public <T, I extends T> I resolveStrategy(Class<T> strategy, Object strategyReference, Function<Class<I>, I> creator) {
+		return resolveStrategy( strategy, strategyReference, (I) null, creator );
+	}
+
+	@Override
+	public <T, I extends T> I resolveStrategy(
+			Class<T> strategy,
+			Object strategyReference,
+			I defaultValue,
+			Function<Class<I>,I> creator) {
+		return resolveStrategy(
+				strategy,
+				strategyReference,
+				(Supplier<I>) () -> defaultValue,
+				creator
+		);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> T resolveDefaultableStrategy(Class<T> strategy, Object strategyReference, final T defaultValue) {
-		return resolveDefaultableStrategy(
+	public <T, I extends T> I resolveStrategy(
+			Class<T> strategy,
+			Object strategyReference,
+			Supplier<I> defaultValueSupplier,
+			Function<Class<I>, I> creator) {
+		if ( strategyReference == null ) {
+			try {
+				return defaultValueSupplier.get();
+			}
+			catch (Exception e) {
+				throw new StrategySelectionException( "Default value supplier threw exception", e );
+			}
+		}
+
+		if ( strategy.isInstance( strategyReference ) ) {
+			return (I) strategy.cast( strategyReference );
+		}
+
+		final Class<I> implementationClass;
+		if ( Class.class.isInstance( strategyReference ) ) {
+			implementationClass = (Class<I>) strategyReference;
+		}
+		else {
+			implementationClass = selectStrategyImplementor( strategy, strategyReference.toString() );
+		}
+
+		try {
+			return creator.apply( implementationClass );
+		}
+		catch (Exception e) {
+			throw new StrategySelectionException(
+					String.format( "Could not instantiate named strategy class [%s]", implementationClass.getName() ),
+					e
+			);
+		}
+	}
+
+
+
+	private static class StandardCreator<I> implements Function<Class<I>,I> {
+		@Override
+		public I apply(Class<I> strategyImplClass) {
+			try {
+				return strategyImplClass.newInstance();
+			}
+			catch (InstantiationException | IllegalAccessException e) {
+				throw new StrategySelectionException(
+						String.format( "Could not instantiate named strategy class [%s]", strategyImplClass.getName() ),
+						e
+				);
+			}
+		}
+	}
+
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Deprecations
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T, I extends T> I resolveStrategy(
+			Class<T> strategy,
+			Object strategyReference,
+			Callable<I> defaultValueSupplier,
+			Function<Class<I>,I> creator) {
+		return resolveStrategy(
 				strategy,
 				strategyReference,
-				(Callable<T>) () -> defaultValue
+				supplier( defaultValueSupplier ),
+				creator
+		);
+	}
+
+	/**
+	 * @deprecated private+deprecated
+	 */
+	@Deprecated
+	private <I> Supplier<I> supplier(Callable<I> callableForm) {
+		return () -> {
+			try {
+				return callableForm.call();
+			}
+			catch (Exception e) {
+				throw new StrategySelectionException( "Error calling Callable to determine strategy default value", e );
+			}
+		};
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T, I extends T> I resolveDefaultableStrategy(Class<T> strategy, Object strategyReference, I defaultValue) {
+		return resolveStrategy(
+				strategy,
+				strategyReference,
+				(Supplier<I>) () -> defaultValue
 		);
 	}
 
@@ -163,73 +297,10 @@ public class StrategySelectorImpl implements StrategySelector {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> T resolveDefaultableStrategy(
+	public <T, I extends T> I resolveDefaultableStrategy(
 			Class<T> strategy,
 			Object strategyReference,
-			Callable<T> defaultResolver) {
-		return (T) resolveStrategy( strategy, strategyReference, defaultResolver, STANDARD_STRATEGY_CREATOR );
-	}
-
-	@Override
-	public <T> T resolveStrategy(
-			Class<T> strategy,
-			Object strategyReference,
-			T defaultValue,
-			StrategyCreator<T> creator) {
-		return resolveStrategy(
-				strategy,
-				strategyReference,
-				(Callable<T>) () -> defaultValue,
-				creator
-		);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public Collection getRegisteredStrategyImplementors(Class strategy) {
-		final Map<String, Class> registrations = namedStrategyImplementorByStrategyMap.get( strategy );
-		if ( registrations == null ) {
-			return Collections.emptySet();
-		}
-		return new HashSet( registrations.values() );
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T resolveStrategy(
-			Class<T> strategy,
-			Object strategyReference,
-			Callable<T> defaultResolver,
-			StrategyCreator<T> creator) {
-		if ( strategyReference == null ) {
-			try {
-				return defaultResolver.call();
-			}
-			catch (Exception e) {
-				throw new StrategySelectionException( "Default-resolver threw exception", e );
-			}
-		}
-
-		if ( strategy.isInstance( strategyReference ) ) {
-			return strategy.cast( strategyReference );
-		}
-
-		final Class<? extends T> implementationClass;
-		if ( Class.class.isInstance( strategyReference ) ) {
-			implementationClass = (Class<T>) strategyReference;
-		}
-		else {
-			implementationClass = selectStrategyImplementor( strategy, strategyReference.toString() );
-		}
-
-		try {
-			return creator.create( implementationClass );
-		}
-		catch (Exception e) {
-			throw new StrategySelectionException(
-					String.format( "Could not instantiate named strategy class [%s]", implementationClass.getName() ),
-					e
-			);
-		}
+			Callable<I> defaultResolver) {
+		return (I) resolveStrategy( strategy, strategyReference, defaultResolver, getStandardCreator() );
 	}
 }

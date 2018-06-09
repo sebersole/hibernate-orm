@@ -6,8 +6,9 @@
  */
 package org.hibernate.envers.boot.internal;
 
+import java.util.function.Function;
+
 import org.hibernate.MappingException;
-import org.hibernate.boot.registry.selector.spi.StrategyCreator;
 import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.envers.internal.tools.ReflectionTools;
 import org.hibernate.envers.strategy.AuditStrategy;
@@ -18,11 +19,13 @@ import org.hibernate.service.ServiceRegistry;
 import org.jboss.logging.Logger;
 
 /**
- * Envers implementation of {@link StrategyCreator} for constructing the {@link AuditStrategy}.
+ * Envers implementation of a Function for constructing the {@link AuditStrategy}
+ * as part of the call to the {@link org.hibernate.boot.registry.selector.spi.StrategySelector}
+ * service
  *
  * @author Chris Cranford
  */
-public class StrategyCreatorAuditStrategyImpl implements StrategyCreator<AuditStrategy> {
+public class StrategyCreatorAuditStrategyImpl<I extends AuditStrategy> implements Function<Class<I>,I> {
 	private static final Logger log = Logger.getLogger( StrategyCreatorAuditStrategyImpl.class );
 
 	private final PropertyData timestampData;
@@ -36,22 +39,22 @@ public class StrategyCreatorAuditStrategyImpl implements StrategyCreator<AuditSt
 	}
 
 	@Override
-	public AuditStrategy create(Class<? extends AuditStrategy> strategyClass) {
-		log.debugf( "Creating AuditStrategy Impl [%s]", strategyClass.getName() );
+	public I apply(Class<I> strategyImplClass) {
+		log.debugf( "Creating AuditStrategy Impl [%s]", strategyImplClass.getName() );
 		try {
-			return performInjections( strategyClass.newInstance() );
+			return performInjections( strategyImplClass.newInstance() );
 		}
 		catch ( Exception e ) {
 			throw new MappingException(
 					String.format(
 							"Unable to create AuditStrategy [%s].",
-							strategyClass.getName()
+							strategyImplClass.getName()
 					)
 			);
 		}
 	}
 
-	private AuditStrategy performInjections(AuditStrategy strategy) {
+	private I performInjections(I strategy) {
 		if ( ValidityAuditStrategy.class.isInstance( strategy ) ) {
 			final Getter getter = ReflectionTools.getGetter( revisionInfoClass, timestampData, serviceRegistry );
 			( (ValidityAuditStrategy) strategy ).setRevisionTimestampGetter( getter );

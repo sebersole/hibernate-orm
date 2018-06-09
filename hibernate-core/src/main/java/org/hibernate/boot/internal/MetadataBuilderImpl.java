@@ -9,7 +9,7 @@ package org.hibernate.boot.internal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import javax.persistence.AttributeConverter;
 import javax.persistence.SharedCacheMode;
 
@@ -617,22 +617,17 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 					false
 			);
 
-			this.implicitNamingStrategy = strategySelector.resolveDefaultableStrategy(
+			this.implicitNamingStrategy = strategySelector.resolveStrategy(
 					ImplicitNamingStrategy.class,
 					configService.getSettings().get( AvailableSettings.IMPLICIT_NAMING_STRATEGY ),
-					new Callable<ImplicitNamingStrategy>() {
-						@Override
-						public ImplicitNamingStrategy call() {
-							return strategySelector.resolveDefaultableStrategy(
-									ImplicitNamingStrategy.class,
-									"default",
-									ImplicitNamingStrategyJpaCompliantImpl.INSTANCE
-							);
-						}
-					}
+					(Supplier<ImplicitNamingStrategy>) ( () -> strategySelector.resolveStrategy(
+							ImplicitNamingStrategy.class,
+							"default",
+							ImplicitNamingStrategyJpaCompliantImpl.INSTANCE
+					) )
 			);
 
-			this.physicalNamingStrategy = strategySelector.resolveDefaultableStrategy(
+			this.physicalNamingStrategy = strategySelector.resolveStrategy(
 					PhysicalNamingStrategy.class,
 					configService.getSettings().get( AvailableSettings.PHYSICAL_NAMING_STRATEGY ),
 					PhysicalNamingStrategyStandardImpl.INSTANCE
