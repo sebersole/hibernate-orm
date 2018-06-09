@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
+import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
@@ -35,8 +36,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	private static final Logger log = Logger.getLogger( AbstractManagedType.class );
 
-	// todo (6.0) : I think we can just drop the mutabilityPlan and comparator for managed types
-
 	private final ManagedJavaDescriptor<J> javaTypeDescriptor;
 
 	private final TypeConfiguration typeConfiguration;
@@ -46,13 +45,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	private final Set<String> subClassEntityNames = ConcurrentHashMap.newKeySet();
 
 	private final Object discriminatorValue;
-
-
-	// todo (6.0) : we need some kind of callback after all Navigables have been added to all containers
-	//		use that callback to build these 2 lists - they are cached resolutions
-	//		for performance rather that "recalculating" each time
-	//
-	//		see `#getNavigables` and `#getDeclaredNavigables` below.
 
 	private ManagedTypeRepresentationStrategy representationStrategy;
 
@@ -111,41 +103,27 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			attributes = CollectionHelper.arrayList( declaredAttributeCount );
 		}
 
-		final List<PersistentAttributeMapping> sortedAttributeMappings = new ArrayList<>( bootDescriptor.getDeclaredPersistentAttributes() );
-		sortedAttributeMappings.sort( Comparator.comparing( PersistentAttributeMapping::getName ) );
 
-		for ( PersistentAttributeMapping attributeMapping : sortedAttributeMappings ) {
-			final PersistentAttribute persistentAttribute = attributeMapping.makeRuntimeAttribute(
-					this,
-					bootDescriptor,
-					SingularPersistentAttribute.Disposition.NORMAL,
-					creationContext
-			);
+		final List<NonIdPersistentAttribute> collectedAttributes = new ArrayList<>();
 
-			if ( !NonIdPersistentAttribute.class.isInstance( persistentAttribute ) ) {
-				throw new HibernateException(
-						String.format(
-								Locale.ROOT,
-								"Boot-time attribute descriptor [%s] made non-NonIdPersistentAttribute, " +
-										"while a NonIdPersistentAttribute was expected : %s",
-								attributeMapping,
-								persistentAttribute
-						)
-				);
-			}
+		createAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes(), collectedAttributes::add );
 
-			attributes.add( (NonIdPersistentAttribute) persistentAttribute );
-			declaredAttributes.add( (NonIdPersistentAttribute) persistentAttribute );
-			declaredAttributesByName.put( persistentAttribute.getAttributeName(), (NonIdPersistentAttribute) persistentAttribute );
+		if ( bootDescriptor instanceof IdentifiableTypeMapping ) {
+			addJoinDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext, collectedAttributes::add );
+		}
 
-			final StateArrayContributor contributor = (StateArrayContributor) persistentAttribute;
-			contributor.setStateArrayPosition( stateArrayContributors.size() );
-			stateArrayContributors.add( contributor );
+		collectedAttributes.sort( Comparator.comparing( NonIdPersistentAttribute::getName ) );
+
+		for ( NonIdPersistentAttribute attribute : collectedAttributes ) {
+			attribute.setStateArrayPosition( getStateArrayContributors().size() );
+			this.attributes.add( attribute );
+			this.declaredAttributes.add( attribute );
+			this.declaredAttributesByName.putIfAbsent( attribute.getName(), attribute );
+			this.stateArrayContributors.add( attribute );
 		}
 
 		fullyInitialized = true;
 	}
-
 
 	public void addSubclassDescriptor(InheritanceCapable<? extends J> subclassType) {
 		log.debugf(
@@ -276,7 +254,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	// todo (6.0) : make sure we are only iterating the attributes once to do all of these kinds of initialization
 
-	Boolean hasMutableProperties;
+	private Boolean hasMutableProperties;
 
 	@Override
 	public boolean hasMutableProperties() {
@@ -615,4 +593,59 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	public List<StateArrayContributor<?>> getStateArrayContributors() {
 		return stateArrayContributors;
 	}
+
+	private void addJoinDeclaredAttributes(
+			IdentifiableTypeMapping bootDescriptor,
+			RuntimeModelCreationContext creationContext,
+			Consumer<NonIdPersistentAttribute<J,?>> collector) {
+		final List<PersistentAttributeMapping> declaredPersistentAttributes = new ArrayList<>();
+
+		bootDescriptor.getMappedJoins().forEach(
+				tableJoin -> declaredPersistentAttributes.addAll( tableJoin.getDeclaredPersistentAttributes() )
+		);
+
+		createAttributes( bootDescriptor, creationContext, declaredPersistentAttributes, collector );
+	}
+
+	private void createAttributes(
+			ManagedTypeMapping bootContainer,
+			RuntimeModelCreationContext creationContext,
+			List<PersistentAttributeMapping> attributes,
+			Consumer<NonIdPersistentAttribute<J,?>> collector) {
+		attributes.forEach(
+				attributeMapping -> createAttribute(
+						attributeMapping,
+						bootContainer,
+						creationContext,
+						collector
+				)
+		);
+	}
+
+	private void createAttribute(
+			PersistentAttributeMapping attributeMapping,
+			ManagedTypeMapping bootContainer,
+			RuntimeModelCreationContext creationContext,
+			Consumer<NonIdPersistentAttribute<J, ?>> collector) {
+		PersistentAttribute<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
+				this,
+				bootContainer,
+				SingularPersistentAttribute.Disposition.NORMAL,
+				creationContext
+		);
+		if ( !NonIdPersistentAttribute.class.isInstance( attribute ) ) {
+			throw new HibernateException(
+					String.format(
+							Locale.ROOT,
+							"Boot-time attribute descriptor [%s] made non-NonIdPersistentAttribute, " +
+									"while a NonIdPersistentAttribute was expected : %s",
+							attributeMapping,
+							attribute
+					)
+			);
+		}
+
+		collector.accept( (NonIdPersistentAttribute<J, ?>) attribute );
+	}
+
 }

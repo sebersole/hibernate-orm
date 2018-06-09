@@ -2674,7 +2674,6 @@ public final class AnnotationBinder {
 			}
 		}
 		XProperty property = inferredData.getProperty();
-		setupComponentTuplizer( property, comp );
 		PropertyBinder binder = new PropertyBinder();
 		binder.setDeclaringClass( inferredData.getDeclaringClass() );
 		binder.setName( inferredData.getPropertyName() );
@@ -2960,7 +2959,6 @@ public final class AnnotationBinder {
 		}
 		//tuplizers
 		final XProperty property = inferredData.getProperty();
-		setupComponentTuplizer( property, componentId );
 
 		rootClass.setIdentifier( id );
 		if ( isGlobalGeneratorNameGlobal( buildingContext ) ) {
@@ -3025,25 +3023,6 @@ public final class AnnotationBinder {
 		addElementsOfClass( baseClassElements, propContainer, context );
 		//Id properties are on top and there is only one
 		return baseClassElements.get( 0 );
-	}
-
-	private static void setupComponentTuplizer(XProperty property, Component component) {
-//		if ( property == null ) {
-//			return;
-//		}
-//		if ( property.isAnnotationPresent( Tuplizers.class ) ) {
-//			for ( Tuplizer tuplizer : property.getAnnotation( Tuplizers.class ).value() ) {
-//				EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-//				//todo tuplizer.entityModeType
-//				component.( mode, tuplizer.impl().getName() );
-//			}
-//		}
-//		if ( property.isAnnotationPresent( Tuplizer.class ) ) {
-//			Tuplizer tuplizer = property.getAnnotation( Tuplizer.class );
-//			EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-//			//todo tuplizer.entityModeType
-//			component.addTuplizer( mode, tuplizer.impl().getName() );
-//		}
 	}
 
 	private static void bindManyToOne(

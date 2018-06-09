@@ -8,9 +8,13 @@ package org.hibernate.mapping;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
 
-import org.hibernate.boot.model.domain.MappedTableJoin;
+import org.hibernate.boot.model.domain.MappedJoin;
+import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
@@ -19,12 +23,13 @@ import org.hibernate.sql.Alias;
 /**
  * @author Gavin King
  */
-public class Join implements AttributeContainer, Serializable, MappedTableJoin {
+public class Join implements AttributeContainer, Serializable, MappedJoin {
 
 	private static final Alias PK_ALIAS = new Alias(15, "PK");
 
-	private ArrayList properties = new ArrayList();
-	private ArrayList declaredProperties = new ArrayList();
+	private TreeMap<String, PersistentAttributeMapping> declaredAttributeMappings;
+	private TreeMap<String, PersistentAttributeMapping> attributeMappings;
+
 	private MappedTable table;
 	private KeyValue key;
 	private PersistentClass persistentClass;
@@ -45,25 +50,73 @@ public class Join implements AttributeContainer, Serializable, MappedTableJoin {
 
 	@Override
 	public void addProperty(Property prop) {
-		properties.add(prop);
-		declaredProperties.add(prop);
+		if(attributeMappings == null){
+			attributeMappings = new TreeMap<>(  );
+		}
+		if ( declaredAttributeMappings == null ) {
+			declaredAttributeMappings = new TreeMap<>(  );
+		}
+		attributeMappings.putIfAbsent( prop.getName(), prop );
+		declaredAttributeMappings.putIfAbsent( prop.getName(), prop );
 		prop.setPersistentClass( getPersistentClass() );
 	}
 
 	public void addMappedsuperclassProperty(Property prop) {
-		properties.add(prop);
+		if ( declaredAttributeMappings == null ) {
+			declaredAttributeMappings = new TreeMap<>(  );
+		}
+		attributeMappings.put( prop.getName(), prop );
 		prop.setPersistentClass( getPersistentClass() );
 	}
 
+	/**
+	 * @deprecated since 6.0, use {@link #getDeclaredPersistentAttributes()}.
+	 */
+	@Deprecated
 	public Iterator getDeclaredPropertyIterator() {
-		return declaredProperties.iterator();
+		return getDeclaredPersistentAttributes().iterator();
 	}
 
+	/**
+	 * @deprecated since 6.0, use {@link #containsPersistentAttributeMapping(PersistentAttributeMapping)}.
+	 */
+	@Deprecated
 	public boolean containsProperty(Property prop) {
-		return properties.contains(prop);
+		return containsPersistentAttributeMapping( prop );
 	}
+
+	public boolean containsPersistentAttributeMapping(PersistentAttributeMapping attributeMapping){
+		return attributeMappings.containsKey( attributeMapping.getName() );
+	}
+
+	/**
+	 * @deprecated since 6.0, use {@link #getPersistentAttributes()}.
+	 */
+	@Deprecated
 	public Iterator getPropertyIterator() {
-		return properties.iterator();
+		return getPersistentAttributes().iterator();
+	}
+
+	@Override
+	public java.util.List<PersistentAttributeMapping> getPersistentAttributes(){
+		return attributeMappings == null
+				? Collections.emptyList()
+				: new ArrayList<>( attributeMappings.values() );
+	}
+
+	@Override
+	public java.util.List<PersistentAttributeMapping> getDeclaredPersistentAttributes(){
+		return declaredAttributeMappings == null
+				? Collections.emptyList()
+				: new ArrayList<>( declaredAttributeMappings.values() );
+	}
+
+	/**
+	 * @deprecated since 6.0, use {@link #getPersistentAttributes()}.{@link List#size() size()}.
+	 */
+	@Deprecated
+	public int getPropertySpan() {
+		return getPersistentAttributes().size();
 	}
 
 	/**
@@ -114,10 +167,6 @@ public class Join implements AttributeContainer, Serializable, MappedTableJoin {
 		table.setPrimaryKey(pk);
 
 		pk.addColumns( getKey().getMappedColumns() );
-	}
-
-	public int getPropertySpan() {
-		return properties.size();
 	}
 
 	public void setCustomSQLInsert(String customSQLInsert, boolean callable, ExecuteUpdateResultCheckStyle checkStyle) {
