@@ -30,7 +30,7 @@ public interface IdentifiableTypeMapping extends ManagedTypeMapping {
 	 * It is conceivable that a user might want to define a
 	 * SecondaryTable on a MappedSuperclass, so we add those here.
 	 */
-	Collection<MappedTableJoin> getSecondaryTables();
+	Collection<MappedJoin> getMappedJoins();
 
 	/**
 	 * Get the attribute that represents a single identifier or an embedded id.

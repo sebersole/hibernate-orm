@@ -27,7 +27,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
-import org.hibernate.boot.model.domain.MappedTableJoin;
+import org.hibernate.boot.model.domain.MappedJoin;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.bytecode.internal.BytecodeEnhancementMetadataNonPojoImpl;
@@ -220,31 +220,31 @@ public abstract class AbstractEntityDescriptor<J>
 	private List<JoinedTableBinding> resolveSecondaryTableBindings(
 			EntityMapping entityMapping,
 			RuntimeModelCreationContext creationContext) {
-		final Collection<MappedTableJoin> secondaryTables = entityMapping.getSecondaryTables();
-		if ( secondaryTables.size() <= 0 ) {
+		final Collection<MappedJoin> mappedJoins = entityMapping.getMappedJoins();
+		if ( mappedJoins.size() <= 0 ) {
 			return Collections.emptyList();
 		}
 
-		if ( secondaryTables.size() == 1 ) {
+		if ( mappedJoins.size() == 1 ) {
 			return Collections.singletonList(
-					generateJoinedTableBinding( secondaryTables.iterator().next(), creationContext )
+					generateJoinedTableBinding( mappedJoins.iterator().next(), creationContext )
 			);
 		}
 
 		final ArrayList<JoinedTableBinding> bindings = new ArrayList<>();
-		for ( MappedTableJoin secondaryTable : secondaryTables ) {
+		for ( MappedJoin mappedJoin : mappedJoins ) {
 			bindings.add(
-					generateJoinedTableBinding( secondaryTable, creationContext )
+					generateJoinedTableBinding( mappedJoin, creationContext )
 			);
 		}
 		return bindings;
 	}
 
-	private JoinedTableBinding generateJoinedTableBinding(MappedTableJoin bootJoinTable, RuntimeModelCreationContext creationContext) {
+	private JoinedTableBinding generateJoinedTableBinding(MappedJoin bootJoinTable, RuntimeModelCreationContext creationContext) {
 		final Table joinedTable = resolveTable( bootJoinTable.getMappedTable(), creationContext );
 
 		// todo (6.0) : resolve "join predicate" as ForeignKey.ColumnMappings
-		//		see note on MappedTableJoin regarding what to expose there
+		//		see note on MappedJoin regarding what to expose there
 
 
 		return new JoinedTableBinding(
@@ -371,7 +371,7 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	@SuppressWarnings("unchecked")
 	public <Y> SingularAttribute<? super J, Y> getId(Class<Y> type) {
-		return (SingularAttribute<? super J, Y>) getHierarchy().getIdentifierDescriptor().asAttribute( type );
+		return getHierarchy().getIdentifierDescriptor().asAttribute( type );
 	}
 
 	@Override
@@ -425,7 +425,7 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	@SuppressWarnings("unchecked")
 	public SingleIdEntityLoader getSingleIdLoader() {
-		if ( 	customQueryLoader != null ) {
+		if ( customQueryLoader != null ) {
 			// if the user specified that we should use a custom query for loading this entity, we need
 			// 		to always use that custom loader.
 			return customQueryLoader;

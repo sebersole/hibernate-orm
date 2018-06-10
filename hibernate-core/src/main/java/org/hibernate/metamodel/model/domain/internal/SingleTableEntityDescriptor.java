@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +32,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -38,14 +40,12 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
-import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.InsertStatement;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.JdbcInsert;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.Type;
@@ -131,31 +131,68 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			}
 		}
 
+		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
+		final ExecutionContext executionContext = getExecutionContext( session );
+
 		// for now - just root table
 		// for now - we also regenerate these SQL AST objects each time - we can cache these
+		executeInsert( fields, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null) );
 
-		final TableReference primaryTableReference = resolvePrimaryTableReference(
-				new SqlAliasBase() {
-					@Override
-					public String getAliasStem() {
-						return SingleTableEntityDescriptor.this.getSqlAliasStem();
-					}
-
-					@Override
-					public String generateNewAlias() {
-						return getAliasStem();
-					}
+		getSecondaryTableBindings().forEach(
+				tableBindings ->
+				{
+					executeInsert(
+							fields,
+							session,
+							unresolvedId,
+							executionContext,
+							new TableReference( tableBindings.getReferringTable(), null )
+					);
 				}
 		);
 
+		return id;
+	}
+
+	private ExecutionContext getExecutionContext(SharedSessionContractImplementor session) {
+		return new ExecutionContext() {
+			private final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
+
+			@Override
+			public SharedSessionContractImplementor getSession() {
+				return session;
+			}
+
+			@Override
+			public QueryOptions getQueryOptions() {
+				return new QueryOptionsImpl();
+			}
+
+			@Override
+			public ParameterBindingContext getParameterBindingContext() {
+				return parameterBindingContext;
+			}
+
+			@Override
+			public Callback getCallback() {
+				return afterLoadAction -> {
+				};
+			}
+		};
+	}
+
+	private void executeInsert(
+			Object[] fields,
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext,
+			TableReference primaryTableReference) {
 		final InsertStatement insertStatement = new InsertStatement( primaryTableReference );
 
 		// todo (6.0) : account for non-generated identifiers
 
-
-
 		getHierarchy().getIdentifierDescriptor().dehydrate(
-				getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+				unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
 					insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
@@ -191,49 +228,28 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				contributor -> {
 					int position = contributor.getStateArrayPosition();
 					final Object domainValue = fields[position];
-
-					contributor.dehydrate(
-							contributor.unresolve( domainValue, session ),
-							(jdbcValue, type, boundColumn) -> {
-								insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-								insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
-							},
-							session
-					);
+					List<Column> columns = contributor.getColumns();
+					if ( columns.get( 0 ).getSourceTable().equals( primaryTableReference.getTable() ) ) {
+						contributor.dehydrate(
+								contributor.unresolve( domainValue, session ),
+								(jdbcValue, type, boundColumn) -> {
+									insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+									insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+								},
+								session
+						);
+					}
 				}
 		);
 
-		final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
-
-		final JdbcInsert jdbcInsert = InsertToJdbcInsertConverter.createJdbcInsert( insertStatement, parameterBindingContext );
-
 		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
-				jdbcInsert,
-				new ExecutionContext() {
-					@Override
-					public SharedSessionContractImplementor getSession() {
-						return session;
-					}
-
-					@Override
-					public QueryOptions getQueryOptions() {
-						return new QueryOptionsImpl();
-					}
-
-					@Override
-					public ParameterBindingContext getParameterBindingContext() {
-						return parameterBindingContext;
-					}
-
-					@Override
-					public Callback getCallback() {
-						return afterLoadAction -> {};
-					}
-				},
+				InsertToJdbcInsertConverter.createJdbcInsert(
+						insertStatement,
+						executionContext.getParameterBindingContext()
+				),
+				executionContext,
 				Connection::prepareStatement
 		);
-
-		return id;
 	}
 
 	@Override

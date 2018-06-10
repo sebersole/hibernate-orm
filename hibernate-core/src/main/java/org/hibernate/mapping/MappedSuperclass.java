@@ -16,8 +16,8 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
+import org.hibernate.boot.model.domain.MappedJoin;
 import org.hibernate.boot.model.domain.MappedSuperclassJavaTypeMapping;
-import org.hibernate.boot.model.domain.MappedTableJoin;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.internal.AbstractMappedSuperclassMapping;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -237,7 +237,7 @@ public class MappedSuperclass extends AbstractMappedSuperclassMapping implements
 	}
 
 	@Override
-	public Collection<MappedTableJoin> getSecondaryTables() {
+	public Collection<MappedJoin> getMappedJoins() {
 		throw new NotYetImplementedException( "Mapped superclass secondary tables is not implemented yet" );
 	}
 }

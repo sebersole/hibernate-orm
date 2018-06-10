@@ -6,6 +6,8 @@
  */
 package org.hibernate.boot.model.domain;
 
+import java.util.List;
+
 import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 
@@ -15,9 +17,14 @@ import org.hibernate.boot.model.relational.MappedTable;
  *
  * @author Steve Ebersole
  */
-public interface MappedTableJoin {
+public interface MappedJoin {
 	MappedTable getMappedTable();
+
 	boolean isOptional();
 
 	MappedForeignKey getJoinMapping();
+
+	List<PersistentAttributeMapping> getPersistentAttributes();
+
+	List<PersistentAttributeMapping> getDeclaredPersistentAttributes();
 }
