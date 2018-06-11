@@ -165,16 +165,13 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		executeInsert( fields, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null) );
 
 		getSecondaryTableBindings().forEach(
-				tableBindings ->
-				{
-					executeInsert(
-							fields,
-							session,
-							unresolvedId,
-							executionContext,
-							new TableReference( tableBindings.getReferringTable(), null )
-					);
-				}
+				tableBindings -> executeInsert(
+						fields,
+						session,
+						unresolvedId,
+						executionContext,
+						new TableReference( tableBindings.getReferringTable(), null )
+				)
 		);
 
 		return id;
