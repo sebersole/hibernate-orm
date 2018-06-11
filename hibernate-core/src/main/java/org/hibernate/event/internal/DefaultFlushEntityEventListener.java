@@ -253,7 +253,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 
 		if ( LOG.isTraceEnabled() ) {
 			if ( status == Status.DELETED ) {
-				if ( !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+				if ( !entityDescriptor.getHierarchy().getMutabilityPlan().isMutable() ) {
 					LOG.tracev(
 							"Updating immutable, deleted entity: {0}",
 							MessageHelper.infoString( entityDescriptor, entry.getId(), session.getFactory() )
@@ -707,7 +707,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		if ( dirtyProperties != null && dirtyProperties.length > 0 && LOG.isTraceEnabled() ) {
 			final String[] allPropertyNames = entityDescriptor.getPropertyNames();
 			final String[] dirtyPropertyNames = new String[dirtyProperties.length];
-			for ( int i = 0; i < dirtyProperties.length; i++ ) {
+			for ( int i = 0; i < dirtyProperties.length && i < allPropertyNames.length; i++ ) {
 				dirtyPropertyNames[i] = allPropertyNames[dirtyProperties[i]];
 			}
 			LOG.tracev(

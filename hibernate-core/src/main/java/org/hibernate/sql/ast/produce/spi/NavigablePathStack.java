@@ -52,7 +52,7 @@ public class NavigablePathStack implements Stack<NavigablePath> {
 			log.tracef(
 					"Pushing Navigable(%s) into NavigablePathStack(%s)",
 					navigableName,
-					internalStack.getCurrent().getFullPath()
+					internalStack.getCurrent() != null ? internalStack.getCurrent().getFullPath() : null
 			);
 		}
 

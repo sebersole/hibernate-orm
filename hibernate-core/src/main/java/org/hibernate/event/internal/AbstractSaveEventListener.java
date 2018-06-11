@@ -110,6 +110,7 @@ public abstract class AbstractSaveEventListener
 	 * @return The id used to save the entity; may be null depending on the
 	 *         type of id generator used and the requiresImmediateIdAccess value
 	 */
+	@SuppressWarnings("unchecked")
 	protected Object saveWithGeneratedId(
 			Object entity,
 			String entityName,
@@ -142,7 +143,7 @@ public abstract class AbstractSaveEventListener
 			if ( LOG.isDebugEnabled() ) {
 				LOG.debugf(
 						"Generated identifier: %s, using strategy: %s",
-						entityDescriptor.getIdentifierType().toLoggableString( generatedId ),
+						entityDescriptor.getIdentifierDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation( generatedId ),
 						identifierDescriptor.getClass().getName()
 				);
 			}

@@ -13,6 +13,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
@@ -34,10 +35,14 @@ public final class EntityPrinter {
 	 *
 	 * @param entityName the entity name
 	 * @param entity an actual entity object, not a proxy!
+	 * @param session the session
 	 *
 	 * @return the entity rendered to a string
 	 */
-	public String toString(String entityName, Object entity) throws HibernateException {
+	public String toString(
+			String entityName,
+			Object entity,
+			SharedSessionContractImplementor session) throws HibernateException {
 		EntityDescriptor entityPersister = factory.getEntityPersister( entityName );
 
 		if ( entityPersister == null ) {
@@ -49,8 +54,8 @@ public final class EntityPrinter {
 		if ( entityPersister.getIdentifierDescriptor() != null ) {
 			result.put(
 					entityPersister.getIdentifierPropertyName(),
-					entityPersister.getIdentifierType().toLoggableString(
-							entityPersister.getIdentifier( entity )
+					entityPersister.getIdentifierDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation(
+							entityPersister.getIdentifierDescriptor().extractIdentifier( entity, session )
 					)
 			);
 		}
@@ -92,7 +97,9 @@ public final class EntityPrinter {
 	}
 
 	// Cannot use Map as an argument because it clashes with the previous method (due to type erasure)
-	public void toString(Iterable<Map.Entry<EntityKey, Object>> entitiesByEntityKey) throws HibernateException {
+	public void toString(
+			Iterable<Map.Entry<EntityKey, Object>> entitiesByEntityKey,
+			SharedSessionContractImplementor session) throws HibernateException {
 		if ( !LOG.isDebugEnabled() || !entitiesByEntityKey.iterator().hasNext() ) {
 			return;
 		}
@@ -104,7 +111,7 @@ public final class EntityPrinter {
 				LOG.debug( "More......" );
 				break;
 			}
-			LOG.debug( toString( entityKeyAndEntity.getKey().getEntityName(), entityKeyAndEntity.getValue() ) );
+			LOG.debug( toString( entityKeyAndEntity.getKey().getEntityName(), entityKeyAndEntity.getValue(), session ) );
 		}
 	}
 
