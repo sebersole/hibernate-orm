@@ -296,4 +296,22 @@ public class SingularPersistentAttributeEmbedded<O,J>
 				)
 		);
 	}
+
+	@Override
+	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
+		if ( originalValue == currentValue ) {
+			return false;
+		}
+
+		final Object[] originalValues = getEmbeddedDescriptor().getPropertyValues( originalValue );
+		final Object[] currentValues = getEmbeddedDescriptor().getPropertyValues( currentValue );
+		for ( StateArrayContributor contributor : getEmbeddedDescriptor().getStateArrayContributors() ) {
+			final int index = contributor.getStateArrayPosition();
+			if ( contributor.isDirty( originalValues[index], currentValues[index], session ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

@@ -245,4 +245,9 @@ public class PluralPersistentAttributeImpl implements PluralPersistentAttribute 
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
+
+	@Override
+	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
+		return !getJavaTypeDescriptor().areEqual( originalValue, currentValue );
+	}
 }

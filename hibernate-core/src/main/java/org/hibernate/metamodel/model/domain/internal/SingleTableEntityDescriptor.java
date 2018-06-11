@@ -8,7 +8,9 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +19,7 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.EntityMapping;
+import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -91,8 +94,32 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public int[] findDirty(
-			Object[] currentState, Object[] previousState, Object owner, SharedSessionContractImplementor session) {
-		return new int[0];
+			Object[] currentState,
+			Object[] previousState,
+			Object owner,
+			SharedSessionContractImplementor session) {
+		final List<Integer> results = new ArrayList<>();
+
+		visitStateArrayContributors(
+				contributor -> {
+					final int index = contributor.getStateArrayPosition();
+					final boolean dirty = currentState[index] != LazyPropertyInitializer.UNFETCHED_PROPERTY &&
+							( previousState[index] == LazyPropertyInitializer.UNFETCHED_PROPERTY ||
+									( contributor.isIncludedInDirtyChecking() &&
+											contributor.isDirty( previousState[index], currentState[index], session ) ) );
+
+					if ( dirty ) {
+						results.add( index );
+					}
+				}
+		);
+
+		if ( results.size() == 0 ) {
+			return null;
+		}
+		else {
+			return results.stream().mapToInt( i-> i ).toArray();
+		}
 	}
 
 	@Override

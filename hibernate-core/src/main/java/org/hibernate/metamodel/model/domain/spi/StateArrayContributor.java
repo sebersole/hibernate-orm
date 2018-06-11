@@ -106,6 +106,13 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 		throw new NotYetImplementedFor6Exception();
 	}
 
+	default boolean isDirty(
+			Object originalValue,
+			Object currentValue,
+			SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( "Not yet implemented for " + this.getClass().getName() );
+	}
+
 	void collectNonNullableTransientEntities(
 			Object value,
 			ForeignKeys.Nullifier nullifier,

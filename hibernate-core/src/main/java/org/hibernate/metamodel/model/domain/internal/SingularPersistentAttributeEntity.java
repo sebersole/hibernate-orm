@@ -24,6 +24,7 @@ import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -579,5 +580,21 @@ public class SingularPersistentAttributeEntity<O,J>
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {
 		throw new UnsupportedOperationException( "ManyToOne cannot be treated as temporal type" );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
+		if ( EqualsHelper.areEqual( originalValue, currentValue ) ) {
+			return false;
+		}
+
+		Object oldIdentifier = unresolve( originalValue, session );
+		Object newIdentifier = unresolve( currentValue, session );
+
+		return !getEntityDescriptor()
+				.getIdentifierDescriptor()
+				.getJavaTypeDescriptor()
+				.areEqual( oldIdentifier, newIdentifier );
 	}
 }

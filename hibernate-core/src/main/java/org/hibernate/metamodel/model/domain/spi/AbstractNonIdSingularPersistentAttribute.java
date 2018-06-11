@@ -125,4 +125,9 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 			}
 		}
 	}
+
+	@Override
+	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
+		return !getJavaTypeDescriptor().areEqual( (J) originalValue, (J) currentValue );
+	}
 }
