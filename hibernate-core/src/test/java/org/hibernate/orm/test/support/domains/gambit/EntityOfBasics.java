@@ -8,6 +8,8 @@ package org.hibernate.orm.test.support.domains.gambit;
 
 import java.net.URL;
 import java.sql.Clob;
+import java.time.Instant;
+import java.util.Date;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -15,6 +17,8 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  * @author Steve Ebersole
@@ -33,6 +37,10 @@ public class EntityOfBasics {
 	private int theInt;
 	private URL theUrl;
 	private Clob theClob;
+	private Date theDate;
+	private Date theTime;
+	private Date theTimestamp;
+	private Instant theInstant;
 	private Gender gender;
 	private Gender convertedGender;
 	private Gender ordinalGender;
@@ -112,6 +120,42 @@ public class EntityOfBasics {
 
 	public void setOrdinalGender(Gender ordinalGender) {
 		this.ordinalGender = ordinalGender;
+	}
+
+	@Temporal( TemporalType.DATE )
+	public Date getTheDate() {
+		return theDate;
+	}
+
+	public void setTheDate(Date theDate) {
+		this.theDate = theDate;
+	}
+
+	@Temporal( TemporalType.TIME )
+	public Date getTheTime() {
+		return theTime;
+	}
+
+	public void setTheTime(Date theTime) {
+		this.theTime = theTime;
+	}
+
+	@Temporal( TemporalType.TIMESTAMP )
+	public Date getTheTimestamp() {
+		return theTimestamp;
+	}
+
+	public void setTheTimestamp(Date theTimestamp) {
+		this.theTimestamp = theTimestamp;
+	}
+
+	@Temporal( TemporalType.TIMESTAMP )
+	public Instant getTheInstant() {
+		return theInstant;
+	}
+
+	public void setTheInstant(Instant theInstant) {
+		this.theInstant = theInstant;
 	}
 
 	public static class GenderConverter implements AttributeConverter<Gender,Character> {

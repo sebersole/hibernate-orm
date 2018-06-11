@@ -423,6 +423,10 @@ literal
 	| timeLiteral
 	;
 
+// todo (6.0) : expand temporal literal support to include:
+//		* Instant -> {instant }
+//		* ...
+
 timestampLiteral
 	: TIMESTAMP_ESCAPE_START dateTimeLiteralText RIGHT_BRACE
 	;

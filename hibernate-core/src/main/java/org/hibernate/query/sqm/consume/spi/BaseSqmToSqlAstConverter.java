@@ -38,6 +38,7 @@ import org.hibernate.query.sqm.tree.expression.SqmExpression;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigDecimal;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralCharacter;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralDate;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralDouble;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFalse;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFloat;
@@ -45,6 +46,8 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralLong;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralNull;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralString;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
 import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
@@ -928,6 +931,33 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				null,
 				expression.getExpressableType(),
+				getCurrentClauseStack().getCurrent() == Clause.SELECT
+		);
+	}
+
+	@Override
+	public QueryLiteral visitLiteralTimestampExpression(SqmLiteralTimestamp literal) {
+		return new QueryLiteral(
+				literal.getLiteralValue(),
+				literal.getExpressableType(),
+				getCurrentClauseStack().getCurrent() == Clause.SELECT
+		);
+	}
+
+	@Override
+	public QueryLiteral visitLiteralDateExpression(SqmLiteralDate literal) {
+		return new QueryLiteral(
+				literal.getLiteralValue(),
+				literal.getExpressableType(),
+				getCurrentClauseStack().getCurrent() == Clause.SELECT
+		);
+	}
+
+	@Override
+	public QueryLiteral visitLiteralTimeExpression(SqmLiteralTime literal) {
+		return new QueryLiteral(
+				literal.getLiteralValue(),
+				literal.getExpressableType(),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}

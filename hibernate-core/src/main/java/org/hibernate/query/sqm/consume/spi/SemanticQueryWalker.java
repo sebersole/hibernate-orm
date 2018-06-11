@@ -22,6 +22,7 @@ import org.hibernate.query.sqm.tree.expression.SqmConstantFieldReference;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigDecimal;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralCharacter;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralDate;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralDouble;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralEntityType;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFalse;
@@ -30,6 +31,8 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralLong;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralNull;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralString;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
 import org.hibernate.query.sqm.tree.expression.SqmParameterizedEntityType;
@@ -76,11 +79,11 @@ import org.hibernate.query.sqm.tree.expression.function.SqmSubstringFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmSumFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmTrimFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmUpperFunction;
-import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmCrossJoin;
 import org.hibernate.query.sqm.tree.from.SqmEntityJoin;
 import org.hibernate.query.sqm.tree.from.SqmFromClause;
 import org.hibernate.query.sqm.tree.from.SqmFromElementSpace;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmRoot;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
@@ -335,6 +338,12 @@ public interface SemanticQueryWalker<T> {
 	T visitLiteralFalseExpression(SqmLiteralFalse expression);
 
 	T visitLiteralNullExpression(SqmLiteralNull expression);
+
+	T visitLiteralTimestampExpression(SqmLiteralTimestamp literal);
+
+	T visitLiteralDateExpression(SqmLiteralDate literal);
+
+	T visitLiteralTimeExpression(SqmLiteralTime literal);
 
 	T visitConcatExpression(SqmConcat expression);
 

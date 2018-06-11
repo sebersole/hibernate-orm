@@ -77,6 +77,7 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteral;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigDecimal;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralCharacter;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralDate;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralDouble;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFalse;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFloat;
@@ -84,6 +85,8 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralLong;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralNull;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralString;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
@@ -1927,6 +1930,15 @@ public class SemanticQueryBuilder
 		}
 		else if ( ctx.literal().NULL() != null ) {
 			return new SqmLiteralNull();
+		}
+		else if ( ctx.literal().timestampLiteral() != null ) {
+			return SqmLiteralTimestamp.from( ctx.literal().timestampLiteral().dateTimeLiteralText().getText(), this );
+		}
+		else if ( ctx.literal().dateLiteral() != null ) {
+			return SqmLiteralDate.from( ctx.literal().dateLiteral().dateTimeLiteralText().getText(), this );
+		}
+		else if ( ctx.literal().timeLiteral() != null ) {
+			return SqmLiteralTime.from( ctx.literal().timeLiteral().dateTimeLiteralText().getText(), this );
 		}
 
 		// otherwise we have a problem

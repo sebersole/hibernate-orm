@@ -23,6 +23,7 @@ import org.hibernate.query.sqm.tree.expression.SqmExpression;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigDecimal;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralBigInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralCharacter;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralDate;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralDouble;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralEntityType;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralFalse;
@@ -31,6 +32,8 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralInteger;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralLong;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralNull;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralString;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
+import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
 import org.hibernate.query.sqm.tree.expression.SqmParameterizedEntityType;
@@ -78,12 +81,12 @@ import org.hibernate.query.sqm.tree.expression.function.SqmSubstringFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmSumFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmTrimFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmUpperFunction;
-import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmCrossJoin;
 import org.hibernate.query.sqm.tree.from.SqmEntityJoin;
 import org.hibernate.query.sqm.tree.from.SqmFromClause;
 import org.hibernate.query.sqm.tree.from.SqmFromElementSpace;
 import org.hibernate.query.sqm.tree.from.SqmJoin;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 import org.hibernate.query.sqm.tree.from.SqmRoot;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
@@ -622,6 +625,21 @@ public class BaseSemanticQueryWalker<T> implements SemanticQueryWalker<T> {
 	@Override
 	public T visitLiteralNullExpression(SqmLiteralNull expression) {
 		return (T) expression;
+	}
+
+	@Override
+	public T visitLiteralTimestampExpression(SqmLiteralTimestamp literal) {
+		return (T) literal;
+	}
+
+	@Override
+	public T visitLiteralDateExpression(SqmLiteralDate literal) {
+		return (T) literal;
+	}
+
+	@Override
+	public T visitLiteralTimeExpression(SqmLiteralTime literal) {
+		return (T) literal;
 	}
 
 	@Override
