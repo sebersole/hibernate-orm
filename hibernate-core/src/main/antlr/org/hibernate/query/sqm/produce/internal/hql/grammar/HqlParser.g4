@@ -341,7 +341,6 @@ likeEscape
 
 expression
 	: LEFT_PAREN expression RIGHT_PAREN								# GroupedExpression
-	| LEFT_PAREN querySpec RIGHT_PAREN								# SubQueryExpression
 	// todo (6.0) : should these unary plus/minus rules only apply to literals?
 	//		if so, move the MINUS / PLUS recognition to the `literal` rule
 	//		specificcally for numeric literals
