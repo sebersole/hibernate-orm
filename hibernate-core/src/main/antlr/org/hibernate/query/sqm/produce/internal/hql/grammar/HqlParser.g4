@@ -32,7 +32,7 @@ updateStatement
 	;
 
 setClause
-	: SET assignment+
+	: SET assignment (COMMA assignment)*
 	;
 
 assignment
@@ -173,8 +173,6 @@ jpaSelectObjectSyntax
 	;
 
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Path structures
 
@@ -280,7 +278,6 @@ qualifiedJoinPredicate
 	;
 
 
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // GROUP BY clause
 
@@ -296,8 +293,9 @@ groupingValue
 	:	expression collationSpecification?
 	;
 
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//HAVING clause
+// HAVING clause
 
 havingClause
 	:	HAVING predicate
@@ -312,28 +310,29 @@ whereClause
 	;
 
 predicate
-	: LEFT_PAREN predicate RIGHT_PAREN						# GroupedPredicate
-	| predicate OR predicate								# OrPredicate
-	| predicate AND predicate								# AndPredicate
-	| NOT predicate											# NegatedPredicate
-	| expression IS (NOT)? NULL								# IsNullPredicate
-	| expression IS (NOT)? EMPTY							# IsEmptyPredicate
-	| expression EQUAL expression							# EqualityPredicate
-	| expression NOT_EQUAL expression						# InequalityPredicate
-	| expression GREATER expression							# GreaterThanPredicate
-	| expression GREATER_EQUAL expression					# GreaterThanOrEqualPredicate
-	| expression LESS expression							# LessThanPredicate
-	| expression LESS_EQUAL expression						# LessThanOrEqualPredicate
-	| expression (NOT)? IN inList							# InPredicate
-	| expression (NOT)? BETWEEN expression AND expression	# BetweenPredicate
-	| expression (NOT)? LIKE expression (likeEscape)?		# LikePredicate
-	| MEMBER OF path										# MemberOfPredicate
+	: LEFT_PAREN predicate RIGHT_PAREN												# GroupedPredicate
+	| predicate OR predicate														# OrPredicate
+	| predicate AND predicate														# AndPredicate
+	| NOT predicate																	# NegatedPredicate
+	| expression IS (NOT)? NULL														# IsNullPredicate
+	| expression IS (NOT)? EMPTY													# IsEmptyPredicate
+	| expression EQUAL expression													# EqualityPredicate
+	| expression NOT_EQUAL expression												# InequalityPredicate
+	| expression GREATER expression													# GreaterThanPredicate
+	| expression GREATER_EQUAL expression											# GreaterThanOrEqualPredicate
+	| expression LESS expression													# LessThanPredicate
+	| expression LESS_EQUAL expression												# LessThanOrEqualPredicate
+	| expression (NOT)? IN inList													# InPredicate
+	| expression (NOT)? BETWEEN expression AND expression							# BetweenPredicate
+	| expression (NOT)? LIKE expression (likeEscape)?								# LikePredicate
+	| MEMBER OF path																# MemberOfPredicate
+	| EXISTS LEFT_PAREN querySpec RIGHT_PAREN										# ExistsPredicate
 	;
 
 inList
-	: ELEMENTS? LEFT_PAREN dotIdentifierSequence RIGHT_PAREN		# PersistentCollectionReferenceInList
-	| LEFT_PAREN expression (COMMA expression)*	RIGHT_PAREN			# ExplicitTupleInList
-	| expression													# SubQueryInList
+	: ELEMENTS? LEFT_PAREN dotIdentifierSequence RIGHT_PAREN						# PersistentCollectionReferenceInList
+	| LEFT_PAREN expression (COMMA expression)*	RIGHT_PAREN							# ExplicitTupleInList
+	| expression																	# SubQueryInList
 	;
 
 likeEscape
@@ -341,26 +340,29 @@ likeEscape
 	;
 
 expression
-	: expression DOUBLE_PIPE expression			# ConcatenationExpression
-	| expression PLUS expression				# AdditionExpression
-	| expression MINUS expression				# SubtractionExpression
-	| expression ASTERISK expression			# MultiplicationExpression
-	| expression SLASH expression				# DivisionExpression
-	| expression PERCENT expression				# ModuloExpression
+	: LEFT_PAREN expression RIGHT_PAREN								# GroupedExpression
+	| LEFT_PAREN querySpec RIGHT_PAREN								# SubQueryExpression
 	// todo (6.0) : should these unary plus/minus rules only apply to literals?
 	//		if so, move the MINUS / PLUS recognition to the `literal` rule
 	//		specificcally for numeric literals
-	| MINUS expression							# UnaryMinusExpression
-	| PLUS expression							# UnaryPlusExpression
-	| caseStatement								# CaseExpression
-	| coalesce									# CoalesceExpression
-	| nullIf									# NullIfExpression
-	| literal									# LiteralExpression
-	| parameter									# ParameterExpression
-	| entityTypeReference						# EntityTypeExpression
-	| path										# PathExpression
-	| function									# FunctionExpression
-	| LEFT_PAREN querySpec RIGHT_PAREN		    # SubQueryExpression
+	| MINUS expression												# UnaryMinusExpression
+	| PLUS expression												# UnaryPlusExpression
+	| expression DOUBLE_PIPE expression								# ConcatenationExpression
+	| expression PLUS expression									# AdditionExpression
+	| expression MINUS expression									# SubtractionExpression
+	| expression ASTERISK expression								# MultiplicationExpression
+	| expression SLASH expression									# DivisionExpression
+	| expression PERCENT expression									# ModuloExpression
+	| caseStatement													# CaseExpression
+	| coalesce														# CoalesceExpression
+	| nullIf														# NullIfExpression
+	| literal														# LiteralExpression
+	| parameter														# ParameterExpression
+	| entityTypeReference											# EntityTypeExpression
+	| path															# PathExpression
+	| function														# FunctionExpression
+	| op=( ALL | ANY | SOME ) LEFT_PAREN querySpec RIGHT_PAREN		# AllOrAnyExpression
+	| LEFT_PAREN querySpec RIGHT_PAREN		    					# SubQueryExpression
 	;
 
 entityTypeReference
@@ -677,7 +679,7 @@ positionStringArgument
 	;
 
 charLengthFunction
-	: CAST LEFT_PAREN expression RIGHT_PAREN
+	: CHARACTER_LENGTH LEFT_PAREN expression RIGHT_PAREN
 	;
 
 octetLengthFunction
@@ -756,11 +758,13 @@ identifier
 	| SELECT
 	| SECOND
 	| SET
+	| SOME
 	| SQRT
 	| SUBSTRING
 	| SUM
 	| TRAILING
 	| TREAT
+	| UNKNOWN
 	| UPDATE
 	| UPPER
 	| VALUE
@@ -771,3 +775,20 @@ identifier
 	}
 	;
 
+dotIdentifierOrParam
+    : dotIdentifierSequence
+    | parameter
+    ;
+
+dotIdentifierOrParamList
+    : dotIdentifierOrParam ( COMMA dotIdentifierOrParam )+
+    ;
+
+comparisonOperators
+    : EQUAL
+    | NOT_EQUAL
+    | GREATER
+    | GREATER_EQUAL
+    | LESS
+    | LESS_EQUAL
+    ;
