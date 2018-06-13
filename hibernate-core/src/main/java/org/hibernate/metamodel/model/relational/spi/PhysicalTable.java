@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
@@ -32,6 +33,7 @@ public class PhysicalTable extends AbstractTable implements ExportableTable {
 	private List<InitCommand> initCommands = new ArrayList<>();
 
 	public PhysicalTable(
+			UUID uuid,
 			Identifier logicalCatalogName,
 			Identifier logicalSchemaName,
 			Identifier logicalTableName,
@@ -40,6 +42,7 @@ public class PhysicalTable extends AbstractTable implements ExportableTable {
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment) {
 		this(
+				uuid,
 				new QualifiedTableName(
 						namingStrategy.toPhysicalCatalogName( logicalCatalogName, jdbcEnvironment ),
 						namingStrategy.toPhysicalSchemaName( logicalSchemaName, jdbcEnvironment ),
@@ -51,10 +54,11 @@ public class PhysicalTable extends AbstractTable implements ExportableTable {
 	}
 
 	public PhysicalTable(
+			UUID uuid,
 			QualifiedTableName physicalQualifiedName,
 			boolean isAbstract,
 			String comment) {
-		super( isAbstract );
+		super( uuid, isAbstract );
 		this.qualifiedTableName = physicalQualifiedName;
 		this.comment = comment;
 	}

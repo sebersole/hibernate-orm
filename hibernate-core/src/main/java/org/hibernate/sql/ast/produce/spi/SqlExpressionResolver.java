@@ -43,4 +43,6 @@ public interface SqlExpressionResolver {
 	 * Resolve the SqlSelection for the given expression
 	 */
 	SqlSelection resolveSqlSelection(Expression expression);
+
+	SqlSelection emptySqlSelection();
 }

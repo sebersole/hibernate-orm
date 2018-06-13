@@ -34,10 +34,10 @@ import org.hibernate.boot.spi.ClassLoaderAccess;
 import org.hibernate.boot.spi.MetadataBuildingOptions;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.annotations.reflection.JPAMetadataProvider;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.jpa.internal.MutableJpaComplianceImpl;
 import org.hibernate.jpa.spi.MutableJpaCompliance;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -172,7 +172,7 @@ public class BootstrapContextImpl implements BootstrapContext {
 	}
 
 	@Override
-	public PersistentCollectionRepresentationResolver getCollectionRepresentationResolver() {
+	public CollectionSemanticsResolver getCollectionRepresentationResolver() {
 		return metadataBuildingOptions.getPersistentCollectionRepresentationResolver();
 	}
 

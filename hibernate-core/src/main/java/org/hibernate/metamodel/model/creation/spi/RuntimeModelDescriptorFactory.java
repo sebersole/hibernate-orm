@@ -7,19 +7,17 @@
 package org.hibernate.metamodel.model.creation.spi;
 
 import org.hibernate.HibernateException;
-import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
-import org.hibernate.cache.spi.access.CollectionDataAccess;
-import org.hibernate.mapping.Collection;
-import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.service.Service;
 
@@ -33,9 +31,9 @@ public interface RuntimeModelDescriptorFactory extends Service {
 	/**
 	 * Create an entity persister instance.
 	 * <p/>
-	 * A persister will not be completely usable after return from this method.  The returned
+	 * A descriptor will not be completely usable after return from this method.  The returned
 	 * reference is good for linking references together, etc.  The persister will be fully
-	 * initialized later via its {@link EntityDescriptor#afterInitialize} method during {@link #finishUp}
+	 * initialized later via {@link EntityDescriptor#finishInitialization}
 	 *
 	 * @param bootMapping The mapping information describing the entity
 	 * @param superTypeDescriptor
@@ -56,47 +54,29 @@ public interface RuntimeModelDescriptorFactory extends Service {
 			RuntimeModelCreationContext creationContext) throws HibernateException;
 
 	/**
-	 * Create a collection persister instance.
-	 * <p/>
-	 * A persister will not be completely usable after return from this method.  The returned
-	 * reference is good for linking references together, etc.  The persister will be fully
-	 * initialized later via its {@link EntityDescriptor#afterInitialize} method during {@link #finishUp}
-	 *
-	 * @param collectionBinding The mapping information describing the collection
-	 * @param cacheAccessStrategy The cache access strategy for the collection region
-	 * @param creationContext Access to additional information needed to create an EntityPersister
-	 *
-	 * @return An appropriate collection persister instance.
-	 *
-	 * @throws HibernateException Indicates a problem building the persister.
-	 */
-	<O,C,E> PersistentCollectionDescriptor<O,C,E> createPersistentCollectionDescriptor(
-			Collection collectionBinding,
-			ManagedTypeDescriptor<O> source,
-			String localName,
-			RuntimeModelCreationContext creationContext) throws HibernateException;
-
-	/**
 	 * Create an embeddable persister instance.
-	 *
-	 * @param bootModelEmbeddedDescriptor The boot-model representation of the composition
-	 * @param runtimeModelContainer The runtime-model container for the embedded to tbe created
-	 * @param localName The composite name
-	 * @param singularAttributeDisposition The disposition to use for any singular attributes
-	 * 		that are part of this composition
-	 * @param creationContext Access to additional information needed to create a persister
-	 *
-	 * @return An appropriate collection persister instance.
-	 *
-	 * @throws HibernateException Indicates a problem building the persister.
 	 */
 	<J> EmbeddedTypeDescriptor<J> createEmbeddedTypeDescriptor(
 			EmbeddedValueMappingImplementor bootValueMapping,
 			EmbeddedContainer runtimeModelContainer,
 			EmbeddedTypeDescriptor<? super J> superTypeDescriptor,
 			String localName,
-			SingularPersistentAttribute.Disposition singularAttributeDisposition,
+			SingularPersistentAttribute.Disposition disposition,
 			RuntimeModelCreationContext creationContext);
+
+	/**
+	 * Create a collection persister instance.
+	 * <p/>
+	 * A descriptor will not be completely usable after return from this method.  The returned
+	 * reference is good for linking references together, etc.  The persister will be fully
+	 * initialized later via {@link PersistentCollectionDescriptor#finishInitialization}
+	 *
+	 * @throws HibernateException Indicates a problem building the persister.
+	 */
+	<O,C,E> PersistentCollectionDescriptor<O,C,E> createPersistentCollectionDescriptor(
+			Property pluralProperty,
+			ManagedTypeDescriptor<O> runtimeManagedType,
+			RuntimeModelCreationContext creationContext) throws HibernateException;
 
 	/**
 	 * Called after all entity mapping descriptors have been processed.

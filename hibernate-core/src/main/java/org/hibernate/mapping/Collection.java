@@ -12,8 +12,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Objects;
+import java.util.Properties;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
@@ -24,12 +24,14 @@ import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.internal.FilterConfiguration;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.service.ServiceRegistry;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Mapping for a collection. Subclasses specialize to particular collection styles.
@@ -725,8 +727,32 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 		this.mappedByProperty = mappedByProperty;
 	}
 
-	@Override
-	public JavaTypeMapping getJavaTypeMapping() {
-		return null;
+	public abstract <C> CollectionSemantics<C> getCollectionSemantics();
+
+	protected static class CollectionJavaDescriptorResolver implements JavaTypeMapping {
+		private final TypeConfiguration typeConfiguration;
+		private final Class javaClass;
+
+		private CollectionJavaDescriptor resolvedDescriptor;
+
+		public CollectionJavaDescriptorResolver(
+				TypeConfiguration typeConfiguration,
+				Class javaClass) {
+			this.typeConfiguration = typeConfiguration;
+			this.javaClass = javaClass;
+		}
+
+		@Override
+		public String getTypeName() {
+			return javaClass.getTypeName();
+		}
+
+		@Override
+		public CollectionJavaDescriptor resolveJavaTypeDescriptor() {
+			if ( resolvedDescriptor == null ) {
+				resolvedDescriptor = (CollectionJavaDescriptor) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( javaClass );
+			}
+			return resolvedDescriptor;
+		}
 	}
 }

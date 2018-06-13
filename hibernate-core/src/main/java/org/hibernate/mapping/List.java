@@ -8,6 +8,8 @@ package org.hibernate.mapping;
 
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardListSemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 
 /**
  * A list mapping has a primary key consisting of the key columns + index column.
@@ -15,7 +17,7 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
  * @author Gavin King
  */
 public class List extends IndexedCollection {
-	
+	private final JavaTypeMapping javaTypeMapping;
 	private int baseIndex;
 
 	public boolean isList() {
@@ -24,6 +26,11 @@ public class List extends IndexedCollection {
 
 	public List(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				java.util.List.class
+		);
 	}
 
 	public Object accept(ValueVisitor visitor) {
@@ -40,6 +47,13 @@ public class List extends IndexedCollection {
 
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
-		return null;
+		return javaTypeMapping;
 	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		return StandardListSemantics.INSTANCE;
+	}
+
 }

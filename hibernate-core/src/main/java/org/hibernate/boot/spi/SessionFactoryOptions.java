@@ -344,6 +344,7 @@ public interface SessionFactoryOptions {
 	}
 
 	default BytecodeProvider getBytecodeProvider() {
+		/// todo (7.0) : scope the BytecodeProvider per-SF as opposed to static
 		return Environment.getBytecodeProvider();
 	}
 

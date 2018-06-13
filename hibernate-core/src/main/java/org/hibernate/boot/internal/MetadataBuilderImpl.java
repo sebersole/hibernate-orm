@@ -54,8 +54,7 @@ import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.MetadataSourceType;
-import org.hibernate.collection.internal.PersistentCollectionRepresentationResolverImpl;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.internal.CoreLogging;
@@ -377,7 +376,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
-	public MetadataBuilder applyRepresentationStrategySelector(PersistentCollectionRepresentationResolver resolver) {
+	public MetadataBuilder applyRepresentationStrategySelector(CollectionSemanticsResolver resolver) {
 		this.options.collectionRepresentationResolver = resolver;
 		return this;
 	}
@@ -540,7 +539,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 
 		private IdGeneratorInterpreterImpl idGenerationTypeInterpreter = new IdGeneratorInterpreterImpl();
 		private ManagedTypeRepresentationResolver managedTypeRepresentationResolver;
-		private PersistentCollectionRepresentationResolver collectionRepresentationResolver;
+		private CollectionSemanticsResolver collectionRepresentationResolver;
 
 		private String schemaCharset;
 
@@ -636,7 +635,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			this.sourceProcessOrdering = resolveInitialSourceProcessOrdering( configService );
 
 			this.managedTypeRepresentationResolver = StandardManagedTypeRepresentationResolver.INSTANCE;
-			this.collectionRepresentationResolver = new PersistentCollectionRepresentationResolverImpl();
+			this.collectionRepresentationResolver = bootDescriptor -> null;
 
 			final boolean useNewIdentifierGenerators = configService.getSetting(
 					AvailableSettings.USE_NEW_ID_GENERATOR_MAPPINGS,
@@ -761,7 +760,7 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		}
 
 		@Override
-		public PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver() {
+		public CollectionSemanticsResolver getPersistentCollectionRepresentationResolver() {
 			return collectionRepresentationResolver;
 		}
 

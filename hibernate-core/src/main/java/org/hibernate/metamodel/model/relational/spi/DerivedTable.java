@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import java.util.UUID;
+
 /**
  * Represents a TableSpecification derived from a subquery (inline view), as opposed to a PhysicalTableSpecification
  *
@@ -14,8 +16,8 @@ package org.hibernate.metamodel.model.relational.spi;
 public class DerivedTable extends AbstractTable {
 	private final String expression;
 
-	public DerivedTable(String expression, boolean isAbstract) {
-		super( isAbstract );
+	public DerivedTable(UUID uuid, String expression, boolean isAbstract) {
+		super( uuid, isAbstract );
 		this.expression = expression;
 	}
 

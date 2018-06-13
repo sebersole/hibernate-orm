@@ -9,9 +9,7 @@ package org.hibernate.loader.internal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
@@ -25,18 +23,15 @@ import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
+import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -47,7 +42,6 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
-import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
 import org.hibernate.sql.exec.internal.LoadParameterBindingContext;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
@@ -56,7 +50,6 @@ import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
@@ -307,54 +300,21 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				}
 		);
 
-		final SelectClause selectClause = rootQuerySpec.getSelectClause();
 		final List<QueryResult> queryResults = new ArrayList<>();
 
-		final SqlExpressionResolver sqlExpressionResolver = new SqlExpressionResolver() {
-			private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
-
-			@Override
-			public Expression resolveSqlExpression(
-					ColumnReferenceQualifier qualifier,
-					QualifiableSqlExpressable sqlSelectable) {
-				return qualifier.qualify( sqlSelectable );
-			}
-
-			@Override
-			public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
-				return sqlSelectable.createExpression();
-			}
-
-			@Override
-			public SqlSelection resolveSqlSelection(Expression expression) {
-				final SqlSelection existing;
-				if ( sqlSelectionMap == null ) {
-					sqlSelectionMap = new HashMap<>();
-					existing = null;
+		final SqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
+				() -> rootQuerySpec,
+				expression -> expression,
+				(expression, sqlSelection) -> {
+					queryResults.add(
+							new ScalarQueryResultImpl(
+									null,
+									sqlSelection,
+									(BasicValuedExpressableType) expression.getType()
+							)
+					);
 				}
-				else {
-					existing = sqlSelectionMap.get( expression.getExpressable() );
-				}
-
-				if ( existing != null ) {
-					return existing;
-				}
-
-				final SqlSelection sqlSelection = expression.createSqlSelection( sqlSelectionMap.size() );
-				selectClause.addSqlSelection( sqlSelection );
-				sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
-
-				queryResults.add(
-						new ScalarQueryResultImpl(
-								null,
-								sqlSelection,
-								(BasicValuedExpressableType) expression.getType()
-						)
-				);
-
-				return sqlSelection;
-			}
-		};
+		);
 
 		final SqlSelectionResolutionContext resolutionContext = new SqlSelectionResolutionContext() {
 			@Override

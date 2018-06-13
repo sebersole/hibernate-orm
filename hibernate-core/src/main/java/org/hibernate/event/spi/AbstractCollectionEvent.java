@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.EntityEntry;
@@ -50,14 +48,14 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 
 	protected static PersistentCollectionDescriptor getLoadedCollectionPersister(PersistentCollection collection, EventSource source ) {
 		CollectionEntry ce = source.getPersistenceContext().getCollectionEntry( collection );
-		return ( ce == null ? null : ce.getLoadedPersistentCollectionDescriptor() );
+		return ( ce == null ? null : ce.getLoadedCollectionDescriptor() );
 	}
 
 	protected static Object getLoadedOwnerOrNull( PersistentCollection collection, EventSource source ) {
 		return source.getPersistenceContext().getLoadedCollectionOwnerOrNull( collection );
 	}
 
-	protected static Serializable getLoadedOwnerIdOrNull( PersistentCollection collection, EventSource source ) {
+	protected static Object getLoadedOwnerIdOrNull(PersistentCollection collection, EventSource source ) {
 		return source.getPersistenceContext().getLoadedCollectionOwnerIdOrNull( collection );
 	}
 

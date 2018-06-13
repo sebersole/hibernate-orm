@@ -6,18 +6,30 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Comparator;
+
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardMapSemantics;
+import org.hibernate.collection.internal.StandardOrderedMapSemantics;
+import org.hibernate.collection.internal.StandardSortedMapSemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 
 /**
  * A map has a primary key consisting of
  * the key columns + index columns.
  */
 public class Map extends IndexedCollection {
+	private final CollectionJavaDescriptorResolver javaTypeMapping;
 
-	public Map(MetadataBuildingContext context, PersistentClass owner) {
-		super( context, owner );
+	public Map(MetadataBuildingContext buildingContext, PersistentClass owner) {
+		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				java.util.Map.class
+		);
 	}
 
 	public boolean isMap() {
@@ -37,6 +49,21 @@ public class Map extends IndexedCollection {
 
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
-		return null;
+		return javaTypeMapping;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		final Comparator comparator = getComparator();
+		if ( comparator != null ) {
+			return StandardSortedMapSemantics.INSTANCE;
+		}
+
+		if ( hasOrder() ) {
+			return StandardOrderedMapSemantics.INSTANCE;
+		}
+
+		return StandardMapSemantics.INSTANCE;
 	}
 }

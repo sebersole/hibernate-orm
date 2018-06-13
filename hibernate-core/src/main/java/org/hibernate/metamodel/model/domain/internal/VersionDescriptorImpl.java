@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.BasicValueMapping;
-import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
@@ -54,7 +53,7 @@ public class VersionDescriptorImpl<O,J>
 						bootModelRootEntity,
 						bootModelRootEntity.getVersionAttributeMapping(),
 						runtimeModelHierarchy.getRootEntityType(),
-						Environment.getBytecodeProvider()
+						creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 				),
 				Disposition.VERSION
 		);

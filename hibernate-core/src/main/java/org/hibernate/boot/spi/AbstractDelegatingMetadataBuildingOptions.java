@@ -16,7 +16,7 @@ import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.MetadataSourceType;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 
@@ -130,7 +130,7 @@ public abstract class AbstractDelegatingMetadataBuildingOptions implements Metad
 	}
 
 	@Override
-	public PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver() {
+	public CollectionSemanticsResolver getPersistentCollectionRepresentationResolver() {
 		return delegate.getPersistentCollectionRepresentationResolver();
 	}
 }

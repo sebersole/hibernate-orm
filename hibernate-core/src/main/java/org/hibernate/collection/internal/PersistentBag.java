@@ -16,10 +16,9 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * An unordered, unkeyed collection that can contain the same element
@@ -29,11 +28,9 @@ import org.hibernate.NotYetImplementedFor6Exception;
  *
  * @author Gavin King
  */
-public class PersistentBag extends AbstractPersistentCollection implements List {
-
-	private PersistentBagDescriptorImpl descriptor;
-	private Serializable key;
-	private List bag;
+public class PersistentBag<E> extends AbstractPersistentCollection<E> implements List<E> {
+	private Object key;
+	private List<E> bag;
 
 	/**
 	 * Constructs a PersistentBag.  Needed for SOAP libraries, etc
@@ -47,15 +44,8 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	 *
 	 * @param session The session
 	 */
-	public PersistentBag(SharedSessionContractImplementor session) {
-		super( session );
-	}
-
-	public PersistentBag(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor) {
-		this( session );
-		this.descriptor = (PersistentBagDescriptorImpl) descriptor;
+	public PersistentBag(SharedSessionContractImplementor session, PersistentCollectionDescriptor collectionDescriptor) {
+		super( session, collectionDescriptor );
 	}
 
 	/**
@@ -67,7 +57,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	@SuppressWarnings("unchecked")
 	public PersistentBag(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
+			PersistentCollectionDescriptor<?,Collection<E>,E> descriptor,
 			Collection coll) {
 		this( session, descriptor );
 
@@ -92,9 +82,15 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 			SharedSessionContractImplementor session,
 			PersistentCollectionDescriptor descriptor,
 			Serializable key) {
+		this( session, descriptor, (Object) key );
+	}
+
+	public PersistentBag(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			Object key) {
 		this( session, descriptor );
 		this.key = key;
-
 	}
 
 	@Override
@@ -113,8 +109,10 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public Object readFrom(ResultSet rs, PersistentCollectionDescriptor persister, Object owner) throws SQLException {
+	public Object readFrom(
+			ResultSet rs,
+			Object owner,
+			PersistentCollectionDescriptor collectionDescriptor) throws SQLException {
 		throw new NotYetImplementedFor6Exception(  );
 		// todo (6.0) : this is done so much differently in this redesign - I think these metods are not going to be needed
 //		// note that if we load this collection from a cartesian product
@@ -127,12 +125,14 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	}
 
 	@Override
-	public void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize) {
-		this.bag = (List) persister.instantiateRaw( anticipatedSize );
+	public void beforeInitialize(
+			int anticipatedSize,
+			PersistentCollectionDescriptor collectionDescriptor) {
+		this.bag = (List) getCollectionMetadata().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
-	public boolean equalsSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public boolean equalsSnapshot(PersistentCollectionDescriptor collectionDescriptor) throws HibernateException {
 		final List sn = (List) getSnapshot();
 		if ( sn.size() != bag.size() ) {
 			return false;
@@ -156,7 +156,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 		final Iterator iter = list.iterator();
 		int result = 0;
 		while ( iter.hasNext() ) {
-			if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( element, iter.next() ) ) {
+			if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( (E) element, (E) iter.next() ) ) {
 				result++;
 			}
 		}
@@ -169,7 +169,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 			throws HibernateException {
 		final ArrayList clonedList = new ArrayList( bag.size() );
 		for ( Object item : bag ) {
-			clonedList.add( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( item ) );
+			clonedList.add( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( (E) item ) );
 		}
 		return clonedList;
 	}
@@ -181,34 +181,37 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	}
 
 	@Override
-	public Serializable disassemble(PersistentCollectionDescriptor persister)
+	public Serializable disassemble(PersistentCollectionDescriptor collectionDescriptor)
 			throws HibernateException {
 		final int length = bag.size();
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( bag.get( i ) );
+			result[i] = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( (E) bag.get( i ) );
 		}
 		return result;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner)
-			throws HibernateException {
-		final Serializable[] array = (Serializable[]) disassembled;
-		final int size = array.length;
-		beforeInitialize( persister, size );
-		for ( Serializable item : array ) {
-			final Object element = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( item );
-			if ( element != null ) {
-				bag.add( element );
-			}
-		}
+	public void initializeFromCache(
+			Serializable disassembled,
+			Object owner,
+			PersistentCollectionDescriptor collectionDescriptor) throws HibernateException {
+		throw new NotYetImplementedFor6Exception();
+//		final Object[] array = (Object[]) disassembled;
+//		final int size = array.length;
+//		beforeInitialize( size, collectionDescriptor );
+//		for ( Object item : array ) {
+//			final E element = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( item );
+//			if ( element != null ) {
+//				bag.add( element );
+//			}
+//		}
 	}
 
 	@Override
-	public boolean needsRecreate(PersistentCollectionDescriptor persister) {
-		return !persister.isOneToMany();
+	public boolean needsRecreate(PersistentCollectionDescriptor collectionDescriptor) {
+		return !collectionDescriptor.isOneToMany();
 	}
 
 
@@ -223,23 +226,22 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
-		final ArrayList deletes = new ArrayList();
-		final List sn = (List) getSnapshot();
-		final Iterator olditer = sn.iterator();
+		final ArrayList<E> deletes = new ArrayList<>();
+
+		final List<E> sn = (List<E>) getSnapshot();
+
 		int i=0;
-		while ( olditer.hasNext() ) {
-			final Object old = olditer.next();
-			final Iterator newiter = bag.iterator();
+		for ( E old : sn ) {
 			boolean found = false;
-			if ( bag.size()>i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, bag.get( i++ ) ) ) {
-			//a shortcut if its location didn't change!
+			if ( bag.size() > i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, bag.get( i++ ) ) ) {
+				//a shortcut if its location didn't change!
 				found = true;
 			}
 			else {
 				//search for it
 				//note that this code is incorrect for other than one-to-many
-				while ( newiter.hasNext() ) {
-					if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, newiter.next() ) ) {
+				for ( E aBag : bag ) {
+					if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, aBag ) ) {
 						found = true;
 						break;
 					}
@@ -249,22 +251,23 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 				deletes.add( old );
 			}
 		}
+
 		return deletes.iterator();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean needsInserting(Object entry, int i) throws HibernateException {
-		final List sn = (List) getSnapshot();
-		if ( sn.size() > i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( sn.get( i ), entry ) ) {
+		final List<E> sn = (List<E>) getSnapshot();
+		if ( sn.size() > i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( sn.get( i ), (E) entry ) ) {
 			//a shortcut if its location didn't change!
 			return false;
 		}
 		else {
 			//search for it
 			//note that this code is incorrect for other than one-to-many
-			for ( Object old : sn ) {
-				if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, entry ) ) {
+			for ( E old : sn ) {
+				if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, (E) entry ) ) {
 					return false;
 				}
 			}
@@ -299,7 +302,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	}
 
 	@Override
-	public Iterator iterator() {
+	public Iterator<E> iterator() {
 		read();
 		return new IteratorProxy( bag.iterator() );
 	}
@@ -318,7 +321,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean add(Object object) {
+	public boolean add(E object) {
 		if ( !isOperationQueueEnabled() ) {
 			write();
 			return bag.add( object );
@@ -361,7 +364,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 		}
 		else {
 			for ( Object value : values ) {
-				queueOperation( new SimpleAdd( value ) );
+				queueOperation( new SimpleAdd( (E) value ) );
 			}
 			return values.size()>0;
 		}
@@ -415,19 +418,26 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 	}
 
 	@Override
-	public Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister) {
+	public Object getIndex(
+			Object entry,
+			int assumedIndex,
+			PersistentCollectionDescriptor collectionDescriptor) {
 		throw new UnsupportedOperationException("Bags don't have indexes");
 	}
 
 	@Override
-	public Object getElement(Object entry) {
-		return entry;
+	@SuppressWarnings("unchecked")
+	public E getElement(
+			Object entry,
+			PersistentCollectionDescriptor collectionDescriptor) {
+		return (E) entry;
 	}
 
 	@Override
-	public Object getSnapshotElement(Object entry, int i) {
+	@SuppressWarnings("unchecked")
+	public E getSnapshotElement(Object entry, int index) {
 		final List sn = (List) getSnapshot();
-		return sn.get( i );
+		return (E) sn.get( index );
 	}
 
 	/**
@@ -454,7 +464,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void add(int i, Object o) {
+	public void add(int i, E o) {
 		write();
 		bag.add( i, o );
 	}
@@ -473,7 +483,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object get(int i) {
+	public E get(int i) {
 		read();
 		return bag.get( i );
 	}
@@ -494,35 +504,35 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ListIterator listIterator() {
+	public ListIterator<E> listIterator() {
 		read();
 		return new ListIteratorProxy( bag.listIterator() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ListIterator listIterator(int i) {
+	public ListIterator<E> listIterator(int i) {
 		read();
 		return new ListIteratorProxy( bag.listIterator( i ) );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object remove(int i) {
+	public E remove(int i) {
 		write();
 		return bag.remove( i );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object set(int i, Object o) {
+	public E set(int i, E o) {
 		write();
 		return bag.set( i, o );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public List subList(int start, int end) {
+	public List<E> subList(int start, int end) {
 		read();
 		return new ListProxy( bag.subList( start, end ) );
 	}
@@ -576,7 +586,7 @@ public class PersistentBag extends AbstractPersistentCollection implements List 
 
 	final class SimpleAdd extends AbstractValueDelayedOperation {
 
-		public SimpleAdd(Object addedValue) {
+		public SimpleAdd(E addedValue) {
 			super( addedValue, null );
 		}
 

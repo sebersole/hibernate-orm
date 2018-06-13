@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.relational.InitCommand;
@@ -26,7 +27,6 @@ import org.hibernate.boot.model.relational.MappedNamespace;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.relational.MappedUniqueKey;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.env.spi.QualifiedObjectNameFormatter;
@@ -51,6 +51,8 @@ import org.jboss.logging.Logger;
 @SuppressWarnings("unchecked")
 public class Table implements MappedTable<Column>, Serializable {
 	private static final Logger log = Logger.getLogger( Table.class );
+
+	private final UUID uuid = UUID.randomUUID();
 
 	private Identifier catalog;
 	private Identifier schema;
@@ -750,9 +752,8 @@ public class Table implements MappedTable<Column>, Serializable {
 	}
 
 	@Override
-	public String getUid() {
-		// todo (6.0) what makes snese to impl this??
-		throw new NotYetImplementedException();
+	public UUID getUid() {
+		return uuid;
 	}
 
 	@Override
@@ -764,7 +765,7 @@ public class Table implements MappedTable<Column>, Serializable {
 
 		InflightTable runtimeTable;
 		if ( getSubselect() != null ) {
-			runtimeTable = new DerivedTable( getSubselect(), isAbstract() );
+			runtimeTable = new DerivedTable( getUid(), getSubselect(), isAbstract() );
 		}
 		else {
 			runtimeTable = createRuntimePhysicalTable( namingStrategy, jdbcEnvironment, identifierGeneratorFactory );
@@ -824,6 +825,7 @@ public class Table implements MappedTable<Column>, Serializable {
 			JdbcEnvironment jdbcEnvironment,
 			IdentifierGeneratorFactory identifierGeneratorFactory) {
 		final PhysicalTable runtimeTable = new PhysicalTable(
+				getUid(),
 				catalog,
 				schema,
 				name,

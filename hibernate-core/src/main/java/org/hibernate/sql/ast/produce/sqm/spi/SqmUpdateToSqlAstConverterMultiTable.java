@@ -23,6 +23,7 @@ import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.ConversionException;
 import org.hibernate.sql.ast.produce.SqlTreeException;
+import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
@@ -53,6 +54,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		extends BaseSqmToSqlAstConverter implements SqlSelectionResolutionContext {
 	private static final Logger log = Logger.getLogger( SqmUpdateToSqlAstConverterMultiTable.class );
 
+
 	public static List<SqlAstUpdateDescriptor> interpret(
 			SqmUpdateStatement sqmStatement,
 			QuerySpec idTableSelect,
@@ -73,7 +75,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 				.collect( Collectors.toList() );
 	}
 
-
+	private final NonSelectSqlExpressionResolver expressionResolver;
 	private final EntityDescriptor entityDescriptor;
 	private final EntityTableGroup entityTableGroup;
 
@@ -159,6 +161,12 @@ public class SqmUpdateToSqlAstConverterMultiTable
 
 		primeStack( getTableGroupStack(), tableGroup );
 		getFromClauseIndex().crossReference( sqmStatement.getEntityFromElement(), tableGroup );
+
+		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				() -> getQuerySpecStack().getCurrent(),
+				this::normalizeSqlExpression,
+				this::collectSelection
+		);
 	}
 
 	@Override
@@ -217,7 +225,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
-		return this;
+		return expressionResolver;
 	}
 
 	@Override

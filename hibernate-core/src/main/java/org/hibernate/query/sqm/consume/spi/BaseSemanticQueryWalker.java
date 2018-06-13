@@ -229,6 +229,13 @@ public class BaseSemanticQueryWalker<T> implements SemanticQueryWalker<T> {
 	@Override
 	public T visitSelectClause(SqmSelectClause selectClause) {
 		for ( SqmSelection selection : selectClause.getSelections() ) {
+			// todo (6.0) : add the ability for certain SqlSelections to be sort of "implicit"...
+			//		- they do not get rendered into the SQL, but do have a SqlReader
+			//
+			// this is useful in 2 specific:
+			///		1) literals : no need to even send those to the database - we could
+			//			just have the SqlSelectionReader return us back the literal value
+			//		2) `EmptySqlSelection` : if this ends up being important at all..
 			visitSelection( selection );
 		}
 		return (T) selectClause;

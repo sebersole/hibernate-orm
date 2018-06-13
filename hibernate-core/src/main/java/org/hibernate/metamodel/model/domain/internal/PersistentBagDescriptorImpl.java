@@ -6,22 +6,22 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Set;
 
 import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class PersistentBagDescriptorImpl extends PersistentListDescriptorImpl {
+public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollectionDescriptor<O,Collection<E>,E> {
 	public PersistentBagDescriptorImpl(
 			Property bootProperty,
 			ManagedTypeDescriptor runtimeContainer,
@@ -30,20 +30,29 @@ public class PersistentBagDescriptorImpl extends PersistentListDescriptorImpl {
 	}
 
 	@Override
-	public PersistentCollection instantiateWrapper(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor, Serializable key) {
-		return new PersistentBag( session, descriptor, key );
+	protected CollectionJavaDescriptor resolveCollectionJtd(
+			org.hibernate.mapping.Collection collectionBinding,
+			RuntimeModelCreationContext creationContext) {
+		return (CollectionJavaDescriptor) creationContext.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getDescriptor( Set.class );
 	}
 
 	@Override
-	public PersistentCollection wrap(
-			SharedSessionContractImplementor session, PersistentCollectionDescriptor descriptor, Object rawCollection) {
-		return null;
+	public PersistentCollection instantiateWrapper(SharedSessionContractImplementor session, Object key) {
+		return new PersistentBag( session, this, key );
 	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public PersistentCollection wrap(SharedSessionContractImplementor session, Collection<E> rawCollection) {
+		return new PersistentBag( session, this, rawCollection );
+	}
+
+
 
 	@Override
 	public boolean contains(Object collection, Object childObject) {
-		return false;
+		return ( (Collection ) collection ).contains( childObject );
 	}
 }

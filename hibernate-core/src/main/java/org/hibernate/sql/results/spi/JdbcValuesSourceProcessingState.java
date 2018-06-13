@@ -13,6 +13,7 @@ import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PreLoadEvent;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 
@@ -43,6 +44,8 @@ public interface JdbcValuesSourceProcessingState {
 
 	PreLoadEvent getPreLoadEvent();
 	PostLoadEvent getPostLoadEvent();
+
+	boolean fetching(PersistentAttribute attribute);
 
 	LoadingEntityEntry registerLoadingEntity(
 			EntityKey entityKey,

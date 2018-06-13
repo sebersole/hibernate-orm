@@ -32,7 +32,7 @@ public interface Navigable<T> extends DomainType<T> {
 	/**
 	 * The NavigableContainer which contains this Navigable.
 	 */
-	NavigableContainer getContainer();
+	NavigableContainer<?> getContainer();
 
 	/**
 	 * The role for this Navigable which is unique across all

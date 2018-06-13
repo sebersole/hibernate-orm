@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -14,13 +15,14 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.collection.spi.CollectionClassification;
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.collection.spi.PersistentCollectionRepresentation;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.loader.spi.CollectionLoader;
 import org.hibernate.mapping.Collection;
+import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -34,7 +36,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * Metadata and operations on a persistent collection (plural attribute).
  *
  * Works hand-in-hand with both {@link PersistentCollection} and
- * {@link PersistentCollectionRepresentation} to define complete support
+ * {@link CollectionSemantics} to define complete support
  * for persistent collections.
  *
  * Unless a customer {@link RuntimeModelDescriptorFactory} is used, it is expected
@@ -66,18 +68,21 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
 
 	Class[] CONSTRUCTOR_SIGNATURE = new Class[] {
-			Collection.class,
+			Property.class,
 			ManagedTypeDescriptor.class,
-			String.class,
 			RuntimeModelCreationContext.class
 	};
 
 	void finishInitialization(Collection collectionBinding, RuntimeModelCreationContext creationContext);
 
-	CollectionClassification getCollectionClassification();
+	default CollectionClassification getCollectionClassification() {
+		return getSemantics().getCollectionClassification();
+	}
+
+	CollectionSemantics<C> getSemantics();
 
 	@Override
-	ManagedTypeDescriptor getContainer();
+	ManagedTypeDescriptor<O> getContainer();
 
 	NavigableRole getNavigableRole();
 
@@ -104,7 +109,20 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 * Will return {@code null} if the collection is not indexed (is not a map, list
 	 * or array).
 	 */
-	CollectionIndex getIndexDescriptor();
+	<I> CollectionIndex<I> getIndexDescriptor();
+
+	/**
+	 * For sorted collections, the comparator to use.  Non-parameterized
+	 * because for SORTED_SET the elements are compared but for SORTED_MAP the
+	 * keys are compared
+	 *
+	 * @see CollectionClassification#SORTED_MAP
+	 * @see CollectionClassification#SORTED_SET
+	 */
+	default Comparator<?> getSortingComparator() {
+		// most impls have none
+		return null;
+	}
 
 
 	// todo : in terms of SqmNavigableSource.findNavigable() impl, be sure to only recognize:
@@ -165,10 +183,10 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	/**
 	 * todo (6.0) : remove this method
 	 *
-	 * @deprecated Use {@link #getRepresentation()} instead
+	 * @deprecated Use {@link #getSemantics()} ()} instead
 	 */
 	@Deprecated
-	PersistentCollectionRepresentation getTuplizer();
+	CollectionSemantics getTuplizer();
 
 	@Override
 	default boolean canCompositeContainCollections() {
@@ -201,13 +219,13 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	//				* PersistentCollectionMetadata#getElementDescriptor#getElementExistsExecutor()...
 	//				* etc
 
-	int getSize(Serializable loadedKey, SharedSessionContractImplementor session);
+	int getSize(Object loadedKey, SharedSessionContractImplementor session);
 
-	Boolean indexExists(Serializable loadedKey, Object index, SharedSessionContractImplementor session);
+	Boolean indexExists(Object loadedKey, Object index, SharedSessionContractImplementor session);
 
-	Boolean elementExists(Serializable loadedKey, Object element, SharedSessionContractImplementor session);
+	Boolean elementExists(Object loadedKey, Object element, SharedSessionContractImplementor session);
 
-	Object getElementByIndex(Serializable loadedKey, Object index, SharedSessionContractImplementor session, Object owner);
+	Object getElementByIndex(Object loadedKey, Object index, SharedSessionContractImplementor session, Object owner);
 
 
 
@@ -449,7 +467,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 
 	CollectionDataAccess getCacheAccess();
 
-	void initialize(Serializable loadedKey, SharedSessionContractImplementor session);
+	void initialize(Object loadedKey, SharedSessionContractImplementor session);
 
 	// todo (6.0) : re-eval the whole timing + style + batch-size
 	int getBatchSize();
@@ -550,19 +568,21 @@ public interface PersistentCollectionDescriptor<O,C,E>
 		throw new NotYetImplementedFor6Exception();
 	}
 
+	default C instantiateRaw(int anticipatedSize) {
+		return getSemantics().instantiateRaw( anticipatedSize, this );
+	}
 
-
-	Object instantiateRaw(int anticipatedSize);
-
-	PersistentCollection instantiateWrapper(
+	default PersistentCollection<E> instantiateWrapper(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Serializable key);
+			Object key) {
+		return getSemantics().instantiateWrapper( key, this, session );
+	}
 
-	PersistentCollection wrap(
+	default PersistentCollection<E> wrap(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Object rawCollection);
+			C rawCollection) {
+		return getSemantics().wrap( rawCollection, this, session );
+	}
 
 	boolean contains(Object collection, Object childObject);
 

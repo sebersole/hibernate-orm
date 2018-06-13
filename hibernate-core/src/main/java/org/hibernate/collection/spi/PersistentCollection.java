@@ -44,8 +44,52 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  *
  * @author Gavin King
  */
-public interface PersistentCollection {
-	PersistentCollectionDescriptor getCollectionMetadata();
+public interface PersistentCollection<E> {
+	/**
+	 * Get the current role name
+	 *
+	 * @return the collection role name
+	 */
+	String getRole();
+
+	/**
+	 * Disassociate this collection from the given session.
+	 *
+	 * @param currentSession The session we are disassociating from.  Used for validations.
+	 *
+	 * @return true if this was currently associated with the given session
+	 */
+	boolean unsetSession(SharedSessionContractImplementor currentSession);
+
+	/**
+	 * Associate the collection with the given session.
+	 *
+	 * @param session The session to associate with
+	 *
+	 * @return false if the collection was already associated with the session
+	 *
+	 * @throws HibernateException if the collection was already associated
+	 * with another open session
+	 */
+	boolean setCurrentSession(SharedSessionContractImplementor session) throws HibernateException;
+
+	// todo (6.0) : Stash PersistentCollectionDescriptor here or not
+	//
+	// The implication has to do with serializability of the wrapper -
+	// when serialized/detached we don't really want to keep the
+	// reference to the PersistentCollectionDescriptor.
+	//
+	// This affects a number of methods below currently accepting the
+	// PersistentCollectionDescriptor as an argument.  Just like with
+	// current Session we can stash a transient reference to the
+	// PersistentCollectionDescriptor and use that while attached.
+	// Given this approach, do through methods and determine
+	// the ones that we expect to only be valid with the wrapper is
+	// attached to a Session - these methods do not need the
+	// PersistentCollectionDescriptor passed in.  The others
+	// mainly consist of methods used during re-attachment
+
+	PersistentCollectionDescriptor<?,?,E> getCollectionMetadata();
 
 	/**
 	 * Get the owning entity. Note that the owner is only
@@ -72,12 +116,11 @@ public interface PersistentCollection {
 
 	/**
 	 * After flushing, re-init snapshot state.
-	 *
-	 * @param key The collection instance key (fk value).
+	 *  @param key The collection instance key (fk value).
 	 * @param role The collection role
 	 * @param snapshot The snapshot state
 	 */
-	void setSnapshot(Serializable key, NavigableRole role, Serializable snapshot);
+	void setSnapshot(Object key, NavigableRole role, Serializable snapshot);
 
 	/**
 	 * After flushing, clear any "queued" additions, since the
@@ -120,119 +163,76 @@ public interface PersistentCollection {
 	boolean isDirectlyAccessible();
 
 	/**
-	 * Disassociate this collection from the given session.
-	 *
-	 * @param currentSession The session we are disassociating from.  Used for validations.
-	 *
-	 * @return true if this was currently associated with the given session
-	 */
-	boolean unsetSession(SharedSessionContractImplementor currentSession);
-
-	/**
-	 * Associate the collection with the given session.
-	 *
-	 * @param session The session to associate with
-	 *
-	 * @return false if the collection was already associated with the session
-	 *
-	 * @throws HibernateException if the collection was already associated
-	 * with another open session
-	 */
-	boolean setCurrentSession(SharedSessionContractImplementor session) throws HibernateException;
-
-	/**
 	 * Read the state of the collection from a disassembled cached value
-	 *
-	 * @param persister The collection persister
-	 * @param disassembled The disassembled cached state
-	 * @param owner The collection owner
 	 */
-	void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner);
-
-	/**
-	 * Iterate all collection entries, during update of the database
-	 *
-	 * @param persister The collection persister.
-	 *
-	 * @return The iterator
-	 */
-	Iterator entries(PersistentCollectionDescriptor persister);
+	void initializeFromCache(
+			Serializable disassembled,
+			Object owner,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 
 	/**
 	 * Read a row from the JDBC result set
 	 *
-	 * @param rs The JDBC ResultSet
-	 * @param role The collection role
-	 * @param owner The collection owner
-	 *
-	 * @return The read object
-	 *
 	 * @throws HibernateException Generally indicates a problem resolving data read from the ResultSet
 	 * @throws SQLException Indicates a problem accessing the ResultSet
 	 */
-	Object readFrom(ResultSet rs, PersistentCollectionDescriptor role, Object owner) throws SQLException;
+	Object readFrom(
+			ResultSet rs,
+			Object owner,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor) throws SQLException;
 
 	/**
 	 * Get the identifier of the given collection entry.  This refers to the collection identifier, not the
 	 * identifier of the (possibly) entity elements.  This is only valid for invocation on the
 	 * {@code idbag} collection.
-	 *
-	 * @param entry The collection entry/element
-	 * @param i The assumed identifier (?)
-	 *
-	 * @return The identifier value
 	 */
-	Object getIdentifier(Object entry, int i);
+	Object getIdentifier(
+			Object entry,
+			int assumedIdentifier,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 	
 	/**
 	 * Get the index of the given collection entry
-	 *
-	 * @param entry The collection entry/element
-	 * @param i The assumed index
-	 * @param persister it was more elegant before we added this...
-	 *
-	 * @return The index value
 	 */
-	Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister);
+	Object getIndex(
+			Object entry,
+			int assumedIndex,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 	
 	/**
 	 * Get the value of the given collection entry.  Generally the given entry parameter value will just be returned.
 	 * Might get a different value for a duplicate entries in a Set.
-	 *
-	 * @param entry The object instance for which to get the collection element instance.
-	 *
-	 * @return The corresponding object that is part of the collection elements.
 	 */
-	Object getElement(Object entry);
+	E getElement(
+			Object entry,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 	
 	/**
 	 * Get the snapshot value of the given collection entry
 	 *
 	 * @param entry The entry
-	 * @param i The index
+	 * @param index The index
 	 *
 	 * @return The snapshot state for that element
 	 */
-	Object getSnapshotElement(Object entry, int i);
+	E getSnapshotElement(Object entry, int index);
 
 	/**
 	 * Called before any elements are read into the collection,
 	 * allowing appropriate initializations to occur.
-	 *
-	 * @param persister The underlying collection persister.
-	 * @param anticipatedSize The anticipated size of the collection after initialization is complete.
 	 */
-	void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize);
+	void beforeInitialize(
+			int anticipatedSize,
+			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 
 	/**
 	 * Does the current state exactly match the snapshot?
 	 *
-	 * @param persister The collection persister
-	 *
 	 * @return {@code true} if the current state and the snapshot state match.
 	 *
+	 * @param collectionDescriptor
 	 */
-	boolean equalsSnapshot(PersistentCollectionDescriptor persister);
+	boolean equalsSnapshot(PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 
 	/**
 	 * Is the snapshot empty?
@@ -246,20 +246,18 @@ public interface PersistentCollection {
 	/**
 	 * Disassemble the collection to get it ready for the cache
 	 *
-	 * @param persister The collection persister
-	 *
 	 * @return The disassembled state
+	 * @param collectionDescriptor
 	 */
-	Serializable disassemble(PersistentCollectionDescriptor persister) ;
+	Serializable disassemble(PersistentCollectionDescriptor<?, ?, E> collectionDescriptor) ;
 
 	/**
 	 * Do we need to completely recreate this collection when it changes?
 	 *
-	 * @param persister The collection persister
-	 *
 	 * @return {@code true} if a change requires a recreate.
+	 * @param collectionDescriptor
 	 */
-	boolean needsRecreate(PersistentCollectionDescriptor persister);
+	boolean needsRecreate(PersistentCollectionDescriptor<?, ?, E> collectionDescriptor);
 
 	/**
 	 * Return a new snapshot of the current state of the collection
@@ -268,7 +266,7 @@ public interface PersistentCollection {
 	 *
 	 * @return The snapshot
 	 */
-	Serializable getSnapshot(PersistentCollectionDescriptor persister);
+	Serializable getSnapshot(PersistentCollectionDescriptor<?,?,E> persister);
 
 	/**
 	 * To be called internally by the session, forcing immediate initialization.
@@ -367,17 +365,8 @@ public interface PersistentCollection {
 	 *
 	 * @return the current collection key value
 	 */
-	Serializable getKey();
-	
-	/**
-	 * Get the current role name
-	 *
-	 * @return the collection role name
-	 */
-	default String getRole() {
-		return getCollectionMetadata().getNavigableRole().getFullPath();
-	}
-	
+	Object getKey();
+
 	/**
 	 * Is the collection unreferenced?
 	 *
@@ -443,5 +432,19 @@ public interface PersistentCollection {
 	 * @return The orphans
 	 */
 	Collection getOrphans(Serializable snapshot, String entityName);
+
+
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Not necessarily attached
+
+
+	/**
+	 * Iterate all collection entries, during update of the database
+	 *
+	 * @return The iterator
+	 */
+	Iterator<E> entries(PersistentCollectionDescriptor<?,?,E> persister);
 	
 }

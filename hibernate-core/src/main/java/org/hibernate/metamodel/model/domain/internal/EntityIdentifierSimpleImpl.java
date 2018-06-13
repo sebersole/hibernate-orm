@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
-import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
@@ -54,7 +53,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 						bootModelRootEntity,
 						bootModelRootEntity.getIdentifierAttributeMapping(),
 						runtimeModelHierarchy.getRootEntityType(),
-						Environment.getBytecodeProvider()
+						creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 				),
 				Disposition.ID
 		);

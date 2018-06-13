@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.LockOptions;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
@@ -35,17 +34,15 @@ import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKeyProducer;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.MetamodelDrivenSqlSelectPlanBuilder;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
-import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
@@ -81,7 +78,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		implements MetamodelDrivenSqlSelectPlanBuilder, RootTableGroupContext, JoinedTableGroupContext,
-		QueryResultCreationContext, SqlAstBuildingContext, SqlExpressionResolver {
+		QueryResultCreationContext, SqlAstBuildingContext {
 
 	private static final Logger log = Logger.getLogger( AbstractMetamodelDrivenSqlSelectPlanBuilder.class );
 
@@ -112,6 +109,12 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 	private TableSpace tableSpace;
 	private TableGroup rootTableGroup;
 	private HashMap<SqlExpressable,SqlSelection> sqlSelectionMap = new HashMap<>();
+
+	private final StandardSqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
+			this::getQuerySpec,
+			expression -> expression,
+			(expression, selection) -> {}
+	);
 
 	/**
 	 *
@@ -361,24 +364,7 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
-		return this;
-	}
-
-	@Override
-	public Expression resolveSqlExpression(
-			ColumnReferenceQualifier qualifier,
-			QualifiableSqlExpressable sqlSelectable) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
-	public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	@Override
-	public SqlSelection resolveSqlSelection(Expression expression) {
-		throw new NotYetImplementedFor6Exception(  );
+		return sqlExpressionResolver;
 	}
 
 

@@ -28,9 +28,6 @@ public class PersistentSortedSet extends PersistentSet implements SortedSet {
 
 	/**
 	 * Constructs a PersistentSortedSet
-	 *
-	 * @param session The session
-	 * @param set The underlying set data
 	 */
 	public PersistentSortedSet(
 			SharedSessionContractImplementor session,
@@ -38,6 +35,17 @@ public class PersistentSortedSet extends PersistentSet implements SortedSet {
 			SortedSet set) {
 		super( session, descriptor, set );
 		comparator = set.comparator();
+	}
+
+	/**
+	 * Constructs a PersistentSortedSet
+	 */
+	public PersistentSortedSet(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor descriptor,
+			Object key) {
+		super( session, descriptor, key );
+		comparator = descriptor.getSortingComparator();
 	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})

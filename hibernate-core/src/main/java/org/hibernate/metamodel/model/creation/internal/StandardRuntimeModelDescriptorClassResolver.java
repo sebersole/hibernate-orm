@@ -6,17 +6,28 @@
  */
 package org.hibernate.metamodel.model.creation.internal;
 
+import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.hibernate.mapping.Array;
+import org.hibernate.mapping.Bag;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.JoinedSubclass;
+import org.hibernate.mapping.List;
+import org.hibernate.mapping.Map;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
+import org.hibernate.mapping.Set;
 import org.hibernate.mapping.SingleTableSubclass;
 import org.hibernate.mapping.UnionSubclass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassResolver;
 import org.hibernate.metamodel.model.domain.NavigableResolutionException;
 import org.hibernate.metamodel.model.domain.internal.JoinedEntityDescriptor;
+import org.hibernate.metamodel.model.domain.internal.PersistentArrayDescriptorImpl;
+import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
+import org.hibernate.metamodel.model.domain.internal.PersistentListDescriptorImpl;
+import org.hibernate.metamodel.model.domain.internal.PersistentMapDescriptorImpl;
+import org.hibernate.metamodel.model.domain.internal.PersistentSetDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.SingleTableEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -67,14 +78,26 @@ public class StandardRuntimeModelDescriptorClassResolver implements RuntimeModel
 
 	@Override
 	public Class<? extends PersistentCollectionDescriptor> getCollectionDescriptorClass(Collection bootMapping) {
-		return bootMapping.isOneToMany() ? oneToManyDescriptor() : basicCollectionDescriptor();
-	}
+		if ( bootMapping instanceof Bag ) {
+			return PersistentBagDescriptorImpl.class;
+		}
 
-	private Class<? extends PersistentCollectionDescriptor> oneToManyDescriptor() {
-		throw new NotYetImplementedException(  );
-	}
+		if ( bootMapping instanceof Array ) {
+			return PersistentArrayDescriptorImpl.class;
+		}
 
-	private Class<? extends PersistentCollectionDescriptor> basicCollectionDescriptor() {
-		throw new NotYetImplementedException(  );
+		if ( bootMapping instanceof List ) {
+			return PersistentListDescriptorImpl.class;
+		}
+
+		if ( bootMapping instanceof Set ) {
+			return PersistentSetDescriptorImpl.class;
+		}
+
+		if ( bootMapping instanceof Map ) {
+			return PersistentMapDescriptorImpl.class;
+		}
+
+		throw new HibernateException( "Unsure which PersistentCollectionDescriptor impl class to use - " + bootMapping );
 	}
 }

@@ -7,6 +7,7 @@
 package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 
 import java.util.Locale;
+import java.util.UUID;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -25,6 +26,7 @@ public class IdTable extends PhysicalTable {
 			EntityDescriptor entityDescriptor,
 			QualifiedTableName physicalQualifiedName) {
 		super(
+				UUID.randomUUID(),
 				physicalQualifiedName,
 				true,
 				"Table used to temporarily hold id values for the entity " + entityDescriptor.getEntityName()

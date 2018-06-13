@@ -6,13 +6,29 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
+import org.hibernate.collection.internal.StandardArraySemantics;
+import org.hibernate.collection.internal.StandardBagSemantics;
+import org.hibernate.collection.internal.StandardListSemantics;
+import org.hibernate.collection.internal.StandardMapSemantics;
+import org.hibernate.collection.internal.StandardOrderedMapSemantics;
+import org.hibernate.collection.internal.StandardOrderedSetSemantics;
+import org.hibernate.collection.internal.StandardSetSemantics;
+import org.hibernate.collection.internal.StandardSortedMapSemantics;
+import org.hibernate.collection.internal.StandardSortedSetSemantics;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.Primitive;
 
@@ -72,14 +88,21 @@ public class JavaTypeDescriptorBaseline {
 		target.addBaselineDescriptor( UrlJavaDescriptor.INSTANCE );
 		target.addBaselineDescriptor( UUIDJavaDescriptor.INSTANCE );
 
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( Collection.class ) );
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( List.class ) );
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( Set.class ) );
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( SortedSet.class ) );
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( Map.class ) );
-		target.addBaselineDescriptor( new CollectionJavaDescriptor( SortedMap.class ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( Collection.class, StandardBagSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( Object[].class, StandardArraySemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( List.class, StandardListSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( ArrayList.class, StandardListSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( Set.class, StandardSetSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( HashSet.class, StandardSetSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( SortedSet.class, StandardSortedSetSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( TreeSet.class, StandardSortedSetSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( LinkedHashSet.class, StandardOrderedSetSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( Map.class, StandardMapSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( HashMap.class, StandardMapSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( SortedMap.class, StandardSortedMapSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( TreeMap.class, StandardSortedMapSemantics.INSTANCE ) );
+		target.addBaselineDescriptor( new CollectionJavaDescriptor( LinkedHashMap.class, StandardOrderedMapSemantics.INSTANCE ) );
 		target.addBaselineDescriptor( MapEntryJavaDescriptor.INSTANCE );
-
 	}
 
 	private static void primePrimitive(BaselineTarget target, BasicJavaDescriptor descriptor) {

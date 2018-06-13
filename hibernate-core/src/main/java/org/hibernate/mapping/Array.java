@@ -7,9 +7,12 @@
 package org.hibernate.mapping;
 
 import org.hibernate.MappingException;
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardArraySemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.type.descriptor.java.spi.Primitive;
 
 /**
@@ -19,9 +22,16 @@ import org.hibernate.type.descriptor.java.spi.Primitive;
  */
 public class Array extends List {
 	private String elementClassName;
+	private final CollectionJavaDescriptorResolver javaTypeMapping;
 
 	public Array(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				Object[].class
+		);
+
 	}
 
 	public Class getElementClass() throws MappingException {
@@ -66,5 +76,16 @@ public class Array extends List {
 	@Override
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept( this );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		return StandardArraySemantics.INSTANCE;
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
 	}
 }

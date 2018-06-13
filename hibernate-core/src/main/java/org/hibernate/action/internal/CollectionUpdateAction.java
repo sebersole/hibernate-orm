@@ -6,8 +6,6 @@
  */
 package org.hibernate.action.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -29,20 +27,19 @@ public final class CollectionUpdateAction extends CollectionAction {
 
 	/**
 	 * Constructs a CollectionUpdateAction
-	 *
-	 * @param collection The collection to update
+	 *  @param collection The collection to update
 	 * @param collectionDescriptor The collection collectionDescriptor
-	 * @param id The collection key
+	 * @param collectionKey The collection key
 	 * @param emptySnapshot Indicates if the snapshot is empty
 	 * @param session The session
 	 */
 	public CollectionUpdateAction(
 				final PersistentCollection collection,
 				final PersistentCollectionDescriptor collectionDescriptor,
-				final Serializable id,
+				final Object collectionKey,
 				final boolean emptySnapshot,
 				final SharedSessionContractImplementor session) {
-		super( collectionDescriptor, collection, id, session );
+		super( collectionDescriptor, collection, collectionKey, session );
 		this.emptySnapshot = emptySnapshot;
 	}
 

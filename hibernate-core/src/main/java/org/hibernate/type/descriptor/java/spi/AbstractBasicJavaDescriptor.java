@@ -31,7 +31,7 @@ public abstract class AbstractBasicJavaDescriptor<T>
 	 * @see #AbstractBasicJavaDescriptor(Class, MutabilityPlan)
 	 */
 	@SuppressWarnings({ "unchecked" })
-	protected AbstractBasicJavaDescriptor(Class<T> type) {
+	protected AbstractBasicJavaDescriptor(Class<? extends T> type) {
 		this(
 				type,
 				(MutabilityPlan<T>) ImmutableMutabilityPlan.INSTANCE,
@@ -48,7 +48,7 @@ public abstract class AbstractBasicJavaDescriptor<T>
 	 * @param mutabilityPlan The plan for handling mutability aspects of the java type.
 	 */
 	@SuppressWarnings({ "unchecked" })
-	protected AbstractBasicJavaDescriptor(Class<T> type, MutabilityPlan<T> mutabilityPlan) {
+	protected AbstractBasicJavaDescriptor(Class<? extends T> type, MutabilityPlan<T> mutabilityPlan) {
 		this(
 				type,
 				mutabilityPlan,
@@ -65,9 +65,8 @@ public abstract class AbstractBasicJavaDescriptor<T>
 	 * @param mutabilityPlan The plan for handling mutability aspects of the java type.
 	 */
 	@SuppressWarnings({ "unchecked" })
-	protected AbstractBasicJavaDescriptor(Class<T> type, MutabilityPlan<T> mutabilityPlan, Comparator comparator) {
+	protected AbstractBasicJavaDescriptor(Class<? extends T> type, MutabilityPlan<T> mutabilityPlan, Comparator comparator) {
 		super( type.getName(), type, mutabilityPlan, comparator );
-		assert type != null;
 	}
 
 	@Override

@@ -15,11 +15,9 @@ import org.hibernate.query.sqm.tree.SqmDeleteOrUpdateStatement;
 import org.hibernate.query.sqm.tree.predicate.SqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
@@ -27,13 +25,11 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
@@ -109,27 +105,11 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 		entityIdSelectionTableSpace.setRootTableGroup( rootTableGroup );
 
-		final SqlExpressionResolver sqlExpressionResolver = new SqlExpressionResolver() {
-			private int numberOfSelections = 0;
-
-			@Override
-			public Expression resolveSqlExpression(
-					ColumnReferenceQualifier qualifier,
-					QualifiableSqlExpressable sqlSelectable) {
-				return qualifier.qualify( sqlSelectable );
-			}
-
-			@Override
-			public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
-				return sqlSelectable.createExpression();
-			}
-
-			@Override
-			public SqlSelection resolveSqlSelection(Expression expression) {
-				return expression.createSqlSelection( numberOfSelections++ );
-			}
-		};
-
+		final PerQuerySpecSqlExpressionResolver sqlExpressionResolver = new PerQuerySpecSqlExpressionResolver(
+				() -> entityIdSelection,
+				expression -> expression,
+				(expression, selection) -> {}
+		);
 		final SqlSelectionGroupNode sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
 				rootTableGroup,
 				new QueryResultCreationContext() {
@@ -144,6 +124,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					public SessionFactoryImplementor getSessionFactory() {
 						return sessionFactory;
 					}
+
 
 					@Override
 					public SqlExpressionResolver getSqlSelectionResolver() {

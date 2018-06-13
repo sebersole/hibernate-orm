@@ -33,7 +33,6 @@ import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.bytecode.internal.BytecodeEnhancementMetadataNonPojoImpl;
 import org.hibernate.bytecode.internal.BytecodeEnhancementMetadataPojoImpl;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.EntityEntryFactory;
@@ -150,7 +149,7 @@ public abstract class AbstractEntityDescriptor<J>
 		this.instantiator = getRepresentationStrategy().resolveInstantiator(
 				bootMapping,
 				this,
-				Environment.getBytecodeProvider()
+				creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 		);
 
 		log.debugf(

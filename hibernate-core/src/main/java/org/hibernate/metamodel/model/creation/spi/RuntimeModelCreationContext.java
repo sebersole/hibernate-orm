@@ -11,21 +11,28 @@ import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.cache.spi.access.CollectionDataAccess;
+import org.hibernate.cache.spi.access.EntityDataAccess;
+import org.hibernate.cache.spi.access.NaturalIdDataAccess;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
+import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
+import org.hibernate.metamodel.model.relational.spi.Namespace;
+import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -58,7 +65,10 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 		return getSessionFactory().getServiceRegistry().getService( MutableIdentifierGeneratorFactory.class );
 	}
 
-	PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver();
+	/**
+	 * The resolver for CollectionSemantic instances
+	 */
+	CollectionSemanticsResolver getCollectionSemanticsResolver();
 
 	@Override
 	default ManagedBeanRegistry getManagedBeanRegistry() {
@@ -93,4 +103,15 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 			EmbeddedTypeDescriptor runtimeDescriptor,
 			EmbeddedValueMappingImplementor bootDescriptor);
 
+	default Table resolve(MappedTable mappedTable) {
+		final Namespace namespace = getDatabaseModel().getNamespace(
+				mappedTable.getCatalog(),
+				mappedTable.getSchema()
+		);
+		return namespace.getTable( mappedTable.getUid() );
+	}
+
+	EntityDataAccess getEntityCacheAccess(NavigableRole navigableRole);
+	NaturalIdDataAccess getNaturalIdCacheAccess(NavigableRole navigableRole);
+	CollectionDataAccess getCollectionCacheAccess(NavigableRole navigableRole);
 }

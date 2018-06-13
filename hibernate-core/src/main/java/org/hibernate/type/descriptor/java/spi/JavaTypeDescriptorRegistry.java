@@ -140,6 +140,10 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 			throw new IllegalArgumentException( "Java type passed to locate Java type descriptor cannot be null" );
 		}
 
+		if ( javaType.isArray() ) {
+			return getDescriptor( Object[].class.getName(), fallback );
+		}
+
 		return getDescriptor( javaType.getTypeName(), fallback );
 	}
 

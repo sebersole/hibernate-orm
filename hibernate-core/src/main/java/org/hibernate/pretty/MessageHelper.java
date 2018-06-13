@@ -407,7 +407,7 @@ public final class MessageHelper {
 	 * @param id The id value of the owner
 	 * @return An info string, in the form [Foo.bars#1]
 	 */
-	public static String collectionInfoString(String role, Serializable id) {
+	public static String collectionInfoString(String role, Object id) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
 		if( role == null ) {
@@ -426,6 +426,18 @@ public final class MessageHelper {
 		}
 		s.append( ']' );
 		return s.toString();
+	}
+
+	/**
+	 * Generate an info message string relating to a particular managed
+	 * collection.
+	 *
+	 * @param role The role-name of the collection
+	 * @param id The id value of the owner
+	 * @return An info string, in the form [Foo.bars#1]
+	 */
+	public static String collectionInfoString(String role, Serializable id) {
+		return collectionInfoString( role, (Object) id );
 	}
 
 }

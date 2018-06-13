@@ -24,11 +24,13 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  */
 public final class CollectionKey implements Serializable {
 	private final NavigableRole role;
-	private final Serializable key;
+	private final Object key;
 	private final JavaTypeDescriptor keyType;
 	private final int hashCode;
 
-	public CollectionKey(PersistentCollectionDescriptor collectionDescriptor, Serializable key) {
+	public CollectionKey(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object key) {
 		this(
 				collectionDescriptor.getNavigableRole(),
 				key,
@@ -36,13 +38,13 @@ public final class CollectionKey implements Serializable {
 		);
 	}
 
-	public CollectionKey(PersistentCollectionDescriptor collectionDescriptor, Serializable key, EntityMode em) {
+	public CollectionKey(PersistentCollectionDescriptor collectionDescriptor, Object key, EntityMode em) {
 		this( collectionDescriptor.getNavigableRole(), key, collectionDescriptor.getKeyJavaTypeDescriptor());
 	}
 
 	private CollectionKey(
 			NavigableRole role,
-			Serializable key,
+			Object key,
 			JavaTypeDescriptor keyType) {
 		this.role = role;
 		this.key = key;
@@ -71,7 +73,7 @@ public final class CollectionKey implements Serializable {
 		return role;
 	}
 
-	public Serializable getKey() {
+	public Object getKey() {
 		return key;
 	}
 

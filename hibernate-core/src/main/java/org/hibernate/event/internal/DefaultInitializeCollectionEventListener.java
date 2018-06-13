@@ -6,8 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.HibernateException;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.entry.CollectionCacheEntry;
@@ -47,7 +45,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 				LOG.tracev(
 						"Initializing collection {0}",
 						MessageHelper.collectionInfoString(
-								ce.getLoadedPersistentCollectionDescriptor(),
+								ce.getLoadedCollectionDescriptor(),
 								collection,
 								ce.getLoadedKey(),
 								source
@@ -58,7 +56,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 
 			final boolean foundInCache = initializeCollectionFromCache(
 					ce.getLoadedKey(),
-					ce.getLoadedPersistentCollectionDescriptor(),
+					ce.getLoadedCollectionDescriptor(),
 					collection,
 					source
 			);
@@ -72,14 +70,14 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 				if ( traceEnabled ) {
 					LOG.trace( "Collection not cached" );
 				}
-				ce.getLoadedPersistentCollectionDescriptor().initialize( ce.getLoadedKey(), source );
+				ce.getLoadedCollectionDescriptor().initialize( ce.getLoadedKey(), source );
 				if ( traceEnabled ) {
 					LOG.trace( "Collection initialized" );
 				}
 
 				if ( source.getFactory().getStatistics().isStatisticsEnabled() ) {
 					source.getFactory().getStatistics().fetchCollection(
-							ce.getLoadedPersistentCollectionDescriptor().getNavigableRole().getFullPath()
+							ce.getLoadedCollectionDescriptor().getNavigableRole().getFullPath()
 					);
 				}
 			}
@@ -89,7 +87,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 	/**
 	 * Try to initialize a collection from the cache
 	 *
-	 * @param id The id of the collection of initialize
+	 * @param collectionKey The id of the collection of initialize
 	 * @param collectionDescriptor The collection persistent Descriptor
 	 * @param collection The collection to initialize
 	 * @param source The originating session
@@ -98,7 +96,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 	 *         false otherwise.
 	 */
 	private boolean initializeCollectionFromCache(
-			Serializable id,
+			Object collectionKey,
 			PersistentCollectionDescriptor collectionDescriptor,
 			PersistentCollection collection,
 			SessionImplementor source) {
@@ -126,7 +124,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 		}
 
 		final SessionFactoryImplementor factory = source.getFactory();
-		final Object ck = cacheAccess.generateCacheKey( id, collectionDescriptor, factory, source.getTenantIdentifier() );
+		final Object ck = cacheAccess.generateCacheKey( collectionKey, collectionDescriptor, factory, source.getTenantIdentifier() );
 		final Object ce = CacheHelper.fromSharedCache( source, ck, cacheAccess );
 
 		if ( factory.getStatistics().isStatisticsEnabled() ) {
@@ -154,7 +152,7 @@ public class DefaultInitializeCollectionEventListener implements InitializeColle
 		);
 
 		final PersistenceContext persistenceContext = source.getPersistenceContext();
-		cacheEntry.assemble( collection, collectionDescriptor, persistenceContext.getCollectionOwner( id, collectionDescriptor ) );
+		cacheEntry.assemble( collection, collectionDescriptor, persistenceContext.getCollectionOwner( collectionKey, collectionDescriptor ) );
 		persistenceContext.getCollectionEntry( collection ).postInitialize( collection );
 		// addInitializedCollection(collection, collectionDescriptor, id);
 		return true;

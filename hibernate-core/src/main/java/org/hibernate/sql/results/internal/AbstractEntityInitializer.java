@@ -293,7 +293,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 					// the container ("owner")... for now just pass null.
 					// ultimately we need to account for fetch parent if the
 					// current sub-contributor is a fetch
-					null
+					entityInstance
 			);
 		}
 

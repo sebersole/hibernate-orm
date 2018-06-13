@@ -27,11 +27,8 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  * @see java.util.ArrayList
  * @author Gavin King
  */
-public class PersistentList extends AbstractPersistentCollection implements List {
-	private PersistentCollectionDescriptor descriptor;
-	private Object key;
-
-	private List list;
+public class PersistentList<E> extends AbstractPersistentCollection<E> implements List<E> {
+	private List<E> list;
 
 	/**
 	 * Constructs a PersistentList.
@@ -41,26 +38,23 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	 */
 	public PersistentList(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			List list) {
-		super( session );
-		this.descriptor = descriptor;
+			PersistentCollectionDescriptor<?,List<E>,E> descriptor,
+			List<E> list) {
+		super( session, descriptor );
 		setList( list );
 		setDirectlyAccessible( true );
 	}
 
-	private void setList(List list) {
+	private void setList(List<E> list) {
 		this.list = list;
 		setInitialized();
 	}
 
 	public PersistentList(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Serializable key) {
-		super( session );
-		this.descriptor = descriptor;
-		this.key = key;
+			PersistentCollectionDescriptor<?,List<E>,E> collectionDescriptor,
+			Object key) {
+		super( session, collectionDescriptor, key );
 	}
 
 	protected List list() {
@@ -89,7 +83,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public boolean equalsSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public boolean equalsSnapshot(PersistentCollectionDescriptor collectionDescriptor) throws HibernateException {
 		final List sn = (List) getSnapshot();
 		if ( sn.size()!=this.list.size() ) {
 			return false;
@@ -97,7 +91,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 		final Iterator itr = list.iterator();
 		final Iterator snapshotItr = sn.iterator();
 		while ( itr.hasNext() ) {
-			if ( persister.isDirty( itr.next(), snapshotItr.next(), getSession() ) ) {
+			if ( collectionDescriptor.isDirty( itr.next(), snapshotItr.next(), getSession() ) ) {
 				return false;
 			}
 		}
@@ -110,8 +104,10 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize) {
-		this.list = (List) persister.instantiateRaw( anticipatedSize );
+	public void beforeInitialize(
+			int anticipatedSize,
+			PersistentCollectionDescriptor collectionDescriptor) {
+		this.list = (List) getCollectionMetadata().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -138,7 +134,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public Iterator iterator() {
+	public Iterator<E> iterator() {
 		read();
 		return new IteratorProxy( list.iterator() );
 	}
@@ -157,7 +153,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean add(Object object) {
+	public boolean add(E object) {
 		if ( !isOperationQueueEnabled() ) {
 			write();
 			return list.add( object );
@@ -201,7 +197,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean addAll(Collection values) {
+	public boolean addAll(Collection<? extends E> values) {
 		if ( values.size()==0 ) {
 			return false;
 		}
@@ -210,16 +206,14 @@ public class PersistentList extends AbstractPersistentCollection implements List
 			return list.addAll( values );
 		}
 		else {
-			for ( Object value : values ) {
-				queueOperation( new SimpleAdd( value ) );
-			}
+			values.forEach( e -> queueOperation( new SimpleAdd( e ) ) );
 			return values.size()>0;
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean addAll(int index, Collection coll) {
+	public boolean addAll(int index, Collection<? extends E> coll) {
 		if ( coll.size()>0 ) {
 			write();
 			return list.addAll( index,  coll );
@@ -278,22 +272,22 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object get(int index) {
+	public E get(int index) {
 		if ( index < 0 ) {
 			throw new ArrayIndexOutOfBoundsException( "negative index" );
 		}
-		final Object result = readElementByIndex( index );
+		final E result = readElementByIndex( index );
 		return result == UNKNOWN ? list.get( index ) : result;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object set(int index, Object value) {
+	public E set(int index, E value) {
 		if (index<0) {
 			throw new ArrayIndexOutOfBoundsException("negative index");
 		}
 
-		final Object old = isPutQueueEnabled() ? readElementByIndex( index ) : UNKNOWN;
+		final E old = isPutQueueEnabled() ? readElementByIndex( index ) : (E) UNKNOWN;
 
 		if ( old==UNKNOWN ) {
 			write();
@@ -307,7 +301,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object remove(int index) {
+	public E remove(int index) {
 		if ( index < 0 ) {
 			throw new ArrayIndexOutOfBoundsException( "negative index" );
 		}
@@ -320,13 +314,13 @@ public class PersistentList extends AbstractPersistentCollection implements List
 		}
 		else {
 			queueOperation( new Remove( index, old ) );
-			return old;
+			return (E) old;
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void add(int index, Object value) {
+	public void add(int index, E value) {
 		if ( index < 0 ) {
 			throw new ArrayIndexOutOfBoundsException( "negative index" );
 		}
@@ -382,7 +376,10 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object readFrom(ResultSet rs, PersistentCollectionDescriptor persister, Object owner) throws SQLException {
+	public Object readFrom(
+			ResultSet rs,
+			Object owner,
+			PersistentCollectionDescriptor collectionDescriptor) throws SQLException {
 		throw new NotYetImplementedFor6Exception(  );
 //		final Object element = persister.readElement( rs, owner, descriptor.getSuffixedElementAliases(), getSession() ) ;
 //		final int index = (Integer) persister.readIndex( rs, descriptor.getSuffixedIndexAliases(), getSession() );
@@ -398,29 +395,32 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator entries(PersistentCollectionDescriptor persister) {
+	public Iterator<E> entries(PersistentCollectionDescriptor collectionDescriptor) {
 		return list.iterator();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner)
+	public void initializeFromCache(
+			Serializable disassembled,
+			Object owner,
+			PersistentCollectionDescriptor<?,?,E> collectionDescriptor)
 			throws HibernateException {
 		final Serializable[] array = (Serializable[]) disassembled;
 		final int size = array.length;
-		beforeInitialize( persister, size );
+		beforeInitialize( size, collectionDescriptor );
 		for ( Serializable arrayElement : array ) {
-			list.add( persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement ) );
+			list.add( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement ) );
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Serializable disassemble(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable disassemble(PersistentCollectionDescriptor collectionDescriptor) throws HibernateException {
 		final int length = list.size();
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( list.get( i ) );
+			result[i] = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( list.get( i ) );
 		}
 		return result;
 	}
@@ -466,20 +466,26 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	}
 
 	@Override
-	public Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister) {
-		return i;
+	public Object getIndex(
+			Object entry,
+			int assumedIndex,
+			PersistentCollectionDescriptor collectionDescriptor) {
+		return assumedIndex;
 	}
 
 	@Override
-	public Object getElement(Object entry) {
+	public Object getElement(
+			Object entry,
+			PersistentCollectionDescriptor collectionDescriptor) {
 		return entry;
 	}
 
 	@Override
-	public Object getSnapshotElement(Object entry, int i) {
-		final List sn = (List) getSnapshot();
-		return sn.get( i );
+	public E getSnapshotElement(Object entry, int index) {
+		final List<E> sn = (List<E>) getSnapshot();
+		return sn.get( index );
 	}
+
 
 	@Override
 	@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -506,7 +512,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 		}
 
 		@Override
-		public Object getAddedInstance() {
+		public E getAddedInstance() {
 			return null;
 		}
 
@@ -518,7 +524,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	final class SimpleAdd extends AbstractValueDelayedOperation {
 
-		public SimpleAdd(Object addedValue) {
+		public SimpleAdd(E addedValue) {
 			super( addedValue, null );
 		}
 
@@ -532,7 +538,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 	abstract class AbstractListValueDelayedOperation extends AbstractValueDelayedOperation {
 		private int index;
 
-		AbstractListValueDelayedOperation(Integer index, Object addedValue, Object orphan) {
+		AbstractListValueDelayedOperation(Integer index, E addedValue, Object orphan) {
 			super( addedValue, orphan );
 			this.index = index;
 		}
@@ -544,7 +550,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	final class Add extends AbstractListValueDelayedOperation {
 
-		public Add(int index, Object addedValue) {
+		public Add(int index, E addedValue) {
 			super( index, addedValue, null );
 		}
 
@@ -557,7 +563,7 @@ public class PersistentList extends AbstractPersistentCollection implements List
 
 	final class Set extends AbstractListValueDelayedOperation {
 
-		public Set(int index, Object addedValue, Object orphan) {
+		public Set(int index, E addedValue, Object orphan) {
 			super( index, addedValue, orphan );
 		}
 

@@ -113,14 +113,11 @@ import org.hibernate.sql.ast.produce.ordering.internal.SqmColumnReference;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
-import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -198,7 +195,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseSqmToSqlAstConverter
 		extends BaseSemanticQueryWalker
-		implements SqmToSqlAstConverter, SqlExpressionResolver, SqlSelectionResolutionContext {
+		implements SqmToSqlAstConverter, SqlSelectionResolutionContext {
 
 	private static final Logger log = Logger.getLogger( BaseSqmToSqlAstConverter.class );
 
@@ -225,6 +222,12 @@ public abstract class BaseSqmToSqlAstConverter
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
 
 	private final Set<String> affectedTableNames = new HashSet<>();
+
+	// todo (6.0) : decide if we want to do the caching/unique-ing of Expressions here.
+	//		its really only needed for top-level select clauses, not sub-queries.
+	//		its "ok" to do it for sub-queries as well - just wondering about the overhead.
+	private Map<QuerySpec,Map<Expression, SqlSelection>> sqlExpressionToSqlSelectionMapByQuerySpec;
+
 
 	public BaseSqmToSqlAstConverter(
 			SqlAstBuildingContext sqlAstBuildingContext,
@@ -302,24 +305,9 @@ public abstract class BaseSqmToSqlAstConverter
 		primeStack( navigableReferenceStack, initial );
 	}
 
-	// NOTE : assumes that Expression impls "properly" implement equals/hashCode which may not be the
-	//		best option.
-
-	// todo (6.0) : decide if we want to do the caching/unique-ing of Expressions here.
-	//		its really only needed for top-level select clauses, not sub-queries.
-	//		its "ok" to do it for sub-queries as well - just wondering about the overhead.
-	private Map<QuerySpec,Map<Expression, SqlSelection>> sqlExpressionToSqlSelectionMapByQuerySpec;
-
-	private Map<QuerySpec,Map<ColumnReferenceQualifier,Map<QualifiableSqlExpressable,SqlSelection>>> qualifiedSExpressionToSqlSelectionMapByQuerySpec;
-
 	// todo (6.0) : is there ever a time when resolving a sqlSelectable relative to a qualifier ought to return different expressions for multiple references?
 
-	@Override
-	public Expression resolveSqlExpression(ColumnReferenceQualifier qualifier, QualifiableSqlExpressable sqlSelectable) {
-		return normalizeSqlExpression( qualifier.qualify( sqlSelectable ) );
-	}
-
-	private Expression normalizeSqlExpression(Expression expression) {
+	protected Expression normalizeSqlExpression(Expression expression) {
 		if ( getCurrentClauseStack().getCurrent() == Clause.ORDER
 				|| getCurrentClauseStack().getCurrent() == Clause.GROUP
 				|| getCurrentClauseStack().getCurrent() == Clause.HAVING ) {
@@ -345,40 +333,29 @@ public abstract class BaseSqmToSqlAstConverter
 		return expression;
 	}
 
-	@Override
-	public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
-		return normalizeSqlExpression( sqlSelectable.createExpression() );
-	}
+	protected void collectSelection(Expression expression, SqlSelection selection) {
+		final QuerySpec current = querySpecStack.getCurrent();
+		if ( current == null ) {
+			// should indicate a DML SQM - nothing to do
+			return;
+		}
 
-	@Override
-	public SqlExpressionResolver getSqlSelectionResolver() {
-		return this;
+		if ( sqlExpressionToSqlSelectionMapByQuerySpec == null ) {
+			sqlExpressionToSqlSelectionMapByQuerySpec = new HashMap<>();
+		}
+
+		final Map<Expression, SqlSelection> selectionMap = sqlExpressionToSqlSelectionMapByQuerySpec.computeIfAbsent(
+				currentQuerySpec(),
+				querySpec -> new HashMap<>()
+		);
+
+		selectionMap.putIfAbsent( expression, selection );
 	}
 
 	@Override
 	public boolean shouldCreateShallowEntityResult() {
 		throw new UnsupportedOperationException(  );
 	}
-
-	@Override
-	public SqlSelection resolveSqlSelection(Expression expression) {
-		final Map<SqlExpressable,SqlSelection> sqlSelectionMap = sqlSelectionMapByQuerySpec.computeIfAbsent(
-				currentQuerySpec(),
-				k -> new HashMap<>()
-		);
-
-		final SqlSelection existing = sqlSelectionMap.get( expression.getExpressable() );
-		if ( existing != null ) {
-			return existing;
-		}
-
-		final SqlSelection sqlSelection = expression.createSqlSelection( sqlSelectionMap.size() );
-		currentQuerySpec().getSelectClause().addSqlSelection( sqlSelection );
-		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
-
-		return sqlSelection;
-	}
-
 
 	@Override
 	public Void visitOrderByClause(SqmOrderByClause orderByClause) {

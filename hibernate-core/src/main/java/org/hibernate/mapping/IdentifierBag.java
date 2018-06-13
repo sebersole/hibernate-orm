@@ -6,19 +6,39 @@
  */
 package org.hibernate.mapping;
 
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardArraySemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 
 /**
  * An <tt>IdentifierBag</tt> has a primary key consisting of
  * just the identifier column
  */
 public class IdentifierBag extends IdentifierCollection {
+	private final CollectionJavaDescriptorResolver javaTypeMapping;
 
 	public IdentifierBag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				java.util.Collection.class
+		);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		return StandardArraySemantics.INSTANCE;
 	}
 
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
-	}	
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
+	}
 }

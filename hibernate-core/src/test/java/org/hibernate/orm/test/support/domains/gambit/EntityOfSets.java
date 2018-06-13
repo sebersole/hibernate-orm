@@ -6,12 +6,16 @@
  */
 package org.hibernate.orm.test.support.domains.gambit;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
 /**
  * @author Steve Ebersole
@@ -25,6 +29,17 @@ public class EntityOfSets {
 	private Set<EntityOfSets> setOfOneToMany;
 	private Set<EntityOfSets> setOfManyToMany;
 
+	public EntityOfSets() {
+	}
+
+	public EntityOfSets(Integer id) {
+		this.id = id;
+		this.setOfBasics = new HashSet<>();
+		this.setOfComponents = new HashSet<>();
+		this.setOfOneToMany = new HashSet<>();
+		this.setOfManyToMany = new HashSet<>();
+	}
+
 	@Id
 	public Integer getId() {
 		return id;
@@ -35,6 +50,7 @@ public class EntityOfSets {
 	}
 
 	@ElementCollection
+	@LazyCollection( LazyCollectionOption.EXTRA )
 	public Set<String> getSetOfBasics() {
 		return setOfBasics;
 	}

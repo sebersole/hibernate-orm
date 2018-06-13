@@ -6,8 +6,6 @@
  */
 package org.hibernate.action.internal;
 
-import java.io.Serializable;
-
 import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -33,8 +31,8 @@ public final class CollectionRemoveAction extends CollectionAction {
 	 * Use this constructor when the collection is non-null.
 	 *
 	 * @param collection The collection to to remove; must be non-null
-	 * @param persister  The collection's persister
-	 * @param id The collection key
+	 * @param collectionDescriptor  The collection's persister
+	 * @param collectionKey The collection key
 	 * @param emptySnapshot Indicates if the snapshot is empty
 	 * @param session The session
 	 *
@@ -42,11 +40,11 @@ public final class CollectionRemoveAction extends CollectionAction {
 	 */
 	public CollectionRemoveAction(
 				final PersistentCollection collection,
-				final PersistentCollectionDescriptor persister,
-				final Serializable id,
+				final PersistentCollectionDescriptor collectionDescriptor,
+				final Object collectionKey,
 				final boolean emptySnapshot,
 				final SharedSessionContractImplementor session) {
-		super( persister, collection, id, session );
+		super( collectionDescriptor, collection, collectionKey, session );
 		if ( collection == null ) {
 			throw new AssertionFailure("collection == null");
 		}
@@ -63,8 +61,8 @@ public final class CollectionRemoveAction extends CollectionAction {
 	 * Use this constructor when the collection to be removed has not been loaded.
 	 *
 	 * @param affectedOwner The collection's owner; must be non-null
-	 * @param persister  The collection's persister
-	 * @param id The collection key
+	 * @param collectionDescriptor  The collection's persister
+	 * @param collectionKey The collection key
 	 * @param emptySnapshot Indicates if the snapshot is empty
 	 * @param session The session
 	 *
@@ -72,11 +70,11 @@ public final class CollectionRemoveAction extends CollectionAction {
 	 */
 	public CollectionRemoveAction(
 				final Object affectedOwner,
-				final PersistentCollectionDescriptor persister,
-				final Serializable id,
+				final PersistentCollectionDescriptor collectionDescriptor,
+				final Object collectionKey,
 				final boolean emptySnapshot,
 				final SharedSessionContractImplementor session) {
-		super( persister, null, id, session );
+		super( collectionDescriptor, null, collectionKey, session );
 		if ( affectedOwner == null ) {
 			throw new AssertionFailure("affectedOwner == null");
 		}

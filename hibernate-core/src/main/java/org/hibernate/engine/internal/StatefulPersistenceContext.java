@@ -28,7 +28,6 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.MappingException;
 import org.hibernate.NonUniqueObjectException;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.PersistentObjectException;
 import org.hibernate.TransientObjectException;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
@@ -749,8 +748,9 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	@Override
 	public Object getCollectionOwner(Object key, PersistentCollectionDescriptor descriptor) throws MappingException {
-		throw new NotYetImplementedFor6Exception();
-
+		// todo (6.0) : assumes collection is defined on entity, not composite
+		// todo (6.0) : also assumes PK FK mapping
+		return getEntity( session.generateEntityKey( key, (EntityDescriptor) descriptor.getContainer() ) );
 
 //		// todo : we really just need to add a split in the notions of:
 //		//		1) collection key
@@ -816,22 +816,22 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	@Override
 	public Object getLoadedCollectionOwnerOrNull(PersistentCollection collection) {
 		final CollectionEntry ce = getCollectionEntry( collection );
-		if ( ce.getLoadedPersistentCollectionDescriptor() == null ) {
+		if ( ce.getLoadedCollectionDescriptor() == null ) {
 			return null;
 		}
 
 		Object loadedOwner = null;
 		// TODO: an alternative is to check if the owner has changed; if it hasn't then
 		// return collection.getOwner()
-		final Serializable entityId = getLoadedCollectionOwnerIdOrNull( ce );
+		final Object entityId = getLoadedCollectionOwnerIdOrNull( ce );
 		if ( entityId != null ) {
-			loadedOwner = getCollectionOwner( entityId, ce.getLoadedPersistentCollectionDescriptor() );
+			loadedOwner = getCollectionOwner( entityId, ce.getLoadedCollectionDescriptor() );
 		}
 		return loadedOwner;
 	}
 
 	@Override
-	public Serializable getLoadedCollectionOwnerIdOrNull(PersistentCollection collection) {
+	public Object getLoadedCollectionOwnerIdOrNull(PersistentCollection collection) {
 		return getLoadedCollectionOwnerIdOrNull( getCollectionEntry( collection ) );
 	}
 
@@ -841,20 +841,21 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	 * @param ce The collection entry
 	 * @return the owner ID if available from the collection's loaded key; otherwise, returns null
 	 */
-	private Serializable getLoadedCollectionOwnerIdOrNull(CollectionEntry ce) {
-		throw new NotYetImplementedFor6Exception();
-//		if ( ce == null || ce.getLoadedKey() == null || ce.getLoadedPersistentCollectionDescriptor() == null ) {
-//			return null;
-//		}
-//		// TODO: an alternative is to check if the owner has changed; if it hasn't then
-//		// get the ID from collection.getOwner()
-//		return ce.getLoadedPersistentCollectionDescriptor().getOrmType().getIdOfOwnerOrNull( ce.getLoadedKey(), session );
+	private Object getLoadedCollectionOwnerIdOrNull(CollectionEntry ce) {
+		if ( ce == null || ce.getLoadedKey() == null || ce.getLoadedCollectionDescriptor() == null ) {
+			return null;
+		}
+
+		final Object loadedKey = ce.getLoadedKey();
+
+		// todo (6.0) : need to account for non-PK Fks (aka, "property-ref")
+		return loadedKey;
 	}
 
 	@Override
-	public void addUninitializedCollection(PersistentCollectionDescriptor descriptor, PersistentCollection collection, Serializable id) {
-		final CollectionEntry ce = new CollectionEntry( collection, descriptor, id, flushing );
-		addCollection( collection, ce, id );
+	public void addUninitializedCollection(PersistentCollectionDescriptor descriptor, PersistentCollection collection, Object collectionKey) {
+		final CollectionEntry ce = new CollectionEntry( collection, descriptor, collectionKey, flushing );
+		addCollection( collection, ce, collectionKey );
 		if ( descriptor.getBatchSize() > 1 ) {
 			getBatchFetchQueue().addBatchLoadableCollection( collection, ce );
 		}
@@ -877,14 +878,13 @@ public class StatefulPersistenceContext implements PersistenceContext {
 
 	/**
 	 * Add a collection to the cache, with a given collection entry.
-	 *
-	 * @param coll The collection for which we are adding an entry.
+	 *  @param coll The collection for which we are adding an entry.
 	 * @param entry The entry representing the collection.
 	 * @param key The key of the collection's entry.
 	 */
-	private void addCollection(PersistentCollection coll, CollectionEntry entry, Serializable key) {
+	private void addCollection(PersistentCollection coll, CollectionEntry entry, Object key) {
 		collectionEntries.put( coll, entry );
-		final CollectionKey collectionKey = new CollectionKey( entry.getLoadedPersistentCollectionDescriptor(), key );
+		final CollectionKey collectionKey = new CollectionKey( entry.getLoadedCollectionDescriptor(), key );
 		final PersistentCollection old = collectionsByKey.put( collectionKey, coll );
 		if ( old != null ) {
 			if ( old == coll ) {

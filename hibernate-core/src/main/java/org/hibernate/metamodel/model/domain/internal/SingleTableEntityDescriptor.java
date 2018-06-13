@@ -209,8 +209,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			SharedSessionContractImplementor session,
 			Object unresolvedId,
 			ExecutionContext executionContext,
-			TableReference primaryTableReference) {
-		final InsertStatement insertStatement = new InsertStatement( primaryTableReference );
+			TableReference tableReference) {
+		final InsertStatement insertStatement = new InsertStatement( tableReference );
 
 		// todo (6.0) : account for non-generated identifiers
 
@@ -252,12 +252,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					int position = contributor.getStateArrayPosition();
 					final Object domainValue = fields[position];
 					List<Column> columns = contributor.getColumns();
-					if ( columns.get( 0 ).getSourceTable().equals( primaryTableReference.getTable() ) ) {
+					if ( columns != null && ! columns.isEmpty() ) {
 						contributor.dehydrate(
 								contributor.unresolve( domainValue, session ),
 								(jdbcValue, type, boundColumn) -> {
-									insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-									insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+									if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+										insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+										insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+									}
 								},
 								session
 						);

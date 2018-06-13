@@ -243,7 +243,7 @@ public class BatchFetchQueue {
 	 * it to the queue.
 	 */
 	public void addBatchLoadableCollection(PersistentCollection collection, CollectionEntry ce) {
-		final PersistentCollectionDescriptor collectionDescriptor = ce.getLoadedPersistentCollectionDescriptor();
+		final PersistentCollectionDescriptor collectionDescriptor = ce.getLoadedCollectionDescriptor();
 
 		LinkedHashMap<CollectionEntry, PersistentCollection> map =  batchLoadableCollections.get( collectionDescriptor.getNavigableRole().getFullPath() );
 		if ( map == null ) {
@@ -259,7 +259,7 @@ public class BatchFetchQueue {
 	 * if necessary
 	 */
 	public void removeBatchLoadableCollection(CollectionEntry ce) {
-		LinkedHashMap<CollectionEntry, PersistentCollection> map =  batchLoadableCollections.get( ce.getLoadedPersistentCollectionDescriptor().getNavigableRole().getFullPath() );
+		LinkedHashMap<CollectionEntry, PersistentCollection> map =  batchLoadableCollections.get( ce.getLoadedCollectionDescriptor().getNavigableRole().getFullPath() );
 		if ( map != null ) {
 			map.remove( ce );
 		}
@@ -273,12 +273,12 @@ public class BatchFetchQueue {
 	 * @param batchSize the maximum number of keys to return
 	 * @return an array of collection keys, of length batchSize (padded with nulls)
 	 */
-	public Serializable[] getCollectionBatch(
+	public Object[] getCollectionBatch(
 			final PersistentCollectionDescriptor persistentCollectionDescriptor,
 			final Serializable id,
 			final int batchSize) {
 
-		Serializable[] keys = new Serializable[batchSize];
+		Object[] keys = new Object[batchSize];
 		keys[0] = id;
 
 		int i = 1;
@@ -337,7 +337,7 @@ public class BatchFetchQueue {
 		return keys; //we ran out of keys to try
 	}
 
-	private boolean isCached(Serializable collectionKey, PersistentCollectionDescriptor descriptor) {
+	private boolean isCached(Object collectionKey, PersistentCollectionDescriptor descriptor) {
 		SharedSessionContractImplementor session = context.getSession();
 		if ( session.getCacheMode().isGetEnabled() && descriptor.hasCache() ) {
 			CollectionDataAccess cache = descriptor.getCacheAccess();

@@ -6,13 +6,11 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.Map;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentArrayHolder;
-import org.hibernate.collection.spi.CollectionClassification;
+import org.hibernate.collection.internal.StandardArraySemantics;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
@@ -20,24 +18,25 @@ import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class PersistentArrayDescriptorImpl extends AbstractPersistentCollectionDescriptor {
+public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollectionDescriptor<O,E[], E> {
 
 	public PersistentArrayDescriptorImpl(
 			Property pluralProperty,
 			ManagedTypeDescriptor runtimeContainer,
 			RuntimeModelCreationContext creationContext) {
-		super( pluralProperty, runtimeContainer, CollectionClassification.ARRAY, creationContext );
+		super( pluralProperty, runtimeContainer, creationContext );
 	}
 
 	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(RuntimeModelCreationContext creationContext) {
+	@SuppressWarnings("unchecked")
+	protected CollectionJavaDescriptor resolveCollectionJtd(
+			Collection collectionBinding,
+			RuntimeModelCreationContext creationContext) {
 		Class componentType = getElementDescriptor().getJavaTypeDescriptor().getJavaType();
 		if ( componentType == null ) {
 			// MAP entity mode?
@@ -50,31 +49,34 @@ public class PersistentArrayDescriptorImpl extends AbstractPersistentCollectionD
 		final Class arrayType = Array.newInstance( componentType, 0 ).getClass();
 		assert arrayType.isArray();
 
-		return findOrCreateCollectionJtd( arrayType, creationContext );
+		final CollectionJavaDescriptor javaDescriptor = new CollectionJavaDescriptor(
+				arrayType,
+				StandardArraySemantics.INSTANCE
+		);
+		creationContext.getTypeConfiguration().getJavaTypeDescriptorRegistry().addDescriptor( javaDescriptor );
+
+		return javaDescriptor;
 	}
 
 	@Override
-	public Object instantiateRaw(int anticipatedSize) {
-		return Array.newInstance(
+	@SuppressWarnings("unchecked")
+	public E[] instantiateRaw(int anticipatedSize) {
+		return (E[]) Array.newInstance(
 				getJavaTypeDescriptor().getJavaType().getComponentType(),
 				anticipatedSize
 		);
 	}
 
 	@Override
-	public PersistentCollection instantiateWrapper(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Serializable key) {
-		return new PersistentArrayHolder( session, descriptor, key );
+	@SuppressWarnings("unchecked")
+	public PersistentCollection instantiateWrapper(SharedSessionContractImplementor session, Object key) {
+		return new PersistentArrayHolder( session, this, key );
 	}
 
 	@Override
-	public PersistentCollection wrap(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Object rawCollection) {
-		return new PersistentArrayHolder( session, descriptor, rawCollection );
+	@SuppressWarnings("unchecked")
+	public PersistentCollection wrap(SharedSessionContractImplementor session, E[] rawCollection) {
+		return new PersistentArrayHolder( session, this, rawCollection );
 	}
 
 	@Override
@@ -92,11 +94,4 @@ public class PersistentArrayDescriptorImpl extends AbstractPersistentCollectionD
 		return false;
 	}
 
-
-	@Override
-	protected Table resolveCollectionTable(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception();
-	}
 }

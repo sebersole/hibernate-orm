@@ -9,7 +9,9 @@ package org.hibernate.sql.ast.produce.sqm.spi;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
+import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
@@ -30,13 +32,23 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 		return walker.deleteStatement;
 	}
 
+	private NonSelectSqlExpressionResolver expressionResolver;
 	private DeleteStatement deleteStatement;
 
 	private SqmDeleteToSqlAstConverterSimple(
 			SqlAstBuildingContext sqlAstBuildingContext,
 			QueryOptions queryOptions) {
 		super( sqlAstBuildingContext, queryOptions );
+		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				() -> getQuerySpecStack().getCurrent(),
+				this::normalizeSqlExpression,
+				this::collectSelection
+		);
+	}
 
+	@Override
+	public SqlExpressionResolver getSqlSelectionResolver() {
+		return expressionResolver;
 	}
 
 	@Override

@@ -6,8 +6,7 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
-import java.util.Collection;
-
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
@@ -16,9 +15,14 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class CollectionJavaDescriptor extends AbstractBasicJavaDescriptor<Collection> {
-	public CollectionJavaDescriptor(Class type) {
+public class CollectionJavaDescriptor<C> extends AbstractBasicJavaDescriptor<C> {
+	private final CollectionSemantics<C> semantics;
+
+	public CollectionJavaDescriptor(
+			Class<? extends C> type,
+			CollectionSemantics<C> semantics) {
 		super( type );
+		this.semantics = semantics;
 	}
 
 	@Override
@@ -33,22 +37,26 @@ public class CollectionJavaDescriptor extends AbstractBasicJavaDescriptor<Collec
 	}
 
 	@Override
-	public String toString(Collection value) {
+	public String toString(C value) {
 		return "CollectionJavaDescriptor(" + getTypeName() + ")";
 	}
 
 	@Override
-	public Collection fromString(String string) {
+	public C fromString(String string) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
-	public <X> X unwrap(Collection value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(C value, Class<X> type, WrapperOptions options) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
-	public <X> Collection wrap(X value, WrapperOptions options) {
+	public <X> C wrap(X value, WrapperOptions options) {
 		throw new UnsupportedOperationException(  );
+	}
+
+	public CollectionSemantics<C> getSemantics() {
+		return semantics;
 	}
 }

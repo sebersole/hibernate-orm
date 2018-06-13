@@ -14,9 +14,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.hibernate.EntityMode;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -26,14 +26,14 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  * @see java.util.TreeMap
  * @author <a href="mailto:doug.currie@alum.mit.edu">e</a>
  */
-public class PersistentSortedMap extends PersistentMap implements SortedMap {
+public class PersistentSortedMap<K,V> extends PersistentMap<K,V> implements SortedMap<K,V> {
 	protected Comparator comparator;
 
 	/**
 	 * Constructs a PersistentSortedMap.  This form needed for SOAP libraries, etc
 	 */
 	@SuppressWarnings("UnusedDeclaration")
-	public PersistentSortedMap() {
+	protected PersistentSortedMap() {
 	}
 
 	/**
@@ -43,8 +43,9 @@ public class PersistentSortedMap extends PersistentMap implements SortedMap {
 	 */
 	public PersistentSortedMap(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor) {
+			PersistentCollectionDescriptor<?,?,V> descriptor) {
 		super( session, descriptor );
+		this.comparator = descriptor.getSortingComparator();
 	}
 
 	/**
@@ -55,20 +56,29 @@ public class PersistentSortedMap extends PersistentMap implements SortedMap {
 	 */
 	public PersistentSortedMap(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
+			PersistentCollectionDescriptor<?,?,V> descriptor,
 			SortedMap map) {
 		super( session, descriptor );
 		comparator = map.comparator();
 	}
+	/**
+	 * Constructs a PersistentSortedMap.
+	 */
+	public PersistentSortedMap(
+			SharedSessionContractImplementor session,
+			PersistentCollectionDescriptor<?,?,V> descriptor,
+			Object key) {
+		super( session, descriptor, key );
+		this.comparator = descriptor.getSortingComparator();
+	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})
-	protected Serializable snapshot(PersistentCollectionDescriptor persister, EntityMode entityMode) throws HibernateException {
+	protected Serializable snapshot(PersistentCollectionDescriptor<?,?,V> persister, RepresentationMode entityMode) throws HibernateException {
 		final TreeMap clonedMap = new TreeMap( comparator );
-		for ( Object o : map.entrySet() ) {
-			final Entry e = (Entry) o;
+		for ( Entry<K, V> entry : map.entrySet() ) {
 			clonedMap.put(
-					e.getKey(),
-					persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( e.getValue() )
+					entry.getKey(),
+					persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( entry.getValue() )
 			);
 		}
 		return clonedMap;
@@ -93,32 +103,36 @@ public class PersistentSortedMap extends PersistentMap implements SortedMap {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public SortedMap headMap(Object toKey) {
+	public SortedMap<K,V> headMap(K toKey) {
 		read();
-		final SortedMap headMap = ( (SortedMap) map ).headMap( toKey );
+		final SortedMap<K,V> headMap = map().headMap( toKey );
 		return new SortedSubMap( headMap );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public SortedMap tailMap(Object fromKey) {
+	public SortedMap<K,V> tailMap(K fromKey) {
 		read();
-		final SortedMap tailMap = ( (SortedMap) map ).tailMap( fromKey );
+		final SortedMap<K,V> tailMap = map().tailMap( fromKey );
 		return new SortedSubMap( tailMap );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object firstKey() {
+	public K firstKey() {
 		read();
-		return ( (SortedMap) map ).firstKey();
+		return map().firstKey();
+	}
+
+	private SortedMap<K,V> map() {
+		return (SortedMap<K, V>) map;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object lastKey() {
+	public K lastKey() {
 		read();
-		return ( (SortedMap) map ).lastKey();
+		return map().lastKey();
 	}
 
 	class SortedSubMap implements SortedMap {

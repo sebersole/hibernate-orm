@@ -15,11 +15,13 @@ import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
@@ -33,6 +35,7 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 	private final QuerySpec idTableSelect;
 	private final EntityDescriptor entityDescriptor;
 	private final EntityTableGroup entityTableGroup;
+	private final NonSelectSqlExpressionResolver expressionResolver;
 
 	public static List<SqlAstUpdateDescriptor> interpret(
 			SqmDeleteStatement sqmStatement,
@@ -121,5 +124,16 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 		);
 
 		getFromClauseIndex().crossReference( sqmStatement.getEntityFromElement(), entityTableGroup );
+
+		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				() -> getQuerySpecStack().getCurrent(),
+				this::normalizeSqlExpression,
+				this::collectSelection
+		);
+	}
+
+	@Override
+	public SqlExpressionResolver getSqlSelectionResolver() {
+		return expressionResolver;
 	}
 }

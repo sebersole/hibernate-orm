@@ -7,6 +7,7 @@
 package org.hibernate.mapping;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -22,8 +23,17 @@ import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.boot.model.relational.MappedColumn;
-import org.hibernate.cfg.Environment;
-import org.hibernate.collection.spi.PersistentCollectionRepresentation;
+import org.hibernate.collection.internal.StandardArraySemantics;
+import org.hibernate.collection.internal.StandardBagSemantics;
+import org.hibernate.collection.internal.StandardIdentifierBagSemantics;
+import org.hibernate.collection.internal.StandardListSemantics;
+import org.hibernate.collection.internal.StandardMapSemantics;
+import org.hibernate.collection.internal.StandardOrderedMapSemantics;
+import org.hibernate.collection.internal.StandardOrderedSetSemantics;
+import org.hibernate.collection.internal.StandardSetSemantics;
+import org.hibernate.collection.internal.StandardSortedMapSemantics;
+import org.hibernate.collection.internal.StandardSortedSetSemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadeStyles;
 import org.hibernate.internal.util.collections.ArrayHelper;
@@ -419,7 +429,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 			RuntimeModelCreationContext context) {
 		assert value != null;
 
-		// todo (7.0) : better served through polymorphism
+		// todo (7.0) : better served through polymorphism though Value?
 
 		// todo (6.0) : how to handle synthetic/virtual properties?
 		assert !Backref.class.isInstance( this );
@@ -438,16 +448,72 @@ public class Property implements Serializable, PersistentAttributeMapping {
 			ManagedTypeDescriptor runtimeContainer,
 			ManagedTypeMapping bootContainer,
 			RuntimeModelCreationContext context) {
-		final PersistentCollectionRepresentation representation = context.getPersistentCollectionRepresentationResolver()
-				.resolveRepresentation( (Collection) value );
-		final PersistentCollectionDescriptor descriptor = representation.generatePersistentCollectionDescriptor(
-				runtimeContainer,
-				bootContainer,
+
+		final PersistentCollectionDescriptor descriptor = context.getRuntimeModelDescriptorFactory().createPersistentCollectionDescriptor(
 				this,
+				runtimeContainer,
 				context
 		);
 		context.registerCollectionDescriptor( descriptor, (Collection) value );
+
 		return descriptor.getDescribedAttribute();
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> CollectionSemantics<T> resolveCollectionSemantics() {
+		// todo (6.0) : re-use CollectionSemantics from boot resolution
+		// 		the decision that a property is a persistent-collection (value instanceof Collection)
+		//		should already have used CollectionSemanticsResolver to make that determination
+		//
+		// this is what would allow plugging in non-java.util.Collection collections (Celyon)
+		//
+		// for now create it here
+
+		if ( value instanceof Array ) {
+			return (CollectionSemantics<T>) StandardArraySemantics.INSTANCE;
+		}
+		else if ( value instanceof Bag ) {
+			return (CollectionSemantics<T>) StandardBagSemantics.INSTANCE;
+		}
+		else if ( value instanceof IdentifierBag ) {
+			return (CollectionSemantics<T>) StandardIdentifierBagSemantics.INSTANCE;
+		}
+		else if ( value instanceof org.hibernate.mapping.List ) {
+			return (CollectionSemantics<T>) StandardListSemantics.INSTANCE;
+		}
+		else if ( value instanceof Set ) {
+			final Set set = (Set) this.value;
+			final Comparator comparator = set.getComparator();
+			if ( comparator != null ) {
+				return (CollectionSemantics<T>) StandardSortedSetSemantics.INSTANCE;
+			}
+
+			if ( set.hasOrder() ) {
+				return (CollectionSemantics<T>) StandardOrderedSetSemantics.INSTANCE;
+			}
+
+			return (CollectionSemantics<T>) StandardSetSemantics.INSTANCE;
+		}
+		else if ( value instanceof Map ) {
+			final Map map = (Map) value;
+			final Comparator comparator = map.getComparator();
+			if ( comparator != null ) {
+				return (CollectionSemantics<T>) StandardSortedMapSemantics.INSTANCE;
+			}
+
+			if ( map.hasOrder() ) {
+				return (CollectionSemantics<T>) StandardOrderedMapSemantics.INSTANCE;
+			}
+
+			return (CollectionSemantics<T>) StandardMapSemantics.INSTANCE;
+		}
+
+		throw new HibernateException(
+				"Unable to determine collection semantics - `" +
+						getEntity().getEntityName() + '#' +
+						getName() + " : " +
+						value.getJavaTypeMapping().getTypeName()
+		);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -460,7 +526,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 				bootContainer,
 				this,
 				runtimeContainer,
-				Environment.getBytecodeProvider()
+				context.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 		);
 		if ( value instanceof BasicValueMapping ) {
 			return new BasicSingularPersistentAttribute(

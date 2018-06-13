@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.Collection;
 
+import org.hibernate.HibernateException;
 import org.hibernate.boot.model.relational.InitCommand;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
@@ -27,4 +28,41 @@ public interface DatabaseModel {
 	Collection<InitCommand> getInitCommands();
 
 	void addInitCommand(InitCommand initCommand);
+
+	default Namespace getNamespace(String catalogName, String schemaName) {
+		if ( catalogName == null && schemaName == null ) {
+			return getDefaultNamespace();
+		}
+
+		for ( Namespace namespace : getNamespaces() ) {
+			if ( catalogName != null ) {
+				// we need to match the catalog name
+				if ( namespace.getCatalogName() == null ) {
+					continue;
+				}
+
+				if ( ! catalogName.equals( namespace.getCatalogName().getCanonicalName() ) ) {
+					continue;
+				}
+			}
+
+			if ( schemaName != null ) {
+				// we need to match the schema name
+				if ( namespace.getSchemaName() == null ) {
+					continue;
+				}
+
+				if ( ! schemaName.equals( namespace.getSchemaName().getCanonicalName() ) ) {
+					continue;
+				}
+
+				// if we get here we have a match.. return it
+				return namespace;
+			}
+		}
+
+		throw new HibernateException(
+				"Could not locate database namespace [catalog=" + catalogName + ", schema=" + schemaName + "]"
+		);
+	}
 }

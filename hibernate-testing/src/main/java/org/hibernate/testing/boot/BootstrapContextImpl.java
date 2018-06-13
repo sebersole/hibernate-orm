@@ -23,7 +23,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.ClassLoaderAccess;
 import org.hibernate.boot.spi.MetadataBuildingOptions;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.jpa.spi.MutableJpaCompliance;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -80,7 +80,7 @@ public class BootstrapContextImpl implements BootstrapContext {
 	}
 
 	@Override
-	public PersistentCollectionRepresentationResolver getCollectionRepresentationResolver() {
+	public CollectionSemanticsResolver getCollectionRepresentationResolver() {
 		return delegate.getCollectionRepresentationResolver();
 	}
 

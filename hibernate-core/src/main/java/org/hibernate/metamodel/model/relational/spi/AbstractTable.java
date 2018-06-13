@@ -6,13 +6,12 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.hibernate.metamodel.model.relational.internal.InflightTable;
 import org.hibernate.naming.Identifier;
@@ -21,14 +20,24 @@ import org.hibernate.naming.Identifier;
  * @author Steve Ebersole
  */
 public abstract class AbstractTable implements InflightTable {
+	private final UUID uuid;
+	private final boolean isAbstract;
+
 	private PrimaryKey primaryKey = null;
 	private Set<ForeignKey> foreignKeys = new HashSet<>();
 	private Set<UniqueKey> uniqueKeys = new HashSet<>();
-	private final Map<String,Column> columnMap = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
-	private final boolean isAbstract;
 
-	public AbstractTable(boolean isAbstract) {
+	private final Map<String,Column> columnMap = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
+
+	public AbstractTable(UUID uuid, boolean isAbstract) {
+		this.uuid = uuid;
 		this.isAbstract = isAbstract;
+	}
+
+	@Override
+	public UUID getUid() {
+		return uuid;
 	}
 
 	@Override

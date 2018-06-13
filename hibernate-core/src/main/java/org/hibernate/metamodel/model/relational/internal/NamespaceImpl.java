@@ -11,7 +11,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
+import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.Sequence;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -55,6 +57,19 @@ public class NamespaceImpl implements Namespace {
 	@Override
 	public Collection<Table> getTables() {
 		return tables == null ? Collections.emptyList() : Collections.unmodifiableCollection( tables );
+	}
+
+	@Override
+	public Table getTable(UUID tableUid) {
+		for ( Table table : tables ) {
+			if ( tableUid.equals( table.getUid() ) ) {
+				return table;
+			}
+		}
+
+		throw new HibernateException(
+				"Could not locate table in namespace [" + this + "] by UUID = " + tableUid
+		);
 	}
 
 	@Override

@@ -27,6 +27,7 @@ import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
+import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
@@ -56,6 +57,7 @@ public class SqmSelectToSqlAstConverter
 		extends BaseSqmToSqlAstConverter
 		implements QueryResultCreationContext {
 	private static final Logger log = Logger.getLogger( SqmSelectToSqlAstConverter.class );
+	private final PerQuerySpecSqlExpressionResolver expressionResolver;
 
 	// todo (6.0) : SqmSelectToSqlAstConverter needs to account for the EntityGraph hint
 	private FetchGraphBuilder fetchGraphBuilder;
@@ -82,6 +84,12 @@ public class SqmSelectToSqlAstConverter
 		this.entityGraphQueryHintType = queryOptions.getEntityGraphQueryHint() == null
 				? EntityGraphQueryHint.Type.NONE
 				:  queryOptions.getEntityGraphQueryHint().getType();
+
+		this.expressionResolver = new PerQuerySpecSqlExpressionResolver(
+				() -> getQuerySpecStack().getCurrent(),
+				this::normalizeSqlExpression,
+				this::collectSelection
+		);
 	}
 
 	public SqlAstSelectDescriptor interpret(SqmSelectStatement statement) {
@@ -190,7 +198,7 @@ public class SqmSelectToSqlAstConverter
 
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
-		return this;
+		return expressionResolver;
 	}
 
 //	@Override

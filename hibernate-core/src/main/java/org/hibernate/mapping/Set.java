@@ -6,10 +6,16 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Comparator;
+
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardOrderedSetSemantics;
+import org.hibernate.collection.internal.StandardSetSemantics;
+import org.hibernate.collection.internal.StandardSortedSetSemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 
 /**
  * A set with no nullable element columns. It will have a primary key
@@ -17,9 +23,15 @@ import org.hibernate.boot.model.relational.MappedPrimaryKey;
  * @author Gavin King
  */
 public class Set extends Collection {
+	private final CollectionJavaDescriptorResolver javaTypeMapping;
 
 	public Set(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				java.util.Set.class
+		);
 	}
 
 	public void validate() throws MappingException {
@@ -75,6 +87,21 @@ public class Set extends Collection {
 
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
-		return null;
+		return javaTypeMapping;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		final Comparator comparator = getComparator();
+		if ( comparator != null ) {
+			return StandardSortedSetSemantics.INSTANCE;
+		}
+
+		if ( hasOrder() ) {
+			return StandardOrderedSetSemantics.INSTANCE;
+		}
+
+		return StandardSetSemantics.INSTANCE;
 	}
 }

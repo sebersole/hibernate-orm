@@ -9,11 +9,11 @@ package org.hibernate.boot.model.relational;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
-import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.metamodel.model.relational.internal.InflightTable;
 import org.hibernate.metamodel.model.relational.spi.Exportable;
@@ -32,10 +32,8 @@ public interface MappedTable<T extends MappedColumn> extends Loggable {
 	/**
 	 * Get an identifier for this MappedTable that is unique across all
 	 * MappedTable references in a given {@link Database}.
-	 * <p/>
-	 * Think "surrogate primary key" relative to Database.
 	 */
-	String getUid();
+	UUID getUid();
 
 	List<String> getCheckConstraints();
 

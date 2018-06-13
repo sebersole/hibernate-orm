@@ -15,12 +15,11 @@ import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
-import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
-import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
  * @author Steve Ebersole
@@ -35,6 +34,11 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 	}
 
 	private final List<SortSpecification> collectedSortSpecs = new ArrayList<>();
+	private final NonSelectSqlExpressionResolver sqlExpressionResolver = new NonSelectSqlExpressionResolver(
+			() -> null,
+			expression -> expression,
+			(expression, selection) -> {}
+	);
 
 
 	protected OrderByFragmentConverter(SqlAstBuildingContext sqlAstBuildingContext) {
@@ -59,13 +63,8 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 		return collectedSortSpecs;
 	}
 
-//	@Override
-//	public SqlSelectionGroup resolveSqlSelectionGroup(Navigable navigable) {
-//		return super.resolveSqlSelectionGroup( navigable );
-//	}
-
 	@Override
-	public SqlSelection resolveSqlSelection(Expression expression) {
-		throw new NotYetImplementedFor6Exception(  );
+	public SqlExpressionResolver getSqlSelectionResolver() {
+		return sqlExpressionResolver;
 	}
 }

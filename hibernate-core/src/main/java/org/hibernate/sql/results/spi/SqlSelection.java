@@ -27,11 +27,9 @@ public interface SqlSelection extends SqlSelectionGroupNode {
 	 */
 	SqlSelectionReader getSqlSelectionReader();
 
-	// todo (6.0) : need this to encapsulate and expose the SqlSelectable or "thing to be selected"
-	//		so that we can render the SQL select clause
-
 	/**
-	 * Get the position within the "JDBC values" array (0-based)
+	 * Get the position within the "JDBC values" array (0-based).  Negative indicates this is
+	 * not a "real" selection
 	 */
 	int getValuesArrayPosition();
 

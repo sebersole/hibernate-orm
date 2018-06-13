@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -18,6 +17,7 @@ import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.relational.Database;
 import org.hibernate.boot.model.relational.MappedNamespace;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
@@ -25,8 +25,7 @@ import org.hibernate.cache.spi.entry.StructuredCollectionCacheEntry;
 import org.hibernate.cache.spi.entry.StructuredMapCacheEntry;
 import org.hibernate.cache.spi.entry.UnstructuredCacheEntry;
 import org.hibernate.cfg.NotYetImplementedException;
-import org.hibernate.collection.spi.CollectionClassification;
-import org.hibernate.collection.spi.PersistentCollectionRepresentation;
+import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
@@ -68,7 +67,6 @@ import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 
 /**
@@ -78,12 +76,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private final SessionFactoryImplementor sessionFactory;
 
 	private final ManagedTypeDescriptor container;
-	private final CollectionClassification classification;
 	private final PluralPersistentAttribute attribute;
 	private final NavigableRole navigableRole;
 	private final CollectionKey foreignKeyDescriptor;
 
-	private CollectionJavaDescriptor javaTypeDescriptor;
+	private CollectionJavaDescriptor<C> javaTypeDescriptor;
 	private CollectionIdentifier idDescriptor;
 	private CollectionElement elementDescriptor;
 	private CollectionIndex indexDescriptor;
@@ -109,11 +106,14 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private final Set<String> spaces;
 
 	private final int batchSize;
+	private final boolean extraLazy;
+	private final boolean hasOrphanDeletes;
+	private final boolean inverse;
 
+	@SuppressWarnings("unchecked")
 	public AbstractPersistentCollectionDescriptor(
 			Property pluralProperty,
 			ManagedTypeDescriptor runtimeContainer,
-			CollectionClassification classification,
 			RuntimeModelCreationContext creationContext) throws MappingException, CacheException {
 
 		final Collection collectionBinding = (Collection) pluralProperty.getValue();
@@ -121,13 +121,17 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.sessionFactory = creationContext.getSessionFactory();
 		this.container = runtimeContainer;
 
-		this.classification = classification;
-
 		this.navigableRole = container.getNavigableRole().append( pluralProperty.getName() );
 
 		this.attribute = new PluralPersistentAttributeImpl(
 				this,
 				pluralProperty,
+				runtimeContainer.getRepresentationStrategy().generatePropertyAccess(
+						pluralProperty.getPersistentClass(),
+						pluralProperty,
+						runtimeContainer,
+						sessionFactory.getSessionFactoryOptions().getBytecodeProvider()
+				),
 				creationContext
 		);
 
@@ -142,7 +146,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			cacheEntryStructure = UnstructuredCacheEntry.INSTANCE;
 		}
 
-		cacheAccess = sessionFactory.getCache().getCollectionRegionAccess( getNavigableRole() );
+		cacheAccess = creationContext.getCollectionCacheAccess( getNavigableRole() );
 
 		int spacesSize = 1 + collectionBinding.getSynchronizedTables().size();
 		spaces = new HashSet<>( spacesSize );
@@ -163,22 +167,41 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		}
 		batchSize = batch;
 
+		separateCollectionTable = resolveCollectionTable( collectionBinding, creationContext );
+
+		this.extraLazy = collectionBinding.isExtraLazy();
+		this.hasOrphanDeletes = collectionBinding.hasOrphanDelete();
+		this.inverse = collectionBinding.isInverse();
 	}
 
-	protected abstract CollectionJavaDescriptor resolveCollectionJtd(RuntimeModelCreationContext creationContext);
+	/**
+	 * todo (6.0) - get CollectionSemantics from Collection boot metadata
+	 * 		this should have been resolved already when determining that we have a collection
+	 * 		as part of boot metamodel building.  this is how custom collection types are hooked in
+	 * 		eventually too
+	 * or - todo (7.0) - ^^
+	 */
+	protected abstract CollectionJavaDescriptor resolveCollectionJtd(
+			Collection collectionBinding,
+			RuntimeModelCreationContext creationContext);
 
 	protected CollectionJavaDescriptor findOrCreateCollectionJtd(
 			Class javaType,
+			Collection collectionBinding,
 			RuntimeModelCreationContext creationContext) {
 		final JavaTypeDescriptorRegistry jtdRegistry = creationContext.getTypeConfiguration()
 				.getJavaTypeDescriptorRegistry();
 
 		CollectionJavaDescriptor descriptor = (CollectionJavaDescriptor) jtdRegistry.getDescriptor( javaType );
 		if ( descriptor == null ) {
-			descriptor = new CollectionJavaDescriptor( javaType );
+			descriptor = new CollectionJavaDescriptor( javaType, determineSemantics( javaType, collectionBinding ) );
 		}
 
 		return descriptor;
+	}
+
+	protected CollectionSemantics determineSemantics(Class javaType, Collection collectionBinding) {
+		return collectionBinding.getCollectionSemantics();
 	}
 
 	protected CollectionJavaDescriptor findCollectionJtd(
@@ -245,7 +268,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.indexDescriptor = resolveIndexDescriptor( this, collectionBinding, creationContext );
 		this.elementDescriptor = resolveElementDescriptor( this, collectionBinding, separateCollectionTable, creationContext );
 
-		this.javaTypeDescriptor = resolveCollectionJtd( creationContext );
+		this.javaTypeDescriptor = (CollectionJavaDescriptor<C>) collectionBinding.getJavaTypeMapping().resolveJavaTypeDescriptor();
 
 		this.fullyInitialized = true;
 	}
@@ -297,9 +320,16 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		);
 	}
 
-	protected abstract Table resolveCollectionTable(
+	protected Table resolveCollectionTable(
 			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext);
+			RuntimeModelCreationContext creationContext) {
+		final MappedTable mappedTable = collectionBinding.getMappedTable();
+		if ( mappedTable == null ) {
+			return null;
+		}
+
+		return creationContext.resolve( mappedTable );
+	}
 
 
 	@SuppressWarnings("unchecked")
@@ -353,6 +383,9 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		);
 	}
 
+	public SessionFactoryImplementor getSessionFactory() {
+		return sessionFactory;
+	}
 
 	@Override
 	public String getSqlAliasStem() {
@@ -371,7 +404,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@Override
 	public void initialize(
-			Serializable loadedKey,
+			Object loadedKey,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception(  );
 	}
@@ -381,9 +414,10 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		return batchSize;
 	}
 
+
 	@Override
-	public CollectionClassification getCollectionClassification() {
-		return classification;
+	public CollectionSemantics<C> getSemantics() {
+		return getJavaTypeDescriptor().getSemantics();
 	}
 
 	@Override
@@ -555,7 +589,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	 */
 	@Override
 	@Deprecated
-	public PersistentCollectionRepresentation getTuplizer() {
+	public CollectionSemantics getTuplizer() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -628,12 +662,12 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@Override
 	public boolean isInverse() {
-		throw new NotYetImplementedFor6Exception();
+		return inverse;
 	}
 
 	@Override
 	public boolean hasOrphanDelete() {
-		throw new NotYetImplementedFor6Exception();
+		return hasOrphanDeletes;
 	}
 
 	@Override
@@ -643,7 +677,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@Override
 	public boolean isExtraLazy() {
-		throw new NotYetImplementedFor6Exception();
+		return extraLazy;
 	}
 
 	@Override
@@ -652,25 +686,25 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public int getSize(Serializable loadedKey, SharedSessionContractImplementor session) {
+	public int getSize(Object loadedKey, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public Boolean indexExists(
-			Serializable loadedKey, Object index, SharedSessionContractImplementor session) {
+			Object loadedKey, Object index, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public Boolean elementExists(
-			Serializable loadedKey, Object element, SharedSessionContractImplementor session) {
+			Object loadedKey, Object element, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public Object getElementByIndex(
-			Serializable loadedKey, Object index, SharedSessionContractImplementor session, Object owner) {
+			Object loadedKey, Object index, SharedSessionContractImplementor session, Object owner) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
@@ -690,7 +724,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
+	public CollectionJavaDescriptor<C> getJavaTypeDescriptor() {
 		return javaTypeDescriptor;
 	}
 

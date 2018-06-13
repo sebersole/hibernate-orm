@@ -8,12 +8,9 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import javax.persistence.TemporalType;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.ValueMapping;
-import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
@@ -58,7 +55,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 						bootModelRootEntity,
 						bootModelRootEntity.getIdentifierProperty(),
 						(ManagedTypeDescriptor<?>) embeddedMetadata.getContainer(),
-						Environment.getBytecodeProvider()
+						creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 				),
 				Disposition.ID
 		);

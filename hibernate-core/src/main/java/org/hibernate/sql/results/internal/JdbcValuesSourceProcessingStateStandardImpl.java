@@ -16,8 +16,14 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PreLoadEvent;
+import org.hibernate.graph.spi.AttributeNodeContainer;
+import org.hibernate.graph.spi.AttributeNodeImplementor;
+import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
@@ -38,6 +44,8 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	private Map<EntityKey,LoadingEntityEntry> loadingEntityMap;
 	private Map<PersistentCollectionDescriptor,Map<Object,LoadingCollectionEntry>> loadingCollectionMap;
 
+	private FetchContext fetchContext;
+
 	private final PreLoadEvent preLoadEvent;
 	private final PostLoadEvent postLoadEvent;
 
@@ -51,6 +59,22 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 		preLoadEvent  = new PreLoadEvent( (EventSource) executionContext.getSession() );
 		postLoadEvent  = new PostLoadEvent( (EventSource) executionContext.getSession() );
+
+		fetchContext = resolveFetchContext( executionContext.getQueryOptions().getEntityGraphQueryHint() );
+	}
+
+	private FetchContext resolveFetchContext(EntityGraphQueryHint hint) {
+		if ( hint != null ) {
+			switch ( hint.getType() ) {
+				case LOAD:
+				case FETCH: {
+					// todo (6.0) : have a FetchContext impl per type?
+					return new FetchContextImpl( hint );
+				}
+			}
+		}
+
+		return null;
 	}
 
 	@Override
@@ -71,6 +95,75 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	@Override
 	public PostLoadEvent getPostLoadEvent() {
 		return postLoadEvent;
+	}
+
+	@Override
+	public boolean fetching(PersistentAttribute attribute) {
+		if ( fetchContext == null ) {
+			return true;
+		}
+		return fetchContext.fetching( attribute );
+	}
+
+	public interface FetchContext {
+		boolean fetching(PersistentAttribute attribute);
+	}
+
+	private class FetchContextImpl implements FetchContext {
+		private final EntityGraphQueryHint.Type graphType;
+
+		private AttributeNodeContainer currentContainer;
+
+		public FetchContextImpl(EntityGraphQueryHint entityGraphHint) {
+			this( entityGraphHint.getHintedGraph(), entityGraphHint.getType() );
+		}
+
+		public FetchContextImpl(EntityGraphImplementor<?> hintedGraph, EntityGraphQueryHint.Type type) {
+			currentContainer = hintedGraph;
+			graphType = type;
+		}
+
+		@Override
+		public boolean fetching(PersistentAttribute attribute) {
+			if ( ! Fetchable.class.isInstance( attribute ) ) {
+				// basic attributes are always fetched for now - that matches behavior of
+				// Hibernate prior to 6.  Eventually though we want to hook this in with
+				// bytecode-enhanced laziness
+				return true;
+			}
+
+			// if there is an entity-graph, see if it says we should eagerly load the attribute
+			// else see if the attribute is configured for join fetching
+			//
+			// ^^ so long as we do not exceed max-fetch-depth
+
+			final AttributeNodeImplementor attributeNode = currentContainer.findAttributeNode( attribute.getAttributeName() );
+
+//			if ( entityGraphSaysToEagerLoad( attributeNode ) ) {
+//				prepareForFetch( attributeNode )
+//			}
+//
+//			if ( attributeNode == null ) {
+//				return false;
+//			}
+//
+//			final Map subGraphs = attributeNode.subGraphs();
+//			if ( subGraphs == null || subGraphs.isEmpty() ) {
+//				return
+//			}
+//			if ( !shouldFetch ) {
+//				return false;
+//			}
+//
+////			final Fetchable fetchable = (Fetchable) attribute;
+////			fetchable.generateFetch( ... )
+//
+//
+//			final AttributeNodeImplementor attributeNode = (fetchNodeStack.getCurrent().findAttributeNode( attribute.getAttributeName() )fetchNodeStack.getCurrent().findAttributeNode( attribute.getAttributeName() );
+//			fetchNodeStack.push( . );
+
+			return false;
+		}
 	}
 
 	@Override

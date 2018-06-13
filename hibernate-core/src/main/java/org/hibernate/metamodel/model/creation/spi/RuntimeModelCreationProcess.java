@@ -28,8 +28,11 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.cache.cfg.internal.DomainDataRegionConfigImpl;
 import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.cache.spi.access.CollectionDataAccess;
+import org.hibernate.cache.spi.access.EntityDataAccess;
+import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
-import org.hibernate.collection.spi.PersistentCollectionRepresentationResolver;
+import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.internal.AbstractAttributeNodeContainer;
 import org.hibernate.graph.internal.AttributeNodeImpl;
@@ -39,6 +42,7 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
+import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
@@ -99,6 +103,7 @@ public class RuntimeModelCreationProcess {
 		this.inFlightRuntimeModel = new InFlightRuntimeModel( metadataBuildingContext );
 
 		this.descriptorFactory = sessionFactory.getServiceRegistry().getService( RuntimeModelDescriptorFactory.class );
+
 	}
 
 
@@ -110,11 +115,7 @@ public class RuntimeModelCreationProcess {
 
 		final DatabaseObjectResolutionContextImpl dbObjectResolver = new DatabaseObjectResolutionContextImpl();
 		final DatabaseModel databaseModel = new RuntimeDatabaseModelProducer( metadataBuildingContext.getBootstrapContext() )
-				.produceDatabaseModel(
-				mappingMetadata.getDatabase(),
-				dbObjectResolver,
-				dbObjectResolver
-		);
+				.produceDatabaseModel( mappingMetadata.getDatabase(), dbObjectResolver, dbObjectResolver );
 
 		SchemaManagementToolCoordinator.process(
 				databaseModel,
@@ -484,7 +485,7 @@ public class RuntimeModelCreationProcess {
 		}
 
 		@Override
-		public PersistentCollectionRepresentationResolver getPersistentCollectionRepresentationResolver() {
+		public CollectionSemanticsResolver getCollectionSemanticsResolver() {
 			return metadataBuildingContext.getBootstrapContext().getCollectionRepresentationResolver();
 		}
 
@@ -574,5 +575,21 @@ public class RuntimeModelCreationProcess {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );
 			configBuilder.addCollectionConfig( bootDescriptor, accessType );
 		}
+
+		@Override
+		public EntityDataAccess getEntityCacheAccess(NavigableRole navigableRole) {
+			return null;
+		}
+
+		@Override
+		public NaturalIdDataAccess getNaturalIdCacheAccess(NavigableRole navigableRole) {
+			return null;
+		}
+
+		@Override
+		public CollectionDataAccess getCollectionCacheAccess(NavigableRole navigableRole) {
+			return null;
+		}
 	}
+
 }

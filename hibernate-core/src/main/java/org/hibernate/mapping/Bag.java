@@ -6,7 +6,10 @@
  */
 package org.hibernate.mapping;
 
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.collection.internal.StandardBagSemantics;
+import org.hibernate.collection.spi.CollectionSemantics;
 
 /**
  * A bag permits duplicates, so it has no primary key
@@ -14,9 +17,15 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
  * @author Gavin King
  */
 public class Bag extends Collection {
+	private final CollectionJavaDescriptorResolver javaTypeMapping;
 
 	public Bag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
+
+		javaTypeMapping = new CollectionJavaDescriptorResolver(
+				buildingContext.getBootstrapContext().getTypeConfiguration(),
+				java.util.Collection.class
+		);
 	}
 
 	void createPrimaryKey() {
@@ -25,5 +34,16 @@ public class Bag extends Collection {
 
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public CollectionSemantics getCollectionSemantics() {
+		return StandardBagSemantics.INSTANCE;
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
 	}
 }

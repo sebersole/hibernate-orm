@@ -6,62 +6,64 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.io.Serializable;
+import java.util.Comparator;
 import java.util.Map;
 
 import org.hibernate.MappingException;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cache.CacheException;
-import org.hibernate.collection.internal.PersistentMap;
-import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class PersistentMapDescriptorImpl extends AbstractPersistentCollectionDescriptor {
+public class PersistentMapDescriptorImpl<O,K,E>
+		extends AbstractPersistentCollectionDescriptor<O,Map<K,E>,E> {
+	private final Comparator<K> comparator;
+
+	@SuppressWarnings("unchecked")
 	public PersistentMapDescriptorImpl(
 			Property pluralProperty,
 			ManagedTypeDescriptor runtimeContainer,
-			RuntimeModelCreationContext creationContext)
-			throws MappingException, CacheException {
-		super( pluralProperty, runtimeContainer, CollectionClassification.MAP, creationContext );
+			RuntimeModelCreationContext creationContext) throws MappingException, CacheException {
+		super( pluralProperty, runtimeContainer, creationContext );
+
+		if ( pluralProperty.getValue() instanceof Collection ) {
+			this.comparator = ( (Collection) pluralProperty.getValue() ).getComparator();
+		}
+		else {
+			this.comparator = null;
+		}
 	}
 
 	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(RuntimeModelCreationContext creationContext) {
+	protected CollectionJavaDescriptor resolveCollectionJtd(
+			Collection collectionBinding,
+			RuntimeModelCreationContext creationContext) {
 		return findCollectionJtd( Map.class, creationContext );
 	}
 
 	@Override
-	public Object instantiateRaw(int anticipatedSize) {
-		return CollectionHelper.mapOfSize( anticipatedSize );
+	public Comparator<?> getSortingComparator() {
+		return comparator;
 	}
 
 	@Override
-	public PersistentCollection instantiateWrapper(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Serializable key) {
-		return new PersistentMap( session, descriptor, key );
+	@SuppressWarnings("unchecked")
+	public PersistentCollection<E> instantiateWrapper(SharedSessionContractImplementor session, Object key) {
+		return getSemantics().instantiateWrapper( key, this, session );
 	}
 
 	@Override
-	public PersistentCollection wrap(
-			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Object rawCollection) {
-		return new PersistentMap( session, descriptor, (Map) rawCollection );
+	@SuppressWarnings("unchecked")
+	public PersistentCollection<E> wrap(SharedSessionContractImplementor session, Map<K, E> rawCollection) {
+		return getSemantics().instantiateWrapper( rawCollection, this, session );
 	}
 
 	@Override
@@ -69,12 +71,5 @@ public class PersistentMapDescriptorImpl extends AbstractPersistentCollectionDes
 		// todo (6.0) : do we need to check key as well?
 		// todo (6.0) : or perhaps make distinction between #containsValue and #containsKey/Index?
 		return ( (Map) collection ).containsValue( childObject );
-	}
-
-	@Override
-	protected Table resolveCollectionTable(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception();
 	}
 }

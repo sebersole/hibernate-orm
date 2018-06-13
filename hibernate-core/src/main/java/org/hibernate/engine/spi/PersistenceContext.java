@@ -365,13 +365,15 @@ public interface PersistenceContext {
 	 * @param collection The persistent collection
 	 * @return the owner ID if available from the collection's loaded key; otherwise, returns null
 	 */
-	Serializable getLoadedCollectionOwnerIdOrNull(PersistentCollection collection);
+	Object getLoadedCollectionOwnerIdOrNull(PersistentCollection collection);
 
 	/**
 	 * add a collection we just loaded up (still needs initializing)
 	 */
-	void addUninitializedCollection(PersistentCollectionDescriptor descriptor,
-			PersistentCollection collection, Serializable id);
+	void addUninitializedCollection(
+			PersistentCollectionDescriptor descriptor,
+			PersistentCollection collection,
+			Object collectionKey);
 
 	/**
 	 * add a detached uninitialized collection

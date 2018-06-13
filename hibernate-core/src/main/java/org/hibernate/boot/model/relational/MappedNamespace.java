@@ -9,14 +9,15 @@ package org.hibernate.boot.model.relational;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.hibernate.HibernateException;
-import org.hibernate.naming.Identifier;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.mapping.DenormalizedTable;
 import org.hibernate.mapping.Table;
+import org.hibernate.naming.Identifier;
 import org.hibernate.naming.NamespaceName;
 import org.hibernate.naming.spi.RelationalNamespace;
 
@@ -52,6 +53,19 @@ public class MappedNamespace implements RelationalNamespace<MappedTable, MappedS
 	@Override
 	public NamespaceName getName() {
 		return name;
+	}
+
+	@Override
+	public MappedTable getTable(UUID tableUid) {
+		for ( MappedTable table : tables.values() ) {
+			if ( tableUid.equals( table.getUid() ) ) {
+				return table;
+			}
+		}
+
+		throw new HibernateException(
+				"Could not locate Table by uid [" + tableUid + "] in namespace [" + this + ']'
+		);
 	}
 
 	public Collection<MappedTable> getTables() {

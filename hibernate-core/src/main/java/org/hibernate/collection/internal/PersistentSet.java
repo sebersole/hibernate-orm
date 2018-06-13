@@ -29,17 +29,14 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  * @see java.util.HashSet
  * @author Gavin King
  */
-public class PersistentSet extends AbstractPersistentCollection implements java.util.Set {
-	private PersistentCollectionDescriptor descriptor;
-	private Serializable key;
+public class PersistentSet<E> extends AbstractPersistentCollection<E> implements java.util.Set<E> {
 	protected Set set;
 	protected transient List tempList;
 
 	protected PersistentSet(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor) {
-		super( session );
-		this.descriptor = descriptor;
+			PersistentCollectionDescriptor<?,?,E> descriptor) {
+		super( session, descriptor );
 	}
 
 
@@ -52,7 +49,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 	 */
 	public PersistentSet(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
+			PersistentCollectionDescriptor<?,?,E> descriptor,
 			java.util.Set set) {
 		this( session, descriptor );
 
@@ -72,12 +69,10 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 
 	public PersistentSet(
 			SharedSessionContractImplementor session,
-			PersistentCollectionDescriptor descriptor,
-			Serializable key) {
-		super( session );
+			PersistentCollectionDescriptor<?,?,E> descriptor,
+			Object key) {
+		super( session, descriptor, key );
 
-		this.descriptor = descriptor;
-		this.key = key;
 	}
 
 
@@ -99,7 +94,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 	}
 
 	@Override
-	public boolean equalsSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public boolean equalsSnapshot(PersistentCollectionDescriptor<?,?,E> collectionDescriptor) throws HibernateException {
 		final java.util.Map sn = (java.util.Map) getSnapshot();
 		if ( sn.size()!=set.size() ) {
 			return false;
@@ -107,7 +102,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 		else {
 			for ( Object test : set ) {
 				final Object oldValue = sn.get( test );
-				if ( oldValue == null || persister.isDirty( oldValue, test, getSession() ) ) {
+				if ( oldValue == null || collectionDescriptor.isDirty( oldValue, test, getSession() ) ) {
 					return false;
 				}
 			}
@@ -121,19 +116,27 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 	}
 
 	@Override
-	public void beforeInitialize(PersistentCollectionDescriptor persister, int anticipatedSize) {
-		this.set = (Set) persister.instantiateRaw( anticipatedSize );
+	public void beforeInitialize(
+			int anticipatedSize,
+			PersistentCollectionDescriptor collectionDescriptor) {
+		this.set = (Set) getCollectionMetadata().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void initializeFromCache(PersistentCollectionDescriptor persister, Serializable disassembled, Object owner)
+	public void initializeFromCache(
+			Serializable disassembled,
+			Object owner,
+			PersistentCollectionDescriptor<?,?,E> collectionDescriptor)
 			throws HibernateException {
 		final Serializable[] array = (Serializable[]) disassembled;
 		final int size = array.length;
-		beforeInitialize( persister, size );
+		beforeInitialize( size, collectionDescriptor );
 		for ( Serializable arrayElement : array ) {
-			final Object assembledArrayElement = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement );
+			final Object assembledArrayElement = getCollectionMetadata().getElementDescriptor()
+					.getJavaTypeDescriptor()
+					.getMutabilityPlan()
+					.assemble( arrayElement );
 			if ( assembledArrayElement != null ) {
 				set.add( assembledArrayElement );
 			}
@@ -187,7 +190,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 	}
 
 	@Override
-	public boolean add(Object value) {
+	public boolean add(E value) {
 		final Boolean exists = isOperationQueueEnabled() ? readElementExistence( value ) : null;
 		if ( exists == null ) {
 			initialize( true );
@@ -315,8 +318,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 	@SuppressWarnings("unchecked")
 	public Object readFrom(
 			ResultSet rs,
-			PersistentCollectionDescriptor persister,
-			Object owner) throws SQLException {
+			Object owner, PersistentCollectionDescriptor collectionDescriptor) throws SQLException {
 		throw new NotYetImplementedFor6Exception(  );
 //		final Object element = persister.readElement( rs, owner, descriptor.getSuffixedElementAliases(), getSession() );
 //		if ( element != null ) {
@@ -349,12 +351,12 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Serializable disassemble(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable disassemble(PersistentCollectionDescriptor collectionDescriptor) throws HibernateException {
 		final Serializable[] result = new Serializable[ set.size() ];
 		final Iterator itr = set.iterator();
 		int i=0;
 		while ( itr.hasNext() ) {
-			result[i++] = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( itr.next() );
+			result[i++] = collectionDescriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( itr.next() );
 		}
 		return result;
 	}
@@ -411,19 +413,24 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object getIndex(Object entry, int i, PersistentCollectionDescriptor persister) {
+	public Object getIndex(
+			Object entry,
+			int assumedIndex,
+			PersistentCollectionDescriptor collectionDescriptor) {
 		throw new UnsupportedOperationException("Sets don't have indexes");
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object getElement(Object entry) {
+	public Object getElement(
+			Object entry,
+			PersistentCollectionDescriptor collectionDescriptor) {
 		return entry;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object getSnapshotElement(Object entry, int i) {
+	public E getSnapshotElement(Object entry, int index) {
 		throw new UnsupportedOperationException("Sets don't support updating by element");
 	}
 
@@ -472,7 +479,7 @@ public class PersistentSet extends AbstractPersistentCollection implements java.
 
 	final class SimpleAdd extends AbstractValueDelayedOperation {
 
-		public SimpleAdd(Object addedValue) {
+		public SimpleAdd(E addedValue) {
 			super( addedValue, null );
 		}
 

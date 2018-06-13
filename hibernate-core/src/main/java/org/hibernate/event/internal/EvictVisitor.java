@@ -8,8 +8,8 @@ package org.hibernate.event.internal;
 
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
+import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.CollectionKey;
@@ -71,18 +71,18 @@ public class EvictVisitor extends AbstractVisitor {
 		if ( LOG.isDebugEnabled() ) {
 			LOG.debugf(
 					"Evicting collection: %s",
-					MessageHelper.collectionInfoString( ce.getLoadedPersistentCollectionDescriptor(),
+					MessageHelper.collectionInfoString( ce.getLoadedCollectionDescriptor(),
 							collection,
 							ce.getLoadedKey(),
 							getSession() ) );
 		}
-		if (ce.getLoadedPersistentCollectionDescriptor() != null && ce.getLoadedPersistentCollectionDescriptor().getBatchSize() > 1) {
+		if (ce.getLoadedCollectionDescriptor() != null && ce.getLoadedCollectionDescriptor().getBatchSize() > 1) {
 			getSession().getPersistenceContext().getBatchFetchQueue().removeBatchLoadableCollection(ce);
 		}
-		if ( ce.getLoadedPersistentCollectionDescriptor() != null && ce.getLoadedKey() != null ) {
+		if ( ce.getLoadedCollectionDescriptor() != null && ce.getLoadedKey() != null ) {
 			//TODO: is this 100% correct?
 			getSession().getPersistenceContext().getCollectionsByKey().remove(
-					new CollectionKey( ce.getLoadedPersistentCollectionDescriptor(), ce.getLoadedKey() )
+					new CollectionKey( ce.getLoadedCollectionDescriptor(), ce.getLoadedKey() )
 			);
 		}
 	}

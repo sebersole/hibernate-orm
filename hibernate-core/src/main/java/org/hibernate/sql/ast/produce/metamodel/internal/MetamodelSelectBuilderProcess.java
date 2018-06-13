@@ -8,10 +8,8 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.LockMode;
@@ -32,18 +30,15 @@ import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.sqm.produce.internal.UniqueIdGenerator;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
+import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
-import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -63,14 +58,12 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
  * @author Steve Ebersole
  */
 public class MetamodelSelectBuilderProcess
-		implements QueryResultCreationContext,
-		SqlAstBuildingContext, SqlExpressionResolver {
+		implements QueryResultCreationContext, SqlAstBuildingContext {
 
 	public static SqlAstSelectDescriptor createSelect(
 			SessionFactoryImplementor sessionFactory,
@@ -104,6 +97,21 @@ public class MetamodelSelectBuilderProcess
 	private final LoadQueryInfluencers loadQueryInfluencers;
 	private final LockOptions lockOptions;
 
+
+	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
+	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
+	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
+	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
+	private final Set<String> affectedTables = new HashSet<>();
+
+	private final QuerySpec rootQuerySpec = new QuerySpec( true );
+
+	private final StandardSqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
+			() -> rootQuerySpec,
+			expression -> expression,
+			(expression, selection) -> {}
+	);
+
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigableContainer,
@@ -122,14 +130,6 @@ public class MetamodelSelectBuilderProcess
 		this.loadQueryInfluencers = loadQueryInfluencers;
 		this.lockOptions = lockOptions != null ? lockOptions : LockOptions.NONE;
 	}
-
-	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
-	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
-	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
-	private final Set<String> affectedTables = new HashSet<>();
-
-	private final QuerySpec rootQuerySpec = new QuerySpec( true );
 
 	private SqlAstSelectDescriptor execute() {
 		navigablePathStack.push( rootNavigableContainer );
@@ -347,7 +347,7 @@ public class MetamodelSelectBuilderProcess
 
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
-		return this;
+		return sqlExpressionResolver;
 	}
 
 	@Override
@@ -364,43 +364,4 @@ public class MetamodelSelectBuilderProcess
 		return lockOptions;
 	}
 
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// SqlExpressionResolver
-
-	private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
-
-	@Override
-	public Expression resolveSqlExpression(
-			ColumnReferenceQualifier qualifier,
-			QualifiableSqlExpressable sqlSelectable) {
-		return qualifier.qualify( sqlSelectable );
-	}
-
-	@Override
-	public Expression resolveSqlExpression(NonQualifiableSqlExpressable sqlSelectable) {
-		return sqlSelectable.createExpression();
-	}
-
-	@Override
-	public SqlSelection resolveSqlSelection(Expression expression) {
-		final SqlSelection existing;
-		if ( sqlSelectionMap == null ) {
-			sqlSelectionMap = new HashMap<>();
-			existing = null;
-		}
-		else {
-			existing = sqlSelectionMap.get( expression.getExpressable() );
-		}
-
-		if ( existing != null ) {
-			return existing;
-		}
-
-		final SqlSelection sqlSelection = expression.createSqlSelection( sqlSelectionMap.size() );
-		rootQuerySpec.getSelectClause().addSqlSelection( sqlSelection );
-		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
-
-		return sqlSelection;
-	}
 }

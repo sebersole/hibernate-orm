@@ -7,6 +7,7 @@
 package org.hibernate.naming.spi;
 
 import java.util.Collection;
+import java.util.UUID;
 
 import org.hibernate.naming.Identifier;
 import org.hibernate.naming.NamespaceName;
@@ -25,4 +26,6 @@ public interface RelationalNamespace<T,S> {
 	Collection<S> getSequences();
 
 	NamespaceName getName();
+
+	T getTable(UUID tableUid);
 }

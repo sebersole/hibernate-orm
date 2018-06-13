@@ -77,18 +77,23 @@ public class RuntimeDatabaseModelProducer {
 
 		private DatabaseModel execute() {
 			final DatabaseModelImpl runtimeDatabaseModel = new DatabaseModelImpl( bootDatabaseModel.getJdbcEnvironment() );
-			generateDefaultNamespace(runtimeDatabaseModel);
+
 			for ( MappedNamespace bootModelNamespace : bootDatabaseModel.getNamespaces() ) {
 				final NamespaceImpl runtimeModelNamespace = generateNamespace(
 						runtimeDatabaseModel,
 						bootModelNamespace
 				);
 
+				if ( bootModelNamespace == bootDatabaseModel.getDefaultNamespace() ) {
+					runtimeDatabaseModel.setDefaultNamespace( runtimeModelNamespace );
+				}
+
 				processTables( bootModelNamespace, runtimeModelNamespace );
 				processSequences( bootModelNamespace, runtimeModelNamespace );
 			}
 
 			processForeignKeys( bootDatabaseModel, runtimeDatabaseModel );
+
 			for ( MappedAuxiliaryDatabaseObject mappedAuxiliaryDatabaseObject : bootDatabaseModel.getAuxiliaryDatabaseObjects() ) {
 				runtimeDatabaseModel.addAuxiliaryDatabaseObject( mappedAuxiliaryDatabaseObject.generateRuntimeAuxiliaryDatabaseObject(
 						bootDatabaseModel.getJdbcEnvironment().getDialect() ) );
@@ -114,7 +119,6 @@ public class RuntimeDatabaseModelProducer {
 				DatabaseModelImpl databaseModel) {
 			final MappedNamespace bootModelDefaultNamespace = bootDatabaseModel.getDefaultNamespace();
 			final NamespaceImpl runtimeModelDefaultNamespace = generateRuntimeNamespace( bootModelDefaultNamespace );
-			databaseModel.setDefaultNamespace( runtimeModelDefaultNamespace );
 			callback.namespaceBuilt( bootModelDefaultNamespace, runtimeModelDefaultNamespace );
 		}
 

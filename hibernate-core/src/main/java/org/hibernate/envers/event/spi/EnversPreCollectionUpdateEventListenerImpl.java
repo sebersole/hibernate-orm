@@ -30,7 +30,7 @@ public class EnversPreCollectionUpdateEventListenerImpl
 	@Override
 	public void onPreUpdateCollection(PreCollectionUpdateEvent event) {
 		final CollectionEntry collectionEntry = getCollectionEntry( event );
-		if ( !collectionEntry.getLoadedPersistentCollectionDescriptor().isInverse() ) {
+		if ( !collectionEntry.getLoadedCollectionDescriptor().isInverse() ) {
 			onCollectionAction( event, event.getCollection(), collectionEntry.getSnapshot(), collectionEntry );
 		}
 	}

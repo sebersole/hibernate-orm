@@ -15,6 +15,7 @@ import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.mapping.Collection;
+import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassResolver;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
@@ -193,33 +194,33 @@ public final class RuntimeModelDescriptorFactoryImpl
 	@Override
 	@SuppressWarnings( {"unchecked"})
 	public <O,C,E> PersistentCollectionDescriptor<O,C,E>  createPersistentCollectionDescriptor(
-			Collection collectionBinding,
-			ManagedTypeDescriptor<O> source,
-			String localName,
+			Property pluralProperty,
+			ManagedTypeDescriptor<O> runtimeManagedType,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
+		final Collection collectionMapping = (Collection) pluralProperty.getValue();
+
 		// If the metadata for the collection specified an explicit persister class, use it
-		Class<? extends PersistentCollectionDescriptor> persisterClass = collectionBinding.getCollectionPersisterClass();
+		Class<? extends PersistentCollectionDescriptor> persisterClass = collectionMapping.getCollectionPersisterClass();
 		if ( persisterClass == null ) {
 			// Otherwise, use the persister class indicated by the PersisterClassResolver service
-			persisterClass = descriptorClassResolver.getCollectionDescriptorClass( collectionBinding );
+			persisterClass = descriptorClassResolver.getCollectionDescriptorClass( collectionMapping );
 		}
-		return createCollectionPersister( persisterClass, collectionBinding, source, localName, creationContext );
+		return createCollectionDescriptor( persisterClass, pluralProperty, collectionMapping, runtimeManagedType, creationContext );
 	}
 
 	@SuppressWarnings( {"unchecked"})
-	private PersistentCollectionDescriptor createCollectionPersister(
+	private PersistentCollectionDescriptor createCollectionDescriptor(
 			Class<? extends PersistentCollectionDescriptor> persisterClass,
+			Property pluralProperty,
 			Collection collectionBinding,
-			ManagedTypeDescriptor source,
-			String localName,
+			ManagedTypeDescriptor runtimeManagedType,
 			RuntimeModelCreationContext creationContext) {
 		try {
 			Constructor<? extends PersistentCollectionDescriptor> constructor = persisterClass.getConstructor( PersistentCollectionDescriptor.CONSTRUCTOR_SIGNATURE );
 			try {
 				final PersistentCollectionDescriptor descriptor = constructor.newInstance(
-						collectionBinding,
-						source,
-						localName,
+						pluralProperty,
+						runtimeManagedType,
 						creationContext
 				);
 				creationContext.registerCollectionDescriptor( descriptor, collectionBinding );
