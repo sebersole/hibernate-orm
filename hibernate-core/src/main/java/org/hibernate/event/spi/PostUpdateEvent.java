@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostUpdateEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor persister;
+	private EntityDescriptor entityDescriptor;
 	private Object[] state;
 	private Object[] oldState;
 	private Object id;
@@ -28,7 +28,7 @@ public class PostUpdateEvent extends AbstractEvent {
 			Object[] state,
 			Object[] oldState,
 			int[] dirtyProperties,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source
 	) {
 		super(source);
@@ -37,7 +37,7 @@ public class PostUpdateEvent extends AbstractEvent {
 		this.state = state;
 		this.oldState = oldState;
 		this.dirtyProperties = dirtyProperties;
-		this.persister = persister;
+		this.entityDescriptor = descriptor;
 	}
 	
 	public Object getEntity() {
@@ -52,8 +52,8 @@ public class PostUpdateEvent extends AbstractEvent {
 		return oldState;
 	}
 
-	public EntityDescriptor getPersister() {
-		return persister;
+	public EntityDescriptor getDescriptor() {
+		return entityDescriptor;
 	}
 
 	public Object[] getState() {

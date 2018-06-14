@@ -265,7 +265,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 	}
 
 	@Override
-	public Iterator<E> entries(PersistentCollectionDescriptor<?,?,E> collectionDescriptor) {
+	public Iterator<E> entries(PersistentCollectionDescriptor<?,?,E> descriptor) {
 		return values.iterator();
 	}
 
@@ -301,7 +301,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final Map snap = (Map) getSnapshot();
 		final List deletes = new ArrayList( snap.keySet() );
 		for ( int i=0; i<values.size(); i++ ) {
@@ -379,7 +379,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final HashMap map = new HashMap( values.size() );
 		final Iterator iter = values.iterator();
 		int i=0;
@@ -387,7 +387,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 			final Object value = iter.next();
 			map.put(
 					identifiers.get( i++ ),
-					persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( value )
+					descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( value )
 			);
 		}
 		return map;
@@ -400,7 +400,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 	}
 
 	@Override
-	public void preInsert(PersistentCollectionDescriptor persister) throws HibernateException {
+	public void preInsert(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final Iterator itr = values.iterator();
 		int i = 0;
 		while ( itr.hasNext() ) {
@@ -408,7 +408,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 			final Integer loc = i++;
 			if ( !identifiers.containsKey( loc ) ) {
 				//TODO: native ids
-				final Object id = persister.getIdDescriptor().getGenerator().generate( getSession(), entry );
+				final Object id = descriptor.getIdDescriptor().getGenerator().generate( getSession(), entry );
 				identifiers.put( loc, id );
 			}
 		}
@@ -518,7 +518,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 
 	@Override
 	public void afterRowInsert(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			Object entry,
 			int i) throws HibernateException {
 		//TODO: if we are using identity columns, fetch the identifier

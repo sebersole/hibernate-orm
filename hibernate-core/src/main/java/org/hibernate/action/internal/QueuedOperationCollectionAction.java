@@ -23,16 +23,16 @@ public final class QueuedOperationCollectionAction extends CollectionAction {
 	/**
 	 * Constructs a CollectionUpdateAction
 	 *  @param collection The collection to update
-	 * @param persister The collection persister
+	 * @param descriptor The collection descriptor
 	 * @param id The collection key
 	 * @param session The session
 	 */
 	public QueuedOperationCollectionAction(
 			final PersistentCollection collection,
-			final PersistentCollectionDescriptor persister,
+			final PersistentCollectionDescriptor descriptor,
 			final Object id,
 			final SharedSessionContractImplementor session) {
-		super( persister, collection, id, session );
+		super( descriptor, collection, id, session );
 	}
 
 	@Override

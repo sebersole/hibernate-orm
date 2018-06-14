@@ -16,11 +16,16 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public class PreCollectionUpdateEvent extends AbstractCollectionEvent {
 
-	public PreCollectionUpdateEvent(PersistentCollectionDescriptor collectionPersister,
-									PersistentCollection collection,
-									EventSource source) {
-		super( collectionPersister, collection, source,
+	public PreCollectionUpdateEvent(
+			PersistentCollectionDescriptor collectionDescriptor,
+			PersistentCollection collection,
+			EventSource source) {
+		super(
+				collectionDescriptor,
+				collection,
+				source,
 				getLoadedOwnerOrNull( collection, source ),
-				getLoadedOwnerIdOrNull( collection, source ) );
+				getLoadedOwnerIdOrNull( collection, source )
+		);
 	}
 }

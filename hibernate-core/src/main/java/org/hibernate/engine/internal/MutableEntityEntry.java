@@ -40,13 +40,13 @@ public final class MutableEntityEntry extends AbstractEntityEntry {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor persister,
+			final EntityDescriptor descriptor,
 			final EntityMode entityMode,
 			final String tenantId,
 			final boolean disableVersionIncrement,
 			final PersistenceContext persistenceContext) {
 		this( status, loadedState, rowId, id, version, lockMode, existsInDatabase,
-				persister,disableVersionIncrement, persistenceContext
+				descriptor,disableVersionIncrement, persistenceContext
 		);
 	}
 
@@ -58,10 +58,10 @@ public final class MutableEntityEntry extends AbstractEntityEntry {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor persister,
+			final EntityDescriptor descriptor,
 			final boolean disableVersionIncrement,
 			final PersistenceContext persistenceContext) {
-		super( status, loadedState, rowId, id, version, lockMode, existsInDatabase, persister,
+		super( status, loadedState, rowId, id, version, lockMode, existsInDatabase, descriptor,
 				disableVersionIncrement, persistenceContext
 		);
 	}

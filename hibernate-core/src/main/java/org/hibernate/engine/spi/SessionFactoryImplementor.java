@@ -289,11 +289,11 @@ public interface SessionFactoryImplementor
 	 */
 	@Deprecated
 	default PersistentCollectionDescriptor getCollectionPersister(String role) throws MappingException {
-		final PersistentCollectionDescriptor<?,?,?> collectionPersister = getMetamodel().findCollectionDescriptor( role );
-		if ( collectionPersister == null ) {
+		final PersistentCollectionDescriptor<?,?,?> collectionDescriptor = getMetamodel().findCollectionDescriptor( role );
+		if ( collectionDescriptor == null ) {
 			throw new MappingException( "Could not locate CollectionPersister for given role [" + role + "]" );
 		}
-		return collectionPersister;
+		return collectionDescriptor;
 	}
 
 	/**

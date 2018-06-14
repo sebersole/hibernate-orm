@@ -64,22 +64,22 @@ public class CollectionCacheInvalidator
 
 	@Override
 	public void onPostInsert(PostInsertEvent event) {
-		evictCache( event.getEntity(), event.getPersister(), event.getSession(), null );
+		evictCache( event.getEntity(), event.getDescriptor(), event.getSession(), null );
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor entityDescriptor) {
+	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
 		return true;
 	}
 
 	@Override
 	public void onPostDelete(PostDeleteEvent event) {
-		evictCache( event.getEntity(), event.getPersister(), event.getSession(), null );
+		evictCache( event.getEntity(), event.getDescriptor(), event.getSession(), null );
 	}
 
 	@Override
 	public void onPostUpdate(PostUpdateEvent event) {
-		evictCache( event.getEntity(), event.getPersister(), event.getSession(), event.getOldState() );
+		evictCache( event.getEntity(), event.getDescriptor(), event.getSession(), event.getOldState() );
 	}
 
 	private void integrate(SessionFactoryServiceRegistry serviceRegistry, SessionFactoryImplementor sessionFactory) {
@@ -163,12 +163,12 @@ public class CollectionCacheInvalidator
 		return id;
 	}
 
-	private void evict(Object id, PersistentCollectionDescriptor collectionPersister, EventSource session) {
+	private void evict(Object id, PersistentCollectionDescriptor collectionDescriptor, EventSource session) {
 		if ( LOG.isDebugEnabled() ) {
-			LOG.debug( "Evict CollectionRegion " + collectionPersister.getNavigableRole().getFullPath() + " for id " + id );
+			LOG.debug( "Evict CollectionRegion " + collectionDescriptor.getNavigableRole().getFullPath() + " for id " + id );
 		}
 		AfterTransactionCompletionProcess afterTransactionProcess = new CollectionEvictCacheAction(
-				collectionPersister,
+				collectionDescriptor,
 				null,
 				id,
 				session

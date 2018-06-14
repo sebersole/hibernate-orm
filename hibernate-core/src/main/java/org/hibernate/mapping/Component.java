@@ -501,7 +501,7 @@ public class Component extends SimpleValue
 
 		@Override
 		public Object locateGenerationContext(SharedSessionContractImplementor session, Object incomingObject) {
-			return session.getEntityPersister( entityName, incomingObject )
+			return session.getEntityDescriptor( entityName, incomingObject )
 					.getHierarchy()
 					.getIdentifierDescriptor()
 					.extractIdentifier( incomingObject, session );

@@ -29,7 +29,7 @@ public class EnversPostInsertEventListenerImpl extends BaseEnversEventListener i
 
 	@Override
 	public void onPostInsert(PostInsertEvent event) {
-		final String entityName = event.getPersister().getEntityName();
+		final String entityName = event.getDescriptor().getEntityName();
 
 		if ( getAuditService().getEntityBindings().isVersioned( entityName ) ) {
 			checkIfTransactionInProgress( event.getSession() );
@@ -38,10 +38,10 @@ public class EnversPostInsertEventListenerImpl extends BaseEnversEventListener i
 
 			final AuditWorkUnit workUnit = new AddWorkUnit(
 					event.getSession(),
-					event.getPersister().getEntityName(),
+					event.getDescriptor().getEntityName(),
 					getAuditService(),
 					event.getId(),
-					event.getPersister(),
+					event.getDescriptor(),
 					event.getState()
 			);
 			auditProcess.addWorkUnit( workUnit );
@@ -49,7 +49,7 @@ public class EnversPostInsertEventListenerImpl extends BaseEnversEventListener i
 			if ( workUnit.containsWork() ) {
 				generateBidirectionalCollectionChangeWorkUnits(
 						auditProcess,
-						event.getPersister(),
+						event.getDescriptor(),
 						entityName,
 						event.getState(),
 						null,
@@ -60,7 +60,7 @@ public class EnversPostInsertEventListenerImpl extends BaseEnversEventListener i
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
-		return getAuditService().getEntityBindings().isVersioned( persister.getEntityName() );
+	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+		return getAuditService().getEntityBindings().isVersioned( descriptor.getEntityName() );
 	}
 }

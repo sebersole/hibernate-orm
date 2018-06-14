@@ -63,7 +63,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 	// in-flight processing state.  reset after each row
 	private Object identifierHydratedState;
-	private EntityDescriptor <?>concretePersister;
+	private EntityDescriptor <?> concreteDescriptor;
 	private EntityKey entityKey;
 	private Object[] hydratedEntityState;
 	private Object entityInstance;
@@ -128,20 +128,20 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		}
 
 		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext();
-		concretePersister = resolveConcreteEntityPersister( rowProcessingState, persistenceContext );
+		concreteDescriptor = resolveConcreteEntityDescriptor( rowProcessingState, persistenceContext );
 
 		//		1) resolve the value(s) into its identifier representation
-		final Object id = concretePersister.getHierarchy()
+		final Object id = concreteDescriptor.getHierarchy()
 				.getIdentifierDescriptor()
 				.getJavaTypeDescriptor()
 				.getMutabilityPlan()
 				.assemble( (Serializable) identifierHydratedState );
 
 		//		2) build and register an EntityKey
-		this.entityKey = new EntityKey( id, concretePersister.getEntityDescriptor() );
+		this.entityKey = new EntityKey( id, concreteDescriptor.getEntityDescriptor() );
 
 		//		3) schedule the EntityKey for batch loading, if possible
-		if ( shouldBatchFetch() && concretePersister.getEntityDescriptor().isBatchLoadable() ) {
+		if ( shouldBatchFetch() && concreteDescriptor.getEntityDescriptor().isBatchLoadable() ) {
 			if ( !persistenceContext.getPersistenceContext().containsEntity( entityKey ) ) {
 				persistenceContext.getPersistenceContext().getBatchFetchQueue().addBatchLoadableEntityKey( entityKey );
 			}
@@ -178,7 +178,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		}
 
 		final Object rowId;
-		if ( concretePersister.getHierarchy().getRowIdDescriptor() != null ) {
+		if ( concreteDescriptor.getHierarchy().getRowIdDescriptor() != null ) {
 			rowId = sqlSelectionMappings.getRowIdSqlSelection().hydrateStateArray( rowProcessingState );
 
 			if ( rowId == null ) {
@@ -204,14 +204,14 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		}
 
 		if ( entityInstance == null ) {
-			entityInstance = persistenceContext.instantiate( concretePersister.getEntityName(), entityKey.getIdentifier() );
+			entityInstance = persistenceContext.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
 		}
 
 		loadingEntityEntry = rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
 				entityKey,
 				key -> new LoadingEntityEntry(
 						entityKey,
-						concretePersister,
+						concreteDescriptor,
 						entityInstance,
 						rowId,
 						hydratedEntityState
@@ -219,17 +219,17 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		);
 	}
 
-	private EntityDescriptor resolveConcreteEntityPersister(
+	private EntityDescriptor resolveConcreteEntityDescriptor(
 			RowProcessingState rowProcessingState,
 			SharedSessionContractImplementor persistenceContext) throws WrongClassException {
-		final EntityDescriptor persister = entityDescriptor;
-		if ( persister.getHierarchy().getDiscriminatorDescriptor() == null ) {
-			return persister;
+		final EntityDescriptor descriptor = entityDescriptor;
+		if ( descriptor.getHierarchy().getDiscriminatorDescriptor() == null ) {
+			return descriptor;
 		}
 
 		final Object discriminatorValue = sqlSelectionMappings.getDiscriminatorSqlSelection().hydrateStateArray( rowProcessingState );
 
-		final EntityDescriptor legacyLoadable = persister.getEntityDescriptor();
+		final EntityDescriptor legacyLoadable = descriptor.getEntityDescriptor();
 		final String result = legacyLoadable.getHierarchy()
 				.getDiscriminatorDescriptor()
 				.getDiscriminatorMappings()
@@ -251,7 +251,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		// reset row state
 		identifierHydratedState = null;
-		concretePersister = null;
+		concreteDescriptor = null;
 		entityKey = null;
 		entityInstance = null;
 

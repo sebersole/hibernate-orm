@@ -60,7 +60,7 @@ public final class CollectionEntry implements Serializable {
 	private transient boolean ignore;
 
 	// "current" means the reference that was found during flush()
-	private transient PersistentCollectionDescriptor currentPersister;
+	private transient PersistentCollectionDescriptor currentDescriptor;
 	private transient Object currentKey;
 
 	/**
@@ -84,7 +84,7 @@ public final class CollectionEntry implements Serializable {
 	 */
 	public CollectionEntry(
 			final PersistentCollection collection,
-			final PersistentCollectionDescriptor loadedPersister,
+			final PersistentCollectionDescriptor loadedDescriptor,
 			final Object loadedKey,
 			final boolean ignore
 	) {
@@ -93,9 +93,9 @@ public final class CollectionEntry implements Serializable {
 		//collection.clearDirty()
 
 		this.loadedKey = loadedKey;
-		setLoadedDescriptor( loadedPersister);
+		setLoadedDescriptor( loadedDescriptor);
 
-		collection.setSnapshot(loadedKey, loadedPersister.getNavigableRole(), null);
+		collection.setSnapshot(loadedKey, loadedDescriptor.getNavigableRole(), null);
 
 		//postInitialize() will be called after initialization
 	}
@@ -103,7 +103,7 @@ public final class CollectionEntry implements Serializable {
 	/**
 	 * For uninitialized detached collections
 	 */
-	public CollectionEntry(PersistentCollectionDescriptor loadedPersister, Object loadedKey) {
+	public CollectionEntry(PersistentCollectionDescriptor loadedDescriptor, Object loadedKey) {
 		// detached collection wrappers that get found + reattached
 		// during flush shouldn't be ignored
 		ignore = false;
@@ -111,7 +111,7 @@ public final class CollectionEntry implements Serializable {
 		//collection.clearDirty()
 
 		this.loadedKey = loadedKey;
-		setLoadedDescriptor( loadedPersister);
+		setLoadedDescriptor( loadedDescriptor);
 	}
 
 	/**
@@ -247,7 +247,7 @@ public final class CollectionEntry implements Serializable {
 	 */
 	public void afterAction(PersistentCollection collection) {
 		loadedKey = getCurrentKey();
-		setLoadedDescriptor( getCurrentPersister() );
+		setLoadedDescriptor( getCurrentDescriptor() );
 
 		boolean resnapshot = collection.wasInitialized() &&
 				( isDoremove() || isDorecreate() || isDoupdate() );
@@ -360,12 +360,12 @@ public final class CollectionEntry implements Serializable {
 		return ignore;
 	}
 
-	public PersistentCollectionDescriptor getCurrentPersister() {
-		return currentPersister;
+	public PersistentCollectionDescriptor getCurrentDescriptor() {
+		return currentDescriptor;
 	}
 
-	public void setCurrentPersister(PersistentCollectionDescriptor currentPersister) {
-		this.currentPersister = currentPersister;
+	public void setCurrentDescriptor(PersistentCollectionDescriptor descriptor) {
+		this.currentDescriptor = descriptor;
 	}
 
 	/**
@@ -399,9 +399,9 @@ public final class CollectionEntry implements Serializable {
 	public String toString() {
 		String result = "CollectionEntry" +
 				MessageHelper.collectionInfoString( loadedCollectionDescriptor.getNavigableRole().getFullPath(), loadedKey );
-		if ( currentPersister != null ) {
+		if ( currentDescriptor != null ) {
 			result += "->" +
-					MessageHelper.collectionInfoString( currentPersister.getNavigableRole().getFullPath(), currentKey );
+					MessageHelper.collectionInfoString( currentDescriptor.getNavigableRole().getFullPath(), currentKey );
 		}
 		return result;
 	}

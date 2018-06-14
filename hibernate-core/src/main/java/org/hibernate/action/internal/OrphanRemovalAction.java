@@ -16,9 +16,9 @@ public final class OrphanRemovalAction extends EntityDeleteAction {
 			Object[] state,
 			Object version,
 			Object instance,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean isCascadeDeleteEnabled,
 			SessionImplementor session) {
-		super( id, state, version, instance, persister, isCascadeDeleteEnabled, session );
+		super( id, state, version, instance, descriptor, isCascadeDeleteEnabled, session );
 	}
 }

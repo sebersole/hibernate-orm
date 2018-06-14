@@ -39,7 +39,7 @@ public class ImmutableEntityEntryFactory implements EntityEntryFactory {
 			Object version,
 			LockMode lockMode,
 			boolean existsInDatabase,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean disableVersionIncrement,
 			PersistenceContext persistenceContext) {
 		return new ImmutableEntityEntry(
@@ -50,7 +50,7 @@ public class ImmutableEntityEntryFactory implements EntityEntryFactory {
 				version,
 				lockMode,
 				existsInDatabase,
-				persister,
+				descriptor,
 				disableVersionIncrement,
 				persistenceContext
 		);

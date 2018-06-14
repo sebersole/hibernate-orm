@@ -35,12 +35,12 @@ public class HibernateTraversableResolver implements TraversableResolver {
 
 	public HibernateTraversableResolver(
 			EntityDescriptor entityDescriptor,
-			ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityPersister) {
-		this.associations = associationsPerEntityPersister.get( entityDescriptor );
+			ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityDescriptor) {
+		this.associations = associationsPerEntityDescriptor.get( entityDescriptor );
 		if (this.associations == null) {
 			this.associations = new HashSet<>();
 			addAssociationsToTheSetForAllProperties( entityDescriptor );
-			associationsPerEntityPersister.put( entityDescriptor, associations );
+			associationsPerEntityDescriptor.put( entityDescriptor, associations );
 		}
 	}
 

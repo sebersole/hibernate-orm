@@ -169,12 +169,12 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 								final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
 
 								if ( entry != null ) {
-									final PersistentCollectionDescriptor persister = entry.getLoadedCollectionDescriptor();
-									if ( persister.isExtraLazy() ) {
+									final PersistentCollectionDescriptor collectionDescriptor = entry.getLoadedCollectionDescriptor();
+									if ( collectionDescriptor.isExtraLazy() ) {
 										if ( hasQueuedOperations() ) {
 											session.flush();
 										}
-										cachedSize = persister.getSize( entry.getLoadedKey(), session );
+										cachedSize = collectionDescriptor.getSize( entry.getLoadedKey(), session );
 										return true;
 									}
 									else {
@@ -305,12 +305,12 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 						@Override
 						public Boolean doWork() {
 							final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-							final PersistentCollectionDescriptor persister = entry.getLoadedCollectionDescriptor();
-							if ( persister.isExtraLazy() ) {
+							final PersistentCollectionDescriptor collectionDescriptor = entry.getLoadedCollectionDescriptor();
+							if ( collectionDescriptor.isExtraLazy() ) {
 								if ( hasQueuedOperations() ) {
 									session.flush();
 								}
-								return persister.indexExists( entry.getLoadedKey(), index, session );
+								return collectionDescriptor.indexExists( entry.getLoadedKey(), index, session );
 							}
 							else {
 								read();
@@ -333,12 +333,12 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 						@Override
 						public Boolean doWork() {
 							final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-							final PersistentCollectionDescriptor persister = entry.getLoadedCollectionDescriptor();
-							if ( persister.isExtraLazy() ) {
+							final PersistentCollectionDescriptor collectionDescriptor = entry.getLoadedCollectionDescriptor();
+							if ( collectionDescriptor.isExtraLazy() ) {
 								if ( hasQueuedOperations() ) {
 									session.flush();
 								}
-								return persister.elementExists( entry.getLoadedKey(), element, session );
+								return collectionDescriptor.elementExists( entry.getLoadedKey(), element, session );
 							}
 							else {
 								read();
@@ -367,13 +367,13 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 				@SuppressWarnings("unchecked")
 				public E doWork() {
 					final CollectionEntry entry = session.getPersistenceContext().getCollectionEntry( AbstractPersistentCollection.this );
-					final PersistentCollectionDescriptor persister = entry.getLoadedCollectionDescriptor();
-					isExtraLazy = persister.isExtraLazy();
+					final PersistentCollectionDescriptor collectionDescriptor = entry.getLoadedCollectionDescriptor();
+					isExtraLazy = collectionDescriptor.isExtraLazy();
 					if ( isExtraLazy ) {
 						if ( hasQueuedOperations() ) {
 							session.flush();
 						}
-						element = (E) persister.getElementByIndex( entry.getLoadedKey(), index, session, owner );
+						element = (E) collectionDescriptor.getElementByIndex( entry.getLoadedKey(), index, session, owner );
 					}
 					else {
 						read();
@@ -504,10 +504,10 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	 * @param copyCache - mapping from entity in the process of being
 	 *                    merged to managed copy.
 	 */
-	public final void replaceQueuedOperationValues(PersistentCollectionDescriptor persister, Map copyCache) {
+	public final void replaceQueuedOperationValues(PersistentCollectionDescriptor descriptor, Map copyCache) {
 		for ( DelayedOperation operation : operationQueue ) {
 			if ( ValueDelayedOperation.class.isInstance( operation ) ) {
-				( (ValueDelayedOperation) operation ).replace( persister, copyCache );
+				( (ValueDelayedOperation) operation ).replace( descriptor, copyCache );
 			}
 		}
 	}
@@ -827,11 +827,11 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	}
 
 	@Override
-	public void preInsert(PersistentCollectionDescriptor persister) throws HibernateException {
+	public void preInsert(PersistentCollectionDescriptor descriptor) throws HibernateException {
 	}
 
 	@Override
-	public void afterRowInsert(PersistentCollectionDescriptor persister, Object entry, int i) throws HibernateException {
+	public void afterRowInsert(PersistentCollectionDescriptor descriptor, Object entry, int i) throws HibernateException {
 	}
 
 	@Override
@@ -1168,7 +1168,7 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	}
 
 	protected interface ValueDelayedOperation extends DelayedOperation {
-		void replace(PersistentCollectionDescriptor collectionPersister, Map copyCache);
+		void replace(PersistentCollectionDescriptor descriptor, Map copyCache);
 	}
 
 	protected abstract class AbstractValueDelayedOperation implements ValueDelayedOperation {
@@ -1180,7 +1180,7 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 			this.orphan = orphan;
 		}
 
-		public void replace(PersistentCollectionDescriptor persister, Map copyCache) {
+		public void replace(PersistentCollectionDescriptor descriptor, Map copyCache) {
 			throw new NotYetImplementedFor6Exception(  );
 //			if ( addedValue != null ) {
 //				addedValue = getReplacement( (Type) persister.getElementType(), addedValue, copyCache );

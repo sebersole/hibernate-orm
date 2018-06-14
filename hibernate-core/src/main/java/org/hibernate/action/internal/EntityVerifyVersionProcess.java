@@ -36,14 +36,14 @@ public class EntityVerifyVersionProcess implements BeforeTransactionCompletionPr
 
 	@Override
 	public void doBeforeTransactionCompletion(SessionImplementor session) {
-		final EntityDescriptor persister = entry.getPersister();
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
 
 		if ( !entry.isExistsInDatabase() ) {
 			// HHH-9419: We cannot check for a version of an entry we ourselves deleted
 			return;
 		}
 
-		final Object latestVersion = persister.getCurrentVersion( entry.getId(), session );
+		final Object latestVersion = entityDescriptor.getCurrentVersion( entry.getId(), session );
 		if ( !entry.getVersion().equals( latestVersion ) ) {
 			throw new OptimisticLockException(
 					object,

@@ -87,7 +87,7 @@ public abstract class AbstractSaveEventListener
 		return performSave(
 				entity,
 				requestedId,
-				source.getEntityPersister( entityName, entity ),
+				source.getEntityDescriptor( entityName, entity ),
 				false,
 				anything,
 				source,
@@ -123,7 +123,7 @@ public abstract class AbstractSaveEventListener
 			( (SelfDirtinessTracker) entity ).$$_hibernate_clearDirtyAttributes();
 		}
 
-		final EntityDescriptor entityDescriptor = source.getEntityPersister( entityName, entity );
+		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
 		final EntityIdentifier<Object, Object> identifierDescriptor = entityDescriptor.getHierarchy()
 				.getIdentifierDescriptor();
 		Object generatedId = identifierDescriptor
@@ -158,7 +158,7 @@ public abstract class AbstractSaveEventListener
 	 *
 	 * @param entity The entity to be saved.
 	 * @param id The id by which to save the entity.
-	 * @param persister The entity's persister instance.
+	 * @param descriptor The entity's descriptor instance.
 	 * @param useIdentityColumn Is an identity column being used?
 	 * @param anything Generally cascade-specific information.
 	 * @param source The session from which the event originated.
@@ -173,42 +173,42 @@ public abstract class AbstractSaveEventListener
 	protected Object performSave(
 			Object entity,
 			Object id,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean useIdentityColumn,
 			Object anything,
 			EventSource source,
 			boolean requiresImmediateIdAccess) {
 
 		if ( LOG.isTraceEnabled() ) {
-			LOG.tracev( "Saving {0}", MessageHelper.infoString( persister, id, source.getFactory() ) );
+			LOG.tracev( "Saving {0}", MessageHelper.infoString( descriptor, id, source.getFactory() ) );
 		}
 
 		final EntityKey key;
 		if ( !useIdentityColumn ) {
-			key = source.generateEntityKey( id, persister );
+			key = source.generateEntityKey( id, descriptor );
 			Object old = source.getPersistenceContext().getEntity( key );
 			if ( old != null ) {
 				if ( source.getPersistenceContext().getEntry( old ).getStatus() == Status.DELETED ) {
 					source.forceFlush( source.getPersistenceContext().getEntry( old ) );
 				}
 				else {
-					throw new NonUniqueObjectException( id, persister.getEntityName() );
+					throw new NonUniqueObjectException( id, descriptor.getEntityName() );
 				}
 			}
-			persister.setIdentifier( entity, id, source );
+			descriptor.setIdentifier( entity, id, source );
 		}
 		else {
 			key = null;
 		}
 
-		if ( invokeSaveLifecycle( entity, persister, source ) ) {
+		if ( invokeSaveLifecycle( entity, descriptor, source ) ) {
 			return id; //EARLY EXIT
 		}
 
 		return performSaveOrReplicate(
 				entity,
 				key,
-				persister,
+				descriptor,
 				useIdentityColumn,
 				anything,
 				source,
@@ -216,10 +216,10 @@ public abstract class AbstractSaveEventListener
 		);
 	}
 
-	protected boolean invokeSaveLifecycle(Object entity, EntityDescriptor persister, EventSource source) {
+	protected boolean invokeSaveLifecycle(Object entity, EntityDescriptor descriptor, EventSource source) {
 		// Sub-insertions should occur before containing insertion so
 		// Try to do the callback now
-		if ( persister.implementsLifecycle() ) {
+		if ( descriptor.implementsLifecycle() ) {
 			LOG.debug( "Calling onSave()" );
 			if ( ((Lifecycle) entity).onSave( source ) ) {
 				LOG.debug( "Insertion vetoed by onSave()" );
@@ -357,21 +357,21 @@ public abstract class AbstractSaveEventListener
 			Object[] values,
 			Object id,
 			Object entity,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean useIdentityColumn,
 			EventSource source,
 			boolean shouldDelayIdentityInserts) {
 		if ( useIdentityColumn ) {
 			EntityIdentityInsertAction insert = new EntityIdentityInsertAction(
-					values, entity, persister, isVersionIncrementDisabled(), source, shouldDelayIdentityInserts
+					values, entity, descriptor, isVersionIncrementDisabled(), source, shouldDelayIdentityInserts
 			);
 			source.getActionQueue().addAction( insert );
 			return insert;
 		}
 		else {
-			Object version = Versioning.getVersion( values, persister );
+			Object version = Versioning.getVersion( values, descriptor );
 			EntityInsertAction insert = new EntityInsertAction(
-					id, values, entity, version, persister, isVersionIncrementDisabled(), source
+					id, values, entity, version, descriptor, isVersionIncrementDisabled(), source
 			);
 			source.getActionQueue().addAction( insert );
 			return insert;
@@ -448,13 +448,13 @@ public abstract class AbstractSaveEventListener
 	 * Handles the calls needed to perform pre-save cascades for the given entity.
 	 *
 	 * @param source The session from whcih the save event originated.
-	 * @param persister The entity's persister instance.
+	 * @param descriptor The entity's descriptor instance.
 	 * @param entity The entity to be saved.
 	 * @param anything Generally cascade-specific data
 	 */
 	protected void cascadeBeforeSave(
 			EventSource source,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			Object entity,
 			Object anything) {
 
@@ -465,7 +465,7 @@ public abstract class AbstractSaveEventListener
 					getCascadeAction(),
 					CascadePoint.BEFORE_INSERT_AFTER_DELETE,
 					source,
-					persister,
+					descriptor,
 					entity,
 					anything
 			);
@@ -479,13 +479,13 @@ public abstract class AbstractSaveEventListener
 	 * Handles to calls needed to perform post-save cascades.
 	 *
 	 * @param source The session from which the event originated.
-	 * @param persister The entity's persister instance.
+	 * @param descriptor The entity's descriptor instance.
 	 * @param entity The entity beng saved.
 	 * @param anything Generally cascade-specific data
 	 */
 	protected void cascadeAfterSave(
 			EventSource source,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			Object entity,
 			Object anything) {
 
@@ -496,7 +496,7 @@ public abstract class AbstractSaveEventListener
 					getCascadeAction(),
 					CascadePoint.AFTER_INSERT_BEFORE_DELETE,
 					source,
-					persister,
+					descriptor,
 					entity,
 					anything
 			);

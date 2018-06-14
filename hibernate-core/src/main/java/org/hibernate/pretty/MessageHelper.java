@@ -182,19 +182,19 @@ public final class MessageHelper {
 	}
 
 	/**
-	 * Generate an info message string relating to given entity persister.
+	 * Generate an info message string relating to given entity descriptor.
 	 *
-	 * @param persister The persister.
+	 * @param descriptor The descriptor.
 	 * @return An info string, in the form [FooBar]
 	 */
-	public static String infoString(EntityDescriptor persister) {
+	public static String infoString(EntityDescriptor descriptor) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
-		if ( persister == null ) {
+		if ( descriptor == null ) {
 			s.append( "<null EntityPersister>" );
 		}
 		else {
-			s.append( persister.getEntityName() );
+			s.append( descriptor.getEntityName() );
 		}
 		s.append( ']' );
 		return s.toString();

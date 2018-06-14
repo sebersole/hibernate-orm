@@ -28,7 +28,7 @@ public interface CacheKeysFactory {
 
 	Object createCollectionKey(
 			Object id,
-			PersistentCollectionDescriptor collectionDescriptor,
+			PersistentCollectionDescriptor descriptor,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier);
 

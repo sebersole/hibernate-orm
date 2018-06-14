@@ -78,10 +78,10 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 
 	@Override
 	@SuppressWarnings( {"unchecked"})
-	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final HashMap clonedSet = new HashMap( set.size() );
 		for ( Object aSet : set ) {
-			final Object copied = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( aSet );
+			final Object copied = descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( aSet );
 			clonedSet.put( copied, copied );
 		}
 		return clonedSet;
@@ -345,7 +345,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator entries(PersistentCollectionDescriptor persister) {
+	public Iterator entries(PersistentCollectionDescriptor descriptor) {
 		return set.iterator();
 	}
 
@@ -363,7 +363,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final java.util.Map sn = (java.util.Map) getSnapshot();
 		final ArrayList deletes = new ArrayList( sn.size() );
 
@@ -380,7 +380,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 		while ( itr.hasNext() ) {
 			final Object test = itr.next();
 			final Object oldValue = sn.get( test );
-			if ( oldValue!=null && persister.isDirty( test, oldValue, getSession() ) ) {
+			if ( oldValue!=null && descriptor.isDirty( test, oldValue, getSession() ) ) {
 				// the element has changed
 				deletes.add( oldValue );
 			}

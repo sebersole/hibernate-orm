@@ -32,7 +32,7 @@ public class PostDeleteEventListenerStandardImpl implements PostDeleteEventListe
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
-		return callbackRegistry.hasRegisteredCallbacks( persister.getMappedClass(), CallbackType.POST_REMOVE );
+	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+		return callbackRegistry.hasRegisteredCallbacks( descriptor.getMappedClass(), CallbackType.POST_REMOVE );
 	}
 }

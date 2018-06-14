@@ -628,8 +628,8 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public TableGroupJoin visitCrossJoinedFromElement(SqmCrossJoin joinedFromElement) {
 		final QuerySpec querySpec = currentQuerySpec();
-		final EntityDescriptor entityPersister = joinedFromElement.getIntrinsicSubclassEntityMetadata();
-		final EntityTableGroup group = entityPersister.createRootTableGroup(
+		final EntityDescriptor entityDescriptor = joinedFromElement.getIntrinsicSubclassEntityMetadata();
+		final EntityTableGroup group = entityDescriptor.createRootTableGroup(
 				joinedFromElement,
 				new RootTableGroupContext() {
 					@Override

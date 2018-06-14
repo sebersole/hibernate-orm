@@ -12,17 +12,17 @@ import org.hibernate.metamodel.model.domain.NavigableRole;
  * @author Steve Ebersole
  */
 public abstract class AbstractCollectionElement<J> implements CollectionElement<J> {
-	private final PersistentCollectionDescriptor persister;
+	private final PersistentCollectionDescriptor descriptor;
 	private final NavigableRole navigableRole;
 
-	public AbstractCollectionElement(PersistentCollectionDescriptor persister) {
-		this.persister = persister;
-		this.navigableRole = persister.getNavigableRole().append( NAVIGABLE_NAME );
+	public AbstractCollectionElement(PersistentCollectionDescriptor descriptor) {
+		this.descriptor = descriptor;
+		this.navigableRole = descriptor.getNavigableRole().append( NAVIGABLE_NAME );
 	}
 
 	@Override
 	public PersistentCollectionDescriptor getContainer() {
-		return persister;
+		return descriptor;
 	}
 
 	@Override

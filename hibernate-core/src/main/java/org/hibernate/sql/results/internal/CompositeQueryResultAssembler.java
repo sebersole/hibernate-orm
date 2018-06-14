@@ -25,10 +25,10 @@ public class CompositeQueryResultAssembler implements QueryResultAssembler {
 	public CompositeQueryResultAssembler(
 			CompositeQueryResultImpl returnComposite,
 			CompositeSqlSelectionGroup sqlSelectionGroup,
-			EmbeddedTypeDescriptor embeddedPersister) {
+			EmbeddedTypeDescriptor embeddedDescriptor) {
 		this.returnComposite = returnComposite;
 		this.sqlSelectionGroup = sqlSelectionGroup;
-		this.embeddedDescriptor = embeddedPersister;
+		this.embeddedDescriptor = embeddedDescriptor;
 	}
 
 	@Override

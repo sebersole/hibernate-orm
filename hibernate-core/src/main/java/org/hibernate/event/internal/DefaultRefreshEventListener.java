@@ -84,7 +84,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		final Object id;
 
 		if ( e == null ) {
-			entityDescriptor = source.getEntityPersister(
+			entityDescriptor = source.getEntityDescriptor(
 					event.getEntityName(),
 					object
 			); //refresh() does not pass an entityName

@@ -35,8 +35,8 @@ public abstract class AbstractCollectionDataAccess
 	}
 
 	@Override
-	public Object generateCacheKey(Object id, PersistentCollectionDescriptor persister, SessionFactoryImplementor factory, String tenantIdentifier) {
-		return keysFactory.createCollectionKey( id, persister, factory, tenantIdentifier );
+	public Object generateCacheKey(Object id, PersistentCollectionDescriptor descriptor, SessionFactoryImplementor factory, String tenantIdentifier) {
+		return keysFactory.createCollectionKey( id, descriptor, factory, tenantIdentifier );
 	}
 
 	@Override

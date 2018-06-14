@@ -40,7 +40,7 @@ public abstract class EntityTools {
 			return hibernateProxy.getHibernateLazyInitializer().getIdentifier();
 		}
 
-		return session.getEntityPersister( entityName, obj ).getIdentifier( obj, session );
+		return session.getEntityDescriptor( entityName, obj ).getIdentifier( obj, session );
 	}
 
 	public static Object getTargetFromProxy(SessionFactoryImplementor sessionFactoryImplementor, HibernateProxy proxy) {

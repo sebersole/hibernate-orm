@@ -147,7 +147,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 				// entity to be merged...
 				EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 				if ( entry == null ) {
-					EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+					EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 					Object id = entityDescriptor.getIdentifier( entity, source );
 					if ( id != null ) {
 						final EntityKey key = source.generateEntityKey( id, entityDescriptor );
@@ -198,7 +198,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
-		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 
 		( (MergeContext) copyCache ).put( entity, entity, true );  //before cascade!
 
@@ -216,7 +216,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final EventSource source = event.getSession();
 
 		final String entityName = event.getEntityName();
-		final EntityDescriptor entityDescriptor = source.getEntityPersister( entityName, entity );
+		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
 
 		final Object id = EntityIdentifierSimple.class.isInstance( entityDescriptor.getHierarchy().getIdentifierDescriptor() ) ?
 				entityDescriptor.getIdentifier( entity, source ) :
@@ -269,7 +269,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
 
-		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 		final String entityName = entityDescriptor.getEntityName();
 
 		Object id = event.getRequestedId();
@@ -499,7 +499,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeAfterSave(EventSource source, EntityDescriptor entityDescriptor, Object entity, Object anything)
+	protected void cascadeAfterSave(EventSource source, EntityDescriptor descriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 
@@ -507,7 +507,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeBeforeSave(EventSource source, EntityDescriptor entityDescriptor, Object entity, Object anything)
+	protected void cascadeBeforeSave(EventSource source, EntityDescriptor descriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 }

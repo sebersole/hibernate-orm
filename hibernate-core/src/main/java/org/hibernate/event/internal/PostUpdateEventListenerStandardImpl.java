@@ -43,7 +43,7 @@ public class PostUpdateEventListenerStandardImpl implements PostUpdateEventListe
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
-		return callbackRegistry.hasRegisteredCallbacks( persister.getMappedClass(), CallbackType.POST_UPDATE );
+	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+		return callbackRegistry.hasRegisteredCallbacks( descriptor.getMappedClass(), CallbackType.POST_UPDATE );
 	}
 }

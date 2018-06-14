@@ -50,13 +50,13 @@ public class DefaultResolveNaturalIdEventListener
 	 * @return The loaded entity, or null.
 	 */
 	protected Object resolveNaturalId(final ResolveNaturalIdEvent event) {
-		final EntityDescriptor persister = event.getEntityDescriptor();
+		final EntityDescriptor descriptor = event.getEntityDescriptor();
 
 		final boolean traceEnabled = LOG.isTraceEnabled();
 		if ( traceEnabled ) {
 			LOG.tracev(
 					"Attempting to resolve: {0}",
-					MessageHelper.infoString( persister, event.getNaturalIdValues(), event.getSession().getFactory() )
+					MessageHelper.infoString( descriptor, event.getNaturalIdValues(), event.getSession().getFactory() )
 			);
 		}
 
@@ -65,7 +65,7 @@ public class DefaultResolveNaturalIdEventListener
 			if ( traceEnabled ) {
 				LOG.tracev(
 						"Resolved object in cache: {0}",
-						MessageHelper.infoString( persister, event.getNaturalIdValues(), event.getSession().getFactory() )
+						MessageHelper.infoString( descriptor, event.getNaturalIdValues(), event.getSession().getFactory() )
 				);
 			}
 			return entityId;
@@ -74,7 +74,7 @@ public class DefaultResolveNaturalIdEventListener
 		if ( traceEnabled ) {
 			LOG.tracev(
 					"Object not resolved in any cache: {0}",
-					MessageHelper.infoString( persister, event.getNaturalIdValues(), event.getSession().getFactory() )
+					MessageHelper.infoString( descriptor, event.getNaturalIdValues(), event.getSession().getFactory() )
 			);
 		}
 

@@ -47,7 +47,7 @@ public class BeanValidationEventListener
 	);
 
 	private ValidatorFactory factory;
-	private ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityPersister = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityDescriptor = new ConcurrentHashMap<>();
 	private GroupsPerOperation groupsPerOperation;
 	boolean initialized;
 
@@ -76,7 +76,7 @@ public class BeanValidationEventListener
 
 	public boolean onPreInsert(PreInsertEvent event) {
 		validate(
-				event.getEntity(), event.getPersister().getRepresentationStrategy().getMode(), event.getPersister(),
+				event.getEntity(), event.getDescriptor().getRepresentationStrategy().getMode(), event.getDescriptor(),
 				GroupsPerOperation.Operation.INSERT
 		);
 		return false;
@@ -84,7 +84,7 @@ public class BeanValidationEventListener
 
 	public boolean onPreUpdate(PreUpdateEvent event) {
 		validate(
-				event.getEntity(), event.getPersister().getRepresentationStrategy().getMode(), event.getPersister(),
+				event.getEntity(), event.getDescriptor().getRepresentationStrategy().getMode(), event.getDescriptor(),
 				GroupsPerOperation.Operation.UPDATE
 		);
 		return false;
@@ -93,8 +93,8 @@ public class BeanValidationEventListener
 	public boolean onPreDelete(PreDeleteEvent event) {
 		validate(
 				event.getEntity(),
-				event.getPersister().getRepresentationStrategy().getMode(),
-				event.getPersister(),
+				event.getDescriptor().getRepresentationStrategy().getMode(),
+				event.getDescriptor(),
 				GroupsPerOperation.Operation.DELETE
 		);
 		return false;
@@ -108,7 +108,9 @@ public class BeanValidationEventListener
 		if ( object == null || representation != RepresentationMode.POJO ) {
 			return;
 		}
-		final TraversableResolver tr = new HibernateTraversableResolver( entityDescriptor, associationsPerEntityPersister );
+		final TraversableResolver tr = new HibernateTraversableResolver( entityDescriptor,
+																		 associationsPerEntityDescriptor
+		);
 		final Validator validator = factory.usingContext().traversableResolver( tr ).getValidator();
 
 		final Class<?>[] groups = groupsPerOperation.get( operation );

@@ -62,7 +62,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 			return;
 		}
 
-		final EntityDescriptor entityDescriptor = source.getEntityPersister( event.getEntityName(), entity );
+		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 		final EntityIdentifier idDescriptor = entityDescriptor.getHierarchy().getIdentifierDescriptor();
 		final VersionDescriptor versionDescriptor = entityDescriptor.getHierarchy().getVersionDescriptor();
 

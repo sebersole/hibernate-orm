@@ -78,11 +78,11 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 
 	@Override
 	@SuppressWarnings( {"unchecked"})
-	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final HashMap clonedMap = new HashMap( map.size() );
 		for ( Object o : map.entrySet() ) {
 			final Entry e = (Entry) o;
-			final Object copy = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( e.getValue() );
+			final Object copy = descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( e.getValue() );
 			clonedMap.put( e.getKey(), copy );
 		}
 		return clonedMap;
@@ -295,7 +295,7 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator entries(PersistentCollectionDescriptor persister) {
+	public Iterator entries(PersistentCollectionDescriptor descriptor) {
 		return map.entrySet().iterator();
 	}
 
@@ -508,7 +508,7 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final List deletes = new ArrayList();
 		for ( Object o : ((Map) getSnapshot()).entrySet() ) {
 			final Entry e = (Entry) o;

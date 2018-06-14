@@ -24,15 +24,15 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 	public static final String SUBCLASS_KEY = "_subclass";
 	public static final String VERSION_KEY = "_version";
 
-	private EntityDescriptor persister;
+	private EntityDescriptor descriptor;
 
 	/**
 	 * Constructs a StructuredCacheEntry strategy
 	 *
-	 * @param persister The persister whose data needs to be structured.
+	 * @param descriptor The descriptor whose data needs to be structured.
 	 */
-	public StructuredCacheEntry(EntityDescriptor persister) {
-		this.persister = persister;
+	public StructuredCacheEntry(EntityDescriptor descriptor) {
+		this.descriptor = descriptor;
 	}
 
 	@Override
@@ -41,8 +41,8 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 		final Map map = (Map) structured;
 		final String subclass = (String) map.get( SUBCLASS_KEY );
 		final Object version = map.get( VERSION_KEY );
-		final EntityDescriptor subclassPersister = factory.getEntityPersister( subclass );
-		final String[] names = subclassPersister.getPropertyNames();
+		final EntityDescriptor subclassDescriptor = factory.getEntityPersister( subclass );
+		final String[] names = subclassDescriptor.getPropertyNames();
 		final Serializable[] state = new Serializable[names.length];
 		for ( int i = 0; i < names.length; i++ ) {
 			state[i] = (Serializable) map.get( names[i] );
@@ -59,7 +59,7 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 	@SuppressWarnings("unchecked")
 	public Object structure(Object item) {
 		final CacheEntry entry = (CacheEntry) item;
-		final String[] names = persister.getPropertyNames();
+		final String[] names = descriptor.getPropertyNames();
 		final Map map = new HashMap( names.length + 3, 1f );
 		map.put( SUBCLASS_KEY, entry.getSubclass() );
 		map.put( VERSION_KEY, entry.getVersion() );
