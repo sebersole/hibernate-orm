@@ -135,7 +135,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		else {
 			return new EntityMutabilityPlanImpl(
 					rootRuntimeDescriptor,
-					(status, loadedState, rowId, id, version, lockMode, existsInDatabase, persister, disableVersionIncrement, persistenceContext) -> new ImmutableEntityEntry(
+					(status, loadedState, rowId, id, version, lockMode, existsInDatabase, descriptor, disableVersionIncrement, persistenceContext) -> new ImmutableEntityEntry(
 							status,
 							loadedState,
 							rowId,
@@ -143,7 +143,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 							version,
 							lockMode,
 							existsInDatabase,
-							persister,
+							descriptor,
 							disableVersionIncrement,
 							persistenceContext
 					),
@@ -154,7 +154,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 
 	private static RepresentationMode determineRepresentationMode(
 			RootClass rootEntityBinding,
-			EntityDescriptor rootEntityPersister,
+			EntityDescriptor rootEntityDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		// see if a specific one was requested specific to this hierarchy
 		if ( rootEntityBinding.getExplicitRepresentationMode() != null ) {
@@ -164,7 +164,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		// otherwise,
 		//
 		// if there is no corresponding Java type, assume MAP mode
-		if ( rootEntityPersister.getJavaTypeDescriptor().getJavaType() == null ) {
+		if ( rootEntityDescriptor.getJavaTypeDescriptor().getJavaType() == null ) {
 			return RepresentationMode.MAP;
 		}
 

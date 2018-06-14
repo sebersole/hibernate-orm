@@ -57,15 +57,15 @@ public class DefaultEvictEventListener implements EvictEventListener {
 				throw new IllegalArgumentException( "Could not determine identifier of proxy passed to evict()" );
 			}
 
-			final EntityDescriptor persister = source.getFactory().getEntityPersister( li.getEntityName() );
-			final EntityKey key = source.generateEntityKey( id, persister );
+			final EntityDescriptor descriptor = source.getFactory().getEntityPersister( li.getEntityName() );
+			final EntityKey key = source.generateEntityKey( id, descriptor );
 			persistenceContext.removeProxy( key );
 
 			if ( !li.isUninitialized() ) {
 				final Object entity = persistenceContext.removeEntity( key );
 				if ( entity != null ) {
 					EntityEntry e = persistenceContext.removeEntry( entity );
-					doEvict( entity, key, e.getPersister(), event.getSession() );
+					doEvict( entity, key, e.getDescriptor(), event.getSession() );
 				}
 			}
 			li.unsetSession();
@@ -73,22 +73,22 @@ public class DefaultEvictEventListener implements EvictEventListener {
 		else {
 			EntityEntry e = persistenceContext.getEntry( object );
 			if ( e != null ) {
-				doEvict( object, e.getEntityKey(), e.getPersister(), source );
+				doEvict( object, e.getEntityKey(), e.getDescriptor(), source );
 			}
 			else {
 				// see if the passed object is even an entity, and if not throw an exception
 				// 		this is different than legacy Hibernate behavior, but what JPA 2.1 is calling for
 				//		with EntityManager.detach
-				EntityDescriptor persister = null;
+				EntityDescriptor descriptor = null;
 				final String entityName = persistenceContext.getSession().guessEntityName( object );
 				if ( entityName != null ) {
 					try {
-						persister = persistenceContext.getSession().getFactory().getEntityPersister( entityName );
+						descriptor = persistenceContext.getSession().getFactory().getEntityPersister( entityName );
 					}
 					catch (Exception ignore) {
 					}
 				}
-				if ( persister == null ) {
+				if ( descriptor == null ) {
 					throw new IllegalArgumentException( "Non-entity object instance passed to evict : " + object );
 				}
 			}

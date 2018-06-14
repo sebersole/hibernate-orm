@@ -44,11 +44,11 @@ public abstract class ProxyVisitor extends AbstractVisitor {
 	 */
 	protected static boolean isOwnerUnchanged(
 			final PersistentCollection snapshot, 
-			final PersistentCollectionDescriptor persister,
+			final PersistentCollectionDescriptor descriptor,
 			final Serializable id
 	) {
 		return isCollectionSnapshotValid(snapshot) &&
-				persister.getNavigableRole().getFullPath().equals( snapshot.getRole() ) &&
+				descriptor.getNavigableRole().getFullPath().equals( snapshot.getRole() ) &&
 				id.equals( snapshot.getKey() );
 	}
 
@@ -66,19 +66,19 @@ public abstract class ProxyVisitor extends AbstractVisitor {
 	protected void reattachCollection(PersistentCollection collection, NavigableRole role)
 	throws HibernateException {
 		if ( collection.wasInitialized() ) {
-			PersistentCollectionDescriptor collectionPersister = getSession().getFactory().getMetamodel()
+			PersistentCollectionDescriptor collectionDescriptor = getSession().getFactory().getMetamodel()
 			.findCollectionDescriptor( role.getFullPath() );
 			getSession().getPersistenceContext()
-				.addInitializedDetachedCollection( collectionPersister, collection );
+				.addInitializedDetachedCollection( collectionDescriptor, collection );
 		}
 		else {
 			if ( !isCollectionSnapshotValid(collection) ) {
 				throw new HibernateException( "could not reassociate uninitialized transient collection" );
 			}
-			PersistentCollectionDescriptor collectionPersister = getSession().getFactory().getMetamodel()
+			PersistentCollectionDescriptor collectionDescriptor = getSession().getFactory().getMetamodel()
 					.findCollectionDescriptor( collection.getRole() );
 			getSession().getPersistenceContext()
-				.addUninitializedDetachedCollection( collectionPersister, collection );
+				.addUninitializedDetachedCollection( collectionDescriptor, collection );
 		}
 	}
 

@@ -230,9 +230,9 @@ public final class ForeignKeys<T> {
 			return isUnsaved;
 		}
 
-		// let the persister inspect the instance to decide
-		final EntityDescriptor persister = session.getEntityPersister( entityName, entity );
-		isUnsaved = persister.isTransient( entity, session );
+		// let the descriptor inspect the instance to decide
+		final EntityDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
+		isUnsaved = descriptor.isTransient( entity, session );
 		if ( isUnsaved != null ) {
 			return isUnsaved;
 		}
@@ -245,8 +245,8 @@ public final class ForeignKeys<T> {
 
 		// hit the database, after checking the session cache for a snapshot
 		final Object[] snapshot = session.getPersistenceContext().getDatabaseSnapshot(
-				persister.getIdentifier( entity, session ),
-				persister
+				descriptor.getIdentifier( entity, session ),
+				descriptor
 		);
 		return snapshot == null;
 
@@ -288,7 +288,7 @@ public final class ForeignKeys<T> {
 									(entityName == null ? session.guessEntityName( object ) : entityName)
 					);
 				}
-				id = session.getEntityPersister( entityName, object ).getHierarchy()
+				id = session.getEntityDescriptor( entityName, object ).getHierarchy()
 						.getIdentifierDescriptor()
 						.extractIdentifier( object, session );
 			}
@@ -325,7 +325,7 @@ public final class ForeignKeys<T> {
 
 		final NonNullableTransientDependencies nonNullableTransientEntities = new NonNullableTransientDependencies();
 		final Nullifier nullifier = new Nullifier( entity, false, isEarlyInsert, session );
-		final EntityDescriptor descriptor = session.getEntityPersister( entityName, entity );
+		final EntityDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
 
 		// todo (6.0) : this is a good example of potential performance trade off - evaluate
 //		specifically, because the method below *could be* (and partially is) a non-polymorphic call site

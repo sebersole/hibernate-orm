@@ -523,11 +523,11 @@ public class StatisticsImpl implements StatisticsImplementor, Service {
 			naturalIdQueryExecutionMaxTimeEntity = rootEntityName;
 		}
 
-		final EntityDescriptor rootEntityPersister = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
+		final EntityDescriptor rootEntityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
 
 		getNaturalIdStatistics( rootEntityName ).queryExecuted( time );
 
-		final String naturalIdRegionName = rootEntityPersister.getHierarchy().getNaturalIdDescriptor().getCacheAccess()
+		final String naturalIdRegionName = rootEntityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess()
 				.getRegion()
 				.getName();
 

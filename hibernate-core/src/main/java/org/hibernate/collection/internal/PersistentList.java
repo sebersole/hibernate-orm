@@ -67,10 +67,10 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 
 	@Override
 	@SuppressWarnings( {"unchecked"})
-	public Serializable getSnapshot(PersistentCollectionDescriptor persister) throws HibernateException {
+	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final ArrayList clonedList = new ArrayList( list.size() );
 		for ( Object element : list ) {
-			final Object deepCopy = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( element );
+			final Object deepCopy = descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( element );
 			clonedList.add( deepCopy );
 		}
 		return clonedList;
@@ -395,7 +395,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator<E> entries(PersistentCollectionDescriptor collectionDescriptor) {
+	public Iterator<E> entries(PersistentCollectionDescriptor descriptor) {
 		return list.iterator();
 	}
 
@@ -427,7 +427,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final List deletes = new ArrayList();
 		final List sn = (List) getSnapshot();
 		int end;

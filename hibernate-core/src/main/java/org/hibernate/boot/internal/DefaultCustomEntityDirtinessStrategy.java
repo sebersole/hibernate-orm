@@ -19,23 +19,23 @@ public class DefaultCustomEntityDirtinessStrategy implements CustomEntityDirtine
 	public static final DefaultCustomEntityDirtinessStrategy INSTANCE = new DefaultCustomEntityDirtinessStrategy();
 
 	@Override
-	public boolean canDirtyCheck(Object entity, EntityDescriptor persister, Session session) {
+	public boolean canDirtyCheck(Object entity, EntityDescriptor descriptor, Session session) {
 		return false;
 	}
 
 	@Override
-	public boolean isDirty(Object entity, EntityDescriptor persister, Session session) {
+	public boolean isDirty(Object entity, EntityDescriptor descriptor, Session session) {
 		return false;
 	}
 
 	@Override
-	public void resetDirty(Object entity, EntityDescriptor persister, Session session) {
+	public void resetDirty(Object entity, EntityDescriptor descriptor, Session session) {
 	}
 
 	@Override
 	public void findDirty(
 			Object entity,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			Session session,
 			DirtyCheckContext dirtyCheckContext) {
 	}

@@ -43,26 +43,26 @@ public final class EntityPrinter {
 			String entityName,
 			Object entity,
 			SharedSessionContractImplementor session) throws HibernateException {
-		EntityDescriptor entityPersister = factory.getEntityPersister( entityName );
+		EntityDescriptor entityDescriptor = factory.getEntityPersister( entityName );
 
-		if ( entityPersister == null ) {
+		if ( entityDescriptor == null ) {
 			return entity.getClass().getName();
 		}
 
 		Map<String, String> result = new HashMap<String, String>();
 
-		if ( entityPersister.getIdentifierDescriptor() != null ) {
+		if ( entityDescriptor.getIdentifierDescriptor() != null ) {
 			result.put(
-					entityPersister.getIdentifierPropertyName(),
-					entityPersister.getIdentifierDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation(
-							entityPersister.getIdentifierDescriptor().extractIdentifier( entity, session )
+					entityDescriptor.getIdentifierPropertyName(),
+					entityDescriptor.getIdentifierDescriptor().getJavaTypeDescriptor().extractLoggableRepresentation(
+							entityDescriptor.getIdentifierDescriptor().extractIdentifier( entity, session )
 					)
 			);
 		}
 
-		Type[] types = entityPersister.getPropertyTypes();
-		String[] names = entityPersister.getPropertyNames();
-		Object[] values = entityPersister.getPropertyValues( entity );
+		Type[] types = entityDescriptor.getPropertyTypes();
+		String[] names = entityDescriptor.getPropertyNames();
+		Object[] values = entityDescriptor.getPropertyValues( entity );
 		for ( int i = 0; i < types.length; i++ ) {
 			if ( !names[i].startsWith( "_" ) ) {
 				String strValue = values[i] == LazyPropertyInitializer.UNFETCHED_PROPERTY ?

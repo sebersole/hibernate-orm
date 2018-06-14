@@ -262,11 +262,11 @@ public interface PersistentCollection<E> {
 	/**
 	 * Return a new snapshot of the current state of the collection
 	 *
-	 * @param persister The collection persister
+	 * @param descriptor The collection descriptor
 	 *
 	 * @return The snapshot
 	 */
-	Serializable getSnapshot(PersistentCollectionDescriptor<?,?,E> persister);
+	Serializable getSnapshot(PersistentCollectionDescriptor<?,?,E> descriptor);
 
 	/**
 	 * To be called internally by the session, forcing immediate initialization.
@@ -314,12 +314,12 @@ public interface PersistentCollection<E> {
 	/**
 	 * Get all the elements that need deleting
 	 *
-	 * @param persister The collection persister
+	 * @param descriptor The collection descriptor
 	 * @param indexIsFormula For indexed collections, tells whether the index is a formula (calculated value) mapping
 	 *
 	 * @return An iterator over the elements to delete
 	 */
-	Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula);
+	Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula);
 
 	/**
 	 * Is this the wrapper for the given collection instance?
@@ -410,18 +410,18 @@ public interface PersistentCollection<E> {
 	 * Called before inserting rows, to ensure that any surrogate keys
 	 * are fully generated
 	 *
-	 * @param persister The collection persister
+	 * @param descriptor The collection descriptor
 	 */
-	void preInsert(PersistentCollectionDescriptor persister);
+	void preInsert(PersistentCollectionDescriptor descriptor);
 
 	/**
 	 * Called after inserting a row, to fetch the natively generated id
 	 *
-	 * @param persister The collection persister
+	 * @param descriptor The collection descriptor
 	 * @param entry The collection element just inserted
 	 * @param i The element position/index
 	 */
-	void afterRowInsert(PersistentCollectionDescriptor persister, Object entry, int i);
+	void afterRowInsert(PersistentCollectionDescriptor descriptor, Object entry, int i);
 
 	/**
 	 * get all "orphaned" elements
@@ -445,6 +445,6 @@ public interface PersistentCollection<E> {
 	 *
 	 * @return The iterator
 	 */
-	Iterator<E> entries(PersistentCollectionDescriptor<?,?,E> persister);
+	Iterator<E> entries(PersistentCollectionDescriptor<?,?,E> descriptor);
 	
 }

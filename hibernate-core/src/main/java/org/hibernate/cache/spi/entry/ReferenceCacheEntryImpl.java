@@ -18,17 +18,17 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public class ReferenceCacheEntryImpl implements CacheEntry {
 	private final Object reference;
 	// passing the persister avoids a costly persister lookup by class name at cache retrieval time
-	private final EntityDescriptor subclassPersister;
+	private final EntityDescriptor subclassDescriptor;
 
 	/**
 	 * Constructs a ReferenceCacheEntryImpl
 	 *
 	 * @param reference The reference entity instance
-	 * @param subclassPersister The specific subclass persister
+	 * @param subclassDescriptor The specific subclass persister
 	 */
-	public ReferenceCacheEntryImpl(Object reference, EntityDescriptor subclassPersister) {
+	public ReferenceCacheEntryImpl(Object reference, EntityDescriptor subclassDescriptor) {
 		this.reference = reference;
-		this.subclassPersister = subclassPersister;
+		this.subclassDescriptor = subclassDescriptor;
 	}
 
 	/**
@@ -47,11 +47,11 @@ public class ReferenceCacheEntryImpl implements CacheEntry {
 
 	@Override
 	public String getSubclass() {
-		return subclassPersister.getEntityName();
+		return subclassDescriptor.getEntityName();
 	}
 
-	public EntityDescriptor getSubclassPersister() {
-		return subclassPersister;
+	public EntityDescriptor getSubclassDescriptor() {
+		return subclassDescriptor;
 	}
 
 	@Override

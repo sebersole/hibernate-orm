@@ -149,16 +149,16 @@ public abstract class AbstractFlushingEventListener implements JpaBootstrapSensi
 			EntityEntry entry = (EntityEntry) me.getValue();
 			Status status = entry.getStatus();
 			if ( status == Status.MANAGED || status == Status.SAVING || status == Status.READ_ONLY ) {
-				cascadeOnFlush( session, entry.getPersister(), me.getKey(), anything );
+				cascadeOnFlush( session, entry.getDescriptor(), me.getKey(), anything );
 			}
 		}
 	}
 
-	private void cascadeOnFlush(EventSource session, EntityDescriptor persister, Object object, Object anything)
+	private void cascadeOnFlush(EventSource session, EntityDescriptor descriptor, Object object, Object anything)
 	throws HibernateException {
 		session.getPersistenceContext().incrementCascadeLevel();
 		try {
-			Cascade.cascade( getCascadingAction(), CascadePoint.BEFORE_FLUSH, session, persister, object, anything );
+			Cascade.cascade( getCascadingAction(), CascadePoint.BEFORE_FLUSH, session, descriptor, object, anything );
 		}
 		finally {
 			session.getPersistenceContext().decrementCascadeLevel();
@@ -280,7 +280,7 @@ public abstract class AbstractFlushingEventListener implements JpaBootstrapSensi
 				actionQueue.addAction(
 						new CollectionRecreateAction(
 								coll,
-								ce.getCurrentPersister(),
+								ce.getCurrentDescriptor(),
 								ce.getCurrentKey(),
 								session
 							)

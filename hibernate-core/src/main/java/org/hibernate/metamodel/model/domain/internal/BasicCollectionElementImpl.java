@@ -45,10 +45,10 @@ public class BasicCollectionElementImpl<J>
 
 	@SuppressWarnings("unchecked")
 	public BasicCollectionElementImpl(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			Collection bootCollectionMapping,
 			RuntimeModelCreationContext creationContext) {
-		super( persister );
+		super( descriptor );
 
 		final BasicValueMapping simpleElementValueMapping = (BasicValueMapping) bootCollectionMapping.getElement();
 

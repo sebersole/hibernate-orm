@@ -20,24 +20,24 @@ public abstract class AbstractPreDatabaseOperationEvent
 
 	private final Object entity;
 	private final Object id;
-	private final EntityDescriptor persister;
+	private final EntityDescriptor descriptor;
 
 	/**
 	 * Constructs an event containing the pertinent information.
 	 *  @param source The session from which the event originated.
 	 * @param entity The entity to be invloved in the database operation.
 	 * @param id The entity id to be invloved in the database operation.
-	 * @param persister The entity's persister.
+	 * @param descriptor The entity's descriptor.
 	 */
 	public AbstractPreDatabaseOperationEvent(
 			EventSource source,
 			Object entity,
 			Object id,
-			EntityDescriptor persister) {
+			EntityDescriptor descriptor) {
 		super( source );
 		this.entity = entity;
 		this.id = id;
-		this.persister = persister;
+		this.descriptor = descriptor;
 	}
 
 	/**
@@ -60,12 +60,12 @@ public abstract class AbstractPreDatabaseOperationEvent
 	}
 
 	/**
-	 * The persister for the {@link #getEntity entity}.
+	 * The descriptor for the {@link #getEntity entity}.
 	 *
-	 * @return The entity persister.
+	 * @return The entity descriptor.
 	 */
-	public EntityDescriptor getPersister() {
-		return persister;
+	public EntityDescriptor getDescriptor() {
+		return descriptor;
 	}
 
 	/**
@@ -87,7 +87,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 
 	@Override
 	public String getEntityName() {
-		return persister.getEntityName();
+		return descriptor.getEntityName();
 	}
 
 	@Override

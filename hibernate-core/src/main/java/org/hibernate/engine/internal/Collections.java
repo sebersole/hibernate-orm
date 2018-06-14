@@ -53,22 +53,22 @@ public final class Collections {
 	private static void processDereferencedCollection(PersistentCollection coll, SessionImplementor session) {
 		final PersistenceContext persistenceContext = session.getPersistenceContext();
 		final CollectionEntry entry = persistenceContext.getCollectionEntry( coll );
-		final PersistentCollectionDescriptor loadedPersister = entry.getLoadedCollectionDescriptor();
+		final PersistentCollectionDescriptor loadedDescriptor = entry.getLoadedCollectionDescriptor();
 
-		if ( loadedPersister != null && LOG.isDebugEnabled() ) {
+		if ( loadedDescriptor != null && LOG.isDebugEnabled() ) {
 			LOG.debugf(
 					"Collection dereferenced: %s",
-					MessageHelper.collectionInfoString( loadedPersister, 
+					MessageHelper.collectionInfoString( loadedDescriptor,
 							coll, entry.getLoadedKey(), session
 					)
 			);
 		}
 
 		// do a check
-		final boolean hasOrphanDelete = loadedPersister != null && loadedPersister.hasOrphanDelete();
+		final boolean hasOrphanDelete = loadedDescriptor != null && loadedDescriptor.hasOrphanDelete();
 		if ( hasOrphanDelete ) {
 			final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor(
-					loadedPersister,
+					loadedDescriptor,
 					session.getSessionFactory()
 			);
 
@@ -92,7 +92,7 @@ public final class Collections {
 			if ( owner == null ) {
 				throw new AssertionFailure(
 						"collection owner not associated with session: " +
-						loadedPersister.getNavigableRole()
+						loadedDescriptor.getNavigableRole()
 				);
 			}
 			final EntityEntry e = persistenceContext.getEntry( owner );
@@ -100,13 +100,13 @@ public final class Collections {
 			if ( e != null && e.getStatus() != Status.DELETED && e.getStatus() != Status.GONE ) {
 				throw new HibernateException(
 						"A collection with cascade=\"all-delete-orphan\" was no longer referenced by the owning entity instance: " +
-						loadedPersister.getNavigableRole()
+						loadedDescriptor.getNavigableRole()
 				);
 			}
 		}
 
 		// do the work
-		entry.setCurrentPersister( null );
+		entry.setCurrentDescriptor( null );
 		entry.setCurrentKey( null );
 		prepareCollectionForUpdate( coll, entry );
 
@@ -129,7 +129,7 @@ public final class Collections {
 			);
 		}
 
-		entry.setCurrentPersister( entry.getLoadedCollectionDescriptor() );
+		entry.setCurrentDescriptor( entry.getLoadedCollectionDescriptor() );
 		entry.setCurrentKey( entry.getLoadedKey() );
 
 		prepareCollectionForUpdate( coll, entry);
@@ -162,7 +162,7 @@ public final class Collections {
 		final PersistentCollectionDescriptor descriptor = factory
 				.getMetamodel()
 				.findCollectionDescriptor( attributeCollection.getNavigableName() );
-		ce.setCurrentPersister( descriptor );
+		ce.setCurrentDescriptor( descriptor );
 
 		//TODO: better to pass the id in as an argument?
 		ce.setCurrentKey( descriptor.getKeyOfOwner( entity, session ) );
@@ -250,14 +250,14 @@ public final class Collections {
 		}
 		entry.setProcessed( true );
 
-		final PersistentCollectionDescriptor loadedPersister = entry.getLoadedCollectionDescriptor();
-		final PersistentCollectionDescriptor currentPersister = entry.getCurrentPersister();
-		if ( loadedPersister != null || currentPersister != null ) {
+		final PersistentCollectionDescriptor loadedDescriptor = entry.getLoadedCollectionDescriptor();
+		final PersistentCollectionDescriptor currentDescriptor = entry.getCurrentDescriptor();
+		if ( loadedDescriptor != null || currentDescriptor != null ) {
 			// it is or was referenced _somewhere_
 
 			// if either its role changed, or its key changed
-			final boolean ownerChanged = loadedPersister != currentPersister
-					|| !currentPersister.getJavaTypeDescriptor().areEqual(
+			final boolean ownerChanged = loadedDescriptor != currentDescriptor
+					|| !currentDescriptor.getJavaTypeDescriptor().areEqual(
 					entry.getLoadedKey(),
 					entry.getCurrentKey()
 			);
@@ -265,21 +265,21 @@ public final class Collections {
 			if ( ownerChanged ) {
 				// do a check
 				final boolean orphanDeleteAndRoleChanged =
-						loadedPersister != null && currentPersister != null && loadedPersister.hasOrphanDelete();
+						loadedDescriptor != null && currentDescriptor != null && loadedDescriptor.hasOrphanDelete();
 
 				if (orphanDeleteAndRoleChanged) {
 					throw new HibernateException(
 							"Don't change the reference to a collection with delete-orphan enabled : "
-									+ loadedPersister.getNavigableRole().getFullPath()
+									+ loadedDescriptor.getNavigableRole().getFullPath()
 					);
 				}
 
 				// do the work
-				if ( currentPersister != null ) {
+				if ( currentDescriptor != null ) {
 					entry.setDorecreate( true );
 				}
 
-				if ( loadedPersister != null ) {
+				if ( loadedDescriptor != null ) {
 					// we will need to remove ye olde entries
 					entry.setDoremove( true );
 					if ( entry.isDorecreate() ) {

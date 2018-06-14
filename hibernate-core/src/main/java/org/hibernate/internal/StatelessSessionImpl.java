@@ -79,11 +79,11 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	public Object insert(String entityName, Object entity) {
 		checkOpen();
 
-		EntityDescriptor persister = getEntityPersister( entityName, entity );
-		Object id = persister.getIdentifierDescriptor().getIdentifierValueGenerator().generate( this, entity );
-		Object[] state = persister.getPropertyValues( entity );
+		EntityDescriptor descriptor = getEntityDescriptor( entityName, entity );
+		Object id = descriptor.getIdentifierDescriptor().getIdentifierValueGenerator().generate( this, entity );
+		Object[] state = descriptor.getPropertyValues( entity );
 
-		final VersionDescriptor versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+		final VersionDescriptor versionDescriptor = descriptor.getHierarchy().getVersionDescriptor();
 		if ( versionDescriptor != null ) {
 			boolean substitute = Versioning.seedVersion(
 					state,
@@ -91,16 +91,16 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 					this
 			);
 			if ( substitute ) {
-				persister.setPropertyValues( entity, state );
+				descriptor.setPropertyValues( entity, state );
 			}
 		}
 		if ( id == IdentifierGeneratorHelper.POST_INSERT_INDICATOR ) {
-			id = persister.insert( state, entity, this );
+			id = descriptor.insert( state, entity, this );
 		}
 		else {
-			persister.insert( id, state, entity, this );
+			descriptor.insert( id, state, entity, this );
 		}
-		persister.setIdentifier( entity, id, this );
+		descriptor.setIdentifier( entity, id, this );
 		return id;
 	}
 
@@ -116,10 +116,10 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public void delete(String entityName, Object entity) {
 		checkOpen();
-		EntityDescriptor persister = getEntityPersister( entityName, entity );
-		Object id = persister.getIdentifier( entity, this );
-		Object version = persister.getVersion( entity );
-		persister.delete( id, version, entity, this );
+		EntityDescriptor descriptor = getEntityDescriptor( entityName, entity );
+		Object id = descriptor.getIdentifier( entity, this );
+		Object version = descriptor.getVersion( entity );
+		descriptor.delete( id, version, entity, this );
 	}
 
 
@@ -217,7 +217,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 	@Override
 	public void refresh(String entityName, Object entity, LockMode lockMode) {
-		final EntityDescriptor entityDescriptor = this.getEntityPersister( entityName, entity );
+		final EntityDescriptor entityDescriptor = this.getEntityDescriptor( entityName, entity );
 		final Object id = entityDescriptor.getIdentifier( entity, this );
 		if ( LOG.isTraceEnabled() ) {
 			LOG.tracev( "Refreshing transient {0}", MessageHelper.infoString( entityDescriptor, id, this.getFactory() ) );
@@ -298,18 +298,18 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			boolean eager,
 			boolean nullable) throws HibernateException {
 		checkOpen();
-		EntityDescriptor persister = getFactory().getMetamodel().findEntityDescriptor( entityName );
+		EntityDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
 		// first, try to load it from the temp PC associated to this SS
-		Object loaded = temporaryPersistenceContext.getEntity( generateEntityKey( id, persister ) );
+		Object loaded = temporaryPersistenceContext.getEntity( generateEntityKey( id, descriptor ) );
 		if ( loaded != null ) {
 			// we found it in the temp PC.  Should indicate we are in the midst of processing a result set
 			// containing eager fetches via join fetch
 			return loaded;
 		}
-		if ( !eager && persister.hasProxy() ) {
+		if ( !eager && descriptor.hasProxy() ) {
 			// if the metadata allowed proxy creation and caller did not request forceful eager loading,
 			// generate a proxy
-			return persister.createProxy( id, this );
+			return descriptor.createProxy( id, this );
 		}
 		// otherwise immediately materialize it
 		return get( entityName, id );
@@ -415,7 +415,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );
 		}
 		else {
-			return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityPersister( object, getFactory() );
+			return getFactory().getMetamodel().findEntityDescriptor( entityName ).getSubclassEntityDescriptor( object, getFactory() );
 		}
 	}
 
