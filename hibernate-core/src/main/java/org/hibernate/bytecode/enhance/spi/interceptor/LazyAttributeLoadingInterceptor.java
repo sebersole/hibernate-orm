@@ -77,10 +77,10 @@ public class LazyAttributeLoadingInterceptor
 				new LazyInitializationWork() {
 					@Override
 					public Object doWork(SharedSessionContractImplementor session, boolean isTemporarySession) {
-						final EntityDescriptor persister = session.getFactory().getMetamodel().findEntityDescriptor( getEntityName() );
+						final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( getEntityName() );
 
 						if ( isTemporarySession ) {
-							final Object id = persister.getIdentifier( target, null );
+							final Object id = entityDescriptor.getIdentifier( target, null );
 
 							// Add an entry for this entity in the PC of the temp Session
 							// NOTE : a few arguments that would be nice to pass along here...
@@ -92,16 +92,16 @@ public class LazyAttributeLoadingInterceptor
 									target,
 									Status.READ_ONLY,
 									loadedState,
-									session.generateEntityKey( id, persister ),
-									persister.getVersion( target ),
+									session.generateEntityKey( id, entityDescriptor ),
+									entityDescriptor.getVersion( target ),
 									LockMode.NONE,
 									existsInDb,
-									persister,
+									entityDescriptor,
 									true
 							);
 						}
 
-						final LazyPropertyInitializer initializer = (LazyPropertyInitializer) persister;
+						final LazyPropertyInitializer initializer = (LazyPropertyInitializer) entityDescriptor;
 						final Object loadedValue = initializer.initializeLazyProperty(
 								attributeName,
 								target,

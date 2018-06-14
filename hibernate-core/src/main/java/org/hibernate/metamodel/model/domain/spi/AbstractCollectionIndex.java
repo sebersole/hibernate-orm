@@ -15,17 +15,17 @@ import org.hibernate.sql.ast.produce.spi.TableGroupContext;
  * @author Steve Ebersole
  */
 public abstract class AbstractCollectionIndex<J> implements CollectionIndex<J> {
-	private final PersistentCollectionDescriptor persister;
+	private final PersistentCollectionDescriptor descriptor;
 	private final NavigableRole navigableRole;
 
-	public AbstractCollectionIndex(PersistentCollectionDescriptor persister) {
-		this.persister = persister;
-		this.navigableRole = persister.getNavigableRole().append( NAVIGABLE_NAME );
+	public AbstractCollectionIndex(PersistentCollectionDescriptor descriptor) {
+		this.descriptor = descriptor;
+		this.navigableRole = descriptor.getNavigableRole().append( NAVIGABLE_NAME );
 	}
 
 	@Override
 	public PersistentCollectionDescriptor getContainer() {
-		return persister;
+		return descriptor;
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public abstract class AbstractCollectionIndex<J> implements CollectionIndex<J> {
 
 	@Override
 	public String asLoggableText() {
-		return "PluralAttributeIndex(" + persister.getNavigableRole() + " [" + getJavaType() + "])";
+		return "PluralAttributeIndex(" + descriptor.getNavigableRole() + " [" + getJavaType() + "])";
 	}
 
 	@Override

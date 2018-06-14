@@ -44,14 +44,14 @@ public class DefaultUpdateEventListener extends DefaultSaveOrUpdateEventListener
 	 */
 	protected Object getUpdateId(
 			Object entity,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			Object requestedId,
 			SessionImplementor session) throws HibernateException {
 		if ( requestedId == null ) {
-			return super.getUpdateId( entity, persister, requestedId, session );
+			return super.getUpdateId( entity, descriptor, requestedId, session );
 		}
 		else {
-			persister.setIdentifier( entity, requestedId, session );
+			descriptor.setIdentifier( entity, requestedId, session );
 			return requestedId;
 		}
 	}

@@ -73,12 +73,12 @@ public class PersistentSortedMap<K,V> extends PersistentMap<K,V> implements Sort
 	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})
-	protected Serializable snapshot(PersistentCollectionDescriptor<?,?,V> persister, RepresentationMode entityMode) throws HibernateException {
+	protected Serializable snapshot(PersistentCollectionDescriptor<?,?,V> descriptor, RepresentationMode entityMode) throws HibernateException {
 		final TreeMap clonedMap = new TreeMap( comparator );
 		for ( Entry<K, V> entry : map.entrySet() ) {
 			clonedMap.put(
 					entry.getKey(),
-					persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( entry.getValue() )
+					descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( entry.getValue() )
 			);
 		}
 		return clonedMap;

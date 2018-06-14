@@ -505,8 +505,8 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Object id, EntityDescriptor persister) {
-		return new EntityKey( id, persister );
+	public EntityKey generateEntityKey(Object id, EntityDescriptor descriptor) {
+		return new EntityKey( id, descriptor );
 	}
 
 	@Override

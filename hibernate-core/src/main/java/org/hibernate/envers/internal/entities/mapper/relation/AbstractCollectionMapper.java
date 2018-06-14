@@ -166,7 +166,7 @@ public abstract class AbstractCollectionMapper<T> extends AbstractPropertyMapper
 			// the same value in both collections.  Using #isSame, these will be seen as differing elements and
 			// changes to the collection will be returned.
 			if ( !( newColl instanceof PersistentMap ) ) {
-				final PersistentCollectionDescriptor collectionDescriptor = collectionEntry.getCurrentPersister();
+				final PersistentCollectionDescriptor collectionDescriptor = collectionEntry.getCurrentDescriptor();
 				if ( collectionDescriptor != null && collectionDescriptor.getIndexDescriptor() != null ) {
 					return mapCollectionChanges( session, newColl, oldColl, id, collectionDescriptor );
 				}

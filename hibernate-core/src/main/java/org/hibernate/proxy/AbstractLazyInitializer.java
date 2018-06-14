@@ -119,8 +119,8 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 				session = s;
 				if ( readOnlyBeforeAttachedToSession == null ) {
 					// use the default read-only/modifiable setting
-					final EntityDescriptor entityPersister = s.getFactory().getEntityPersister( entityName );
-					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !entityPersister.getJavaTypeDescriptor().getMutabilityPlan().isMutable() );
+					final EntityDescriptor entityDescriptor = s.getFactory().getEntityPersister( entityName );
+					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() );
 				}
 				else {
 					// use the read-only/modifiable setting indicated during deserialization

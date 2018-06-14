@@ -39,8 +39,8 @@ public class EntityIncrementVersionProcess implements BeforeTransactionCompletio
 	 */
 	@Override
 	public void doBeforeTransactionCompletion(SessionImplementor session) {
-		final EntityDescriptor persister = entry.getPersister();
-		final Object nextVersion = persister.forceVersionIncrement( entry.getId(), entry.getVersion(), session );
+		final EntityDescriptor entityDescriptor = entry.getDescriptor();
+		final Object nextVersion = entityDescriptor.forceVersionIncrement( entry.getId(), entry.getVersion(), session );
 		entry.forceLocked( object, nextVersion );
 	}
 }

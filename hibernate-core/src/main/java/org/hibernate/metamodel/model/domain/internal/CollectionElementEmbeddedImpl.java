@@ -36,17 +36,17 @@ public class CollectionElementEmbeddedImpl<J>
 		extends AbstractCollectionElement<J>
 		implements CollectionElementEmbedded<J> {
 
-	private final EmbeddedTypeDescriptor<J> embeddedPersister;
+	private final EmbeddedTypeDescriptor<J> embeddedDescriptor;
 
 	public CollectionElementEmbeddedImpl(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			Collection mapping,
 			RuntimeModelCreationContext creationContext) {
-		super( persister );
+		super( descriptor );
 
-		this.embeddedPersister = creationContext.getRuntimeModelDescriptorFactory().createEmbeddedTypeDescriptor(
+		this.embeddedDescriptor = creationContext.getRuntimeModelDescriptorFactory().createEmbeddedTypeDescriptor(
 				(EmbeddedValueMappingImplementor) mapping.getElement(),
-				persister,
+				descriptor,
 				null,
 				NAVIGABLE_NAME,
 				SingularPersistentAttribute.Disposition.NORMAL,
@@ -56,7 +56,7 @@ public class CollectionElementEmbeddedImpl<J>
 
 	@Override
 	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
-		return embeddedPersister;
+		return embeddedDescriptor;
 	}
 
 	@Override

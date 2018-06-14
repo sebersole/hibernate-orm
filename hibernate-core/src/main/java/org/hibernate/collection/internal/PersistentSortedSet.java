@@ -49,11 +49,11 @@ public class PersistentSortedSet extends PersistentSet implements SortedSet {
 	}
 
 	@SuppressWarnings({"unchecked", "UnusedParameters"})
-	protected Serializable snapshot(PersistentCollectionDescriptor persister, EntityMode entityMode)
+	protected Serializable snapshot(PersistentCollectionDescriptor descriptor, EntityMode entityMode)
 			throws HibernateException {
 		final TreeMap clonedSet = new TreeMap( comparator );
 		for ( Object setElement : set ) {
-			final Object copy = persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( setElement );
+			final Object copy = descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( setElement );
 			clonedSet.put( copy, copy );
 		}
 		return clonedSet;

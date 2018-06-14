@@ -23,7 +23,7 @@ public class EnversPreUpdateEventListenerImpl extends BaseEnversUpdateEventListe
 
 	@Override
 	public boolean onPreUpdate(PreUpdateEvent event) {
-		final String entityName = event.getPersister().getEntityName();
+		final String entityName = event.getDescriptor().getEntityName();
 		if ( getAuditService().getEntityBindings().isVersioned( entityName ) ) {
 			checkIfTransactionInProgress( event.getSession() );
 			if ( isDetachedEntityUpdate( entityName, event.getOldState() ) ) {
@@ -31,7 +31,7 @@ public class EnversPreUpdateEventListenerImpl extends BaseEnversUpdateEventListe
 				auditProcess.cacheEntityState(
 						event.getId(),
 						entityName,
-						event.getPersister().getDatabaseSnapshot( event.getId(), event.getSession() )
+						event.getDescriptor().getDatabaseSnapshot( event.getId(), event.getSession() )
 				);
 			}
 		}

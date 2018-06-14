@@ -104,7 +104,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 	}
 
 	@Override
-	public Iterator entries(PersistentCollectionDescriptor persister) {
+	public Iterator entries(PersistentCollectionDescriptor descriptor) {
 		return bag.iterator();
 	}
 
@@ -165,7 +165,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Serializable getSnapshot(PersistentCollectionDescriptor persister)
+	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor)
 			throws HibernateException {
 		final ArrayList clonedList = new ArrayList( bag.size() );
 		for ( Object item : bag ) {
@@ -225,7 +225,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final ArrayList<E> deletes = new ArrayList<>();
 
 		final List<E> sn = (List<E>) getSnapshot();

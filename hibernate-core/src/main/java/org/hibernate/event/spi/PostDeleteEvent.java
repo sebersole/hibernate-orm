@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostDeleteEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor persister;
+	private EntityDescriptor entityDescriptor;
 	private Object id;
 	private Object[] deletedState;
 	
@@ -23,13 +23,13 @@ public class PostDeleteEvent extends AbstractEvent {
 			Object entity,
 			Object id,
 			Object[] deletedState,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source
 	) {
 		super(source);
 		this.entity = entity;
 		this.id = id;
-		this.persister = persister;
+		this.entityDescriptor = descriptor;
 		this.deletedState = deletedState;
 	}
 	
@@ -37,8 +37,8 @@ public class PostDeleteEvent extends AbstractEvent {
 		return id;
 	}
 
-	public EntityDescriptor getPersister() {
-		return persister;
+	public EntityDescriptor getDescriptor() {
+		return entityDescriptor;
 	}
 
 	public Object getEntity() {

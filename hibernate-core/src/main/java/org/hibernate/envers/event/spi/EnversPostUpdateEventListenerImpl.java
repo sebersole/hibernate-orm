@@ -29,7 +29,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 
 	@Override
 	public void onPostUpdate(PostUpdateEvent event) {
-		final String entityName = event.getPersister().getEntityName();
+		final String entityName = event.getDescriptor().getEntityName();
 
 		if ( getAuditService().getEntityBindings().isVersioned( entityName ) ) {
 			checkIfTransactionInProgress( event.getSession() );
@@ -40,10 +40,10 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 			final Object[] newDbState = postUpdateDBState( event );
 			final AuditWorkUnit workUnit = new ModWorkUnit(
 					event.getSession(),
-					event.getPersister().getEntityName(),
+					event.getDescriptor().getEntityName(),
 					getAuditService(),
 					event.getId(),
-					event.getPersister(),
+					event.getDescriptor(),
 					newDbState,
 					oldState
 			);
@@ -52,7 +52,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 			if ( workUnit.containsWork() ) {
 				generateBidirectionalCollectionChangeWorkUnits(
 						auditProcess,
-						event.getPersister(),
+						event.getDescriptor(),
 						entityName,
 						newDbState,
 						event.getOldState(),
@@ -72,7 +72,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 	private Object[] postUpdateDBState(PostUpdateEvent event) {
 		final Object[] newDbState = event.getState().clone();
 		if ( event.getOldState() != null ) {
-			final EntityDescriptor<?> entityDescriptor = event.getPersister();
+			final EntityDescriptor<?> entityDescriptor = event.getDescriptor();
 			entityDescriptor.visitStateArrayContributors(
 					contributor -> {
 						int index = contributor.getStateArrayPosition();
@@ -89,7 +89,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor persister) {
-		return getAuditService().getEntityBindings().isVersioned( persister.getEntityName() );
+	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+		return getAuditService().getEntityBindings().isVersioned( descriptor.getEntityName() );
 	}
 }

@@ -1251,7 +1251,7 @@ public class ActionQueue {
 		 */
 		private void addParentChildEntityNames(AbstractEntityInsertAction action, BatchIdentifier batchIdentifier) {
 //			Object[] propertyValues = action.getState();
-//			ClassMetadata classMetadata = action.getPersister().getClassMetadata();
+//			ClassMetadata classMetadata = action.getDescriptor().getClassMetadata();
 //			if ( classMetadata != null ) {
 //				Type[] propertyTypes = classMetadata.getPropertyTypes();
 //

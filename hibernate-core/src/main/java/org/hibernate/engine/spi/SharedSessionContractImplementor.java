@@ -193,11 +193,11 @@ public interface SharedSessionContractImplementor
 	 * Hide the changing requirements of entity key creation
 	 *
 	 * @param id The entity id
-	 * @param persister The entity persister
+	 * @param descriptor The entity descriptor
 	 *
 	 * @return The entity key
 	 */
-	EntityKey generateEntityKey(Object id, EntityDescriptor persister);
+	EntityKey generateEntityKey(Object id, EntityDescriptor descriptor);
 
 	/**
 	 * Retrieves the interceptor currently in use by this event source.
@@ -244,7 +244,10 @@ public interface SharedSessionContractImplementor
 	 *
 	 * @param entityName optional entity name
 	 * @param object the entity instance
+	 *
+	 * @deprecated since 6.0, use {@link #getEntityDescriptor(String, Object)} instead.
 	 */
+	@Deprecated
 	default EntityDescriptor getEntityPersister(String entityName, Object object) throws HibernateException {
 		return getEntityDescriptor( entityName, object );
 	}

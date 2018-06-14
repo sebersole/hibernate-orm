@@ -92,7 +92,7 @@ public class EntityEntryContext {
 		final boolean alreadyAssociated = managedEntity != null;
 		if ( !alreadyAssociated ) {
 			if ( ManagedEntity.class.isInstance( entity ) ) {
-				if ( entityEntry.getPersister().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+				if ( entityEntry.getDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
 					managedEntity = (ManagedEntity) entity;
 					// We know that managedEntity is not associated with the same PersistenceContext.
 					// Check if managedEntity is associated with a different PersistenceContext.
@@ -158,7 +158,7 @@ public class EntityEntryContext {
 			}
 			final AbstractEntityEntry entityEntry = (AbstractEntityEntry) managedEntity.$$_hibernate_getEntityEntry();
 
-			if ( entityEntry.getPersister().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+			if ( entityEntry.getDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
 				return entityEntry.getPersistenceContext() == persistenceContext
 						? managedEntity // it is associated
 						: null;
@@ -183,7 +183,7 @@ public class EntityEntryContext {
 		// we only have to check mutable managedEntity
 		final AbstractEntityEntry entityEntry = (AbstractEntityEntry) managedEntity.$$_hibernate_getEntityEntry();
 		if ( entityEntry == null ||
-				!entityEntry.getPersister().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ||
+				!entityEntry.getDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ||
 				entityEntry.getPersistenceContext() == null ||
 				entityEntry.getPersistenceContext() == persistenceContext ) {
 			return;
@@ -443,7 +443,7 @@ public class EntityEntryContext {
 
 			final ManagedEntity managedEntity;
 			if ( isEnhanced ) {
-				if ( entry.getPersister().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+				if ( entry.getDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
 					managedEntity = (ManagedEntity) entity;
 				}
 				else {
@@ -642,7 +642,7 @@ public class EntityEntryContext {
 			if( !(managedEntity.$$_hibernate_getEntityEntry() instanceof ImmutableEntityEntry) ) {
 				return true;
 			}
-			else if( managedEntity.$$_hibernate_getEntityEntry().getPersister().canUseReferenceCacheEntries() ) {
+			else if( managedEntity.$$_hibernate_getEntityEntry().getDescriptor().canUseReferenceCacheEntries() ) {
 				return false;
 			}
 

@@ -48,10 +48,10 @@ public class BasicCollectionIndexImpl<J>
 
 	@SuppressWarnings("unchecked")
 	public BasicCollectionIndexImpl(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			IndexedCollection bootCollectionMapping,
 			RuntimeModelCreationContext creationContext) {
-		super( persister );
+		super( descriptor );
 
 		final BasicValueMapping valueMapping = (BasicValueMapping) bootCollectionMapping.getIndex();
 		this.column  = creationContext.getDatabaseObjectResolver().resolveColumn( valueMapping.getMappedColumn() );

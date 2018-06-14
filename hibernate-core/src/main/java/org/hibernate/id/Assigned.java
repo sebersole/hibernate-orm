@@ -30,7 +30,7 @@ public class Assigned implements IdentifierGenerator, Configurable {
 	@Override
 	public Object generate(SharedSessionContractImplementor session, Object object) throws HibernateException {
 		if ( entityDescriptor == null ) {
-			entityDescriptor = session.getEntityPersister( entityName, object );
+			entityDescriptor = session.getEntityDescriptor( entityName, object );
 		}
 
 		final Object id = entityDescriptor.getIdentifier( object, session );

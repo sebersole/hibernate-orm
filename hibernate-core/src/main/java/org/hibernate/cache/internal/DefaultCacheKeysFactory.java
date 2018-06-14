@@ -93,8 +93,8 @@ public class DefaultCacheKeysFactory implements CacheKeysFactory {
 	}
 
 	@Override
-	public Object createCollectionKey(Object id, PersistentCollectionDescriptor collectionDescriptor, SessionFactoryImplementor factory, String tenantIdentifier) {
-		return staticCreateCollectionKey( id, collectionDescriptor, factory, tenantIdentifier );
+	public Object createCollectionKey(Object id, PersistentCollectionDescriptor descriptor, SessionFactoryImplementor factory, String tenantIdentifier) {
+		return staticCreateCollectionKey( id, descriptor, factory, tenantIdentifier );
 	}
 
 	@Override

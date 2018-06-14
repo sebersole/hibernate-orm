@@ -23,16 +23,16 @@ public class PreInsertEvent extends AbstractPreDatabaseOperationEvent {
 	 *  @param entity The entity to be inserted.
 	 * @param id The id to use in the insertion.
 	 * @param state The state to be inserted.
-	 * @param persister The entity's persister.
+	 * @param descriptor The entity's descriptor.
 	 * @param source The session from which the event originated.
 	 */
 	public PreInsertEvent(
 			Object entity,
 			Object id,
 			Object[] state,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source) {
-		super( source, entity, id, persister );
+		super( source, entity, id, descriptor );
 		this.state = state;
 	}
 

@@ -79,15 +79,15 @@ public class PersistentArrayHolder<E> extends AbstractPersistentCollection<E> {
 	}
 
 	@Override
-	public Serializable getSnapshot(PersistentCollectionDescriptor<?,?,E> persister) {
+	public Serializable getSnapshot(PersistentCollectionDescriptor<?,?,E> descriptor) {
 //		final int length = (array==null) ? tempList.size() : Array.getLength( array );
 		final int length = Array.getLength( array );
-		final Serializable result = (Serializable) Array.newInstance( persister.getElementDescriptor().getJavaType(), length );
+		final Serializable result = (Serializable) Array.newInstance( descriptor.getElementDescriptor().getJavaType(), length );
 		for ( int i=0; i<length; i++ ) {
 //			final Object elt = (array==null) ? tempList.get( i ) : Array.get( array, i );
 			final E elt = (E) Array.get( array, i );
 			try {
-				Array.set( result, i, persister.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( elt ) );
+				Array.set( result, i, descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( elt ) );
 			}
 			catch (IllegalArgumentException iae) {
 				LOG.invalidArrayElementType( iae.getMessage() );
@@ -179,7 +179,7 @@ public class PersistentArrayHolder<E> extends AbstractPersistentCollection<E> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Iterator<E> entries(PersistentCollectionDescriptor<?, ?, E> persister) {
+	public Iterator<E> entries(PersistentCollectionDescriptor<?, ?, E> descriptor) {
 		return elements();
 	}
 
@@ -249,7 +249,7 @@ public class PersistentArrayHolder<E> extends AbstractPersistentCollection<E> {
 	}
 
 	@Override
-	public Iterator getDeletes(PersistentCollectionDescriptor persister, boolean indexIsFormula) throws HibernateException {
+	public Iterator getDeletes(PersistentCollectionDescriptor descriptor, boolean indexIsFormula) throws HibernateException {
 		final java.util.List<Integer> deletes = new ArrayList<>();
 		final Serializable sn = getSnapshot();
 		final int snSize = Array.getLength( sn );

@@ -43,22 +43,22 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 public class CollectionIndexEntityImpl<J>
 		extends AbstractCollectionIndex<J>
 		implements CollectionIndexEntity<J> {
-	private final EntityDescriptor<J> entityPersister;
+	private final EntityDescriptor<J> entityDescriptor;
 	private final NavigableRole navigableRole;
 
 	public CollectionIndexEntityImpl(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			IndexedCollection bootCollectionMapping,
 			RuntimeModelCreationContext creationContext) {
-		super( persister );
+		super( descriptor );
 
-		this.entityPersister = null;
-		this.navigableRole = persister.getNavigableRole().append( NAVIGABLE_NAME );
+		this.entityDescriptor = null;
+		this.navigableRole = descriptor.getNavigableRole().append( NAVIGABLE_NAME );
 	}
 
 	@Override
 	public EntityDescriptor<J> getEntityDescriptor() {
-		return entityPersister;
+		return entityDescriptor;
 	}
 
 	@Override

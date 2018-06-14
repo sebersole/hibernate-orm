@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostInsertEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor persister;
+	private EntityDescriptor entityDescriptor;
 	private Object[] state;
 	private Object id;
 	
@@ -23,13 +23,13 @@ public class PostInsertEvent extends AbstractEvent {
 			Object entity,
 			Object id,
 			Object[] state,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source) {
 		super(source);
 		this.entity = entity;
 		this.id = id;
 		this.state = state;
-		this.persister = persister;
+		this.entityDescriptor = descriptor;
 	}
 	
 	public Object getEntity() {
@@ -40,8 +40,8 @@ public class PostInsertEvent extends AbstractEvent {
 		return id;
 	}
 
-	public EntityDescriptor getPersister() {
-		return persister;
+	public EntityDescriptor getDescriptor() {
+		return entityDescriptor;
 	}
 
 	public Object[] getState() {

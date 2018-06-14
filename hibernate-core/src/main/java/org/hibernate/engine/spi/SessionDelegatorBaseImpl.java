@@ -128,8 +128,8 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Object id, EntityDescriptor persister) {
-		return delegate.generateEntityKey( id, persister );
+	public EntityKey generateEntityKey(Object id, EntityDescriptor descriptor) {
+		return delegate.generateEntityKey( id, descriptor );
 	}
 
 	@Override

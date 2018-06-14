@@ -78,7 +78,7 @@ public class PersistenceUnitUtilImpl implements PersistenceUnitUtil, Serializabl
 			else {
 				// HHH-11426 - best effort to deal with the case of detached entities
 				log.debug( "javax.persistence.PersistenceUnitUtil.getIdentifier may not be able to read identifier of a detached entity" );
-				return getIdentifierFromPersister( entity );
+				return getIdentifierFromDescriptor( entity );
 			}
 		}
 		else {
@@ -87,23 +87,23 @@ public class PersistenceUnitUtilImpl implements PersistenceUnitUtil, Serializabl
 							"(although Hibernate also adapts this support to its proxies); " +
 							"however the passed entity was not enhanced (nor a proxy).. may not be able to read identifier"
 			);
-			return getIdentifierFromPersister( entity );
+			return getIdentifierFromDescriptor( entity );
 		}
 	}
 
-	private Object getIdentifierFromPersister(Object entity) {
+	private Object getIdentifierFromDescriptor(Object entity) {
 		Class<?> entityClass = Hibernate.getClass( entity );
-		final EntityDescriptor persister;
+		final EntityDescriptor descriptor;
 		try {
-			persister = sessionFactory.getMetamodel().getEntityDescriptor( entityClass );
-			if ( persister == null ) {
+			descriptor = sessionFactory.getMetamodel().getEntityDescriptor( entityClass );
+			if ( descriptor == null ) {
 				throw new IllegalArgumentException( entityClass.getName() + " is not an entity" );
 			}
 		}
 		catch (MappingException ex) {
 			throw new IllegalArgumentException( entityClass.getName() + " is not an entity", ex );
 		}
-		return persister.getIdentifier( entity, null );
+		return descriptor.getIdentifier( entity, null );
 	}
 
 }

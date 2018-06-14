@@ -38,15 +38,15 @@ public class BatchFetchQueueHelper {
 	 *
 	 * @param ids - the IDs for the entities that were batch loaded
 	 * @param results - the results from loading the batch
-	 * @param persister - the entity persister for the entities in batch
+	 * @param descriptor - the entity descriptor for the entities in batch
 	 * @param session - the session
 	 */
 	public static void removeNotFoundBatchLoadableEntityKeys(
 			Serializable[] ids,
 			List<?> results,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			SharedSessionContractImplementor session) {
-		if ( !persister.isBatchLoadable() ) {
+		if ( !descriptor.isBatchLoadable() ) {
 			return;
 		}
 		if ( ids.length == results.size() ) {
@@ -60,26 +60,26 @@ public class BatchFetchQueueHelper {
 		}
 		assert idSet.size() == ids.length - results.size();
 		if ( LOG.isDebugEnabled() ) {
-			LOG.debug( "Entities of type [" + persister.getEntityName() + "] not found; IDs: " + idSet );
+			LOG.debug( "Entities of type [" + descriptor.getEntityName() + "] not found; IDs: " + idSet );
 		}
 		for ( Serializable id : idSet ) {
-			removeBatchLoadableEntityKey( id, persister, session );
+			removeBatchLoadableEntityKey( id, descriptor, session );
 		}
 	}
 
 	/**
-	 * Remove the entity key with the specified {@code id} and {@code persister} from
+	 * Remove the entity key with the specified {@code id} and {@code descriptor} from
 	 * the batch loadable entities {@link BatchFetchQueue}.
 	 *
 	 * @param id - the ID for the entity to be removed
-	 * @param persister - the entity persister
+	 * @param descriptor - the entity descriptor
 	 * @param session - the session
 	 */
 	public static void removeBatchLoadableEntityKey(
 			Serializable id,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			SharedSessionContractImplementor session) {
-		final EntityKey entityKey = session.generateEntityKey( id, persister );
+		final EntityKey entityKey = session.generateEntityKey( id, descriptor );
 		final BatchFetchQueue batchFetchQueue = session.getPersistenceContext().getBatchFetchQueue();
 		batchFetchQueue.removeBatchLoadableEntityKey( entityKey );
 	}
