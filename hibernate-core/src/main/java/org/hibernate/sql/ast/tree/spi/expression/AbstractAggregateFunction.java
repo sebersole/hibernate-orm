@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 
 /**
  * @author Steve Ebersole
@@ -35,5 +36,10 @@ public abstract class AbstractAggregateFunction extends AbstractStandardFunction
 	@Override
 	public Expression getArgument() {
 		return argument;
+	}
+
+	@Override
+	public SqlExpressable getExpressable() {
+		return this;
 	}
 }

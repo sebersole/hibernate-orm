@@ -150,6 +150,10 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitQuerySpec(QuerySpec querySpec) {
+		if ( !querySpec.isRoot() ) {
+			appendSql( " (" );
+		}
+
 		visitSelectClause( querySpec.getSelectClause() );
 		visitFromClause( querySpec.getFromClause() );
 
@@ -179,6 +183,10 @@ public abstract class AbstractSqlAstWalker
 		}
 
 		visitLimitOffsetClause( querySpec );
+
+		if ( !querySpec.isRoot() ) {
+			appendSql( ") " );
+		}
 	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

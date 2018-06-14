@@ -51,6 +51,7 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
 import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
+import org.hibernate.query.sqm.tree.expression.SqmSubQuery;
 import org.hibernate.query.sqm.tree.expression.SqmUnaryOperation;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityIdentifierReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityReference;
@@ -153,6 +154,7 @@ import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
 import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
 import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
+import org.hibernate.sql.ast.tree.spi.expression.SubQuery;
 import org.hibernate.sql.ast.tree.spi.expression.SumFunction;
 import org.hibernate.sql.ast.tree.spi.expression.TrimFunction;
 import org.hibernate.sql.ast.tree.spi.expression.UnaryOperation;
@@ -366,7 +368,7 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public SortSpecification visitSortSpecification(SqmSortSpecification sortSpecification) {
 		return new SortSpecification(
-				(Expression) sortSpecification.getSortExpression().accept( this ),
+				toExpression( sortSpecification.getSortExpression().accept( this ) ),
 				sortSpecification.getCollation(),
 				sortSpecification.getSortOrder()
 		);
@@ -1217,7 +1219,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 		try {
 			return new MaxFunction(
-					(Expression) expression.getArgument().accept( this ),
+					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
 					expression.getExpressableType()
 			);
@@ -1233,7 +1235,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 		try {
 			return new MinFunction(
-					(Expression) expression.getArgument().accept( this ),
+					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
 					expression.getExpressableType()
 			);
@@ -1267,7 +1269,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 		try {
 			return new SumFunction(
-					(Expression) expression.getArgument().accept( this ),
+					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
 					expression.getExpressableType()
 			);
@@ -1521,6 +1523,11 @@ public abstract class BaseSqmToSqlAstConverter
 			}
 			return new SqlTuple( list );
 		}
+		else if ( value instanceof SqmSubQuery ) {
+			SqmSubQuery sqmSubQuery = (SqmSubQuery) value;
+			QuerySpec querySpec = visitQuerySpec( sqmSubQuery.getQuerySpec() );
+			return new SubQuery( querySpec, sqmSubQuery.getExpressableType() );
+		}
 
 		// any other special cases?
 
@@ -1579,7 +1586,7 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public NullnessPredicate visitIsNullPredicate(NullnessSqmPredicate predicate) {
 		return new NullnessPredicate(
-				(Expression) predicate.getExpression().accept( this ),
+				toExpression( predicate.getExpression().accept( this ) ),
 				predicate.isNegated()
 		);
 	}

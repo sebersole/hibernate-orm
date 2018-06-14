@@ -164,6 +164,8 @@ public class SqmSelectToSqlAstConverter
 
 		if ( getQuerySpecStack().depth() > 1 ) {
 			// we only need the QueryResults if we are in the top-level select-clause.
+			// but we do need to at least resolve the sql selections
+			getSqlSelectionResolver().resolveSqlSelection( (Expression) resultProducer );
 			return null;
 		}
 
