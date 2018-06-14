@@ -749,6 +749,11 @@ public class Oracle8iDialect extends Dialect {
 		return true;
 	}
 
+	@Override
+	public boolean isEmptyStringTreatedAsNull() {
+		return true;
+	}
+
 	/**
 	 * For Oracle, the FOR UPDATE clause cannot be applied when using ORDER BY, DISTINCT or views.
 	 *

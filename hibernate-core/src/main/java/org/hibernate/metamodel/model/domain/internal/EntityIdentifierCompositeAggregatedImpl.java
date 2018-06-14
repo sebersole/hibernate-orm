@@ -177,6 +177,38 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
+	public Object resolveHydratedState(
+			Object hydratedForm,
+			ResolutionContext resolutionContext,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		if ( hydratedForm == null ) {
+			return null;
+		}
+		else {
+			Object[] hydratedState = (Object[]) hydratedForm;
+			Object[] state = new Object[getEmbeddedDescriptor().getStateArrayContributors().size()];
+
+			getEmbeddedDescriptor().visitStateArrayContributors(
+					contributor -> {
+						final int index = contributor.getStateArrayPosition();
+						state[index] = contributor.resolveHydratedState(
+								hydratedState[index],
+								resolutionContext,
+								session,
+								containerInstance
+						);
+					}
+			);
+
+			Object result = getEmbeddedDescriptor().instantiate( session );
+			getEmbeddedDescriptor().setPropertyValues( result, state );
+
+			return result;
+		}
+	}
+
+	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
 		getEmbeddedDescriptor().visitStateArrayContributors(

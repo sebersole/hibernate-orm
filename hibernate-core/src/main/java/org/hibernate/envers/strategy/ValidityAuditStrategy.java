@@ -33,18 +33,25 @@ import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.util.StringHelper;
+import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggregated;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
+import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.MIDDLE_ENTITY_ALIAS;
@@ -509,25 +516,22 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// SET REVEND = ?
 		final Number revisionNumber = auditService.getRevisionInfoNumberReader().getRevisionNumber( revision );
-		final BasicValuedNavigable rootAuditedRevisionEndNavigable = getNavigableByPath(
+		final Navigable rootAuditedRevisionEndNavigable = getNavigableByPath(
 				rootAuditedEntityDescriptor,
 				options.getRevisionEndFieldName()
 		);
-		update.addColumn( rootAuditedRevisionEndNavigable.getBoundColumn().getExpression() );
-		update.bind( revisionNumber, rootAuditedRevisionEndNavigable.getBasicType() );
+		update.addColumn( rootAuditedRevisionEndNavigable );
+		update.bind( revisionNumber, rootAuditedRevisionEndNavigable );
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// [, REVEND_TSTMP = ?]
 		if ( options.isRevisionEndTimestampEnabled() ) {
-			final BasicValuedNavigable rootAuditedRevisionEndTimestampNavigable = getNavigableByPath(
+			final Navigable rootAuditedRevisionEndTimestampNavigable = getNavigableByPath(
 					rootAuditedEntityDescriptor,
 					options.getRevisionEndTimestampFieldName()
 			);
-			update.addColumn( rootAuditedRevisionEndTimestampNavigable.getBoundColumn().getExpression() );
-			update.bind(
-					getRevisionEndTimestampValue( revision, options ),
-					rootAuditedRevisionEndTimestampNavigable.getBasicType()
-			);
+			update.addColumn( rootAuditedRevisionEndTimestampNavigable );
+			update.bind( getRevisionEndTimestampValue( revision, options ), rootAuditedRevisionEndTimestampNavigable );
 		}
 
 		applyUpdateContextWhereCommon(
@@ -541,11 +545,11 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REVEND is null
-		final BasicValuedNavigable auditedRevisionEndNavigable = getNavigableByPath(
+		final Navigable auditedRevisionEndNavigable = getNavigableByPath(
 				auditedEntityDescriptor,
 				options.getRevisionEndFieldName()
 		);
-		update.addWhereColumn( auditedRevisionEndNavigable.getBoundColumn().getExpression(), " is null" );
+		update.addWhereColumn( auditedRevisionEndNavigable, " is null" );
 
 		return update;
 	}
@@ -588,21 +592,21 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		final UpdateContext update = new UpdateContext( sessionFactory );
 		update.setTableName( getUpdateTableName( entityDescriptor, auditedEntityDescriptor, auditedEntityDescriptor ) );
 
-		final BasicValuedNavigable auditedRevisionEndTimestampNavigable = getNavigableByPath(
+		final Navigable auditedRevisionEndTimestampNavigable = getNavigableByPath(
 				auditedEntityDescriptor,
 				options.getRevisionEndTimestampFieldName()
 		);
 
 		final Object timestampValue = getRevisionEndTimestampValue( revision, options );
-		update.addColumn( auditedRevisionEndTimestampNavigable.getBoundColumn().getExpression() );
-		update.bind( timestampValue, auditedRevisionEndTimestampNavigable.getBasicType() );
+		update.addColumn( auditedRevisionEndTimestampNavigable );
+		update.bind( timestampValue, auditedRevisionEndTimestampNavigable );
 
 		final Number revisionNumber = auditService.getRevisionInfoNumberReader().getRevisionNumber( revision );
 		applyUpdateContextWhereCommon( update, entityDescriptor, auditedEntityDescriptor, options, id, revisionNumber );
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REVEND_TSTMP is null
-		update.addWhereColumn( auditedRevisionEndTimestampNavigable.getBoundColumn().getExpression(), " is null" );
+		update.addWhereColumn( auditedRevisionEndTimestampNavigable, " is null" );
 
 		return update;
 	}
@@ -627,22 +631,18 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// WHERE (entity_id) = ? AND REV <> ? AND REVEND is null
 
-		// todo (6.0) - how do we handle identifiers now?
-		//		Previously we delegated binding to the Type and this was generalized across all 3 identifier use
-		//		cases; however, we presently expose ValueBinder through BasicType; which covers just the simple
-		//		identifier use case.  We need to determine how we're to deal with aggregate and non-aggregate
-		//		based identifier use cases.
 		updateContext.addPrimaryKeyColumns( getEntityDescriptorPrimaryKeyColumnNames( entityDescriptor ) );
-		updateContext.bind( id, entityDescriptor.getHierarchy().getIdentifierDescriptor() );
+		updateContext.bind( id, (Navigable) entityDescriptor.getHierarchy().getIdentifierDescriptor() );
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REV <> ? (REV is on the auditedEntityDescriptor)
-		final BasicValuedNavigable revisionNumberPath = getNavigableByPath(
+		final Navigable revisionNumberPath = getNavigableByPath(
 				auditedEntityDescriptor,
-				options.getRevisionNumberPath()
+				options.getOriginalIdPropName() + "." + options.getRevisionFieldName()
+//				options.getRevisionNumberPath()
 		);
-		updateContext.addWhereColumn( revisionNumberPath.getBoundColumn().getExpression(), " <> ?" );
-		updateContext.bind( revisionNumber, revisionNumberPath.getBasicType() );
+		updateContext.addWhereColumn( revisionNumberPath, " <> ?" );
+		updateContext.bind( revisionNumber, revisionNumberPath );
 	}
 
 	private EntityDescriptor getEntityDescriptor(String entityName, SessionImplementor sessionImplementor) {
@@ -686,7 +686,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		}
 	}
 
-	private BasicValuedNavigable getNavigableByPath(EntityDescriptor entityDescriptor, String propertyPath) {
+	private Navigable getNavigableByPath(EntityDescriptor entityDescriptor, String propertyPath) {
 		// todo: improve this for efficiency.
 		// 		we likely can determine these values more efficiently based on configuration options or by caching
 		// 		the necessary column references in the EntityConfiguration and looking that up directly here.
@@ -698,9 +698,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 				container = NavigableContainer.class.cast( navigable );
 			}
 			else {
-				if ( BasicValuedNavigable.class.isInstance( navigable ) ) {
-					return (BasicValuedNavigable) navigable;
-				}
+				return navigable;
 			}
 		}
 		throw new AuditException( "Failed to locate BasicValuedNavigable for property path [" + propertyPath + "]." );
@@ -708,7 +706,10 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 	/**
 	 * Represents the audit strategy's update.
+	 *
+	 * @deprecated since 6.0, use {@link UpdateStatement} instead.
 	 */
+	@Deprecated
 	private class UpdateContext extends Update {
 		private final List<QueryParameterBinding> bindings = new ArrayList<>();
 
@@ -731,8 +732,70 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		 * @param value the value to be bound.
 		 * @param type the type to be bound.
 		 */
-		public void bind(Object value, AllowableParameterType type) {
+		private void bind(Object value, AllowableParameterType type) {
 			this.bindings.add( new QueryParameterBinding( value, type ) );
+		}
+
+		public void addColumn(Navigable navigable) {
+			StateArrayContributor contributor = (StateArrayContributor) navigable;
+			List<Column> columns = contributor.getColumns();
+			assert columns.size() == 1;
+
+			addColumn( columns.get( 0 ).getExpression() );
+		}
+
+		public void bind(Object value, Navigable navigable) {
+			navigable.visitNavigable( new NavigableVisitationStrategy() {
+				@Override
+				public void visitSimpleIdentifier(EntityIdentifierSimple identifier) {
+					bind( value, identifier.getBasicType() );
+				}
+
+				@Override
+				public void visitAggregateCompositeIdentifier(EntityIdentifierCompositeAggregated identifier) {
+					identifier.visitNavigables( this );
+				}
+
+				@Override
+				public void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
+					bind( value, attribute.getBasicType() );
+				}
+
+				@Override
+				public void visitSingularAttributeEntity(SingularPersistentAttributeEntity attribute) {
+					attribute.getEntityDescriptor().getIdentifierDescriptor().visitNavigable( this );
+				}
+			} );
+		}
+
+		public void addWhereColumn(Navigable navigable) {
+			addWhereColumn( navigable, "=?" );
+		}
+
+		public void addWhereColumn(Navigable navigable, String expression) {
+			navigable.visitNavigable( new NavigableVisitationStrategy() {
+				@Override
+				public void visitSimpleIdentifier(EntityIdentifierSimple identifier) {
+					addWhereColumn( identifier.getBoundColumn().getExpression(), expression );
+				}
+
+				@Override
+				public void visitAggregateCompositeIdentifier(EntityIdentifierCompositeAggregated identifier) {
+					identifier.visitNavigables( this );
+				}
+
+				@Override
+				public void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
+					addWhereColumn( attribute.getBoundColumn().getExpression(), expression );
+				}
+
+				@Override
+				public void visitSingularAttributeEntity(SingularPersistentAttributeEntity attribute) {
+					List<Column> columns = attribute.getColumns();
+					assert columns.size() == 1;
+					addWhereColumn( columns.get( 0 ).getExpression(), expression );
+				}
+			} );
 		}
 	}
 

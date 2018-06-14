@@ -952,7 +952,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public AuditReader openAuditReader() {
-		return new AuditReaderImpl( openSession() );
+		return new AuditReaderImpl( openSession(), true );
 	}
 
 	public static Interceptor configuredInterceptor(Interceptor interceptor, SessionFactoryOptions options) {

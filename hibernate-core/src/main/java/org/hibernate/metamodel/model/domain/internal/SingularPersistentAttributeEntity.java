@@ -597,4 +597,15 @@ public class SingularPersistentAttributeEntity<O,J>
 				.getJavaTypeDescriptor()
 				.areEqual( oldIdentifier, newIdentifier );
 	}
+
+	@Override
+	public List<ColumnReference> resolveColumnReferences(
+			ColumnReferenceQualifier qualifier,
+			SqlSelectionResolutionContext resolutionContext) {
+		List<ColumnReference> columnReferences = new ArrayList<>();
+		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
+			columnReferences.add( new ColumnReference( qualifier, column ) );
+		}
+		return columnReferences;
+	}
 }

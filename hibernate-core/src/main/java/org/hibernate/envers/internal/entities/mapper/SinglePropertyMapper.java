@@ -9,10 +9,10 @@ package org.hibernate.envers.internal.entities.mapper;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.dialect.Oracle8iDialect;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.internal.entities.PropertyData;
@@ -56,13 +56,17 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			Object newObj,
 			Object oldObj) {
 		data.put( propertyData.getName(), newObj );
-		boolean dbLogicallyDifferent = true;
-		if ( (session.getFactory().getJdbcServices()
-				.getDialect() instanceof Oracle8iDialect) && (newObj instanceof String || oldObj instanceof String) ) {
-			// Don't generate new revision when database replaces empty string with NULL during INSERT or UPDATE statements.
-			dbLogicallyDifferent = !(StringTools.isEmpty( newObj ) && StringTools.isEmpty( oldObj ));
+
+		if ( newObj instanceof String || oldObj instanceof String ) {
+			if ( session.getFactory().getJdbcServices().getDialect().isEmptyStringTreatedAsNull() ) {
+				if ( StringTools.isEmpty( newObj ) && StringTools.isEmpty( oldObj ) ) {
+					return false;
+				}
+			}
 		}
-		return dbLogicallyDifferent && !EqualsHelper.areEqual( newObj, oldObj );
+
+		// todo (6.0) - delegate to JavaTypeDescriptor
+		return !Objects.equals( newObj, oldObj );
 	}
 
 	@Override
@@ -72,6 +76,7 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			Object newObj,
 			Object oldObj) {
 		if ( propertyData.isUsingModifiedFlag() ) {
+			// todo (6.0) - delegate equality check to JavaTypeDescriptor
 			data.put( propertyData.getModifiedFlagPropertyName(), !EqualsHelper.areEqual( newObj, oldObj ) );
 		}
 	}

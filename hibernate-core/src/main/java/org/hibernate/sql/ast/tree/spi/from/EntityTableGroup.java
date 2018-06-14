@@ -108,13 +108,16 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 //			}
 //		}
 
-		for ( TableReferenceJoin tableJoin : tableReferenceJoins ) {
-			if ( tableJoin.getJoinedTableBinding().getTable() == table ) {
-				return tableJoin.getJoinedTableBinding();
+		if( tableReferenceJoins != null ) {
+			for ( TableReferenceJoin tableJoin : tableReferenceJoins ) {
+				if ( tableJoin.getJoinedTableBinding().getTable() == table ) {
+					return tableJoin.getJoinedTableBinding();
+				}
 			}
 		}
 
-		throw new IllegalStateException( "Could not resolve binding for table : " + table );
+		return null;
+//		throw new IllegalStateException( "Could not resolve binding for table : " + table );
 	}
 
 //	@Override

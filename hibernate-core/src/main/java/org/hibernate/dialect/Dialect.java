@@ -2837,6 +2837,15 @@ public abstract class Dialect implements ConversionContext {
 	}
 
 	/**
+	 * Return whether the dialect considers an empty-string value as null.
+	 *
+	 * @return boolean True if an empty string is treated as null, false othrwise.
+	 */
+	public boolean isEmptyStringTreatedAsNull() {
+		return false;
+	}
+
+	/**
 	 * Some dialects have trouble applying pessimistic locking depending upon what other query options are
 	 * specified (paging, ordering, etc).  This method allows these dialects to request that locking be applied
 	 * by subsequent selects.

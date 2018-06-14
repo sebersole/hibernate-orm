@@ -133,9 +133,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		//		1) resolve the value(s) into its identifier representation
 		final Object id = concretePersister.getHierarchy()
 				.getIdentifierDescriptor()
-				.getJavaTypeDescriptor()
-				.getMutabilityPlan()
-				.assemble( (Serializable) identifierHydratedState );
+				.resolveHydratedState( identifierHydratedState, rowProcessingState, persistenceContext.getSession(), null );
 
 		//		2) build and register an EntityKey
 		this.entityKey = new EntityKey( id, concretePersister.getEntityDescriptor() );

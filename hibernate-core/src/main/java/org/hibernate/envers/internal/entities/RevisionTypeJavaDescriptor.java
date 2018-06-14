@@ -10,8 +10,8 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.descriptor.sql.spi.IntegerSqlDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
-import org.hibernate.type.descriptor.sql.spi.TinyIntSqlDescriptor;
 
 /**
  * @author Chris Cranford
@@ -25,7 +25,7 @@ public class RevisionTypeJavaDescriptor extends EnumJavaDescriptor<RevisionType>
 
 	@Override
 	public SqlTypeDescriptor getJdbcRecommendedSqlType(JdbcRecommendedSqlTypeMappingContext context) {
-		return TinyIntSqlDescriptor.INSTANCE;
+		return IntegerSqlDescriptor.INSTANCE;
 	}
 
 	@Override
@@ -35,6 +35,9 @@ public class RevisionTypeJavaDescriptor extends EnumJavaDescriptor<RevisionType>
 		}
 		if ( RevisionType.class.isAssignableFrom( type ) ) {
 			return (X) value;
+		}
+		if ( Integer.class.isAssignableFrom( type ) ) {
+			return (X) Integer.valueOf( value.ordinal() );
 		}
 		if ( Byte.class.isAssignableFrom( type ) ) {
 			return (X) value.getRepresentation();
@@ -49,6 +52,10 @@ public class RevisionTypeJavaDescriptor extends EnumJavaDescriptor<RevisionType>
 		}
 		if ( RevisionType.class.isInstance( value ) ) {
 			return (RevisionType) value;
+		}
+		if ( Integer.class.isInstance( value ) ) {
+			int ordinal = (Integer) value;
+			return RevisionType.values()[ ordinal ];
 		}
 		if ( Byte.class.isInstance( value ) ) {
 			return RevisionType.fromRepresentation( value );

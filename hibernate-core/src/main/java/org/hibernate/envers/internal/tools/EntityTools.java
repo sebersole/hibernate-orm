@@ -6,16 +6,14 @@
  */
 package org.hibernate.envers.internal.tools;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.persistence.metamodel.Attribute;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -27,7 +25,7 @@ public abstract class EntityTools {
 		final Object id1 = getIdentifier( session, entityName, obj1 );
 		final Object id2 = getIdentifier( session, entityName, obj2 );
 
-		return EqualsHelper.areEqual( id1, id2 );
+		return Objects.equals( id1, id2 );
 	}
 
 	public static Object getIdentifier(SessionImplementor session, String entityName, Object obj) {
@@ -101,13 +99,12 @@ public abstract class EntityTools {
 	 * @return A string array of property names.
 	 */
 	public static String[] getPropertyNames(EntityDescriptor entityDescriptor) {
-		// todo (6.0) - Rework usage sites of this
-		//		For now this was added to get functionality working.
-		//		Since this is internal tooling, this won't affect any API/SPI.
-		final Set<? extends Attribute> attributes = entityDescriptor.getAttributes();
-		return attributes.stream()
-				.map( Attribute::getName )
-				.collect( Collectors.toList() )
-				.toArray( new String[ attributes.size() ] );
+		final List<String> attributes = new ArrayList<>();
+		entityDescriptor.visitStateArrayContributors(
+				contributor -> {
+					attributes.add( contributor.getNavigableName() );
+				}
+		);
+		return attributes.toArray( new String[ attributes.size() ] );
 	}
 }

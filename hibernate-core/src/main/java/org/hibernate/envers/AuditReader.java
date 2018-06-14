@@ -22,7 +22,15 @@ import org.hibernate.envers.query.AuditQueryCreator;
  * @author Hern&aacute;n Chanfreau
  * @author Lukasz Antoniak (lukasz dot antoniak at gmail dot com)
  */
-public interface AuditReader {
+public interface AuditReader extends AutoCloseable {
+	/**
+	 * Potentially closes the underlying resources if this reader is closeable.
+	 *
+	 * @throws AuditException if the underlying resources are closeable but fail to close.
+	 */
+	@Override
+	void close();
+
 	/**
 	 * Find an entity by primary key at the given revision.
 	 *

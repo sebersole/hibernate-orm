@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.envers.exception.AuditException;
+import org.hibernate.envers.internal.reader.AuditReaderImpl;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -33,7 +34,7 @@ public class AuditReaderFactory {
 	 */
 	@Deprecated
 	public static AuditReader get(Session session) throws AuditException {
-		return session.getSessionFactory().openAuditReader();
+		return new AuditReaderImpl( session, false );
 	}
 
 	/**

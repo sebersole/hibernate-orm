@@ -7,7 +7,7 @@
 package org.hibernate.envers.internal.entities;
 
 import org.hibernate.envers.RevisionType;
-import org.hibernate.type.descriptor.sql.spi.TinyIntSqlDescriptor;
+import org.hibernate.type.descriptor.sql.spi.IntegerSqlDescriptor;
 import org.hibernate.type.internal.BasicTypeImpl;
 
 /**
@@ -20,7 +20,7 @@ public class RevisionTypeType extends BasicTypeImpl<RevisionType> {
 	public static final RevisionTypeType INSTANCE = new RevisionTypeType();
 
 	public RevisionTypeType() {
-		super( RevisionTypeJavaDescriptor.INSTANCE, TinyIntSqlDescriptor.INSTANCE );
+		super( RevisionTypeJavaDescriptor.INSTANCE, IntegerSqlDescriptor.INSTANCE );
 	}
 
 }

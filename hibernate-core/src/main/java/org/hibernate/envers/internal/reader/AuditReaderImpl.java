@@ -47,10 +47,12 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 	private final Session session;
 	private final FirstLevelCache firstLevelCache;
 	private final CrossTypeRevisionChangesReader crossTypeRevisionChangesReader;
+	private final boolean closeable;
 
-	public AuditReaderImpl(Session session) {
+	public AuditReaderImpl(Session session, boolean closeable) {
 		this.session = session;
 		this.sessionImplementor = (SessionImplementor) session;
+		this.closeable = closeable;
 
 		final ServiceRegistry serviceRegistry = this.sessionImplementor.getSessionFactory().getServiceRegistry();
 		this.auditService = serviceRegistry.getService( AuditService.class );
@@ -86,15 +88,15 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 	}
 
 	@Override
-	public <T> T find(Class<T> cls, Object primaryKey, Number revision) throws
-			IllegalArgumentException, NotAuditedException, IllegalStateException {
+	public <T> T find(Class<T> cls, Object primaryKey, Number revision)
+	throws IllegalArgumentException, NotAuditedException, IllegalStateException {
 		cls = getTargetClassIfProxied( cls );
 		return this.find( cls, cls.getName(), primaryKey, revision );
 	}
 
 	@Override
 	public <T> T find(Class<T> cls, String entityName, Object primaryKey, Number revision)
-			throws IllegalArgumentException, NotAuditedException, IllegalStateException {
+	throws IllegalArgumentException, NotAuditedException, IllegalStateException {
 		return this.find( cls, entityName, primaryKey, revision, false );
 	}
 
@@ -105,7 +107,8 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 			String entityName,
 			Object primaryKey,
 			Number revision,
-			boolean includeDeletions) throws IllegalArgumentException, NotAuditedException, IllegalStateException {
+			boolean includeDeletions)
+	throws IllegalArgumentException, NotAuditedException, IllegalStateException {
 		cls = getTargetClassIfProxied( cls );
 		checkNotNull( cls, "Entity class" );
 		checkNotNull( entityName, "Entity name" );
@@ -140,21 +143,21 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 
 	@Override
 	public List<Number> getRevisions(Class<?> cls, Object primaryKey)
-			throws IllegalArgumentException, NotAuditedException, IllegalStateException {
+	throws IllegalArgumentException, NotAuditedException, IllegalStateException {
 		cls = getTargetClassIfProxied( cls );
 		return this.getRevisions( cls, cls.getName(), primaryKey );
 	}
 
 	@Override
 	public <T> T find(Class<T> cls, Object primaryKey, Date date)
-			throws IllegalArgumentException, NotAuditedException, RevisionDoesNotExistException, IllegalStateException {
+	throws IllegalArgumentException, NotAuditedException, RevisionDoesNotExistException, IllegalStateException {
 		return find( cls, primaryKey, getRevisionNumberForDate( date ) );
 	}
 
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public List<Number> getRevisions(Class<?> cls, String entityName, Object primaryKey)
-			throws IllegalArgumentException, NotAuditedException, IllegalStateException {
+	throws IllegalArgumentException, NotAuditedException, IllegalStateException {
 		// todo: if a class is not versioned from the beginning, there's a missing ADD rev - what then?
 		cls = getTargetClassIfProxied( cls );
 		checkNotNull( cls, "Entity class" );
@@ -175,7 +178,7 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 
 	@Override
 	public Date getRevisionDate(Number revision)
-			throws IllegalArgumentException, RevisionDoesNotExistException, IllegalStateException {
+	throws IllegalArgumentException, RevisionDoesNotExistException, IllegalStateException {
 		checkNotNull( revision, "Entity revision" );
 		checkPositive( revision, "Entity revision" );
 		checkSession();
@@ -219,7 +222,7 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public <T> T findRevision(Class<T> revisionEntityClass, Number revision)
-			throws IllegalArgumentException, RevisionDoesNotExistException, IllegalStateException {
+	throws IllegalArgumentException, RevisionDoesNotExistException, IllegalStateException {
 		revisionEntityClass = getTargetClassIfProxied( revisionEntityClass );
 		checkNotNull( revision, "Entity revision" );
 		checkPositive( revision, "Entity revision" );
@@ -246,8 +249,7 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public <T> Map<Number, T> findRevisions(Class<T> revisionEntityClass, Set<Number> revisions)
-			throws IllegalArgumentException,
-			IllegalStateException {
+	throws IllegalArgumentException, IllegalStateException {
 		revisionEntityClass = getTargetClassIfProxied( revisionEntityClass );
 		final Map<Number, T> result = new HashMap<>( revisions.size() );
 
@@ -324,6 +326,18 @@ public class AuditReaderImpl implements AuditReaderImplementor {
 			throw new HibernateException(
 					"Envers can't resolve entityName for historic entity. The id, revision and entity is not on envers first level cache."
 			);
+		}
+	}
+
+	@Override
+	public void close() {
+		try {
+			if ( closeable && session.isOpen() ) {
+				session.close();
+			}
+		}
+		catch ( Exception e ) {
+			throw new AuditException( "Failed to close session.", e );
 		}
 	}
 }

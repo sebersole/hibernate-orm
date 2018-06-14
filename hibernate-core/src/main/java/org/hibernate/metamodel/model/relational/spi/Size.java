@@ -112,6 +112,7 @@ public class Size implements Serializable {
 		private LobMultiplier lobMultiplier;
 
 		public Builder() {
+			lobMultiplier = LobMultiplier.NONE;
 		}
 
 
