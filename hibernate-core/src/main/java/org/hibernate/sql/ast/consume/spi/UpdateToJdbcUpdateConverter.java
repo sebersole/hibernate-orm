@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
-import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
@@ -20,20 +19,18 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 /**
  * @author Steve Ebersole
  */
-public class SqlUpdateToJdbcUpdateConverter
+public class UpdateToJdbcUpdateConverter
 		extends AbstractSqlAstToJdbcOperationConverter
 		implements SqlMutationToJdbcMutationConverter {
 
 	// todo (6.0) : do we need to limit rendering the qualification alias for columns?
 	//		we could also control this when we build the SQL AST
 
-	public static JdbcUpdate interpret(
-			SqlAstUpdateDescriptor sqlAst,
+	public static JdbcUpdate createJdbcUpdate(
+			UpdateStatement sqlAst,
 			ParameterBindingContext parameterBindingContext) {
-		final SqlUpdateToJdbcUpdateConverter walker = new SqlUpdateToJdbcUpdateConverter( parameterBindingContext );
-
-		walker.processUpdateStatement( sqlAst.getSqlAstStatement() );
-
+		final UpdateToJdbcUpdateConverter walker = new UpdateToJdbcUpdateConverter( parameterBindingContext );
+		walker.processUpdateStatement( sqlAst );
 		return new JdbcUpdate() {
 			@Override
 			public String getSql() {
@@ -52,7 +49,7 @@ public class SqlUpdateToJdbcUpdateConverter
 		};
 	}
 
-	public SqlUpdateToJdbcUpdateConverter(ParameterBindingContext parameterBindingContext) {
+	public UpdateToJdbcUpdateConverter(ParameterBindingContext parameterBindingContext) {
 		super( parameterBindingContext );
 	}
 
@@ -70,13 +67,10 @@ public class SqlUpdateToJdbcUpdateConverter
 
 		appendSql( tableName );
 
-		// todo (6.0) : need to render the target column list
-		// 		for now we do not render
-
-
 		boolean firstPass = true;
 		for ( Assignment assignment : updateStatement.getAssignments() ) {
 			if ( firstPass ) {
+				appendSql( " set " );
 				firstPass = false;
 			}
 			else {
@@ -84,6 +78,11 @@ public class SqlUpdateToJdbcUpdateConverter
 			}
 
 			visitAssignment( assignment );
+		}
+
+		if ( updateStatement.getRestriction() != null ) {
+			appendSql( " where " );
+			updateStatement.getRestriction().accept( this );
 		}
 	}
 
@@ -95,6 +94,4 @@ public class SqlUpdateToJdbcUpdateConverter
 		appendSql( " = " );
 		assignment.getAssignedValue().accept( this );
 	}
-
-
 }

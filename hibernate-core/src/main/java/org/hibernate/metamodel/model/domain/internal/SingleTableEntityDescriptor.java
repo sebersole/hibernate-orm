@@ -34,6 +34,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
@@ -42,11 +43,16 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
+import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.InsertStatement;
+import org.hibernate.sql.ast.tree.spi.UpdateStatement;
+import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
+import org.hibernate.sql.ast.tree.spi.predicate.Junction;
+import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
@@ -295,6 +301,66 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			Object object,
 			Object rowId,
 			SharedSessionContractImplementor session) throws HibernateException {
+
+		// todo (6.0) - initial basic pass at entity updates
+
+		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
+		final ExecutionContext executionContext = getExecutionContext( session );
+
+		final TableReference tableReference = new TableReference( getPrimaryTable(), null );
+
+		List<Assignment> assignments = new ArrayList<>();
+		for ( int i = 0; i < dirtyFields.length; ++i ) {
+			final StateArrayContributor contributor = getStateArrayContributors().get( dirtyFields[i] );
+			final Object domainValue = fields[contributor.getStateArrayPosition()];
+			List<Column> columns = contributor.getColumns();
+			if ( columns != null && !columns.isEmpty() ) {
+				contributor.dehydrate(
+						contributor.unresolve( domainValue, session ),
+						(jdbcValue, type, boundColumn) -> {
+							if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+								assignments.add(
+										new Assignment(
+												new ColumnReference( boundColumn ),
+												new LiteralParameter( jdbcValue, type )
+										)
+								);
+							}
+						},
+						session
+				);
+			}
+		}
+
+		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+		getHierarchy().getIdentifierDescriptor().dehydrate(
+				unresolvedId,
+				(jdbcValue, type, boundColumn) -> {
+					identifierJunction.add(
+							new RelationalPredicate(
+									RelationalPredicate.Operator.EQUAL,
+									new ColumnReference( boundColumn ),
+									new LiteralParameter( jdbcValue, type )
+							)
+					);
+				},
+				session
+		);
+
+		final UpdateStatement updateStatement = new UpdateStatement(
+				tableReference,
+				assignments,
+				identifierJunction
+		);
+
+		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
+				UpdateToJdbcUpdateConverter.createJdbcUpdate(
+						updateStatement,
+						executionContext.getParameterBindingContext()
+				),
+				executionContext,
+				Connection::prepareStatement
+		);
 
 	}
 

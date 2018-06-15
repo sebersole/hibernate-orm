@@ -15,7 +15,7 @@ import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.consume.multitable.spi.UpdateHandler;
 import org.hibernate.query.sqm.tree.SqmDeleteOrUpdateStatement;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
-import org.hibernate.sql.ast.consume.spi.SqlUpdateToJdbcUpdateConverter;
+import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
 import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmUpdateToSqlAstConverterMultiTable;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
@@ -78,8 +78,8 @@ public class TableBasedUpdateHandlerImpl
 			// convert each SQL AST UpdateStatement into a JdbcUpdate operation
 			// 		and execute it
 
-			final JdbcUpdate jdbcUpdate = SqlUpdateToJdbcUpdateConverter.interpret(
-					updateDescriptor,
+			final JdbcUpdate jdbcUpdate = UpdateToJdbcUpdateConverter.createJdbcUpdate(
+					updateDescriptor.getSqlAstStatement(),
 					executionContext.getParameterBindingContext()
 			);
 

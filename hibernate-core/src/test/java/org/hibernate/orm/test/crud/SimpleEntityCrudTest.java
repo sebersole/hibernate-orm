@@ -8,11 +8,16 @@ package org.hibernate.orm.test.crud;
 
 import java.util.List;
 
+import org.hamcrest.CoreMatchers;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
 
 import org.junit.jupiter.api.Test;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Andrea Boriero
@@ -69,6 +74,42 @@ public class SimpleEntityCrudTest extends SessionFactoryBasedFunctionalTest {
 							.load( 2 );
 					assert loaded != null;
 					assert "hi".equals( loaded.getSomeString() );
+				}
+		);
+	}
+
+	@Test
+	@org.junit.Test
+	public void testEntityUpdate() {
+		final SimpleEntity entity = new SimpleEntity();
+		entity.setId( 2 );
+		entity.setSomeString( "hello world" );
+		entity.setSomeInteger( 5 );
+		entity.setSomeLong( 10L );
+		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity loaded = session.get( SimpleEntity.class, 2 );
+					assertThat( loaded, notNullValue() );
+					assertThat( loaded.getSomeString(), is( "hello world" ) );
+					assertThat( loaded.getSomeLong(), is( 10L ) );
+				}
+		);
+
+		sessionFactoryScope().inTransaction( session -> {
+			final SimpleEntity e = session.find( SimpleEntity.class, entity.getId() );
+			e.setSomeLong( 25L );
+			e.setSomeString( "test" );
+			session.merge( e );
+		} );
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity loaded = session.get( SimpleEntity.class, 2 );
+					assertThat( loaded, notNullValue() );
+					assertThat( loaded.getSomeString(), is( "test" ) );
+					assertThat( loaded.getSomeLong(), is( 25L ) );
 				}
 		);
 	}
