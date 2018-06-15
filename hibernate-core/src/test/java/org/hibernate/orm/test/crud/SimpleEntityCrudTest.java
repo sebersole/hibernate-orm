@@ -79,7 +79,6 @@ public class SimpleEntityCrudTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	@Test
-	@org.junit.Test
 	public void testEntityUpdate() {
 		final SimpleEntity entity = new SimpleEntity();
 		entity.setId( 2 );
