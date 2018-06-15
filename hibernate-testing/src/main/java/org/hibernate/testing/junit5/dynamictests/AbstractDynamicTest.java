@@ -6,6 +6,7 @@
  */
 package org.hibernate.testing.junit5.dynamictests;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static org.junit.platform.commons.util.ReflectionUtils.findMethods;
@@ -84,6 +86,8 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 			// method is checked.
 			testMethods.forEach( method -> {
 				if ( context.isExecutionAllowed( method ) ) {
+					final DynamicTest dynamicTestAnnotation = method.getAnnotation( DynamicTest.class );
+					final Class<? extends Throwable> expectedException = dynamicTestAnnotation.expected();
 					tests.add(
 							dynamicTest(
 									method.getName(),
@@ -96,6 +100,22 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 										Throwable exception = null;
 										try {
 											method.invoke( testInstance );
+
+											// If the @DynamicTest annotation specifies an expected exception
+											// and it wasn't thrown during the method invocation, we want to
+											// assert here and fail the test node accordingly.
+											assertEquals(
+													DynamicTest.None.class,
+													expectedException,
+													"Expected: " + expectedException.getName()
+											);
+										}
+										catch ( InvocationTargetException t ) {
+											// only throw if the exception was not expected.
+											if ( !expectedException.isInstance( t.getTargetException() ) ) {
+												exception = t;
+												throw t;
+											}
 										}
 										catch ( Throwable t ) {
 											exception = t;
