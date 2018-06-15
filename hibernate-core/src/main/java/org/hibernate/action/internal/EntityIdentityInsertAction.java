@@ -36,7 +36,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 	 *
 	 * @param state The current (extracted) entity state
 	 * @param instance The entity instance
-	 * @param persister The entity persister
+	 * @param descriptor The entity descriptor
 	 * @param isVersionIncrementDisabled Whether version incrementing is disabled
 	 * @param session The session
 	 * @param isDelayed Are we in a situation which allows the insertion to be delayed?
@@ -46,7 +46,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 	public EntityIdentityInsertAction(
 			Object[] state,
 			Object instance,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean isVersionIncrementDisabled,
 			SharedSessionContractImplementor session,
 			boolean isDelayed) {
@@ -55,7 +55,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 				state,
 				instance,
 				isVersionIncrementDisabled,
-				persister,
+				descriptor,
 				session
 		);
 		this.isDelayed = isDelayed;
@@ -66,7 +66,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 	public void execute() throws HibernateException {
 		nullifyTransientReferencesIfNotAlready();
 
-		final EntityDescriptor persister = getEntityDescriptor();
+		final EntityDescriptor descriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();
 
@@ -76,15 +76,15 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 		// else inserted the same pk first, the insert would fail
 
 		if ( !isVeto() ) {
-			generatedId = persister.insert( getState(), instance, session );
-			if ( persister.hasInsertGeneratedProperties() ) {
-				persister.processInsertGeneratedProperties( generatedId, instance, getState(), session );
+			generatedId = descriptor.insert( getState(), instance, session );
+			if ( descriptor.hasInsertGeneratedProperties() ) {
+				descriptor.processInsertGeneratedProperties( generatedId, instance, getState(), session );
 			}
 			//need to do that here rather than in the save event listener to let
 			//the post insert events to have a id-filled entity when IDENTITY is used (EJB3)
-			persister.setIdentifier( instance, generatedId, session );
+			descriptor.setIdentifier( instance, generatedId, session );
 			session.getPersistenceContext().registerInsertedKey( getEntityDescriptor(), generatedId );
-			entityKey = session.generateEntityKey( generatedId, persister );
+			entityKey = session.generateEntityKey( generatedId, descriptor );
 			session.getPersistenceContext().checkUniqueness( entityKey, getInstance() );
 		}
 
@@ -92,9 +92,9 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 		//TODO: this bit actually has to be called after all cascades!
 		//      but since identity insert is called *synchronously*,
 		//      instead of asynchronously as other actions, it isn't
-		/*if ( persister.hasCache() && !persister.isCacheInvalidationRequired() ) {
-			cacheEntry = new CacheEntry(object, persister, session);
-			persister.getCache().insert(generatedId, cacheEntry);
+		/*if ( descriptor.hasCache() && !descriptor.isCacheInvalidationRequired() ) {
+			cacheEntry = new CacheEntry(object, descriptor, session);
+			descriptor.getCache().insert(generatedId, cacheEntry);
 		}*/
 
 		postInsert();

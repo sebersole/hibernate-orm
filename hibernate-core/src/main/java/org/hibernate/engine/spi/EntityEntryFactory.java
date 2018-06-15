@@ -29,7 +29,7 @@ public interface EntityEntryFactory extends Serializable {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor persister,
+			final EntityDescriptor descriptor,
 			final boolean disableVersionIncrement,
 			final PersistenceContext persistenceContext);
 }

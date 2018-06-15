@@ -39,7 +39,7 @@ public class MutableEntityEntryFactory implements EntityEntryFactory {
 			Object version,
 			LockMode lockMode,
 			boolean existsInDatabase,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean disableVersionIncrement,
 			PersistenceContext persistenceContext) {
 		return new MutableEntityEntry(
@@ -50,7 +50,7 @@ public class MutableEntityEntryFactory implements EntityEntryFactory {
 				version,
 				lockMode,
 				existsInDatabase,
-				persister,
+				descriptor,
 				disableVersionIncrement,
 				persistenceContext
 		);

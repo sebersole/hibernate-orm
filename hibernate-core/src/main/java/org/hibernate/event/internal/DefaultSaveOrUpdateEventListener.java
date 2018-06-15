@@ -121,13 +121,13 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 			}
 			else {
 
-				final boolean isEqual = !entityEntry.getPersister().getIdentifierType()
+				final boolean isEqual = !entityEntry.getDescriptor().getIdentifierType()
 						.getJavaTypeDescriptor().areEqual( requestedId, entityEntry.getId() );
 
 				if ( isEqual ) {
 					throw new PersistentObjectException(
 							"object passed to save() was already persistent: " +
-									MessageHelper.infoString( entityEntry.getPersister(), requestedId, factory )
+									MessageHelper.infoString( entityEntry.getDescriptor(), requestedId, factory )
 					);
 				}
 
@@ -138,7 +138,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 			if ( traceEnabled ) {
 				LOG.tracev(
 						"Object already associated with session: {0}",
-						MessageHelper.infoString( entityEntry.getPersister(), savedId, factory )
+						MessageHelper.infoString( entityEntry.getDescriptor(), savedId, factory )
 				);
 			}
 
@@ -214,7 +214,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 
 		Object entity = event.getEntity();
 
-		EntityDescriptor entityDescriptor = event.getSession().getEntityPersister( event.getEntityName(), entity );
+		EntityDescriptor entityDescriptor = event.getSession().getEntityDescriptor( event.getEntityName(), entity );
 
 		event.setRequestedId(
 				getUpdateId( entity, entityDescriptor, event.getRequestedId(), event.getSession() )
@@ -228,7 +228,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 	 * Determine the id to use for updating.
 	 *
 	 * @param entity The entity.
-	 * @param entityDescriptor The entity entityDescriptor
+	 * @param descriptor The entity descriptor
 	 * @param requestedId The requested identifier
 	 * @param session The session
 	 *
@@ -238,17 +238,17 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 	 */
 	protected Object getUpdateId(
 			Object entity,
-			EntityDescriptor entityDescriptor,
+			EntityDescriptor descriptor,
 			Object requestedId,
 			SessionImplementor session) {
 		// use the id assigned to the instance
-		Object id = entityDescriptor.getIdentifier( entity, session );
+		Object id = descriptor.getIdentifier( entity, session );
 		if ( id == null ) {
 			// assume this is a newly instantiated transient object
 			// which should be saved rather than updated
 			throw new TransientObjectException(
 					"The given object has a null identifier: " +
-							entityDescriptor.getEntityName()
+							descriptor.getEntityName()
 			);
 		}
 		else {

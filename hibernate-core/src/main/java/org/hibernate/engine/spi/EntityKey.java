@@ -150,7 +150,7 @@ public final class EntityKey implements Serializable {
 			throws IOException, ClassNotFoundException {
 		final Serializable id = (Serializable) ois.readObject();
 		final String entityName = (String) ois.readObject();
-		final EntityDescriptor entityPersister = sessionFactory.getEntityPersister( entityName );
-		return new EntityKey( id, entityPersister );
+		final EntityDescriptor entityDescriptor = sessionFactory.getEntityPersister( entityName );
+		return new EntityKey( id, entityDescriptor );
 	}
 }

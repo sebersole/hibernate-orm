@@ -84,15 +84,15 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		// needs to be a Session for the #save and #contains calls below...
 		final Session session = ( Session ) sessionImplementor;
 
-		final EntityDescriptor persister = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
-		Object associatedObject = persister.getPropertyValue( object, propertyName );
+		final EntityDescriptor descriptor = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
+		Object associatedObject = descriptor.getPropertyValue( object, propertyName );
 		if ( associatedObject == null ) {
 			throw new IdentifierGenerationException(
 					"attempted to assign id from null one-to-one property [" + getRole() + "]"
 			);
 		}
 
-		final String entityName = retrieveEntityName( persister );
+		final String entityName = retrieveEntityName( descriptor );
 
 		Object id;
 		try {
@@ -120,16 +120,16 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		return id;
 	}
 
-	private String retrieveEntityName(EntityDescriptor persister) {
+	private String retrieveEntityName(EntityDescriptor descriptor) {
 		String entityName;
-		final PersistentAttribute attribute = persister.findPersistentAttribute( propertyName );
+		final PersistentAttribute attribute = descriptor.findPersistentAttribute( propertyName );
 		if ( attribute.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY ) {
 			// the normal case
 			entityName = attribute.getContainer().getNavigableName();
 		}
 		else {
 			// try identifier mapper
-			entityName = persister.findPersistentAttribute( NavigablePath.IDENTIFIER_MAPPER_PROPERTY + "." + propertyName ).getContainer().getNavigableName();
+			entityName = descriptor.findPersistentAttribute( NavigablePath.IDENTIFIER_MAPPER_PROPERTY + "." + propertyName ).getContainer().getNavigableName();
 		}
 		return entityName;
 	}

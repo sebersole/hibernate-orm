@@ -103,10 +103,10 @@ public final class Versioning {
 	 *
 	 * @param fields The state snapshot
 	 * @param version The optimistic locking value
-	 * @param persister The entity persister
+	 * @param descriptor The entity descriptor
 	 */
-	public static void setVersion(Object[] fields, Object version, EntityDescriptor persister) {
-		final VersionDescriptor<Object, Object> versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+	public static void setVersion(Object[] fields, Object version, EntityDescriptor descriptor) {
+		final VersionDescriptor<Object, Object> versionDescriptor = descriptor.getHierarchy().getVersionDescriptor();
 		if ( versionDescriptor == null ) {
 			return;
 		}
@@ -120,11 +120,11 @@ public final class Versioning {
 	 * Extract the optimistic locking value out of the entity state snapshot.
 	 *
 	 * @param fields The state snapshot
-	 * @param persister The entity persister
+	 * @param descriptor The entity descriptor
 	 * @return The extracted optimistic locking value
 	 */
-	public static Object getVersion(Object[] fields, EntityDescriptor persister) {
-		final VersionDescriptor<Object, Object> versionDescriptor = persister.getHierarchy().getVersionDescriptor();
+	public static Object getVersion(Object[] fields, EntityDescriptor descriptor) {
+		final VersionDescriptor<Object, Object> versionDescriptor = descriptor.getHierarchy().getVersionDescriptor();
 		if ( versionDescriptor == null ) {
 			return null;
 		}

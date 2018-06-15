@@ -37,17 +37,17 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class CollectionIndexEmbeddedImpl<J>
 		extends AbstractCollectionIndex<J>
 		implements CollectionIndexEmbedded<J> {
-	private final EmbeddedTypeDescriptor<J> embeddedPersister;
+	private final EmbeddedTypeDescriptor<J> embeddedDescriptor;
 
 	public CollectionIndexEmbeddedImpl(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			IndexedCollection bootCollectionMapping,
 			RuntimeModelCreationContext creationContext) {
-		super( persister );
+		super( descriptor );
 
-		this.embeddedPersister = creationContext.getRuntimeModelDescriptorFactory().createEmbeddedTypeDescriptor(
+		this.embeddedDescriptor = creationContext.getRuntimeModelDescriptorFactory().createEmbeddedTypeDescriptor(
 				(EmbeddedValueMappingImplementor) bootCollectionMapping.getIndex(),
-				persister,
+				descriptor,
 				null,
 				NAVIGABLE_NAME,
 				SingularPersistentAttribute.Disposition.NORMAL,
@@ -57,7 +57,7 @@ public class CollectionIndexEmbeddedImpl<J>
 
 	@Override
 	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
-		return embeddedPersister;
+		return embeddedDescriptor;
 	}
 
 	@Override

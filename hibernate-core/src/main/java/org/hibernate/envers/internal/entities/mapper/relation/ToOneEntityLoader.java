@@ -53,11 +53,11 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor persister = versionsReader.getSessionImplementor()
+		final EntityDescriptor descriptor = versionsReader.getSessionImplementor()
 				.getFactory()
 				.getMetamodel()
 				.findEntityDescriptor( entityName );
-		return persister.createProxy(
+		return descriptor.createProxy(
 				(Serializable) entityId,
 				new ToOneDelegateSessionImplementor( versionsReader, entityClass, entityId, revision, removed )
 		);
@@ -74,11 +74,11 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor persister = versionsReader.getSessionImplementor()
+		final EntityDescriptor descriptor = versionsReader.getSessionImplementor()
 				.getFactory()
 				.getMetamodel()
 				.findEntityDescriptor( entityName );
-		if ( persister.hasProxy() ) {
+		if ( descriptor.hasProxy() ) {
 			return createProxy( versionsReader, entityClass, entityName, entityId, revision, removed );
 		}
 		return loadImmediate( versionsReader, entityClass, entityName, entityId, revision, removed );

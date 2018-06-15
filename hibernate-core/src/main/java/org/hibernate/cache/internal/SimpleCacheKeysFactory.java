@@ -42,7 +42,7 @@ public class SimpleCacheKeysFactory implements CacheKeysFactory {
 	@Override
 	public Object createCollectionKey(
 			Object id,
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			SessionFactoryImplementor factory,
 			String tenantIdentifier) {
 		return id;

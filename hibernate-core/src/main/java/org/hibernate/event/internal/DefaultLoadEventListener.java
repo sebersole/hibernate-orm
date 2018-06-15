@@ -73,7 +73,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final LoadEvent event,
 			final LoadEventListener.LoadType loadType) {
 
-		final EntityDescriptor entityDescriptor = getPersister( event );
+		final EntityDescriptor entityDescriptor = getDescriptor( event );
 
 		if ( entityDescriptor == null ) {
 			throw new HibernateException( "Unable to locate entityDescriptor: " + event.getEntityClassName() );
@@ -87,11 +87,11 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 		doOnLoad( entityDescriptor, event, loadType );
 	}
 
-	private EntityDescriptor getPersister(final LoadEvent event ) {
+	private EntityDescriptor getDescriptor(final LoadEvent event ) {
 		if ( event.getInstanceToLoad() != null ) {
 			//the load() which takes an entity does not pass an entityName
 			event.setEntityClassName( event.getInstanceToLoad().getClass().getName() );
-			return event.getSession().getEntityPersister(
+			return event.getSession().getEntityDescriptor(
 					null,
 					event.getInstanceToLoad()
 			);
@@ -166,19 +166,19 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	private void loadByDerivedIdentitySimplePkValue(
 			LoadEvent event,
 			LoadEventListener.LoadType options,
-			EntityDescriptor dependentPersister,
+			EntityDescriptor dependentDescriptor,
 			EntityIdentifierComposite dependentIdType,
-			EntityDescriptor parentPersister) {
+			EntityDescriptor parentDescriptor) {
 				throw new NotYetImplementedFor6Exception(  );
-//		final EntityKey parentEntityKey = event.getSession().generateEntityKey( event.getEntityId(), parentPersister );
-//		final Object parent = doLoad( event, parentPersister, parentEntityKey, options );
+//		final EntityKey parentEntityKey = event.getSession().generateEntityKey( event.getEntityId(), parentDescriptor );
+//		final Object parent = doLoad( event, parentDescriptor, parentEntityKey, options );
 //
 //		final Serializable dependent = (Serializable) dependentIdType.instantiate( parent, event.getSession() );
-//		dependentIdType.setPropertyValues( dependent, new Object[] {parent}, dependentPersister.getHierarchy().getRepresentation() );
-//		final EntityKey dependentEntityKey = event.getSession().generateEntityKey( dependent, dependentPersister );
+//		dependentIdType.setPropertyValues( dependent, new Object[] {parent}, dependentDescriptor.getHierarchy().getRepresentation() );
+//		final EntityKey dependentEntityKey = event.getSession().generateEntityKey( dependent, dependentDescriptor );
 //		event.setEntityId( dependent );
 //
-//		event.setResult( doLoad( event, dependentPersister, dependentEntityKey, options ) );
+//		event.setResult( doLoad( event, dependentDescriptor, dependentEntityKey, options ) );
 	}
 
 	/**
@@ -700,7 +700,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			TwoPhaseLoad.addUninitializedCachedEntity(
 					entityKey,
 					entity,
-					referenceCacheEntry.getSubclassPersister(),
+					referenceCacheEntry.getSubclassDescriptor(),
 					LockMode.NONE,
 					referenceCacheEntry.getVersion(),
 					session

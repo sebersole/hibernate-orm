@@ -275,7 +275,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@SuppressWarnings("unchecked")
 	private static <J,T extends Type<J>> CollectionIndex<J> resolveIndexDescriptor(
-			PersistentCollectionDescriptor persister,
+			PersistentCollectionDescriptor descriptor,
 			Collection collectionBinding,
 			RuntimeModelCreationContext creationContext) {
 		if ( !IndexedCollection.class.isInstance( collectionBinding ) ) {
@@ -291,7 +291,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( indexValueMapping instanceof BasicValueMapping ) {
 			return new BasicCollectionIndexImpl(
-					persister,
+					descriptor,
 					indexedCollectionMapping,
 					creationContext
 			);
@@ -299,7 +299,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( indexValueMapping instanceof EmbeddedValueMapping ) {
 			return new CollectionIndexEmbeddedImpl(
-					persister,
+					descriptor,
 					indexedCollectionMapping,
 					creationContext
 			);
@@ -308,7 +308,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		if ( indexValueMapping instanceof OneToMany || indexValueMapping instanceof ManyToOne ) {
 			// NOTE : ManyToOne is used to signify the index is a many-to-many
 			return new CollectionIndexEntityImpl(
-					persister,
+					descriptor,
 					indexedCollectionMapping,
 					creationContext
 			);
@@ -334,7 +334,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@SuppressWarnings("unchecked")
 	private static CollectionElement resolveElementDescriptor(
-			AbstractPersistentCollectionDescriptor collectionPersister,
+			AbstractPersistentCollectionDescriptor descriptor,
 			Collection bootCollectionDescriptor,
 			Table separateCollectionTable,
 			RuntimeModelCreationContext creationContext) {
@@ -345,7 +345,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( bootCollectionDescriptor.getElement() instanceof BasicValueMapping ) {
 			return new BasicCollectionElementImpl(
-					collectionPersister,
+					descriptor,
 					bootCollectionDescriptor,
 					creationContext
 			);
@@ -353,7 +353,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( bootCollectionDescriptor.getElement() instanceof EmbeddedValueMapping ) {
 			return new CollectionElementEmbeddedImpl(
-					collectionPersister,
+					descriptor,
 					bootCollectionDescriptor,
 					creationContext
 			);
@@ -361,7 +361,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( bootCollectionDescriptor.getElement() instanceof ToOne ) {
 			return new CollectionElementEntityImpl(
-					collectionPersister,
+					descriptor,
 					bootCollectionDescriptor,
 					CollectionElement.ElementClassification.MANY_TO_MANY,
 					creationContext
@@ -370,7 +370,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( bootCollectionDescriptor.getElement() instanceof OneToMany ) {
 			return new CollectionElementEntityImpl(
-					collectionPersister,
+					descriptor,
 					bootCollectionDescriptor,
 					CollectionElement.ElementClassification.ONE_TO_MANY,
 					creationContext

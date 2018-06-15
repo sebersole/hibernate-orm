@@ -580,7 +580,7 @@ public final class SessionImpl
 			throw new ObjectDeletedException(
 					"The given object was deleted",
 					e.getId(),
-					e.getPersister().getEntityName()
+					e.getDescriptor().getEntityName()
 			);
 		}
 		return e.getLockMode();
@@ -1073,8 +1073,8 @@ public final class SessionImpl
 	@Override
 	public Object immediateLoad(String entityName, Object id) throws HibernateException {
 		if ( log.isDebugEnabled() ) {
-			EntityDescriptor persister = getFactory().getMetamodel().findEntityDescriptor( entityName );
-			log.debugf( "Initializing proxy: %s", MessageHelper.infoString( persister, id, getFactory() ) );
+			EntityDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
+			log.debugf( "Initializing proxy: %s", MessageHelper.infoString( descriptor, id, getFactory() ) );
 		}
 		LoadEvent event = loadEvent;
 		loadEvent = null;
@@ -1189,12 +1189,12 @@ public final class SessionImpl
 
 	@Override
 	public <T> MultiIdentifierLoadAccess<T> byMultipleIds(Class<T> entityClass) {
-		return new MultiIdentifierLoadAccessImpl<>( locateEntityPersister( entityClass ) );
+		return new MultiIdentifierLoadAccessImpl<>( locateEntityDescriptor( entityClass ) );
 	}
 
 	@Override
 	public MultiIdentifierLoadAccess byMultipleIds(String entityName) {
-		return new MultiIdentifierLoadAccessImpl( locateEntityPersister( entityName ) );
+		return new MultiIdentifierLoadAccessImpl( locateEntityDescriptor( entityName ) );
 	}
 
 	@Override
@@ -1439,7 +1439,7 @@ public final class SessionImpl
 		if ( log.isDebugEnabled() ) {
 			log.debugf(
 					"Flushing to force deletion of re-saved object: %s",
-					MessageHelper.infoString( entityEntry.getPersister(), entityEntry.getId(), getFactory() )
+					MessageHelper.infoString( entityEntry.getDescriptor(), entityEntry.getId(), getFactory() )
 			);
 		}
 
@@ -1447,7 +1447,7 @@ public final class SessionImpl
 			throw new ObjectDeletedException(
 					"deleted object would be re-saved by cascade (remove deleted object from associations)",
 					entityEntry.getId(),
-					entityEntry.getPersister().getEntityName()
+					entityEntry.getDescriptor().getEntityName()
 			);
 		}
 		checkOpenOrWaitingForAutoClose();
@@ -1496,7 +1496,7 @@ public final class SessionImpl
 			}
 			catch (HibernateException e) {
 				try {
-					return getEntityPersister( null, object );
+					return getEntityDescriptor( null, object );
 				}
 				catch (HibernateException e2) {
 					throw e;
@@ -1718,7 +1718,7 @@ public final class SessionImpl
 			return guessEntityName( object );
 		}
 		else {
-			return entry.getPersister().getEntityName();
+			return entry.getDescriptor().getEntityName();
 		}
 	}
 
@@ -1737,7 +1737,7 @@ public final class SessionImpl
 		if ( entry == null ) {
 			throwTransientObjectException( object );
 		}
-		return entry.getPersister().getEntityName();
+		return entry.getDescriptor().getEntityName();
 	}
 
 	private void throwTransientObjectException(Object object) throws HibernateException {
@@ -2197,20 +2197,20 @@ public final class SessionImpl
 	}
 
 	private class IdentifierLoadAccessImpl<T> implements IdentifierLoadAccess<T> {
-		private final EntityDescriptor entityPersister;
+		private final EntityDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private CacheMode cacheMode;
 
-		private IdentifierLoadAccessImpl(EntityDescriptor entityPersister) {
-			this.entityPersister = entityPersister;
+		private IdentifierLoadAccessImpl(EntityDescriptor entityDescriptor) {
+			this.entityDescriptor = entityDescriptor;
 		}
 
 		private IdentifierLoadAccessImpl(String entityName) {
-			this( locateEntityPersister( entityName ) );
+			this( locateEntityDescriptor( entityName ) );
 		}
 
 		private IdentifierLoadAccessImpl(Class<T> entityClass) {
-			this( locateEntityPersister( entityClass ) );
+			this( locateEntityDescriptor( entityClass ) );
 		}
 
 		@Override
@@ -2252,18 +2252,18 @@ public final class SessionImpl
 		@SuppressWarnings("unchecked")
 		protected T doGetReference(Object id) {
 			if ( this.lockOptions != null ) {
-				LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), lockOptions, SessionImpl.this );
+				LoadEvent event = new LoadEvent( id, entityDescriptor.getEntityName(), lockOptions, SessionImpl.this );
 				fireLoad( event, LoadEventListener.LOAD );
 				return (T) event.getResult();
 			}
 
-			LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), false, SessionImpl.this );
+			LoadEvent event = new LoadEvent( id, entityDescriptor.getEntityName(), false, SessionImpl.this );
 			boolean success = false;
 			try {
 				fireLoad( event, LoadEventListener.LOAD );
 				if ( event.getResult() == null ) {
 					getFactory().getEntityNotFoundDelegate().handleEntityNotFound(
-							entityPersister.getEntityName(),
+							entityDescriptor.getEntityName(),
 							id
 					);
 				}
@@ -2307,12 +2307,12 @@ public final class SessionImpl
 		@SuppressWarnings("unchecked")
 		protected final T doLoad(Object id) {
 			if ( this.lockOptions != null ) {
-				LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), lockOptions, SessionImpl.this );
+				LoadEvent event = new LoadEvent( id, entityDescriptor.getEntityName(), lockOptions, SessionImpl.this );
 				fireLoad( event, LoadEventListener.GET );
 				return (T) event.getResult();
 			}
 
-			LoadEvent event = new LoadEvent( id, entityPersister.getEntityName(), false, SessionImpl.this );
+			LoadEvent event = new LoadEvent( id, entityDescriptor.getEntityName(), false, SessionImpl.this );
 			boolean success = false;
 			try {
 				fireLoad( event, LoadEventListener.GET );
@@ -2329,7 +2329,7 @@ public final class SessionImpl
 	}
 
 	private class MultiIdentifierLoadAccessImpl<T> implements MultiIdentifierLoadAccess<T>, MultiLoadOptions {
-		private final EntityDescriptor entityPersister;
+		private final EntityDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private CacheMode cacheMode;
 		private Integer batchSize;
@@ -2337,8 +2337,8 @@ public final class SessionImpl
 		private boolean returnOfDeletedEntitiesEnabled;
 		private boolean orderedReturnEnabled = true;
 
-		public MultiIdentifierLoadAccessImpl(EntityDescriptor entityPersister) {
-			this.entityPersister = entityPersister;
+		public MultiIdentifierLoadAccessImpl(EntityDescriptor entityDescriptor) {
+			this.entityDescriptor = entityDescriptor;
 		}
 
 		@Override
@@ -2422,7 +2422,7 @@ public final class SessionImpl
 			}
 
 			try {
-				return entityPersister.getMultiIdLoader( this ).load( ids, this, SessionImpl.this );
+				return entityDescriptor.getMultiIdLoader( this ).load( ids, this, SessionImpl.this );
 			}
 			finally {
 				if ( cacheModeChanged ) {
@@ -2447,7 +2447,7 @@ public final class SessionImpl
 			}
 
 			try {
-				return entityPersister.getMultiIdLoader( this ).load(
+				return entityDescriptor.getMultiIdLoader( this ).load(
 						ids.toArray( new Serializable[0] ),
 						this,
 						SessionImpl.this
@@ -2462,11 +2462,11 @@ public final class SessionImpl
 		}
 	}
 
-	private <T> EntityDescriptor<? extends T> locateEntityPersister(Class<T> entityClass) {
+	private <T> EntityDescriptor<? extends T> locateEntityDescriptor(Class<T> entityClass) {
 		return getFactory().getMetamodel().getEntityDescriptor( entityClass );
 	}
 
-	private <T> EntityDescriptor<? extends T> locateEntityPersister(String entityName) {
+	private <T> EntityDescriptor<? extends T> locateEntityDescriptor(String entityName) {
 		return getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
@@ -2592,16 +2592,16 @@ public final class SessionImpl
 	private class NaturalIdLoadAccessImpl<T> extends BaseNaturalIdLoadAccessImpl<T> implements NaturalIdLoadAccess<T> {
 		private final Map<String, Object> naturalIdParameters = new LinkedHashMap<>();
 
-		private NaturalIdLoadAccessImpl(EntityDescriptor entityPersister) {
-			super( entityPersister );
+		private NaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+			super( entityDescriptor );
 		}
 
 		private NaturalIdLoadAccessImpl(String entityName) {
-			this( locateEntityPersister( entityName ) );
+			this( locateEntityDescriptor( entityName ) );
 		}
 
 		private NaturalIdLoadAccessImpl(Class entityClass) {
-			this( locateEntityPersister( entityClass ) );
+			this( locateEntityDescriptor( entityClass ) );
 		}
 
 		@Override
@@ -2653,17 +2653,17 @@ public final class SessionImpl
 			implements SimpleNaturalIdLoadAccess<T> {
 		private final String naturalIdAttributeName;
 
-		private SimpleNaturalIdLoadAccessImpl(EntityDescriptor entityPersister) {
-			super( entityPersister );
+		private SimpleNaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+			super( entityDescriptor );
 
-			final NaturalIdDescriptor<?> naturalIdentifierDescriptor = entityPersister.getHierarchy()
+			final NaturalIdDescriptor<?> naturalIdentifierDescriptor = entityDescriptor.getHierarchy()
 					.getNaturalIdDescriptor();
 
 			if ( naturalIdentifierDescriptor == null ) {
 				throw new HibernateException(
 						String.format(
 								"Entity [%s] did not define a natural id",
-								entityPersister.getEntityName()
+								entityDescriptor.getEntityName()
 						)
 				);
 			}
@@ -2672,7 +2672,7 @@ public final class SessionImpl
 				throw new HibernateException(
 						String.format(
 								"Natural0id defined for entity [%s] is not simple (1 attribute)",
-								entityPersister.getEntityName()
+								entityDescriptor.getEntityName()
 						)
 				);
 			}
@@ -2682,11 +2682,11 @@ public final class SessionImpl
 		}
 
 		private SimpleNaturalIdLoadAccessImpl(String entityName) {
-			this( locateEntityPersister( entityName ) );
+			this( locateEntityDescriptor( entityName ) );
 		}
 
 		private SimpleNaturalIdLoadAccessImpl(Class entityClass) {
-			this( locateEntityPersister( entityClass ) );
+			this( locateEntityDescriptor( entityClass ) );
 		}
 
 		@Override

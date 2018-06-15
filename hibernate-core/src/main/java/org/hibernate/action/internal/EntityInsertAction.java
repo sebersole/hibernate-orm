@@ -41,7 +41,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 	 * @param state The current (extracted) entity state
 	 * @param instance The entity instance
 	 * @param version The current entity version value
-	 * @param persister The entity's persister
+	 * @param descriptor The entity's descriptor
 	 * @param isVersionIncrementDisabled Whether version incrementing is disabled.
 	 * @param session The session
 	 */
@@ -50,10 +50,10 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 			Object[] state,
 			Object instance,
 			Object version,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			boolean isVersionIncrementDisabled,
 			SharedSessionContractImplementor session) {
-		super( id, state, instance, isVersionIncrementDisabled, persister, session );
+		super( id, state, instance, isVersionIncrementDisabled, descriptor, session );
 		this.version = version;
 	}
 
@@ -140,11 +140,11 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		markExecuted();
 	}
 
-	private boolean cacheInsert(EntityDescriptor persister, Object ck) {
+	private boolean cacheInsert(EntityDescriptor descriptor, Object ck) {
 		SharedSessionContractImplementor session = getSession();
 		try {
 			session.getEventListenerManager().cachePutStart();
-			final EntityDescriptor rootDescriptor = persister.getHierarchy().getRootEntityType();
+			final EntityDescriptor rootDescriptor = descriptor.getHierarchy().getRootEntityType();
 			return session.getFactory().getCache().getEntityRegionAccess( rootDescriptor.getNavigableRole() ).insert(
 					session,
 					ck,

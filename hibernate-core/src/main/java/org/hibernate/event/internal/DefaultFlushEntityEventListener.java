@@ -654,7 +654,7 @@ public class DefaultFlushEntityEventListener implements FlushEntityEventListener
 		}
 
 		@Override
-		public EntityDescriptor getContainingPersister() {
+		public EntityDescriptor getContainingDescriptor() {
 			return descriptor;
 		}
 

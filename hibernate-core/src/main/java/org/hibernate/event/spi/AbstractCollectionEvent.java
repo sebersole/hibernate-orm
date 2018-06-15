@@ -25,15 +25,17 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 
 	/**
 	 * Constructs an AbstractCollectionEvent object.
-	 *  @param collection - the collection
+	 *
+	 * @param collectionDescriptor - the collection descriptor
+	 * @param collection - the collection
 	 * @param source - the Session source
 	 * @param affectedOwner - the owner that is affected by this event;
- * can be null if unavailable
+	 * can be null if unavailable
 	 * @param affectedOwnerId - the ID for the owner that is affected
-* by this event; can be null if unavailable
+	 * by this event; can be null if unavailable
 	 */
 	public AbstractCollectionEvent(
-			PersistentCollectionDescriptor collectionPersister,
+			PersistentCollectionDescriptor collectionDescriptor,
 			PersistentCollection collection,
 			EventSource source,
 			Object affectedOwner,
@@ -43,10 +45,10 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 		this.affectedOwner = affectedOwner;
 		this.affectedOwnerId = affectedOwnerId;
 		this.affectedOwnerEntityName =
-				getAffectedOwnerEntityName( collectionPersister, affectedOwner, source );
+				getAffectedOwnerEntityName( collectionDescriptor, affectedOwner, source );
 	}
 
-	protected static PersistentCollectionDescriptor getLoadedCollectionPersister(PersistentCollection collection, EventSource source ) {
+	protected static PersistentCollectionDescriptor getLoadedCollectionDescriptor(PersistentCollection collection, EventSource source ) {
 		CollectionEntry ce = source.getPersistenceContext().getCollectionEntry( collection );
 		return ( ce == null ? null : ce.getLoadedCollectionDescriptor() );
 	}
@@ -64,12 +66,12 @@ public abstract class AbstractCollectionEvent extends AbstractEvent {
 		return ( ownerEntry == null ? null : ownerEntry.getId() );
 	}
 
-	protected static String getAffectedOwnerEntityName(PersistentCollectionDescriptor collectionPersister, Object affectedOwner, EventSource source ) {
+	protected static String getAffectedOwnerEntityName(PersistentCollectionDescriptor collectionDescriptor, Object affectedOwner, EventSource source ) {
 
-		// collectionPersister should not be null, but we don't want to throw
+		// collectionDescriptor should not be null, but we don't want to throw
 		// an exception if it is null
 		String entityName =
-				( collectionPersister == null ? null : collectionPersister.findEntityOwnerDescriptor().getEntityName() );
+				( collectionDescriptor == null ? null : collectionDescriptor.findEntityOwnerDescriptor().getEntityName() );
 		if ( affectedOwner != null ) {
 			EntityEntry ee = source.getPersistenceContext().getEntry( affectedOwner );
 			if ( ee != null && ee.getEntityName() != null) {

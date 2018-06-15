@@ -137,7 +137,7 @@ public class StandardCacheEntryImpl implements CacheEntry {
 				.setEntity( instance )
 				.setState( state )
 				.setId( id )
-				.setPersister( descriptor );
+				.setDescriptor( descriptor );
 
 		final EventListenerGroup<PreLoadEventListener> listenerGroup = session
 				.getFactory()

@@ -28,16 +28,16 @@ public class PreDeleteEvent
 	 *  @param entity The entity to be deleted.
 	 * @param id The id to use in the deletion.
 	 * @param deletedState The entity's state at deletion time.
-	 * @param persister The entity's persister.
+	 * @param descriptor The entity's descriptor.
 	 * @param source The session from which the event originated.
 	 */
 	public PreDeleteEvent(
 			Object entity,
 			Object id,
 			Object[] deletedState,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source) {
-		super( source, entity, id, persister );
+		super( source, entity, id, descriptor );
 		this.deletedState = deletedState;
 	}
 

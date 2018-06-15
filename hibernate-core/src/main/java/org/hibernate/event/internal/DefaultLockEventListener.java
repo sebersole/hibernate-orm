@@ -64,23 +64,23 @@ public class DefaultLockEventListener extends AbstractLockUpgradeEventListener i
 		
 		EntityEntry entry = source.getPersistenceContext().getEntry(entity);
 		if (entry==null) {
-			final EntityDescriptor persister = source.getEntityPersister( event.getEntityName(), entity );
-			final Object id = persister.getIdentifier( entity, source );
+			final EntityDescriptor descriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+			final Object id = descriptor.getIdentifier( entity, source );
 			if ( !ForeignKeys.isNotTransient( event.getEntityName(), entity, Boolean.FALSE, source ) ) {
 				throw new TransientObjectException(
 						"cannot lock an unsaved transient instance: " +
-						persister.getEntityName()
+						descriptor.getEntityName()
 				);
 			}
 
-			entry = reassociate(event, entity, id, persister);
-			cascadeOnLock(event, persister, entity);
+			entry = reassociate(event, entity, id, descriptor);
+			cascadeOnLock(event, descriptor, entity);
 		}
 
 		upgradeLock( entity, entry, event.getLockOptions(), event.getSession() );
 	}
 	
-	private void cascadeOnLock(LockEvent event, EntityDescriptor persister, Object entity) {
+	private void cascadeOnLock(LockEvent event, EntityDescriptor descriptor, Object entity) {
 		EventSource source = event.getSession();
 		source.getPersistenceContext().incrementCascadeLevel();
 		try {
@@ -88,7 +88,7 @@ public class DefaultLockEventListener extends AbstractLockUpgradeEventListener i
 					CascadingActions.LOCK,
 					CascadePoint.AFTER_LOCK,
 					source,
-					persister,
+					descriptor,
 					entity,
 					event.getLockOptions()
 			);

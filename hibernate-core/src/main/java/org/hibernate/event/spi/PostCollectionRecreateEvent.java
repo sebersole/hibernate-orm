@@ -17,10 +17,10 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 public class PostCollectionRecreateEvent extends AbstractCollectionEvent {
 
 	public PostCollectionRecreateEvent(
-			PersistentCollectionDescriptor collectionPersister,
+			PersistentCollectionDescriptor collectionDescriptor,
 			PersistentCollection collection,
 			EventSource source ) {
-		super( collectionPersister, collection, source,
+		super( collectionDescriptor, collection, source,
 				collection.getOwner(),
 				getOwnerIdOrNull( collection.getOwner(), source ) );
 	}

@@ -26,7 +26,7 @@ public class PreUpdateEvent extends AbstractPreDatabaseOperationEvent {
 	 * @param state The state to be updated.
 	 * @param oldState The state of the entity at the time it was loaded from
 * the database.
-	 * @param persister The entity's persister.
+	 * @param descriptor The entity's descriptor.
 	 * @param source The session from which the event originated.
 	 */
 	public PreUpdateEvent(
@@ -34,9 +34,9 @@ public class PreUpdateEvent extends AbstractPreDatabaseOperationEvent {
 			Object id,
 			Object[] state,
 			Object[] oldState,
-			EntityDescriptor persister,
+			EntityDescriptor descriptor,
 			EventSource source) {
-		super( source, entity, id, persister );
+		super( source, entity, id, descriptor );
 		this.state = state;
 		this.oldState = oldState;
 	}

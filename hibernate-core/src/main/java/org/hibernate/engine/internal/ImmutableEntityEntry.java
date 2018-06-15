@@ -46,7 +46,7 @@ public final class ImmutableEntityEntry extends AbstractEntityEntry {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor persister,
+			final EntityDescriptor descriptor,
 			final EntityMode entityMode,
 			final String tenantId,
 			final boolean disableVersionIncrement,
@@ -59,7 +59,7 @@ public final class ImmutableEntityEntry extends AbstractEntityEntry {
 				version,
 				lockMode,
 				existsInDatabase,
-				persister,
+				descriptor,
 				disableVersionIncrement,
 				// purposefully do not pass along the session/persistence-context : HHH-10251
 				null
@@ -74,7 +74,7 @@ public final class ImmutableEntityEntry extends AbstractEntityEntry {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor persister,
+			final EntityDescriptor descriptor,
 			final boolean disableVersionIncrement,
 			final PersistenceContext persistenceContext) {
 
@@ -86,7 +86,7 @@ public final class ImmutableEntityEntry extends AbstractEntityEntry {
 				version,
 				lockMode,
 				existsInDatabase,
-				persister,
+				descriptor,
 				disableVersionIncrement,
 				// purposefully do not pass along the session/persistence-context : HHH-10251
 				null
