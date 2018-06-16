@@ -43,8 +43,11 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
+import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
 import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
+import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.DeleteStatement;
 import org.hibernate.sql.ast.tree.spi.InsertStatement;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
@@ -285,9 +288,56 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public void delete(
-			Object id, Object version, Object object, SharedSessionContractImplementor session)
+			Object id,
+			Object version,
+			Object object,
+			SharedSessionContractImplementor session)
 			throws HibernateException {
 
+		// todo (6.0) - initial basic pass at entity deletes
+
+		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
+		final ExecutionContext executionContext = getExecutionContext( session );
+
+		final TableReference tableReference = new TableReference( getPrimaryTable(), null );
+
+		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+		getHierarchy().getIdentifierDescriptor().dehydrate(
+				unresolvedId,
+				(jdbcValue, type, boundColumn) -> {
+					identifierJunction.add(
+							new RelationalPredicate(
+									RelationalPredicate.Operator.EQUAL,
+									new ColumnReference( boundColumn ),
+									new LiteralParameter( jdbcValue, type )
+							)
+					);
+				},
+				session
+		);
+
+		final DeleteStatement deleteStatement = new DeleteStatement( tableReference, identifierJunction );
+
+		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
+				SqlDeleteToJdbcDeleteConverter.interpret(
+						new SqlAstDeleteDescriptor() {
+							@Override
+							public DeleteStatement getSqlAstStatement() {
+								return deleteStatement;
+							}
+
+							@Override
+							public Set<String> getAffectedTableNames() {
+								return Collections.singleton(
+										deleteStatement.getTargetTable().getTable().getTableExpression()
+								);
+							}
+						},
+						executionContext.getParameterBindingContext()
+				),
+				executionContext,
+				Connection::prepareStatement
+		);
 	}
 
 	@Override
@@ -361,7 +411,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				executionContext,
 				Connection::prepareStatement
 		);
-
 	}
 
 	@Override
