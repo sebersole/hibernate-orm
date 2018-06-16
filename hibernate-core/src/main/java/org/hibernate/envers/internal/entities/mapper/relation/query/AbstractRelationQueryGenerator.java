@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.spi.AuditMetadataBuildingOptions;
+import org.hibernate.envers.internal.entities.mapper.id.IdMapper;
 import org.hibernate.envers.internal.entities.mapper.id.QueryParameterData;
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleIdData;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
@@ -57,9 +58,9 @@ public abstract class AbstractRelationQueryGenerator implements RelationQueryGen
 		final Query query = versionsReader.getSession().createQuery( removed ? getQueryRemovedString() : getQueryString() );
 		query.setParameter( DEL_REVISION_TYPE_PARAMETER, RevisionType.DEL );
 		query.setParameter( REVISION_PARAMETER, revision );
-		for ( QueryParameterData paramData : referencingIdData.getPrefixedMapper().mapToQueryParametersFromId(
-				primaryKey
-		) ) {
+
+		final IdMapper prefixedMapper = referencingIdData.getPrefixedMapper();
+		for ( QueryParameterData paramData : prefixedMapper.mapToQueryParametersFromId( primaryKey ) ) {
 			paramData.setParameterValue( query );
 		}
 		return query;

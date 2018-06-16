@@ -6,7 +6,7 @@
  */
 package org.hibernate.envers.internal.tools.graph;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Defines a graph, where each vertex has a representation, which identifies uniquely a value.
@@ -19,7 +19,7 @@ public interface GraphDefiner<V, R> {
 
 	V getValue(R r);
 
-	List<V> getNeighbours(V v);
+	Collection<V> getNeighbours(V v);
 
-	List<V> getValues();
+	Collection<V> getValues();
 }

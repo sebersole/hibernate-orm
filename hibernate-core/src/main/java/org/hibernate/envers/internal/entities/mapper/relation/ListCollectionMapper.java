@@ -7,9 +7,13 @@
 package org.hibernate.envers.internal.entities.mapper.relation;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -18,7 +22,6 @@ import org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.I
 import org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.ListCollectionInitializor;
 import org.hibernate.envers.internal.entities.mapper.relation.lazy.proxy.ListProxy;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
-import org.hibernate.envers.internal.tools.Tools;
 import org.hibernate.envers.tools.Pair;
 
 /**
@@ -31,7 +34,8 @@ public final class ListCollectionMapper extends AbstractCollectionMapper<List> i
 
 	public ListCollectionMapper(
 			CommonCollectionMapperData commonCollectionMapperData,
-			MiddleComponentData elementComponentData, MiddleComponentData indexComponentData,
+			MiddleComponentData elementComponentData,
+			MiddleComponentData indexComponentData,
 			boolean revisionTypeInId) {
 		super( commonCollectionMapperData, List.class, ListProxy.class, false, revisionTypeInId );
 		this.elementComponentData = elementComponentData;
@@ -62,7 +66,7 @@ public final class ListCollectionMapper extends AbstractCollectionMapper<List> i
 			return null;
 		}
 		else {
-			return Tools.listToIndexElementPairList( (List<Object>) newCollection );
+			return listToIndexElementPairList( (List<Object>) newCollection );
 		}
 	}
 
@@ -73,7 +77,7 @@ public final class ListCollectionMapper extends AbstractCollectionMapper<List> i
 			return null;
 		}
 		else {
-			return Tools.listToIndexElementPairList( (List<Object>) oldCollection );
+			return listToIndexElementPairList( (List<Object>) oldCollection );
 		}
 	}
 
@@ -92,5 +96,32 @@ public final class ListCollectionMapper extends AbstractCollectionMapper<List> i
 				indexValuePair.getSecond()
 		);
 		indexComponentData.getComponentMapper().mapToMapFromObject( session, idData, data, indexValuePair.getFirst() );
+	}
+
+	@Override
+	protected Set<Object> buildCollectionChangeSet(Object eventCollection, Collection collection) {
+		final Set<Object> changeSet = new HashSet<>();
+		if ( eventCollection != null ) {
+			for ( Object entry : collection ) {
+				if ( entry != null ) {
+					final Pair pair = Pair.class.cast( entry );
+					if ( pair.getSecond() == null ) {
+						continue;
+					}
+					changeSet.add( entry );
+				}
+			}
+		}
+		return changeSet;
+	}
+
+	private static <T> List<Pair<Integer, T>> listToIndexElementPairList(List<T> list) {
+		final List<Pair<Integer, T>> ret = new ArrayList<>();
+		final Iterator<T> listIter = list.iterator();
+		for ( int i = 0; i < list.size(); i++ ) {
+			ret.add( Pair.make( i, listIter.next() ) );
+		}
+
+		return ret;
 	}
 }

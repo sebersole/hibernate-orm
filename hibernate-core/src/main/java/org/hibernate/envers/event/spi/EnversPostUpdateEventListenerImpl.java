@@ -22,7 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  * @author Chris Cranford
  */
-public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener implements PostUpdateEventListener {
+public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventListener implements PostUpdateEventListener {
 	public EnversPostUpdateEventListenerImpl(AuditService auditService) {
 		super( auditService );
 	}
@@ -36,6 +36,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener i
 
 			final AuditProcess auditProcess = getAuditService().getAuditProcess( event.getSession() );
 
+			Object[] oldState = getOldDBState( auditProcess, entityName, event );
 			final Object[] newDbState = postUpdateDBState( event );
 			final AuditWorkUnit workUnit = new ModWorkUnit(
 					event.getSession(),
@@ -44,7 +45,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener i
 					event.getId(),
 					event.getPersister(),
 					newDbState,
-					event.getOldState()
+					oldState
 			);
 			auditProcess.addWorkUnit( workUnit );
 
@@ -59,6 +60,13 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversEventListener i
 				);
 			}
 		}
+	}
+
+	private Object[] getOldDBState(AuditProcess auditProcess, String entityName, PostUpdateEvent event) {
+		if ( isDetachedEntityUpdate( entityName, event.getOldState() ) ) {
+			return auditProcess.getCachedEntityState( event.getId(), entityName );
+		}
+		return event.getOldState();
 	}
 
 	private Object[] postUpdateDBState(PostUpdateEvent event) {

@@ -11,7 +11,6 @@ import org.hibernate.envers.internal.entities.mapper.relation.MiddleComponentDat
 import org.hibernate.envers.internal.entities.mapper.relation.MiddleIdData;
 import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
-import org.hibernate.envers.strategy.AuditStrategy;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.DEL_REVISION_TYPE_PARAMETER;
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.MIDDLE_ENTITY_ALIAS;
@@ -36,8 +35,6 @@ public final class OneEntityQueryGenerator extends AbstractRelationQueryGenerato
 			MiddleComponentData... componentData) {
 		super( options, referencingIdData, revisionTypeInId );
 
-		final AuditStrategy auditStrategy = options.getAuditStrategy();
-
 		/*
 		 * The valid query that we need to create:
 		 *   SELECT ee FROM middleEntity ee WHERE
@@ -61,10 +58,20 @@ public final class OneEntityQueryGenerator extends AbstractRelationQueryGenerato
 		final QueryBuilder commonPart = commonQueryPart( versionsMiddleEntityName );
 		final QueryBuilder validQuery = commonPart.deepCopy();
 		final QueryBuilder removedQuery = commonPart.deepCopy();
+
 		createValidDataRestrictions(
-				auditStrategy, versionsMiddleEntityName, validQuery, validQuery.getRootParameters(), true, componentData
+				versionsMiddleEntityName,
+				validQuery,
+				validQuery.getRootParameters(),
+				true,
+				componentData
 		);
-		createValidAndRemovedDataRestrictions( auditStrategy, versionsMiddleEntityName, removedQuery, componentData );
+
+		createValidAndRemovedDataRestrictions(
+				versionsMiddleEntityName,
+				removedQuery,
+				componentData
+		);
 
 		queryString = queryToString( validQuery );
 		queryRemovedString = queryToString( removedQuery );
@@ -91,19 +98,33 @@ public final class OneEntityQueryGenerator extends AbstractRelationQueryGenerato
 	 * Creates query restrictions used to retrieve only actual data.
 	 */
 	private void createValidDataRestrictions(
-			AuditStrategy auditStrategy, String versionsMiddleEntityName,
-			QueryBuilder qb, Parameters rootParameters, boolean inclusive,
+			String versionsMiddleEntityName,
+			QueryBuilder qb,
+			Parameters rootParameters,
+			boolean inclusive,
 			MiddleComponentData... componentData) {
 		final String revisionPropertyPath = options.getRevisionNumberPath();
 		final String originalIdPropertyName = options.getOriginalIdPropName();
 		final String eeOriginalIdPropertyPath = MIDDLE_ENTITY_ALIAS + "." + originalIdPropertyName;
+
 		// (with ee association at revision :revision)
 		// --> based on auditStrategy (see above)
-		auditStrategy.addAssociationAtRevisionRestriction(
-				qb, rootParameters, revisionPropertyPath, options.getRevisionEndFieldName(), true,
-				referencingIdData, versionsMiddleEntityName, eeOriginalIdPropertyPath, revisionPropertyPath,
-				originalIdPropertyName, MIDDLE_ENTITY_ALIAS, inclusive, componentData
+		options.getAuditStrategy().addAssociationAtRevisionRestriction(
+				qb,
+				rootParameters,
+				revisionPropertyPath,
+				options.getRevisionEndFieldName(),
+				true,
+				referencingIdData,
+				versionsMiddleEntityName,
+				eeOriginalIdPropertyPath,
+				revisionPropertyPath,
+				originalIdPropertyName,
+				MIDDLE_ENTITY_ALIAS,
+				inclusive,
+				componentData
 		);
+
 		// ee.revision_type != DEL
 		rootParameters.addWhereWithNamedParam( getRevisionTypePath(), "!=", DEL_REVISION_TYPE_PARAMETER );
 	}
@@ -112,15 +133,16 @@ public final class OneEntityQueryGenerator extends AbstractRelationQueryGenerato
 	 * Create query restrictions used to retrieve actual data and deletions that took place at exactly given revision.
 	 */
 	private void createValidAndRemovedDataRestrictions(
-			AuditStrategy auditStrategy, String versionsMiddleEntityName,
-			QueryBuilder remQb, MiddleComponentData... componentData) {
+			String versionsMiddleEntityName,
+			QueryBuilder remQb,
+			MiddleComponentData... componentData) {
 		final Parameters disjoint = remQb.getRootParameters().addSubParameters( "or" );
 		// Restrictions to match all valid rows.
 		final Parameters valid = disjoint.addSubParameters( "and" );
 		// Restrictions to match all rows deleted at exactly given revision.
 		final Parameters removed = disjoint.addSubParameters( "and" );
 		// Excluding current revision, because we need to match data valid at the previous one.
-		createValidDataRestrictions( auditStrategy, versionsMiddleEntityName, remQb, valid, false, componentData );
+		createValidDataRestrictions( versionsMiddleEntityName, remQb, valid, false, componentData );
 		// ee.revision = :revision
 		removed.addWhereWithNamedParam( options.getRevisionNumberPath(), "=", REVISION_PARAMETER );
 		// ee.revision_type = DEL

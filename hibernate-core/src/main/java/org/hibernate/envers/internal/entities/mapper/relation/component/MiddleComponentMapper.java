@@ -28,8 +28,10 @@ public interface MiddleComponentMapper {
 	 * @return An object with data corresponding to the one found in the given map.
 	 */
 	Object mapToObjectFromFullMap(
-			EntityInstantiator entityInstantiator, Map<String, Object> data,
-			Object dataObject, Number revision);
+			EntityInstantiator entityInstantiator,
+			Map<String, Object> data,
+			Object dataObject,
+			Number revision);
 
 	/**
 	 * Maps from an object to the object's map representation (for an entity - only its id).

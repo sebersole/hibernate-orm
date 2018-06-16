@@ -26,6 +26,7 @@ import org.hibernate.query.Query;
 
 import static org.hibernate.envers.internal.tools.ArgumentsTools.checkNotNull;
 import static org.hibernate.envers.internal.tools.ArgumentsTools.checkPositive;
+import static org.hibernate.envers.tools.Pair.make;
 
 /**
  * @author Lukasz Antoniak (lukasz dot antoniak at gmail dot com)
@@ -45,11 +46,8 @@ public class CrossTypeRevisionChangesReaderImpl implements CrossTypeRevisionChan
 		final List<Object> result = new ArrayList<>();
 		for ( Pair<String, Class> type : entityTypes ) {
 			result.addAll(
-					auditReaderImplementor.createQuery().forEntitiesModifiedAtRevision(
-							type.getSecond(),
-							type.getFirst(),
-							revision
-					)
+					auditReaderImplementor.createQuery()
+							.forEntitiesModifiedAtRevision( type.getSecond(), type.getFirst(), revision )
 							.getResultList()
 			);
 		}
@@ -59,17 +57,19 @@ public class CrossTypeRevisionChangesReaderImpl implements CrossTypeRevisionChan
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public List<Object> findEntities(Number revision, RevisionType revisionType)
-			throws IllegalStateException, IllegalArgumentException {
+	throws IllegalStateException, IllegalArgumentException {
 		final Set<Pair<String, Class>> entityTypes = findEntityTypes( revision );
 		final List<Object> result = new ArrayList<>();
 		for ( Pair<String, Class> type : entityTypes ) {
 			result.addAll(
-					auditReaderImplementor.createQuery().forEntitiesModifiedAtRevision(
-							type.getSecond(),
-							type.getFirst(),
-							revision
-					)
-							.add( new RevisionTypeAuditExpression( null, revisionType, "=" ) ).getResultList()
+					auditReaderImplementor.createQuery()
+							.forEntitiesModifiedAtRevision(
+									type.getSecond(),
+									type.getFirst(),
+									revision
+							)
+							.add( new RevisionTypeAuditExpression( null, revisionType, "=" ) )
+							.getResultList()
 			);
 		}
 		return result;
@@ -78,7 +78,7 @@ public class CrossTypeRevisionChangesReaderImpl implements CrossTypeRevisionChan
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public Map<RevisionType, List<Object>> findEntitiesGroupByRevisionType(Number revision)
-			throws IllegalStateException, IllegalArgumentException {
+	throws IllegalStateException, IllegalArgumentException {
 		final Set<Pair<String, Class>> entityTypes = findEntityTypes( revision );
 		final Map<RevisionType, List<Object>> result = new HashMap<>();
 		for ( RevisionType revisionType : RevisionType.values() ) {
@@ -97,7 +97,7 @@ public class CrossTypeRevisionChangesReaderImpl implements CrossTypeRevisionChan
 	@Override
 	@SuppressWarnings({"unchecked"})
 	public Set<Pair<String, Class>> findEntityTypes(Number revision)
-			throws IllegalStateException, IllegalArgumentException {
+	throws IllegalStateException, IllegalArgumentException {
 		checkNotNull( revision, "Entity revision" );
 		checkPositive( revision, "Entity revision" );
 		checkSession();
@@ -113,19 +113,13 @@ public class CrossTypeRevisionChangesReaderImpl implements CrossTypeRevisionChan
 
 		if ( revisionInfo != null ) {
 			// If revision exists.
-			final Set<String> entityNames = auditService.getModifiedEntityNamesReader().getModifiedEntityNames( revisionInfo );
+			final Set<String> entityNames = auditService.getModifiedEntityNamesReader()
+					.getModifiedEntityNames( revisionInfo );
 			if ( entityNames != null ) {
 				// Generate result that contains entity names and corresponding Java classes.
 				final Set<Pair<String, Class>> result = new HashSet<>();
 				for ( String entityName : entityNames ) {
-					result.add(
-							Pair.make(
-									entityName, EntityTools.getEntityClass(
-									sessionImplementor,
-									entityName
-							)
-							)
-					);
+					result.add( make( entityName, EntityTools.getEntityClass( sessionImplementor, entityName ) ) );
 				}
 				return result;
 			}

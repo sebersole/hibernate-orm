@@ -16,7 +16,10 @@ import org.hibernate.internal.util.compare.EqualsHelper;
  * @param <T3>
  *
  * @author Adam Warski (adamw@aster.pl)
+ *
+ * @deprecated since 6.0 with no replacement.
  */
+@Deprecated
 public class Triple<T1, T2, T3> {
 	private T1 obj1;
 	private T2 obj2;

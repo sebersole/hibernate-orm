@@ -8,8 +8,10 @@ package org.hibernate.envers.test;
 
 import java.lang.reflect.Method;
 
+import org.hibernate.dialect.Dialect;
 import org.hibernate.envers.strategy.AuditStrategy;
 
+import org.hibernate.testing.junit5.SkipForDialect;
 import org.hibernate.testing.junit5.dynamictests.AbstractDynamicTest;
 import org.hibernate.testing.junit5.dynamictests.DynamicExecutionContext;
 import org.hibernate.testing.junit5.envers.RequiresAuditStrategy;
@@ -34,12 +36,18 @@ public class EnversDynamicExecutionContext implements DynamicExecutionContext {
 		if ( !isAuditStrategy( testClass.getAnnotation( RequiresAuditStrategy.class ) ) ) {
 			return false;
 		}
+		if ( isDialectMatch( testClass.getAnnotationsByType( SkipForDialect.class ) ) ) {
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public boolean isExecutionAllowed(Method method) {
 		if ( !isAuditStrategy( method.getAnnotation( RequiresAuditStrategy.class ) ) ) {
+			return false;
+		}
+		if ( isDialectMatch( method.getAnnotationsByType( SkipForDialect.class ) ) ) {
 			return false;
 		}
 		return true;
@@ -68,6 +76,22 @@ public class EnversDynamicExecutionContext implements DynamicExecutionContext {
 			}
 		}
 
+		return false;
+	}
+
+	private boolean isDialectMatch(SkipForDialect[] skipForDialectAnnotations) {
+		for ( SkipForDialect skipForDialect : skipForDialectAnnotations ) {
+			if ( skipForDialect.matchSubTypes() ) {
+				if ( Dialect.getDialect().getClass().isAssignableFrom( skipForDialect.dialectClass() ) ) {
+					return true;
+				}
+			}
+			else {
+				if ( Dialect.getDialect().getClass().equals( skipForDialect.dialectClass() ) ) {
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 }

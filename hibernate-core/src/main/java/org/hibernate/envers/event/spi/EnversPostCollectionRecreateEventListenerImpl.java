@@ -33,5 +33,8 @@ public class EnversPostCollectionRecreateEventListenerImpl
 		if ( !collectionEntry.getLoadedCollectionDescriptor().isInverse() ) {
 			onCollectionAction( event, event.getCollection(), null, collectionEntry );
 		}
+		else {
+			onCollectionActionInversed( event, event.getCollection(), null, collectionEntry );
+		}
 	}
 }

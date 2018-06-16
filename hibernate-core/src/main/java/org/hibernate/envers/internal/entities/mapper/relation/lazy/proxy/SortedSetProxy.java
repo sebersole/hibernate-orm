@@ -9,6 +9,8 @@ package org.hibernate.envers.internal.entities.mapper.relation.lazy.proxy;
 import java.util.Comparator;
 import java.util.SortedSet;
 
+import org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.Initializor;
+
 /**
  * @author Adam Warski (adam at warski dot org)
  */
@@ -18,7 +20,7 @@ public class SortedSetProxy<U> extends CollectionProxy<U, SortedSet<U>> implemen
 	public SortedSetProxy() {
 	}
 
-	public SortedSetProxy(org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.Initializor<SortedSet<U>> initializor) {
+	public SortedSetProxy(Initializor<SortedSet<U>> initializor) {
 		super( initializor );
 	}
 

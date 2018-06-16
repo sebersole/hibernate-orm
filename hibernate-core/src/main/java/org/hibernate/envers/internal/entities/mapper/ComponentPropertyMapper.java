@@ -7,6 +7,8 @@
 package org.hibernate.envers.internal.entities.mapper;
 
 import java.io.Serializable;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +28,7 @@ import org.hibernate.property.access.spi.Setter;
  * @author Lukasz Zuchowski (author at zuchos dot com)
  * @author Chris Cranford
  */
-public class ComponentPropertyMapper implements PropertyMapper, CompositeMapperBuilder {
+public class ComponentPropertyMapper extends AbstractPropertyMapper implements CompositeMapperBuilder {
 	private final PropertyData propertyData;
 	private final MultiPropertyMapper delegate;
 	private final Class componentClass;
@@ -114,39 +116,43 @@ public class ComponentPropertyMapper implements PropertyMapper, CompositeMapperB
 			return;
 		}
 
-		final Setter setter = ReflectionTools.getSetter(
-				obj.getClass(),
-				propertyData,
-				versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
+		AccessController.doPrivileged(
+				new PrivilegedAction<Object>() {
+					@Override
+					public Object run() {
+						try {
+							final Object subObj = ReflectHelper.getDefaultConstructor( componentClass ).newInstance();
+
+							if ( isDynamicComponentMap() ) {
+								( (Map) obj ).put( propertyData.getBeanName(), subObj );
+								delegate.mapToEntityFromMap( subObj, data, primaryKey, versionsReader, revision );
+							}
+							else {
+								final Setter setter = ReflectionTools.getSetter(
+										obj.getClass(),
+										propertyData,
+										versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
+								);
+
+								if ( isAllPropertiesNull( data ) ) {
+									// single property, but default value need not be null, so we'll set it to null anyway
+									setter.set( obj, null, null );
+								}
+								else {
+									// set the component
+									setter.set( obj, subObj, null );
+									delegate.mapToEntityFromMap( subObj, data, primaryKey, versionsReader, revision );
+								}
+							}
+						}
+						catch ( Exception e ) {
+							throw new AuditException( e );
+						}
+
+						return null;
+					}
+				}
 		);
-
-		// If all properties are null and single, then the component has to be null also.
-		boolean allNullAndSingle = true;
-		for ( Map.Entry<PropertyData, PropertyMapper> property : delegate.getProperties().entrySet() ) {
-			if ( data.get(
-					property.getKey()
-							.getName()
-			) != null || !( property.getValue() instanceof SinglePropertyMapper ) ) {
-				allNullAndSingle = false;
-				break;
-			}
-		}
-
-		if ( allNullAndSingle ) {
-			// single property, but default value need not be null, so we'll set it to null anyway
-			setter.set( obj, null, null );
-		}
-		else {
-			// set the component
-			try {
-				final Object subObj = ReflectHelper.getDefaultConstructor( componentClass ).newInstance();
-				setter.set( obj, subObj, null );
-				delegate.mapToEntityFromMap( subObj, data, primaryKey, versionsReader, revision );
-			}
-			catch ( Exception e ) {
-				throw new AuditException( e );
-			}
-		}
 	}
 
 	@Override
@@ -160,5 +166,20 @@ public class ComponentPropertyMapper implements PropertyMapper, CompositeMapperB
 	@Override
 	public Map<PropertyData, PropertyMapper> getProperties() {
 		return delegate.getProperties();
+	}
+
+	@Override
+	public boolean hasPropertiesWithModifiedFlag() {
+		return delegate.hasPropertiesWithModifiedFlag();
+	}
+
+	private boolean isAllPropertiesNull(Map data) {
+		for ( Map.Entry<PropertyData, PropertyMapper> property : delegate.getProperties().entrySet() ) {
+			final Object value = data.get( property.getKey().getName() );
+			if ( value != null || !( property.getValue() instanceof SinglePropertyMapper ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

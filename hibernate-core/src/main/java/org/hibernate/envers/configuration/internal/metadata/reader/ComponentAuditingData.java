@@ -6,11 +6,10 @@
  */
 package org.hibernate.envers.configuration.internal.metadata.reader;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.hibernate.envers.internal.tools.Tools.newHashMap;
 
 /**
  * Audit mapping meta-data for component.
@@ -20,10 +19,9 @@ import static org.hibernate.envers.internal.tools.Tools.newHashMap;
  * @author Chris Cranford
  */
 public class ComponentAuditingData extends PropertyAuditingData implements AuditedPropertiesHolder {
-	private final Map<String, PropertyAuditingData> properties;
+	private final Map<String, PropertyAuditingData> properties = new HashMap<>();
 
 	public ComponentAuditingData() {
-		this.properties = newHashMap();
 	}
 
 	@Override

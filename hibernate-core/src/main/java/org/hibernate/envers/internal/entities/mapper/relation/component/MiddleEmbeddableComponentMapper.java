@@ -6,6 +6,9 @@
  */
 package org.hibernate.envers.internal.entities.mapper.relation.component;
 
+import java.lang.reflect.InvocationTargetException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 import org.hibernate.engine.spi.SessionImplementor;
@@ -39,9 +42,7 @@ public class MiddleEmbeddableComponentMapper implements MiddleComponentMapper, C
 			Object dataObject,
 			Number revision) {
 		try {
-			final Object componentInstance = dataObject != null
-					? dataObject
-					: ReflectHelper.getDefaultConstructor( componentClass ).newInstance();
+			final Object componentInstance = getComponentInstance( dataObject );
 			delegate.mapToEntityFromMap(
 					componentInstance,
 					data,
@@ -50,6 +51,10 @@ public class MiddleEmbeddableComponentMapper implements MiddleComponentMapper, C
 					revision
 			);
 			return componentInstance;
+		}
+		catch (AuditException e) {
+			// just throw the AuditException without wrapping in another AuditException
+			throw e;
 		}
 		catch (Exception e) {
 			throw new AuditException( e );
@@ -106,11 +111,13 @@ public class MiddleEmbeddableComponentMapper implements MiddleComponentMapper, C
 			}
 			else {
 				// (p1.prop = p2.prop or (p1.prop is null and p2.prop is null))
-				Parameters sub1 = parameters.addSubParameters( "or" );
-				sub1.addWhere( prefix1 + '.' + propertyName, false, "=", prefix2 + '.' + propertyName, false );
-				Parameters sub2 = sub1.addSubParameters( "and" );
-				sub2.addNullRestriction( prefix1 + '.' + propertyName, false );
-				sub2.addNullRestriction( prefix2 + '.' + propertyName, false );
+				parameters.addWhereOrNullRestriction(
+						prefix1 + '.' + propertyName,
+						false,
+						"=",
+						prefix2 + '.' + propertyName,
+						false
+				);
 			}
 		}
 	}
@@ -132,5 +139,31 @@ public class MiddleEmbeddableComponentMapper implements MiddleComponentMapper, C
 
 	public Map<PropertyData, PropertyMapper> getProperties() {
 		return delegate.getProperties();
+	}
+
+	private Object getComponentInstance(Object dataObject) {
+		if ( dataObject != null ) {
+			return dataObject;
+		}
+
+		return AccessController.doPrivileged(
+				new PrivilegedAction<Object>() {
+					@Override
+					public Object run() {
+						try {
+							return ReflectHelper.getDefaultConstructor( componentClass ).newInstance();
+						}
+						catch ( InstantiationException e ) {
+							throw new AuditException( e );
+						}
+						catch ( IllegalAccessException e ) {
+							throw new AuditException( e );
+						}
+						catch ( InvocationTargetException e ) {
+							throw new AuditException( e );
+						}
+					}
+				}
+		);
 	}
 }

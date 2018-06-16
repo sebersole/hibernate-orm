@@ -6,6 +6,7 @@
  */
 package org.hibernate.envers.internal.reader;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.hibernate.envers.internal.EnversMessageLogger;
@@ -13,7 +14,6 @@ import org.hibernate.envers.internal.tools.Triple;
 
 import org.jboss.logging.Logger;
 
-import static org.hibernate.envers.internal.tools.Tools.newHashMap;
 import static org.hibernate.envers.internal.tools.Triple.make;
 
 /**
@@ -32,16 +32,14 @@ public class FirstLevelCache {
 	/**
 	 * cache for resolve an object for a given id, revision and entityName.
 	 */
-	private final Map<Triple<String, Number, Object>, Object> cache;
+	private final Map<Triple<String, Number, Object>, Object> cache = new HashMap<>();
 
 	/**
 	 * used to resolve the entityName for a given id, revision and entity.
 	 */
-	private final Map<Triple<Object, Number, Object>, String> entityNameCache;
+	private final Map<Triple<Object, Number, Object>, String> entityNameCache = new HashMap<>();
 
 	public FirstLevelCache() {
-		cache = newHashMap();
-		entityNameCache = newHashMap();
 	}
 
 	public Object get(String entityName, Number revision, Object id) {

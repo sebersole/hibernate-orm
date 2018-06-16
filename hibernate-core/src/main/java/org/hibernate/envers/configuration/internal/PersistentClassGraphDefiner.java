@@ -7,11 +7,11 @@
 package org.hibernate.envers.configuration.internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import org.hibernate.boot.spi.MetadataImplementor;
-import org.hibernate.envers.internal.tools.Tools;
 import org.hibernate.envers.internal.tools.graph.GraphDefiner;
 import org.hibernate.mapping.PersistentClass;
 
@@ -39,7 +39,7 @@ public class PersistentClassGraphDefiner implements GraphDefiner<PersistentClass
 	}
 
 	@SuppressWarnings({"unchecked"})
-	private void addNeighbours(List<PersistentClass> neighbours, Iterator<PersistentClass> subclassIterator) {
+	private void addNeighbours(Collection<PersistentClass> neighbours, Iterator<PersistentClass> subclassIterator) {
 		while ( subclassIterator.hasNext() ) {
 			final PersistentClass subclass = subclassIterator.next();
 			neighbours.add( subclass );
@@ -49,7 +49,7 @@ public class PersistentClassGraphDefiner implements GraphDefiner<PersistentClass
 
 	@Override
 	@SuppressWarnings({"unchecked"})
-	public List<PersistentClass> getNeighbours(PersistentClass pc) {
+	public Collection<PersistentClass> getNeighbours(PersistentClass pc) {
 		final List<PersistentClass> neighbours = new ArrayList<>();
 
 		addNeighbours( neighbours, (Iterator<PersistentClass>) pc.getSubclassIterator() );
@@ -58,8 +58,7 @@ public class PersistentClassGraphDefiner implements GraphDefiner<PersistentClass
 	}
 
 	@Override
-	@SuppressWarnings({"unchecked"})
-	public List<PersistentClass> getValues() {
-		return Tools.collectionToList( metadata.getEntityBindings() );
+	public Collection<PersistentClass> getValues() {
+		return metadata.getEntityBindings();
 	}
 }

@@ -9,16 +9,21 @@ package org.hibernate.envers.configuration.internal.metadata.reader;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Version;
 
+import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.common.reflection.ClassLoadingException;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
@@ -43,9 +48,6 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Value;
 import org.hibernate.query.NavigablePath;
 
-import static org.hibernate.envers.internal.tools.Tools.newHashMap;
-import static org.hibernate.envers.internal.tools.Tools.newHashSet;
-
 /**
  * Reads persistent properties form a {@link PersistentPropertiesSource} and adds the ones that are audited to a
  * {@link AuditedPropertiesHolder}, filling all the auditing data.
@@ -65,16 +67,16 @@ public class AuditedPropertiesReader {
 	protected final ReflectionManager reflectionManager;
 	protected final String propertyNamePrefix;
 
-	protected final Set<String> propertyAccessedPersistentProperties;
-	protected final Set<String> fieldAccessedPersistentProperties;
+	protected final Set<String> propertyAccessedPersistentProperties = new HashSet<>();
+	protected final Set<String> fieldAccessedPersistentProperties = new HashSet<>();
 	// Mapping class field to corresponding <properties> element.
-	protected final Map<String, String> propertiesGroupMapping;
+	protected final Map<String, String> propertiesGroupMapping = new HashMap<>();
 
-	protected final Set<XProperty> overriddenAuditedProperties;
-	protected final Set<XProperty> overriddenNotAuditedProperties;
+	protected final Set<XProperty> overriddenAuditedProperties = new HashSet<>();
+	protected final Set<XProperty> overriddenNotAuditedProperties = new HashSet<>();
 
-	protected final Set<XClass> overriddenAuditedClasses;
-	protected final Set<XClass> overriddenNotAuditedClasses;
+	protected final Set<XClass> overriddenAuditedClasses = new HashSet<>();
+	protected final Set<XClass> overriddenNotAuditedClasses = new HashSet<>();
 
 	public AuditedPropertiesReader(
 			PersistentPropertiesSource persistentPropertiesSource,
@@ -87,16 +89,6 @@ public class AuditedPropertiesReader {
 		this.options = options;
 		this.reflectionManager = reflectionManager;
 		this.propertyNamePrefix = propertyNamePrefix;
-
-		propertyAccessedPersistentProperties = newHashSet();
-		fieldAccessedPersistentProperties = newHashSet();
-		propertiesGroupMapping = newHashMap();
-
-		overriddenAuditedProperties = newHashSet();
-		overriddenNotAuditedProperties = newHashSet();
-
-		overriddenAuditedClasses = newHashSet();
-		overriddenNotAuditedClasses = newHashSet();
 	}
 
 	public void read() {
@@ -290,7 +282,9 @@ public class AuditedPropertiesReader {
 		Audited audited = computeAuditConfiguration( dynamicComponentSource.getXClass() );
 		if ( !fieldAccessedPersistentProperties.isEmpty() ) {
 			throw new MappingException(
-					"Audited dynamic component cannot have properties with access=\"field\" for properties: " + fieldAccessedPersistentProperties + ". \n Change properties access=\"property\", to make it work)"
+					"Audited dynamic component cannot have properties with access=\"field\" for properties: " +
+							fieldAccessedPersistentProperties +
+							". \n Change properties access=\"property\", to make it work)"
 			);
 		}
 		for ( String property : propertyAccessedPersistentProperties ) {
@@ -495,6 +489,8 @@ public class AuditedPropertiesReader {
 			return false;
 		}
 
+		validateLobMappingSupport( property );
+
 		propertyData.setName( propertyName );
 		propertyData.setBeanName( property.getName() );
 		propertyData.setAccessType( accessType );
@@ -510,6 +506,31 @@ public class AuditedPropertiesReader {
 		setPropertyRelationMappedBy( property, propertyData );
 
 		return true;
+	}
+
+	private void validateLobMappingSupport(XProperty property) {
+		// HHH-9834 - Sanity check
+		try {
+			if ( property.isAnnotationPresent( ElementCollection.class ) ) {
+				if ( property.isAnnotationPresent( Lob.class ) ) {
+					if ( !property.getCollectionClass().isAssignableFrom( Map.class ) ) {
+						throw new MappingException(
+								"@ElementCollection combined with @Lob is only supported for Map collection types."
+						);
+					}
+				}
+			}
+		}
+		catch ( MappingException e ) {
+			throw new HibernateException(
+					String.format(
+							"Invalid mapping in [%s] for property [%s]",
+							property.getDeclaringClass().getName(),
+							property.getName()
+					),
+					e
+			);
+		}
 	}
 
 	protected boolean checkAudited(

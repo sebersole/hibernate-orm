@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.Initializor;
+
 /**
  * @author Adam Warski (adam at warski dot org)
  */
@@ -19,7 +21,7 @@ public class ListProxy<U> extends CollectionProxy<U, List<U>> implements List<U>
 	public ListProxy() {
 	}
 
-	public ListProxy(org.hibernate.envers.internal.entities.mapper.relation.lazy.initializor.Initializor<List<U>> initializor) {
+	public ListProxy(Initializor<List<U>> initializor) {
 		super( initializor );
 	}
 

@@ -16,6 +16,7 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.entities.EntityConfiguration;
 import org.hibernate.envers.internal.entities.RelationDescription;
+import org.hibernate.envers.internal.entities.RelationType;
 import org.hibernate.envers.internal.entities.mapper.PersistentCollectionChangeData;
 import org.hibernate.envers.internal.entities.mapper.id.IdMapper;
 import org.hibernate.envers.internal.synchronization.AuditProcess;
@@ -24,6 +25,7 @@ import org.hibernate.envers.internal.synchronization.work.CollectionChangeWorkUn
 import org.hibernate.envers.internal.synchronization.work.FakeBidirectionalRelationWorkUnit;
 import org.hibernate.envers.internal.synchronization.work.PersistentCollectionChangeWorkUnit;
 import org.hibernate.event.spi.AbstractCollectionEvent;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 
 /**
  * Base class for Envers' collection event related listeners
@@ -55,8 +57,7 @@ public abstract class BaseEnversCollectionEventListener extends BaseEnversEventL
 			final AuditProcess auditProcess = getAuditService().getAuditProcess( event.getSession() );
 
 			final String entityName = event.getAffectedOwnerEntityName();
-			final String ownerEntityName = collectionEntry.getLoadedCollectionDescriptor().getContainer().getNavigableName();
-			final String referencingPropertyName = collectionEntry.getRole().substring( ownerEntityName.length() + 1 );
+			final String referencingPropertyName = resolveReferencingPropertyName( collectionEntry );
 
 			// Checking if this is not a "fake" many-to-one bidirectional relation. The relation description may be
 			// null in case of collections of non-entities.
@@ -104,6 +105,23 @@ public abstract class BaseEnversCollectionEventListener extends BaseEnversEventL
 		}
 	}
 
+	protected final void onCollectionActionInversed(
+			AbstractCollectionEvent event,
+			PersistentCollection newColl,
+			Serializable oldColl,
+			CollectionEntry collectionEntry) {
+		if ( shouldGenerateRevision( event ) ) {
+			final String entityName = event.getAffectedOwnerEntityName();
+			final String referencingPropertyName = resolveReferencingPropertyName( collectionEntry );
+			final RelationDescription rd = searchForRelationDescription( entityName, referencingPropertyName );
+			if ( rd != null ) {
+				if ( rd.getRelationType().equals( RelationType.TO_MANY_NOT_OWNING ) && rd.isIndexed() ) {
+					onCollectionAction( event, newColl, oldColl, collectionEntry );
+				}
+			}
+		}
+	}
+
 	/**
 	 * Forces persistent collection initialization.
 	 *
@@ -141,12 +159,20 @@ public abstract class BaseEnversCollectionEventListener extends BaseEnversEventL
 	 */
 	private RelationDescription searchForRelationDescription(String entityName, String referencingPropertyName) {
 		final EntityConfiguration configuration = getAuditService().getEntityBindings().get( entityName );
-		final RelationDescription rd = configuration.getRelationDescription( referencingPropertyName );
+		final String propertyName = sanitizeReferencingPropertyName( referencingPropertyName );
+		final RelationDescription rd = configuration.getRelationDescription( propertyName );
 		if ( rd == null && configuration.getParentEntityName() != null ) {
-			return searchForRelationDescription( configuration.getParentEntityName(), referencingPropertyName );
+			return searchForRelationDescription( configuration.getParentEntityName(), propertyName );
 		}
 
 		return rd;
+	}
+
+	private String sanitizeReferencingPropertyName(String propertyName) {
+		if ( propertyName != null && propertyName.indexOf( '.' ) != -1 ) {
+			return propertyName.replaceAll( "\\.", "\\_" );
+		}
+		return propertyName;
 	}
 
 	private void generateFakeBidirecationalRelationWorkUnits(
@@ -270,5 +296,13 @@ public abstract class BaseEnversCollectionEventListener extends BaseEnversEventL
 				);
 			}
 		}
+	}
+
+	private String resolveReferencingPropertyName(CollectionEntry collectionEntry) {
+		final String ownerEntityName = collectionEntry.getLoadedCollectionDescriptor()
+				.getContainer()
+				.getNavigableName();
+
+		return collectionEntry.getNavigableRole().getFullPath().substring( ownerEntityName.length() + 1 );
 	}
 }

@@ -76,12 +76,21 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 		);
 		final QueryBuilder validQuery = commonPart.deepCopy();
 		final QueryBuilder removedQuery = commonPart.deepCopy();
+
 		createValidDataRestrictions(
-				options, referencedIdData, versionsMiddleEntityName, validQuery,
-				validQuery.getRootParameters(), true, componentData
+				referencedIdData,
+				versionsMiddleEntityName,
+				validQuery,
+				validQuery.getRootParameters(),
+				true,
+				componentData
 		);
+
 		createValidAndRemovedDataRestrictions(
-				options, referencedIdData, versionsMiddleEntityName, removedQuery, componentData
+				referencedIdData,
+				versionsMiddleEntityName,
+				removedQuery,
+				componentData
 		);
 
 		queryString = queryToString( validQuery );
@@ -95,17 +104,23 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 			MiddleIdData referencedIdData, String versionsMiddleEntityName,
 			String originalIdPropertyName) {
 		final String eeOriginalIdPropertyPath = MIDDLE_ENTITY_ALIAS + "." + originalIdPropertyName;
+
 		// SELECT new list(ee) FROM middleEntity ee
 		QueryBuilder qb = new QueryBuilder( versionsMiddleEntityName, MIDDLE_ENTITY_ALIAS );
 		qb.addFrom( referencedIdData.getAuditEntityName(), REFERENCED_ENTITY_ALIAS, false );
 		qb.addProjection( "new list", MIDDLE_ENTITY_ALIAS + ", " + REFERENCED_ENTITY_ALIAS, null, false );
+
 		// WHERE
 		final Parameters rootParameters = qb.getRootParameters();
+
 		// ee.id_ref_ed = e.id_ref_ed
 		referencedIdData.getPrefixedMapper().addIdsEqualToQuery(
-				rootParameters, eeOriginalIdPropertyPath, referencedIdData.getOriginalMapper(),
+				rootParameters,
+				eeOriginalIdPropertyPath,
+				referencedIdData.getOriginalMapper(),
 				REFERENCED_ENTITY_ALIAS + "." + originalIdPropertyName
 		);
+
 		// ee.originalId.id_ref_ing = :id_ref_ing
 		referencingIdData.getPrefixedMapper().addNamedIdEqualsToQuery( rootParameters, originalIdPropertyName, true );
 		return qb;
@@ -115,7 +130,6 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 	 * Creates query restrictions used to retrieve only actual data.
 	 */
 	private void createValidDataRestrictions(
-			AuditMetadataBuildingOptions options,
 			MiddleIdData referencedIdData,
 			String versionsMiddleEntityName,
 			QueryBuilder qb,
@@ -126,6 +140,7 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 		final String originalIdPropertyName = options.getOriginalIdPropName();
 		final String eeOriginalIdPropertyPath = MIDDLE_ENTITY_ALIAS + "." + originalIdPropertyName;
 		final String revisionTypePropName = getRevisionTypePath();
+
 		// (selecting e entities at revision :revision)
 		// --> based on auditStrategy (see above)
 		options.getAuditStrategy().addEntityAtRevisionRestriction(
@@ -142,6 +157,7 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 				REFERENCED_ENTITY_ALIAS_DEF_AUD_STR,
 				true
 		);
+
 		// (with ee association at revision :revision)
 		// --> based on auditStrategy (see above)
 		options.getAuditStrategy().addAssociationAtRevisionRestriction(
@@ -159,8 +175,10 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 				inclusive,
 				componentData
 		);
+
 		// ee.revision_type != DEL
 		rootParameters.addWhereWithNamedParam( revisionTypePropName, "!=", DEL_REVISION_TYPE_PARAMETER );
+
 		// e.revision_type != DEL
 		rootParameters.addWhereWithNamedParam(
 				REFERENCED_ENTITY_ALIAS + "." + revisionTypePropName,
@@ -174,7 +192,6 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 	 * Create query restrictions used to retrieve actual data and deletions that took place at exactly given revision.
 	 */
 	private void createValidAndRemovedDataRestrictions(
-			AuditMetadataBuildingOptions options,
 			MiddleIdData referencedIdData,
 			String versionsMiddleEntityName,
 			QueryBuilder remQb,
@@ -186,9 +203,9 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 		final Parameters removed = disjoint.addSubParameters( "and" );
 		final String revisionPropertyPath = options.getRevisionNumberPath();
 		final String revisionTypePropName = getRevisionTypePath();
+
 		// Excluding current revision, because we need to match data valid at the previous one.
 		createValidDataRestrictions(
-				options,
 				referencedIdData,
 				versionsMiddleEntityName,
 				remQb,
@@ -196,8 +213,10 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 				false,
 				componentData
 		);
+
 		// ee.revision = :revision
 		removed.addWhereWithNamedParam( revisionPropertyPath, "=", REVISION_PARAMETER );
+
 		// e.revision = :revision
 		removed.addWhereWithNamedParam(
 				REFERENCED_ENTITY_ALIAS + "." + revisionPropertyPath,
@@ -205,8 +224,10 @@ public final class TwoEntityQueryGenerator extends AbstractRelationQueryGenerato
 				"=",
 				REVISION_PARAMETER
 		);
+
 		// ee.revision_type = DEL
 		removed.addWhereWithNamedParam( revisionTypePropName, "=", DEL_REVISION_TYPE_PARAMETER );
+
 		// e.revision_type = DEL
 		removed.addWhereWithNamedParam(
 				REFERENCED_ENTITY_ALIAS + "." + revisionTypePropName,

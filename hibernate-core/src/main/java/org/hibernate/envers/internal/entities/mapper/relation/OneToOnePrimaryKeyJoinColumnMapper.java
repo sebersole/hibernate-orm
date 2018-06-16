@@ -6,8 +6,6 @@
  */
 package org.hibernate.envers.internal.entities.mapper.relation;
 
-import java.io.Serializable;
-
 import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.query.AuditEntity;
@@ -30,22 +28,28 @@ public class OneToOnePrimaryKeyJoinColumnMapper extends AbstractOneToOneMapper {
 
 	@Override
 	protected Object queryForReferencedEntity(
-			AuditReaderImplementor versionsReader, EntityInfo referencedEntity,
-			Serializable primaryKey, Number revision) {
+			AuditReaderImplementor versionsReader,
+			EntityInfo referencedEntity,
+			Object primaryKey,
+			Number revision) {
 		if ( referencedEntity.isAudited() ) {
 			// Audited relation.
-			return versionsReader.createQuery().forEntitiesAtRevision(
-					referencedEntity.getEntityClass(),
-					referencedEntity.getEntityName(), revision
-			)
+			return versionsReader.createQuery()
+					.forEntitiesAtRevision(
+							referencedEntity.getEntityClass(),
+							referencedEntity.getEntityName(),
+							revision
+					)
 					.add( AuditEntity.id().eq( primaryKey ) )
 					.getSingleResult();
 		}
 		else {
 			// Not audited relation.
 			return createNotAuditedEntityReference(
-					versionsReader, referencedEntity.getEntityClass(),
-					referencedEntity.getEntityName(), primaryKey
+					versionsReader,
+					referencedEntity.getEntityClass(),
+					referencedEntity.getEntityName(),
+					primaryKey
 			);
 		}
 	}
@@ -56,8 +60,10 @@ public class OneToOnePrimaryKeyJoinColumnMapper extends AbstractOneToOneMapper {
 	 * (non-historical) version of an entity.
 	 */
 	private Object createNotAuditedEntityReference(
-			AuditReaderImplementor versionsReader, Class<?> entityClass,
-			String entityName, Serializable primaryKey) {
+			AuditReaderImplementor versionsReader,
+			Class<?> entityClass,
+			String entityName,
+			Object primaryKey) {
 		final EntityDescriptor entityDescriptor = versionsReader.getSessionImplementor()
 				.getFactory()
 				.getMetamodel()

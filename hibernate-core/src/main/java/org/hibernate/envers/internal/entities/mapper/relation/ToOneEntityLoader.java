@@ -6,8 +6,7 @@
  */
 package org.hibernate.envers.internal.entities.mapper.relation;
 
-import java.io.Serializable;
-
+import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.entities.mapper.relation.lazy.ToOneDelegateSessionImplementor;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -31,7 +30,8 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		if ( versionsReader.getAuditService().getEntityBindings().getNotVersionEntityConfiguration( entityName ) == null ) {
+		final AuditService auditService = versionsReader.getAuditService();
+		if ( auditService.getEntityBindings().getNotVersionEntityConfiguration( entityName ) == null ) {
 			// Audited relation, look up entity with Envers.
 			// When user traverses removed entities graph, do not restrict revision type of referencing objects
 			// to ADD or MOD (DEL possible). See HHH-5845.
@@ -39,7 +39,7 @@ public final class ToOneEntityLoader {
 		}
 		else {
 			// Not audited relation, look up entity with Hibernate.
-			return versionsReader.getSessionImplementor().immediateLoad( entityName, (Serializable) entityId );
+			return versionsReader.getSessionImplementor().immediateLoad( entityName, entityId );
 		}
 	}
 
@@ -53,12 +53,9 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor persister = versionsReader.getSessionImplementor()
-				.getFactory()
-				.getMetamodel()
-				.findEntityDescriptor( entityName );
-		return persister.createProxy(
-				(Serializable) entityId,
+		final EntityDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
+		return entityDescriptor.createProxy(
+				entityId,
 				new ToOneDelegateSessionImplementor( versionsReader, entityClass, entityId, revision, removed )
 		);
 	}
@@ -74,13 +71,19 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor persister = versionsReader.getSessionImplementor()
-				.getFactory()
-				.getMetamodel()
-				.findEntityDescriptor( entityName );
-		if ( persister.hasProxy() ) {
+		final EntityDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
+		if ( entityDescriptor.hasProxy() ) {
 			return createProxy( versionsReader, entityClass, entityName, entityId, revision, removed );
 		}
 		return loadImmediate( versionsReader, entityClass, entityName, entityId, revision, removed );
+	}
+
+	private static EntityDescriptor resolveEntityDescriptorByName(
+			AuditReaderImplementor versionsReader,
+			String entityName) {
+		return versionsReader.getSessionImplementor()
+				.getFactory()
+				.getMetamodel()
+				.findEntityDescriptor( entityName );
 	}
 }

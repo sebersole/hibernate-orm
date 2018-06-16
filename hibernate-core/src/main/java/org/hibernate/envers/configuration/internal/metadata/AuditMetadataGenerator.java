@@ -9,6 +9,7 @@ package org.hibernate.envers.configuration.internal.metadata;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.MappingException;
@@ -40,8 +41,6 @@ import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.SyntheticProperty;
-import org.hibernate.mapping.Table;
-import org.hibernate.mapping.Value;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tuple.GeneratedValueGeneration;
 import org.hibernate.tuple.GenerationTiming;
@@ -627,7 +626,8 @@ public final class AuditMetadataGenerator {
 				// Unsupported id mapping, e.g. key-many-to-one. If the entity is used in auditing, an exception
 				// will be thrown later on.
 				LOG.debugf(
-						"Unable to create auditing id mapping for entity %s, because of an unsupported Hibernate id mapping (e.g. key-many-to-one)",
+						"Unable to create auditing id mapping for entity %s, " +
+								"because of an unsupported Hibernate id mapping (e.g. key-many-to-one)",
 						entityName
 				);
 				return;
@@ -721,6 +721,9 @@ public final class AuditMetadataGenerator {
 		createJoins( pc, classMapping, auditingData );
 		addJoins( pc, propertyMapper, auditingData, pc.getEntityName(), xmlMappingData, true );
 
+		// HHH-7940 - New synthetic property support for @IndexColumn/@OrderColumn dynamic properties
+		addSynthetics( classMapping, auditingData, propertyMapper, xmlMappingData, pc.getEntityName(), true );
+
 		// Storing the generated configuration
 		final EntityConfiguration entityCfg = new EntityConfiguration(
 				auditEntityName,
@@ -730,6 +733,28 @@ public final class AuditMetadataGenerator {
 				parentEntityName
 		);
 		entitiesConfigurations.put( pc.getEntityName(), entityCfg );
+	}
+
+	private void addSynthetics(
+			Element classMapping,
+			ClassAuditingData auditingData,
+			CompositeMapperBuilder currentMapper,
+			EntityXmlMappingData xmlMappingData,
+			String entityName,
+			boolean firstPass) {
+		for ( PropertyAuditingData propertyAuditingData : auditingData.getSyntheticProperties() ) {
+			addValue(
+					classMapping,
+					propertyAuditingData.getValue(),
+					currentMapper,
+					entityName,
+					xmlMappingData,
+					propertyAuditingData,
+					true,
+					firstPass,
+					false
+			);
+		}
 	}
 
 	@SuppressWarnings({"unchecked"})
@@ -806,16 +831,32 @@ public final class AuditMetadataGenerator {
 			final RelationTargetAuditMode relationTargetAuditMode = propertyAuditingData.getRelationTargetAuditMode();
 			configuration = getNotAuditedEntitiesConfigurations().get( referencedEntityName );
 
-			if ( configuration == null || !allowNotAuditedTarget || !RelationTargetAuditMode.NOT_AUDITED.equals(
-					relationTargetAuditMode
-			) ) {
-				throw new MappingException(
-						"An audited relation from " + entityName + "."
-								+ propertyAuditingData.getName() + " to a not audited entity " + referencedEntityName + "!"
-								+ (allowNotAuditedTarget ?
-								" Such mapping is possible, but has to be explicitly defined using @Audited(targetAuditMode = NOT_AUDITED)." :
-								"")
-				);
+			final boolean isAudited = !RelationTargetAuditMode.NOT_AUDITED.equals( relationTargetAuditMode );
+			if ( configuration == null || !allowNotAuditedTarget || isAudited ) {
+				if ( !allowNotAuditedTarget ) {
+					throw new MappingException(
+							String.format(
+									Locale.ROOT,
+									"An audited relation from %s.%s to a not audited entity %s!",
+									entityName,
+									propertyAuditingData.getName(),
+									referencedEntityName
+							)
+					);
+				}
+				else {
+					throw new MappingException(
+							String.format(
+									Locale.ROOT,
+									"An audited relation from %s.%s to a not audited entity %s! " +
+											"Such mapping is possible but has to be explicitly defined using " +
+											"@Audited(targetAuditMode = NOT_AUDITED).",
+									entityName,
+									propertyAuditingData.getName(),
+									referencedEntityName
+							)
+					);
+				}
 			}
 		}
 

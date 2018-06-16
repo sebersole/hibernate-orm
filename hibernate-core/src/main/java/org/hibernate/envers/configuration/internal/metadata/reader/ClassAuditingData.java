@@ -6,12 +6,11 @@
  */
 package org.hibernate.envers.configuration.internal.metadata.reader;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.hibernate.envers.AuditTable;
-
-import static org.hibernate.envers.internal.tools.Tools.newHashMap;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -20,8 +19,8 @@ import static org.hibernate.envers.internal.tools.Tools.newHashMap;
  * @author Chris Cranford
  */
 public class ClassAuditingData implements AuditedPropertiesHolder {
-	private final Map<String, PropertyAuditingData> properties;
-	private final Map<String, String> secondaryTableDictionary;
+	private final Map<String, PropertyAuditingData> properties = new HashMap<>();
+	private final Map<String, String> secondaryTableDictionary = new HashMap<>();
 
 	private AuditTable auditTable;
 
@@ -32,8 +31,6 @@ public class ClassAuditingData implements AuditedPropertiesHolder {
 	private boolean defaultAudited;
 
 	public ClassAuditingData() {
-		properties = newHashMap();
-		secondaryTableDictionary = newHashMap();
 	}
 
 	@Override

@@ -7,19 +7,21 @@
 package org.hibernate.envers.test.basic;
 
 import org.hibernate.envers.exception.NotAuditedException;
+import org.hibernate.envers.strategy.DefaultAuditStrategy;
 import org.hibernate.envers.test.EnversSessionFactoryBasedFunctionalTest;
 import org.hibernate.envers.test.support.domains.basic.BasicAuditedEntity;
 import org.hibernate.envers.test.support.domains.basic.BasicNonAuditedEntity;
 
 import org.hibernate.testing.junit5.dynamictests.DynamicBeforeAll;
 import org.hibernate.testing.junit5.dynamictests.DynamicTest;
+import org.hibernate.testing.junit5.envers.RequiresAuditStrategy;
 
 import static org.hibernate.testing.transaction.TransactionUtil.doInHibernate;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Chris Cranford
  */
+@RequiresAuditStrategy(value = DefaultAuditStrategy.class, comment = "Remove: Others currently fail")
 public class NotAuditedTest extends EnversSessionFactoryBasedFunctionalTest {
 	private Integer id;
 
@@ -43,25 +45,13 @@ public class NotAuditedTest extends EnversSessionFactoryBasedFunctionalTest {
 		} );
 	}
 
-	@DynamicTest
+	@DynamicTest(expected = NotAuditedException.class)
 	public void testRevisionCounts() {
-		try {
-			getAuditReader().getRevisions( BasicNonAuditedEntity.class, this.id );
-			fail( "Expected a NotAuditedException" );
-		}
-		catch ( NotAuditedException e ) {
-			// expected
-		}
+		getAuditReader().getRevisions( BasicNonAuditedEntity.class, this.id );
 	}
 
-	@DynamicTest
+	@DynamicTest(expected = NotAuditedException.class)
 	public void testRevisionHistory() {
-		try {
-			getAuditReader().find( BasicNonAuditedEntity.class, this.id, 1 );
-			fail( "Expected a NotAuditedException" );
-		}
-		catch ( NotAuditedException e ) {
-			// expected
-		}
+		getAuditReader().find( BasicNonAuditedEntity.class, this.id, 1 );
 	}
 }

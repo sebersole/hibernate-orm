@@ -19,6 +19,7 @@ import org.hibernate.envers.event.spi.EnversPostInsertEventListenerImpl;
 import org.hibernate.envers.event.spi.EnversPostUpdateEventListenerImpl;
 import org.hibernate.envers.event.spi.EnversPreCollectionRemoveEventListenerImpl;
 import org.hibernate.envers.event.spi.EnversPreCollectionUpdateEventListenerImpl;
+import org.hibernate.envers.event.spi.EnversPreUpdateEventListenerImpl;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.integrator.spi.Integrator;
@@ -101,6 +102,10 @@ public class EnversIntegrator implements Integrator {
 		listenerRegistry.appendListeners(
 				EventType.POST_INSERT,
 				new EnversPostInsertEventListenerImpl( auditService )
+		);
+		listenerRegistry.appendListeners(
+				EventType.PRE_UPDATE,
+				new EnversPreUpdateEventListenerImpl( auditService )
 		);
 		listenerRegistry.appendListeners(
 				EventType.POST_UPDATE,

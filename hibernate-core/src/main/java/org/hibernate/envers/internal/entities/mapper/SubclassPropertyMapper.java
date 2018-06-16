@@ -24,7 +24,7 @@ import org.hibernate.envers.internal.reader.AuditReaderImplementor;
  * @author Michal Skowronek (mskowr at o2 dot pl)
  * @author Chris Cranford
  */
-public class SubclassPropertyMapper implements ExtendedPropertyMapper {
+public class SubclassPropertyMapper extends AbstractPropertyMapper implements ExtendedPropertyMapper {
 	private ExtendedPropertyMapper main;
 	private ExtendedPropertyMapper parentMapper;
 
@@ -138,5 +138,16 @@ public class SubclassPropertyMapper implements ExtendedPropertyMapper {
 		joinedProperties.putAll( parentMapper.getProperties() );
 		joinedProperties.putAll( main.getProperties() );
 		return joinedProperties;
+	}
+
+	@Override
+	public boolean hasPropertiesWithModifiedFlag() {
+		// checks all properties, exposed both by the main mapper and parent mapper.
+		for ( PropertyData property : getProperties().keySet() ) {
+			if ( property.isUsingModifiedFlag() ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

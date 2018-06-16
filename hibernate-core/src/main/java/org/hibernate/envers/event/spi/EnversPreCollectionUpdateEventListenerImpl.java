@@ -33,5 +33,8 @@ public class EnversPreCollectionUpdateEventListenerImpl
 		if ( !collectionEntry.getLoadedCollectionDescriptor().isInverse() ) {
 			onCollectionAction( event, event.getCollection(), collectionEntry.getSnapshot(), collectionEntry );
 		}
+		else {
+			onCollectionActionInversed( event, event.getCollection(), collectionEntry.getSnapshot(), collectionEntry );
+		}
 	}
 }

@@ -79,4 +79,13 @@ public class BasicNonAuditedEntity {
 	public int hashCode() {
 		return Objects.hash( id, str1, str2 );
 	}
+
+	@Override
+	public String toString() {
+		return "BasicNonAuditedEntity{" +
+				"id=" + id +
+				", str1='" + str1 + '\'' +
+				", str2='" + str2 + '\'' +
+				'}';
+	}
 }

@@ -43,6 +43,8 @@ public final class OneAuditEntityQueryGenerator extends AbstractRelationQueryGen
 
 		this.mappedBy = mappedBy;
 
+		// HHH-11770 We use AbstractCompositeIdMapper here to handle EmbeddedIdMapper and MultipleIdMappper support
+		// so that OneAuditEntityQueryGenerator supports mappings to both @IdClass and @EmbeddedId components.
 		if ( ( referencedIdData.getOriginalMapper() instanceof MultipleIdMapper ) && mappedByKey ) {
 			multipleIdMapperKey = true;
 		}

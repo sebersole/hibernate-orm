@@ -11,8 +11,6 @@ import java.util.Map;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
-import org.hibernate.envers.internal.tools.MapProxyTool;
-import org.hibernate.envers.internal.tools.StringTools;
 
 /**
  * Multi mapper for dynamic components (it knows that component is a map, not a class)
@@ -26,6 +24,22 @@ public class MultiDynamicComponentMapper extends MultiPropertyMapper {
 
 	public MultiDynamicComponentMapper(PropertyData dynamicComponentData) {
 		this.dynamicComponentData = dynamicComponentData;
+	}
+
+	@Override
+	public void addComposite(PropertyData propertyData, PropertyMapper propertyMapper) {
+		// delegate to the super implementation and then mark the property mapper as a dynamic-component map.
+		super.addComposite( propertyData, propertyMapper );
+		propertyMapper.markAsDynamicComponentMap();
+	}
+
+	@Override
+	public void add(PropertyData propertyData) {
+		final SinglePropertyMapper single = new SinglePropertyMapper();
+		single.add( propertyData );
+
+		// delegate to our implementation of #addComposite for specialized behavior.
+		addComposite( propertyData, single );
 	}
 
 	@Override
@@ -103,22 +117,8 @@ public class MultiDynamicComponentMapper extends MultiPropertyMapper {
 			Object primaryKey,
 			AuditReaderImplementor versionsReader,
 			Number revision) {
-		Object mapProxy = MapProxyTool.newInstanceOfBeanProxyForMap(
-				generateClassName( data, dynamicComponentData.getBeanName() ),
-				(Map) obj,
-				properties.keySet(),
-				versionsReader.getAuditService().getClassLoaderService()
-		);
 		for ( PropertyMapper mapper : properties.values() ) {
-			mapper.mapToEntityFromMap( mapProxy, data, primaryKey, versionsReader, revision );
+			mapper.mapToEntityFromMap( obj, data, primaryKey, versionsReader, revision );
 		}
 	}
-
-	private String generateClassName(Map data, String dynamicComponentPropertyName) {
-		return ( data.get( "$type$" ) + StringTools.capitalizeFirst( dynamicComponentPropertyName ) ).replaceAll(
-				"_",
-				""
-		);
-	}
-
 }

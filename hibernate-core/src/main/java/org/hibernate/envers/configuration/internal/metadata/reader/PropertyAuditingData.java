@@ -16,7 +16,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import org.hibernate.envers.RelationTargetNotFoundAction;
 import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.mapping.Value;
-import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -132,7 +132,7 @@ public class PropertyAuditingData {
 		return resolvePropertyData( null );
 	}
 
-	public PropertyData resolvePropertyData(Type propertyType) {
+	public PropertyData resolvePropertyData(JavaTypeDescriptor javaTypeDescriptor) {
 		return new PropertyData(
 				name,
 				beanName,
@@ -140,11 +140,13 @@ public class PropertyAuditingData {
 				usingModifiedFlag,
 				modifiedFlagName,
 				synthetic,
-				propertyType
+				javaTypeDescriptor
 		);
 	}
 
-	public PropertyData resolvePropertyData(Type propertyType, Type virtualType) {
+	public PropertyData resolvePropertyData(
+			JavaTypeDescriptor propertyDescriptor,
+			JavaTypeDescriptor virtualDescriptor) {
 		return new PropertyData(
 				name,
 				beanName,
@@ -152,8 +154,8 @@ public class PropertyAuditingData {
 				usingModifiedFlag,
 				modifiedFlagName,
 				synthetic,
-				propertyType,
-				virtualType.getJavaTypeDescriptor().getJavaType()
+				propertyDescriptor,
+				virtualDescriptor.getJavaType()
 		);
 	}
 

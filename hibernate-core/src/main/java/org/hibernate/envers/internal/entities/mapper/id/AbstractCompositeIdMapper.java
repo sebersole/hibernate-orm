@@ -8,11 +8,11 @@ package org.hibernate.envers.internal.entities.mapper.id;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.internal.entities.PropertyData;
-import org.hibernate.envers.internal.tools.Tools;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.service.ServiceRegistry;
 
@@ -23,12 +23,11 @@ import org.hibernate.service.ServiceRegistry;
 public abstract class AbstractCompositeIdMapper extends AbstractIdMapper implements SimpleIdMapperBuilder {
 	protected final Class compositeIdClass;
 
-	protected Map<PropertyData, SingleIdMapper> ids;
+	protected Map<PropertyData, SingleIdMapper> ids = new LinkedHashMap<>();
 
 	protected AbstractCompositeIdMapper(Class compositeIdClass, ServiceRegistry serviceRegistry) {
 		super( serviceRegistry );
 		this.compositeIdClass = compositeIdClass;
-		ids = Tools.newLinkedHashMap();
 	}
 
 	@Override

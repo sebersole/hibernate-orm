@@ -32,8 +32,10 @@ public final class MiddleMapKeyIdComponentMapper implements MiddleComponentMappe
 
 	@Override
 	public Object mapToObjectFromFullMap(
-			EntityInstantiator entityInstantiator, Map<String, Object> data,
-			Object dataObject, Number revision) {
+			EntityInstantiator entityInstantiator,
+			Map<String, Object> data,
+			Object dataObject,
+			Number revision) {
 		return relatedIdMapper.mapToIdFromMap( (Map) data.get( originalIdPropertyName ) );
 	}
 

@@ -27,10 +27,13 @@ public class SortedMapCollectionInitializor extends MapCollectionInitializor<Sor
 	public SortedMapCollectionInitializor(
 			AuditReaderImplementor versionsReader,
 			RelationQueryGenerator queryGenerator,
-			Object primaryKey, Number revision, boolean removed,
+			Object primaryKey,
+			Number revision,
+			boolean removed,
 			Class<? extends SortedMap> collectionClass,
 			MiddleComponentData elementComponentData,
-			MiddleComponentData indexComponentData, Comparator comparator) {
+			MiddleComponentData indexComponentData,
+			Comparator comparator) {
 		super(
 				versionsReader,
 				queryGenerator,

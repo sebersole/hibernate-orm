@@ -72,8 +72,10 @@ public abstract class AbstractOneToOneMapper extends AbstractToOneMapper {
 	 * @return Referenced object or proxy of one-to-one relation.
 	 */
 	protected abstract Object queryForReferencedEntity(
-			AuditReaderImplementor versionsReader, EntityInfo referencedEntity,
-			Serializable primaryKey, Number revision);
+			AuditReaderImplementor versionsReader,
+			EntityInfo referencedEntity,
+			Object primaryKey,
+			Number revision);
 
 	@Override
 	public void mapModifiedFlagsToMapFromEntity(
@@ -86,10 +88,8 @@ public abstract class AbstractOneToOneMapper extends AbstractToOneMapper {
 	@Override
 	public void mapModifiedFlagsToMapForCollectionChange(String collectionPropertyName, Map<String, Object> data) {
 		if ( getPropertyData().isUsingModifiedFlag() ) {
-			data.put(
-					getPropertyData().getModifiedFlagPropertyName(),
-					collectionPropertyName.equals( getPropertyData().getName() )
-			);
+			final String propertyName = getPropertyData().getModifiedFlagPropertyName();
+			data.put( propertyName, collectionPropertyName.equals( getPropertyData().getName() ) );
 		}
 	}
 }

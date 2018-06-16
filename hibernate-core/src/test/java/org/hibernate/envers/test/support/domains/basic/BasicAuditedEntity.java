@@ -25,20 +25,20 @@ public class BasicAuditedEntity {
 	@Audited
 	private String str1;
 	@Audited
-	private String str2;
+	private long long1;
 
 	public BasicAuditedEntity() {
 
 	}
 
-	public BasicAuditedEntity(Integer id, String str1, String str2) {
-		this( str1, str2 );
+	public BasicAuditedEntity(Integer id, String str1, long long1) {
+		this( str1, long1 );
 		this.id = id;
 	}
 
-	public BasicAuditedEntity(String str1, String str2) {
+	public BasicAuditedEntity(String str1, long long1) {
 		this.str1 = str1;
-		this.str2 = str2;
+		this.long1 = long1;
 	}
 
 	public Integer getId() {
@@ -57,12 +57,12 @@ public class BasicAuditedEntity {
 		this.str1 = str1;
 	}
 
-	public String getStr2() {
-		return str2;
+	public long getLong1() {
+		return long1;
 	}
 
-	public void setStr2(String str2) {
-		this.str2 = str2;
+	public void setLong1(long long1) {
+		this.long1 = long1;
 	}
 
 	@Override
@@ -76,11 +76,20 @@ public class BasicAuditedEntity {
 		BasicAuditedEntity that = (BasicAuditedEntity) o;
 		return Objects.equals( id, that.id ) &&
 				Objects.equals( str1, that.str1 ) &&
-				Objects.equals( str2, that.str2 );
+				Objects.equals( long1, that.long1 );
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash( id, str1, str2 );
+		return Objects.hash( id, str1, long1 );
+	}
+
+	@Override
+	public String toString() {
+		return "BasicAuditedEntity{" +
+				"id=" + id +
+				", str1='" + str1 + '\'' +
+				", long1=" + long1 +
+				'}';
 	}
 }

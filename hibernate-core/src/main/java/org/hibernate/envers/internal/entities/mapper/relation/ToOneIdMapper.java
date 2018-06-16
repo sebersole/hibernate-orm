@@ -16,6 +16,8 @@ import org.hibernate.envers.internal.entities.mapper.id.IdMapper;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.internal.tools.EntityTools;
 import org.hibernate.envers.internal.tools.query.Parameters;
+import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -81,8 +83,39 @@ public class ToOneIdMapper extends AbstractToOneMapper {
 	}
 
 	protected boolean checkModified(SessionImplementor session, Object newObj, Object oldObj) {
-		//noinspection SimplifiableConditionalExpression
-		return nonInsertableFake ? false : !EntityTools.entitiesEqual( session, referencedEntityName, newObj, oldObj );
+		if ( nonInsertableFake ) {
+			return false;
+		}
+
+		if ( newObj == null || oldObj == null || newObj.getClass().equals( oldObj.getClass() ) ) {
+			return !EntityTools.entitiesEqual( session, referencedEntityName, newObj, oldObj );
+		}
+
+		// There is a chance that oldObj may reference the identifier of the old entity rather
+		// than the entity instance itself.  This happens under Session#update with a detached
+		// entity because the database snapshot that is used to derive the prior state doesn't
+		// return the entity instances of the to-one associations but only the identifier.
+		//
+		// So here we assume the method was supplied the id and we ask the persister to verify
+		// if the value is the identifier type.  If not, we assume its the entity type and
+		// therefore resolve the identifier from the entity directly prior to simply then
+		// doing the identifier comparison.
+
+		final EntityDescriptor entityDescriptor = session.getFactory()
+				.getMetamodel()
+				.findEntityDescriptor( referencedEntityName );
+
+		Object resolvedNewObjectId = newObj;
+		if ( !entityDescriptor.getIdentifierDescriptor().getJavaType().isInstance( newObj ) ) {
+			resolvedNewObjectId = EntityTools.getIdentifier( session, referencedEntityName, newObj );
+		}
+
+		Object resolvedOldObjectId = oldObj;
+		if ( !entityDescriptor.getIdentifierDescriptor().getJavaType().isInstance(  oldObj ) ) {
+			resolvedOldObjectId = EntityTools.getIdentifier( session, referencedEntityName, oldObj );
+		}
+
+		return !EqualsHelper.areEqual( resolvedNewObjectId, resolvedOldObjectId );
 	}
 
 	@Override
@@ -101,22 +134,27 @@ public class ToOneIdMapper extends AbstractToOneMapper {
 			else {
 				final EntityInfo referencedEntity = getEntityInfo( versionsReader, referencedEntityName );
 
-				final String referencingEntityName = versionsReader.getAuditService().getEntityBindings()
-						.getEntityNameForVersionsEntityName( (String) data.get( "$type$" ) );
-
-				final boolean ignoreNotFound;
-				if ( referencingEntityName == null && primaryKey == null ) {
-					/// HHH-11215 - Fix for NPE when Embeddable with ManyToOne inside ElementCollection
-					// An embeddable in an element-collection
-					ignoreNotFound = true;
+				boolean ignoreNotFound = false;
+				if ( !referencedEntity.isAudited() ) {
+					final String referencingEntityName = versionsReader.getAuditService()
+							.getEntityBindings()
+							.getEntityNameForVersionsEntityName( (String) data.get( "$type$" ) );
+					if ( referencingEntityName == null && primaryKey == null ) {
+						/// HHH-11215 - Fix for NPE when Embeddable with ManyToOne inside ElementCollection
+						// An embeddable in an element-collection
+						// todo: perhaps mapper should account for this instead?
+						ignoreNotFound = true;
+					}
+					else {
+						ignoreNotFound = versionsReader.getAuditService()
+								.getEntityBindings()
+								.getRelationDescription( referencingEntityName, getPropertyData().getName() )
+								.isIgnoreNotFound();
+					}
 				}
-				else {
-					ignoreNotFound = versionsReader.getAuditService().getEntityBindings()
-							.getRelationDescription( referencingEntityName, getPropertyData().getName() )
-							.isIgnoreNotFound();
-				}
 
-				final String revisionTypePropertyName = versionsReader.getAuditService().getOptions()
+				final String revisionTypePropertyName = versionsReader.getAuditService()
+						.getOptions()
 						.getRevisionTypePropName();
 
 				if ( ignoreNotFound ) {

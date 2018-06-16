@@ -17,8 +17,10 @@ import org.hibernate.envers.internal.tools.query.Parameters;
  */
 public final class MiddleDummyComponentMapper implements MiddleComponentMapper {
 	public Object mapToObjectFromFullMap(
-			EntityInstantiator entityInstantiator, Map<String, Object> data,
-			Object dataObject, Number revision) {
+			EntityInstantiator entityInstantiator,
+			Map<String, Object> data,
+			Object dataObject,
+			Number revision) {
 		return null;
 	}
 

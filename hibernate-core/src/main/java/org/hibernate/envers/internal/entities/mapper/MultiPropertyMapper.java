@@ -7,6 +7,9 @@
 package org.hibernate.envers.internal.entities.mapper;
 
 import java.io.Serializable;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +19,6 @@ import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.internal.tools.MappingTools;
 import org.hibernate.envers.internal.tools.ReflectionTools;
-import org.hibernate.envers.internal.tools.Tools;
 import org.hibernate.envers.tools.Pair;
 import org.hibernate.property.access.spi.Getter;
 
@@ -26,13 +28,11 @@ import org.hibernate.property.access.spi.Getter;
  * @author Lukasz Zuchowski (author at zuchos dot com)
  * @author Chris Cranford
  */
-public class MultiPropertyMapper implements ExtendedPropertyMapper {
-	protected final Map<PropertyData, PropertyMapper> properties;
-	private final Map<String, PropertyData> propertyDatas;
+public class MultiPropertyMapper extends AbstractPropertyMapper implements ExtendedPropertyMapper {
+	protected final Map<PropertyData, PropertyMapper> properties = new HashMap<>();
+	private final Map<String, PropertyData> propertyDatas = new HashMap<>();
 
 	public MultiPropertyMapper() {
-		properties = Tools.newHashMap();
-		propertyDatas = Tools.newHashMap();
 	}
 
 	@Override
@@ -98,28 +98,49 @@ public class MultiPropertyMapper implements ExtendedPropertyMapper {
 			Map<String, Object> data,
 			Object newObj,
 			Object oldObj) {
-		boolean ret = false;
-		for ( Map.Entry<PropertyData, PropertyMapper> entry : properties.entrySet() ) {
-			final PropertyData propertyData = entry.getKey();
-			final PropertyMapper propertyMapper = entry.getValue();
-			Getter getter;
-			if ( newObj != null ) {
-				getter = ReflectionTools.getGetter( newObj.getClass(), propertyData, session.getFactory().getServiceRegistry() );
-			}
-			else if ( oldObj != null ) {
-				getter = ReflectionTools.getGetter( oldObj.getClass(), propertyData, session.getFactory().getServiceRegistry() );
-			}
-			else {
-				return false;
-			}
-			ret |= propertyMapper.mapToMapFromEntity(
-					session, data,
-					newObj == null ? null : getter.get( newObj ),
-					oldObj == null ? null : getter.get( oldObj )
-			);
-		}
+		return AccessController.doPrivileged(
+				new PrivilegedAction<Boolean>() {
+					@Override
+					public Boolean run() {
+						boolean ret = false;
+						for ( Map.Entry<PropertyData, PropertyMapper> entry : properties.entrySet() ) {
+							final PropertyData propertyData = entry.getKey();
+							final PropertyMapper propertyMapper = entry.getValue();
 
-		return ret;
+							// synthetic properties are not part of the entity model; therefore they should be ignored.
+							if ( propertyData.isSynthetic() ) {
+								continue;
+							}
+
+							Getter getter;
+							if ( newObj != null ) {
+								getter = ReflectionTools.getGetter(
+										newObj.getClass(),
+										propertyData,
+										session.getFactory().getServiceRegistry()
+								);
+							}
+							else if ( oldObj != null ) {
+								getter = ReflectionTools.getGetter(
+										oldObj.getClass(),
+										propertyData,
+										session.getFactory().getServiceRegistry()
+								);
+							}
+							else {
+								return false;
+							}
+
+							ret |= propertyMapper.mapToMapFromEntity(
+									session, data,
+									newObj == null ? null : getter.get( newObj ),
+									oldObj == null ? null : getter.get( oldObj )
+							);
+						}
+						return ret;
+					}
+				}
+		);
 	}
 
 	@Override
@@ -128,25 +149,49 @@ public class MultiPropertyMapper implements ExtendedPropertyMapper {
 			Map<String, Object> data,
 			Object newObj,
 			Object oldObj) {
-		for ( Map.Entry<PropertyData, PropertyMapper> entry : properties.entrySet() ) {
-			final PropertyData propertyData = entry.getKey();
-			final PropertyMapper propertyMapper = entry.getValue();
-			Getter getter;
-			if ( newObj != null ) {
-				getter = ReflectionTools.getGetter( newObj.getClass(), propertyData, session.getFactory().getServiceRegistry() );
-			}
-			else if ( oldObj != null ) {
-				getter = ReflectionTools.getGetter( oldObj.getClass(), propertyData, session.getFactory().getServiceRegistry() );
-			}
-			else {
-				return;
-			}
-			propertyMapper.mapModifiedFlagsToMapFromEntity(
-					session, data,
-					newObj == null ? null : getter.get( newObj ),
-					oldObj == null ? null : getter.get( oldObj )
-			);
-		}
+		AccessController.doPrivileged(
+				new PrivilegedAction<Object>() {
+					@Override
+					public Object run() {
+						for ( Map.Entry<PropertyData, PropertyMapper> entry : properties.entrySet() ) {
+							final PropertyData propertyData = entry.getKey();
+							final PropertyMapper propertyMapper = entry.getValue();
+
+							// synthetic properties are not part of the entity model; therefore they should be ignored.
+							if ( propertyData.isSynthetic() ) {
+								continue;
+							}
+
+							Getter getter;
+							if ( newObj != null ) {
+								getter = ReflectionTools.getGetter(
+										newObj.getClass(),
+										propertyData,
+										session.getFactory().getServiceRegistry()
+								);
+							}
+							else if ( oldObj != null ) {
+								getter = ReflectionTools.getGetter(
+										oldObj.getClass(),
+										propertyData,
+										session.getFactory().getServiceRegistry()
+								);
+							}
+							else {
+								break;
+							}
+
+							propertyMapper.mapModifiedFlagsToMapFromEntity(
+									session, data,
+									newObj == null ? null : getter.get( newObj ),
+									oldObj == null ? null : getter.get( oldObj )
+							);
+						}
+
+						return null;
+					}
+				}
+		);
 	}
 
 	@Override
@@ -218,5 +263,15 @@ public class MultiPropertyMapper implements ExtendedPropertyMapper {
 
 	public Map<String, PropertyData> getPropertyDatas() {
 		return propertyDatas;
+	}
+
+	@Override
+	public boolean hasPropertiesWithModifiedFlag() {
+		for ( PropertyData property : getProperties().keySet() ) {
+			if ( property.isUsingModifiedFlag() ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

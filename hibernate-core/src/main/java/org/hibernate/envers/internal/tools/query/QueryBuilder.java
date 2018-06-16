@@ -23,12 +23,16 @@ import org.hibernate.envers.internal.tools.Triple;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.Query;
 
+import org.jboss.logging.Logger;
+
 /**
  * A class for incrementally building a HQL query.
  *
  * @author Adam Warski (adam at warski dot org)
  */
 public class QueryBuilder {
+	private static final Logger log = Logger.getLogger( QueryBuilder.class );
+
 	private final String entityName;
 	private final String alias;
 
@@ -245,7 +249,10 @@ public class QueryBuilder {
 
 		build( querySb, queryParamValues );
 
-		final Query query = session.createQuery( querySb.toString() );
+		final String sql = querySb.toString();
+		log.infof( "HQL: %s", sql );
+
+		final Query query = session.createQuery( sql );
 		for ( Map.Entry<String, Object> paramValue : queryParamValues.entrySet() ) {
 			if ( paramValue.getValue() instanceof RevisionType ) {
 				// this is needed when the ClassicQueryTranslatorFactory is used

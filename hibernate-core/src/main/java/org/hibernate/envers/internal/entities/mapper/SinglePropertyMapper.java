@@ -7,9 +7,10 @@
 package org.hibernate.envers.internal.entities.mapper;
 
 import java.io.Serializable;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -30,7 +31,7 @@ import org.hibernate.property.access.spi.SetterFieldImpl;
  * @author Michal Skowronek (mskowr at o2 dot pl)
  * @author Chris Cranford
  */
-public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder {
+public class SinglePropertyMapper extends AbstractPropertyMapper implements SimpleMapperBuilder {
 	private PropertyData propertyData;
 
 	public SinglePropertyMapper(PropertyData propertyData) {
@@ -65,8 +66,7 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			}
 		}
 
-		// todo (6.0) - delegate to JavaTypeDescriptor
-		return !Objects.equals( newObj, oldObj );
+		return !areEqual( newObj, oldObj );
 	}
 
 	@Override
@@ -75,9 +75,8 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			Map<String, Object> data,
 			Object newObj,
 			Object oldObj) {
-		if ( propertyData.isUsingModifiedFlag() ) {
-			// todo (6.0) - delegate equality check to JavaTypeDescriptor
-			data.put( propertyData.getModifiedFlagPropertyName(), !EqualsHelper.areEqual( newObj, oldObj ) );
+		if ( propertyData.isUsingModifiedFlag() && !propertyData.isSynthetic() ) {
+			data.put( propertyData.getModifiedFlagPropertyName(), !areEqual( newObj, oldObj ) );
 		}
 	}
 
@@ -92,19 +91,38 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 			Object primaryKey,
 			AuditReaderImplementor versionsReader,
 			Number revision) {
-		if ( data == null || obj == null ) {
+		// synthetic properties are not part of the entity model; therefore they should be ignored.
+		if ( data == null || obj == null || propertyData.isSynthetic() ) {
 			return;
 		}
 
-		final Setter setter = ReflectionTools.getSetter(
-				obj.getClass(),
-				propertyData,
-				versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
-		);
 		final Object value = data.get( propertyData.getName() );
-		// We only set a null value if the field is not primite. Otherwise, we leave it intact.
-		if ( value != null || !isPrimitive( setter, propertyData, obj.getClass() ) ) {
-			setter.set( obj, value, null );
+
+		if ( isDynamicComponentMap() ) {
+			@SuppressWarnings("unchecked")
+			final Map<String, Object> map = (Map<String, Object>) obj;
+			map.put( propertyData.getBeanName(), value );
+		}
+		else {
+			AccessController.doPrivileged(
+					new PrivilegedAction<Object>() {
+						@Override
+						public Object run() {
+							final Setter setter = ReflectionTools.getSetter(
+									obj.getClass(),
+									propertyData,
+									versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
+							);
+
+							// We only set a null value if the field is not primitive. Otherwise, we leave it intact.
+							if ( value != null || !isPrimitive( setter, propertyData, obj.getClass() ) ) {
+								setter.set( obj, value, null );
+							}
+
+							return null;
+						}
+					}
+			);
 		}
 	}
 
@@ -138,4 +156,22 @@ public class SinglePropertyMapper implements PropertyMapper, SimpleMapperBuilder
 		return null;
 	}
 
+	@Override
+	public boolean hasPropertiesWithModifiedFlag() {
+		return propertyData != null && propertyData.isUsingModifiedFlag();
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean areEqual(Object newObj, Object oldObj) {
+		// Should a JavaTypeDescriptor be specified in the property mapper, delegate there to make
+		// certain that proper equality comparisons occur based on the descriptor semantics rather
+		// than the generalized EqualsHelper#areEqual.
+		if ( propertyData.getJavaTypeDescriptor() != null ) {
+			return propertyData.getJavaTypeDescriptor().areEqual( newObj, oldObj );
+		}
+
+		// todo (6.0) - Confirm if this is still necessary as everything should use a JavaTypeDescriptor.
+		//		This was maintained for legacy 5.2 behavior only.
+		return EqualsHelper.areEqual( newObj, oldObj );
+	}
 }

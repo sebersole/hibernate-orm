@@ -7,6 +7,7 @@
 package org.hibernate.envers.internal.tools.graph;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public final class GraphTopologicalSort {
 	 * @return Values of the graph, sorted topologically.
 	 */
 	public static <V, R> List<V> sort(GraphDefiner<V, R> definer) {
-		final List<V> values = definer.getValues();
+		final Collection<V> values = definer.getValues();
 		final Map<R, Vertex<R>> vertices = new HashMap<>();
 
 		// Creating a vertex for each representation

@@ -82,4 +82,13 @@ public class BasicPartialAuditedEntity {
 	public int hashCode() {
 		return Objects.hash( id, str1, str2 );
 	}
+
+	@Override
+	public String toString() {
+		return "BasicPartialAuditedEntity{" +
+				"id=" + id +
+				", str1='" + str1 + '\'' +
+				", str2='" + str2 + '\'' +
+				'}';
+	}
 }

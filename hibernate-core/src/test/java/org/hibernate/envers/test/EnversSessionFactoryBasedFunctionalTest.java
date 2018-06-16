@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.Metamodel;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -149,6 +150,10 @@ public class EnversSessionFactoryBasedFunctionalTest
 
 	protected EnversSessionFactoryScope sessionFactoryScope() {
 		return sessionFactoryScope;
+	}
+
+	protected Session openSession() {
+		return sessionFactoryScope.getSessionFactory().openSession();
 	}
 
 	protected AuditReader getAuditReader() {

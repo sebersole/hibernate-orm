@@ -7,7 +7,7 @@
 package org.hibernate.envers.internal.entities;
 
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Holds information on a property that is audited.
@@ -26,8 +26,8 @@ public class PropertyData {
 	// Synthetic properties are ones which are not part of the actual java model.
 	// They're properties used for bookkeeping by Hibernate
 	private boolean synthetic;
-	private Type propertyType;
 	private Class<?> virtualReturnClass;
+	private JavaTypeDescriptor javaTypeDescriptor;
 
 	/**
 	 * Copies the given property data, except the name.
@@ -36,7 +36,7 @@ public class PropertyData {
 	 * @param propertyData Property data to copy the rest of properties from.
 	 */
 	public PropertyData(String newName, PropertyData propertyData) {
-		this ( newName, propertyData.beanName, propertyData.accessType, propertyData.getType() );
+		this ( newName, propertyData.beanName, propertyData.accessType, propertyData.getJavaTypeDescriptor() );
 	}
 
 	/**
@@ -52,10 +52,10 @@ public class PropertyData {
 	 * @param name Name of the property.
 	 * @param beanName Name of the property in the bean.
 	 * @param accessType Accessor type for this property.
-	 * @param propertyType The property type.
+	 * @param javaTypeDescriptor The java type descriptor.
 	 */
-	public PropertyData(String name, String beanName, String accessType, Type propertyType) {
-		this( name, beanName, accessType, false, null, false, propertyType, null );
+	public PropertyData(String name, String beanName, String accessType, JavaTypeDescriptor javaTypeDescriptor) {
+		this( name, beanName, accessType, false, null, false, javaTypeDescriptor, null );
 	}
 
 	/**
@@ -82,8 +82,8 @@ public class PropertyData {
 			boolean usingModifiedFlag,
 			String modifiedFlagName,
 			boolean synthetic,
-			Type propertyType) {
-		this( name, beanName, accessType, usingModifiedFlag, modifiedFlagName, synthetic, propertyType, null );
+			JavaTypeDescriptor javaTypeDescriptor) {
+		this( name, beanName, accessType, usingModifiedFlag, modifiedFlagName, synthetic, javaTypeDescriptor, null );
 	}
 
 	public PropertyData(
@@ -93,7 +93,7 @@ public class PropertyData {
 			boolean usingModifiedFlag,
 			String modifiedFlagName,
 			boolean synthetic,
-			Type propertyType,
+			JavaTypeDescriptor javaTypeDescriptor,
 			Class<?> virtualReturnClass) {
 		this.name = name;
 		this.beanName = beanName;
@@ -101,7 +101,7 @@ public class PropertyData {
 		this.usingModifiedFlag = usingModifiedFlag;
 		this.modifiedFlagName = modifiedFlagName;
 		this.synthetic = synthetic;
-		this.propertyType = propertyType;
+		this.javaTypeDescriptor = javaTypeDescriptor;
 		this.virtualReturnClass = virtualReturnClass;
 	}
 
@@ -129,8 +129,8 @@ public class PropertyData {
 		return synthetic;
 	}
 
-	public Type getType() {
-		return propertyType;
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return javaTypeDescriptor;
 	}
 
 	public Class<?> getVirtualReturnClass() {
@@ -164,12 +164,12 @@ public class PropertyData {
 		return result;
 	}
 
-	public static PropertyData forProperty(String propertyName, Type propertyType) {
+	public static PropertyData forProperty(String propertyName, JavaTypeDescriptor javaTypeDescriptor) {
 		return new PropertyData(
 				propertyName,
 				null,
 				null,
-				propertyType
+				javaTypeDescriptor
 		);
 	}
 }

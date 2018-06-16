@@ -8,7 +8,9 @@ package org.hibernate.envers.internal.entities.mapper.relation;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -77,5 +79,18 @@ public class BasicCollectionMapper<T extends Collection> extends AbstractCollect
 			Map<String, Object> data,
 			Object changed) {
 		elementComponentData.getComponentMapper().mapToMapFromObject( session, idData, data, changed );
+	}
+
+	@Override
+	protected Set<Object> buildCollectionChangeSet(Object eventCollection, Collection collection) {
+		final Set<Object> changeSet = new HashSet<>();
+		if ( eventCollection != null ) {
+			for ( Object entry : collection ) {
+				if ( entry != null ) {
+					changeSet.add( entry );
+				}
+			}
+		}
+		return changeSet;
 	}
 }
