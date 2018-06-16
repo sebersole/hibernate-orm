@@ -7,21 +7,18 @@
 package org.hibernate.envers.test.basic;
 
 import org.hibernate.envers.exception.NotAuditedException;
-import org.hibernate.envers.strategy.DefaultAuditStrategy;
 import org.hibernate.envers.test.EnversSessionFactoryBasedFunctionalTest;
 import org.hibernate.envers.test.support.domains.basic.BasicAuditedEntity;
 import org.hibernate.envers.test.support.domains.basic.BasicNonAuditedEntity;
 
 import org.hibernate.testing.junit5.dynamictests.DynamicBeforeAll;
 import org.hibernate.testing.junit5.dynamictests.DynamicTest;
-import org.hibernate.testing.junit5.envers.RequiresAuditStrategy;
 
 import static org.hibernate.testing.transaction.TransactionUtil.doInHibernate;
 
 /**
  * @author Chris Cranford
  */
-@RequiresAuditStrategy(value = DefaultAuditStrategy.class, comment = "Remove: Others currently fail")
 public class NotAuditedTest extends EnversSessionFactoryBasedFunctionalTest {
 	private Integer id;
 

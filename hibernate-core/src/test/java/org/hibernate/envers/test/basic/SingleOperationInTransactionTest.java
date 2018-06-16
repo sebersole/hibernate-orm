@@ -10,13 +10,11 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.hibernate.envers.exception.RevisionDoesNotExistException;
-import org.hibernate.envers.strategy.DefaultAuditStrategy;
 import org.hibernate.envers.test.EnversSessionFactoryBasedFunctionalTest;
 import org.hibernate.envers.test.support.domains.basic.BasicAuditedEntity;
 
 import org.hibernate.testing.junit5.dynamictests.DynamicBeforeAll;
 import org.hibernate.testing.junit5.dynamictests.DynamicTest;
-import org.hibernate.testing.junit5.envers.RequiresAuditStrategy;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -27,7 +25,6 @@ import static org.hibernate.testing.transaction.TransactionUtil.doInHibernate;
 /**
  * @author Chris Cranford
  */
-@RequiresAuditStrategy(value = DefaultAuditStrategy.class, comment = "Remove: Others currently fail")
 public class SingleOperationInTransactionTest extends EnversSessionFactoryBasedFunctionalTest {
 	private Integer e1Id;
 	private Integer e2Id;

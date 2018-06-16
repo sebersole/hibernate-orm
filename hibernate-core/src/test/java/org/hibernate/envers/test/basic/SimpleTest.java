@@ -35,7 +35,7 @@ public class SimpleTest extends EnversSessionFactoryBasedFunctionalTest {
 	}
 
 	@DynamicBeforeAll
-	public void initData() {
+	public void prepareAuditData() {
 		// REV 1 - RevisionType.ADD
 		id = doInHibernate( this::sessionFactory, session -> {
 			final StrTestEntity entity = new StrTestEntity();
