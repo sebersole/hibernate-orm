@@ -72,7 +72,7 @@ public class PhysicalColumn implements Column {
 
 	@Override
 	public String getExpression() {
-		return name.getCanonicalName();
+		return name.getText();
 	}
 
 	@Override

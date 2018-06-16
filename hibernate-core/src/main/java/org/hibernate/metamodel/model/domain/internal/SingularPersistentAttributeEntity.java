@@ -313,6 +313,11 @@ public class SingularPersistentAttributeEntity<O,J>
 				tableGroupJoinContext
 		);
 
+		// handle optional entity references to be outer joins.
+		if ( isNullable() && JoinType.INNER.equals( joinType ) ) {
+			joinType = JoinType.LEFT;
+		}
+
 		return joinCollector.generateTableGroup( joinType, tableGroupInfoSource, tableGroupJoinContext );
 	}
 

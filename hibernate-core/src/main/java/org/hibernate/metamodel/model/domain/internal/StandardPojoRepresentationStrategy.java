@@ -15,9 +15,10 @@ import java.util.function.Supplier;
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.bytecode.spi.BytecodeProvider;
 import org.hibernate.bytecode.spi.ReflectionOptimizer;
-import org.hibernate.cfg.Environment;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
@@ -37,6 +38,7 @@ import org.jboss.logging.Logger;
 public class StandardPojoRepresentationStrategy implements ManagedTypeRepresentationStrategy {
 	private static final Logger log = Logger.getLogger( StandardPojoRepresentationStrategy.class );
 
+	private final StrategySelector strategySelector;
 	private Supplier<ReflectionOptimizer> reflectionOptimizerAccess;
 
 	public StandardPojoRepresentationStrategy(
@@ -50,6 +52,10 @@ public class StandardPojoRepresentationStrategy implements ManagedTypeRepresenta
 //		else {
 //			this.reflectionOptimizerAccess = () -> buildReflectionOptimizer( bootDescriptor, runtimeDescriptor, creationContext, Environment.getBytecodeProvider() );
 //		}
+
+		this.strategySelector = creationContext.getSessionFactory()
+				.getServiceRegistry()
+				.getService( StrategySelector.class );
 
 		log.tracef( "StandardPojoRepresentationStrategy created for [%s]", runtimeDescriptor );
 	}
@@ -131,8 +137,17 @@ public class StandardPojoRepresentationStrategy implements ManagedTypeRepresenta
 		}
 
 		if ( strategy == null ) {
-			// for now...
-			strategy = BuiltInPropertyAccessStrategies.MIXED.getStrategy();
+			if ( StringHelper.isNotEmpty( bootAttribute.getPropertyAccessorName() ) ) {
+				// handle explicitly specified attribute accessor
+				strategy = strategySelector.resolveStrategy(
+						PropertyAccessStrategy.class,
+						bootAttribute.getPropertyAccessorName()
+				);
+			}
+			else {
+				// for now...
+				strategy = BuiltInPropertyAccessStrategies.MIXED.getStrategy();
+			}
 		}
 
 		if ( strategy == null ) {
