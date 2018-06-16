@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.TestFactory;
 
@@ -65,7 +66,7 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 		);
 
 		for ( final T context : getExecutionContexts() ) {
-			if ( !context.isExecutionAllowed( testClass ) ) {
+			if ( testClass.isAnnotationPresent( Disabled.class ) || !context.isExecutionAllowed( testClass ) ) {
 				continue;
 			}
 
@@ -74,7 +75,7 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 
 			// First invoke all @DynamicBeforeAll annotated methods
 			beforeAllMethods.forEach( method -> {
-				if ( context.isExecutionAllowed( method ) ) {
+				if ( !method.isAnnotationPresent( Disabled.class ) && context.isExecutionAllowed( method ) ) {
 					tests.add( dynamicTest( method.getName(), () -> method.invoke( testInstance ) ) );
 				}
 			} );
@@ -85,7 +86,7 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 			// @DynamicTest method.  So to control whether the test runs, only the @DynamicTest
 			// method is checked.
 			testMethods.forEach( method -> {
-				if ( context.isExecutionAllowed( method ) ) {
+				if ( !method.isAnnotationPresent( Disabled.class ) && context.isExecutionAllowed( method ) ) {
 					final DynamicTest dynamicTestAnnotation = method.getAnnotation( DynamicTest.class );
 					final Class<? extends Throwable> expectedException = dynamicTestAnnotation.expected();
 					tests.add(
@@ -113,8 +114,16 @@ public abstract class AbstractDynamicTest<T extends DynamicExecutionContext> {
 										catch ( InvocationTargetException t ) {
 											// only throw if the exception was not expected.
 											if ( !expectedException.isInstance( t.getTargetException() ) ) {
-												exception = t;
-												throw t;
+												if ( t.getTargetException() != null ) {
+													// in this use case, we only really care about the cause
+													// we can safely ignore the wrapper exception here.
+													exception = t.getTargetException();
+													throw t.getTargetException();
+												}
+												else {
+													exception = t;
+													throw t;
+												}
 											}
 										}
 										catch ( Throwable t ) {
