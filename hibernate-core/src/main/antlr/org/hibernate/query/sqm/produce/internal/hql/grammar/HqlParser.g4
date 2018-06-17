@@ -58,7 +58,6 @@ intoSpec
 
 targetFieldsSpec
 	: LEFT_PAREN dotIdentifierSequence (COMMA dotIdentifierSequence)* RIGHT_PAREN
-
 	;
 
 
@@ -773,21 +772,3 @@ identifier
 	    logUseOfReservedWordAsIdentifier(getCurrentToken());
 	}
 	;
-
-dotIdentifierOrParam
-    : dotIdentifierSequence
-    | parameter
-    ;
-
-dotIdentifierOrParamList
-    : dotIdentifierOrParam ( COMMA dotIdentifierOrParam )+
-    ;
-
-comparisonOperators
-    : EQUAL
-    | NOT_EQUAL
-    | GREATER
-    | GREATER_EQUAL
-    | LESS
-    | LESS_EQUAL
-    ;
