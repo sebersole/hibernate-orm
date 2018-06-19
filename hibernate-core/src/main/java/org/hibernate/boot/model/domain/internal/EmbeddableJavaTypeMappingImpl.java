@@ -34,7 +34,7 @@ public class EmbeddableJavaTypeMappingImpl<T>
 
 	@Override
 	public String getTypeName() {
-		return roleName;
+		return componentClassName;
 	}
 
 	@Override
