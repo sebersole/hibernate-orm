@@ -11,11 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.JDBCException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
@@ -24,15 +20,7 @@ import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
  * @author Steve Ebersole
  */
 public interface ResultContext extends ExecutionContext {
-	SharedSessionContractImplementor getSession();
-
-	QueryOptions getQueryOptions();
-
-	@Override
-	ParameterBindingContext getParameterBindingContext();
-
-	@Override
-	Callback getCallback();
+	ExecutionContext getExecutionContext();
 
 	List<ResultSetMappingDescriptor> getResultSetMappings();
 

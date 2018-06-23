@@ -9,6 +9,7 @@ package org.hibernate.sql.results.spi;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.PostLoadEvent;
@@ -36,7 +37,13 @@ import org.hibernate.query.spi.QueryOptions;
  * @author Steve Ebersole
  */
 public interface JdbcValuesSourceProcessingState {
-	SharedSessionContractImplementor getPersistenceContext();
+	SharedSessionContractImplementor getSession();
+
+	@Remove
+	@Deprecated
+	default SharedSessionContractImplementor getPersistenceContext() {
+		return getSession();
+	}
 
 	QueryOptions getQueryOptions();
 

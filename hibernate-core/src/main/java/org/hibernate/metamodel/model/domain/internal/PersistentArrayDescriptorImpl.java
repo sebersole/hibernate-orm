@@ -19,6 +19,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -86,7 +87,8 @@ public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollec
 
 		final int length = Array.getLength( collection );
 		for ( int i = 0; i < length; i++ ) {
-			if ( getElementDescriptor().getJavaTypeDescriptor().areEqual( Array.get( collection, i ), childObject ) ) {
+			final JavaTypeDescriptor javaTypeDescriptor = getElementDescriptor().getJavaTypeDescriptor();
+			if ( javaTypeDescriptor.areEqual( Array.get( collection, i ), childObject ) ) {
 				return true;
 			}
 		}

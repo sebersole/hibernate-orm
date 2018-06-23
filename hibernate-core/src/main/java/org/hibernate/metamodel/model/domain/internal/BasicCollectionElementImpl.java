@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.function.BiConsumer;
+
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
@@ -21,12 +23,11 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.Logger;
@@ -96,21 +97,6 @@ public class BasicCollectionElementImpl<J>
 		return column;
 	}
 
-//	@Override
-//	public List<Column> getColumns() {
-//		return Collections.singletonList( getBoundColumn() );
-//	}
-
-	@Override
-	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
-	}
-
 	@Override
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
@@ -125,7 +111,12 @@ public class BasicCollectionElementImpl<J>
 								getBoundColumn()
 						)
 				),
-				this
+				getValueConverter()
 		);
+	}
+
+	@Override
+	public void visitColumns(BiConsumer<Column, JdbcValueMapper<?>> consumer) {
+		consumer.accept( getBoundColumn(), getBasicType() );
 	}
 }

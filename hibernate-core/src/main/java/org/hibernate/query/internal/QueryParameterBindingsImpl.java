@@ -7,6 +7,7 @@
 package org.hibernate.query.internal;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.hibernate.Incubating;
 import org.hibernate.QueryException;
@@ -71,6 +72,11 @@ public class QueryParameterBindingsImpl implements QueryParameterBindings {
 		this.parameterBindingMap = CollectionHelper.concurrentMap( parameterMetadata.getParameterCount() );
 
 		this.jdbcStyleOrdinalCountBase = sessionFactory.getSessionFactoryOptions().jdbcStyleParamsZeroBased() ? 0 : 1;
+	}
+
+	@Override
+	public void visitBindings(BiConsumer consumer) {
+		parameterBindingMap.forEach( consumer );
 	}
 
 	@SuppressWarnings({"WeakerAccess", "unchecked"})

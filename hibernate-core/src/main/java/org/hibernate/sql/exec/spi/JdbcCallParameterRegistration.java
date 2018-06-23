@@ -8,11 +8,10 @@
 package org.hibernate.sql.exec.spi;
 
 import java.sql.CallableStatement;
-
 import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 
 /**

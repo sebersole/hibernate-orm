@@ -33,7 +33,6 @@ import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
@@ -44,6 +43,7 @@ import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.Update;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 

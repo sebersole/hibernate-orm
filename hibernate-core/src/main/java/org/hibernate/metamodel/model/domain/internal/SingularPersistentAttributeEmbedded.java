@@ -23,7 +23,6 @@ import org.hibernate.mapping.Component;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
@@ -33,11 +32,15 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEmbedded;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueCollector;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
@@ -45,8 +48,6 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -182,12 +183,12 @@ public class SingularPersistentAttributeEmbedded<O,J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ValueBinder<J> getValueBinder() {
+	public JdbcValueBinder<J> getValueBinder() {
 		return getEmbeddedDescriptor().getValueBinder();
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public JdbcValueExtractor getValueExtractor() {
 		return getEmbeddedDescriptor().getValueExtractor();
 	}
 

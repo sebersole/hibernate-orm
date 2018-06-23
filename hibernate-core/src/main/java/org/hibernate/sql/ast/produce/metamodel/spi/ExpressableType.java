@@ -10,7 +10,7 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
- * Polymorphically represents any  "type" which can occur as an expression
+ * Polymorphically represents any "type" which can occur as an expression
  * in an SQM tree.
  * <p/>
  * Generally will be one of:<ul>
@@ -23,15 +23,13 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
+@Deprecated
 public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T> {
 	JavaTypeDescriptor<T> getJavaTypeDescriptor();
 
-	// todo (6.0) : need to account for binding and extracting at this level
-	//		now encapsulates AttributeConverter, so this is appropriate.
-	//
-	// 		However	value extraction is a 2-part process:
-	//			1) extract the "raw" SQL value - pushed into JdbcValues#getCurrentRowValuesArray()
-	//			2) use ExpressableType to access the "current row JDBC value"
-
-
+	// todo (6.0) (domain-jdbc) : another case where the lines between JDBC and domain are wrong
+	//		More-or-less this contract represents a type in the domain-sense.  This should *never*
+	//		be pushed into the SQL AST as the JDBC-level always deals with simple/basic values.
+	// 		This contract is probably needed for *producing* the SQL AST - it just should not
+	//		be used *in* that SQL AST
 }

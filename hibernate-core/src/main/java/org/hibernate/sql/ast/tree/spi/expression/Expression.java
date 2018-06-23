@@ -7,7 +7,7 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.SqlAstNode;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -32,18 +32,12 @@ import org.hibernate.sql.results.spi.SqlSelectionProducer;
  *
  * @author Steve Ebersole
  */
-public interface Expression extends SqlAstNode, SqlSelectionProducer {
-	// todo (6.0) : does it make sense for this to be an ExpressableType?
-	//		ExpressableType is more of a domain/SQM construct.  At the SQL level,
-	//		"tuples" aside, a BasicType or JavaTypeDescriptor makes more sense.
+public interface Expression<J> extends SqlAstNode, SqlSelectionProducer {
+	default JdbcValueMapper<J> getJdbcValueMapper() {
+		return getExpressable().getJdbcValueMapper();
+	}
 
-	/**
-	 * Access the type for this expression.  See {@link ExpressableType}
-	 * for more detailed description.
-	 */
-	ExpressableType getType();
-
-	default SqlExpressable getExpressable() {
+	default SqlExpressable<J> getExpressable() {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 

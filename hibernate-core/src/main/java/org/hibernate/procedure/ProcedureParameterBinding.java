@@ -8,8 +8,8 @@ package org.hibernate.procedure;
 
 import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * Describes an input value binding for any IN/INOUT parameters.

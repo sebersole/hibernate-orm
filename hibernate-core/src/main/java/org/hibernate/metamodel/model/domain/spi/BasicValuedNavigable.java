@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -21,6 +22,13 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 	Column getBoundColumn();
 
 	BasicType<J> getBasicType();
+
+	@Override
+	default Expression<?> toJdbcParameters() {
+		return walker.getTableGroupStack()
+				.getCurrent()
+				.resolveColumnReference( getBoundColumn() );
+	}
 
 	@Override
 	default BasicJavaDescriptor<J> getJavaTypeDescriptor() {

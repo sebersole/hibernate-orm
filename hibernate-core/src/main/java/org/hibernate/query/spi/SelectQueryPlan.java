@@ -36,11 +36,16 @@ public interface SelectQueryPlan<R> extends QueryPlan {
 	/**
 	 * Perform (execute) the query returning a List
 	 */
-	List<R> performList(ExecutionContext executionContext);
+	List<R> performList(
+			ExecutionContext executionContext,
+			ParameterBindingContext domainParamBindingContext);
 
 	/**
 	 * Perform (execute) the query returning a ScrollableResults
 	 */
-	ScrollableResultsImplementor<R> performScroll(ScrollMode scrollMode, ExecutionContext executionContext);
+	ScrollableResultsImplementor<R> performScroll(
+			ScrollMode scrollMode,
+			ExecutionContext executionContext,
+			ParameterBindingContext domainParamBindingContext);
 
 }

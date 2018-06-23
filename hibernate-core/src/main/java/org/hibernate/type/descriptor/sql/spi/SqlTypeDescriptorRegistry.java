@@ -13,11 +13,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.hibernate.sql.AbstractJdbcValueBinder;
+import org.hibernate.sql.AbstractJdbcValueExtractor;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.internal.SqlTypeDescriptorBaseline;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -87,7 +92,7 @@ public class SqlTypeDescriptorRegistry implements SqlTypeDescriptorBaseline.Base
 		return fallBackDescriptor;
 	}
 
-	public static class ObjectSqlTypeDescriptor implements SqlTypeDescriptor {
+	public static class ObjectSqlTypeDescriptor extends AbstractSqlTypeDescriptor {
 		private final int jdbcTypeCode;
 
 		public ObjectSqlTypeDescriptor(int jdbcTypeCode) {
@@ -116,47 +121,57 @@ public class SqlTypeDescriptorRegistry implements SqlTypeDescriptorBaseline.Base
 		}
 
 		@Override
-		public <X> ValueBinder<X> getBinder(JavaTypeDescriptor<X> javaTypeDescriptor) {
+		public <X> JdbcValueMapper<X> getJdbcValueMapper(BasicJavaDescriptor<X> javaTypeDescriptor) {
+			return determineValueMapper(
+					javaTypeDescriptor,
+					jtd -> {
+						final JdbcValueBinder<X> binder = createBinder( javaTypeDescriptor );
+						final JdbcValueExtractor<X> extractor = createExtractor( javaTypeDescriptor );
+
+						return new JdbcValueMapperImpl<>( javaTypeDescriptor, this, extractor, binder );
+					}
+			);
+		}
+
+		private <X> JdbcValueBinder<X> createBinder(BasicJavaDescriptor<X> javaTypeDescriptor) {
 			if ( Serializable.class.isAssignableFrom( javaTypeDescriptor.getJavaType() ) ) {
 				return VarbinarySqlDescriptor.INSTANCE.getBinder( javaTypeDescriptor );
 			}
 
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
+				protected void doBind(PreparedStatement st, X value, int index, ExecutionContext executionContext)
 						throws SQLException {
 					st.setObject( index, value, jdbcTypeCode );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
+				protected void doBind(CallableStatement st, X value, String name, ExecutionContext executionContext)
 						throws SQLException {
 					st.setObject( name, value, jdbcTypeCode );
 				}
 			};
 		}
 
-		@Override
-		@SuppressWarnings("unchecked")
-		public ValueExtractor getExtractor(JavaTypeDescriptor javaTypeDescriptor) {
+		private  <X> JdbcValueExtractor<X> createExtractor(BasicJavaDescriptor<X> javaTypeDescriptor) {
 			if ( Serializable.class.isAssignableFrom( javaTypeDescriptor.getJavaType() ) ) {
 				return VarbinarySqlDescriptor.INSTANCE.getExtractor( javaTypeDescriptor );
 			}
 
-			return new BasicExtractor( javaTypeDescriptor, this ) {
+			return new AbstractJdbcValueExtractor<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected Object doExtract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-					return rs.getObject( position );
+				protected X doExtract(ResultSet rs, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException {
+					return (X) rs.getObject( sqlSelection.getJdbcResultSetIndex() );
 				}
 
 				@Override
-				protected Object doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-					return statement.getObject( index );
+				protected X doExtract(CallableStatement statement, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException {
+					return (X) statement.getObject( sqlSelection.getJdbcResultSetIndex() );
 				}
 
 				@Override
-				protected Object doExtract(CallableStatement statement, String name, WrapperOptions options) throws SQLException {
-					return statement.getObject( name );
+				protected X doExtract(CallableStatement statement, String name, JdbcValuesSourceProcessingState processingState) throws SQLException {
+					return (X) statement.getObject( name );
 				}
 			};
 		}

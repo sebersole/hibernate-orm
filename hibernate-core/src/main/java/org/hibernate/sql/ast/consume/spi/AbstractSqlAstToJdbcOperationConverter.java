@@ -9,10 +9,10 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -21,18 +21,10 @@ public class AbstractSqlAstToJdbcOperationConverter
 		extends AbstractSqlAstWalker
 		implements SqlAstToJdbcOperationConverter {
 
-	// pre-req state
-	private final ParameterBindingContext parameterBindingContext;
-
 	private final Set<String> affectedTableNames = new HashSet<>();
 
-	protected AbstractSqlAstToJdbcOperationConverter(ParameterBindingContext parameterBindingContext) {
-		this.parameterBindingContext = parameterBindingContext;
-	}
-
-	@Override
-	protected ParameterBindingContext getParameterBindingContext() {
-		return parameterBindingContext;
+	public AbstractSqlAstToJdbcOperationConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	@Override

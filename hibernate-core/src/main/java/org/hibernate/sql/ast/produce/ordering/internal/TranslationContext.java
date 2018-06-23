@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.produce.ordering.internal;
 
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.query.spi.ParameterBindingContext;
 
 /**
  * Contract for contextual information required to perform translation.

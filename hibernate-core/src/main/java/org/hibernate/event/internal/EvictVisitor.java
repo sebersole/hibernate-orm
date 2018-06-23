@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 
 /**
@@ -37,14 +37,15 @@ public class EvictVisitor extends AbstractVisitor {
 	}
 
 	@Override
-	Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+	Object processCollection(Object collection, PluralPersistentAttribute attributeCollection) throws HibernateException {
 		if (collection != null) {
 			evictCollection(collection, attributeCollection);
 		}
 
 		return null;
 	}
-	public void evictCollection(Object value, PluralAttributeCollection attributeCollection) {
+
+	public void evictCollection(Object value, PluralPersistentAttribute attributeCollection) {
 		final PersistentCollection collection;
 		if ( attributeCollection.getPersistentCollectionDescriptor()
 				.getCollectionClassification() == CollectionClassification.ARRAY ) {

@@ -27,6 +27,7 @@ import org.hibernate.internal.ScrollableResultsImpl;
 import org.hibernate.query.internal.ScrollableResultsIterator;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.JdbcSelectExecutor;
 import org.hibernate.sql.exec.spi.PreparedStatementCreator;
@@ -66,10 +67,12 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	public <R> List<R> list(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer) {
 		return executeQuery(
 				jdbcSelect,
 				executionContext,
+				jdbcParameterBindings,
 				rowTransformer,
 				Connection::prepareStatement,
 				ListResultsConsumer.instance()
@@ -81,10 +84,12 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			JdbcSelect jdbcSelect,
 			ScrollMode scrollMode,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer) {
 		return executeQuery(
 				jdbcSelect,
 				executionContext,
+				jdbcParameterBindings,
 				rowTransformer,
 				(connection, sql) -> connection.prepareStatement(
 						sql,
@@ -100,11 +105,13 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	public <R> Stream<R> stream(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer) {
 		final ScrollableResultsImplementor<R> scrollableResults = scroll(
 				jdbcSelect,
 				ScrollMode.FORWARD_ONLY,
 				executionContext,
+				jdbcParameterBindings,
 				rowTransformer
 		);
 		final ScrollableResultsIterator<R> iterator = new ScrollableResultsIterator<>( scrollableResults );
@@ -223,16 +230,21 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	private <T, R> T executeQuery(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer,
 			PreparedStatementCreator statementCreator,
-			ResultsConsumer<T,R> resultsConsumer) {
+			ResultsConsumer<T, R> resultsConsumer) {
+
+		// todo (6.0) : need to transform the domain query parameters/bindings (ParameterBindingContext) into JdbcValueBindings
 
 		final JdbcValues jdbcValues = resolveJdbcValuesSource(
 				jdbcSelect,
 				executionContext,
+				jdbcParameterBindings,
 				new DeferredResultSetAccess(
 						jdbcSelect,
 						executionContext,
+						jdbcParameterBindings,
 						statementCreator
 				)
 		);
@@ -286,6 +298,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	private JdbcValues resolveJdbcValuesSource(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			ResultSetAccess resultSetAccess) {
 		final List<Object[]> cachedResults;
 
@@ -293,7 +306,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final CacheMode cacheMode = resolveCacheMode(  executionContext );
 
 		final ResultSetMapping resultSetMapping = jdbcSelect.getResultSetMapping()
-				.resolve( resultSetAccess, executionContext );
+				.resolve( resultSetAccess, executionContext, );
 
 		final QueryKey queryResultsCacheKey;
 
@@ -313,7 +326,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 			queryResultsCacheKey = QueryKey.from(
 					jdbcSelect.getSql(),
 					executionContext.getQueryOptions().getLimit(),
-					executionContext.getParameterBindingContext().getQueryParameterBindings(),
+					jdbcParameterBindings,
 					executionContext.getSession()
 			);
 

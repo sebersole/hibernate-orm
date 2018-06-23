@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.spi;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * A resolver for Type based on a parameter value being bound, when no

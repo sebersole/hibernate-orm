@@ -13,6 +13,7 @@ import java.util.Set;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
@@ -24,7 +25,7 @@ import org.hibernate.sql.ast.tree.spi.DeleteStatement;
 import org.hibernate.sql.exec.internal.JdbcMutationExecutorImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutation;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 
 /**
  * @author Steve Ebersole
@@ -42,6 +43,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 	public int executeUpdate(
 			SharedSessionContractImplementor session,
 			QueryOptions queryOptions,
+			JdbcParameterBindings jdbcParameterBindings,
 			ParameterBindingContext parameterBindingContext) {
 		final DeleteStatement deleteStatement = SqmDeleteToSqlAstConverterSimple.interpret(
 				sqmStatement,
@@ -53,9 +55,13 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 					}
 
 					@Override
+					public QueryOptions getQueryOptions() {
+						return queryOptions;
+					}
+
+					@Override
 					public Callback getCallback() {
-						return afterLoadAction -> {
-						};
+						return afterLoadAction -> {};
 					}
 				}
 		);
@@ -91,15 +97,11 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 					}
 
 					@Override
-					public ParameterBindingContext getParameterBindingContext() {
-						return parameterBindingContext;
-					}
-
-					@Override
 					public Callback getCallback() {
 						return afterLoadAction -> {};
 					}
 				},
+				jdbcParameterBindings,
 				Connection::prepareStatement
 		);
 	}

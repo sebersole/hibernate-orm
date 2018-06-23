@@ -9,7 +9,6 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.util.List;
 
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
@@ -22,10 +21,8 @@ public class SqlTuple implements Expression {
 		this.expressions = expressions;
 	}
 
-	@Override
-	public ExpressableType getType() {
-		// todo (6.0) : what to return here?
-		return null;
+	public List<Expression> getExpressions() {
+		return expressions;
 	}
 
 	@Override
@@ -35,6 +32,6 @@ public class SqlTuple implements Expression {
 
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
-
+		sqlTreeWalker.visitTuple( this );
 	}
 }

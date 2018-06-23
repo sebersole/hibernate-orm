@@ -6,17 +6,19 @@
  */
 package org.hibernate.query.sqm.tree.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hibernate.query.sqm.tree.expression.SqmParameter;
+import org.hibernate.query.sqm.SemanticException;
 import org.hibernate.query.sqm.tree.SqmStatement;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
 import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
-import org.hibernate.query.sqm.SemanticException;
 
 /**
  * @author Steve Ebersole
@@ -24,6 +26,8 @@ import org.hibernate.query.sqm.SemanticException;
 public abstract class AbstractSqmStatement implements SqmStatement, ParameterCollector {
 	private Map<String,SqmNamedParameter> namedQueryParameters;
 	private Map<Integer,SqmPositionalParameter> positionalQueryParameters;
+
+	private List<SqmParameter> sqmParameterList;
 
 	@Override
 	public void addParameter(SqmNamedParameter parameter) {
@@ -33,8 +37,12 @@ public abstract class AbstractSqmStatement implements SqmStatement, ParameterCol
 		if ( namedQueryParameters == null ) {
 			namedQueryParameters = new ConcurrentHashMap<>();
 		}
-
 		namedQueryParameters.put( parameter.getName(), parameter );
+
+		if ( sqmParameterList == null ) {
+			sqmParameterList = new ArrayList<>();
+		}
+		sqmParameterList.add( parameter );
 	}
 
 	@Override
@@ -45,8 +53,12 @@ public abstract class AbstractSqmStatement implements SqmStatement, ParameterCol
 		if ( positionalQueryParameters == null ) {
 			positionalQueryParameters = new ConcurrentHashMap<>();
 		}
-
 		positionalQueryParameters.put( parameter.getPosition(), parameter );
+
+		if ( sqmParameterList == null ) {
+			sqmParameterList = new ArrayList<>();
+		}
+		sqmParameterList.add( parameter );
 	}
 
 	public void wrapUp() {
@@ -87,5 +99,10 @@ public abstract class AbstractSqmStatement implements SqmStatement, ParameterCol
 			parameters.addAll( positionalQueryParameters.values() );
 		}
 		return parameters;
+	}
+
+	@Override
+	public List<SqmParameter> getSqmParameterList() {
+		return sqmParameterList;
 	}
 }

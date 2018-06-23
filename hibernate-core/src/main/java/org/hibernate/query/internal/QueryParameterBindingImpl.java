@@ -10,11 +10,11 @@ package org.hibernate.query.internal;
 import java.util.Collection;
 import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 import org.hibernate.query.spi.QueryParameterBindingValidator;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

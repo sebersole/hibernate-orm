@@ -6,10 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+
 /**
  * @author Steve Ebersole
  */
-public interface CollectionElement<J> extends Navigable<J> {
+public interface CollectionElement<J> extends Navigable<J>, Writeable<J,Object> {
 
 	String NAVIGABLE_NAME = "{element}";
 
@@ -22,6 +25,11 @@ public interface CollectionElement<J> extends Navigable<J> {
 	}
 
 	ElementClassification getClassification();
+
+	@Override
+	default Object unresolve(J value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 
 	// todo (6.0) : another place to consider removing generic access to columns
 	//List<Column> getColumns();

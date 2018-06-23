@@ -6,12 +6,14 @@
  */
 package org.hibernate.type.descriptor.sql.spi;
 
+import org.hibernate.annotations.Remove;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Describes a JDBC/SQL type.
@@ -47,6 +49,10 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 
 	<T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor);
 
+	<T> JdbcValueMapper getJdbcValueMapper(BasicJavaDescriptor<T> javaTypeDescriptor);
+
+	// todo (6.0) : have getBinder and getExtractor return
+
 	/**
 	 * Get the binder (setting JDBC in-going parameter values) capable of handling values of the type described by the
 	 * passed descriptor.
@@ -55,7 +61,10 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 	 *
 	 * @return The appropriate binder.
 	 */
-	<X> ValueBinder<X> getBinder(JavaTypeDescriptor<X> javaTypeDescriptor);
+	@Remove
+	default <X> JdbcValueBinder<X> getBinder(BasicJavaDescriptor<X> javaTypeDescriptor) {
+		return getJdbcValueMapper( javaTypeDescriptor ).getJdbcValueBinder();
+	}
 
 	/**
 	 * Get the extractor (pulling out-going values from JDBC objects) capable of handling values of the type described
@@ -65,7 +74,9 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 	 *
 	 * @return The appropriate extractor
 	 */
-	<X> ValueExtractor<X> getExtractor(JavaTypeDescriptor<X> javaTypeDescriptor);
+	@Remove
+	default <X> JdbcValueExtractor<X> getExtractor(BasicJavaDescriptor<X> javaTypeDescriptor) {
+		return getJdbcValueMapper( javaTypeDescriptor ).getJdbcValueExtractor();
+	}
 
-	// todo (6.0) : write a base class and define `#toString()` based on type-code
 }

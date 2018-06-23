@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
@@ -17,7 +16,6 @@ import org.hibernate.cache.spi.entry.CacheEntryStructure;
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.loader.spi.CollectionLoader;
@@ -386,7 +384,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -397,7 +395,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -560,7 +558,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 * As with all of these "owner"-related methods we need to come up with
 	 * a better plan for handling that stuff.
 	 */
-	default Serializable getKeyOfOwner(Object entity, SessionImplementor session) {
+	default Object getKeyOfOwner(Object entity, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
@@ -589,4 +587,6 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	default Object indexOf(Object collection, Object element) {
 		throw new UnsupportedOperationException( "Collection type does not support indexes" );
 	}
+
+	boolean isMutable();
 }

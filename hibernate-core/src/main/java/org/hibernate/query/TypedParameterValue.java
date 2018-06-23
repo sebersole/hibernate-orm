@@ -7,7 +7,7 @@
 
 package org.hibernate.query;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * Can be used to bind query parameter values.  Allows to provide additional details about the

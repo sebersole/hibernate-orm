@@ -200,9 +200,7 @@ public class RuntimeDatabaseModelProducer {
 
 							assert runtimeTargetColumn != null;
 
-							columnMappingList.add(
-									new ColumnMappingImpl( runtimeReferringColumn, runtimeTargetColumn )
-							);
+							columnMappingList.add( new ColumnMappingImpl( runtimeReferringColumn, runtimeTargetColumn ) );
 						}
 
 //						if ( bootTargetColumns == null || bootTargetColumns.isEmpty() ) {

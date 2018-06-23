@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.BasicValueMapping;
@@ -18,14 +19,14 @@ import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentA
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.JdbcValueCollector;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -134,19 +135,10 @@ public class VersionDescriptorImpl<O,J>
 								VersionDescriptorImpl.this.column
 						)
 				),
-				this
+				null
 		);
 	}
 
-	@Override
-	public ValueBinder getValueBinder() {
-		return getBasicType().getValueBinder();
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor() {
-		return getBasicType().getValueExtractor();
-	}
 
 	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
@@ -158,6 +150,18 @@ public class VersionDescriptorImpl<O,J>
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
 			SharedSessionContractImplementor session) {
-		jdbcValueCollector.collect( value, this, getBoundColumn() );
+		jdbcValueCollector.collect( value, getBoundColumn(), getBasicType() );
+	}
+
+	@Override
+	public void visitColumns(Consumer<Column> consumer) {
+		consumer.accept( getBoundColumn() );
+	}
+
+	@Override
+	public Expression<?> toJdbcParameters() {
+		return walker.getTableGroupStack()
+				.getCurrent()
+				.resolveColumnReference( getBoundColumn() );
 	}
 }

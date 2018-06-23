@@ -11,7 +11,7 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
  * When a transient entity is passed to lock(), we must inspect all its collections and
@@ -29,7 +29,7 @@ public class OnLockVisitor extends ReattachVisitor {
 	}
 
 	@Override
-	public Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+	public Object processCollection(Object collection, PluralPersistentAttribute attributeCollection) throws HibernateException {
 		if ( collection == null ) {
 			return null;
 		}

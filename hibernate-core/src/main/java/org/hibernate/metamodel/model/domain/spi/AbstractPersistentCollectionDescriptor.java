@@ -6,7 +6,11 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -26,6 +30,7 @@ import org.hibernate.cache.spi.entry.StructuredMapCacheEntry;
 import org.hibernate.cache.spi.entry.UnstructuredCacheEntry;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.collection.spi.CollectionSemantics;
+import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
@@ -54,25 +59,43 @@ import org.hibernate.metamodel.model.domain.internal.PluralPersistentAttributeIm
 import org.hibernate.metamodel.model.domain.internal.SqlAliasStemHelper;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.naming.Identifier;
+import org.hibernate.query.internal.QueryOptionsImpl;
+import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.TableGroupContext;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.InsertStatement;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
+import org.hibernate.sql.ast.tree.spi.expression.StandardJdbcParameter;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
+import org.hibernate.sql.ast.tree.spi.from.TableReference;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterBindings;
+import org.hibernate.sql.exec.internal.StandardMultiSetJdbcParameterBindings;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements PersistentCollectionDescriptor<O,C,E> {
+	private static final Logger log = Logger.getLogger( AbstractPersistentCollectionDescriptor.class );
+
 	private final SessionFactoryImplementor sessionFactory;
 
 	private final ManagedTypeDescriptor container;
@@ -105,10 +128,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private final Set<String> spaces;
 
-	private final int batchSize;
+	private final boolean inverse;
+	private final boolean mutable;
 	private final boolean extraLazy;
 	private final boolean hasOrphanDeletes;
-	private final boolean inverse;
+	private final int batchSize;
 
 	@SuppressWarnings("unchecked")
 	public AbstractPersistentCollectionDescriptor(
@@ -169,9 +193,10 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		separateCollectionTable = resolveCollectionTable( collectionBinding, creationContext );
 
+		this.inverse = collectionBinding.isInverse();
+		this.mutable = collectionBinding.isMutable();
 		this.extraLazy = collectionBinding.isExtraLazy();
 		this.hasOrphanDeletes = collectionBinding.hasOrphanDelete();
-		this.inverse = collectionBinding.isInverse();
 	}
 
 	/**
@@ -398,8 +423,35 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
+	public CollectionSemantics<C> getSemantics() {
+		return getJavaTypeDescriptor().getSemantics();
+	}
+
+	@Override
+	public int getBatchSize() {
+		return batchSize;
+	}
+
+	@Override
 	public Set<String> getCollectionSpaces() {
 		return spaces;
+	}
+
+	@Override
+	public Object getKeyOfOwner(Object owner, SharedSessionContractImplementor session) {
+		if ( owner == null ) {
+			log.debugf( "Owner was null - cannot determine collection-key" );
+			return null;
+		}
+
+		// todo (6.0) : lots of bad (temp) assumptions here:
+		//		1) assumes the container is an entity (not a composite, e.g.)
+		// 		2) assumes the collection key refers to the entity's PK - no property-ref support
+
+		final IdentifiableTypeDescriptor ownerDescriptor = (IdentifiableTypeDescriptor) getContainer();
+		final EntityIdentifierSimple identifierDescriptor = (EntityIdentifierSimple) ownerDescriptor.getHierarchy().getIdentifierDescriptor();
+
+		return identifierDescriptor.asAttribute( identifierDescriptor.getJavaType() ).getPropertyAccess().getGetter().get( owner );
 	}
 
 	@Override
@@ -410,14 +462,137 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public int getBatchSize() {
-		return batchSize;
+	public void recreate(
+			PersistentCollection collection,
+			Object key,
+			SharedSessionContractImplementor session) {
+
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// this all assumes "element collections"
+
+		assert separateCollectionTable != null;
+
+		collection.preInsert( this );
+
+		final TableReference tableReference = new TableReference( separateCollectionTable, null );
+		final InsertStatement collectionTableInsert = new InsertStatement( tableReference );
+
+		final StandardMultiSetJdbcParameterBindings.Builder multiSetBuilder = new StandardMultiSetJdbcParameterBindings.Builder();
+		final List<ParameterSpec> bindingSpecs = new ArrayList<>();
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// Collection-key
+		// 		for now assume a simple key
+
+		getCollectionKeyDescriptor().dehydrate(
+				key,
+				(jdbcValue, boundColumn, mapper) -> {
+					collectionTableInsert.addTargetColumnReference( tableReference.resolveColumnReference( boundColumn ) );
+					collectionTableInsert.addValue( new GenericSqlLiteral( jdbcValue, mapper, false ) );
+				},
+				session
+		);
+
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// Collection-index (?)
+
+		// todo (6.0) : need to know if we can insert the index here
+		// 		or if we need to delay that and "come back" and do an update later to set it
+
+		if ( getIndexDescriptor() != null ) {
+			getIndexDescriptor().visitColumns(
+					column -> {
+						collectionTableInsert.addTargetColumnReference( tableReference.resolveColumnReference( column ) );
+						final StandardJdbcParameter valueParameter = new StandardJdbcParameter( column.getJdbcValueMapper() );
+						collectionTableInsert.addValue( valueParameter );
+						bindingSpecs.add( valueParameter );
+					}
+			);
+		}
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// collection-element
+		// again, assume a simple value (single column)
+
+		getElementDescriptor().visitColumns(
+				column -> {
+					collectionTableInsert.addTargetColumnReference( (ColumnReference) tableReference.qualify( column ) );
+					final StandardJdbcParameter valueParameter = new StandardJdbcParameter( column.getJdbcValueMapper() );
+					collectionTableInsert.addValue( valueParameter );
+					bindingSpecs.add( valueParameter );
+				}
+		);
+
+		final Iterator entries = collection.entries( this );
+		while ( entries.hasNext() ) {
+			final Object entry = entries.next();
+
+			final StandardJdbcParameterBindings.Builder entryBindingsBuilder = new StandardJdbcParameterBindings.Builder();
+			final Iterator<ParameterSpec> parameterSpecs = bindingSpecs.iterator();
+
+			if ( getIndexDescriptor() != null ) {
+				final Object index = indexOf( collection, entry );
+				getIndexDescriptor().dehydrate(
+						index,
+						(jdbcValue, boundColumn, consumer) -> {
+							entryBindingsBuilder.add( parameterSpecs.next(), jdbcValue );
+						},
+						session
+				);
+			}
+
+			getElementDescriptor().dehydrate(
+					entry,
+					(jdbcValue, boundColumn, type) -> {
+						entryBindingsBuilder.add( parameterSpecs.next(), jdbcValue );
+					},
+					session
+			);
+
+			multiSetBuilder.addBindingSet( entryBindingsBuilder.build() );
+		}
+
+		final ExecutionContext executionContext = getExecutionContext( multiSetBuilder.build(), session );
+
+		executeInsert( collectionTableInsert, executionContext );
 	}
 
+	protected void executeInsert(
+			InsertStatement insertStatement,
+			ExecutionContext executionContext) {
+		JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
+				InsertToJdbcInsertConverter.createJdbcInsert(
+						insertStatement,
+						getSessionFactory()
+				),
+				executionContext,
+				StandardJdbcParameterBindings.NO_BINDINGS,
+				Connection::prepareStatement
+		);
+	}
 
-	@Override
-	public CollectionSemantics<C> getSemantics() {
-		return getJavaTypeDescriptor().getSemantics();
+	private ExecutionContext getExecutionContext(
+			StandardMultiSetJdbcParameterBindings jdbcValueBindings,
+			SharedSessionContractImplementor session) {
+		return new ExecutionContext() {
+			@Override
+			public SharedSessionContractImplementor getSession() {
+				return session;
+			}
+
+			@Override
+			public QueryOptions getQueryOptions() {
+				return new QueryOptionsImpl();
+			}
+
+			@Override
+			public Callback getCallback() {
+				return afterLoadAction -> {
+				};
+			}
+		};
 	}
 
 	@Override
@@ -641,12 +816,12 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public CollectionElement getElementDescriptor() {
+	public CollectionElement<E> getElementDescriptor() {
 		return elementDescriptor;
 	}
 
 	@Override
-	public CollectionIndex getIndexDescriptor() {
+	public CollectionIndex<?> getIndexDescriptor() {
 		return indexDescriptor;
 	}
 
@@ -678,6 +853,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	@Override
 	public boolean isExtraLazy() {
 		return extraLazy;
+	}
+
+	@Override
+	public boolean isMutable() {
+		return mutable;
 	}
 
 	@Override

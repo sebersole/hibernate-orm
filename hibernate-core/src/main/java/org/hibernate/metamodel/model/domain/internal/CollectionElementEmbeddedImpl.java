@@ -6,20 +6,22 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractCollectionElement;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.CollectionElementEmbedded;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmCollectionElementReferenceEmbedded;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
@@ -62,6 +64,11 @@ public class CollectionElementEmbeddedImpl<J>
 	@Override
 	public EmbeddableJavaDescriptor<J> getJavaTypeDescriptor() {
 		return getEmbeddedDescriptor().getJavaTypeDescriptor();
+	}
+
+	@Override
+	public void visitColumns(Consumer<Column> consumer) {
+		getEmbeddedDescriptor().getStateArrayContributors().forEach( contributor -> contributor.visitColumns( consumer ) );
 	}
 
 	@Override

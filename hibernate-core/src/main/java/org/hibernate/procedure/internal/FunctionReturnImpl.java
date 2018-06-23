@@ -11,11 +11,11 @@ import java.sql.Types;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.spi.FunctionReturnImplementor;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.named.spi.ParameterMemento;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.exec.internal.JdbcCallFunctionReturnImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterExtractorImpl;

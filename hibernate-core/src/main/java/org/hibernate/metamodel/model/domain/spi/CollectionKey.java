@@ -6,15 +6,21 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Consumer;
+
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+import org.hibernate.sql.JdbcValueCollector;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class CollectionKey {
+public class CollectionKey implements Writeable<Object,Object> {
 	private final AbstractPersistentCollectionDescriptor collectionDescriptor;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
@@ -37,6 +43,23 @@ public class CollectionKey {
 
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
 		return javaTypeDescriptor;
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public void visitColumns(Consumer<Column> consumer) {
+		for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping : getJoinForeignKey().getColumnMappings().getColumnMappings() ) {
+			consumer.accept( columnMapping.getTargetColumn() );
+		}
+	}
+
+	@Override
+	public void dehydrate(Object value, JdbcValueCollector jdbcValueCollector, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	//	public ForeignKey.ColumnMappings buildJoinColumnMappings(List<Column> joinTargetColumns) {
@@ -112,8 +135,8 @@ public class CollectionKey {
 //	}
 
 	private static JavaTypeDescriptor resolveJavaTypeDescriptor(Collection collectionValue) {
-		if ( collectionValue.getJavaTypeMapping() != null ) {
-			return collectionValue.getJavaTypeMapping().resolveJavaTypeDescriptor();
+		if ( collectionValue.getKey().getJavaTypeMapping() != null ) {
+			return collectionValue.getKey().getJavaTypeMapping().resolveJavaTypeDescriptor();
 		}
 		return null;
 	}

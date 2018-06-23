@@ -6,9 +6,9 @@
  */
 package org.hibernate.query.spi;
 
+import java.util.function.BiConsumer;
+
 import org.hibernate.Incubating;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.cache.spi.QueryKey;
 
 /**
  * Manages all the parameter bindings for a particular query.
@@ -17,6 +17,9 @@ import org.hibernate.cache.spi.QueryKey;
  */
 @Incubating
 public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
+
+	void visitBindings(BiConsumer<QueryParameterImplementor<Object>,Object> consumer);
+
 	/**
 	 * Has binding been done for the given parameter.  Handles
 	 * cases where we do not (yet) have a binding object as well
@@ -61,15 +64,12 @@ public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
 	 */
 	void validate();
 
-	/**
-	 * Generate a "memento" for these parameter bindings that can be used
-	 * in creating a {@link org.hibernate.cache.spi.QueryKey}
-	 */
-	default QueryKey.ParameterBindingsMemento generateQueryKeyMemento() {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
 	QueryParameterBindings NO_PARAM_BINDINGS = new QueryParameterBindings() {
+		@Override
+		public void visitBindings(BiConsumer consumer) {
+			// nothing to do
+		}
+
 		@Override
 		public boolean isBound(QueryParameterImplementor parameter) {
 			return false;

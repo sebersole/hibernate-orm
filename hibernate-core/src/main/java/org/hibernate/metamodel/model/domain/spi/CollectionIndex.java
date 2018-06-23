@@ -10,13 +10,13 @@ import java.util.List;
 
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.JoinType;
-import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
+import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 
 /**
  * @author Steve Ebersole
  */
-public interface CollectionIndex<J> extends Navigable<J> {
+public interface CollectionIndex<J> extends Navigable<J>, Writeable<J,Object> {
 
 	String NAVIGABLE_NAME = "{index}";
 
@@ -37,4 +37,5 @@ public interface CollectionIndex<J> extends Navigable<J> {
 			TableGroupContext tableGroupContext);
 
 	List<Column> getColumns();
+
 }

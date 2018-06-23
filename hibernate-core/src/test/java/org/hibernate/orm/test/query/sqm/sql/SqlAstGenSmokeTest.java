@@ -8,20 +8,21 @@ package org.hibernate.orm.test.query.sqm.sql;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfBasics;
 import org.hibernate.query.internal.QueryOptionsImpl;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
+import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,50 @@ import static org.hibernate.testing.hamcrest.CollectionMatchers.hasSize;
  * @author Steve Ebersole
  */
 public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
+	private final QueryOptions queryOptions = new QueryOptionsImpl();
+
+	private final QueryParameterBindings parameterBindings = new QueryParameterBindings() {
+		@Override
+		public boolean isBound(QueryParameterImplementor parameter) {
+			return false;
+		}
+
+		@Override
+		public void visitBindings(BiConsumer consumer) {
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(QueryParameterImplementor parameter) {
+			return null;
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(String name) {
+			return null;
+		}
+
+		@Override
+		public QueryParameterBinding<?> getBinding(int position) {
+			return null;
+		}
+
+		@Override
+		public void validate() {
+		}
+	};
+
+	private final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
+		@Override
+		public <T> List<T> getLoadIdentifiers() {
+			return Collections.emptyList();
+		}
+
+		@Override
+		public QueryParameterBindings getQueryParameterBindings() {
+			return parameterBindings;
+		}
+	};
+
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
 		super.applyMetadataSources( metadataSources );
@@ -41,59 +86,15 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 
 	@Test
 	public void testSqlAstGeneration() {
-		final SharedSessionContractImplementor session = (SharedSessionContractImplementor) getSessionFactory().openSession();
+		final SharedSessionContractImplementor session = (SharedSessionContractImplementor) sessionFactory().openSession();
 
 		try {
 			final JdbcSelect jdbcSelect = buildJdbcSelect(
 					"select a.theString from EntityOfBasics a",
-					new ExecutionContext() {
-						private final QueryOptions queryOptions = new QueryOptionsImpl();
-
-						private final QueryParameterBindings parameterBindings = new QueryParameterBindings() {
-							@Override
-							public boolean isBound(QueryParameterImplementor parameter) {
-								return false;
-							}
-
-							@Override
-							public QueryParameterBinding<?> getBinding(QueryParameterImplementor parameter) {
-								return null;
-							}
-
-							@Override
-							public QueryParameterBinding<?> getBinding(String name) {
-								return null;
-							}
-
-							@Override
-							public QueryParameterBinding<?> getBinding(int position) {
-								return null;
-							}
-
-							@Override
-							public void validate() {
-							}
-						};
-						private final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
-							@Override
-							public SessionFactoryImplementor getSessionFactory() {
-								return sessionFactory();
-							}
-
-							@Override
-							public <T> List<T> getLoadIdentifiers() {
-								return Collections.emptyList();
-							}
-
-							@Override
-							public QueryParameterBindings getQueryParameterBindings() {
-								return parameterBindings;
-							}
-						};
-
+					new SqlAstBuildingContext() {
 						@Override
-						public SharedSessionContractImplementor getSession() {
-							return session;
+						public SessionFactoryImplementor getSessionFactory() {
+							return sessionFactory();
 						}
 
 						@Override
@@ -102,15 +103,8 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 						}
 
 						@Override
-						public ParameterBindingContext getParameterBindingContext() {
-							return parameterBindingContext;
-						}
-
-						@Override
 						public Callback getCallback() {
-							return afterLoadAction -> {
-
-							};
+							return SqlAstGenSmokeTest.this;
 						}
 					}
 			);

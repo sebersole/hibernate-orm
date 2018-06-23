@@ -12,9 +12,9 @@ import java.util.Set;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.tree.spi.InsertSelectStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcInsertSelect;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
 /**
  * @author Steve Ebersole
@@ -40,8 +40,8 @@ public class SqlInsertSelectToJdbcInsertSelectConverter
 			}
 
 			@Override
-			public List<JdbcParameterBinder> getParameterBinders() {
-				return walker.getParameterBinders();
+			public List<ParameterSpec> getJdbcParameters() {
+				return walker.getParameterSpecs();
 			}
 
 			@Override
@@ -53,7 +53,7 @@ public class SqlInsertSelectToJdbcInsertSelectConverter
 
 
 	private SqlInsertSelectToJdbcInsertSelectConverter(ExecutionContext executionContext) {
-		super( executionContext.getParameterBindingContext() );
+		super( executionContext.getSessionFactory() );
 	}
 
 	private void visitInsertSelectStatement(InsertSelectStatement sqlAst) {

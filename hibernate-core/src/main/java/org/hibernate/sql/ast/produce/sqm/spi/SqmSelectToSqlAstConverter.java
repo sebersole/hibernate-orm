@@ -19,12 +19,13 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.EntityGraphQueryHint;
-import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.query.sqm.tree.SqmInsertSelectStatement;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
@@ -77,13 +78,13 @@ public class SqmSelectToSqlAstConverter
 	}
 
 	public SqmSelectToSqlAstConverter(
-			QueryOptions queryOptions,
-			SqlAstBuildingContext sqlAstBuildingContext) {
-		super( sqlAstBuildingContext, queryOptions );
+			SqlAstBuildingContext sqlAstBuildingContext,
+			Map<SqmParameter,QueryParameterImplementor<?>> sqmParamToQueryParamMap) {
+		super( sqlAstBuildingContext, sqmParamToQueryParamMap );
 		this.fetchDepthLimit = sqlAstBuildingContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
-		this.entityGraphQueryHintType = queryOptions.getEntityGraphQueryHint() == null
+		this.entityGraphQueryHintType = sqlAstBuildingContext.getQueryOptions().getEntityGraphQueryHint() == null
 				? EntityGraphQueryHint.Type.NONE
-				:  queryOptions.getEntityGraphQueryHint().getType();
+				:  sqlAstBuildingContext.getQueryOptions().getEntityGraphQueryHint().getType();
 
 		this.expressionResolver = new PerQuerySpecSqlExpressionResolver(
 				() -> getQuerySpecStack().getCurrent(),

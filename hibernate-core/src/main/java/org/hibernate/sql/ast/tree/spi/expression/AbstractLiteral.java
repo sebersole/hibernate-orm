@@ -6,19 +6,9 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
@@ -29,15 +19,14 @@ import org.hibernate.sql.results.spi.SqlSelection;
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractLiteral
-		implements JdbcParameterBinder, Expression, SqlExpressable, QueryResultProducer {
+public abstract class AbstractLiteral implements Expression, SqlExpressable {
 	private final Object value;
-	private final BasicValuedExpressableType type;
+	private final JdbcValueMapper jdbcValueMapper;
 	private final boolean inSelect;
 
-	public AbstractLiteral(Object value, BasicValuedExpressableType type, boolean inSelect) {
+	public AbstractLiteral(Object value, JdbcValueMapper jdbcValueMapper, boolean inSelect) {
 		this.value = value;
-		this.type = type;
+		this.jdbcValueMapper = jdbcValueMapper;
 		this.inSelect = inSelect;
 	}
 
@@ -46,8 +35,8 @@ public abstract class AbstractLiteral
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
-		return type;
+	public JdbcValueMapper getJdbcValueMapper() {
+		return jdbcValueMapper;
 	}
 
 	public boolean isInSelect() {
@@ -64,35 +53,7 @@ public abstract class AbstractLiteral
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getSqlSelectionReader()
+				getJdbcValueMapper()
 		);
-	}
-
-	@Override
-	public QueryResult createQueryResult(
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-
-		// todo (6.0) : consider just returning the literal value back directly
-
-		return new ScalarQueryResultImpl(
-				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
-				getType()
-		);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public int bindParameterValue(
-			PreparedStatement statement,
-			int startPosition,
-			ParameterBindingContext context,
-			SharedSessionContractImplementor session) throws SQLException {
-		getType().getBasicType()
-				.getSqlTypeDescriptor()
-				.getBinder( getType().getJavaTypeDescriptor() )
-				.bind( statement, value, startPosition, session );
-		return getType().getNumberOfJdbcParametersToBind();
 	}
 }

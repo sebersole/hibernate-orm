@@ -9,10 +9,11 @@ package org.hibernate.query.sqm.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.ScrollMode;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.spi.SelectQueryPlan;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
@@ -26,18 +27,23 @@ public class AggregatedSelectQueryPlanImpl<R> implements SelectQueryPlan<R> {
 	}
 
 	@Override
-	public List<R> performList(ExecutionContext executionContext) {
+	public List<R> performList(
+			ExecutionContext executionContext,
+			ParameterBindingContext domainParamBindingContext) {
 		final List<R> overallResults = new ArrayList<R>();
 
 		for ( SelectQueryPlan<R> aggregatedQueryPlan : aggregatedQueryPlans ) {
-			overallResults.addAll( aggregatedQueryPlan.performList( executionContext ) );
+			overallResults.addAll( aggregatedQueryPlan.performList( executionContext, domainParamBindingContext ) );
 		}
 
 		return overallResults;
 	}
 
 	@Override
-	public ScrollableResultsImplementor<R> performScroll(ScrollMode scrollMode, ExecutionContext executionContext) {
+	public ScrollableResultsImplementor<R> performScroll(
+			ScrollMode scrollMode,
+			ExecutionContext executionContext,
+			ParameterBindingContext domainParamBindingContext) {
 		throw new NotYetImplementedFor6Exception();
 	}
 }

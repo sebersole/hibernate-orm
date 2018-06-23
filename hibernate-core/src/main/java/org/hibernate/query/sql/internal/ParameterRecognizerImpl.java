@@ -6,10 +6,8 @@
  */
 package org.hibernate.query.sql.internal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.persistence.StoredProcedureQuery;
 
@@ -20,7 +18,6 @@ import org.hibernate.query.internal.QueryParameterNamedImpl;
 import org.hibernate.query.internal.QueryParameterPositionalImpl;
 import org.hibernate.query.spi.ParameterRecognizer;
 import org.hibernate.query.spi.QueryParameterImplementor;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
 /**
  * @author Steve Ebersole
@@ -46,8 +43,6 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 
 	private PositionalParameterStyle positionalParameterStyle;
 	private int ordinalParameterImplicitPosition;
-
-	private List<JdbcParameterBinder> parameterBinders;
 
 	public ParameterRecognizerImpl(SessionFactoryImplementor factory) {
 		if ( factory.getSessionFactoryOptions().isJpaBootstrap() ) {
@@ -102,10 +97,6 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		return positionalQueryParameters;
 	}
 
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
-	}
-
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Recognition code
@@ -134,10 +125,6 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		}
 		positionalQueryParameters.put( implicitPosition, QueryParameterPositionalImpl.fromNativeQuery( implicitPosition ) );
 
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
-		}
-		parameterBinders.add( new PositionalQueryParameterBinderImpl( implicitPosition ) );
 	}
 
 	@Override
@@ -148,11 +135,6 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 			}
 			namedQueryParameters.put( name, QueryParameterNamedImpl.fromNativeQuery( name ) );
 		}
-
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
-		}
-		parameterBinders.add( new NamedQueryParameterBinder( name ) );
 	}
 
 	@Override
@@ -173,11 +155,6 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 			}
 			positionalQueryParameters.put( position, QueryParameterPositionalImpl.fromNativeQuery( position ) );
 		}
-
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
-		}
-		parameterBinders.add( new PositionalQueryParameterBinderImpl( position ) );
 	}
 
 	@Override

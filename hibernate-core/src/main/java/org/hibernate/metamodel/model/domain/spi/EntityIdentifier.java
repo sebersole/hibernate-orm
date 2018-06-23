@@ -12,6 +12,7 @@ import java.util.List;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
@@ -30,7 +31,7 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
  *
  * @author Steve Ebersole
  */
-public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterType<J>, Readable, Writeable {
+public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterType<J>, Readable, Writeable<J,Object> {
 	String NAVIGABLE_ID = "{id}";
 	String LEGACY_NAVIGABLE_ID = "id";
 

@@ -9,98 +9,41 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
-
-import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractParameter implements GenericParameter, QueryResultProducer {
-	private static final Logger log = Logger.getLogger( AbstractParameter.class );
+public abstract class AbstractParameter implements GenericParameter {
 
-	private final AllowableParameterType inferredType;
+	// todo (6.0) (domain-jdbc) : ...
 
-	public AbstractParameter(AllowableParameterType inferredType) {
-		this.inferredType = inferredType;
-	}
+	private final JdbcValueMapper valueMapper;
 
-	public AllowableParameterType getInferredType() {
-		return inferredType;
+	public AbstractParameter(JdbcValueMapper valueMapper) {
+		this.valueMapper = valueMapper;
 	}
 
 	@Override
-	public AllowableParameterType getType() {
-		return getInferredType();
+	public JdbcValueMapper getJdbcValueMapper() {
+		return valueMapper;
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public int bindParameterValue(
-			PreparedStatement statement,
-			int startPosition,
-			ParameterBindingContext bindingContext,
-			SharedSessionContractImplementor session) throws SQLException {
-		final AllowableParameterType bindType;
-		final Object bindValue;
-
-		final QueryParameterBinding valueBinding = resolveBinding( bindingContext );
-		if ( valueBinding == null ) {
-			warnNoBinding();
-			bindType = null;
-			bindValue = null;
-		}
-		else {
-			if ( valueBinding.getBindType() == null ) {
-				bindType = inferredType;
-			}
-			else {
-				bindType = valueBinding.getBindType();
-			}
-			bindValue = valueBinding.getBindValue();
-		}
-
-		if ( bindType == null ) {
-			unresolvedType();
-		}
-		assert bindType != null;
-		if ( bindValue == null ) {
-			warnNullBindValue();
-		}
-
-		bindType.getValueBinder().bind( statement, bindValue, startPosition, session );
-
-		return bindType.getNumberOfJdbcParametersToBind();
-	}
-
-	protected abstract void warnNoBinding();
-
-	protected abstract void unresolvedType();
-
-	protected abstract void warnNullBindValue();
-
-
-
-	// todo (6.0) : both of the methods below are another manifestation of only really allowing basic (single column) valued parameters
-
-
-	@Override
-	public QueryResult createQueryResult(
-			String resultVariable, QueryResultCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
-				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
-				(BasicValuedExpressableType) getType()
+	public void bindValue(
+			PreparedStatement preparedStatement,
+			JdbcParameterBindings jdbcParameterBindings,
+			int position,
+			ExecutionContext executionContext) throws SQLException {
+		getJdbcValueMapper().getJdbcValueBinder().bind(
+				preparedStatement,
+				jdbcParameterBindings.getBindValue( this ),
+				position,
+				executionContext
 		);
 	}
 
@@ -115,7 +58,7 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getSqlSelectionReader()
+				getJdbcValueMapper()
 		);
 	}
 }

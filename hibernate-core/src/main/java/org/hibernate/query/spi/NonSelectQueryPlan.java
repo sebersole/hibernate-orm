@@ -7,14 +7,19 @@
 package org.hibernate.query.spi;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 
 /**
  * @author Steve Ebersole
  */
 public interface NonSelectQueryPlan {
+
+	/**
+	 * todo (6.0) : is ParameterBindingContext really needed here?
+	 */
 	int executeUpdate(
 			SharedSessionContractImplementor persistenceContext,
 			QueryOptions queryOptions,
+			JdbcParameterBindings jdbcParameterBindings,
 			ParameterBindingContext parameterBindingContext);
 }

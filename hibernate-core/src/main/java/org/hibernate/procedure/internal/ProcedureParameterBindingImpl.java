@@ -6,12 +6,12 @@
  */
 package org.hibernate.procedure.internal;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ProcedureParameterBinding;
 import org.hibernate.procedure.spi.ProcedureParameterBindingImplementor;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.internal.QueryParameterBindingImpl;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * Implementation of the {@link ProcedureParameterBinding} contract.

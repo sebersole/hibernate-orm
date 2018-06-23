@@ -18,11 +18,11 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
+import org.hibernate.query.sqm.AllowableParameterType;
+import org.hibernate.sql.JdbcValueBinder;
 import org.hibernate.sql.Update;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 
 import org.jboss.logging.Logger;
 
@@ -81,7 +81,7 @@ public class PessimisticWriteUpdateLockingStrategy implements LockingStrategy {
 						.getStatementPreparer()
 						.prepareStatement( sql );
 				try {
-					final ValueBinder versionValueBinder = lockable.getHierarchy()
+					final JdbcValueBinder versionValueBinder = lockable.getHierarchy()
 							.getVersionDescriptor()
 							.getBasicType()
 							.getValueBinder();

@@ -9,11 +9,11 @@ package org.hibernate.procedure.internal;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQueryParameter;
 import org.hibernate.query.named.spi.ParameterMemento;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * @author Steve Ebersole

@@ -8,7 +8,7 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.JdbcValueCollector;
 
 /**
  * Represents a value that can ultimately be written to the database.  The process of
@@ -23,7 +23,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
  *
  * @author Steve Ebersole
  */
-public interface Writeable<D,I> {
+public interface Writeable<D,I> extends ColumnContainer {
 	/**
 	 * Produce a multi-dimensional array of extracted simple value
 	 */
@@ -39,8 +39,4 @@ public interface Writeable<D,I> {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
-	@FunctionalInterface
-	interface JdbcValueCollector {
-		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
-	}
 }

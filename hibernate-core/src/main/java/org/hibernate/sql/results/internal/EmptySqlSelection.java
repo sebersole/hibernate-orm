@@ -6,10 +6,10 @@
  */
 package org.hibernate.sql.results.internal;
 
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 
 /**
  * @author Steve Ebersole
@@ -22,8 +22,8 @@ public class EmptySqlSelection implements SqlSelection {
 	}
 
 	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
-		return EmptySqlSelectionReader.INSTANCE;
+	public JdbcValueMapper getJdbcValueMapper() {
+		return null;
 	}
 
 	@Override
@@ -34,8 +34,8 @@ public class EmptySqlSelection implements SqlSelection {
 	@Override
 	public void accept(SqlAstWalker interpreter) {
 		// todo (6.0) : see the note on `BaseSemanticQueryWalker#visitSelectClause`
-		interpreter.visitQueryLiteral(
-				new QueryLiteral(
+		interpreter.visitLiteral(
+				new GenericSqlLiteral(
 						null,
 						null,
 						true

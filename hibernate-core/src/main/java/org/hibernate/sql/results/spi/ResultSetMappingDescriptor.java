@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -66,10 +66,6 @@ public interface ResultSetMappingDescriptor {
 
 	}
 
-	interface ResolutionContext {
-		SharedSessionContractImplementor getPersistenceContext();
-	}
-
 	/**
 	 * Resolve the selections (both at the JDBC and object level) for this
 	 * mapping.  Acts as delayed access to this resolution process to support
@@ -77,11 +73,10 @@ public interface ResultSetMappingDescriptor {
 	 * JPA.
 	 *
 	 * @param jdbcResultsMetadata Access to information about the underlying results
-	 * @param resolutionContext Access to information needed for resolution (param object)
-	 *
+	 * @param sessionFactory
 	 * @return The resolved result references
 	 */
 	ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext);
+			SessionFactoryImplementor sessionFactory);
 }

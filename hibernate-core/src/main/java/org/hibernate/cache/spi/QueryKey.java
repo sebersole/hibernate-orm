@@ -13,7 +13,7 @@ import java.util.Set;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.query.Limit;
-import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 
 /**
  * A key that identifies a particular query with bound parameter values.  This is the object Hibernate uses
@@ -31,7 +31,7 @@ public class QueryKey implements Serializable {
 	public static QueryKey from(
 			String sqlQueryString,
 			Limit limit,
-			QueryParameterBindings parameterBindings,
+			JdbcParameterBindings jdbcBindings,
 			SharedSessionContractImplementor persistenceContext) {
 		// todo (6.0) : here is where we should centralize cacheable-or-not
 		//		if this method returns null, the query should be considered un-cacheable
@@ -43,7 +43,7 @@ public class QueryKey implements Serializable {
 
 		return new QueryKey(
 				sqlQueryString,
-				parameterBindings.generateQueryKeyMemento(),
+				jdbcBindings.generateQueryKeyMemento(),
 				limitToUse.getFirstRow(),
 				limitToUse.getMaxRows(),
 				persistenceContext.getTenantIdentifier(),

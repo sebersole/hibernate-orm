@@ -12,9 +12,9 @@ import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -82,12 +82,12 @@ public class TenantDiscriminationImpl implements TenantDiscrimination {
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public JdbcValueBinder getValueBinder() {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public JdbcValueExtractor getValueExtractor() {
 		throw new NotYetImplementedFor6Exception();
 	}
 }

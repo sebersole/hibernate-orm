@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.spi;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.hibernate.query.ParameterMetadata;
@@ -17,12 +18,13 @@ public interface ParameterMetadataImplementor<P extends QueryParameterImplemento
 	@Override
 	boolean containsReference(P parameter);
 
-	@FunctionalInterface
-	interface ParameterCollector<P extends QueryParameterImplementor<?>> {
-		void collect(P queryParameter);
-	}
-
-	void collectAllParameters(ParameterCollector<P> collector);
+	/**
+	 * Visits each query parameter.
+	 *
+	 * @apiNote The semantic here is to visit each parameter exactly once
+	 * regardless of how many times that parameter appears in the query.
+	 */
+	void visitParameters(Consumer<P> collector);
 
 	boolean hasAnyMatching(Predicate<P> filter);
 }

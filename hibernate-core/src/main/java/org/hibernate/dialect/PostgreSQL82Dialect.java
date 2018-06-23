@@ -19,13 +19,15 @@ import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.LocalTempTableExporter;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.LocalTemporaryTableStrategy;
 import org.hibernate.service.ServiceRegistry;
+import org.hibernate.sql.AbstractJdbcValueBinder;
+import org.hibernate.sql.AbstractJdbcValueExtractor;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
-import org.hibernate.type.descriptor.sql.spi.BasicBinder;
-import org.hibernate.type.descriptor.sql.spi.BasicExtractor;
 import org.hibernate.type.descriptor.sql.spi.JdbcLiteralFormatter;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -117,42 +119,42 @@ public class PostgreSQL82Dialect extends PostgreSQL81Dialect {
 		}
 
 		@Override
-		public <X> ValueBinder<X> getBinder(JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueBinder<X> getBinder(BasicJavaDescriptor<X> javaTypeDescriptor) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options) throws SQLException {
-					st.setObject( index, javaTypeDescriptor.unwrap( value, UUID.class, options ), Types.OTHER );
+				protected void doBind(PreparedStatement st, X value, int index, ExecutionContext executionContext) throws SQLException {
+					st.setObject( index, javaTypeDescriptor.unwrap( value, UUID.class, executionContext.getSession() ), Types.OTHER );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
+				protected void doBind(CallableStatement st, X value, String name, ExecutionContext executionContext)
 						throws SQLException {
-					st.setObject( name, javaTypeDescriptor.unwrap( value, UUID.class, options ), Types.OTHER );
+					st.setObject( name, javaTypeDescriptor.unwrap( value, UUID.class, executionContext.getSession() ), Types.OTHER );
 				}
 			};
 		}
 
 		@Override
-		public <X> ValueExtractor<X> getExtractor(JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicExtractor<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueExtractor<X> getExtractor(BasicJavaDescriptor<X> javaTypeDescriptor) {
+			return new AbstractJdbcValueExtractor<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected X doExtract(ResultSet rs, int position, WrapperOptions options)
+				protected X doExtract(ResultSet rs, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState)
 						throws SQLException {
-					return javaTypeDescriptor.wrap( rs.getObject( position ), options );
+					return javaTypeDescriptor.wrap( rs.getObject( sqlSelection.getJdbcResultSetIndex() ), processingState.getSession() );
 				}
 
 				@Override
-				protected X doExtract(CallableStatement statement, int index, WrapperOptions options)
+				protected X doExtract(CallableStatement statement, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState)
 						throws SQLException {
-					return javaTypeDescriptor.wrap( statement.getObject( index ), options );
+					return javaTypeDescriptor.wrap( statement.getObject( sqlSelection.getJdbcResultSetIndex() ), processingState.getSession() );
 				}
 
 				@Override
 				protected X doExtract(
 						CallableStatement statement,
 						String name,
-						WrapperOptions options) throws SQLException {
-					return javaTypeDescriptor.wrap( statement.getObject( name ), options );
+						JdbcValuesSourceProcessingState processingState) throws SQLException {
+					return javaTypeDescriptor.wrap( statement.getObject( name ), processingState.getSession() );
 				}
 			};
 		}

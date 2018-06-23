@@ -28,13 +28,13 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
 import org.hibernate.query.named.spi.NameableQuery;
 import org.hibernate.query.named.spi.NamedNativeQueryMemento;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.type.Type;
 

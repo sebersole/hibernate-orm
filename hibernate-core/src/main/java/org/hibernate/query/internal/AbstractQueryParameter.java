@@ -7,8 +7,8 @@
 
 package org.hibernate.query.internal;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterImplementor;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 import org.jboss.logging.Logger;
 

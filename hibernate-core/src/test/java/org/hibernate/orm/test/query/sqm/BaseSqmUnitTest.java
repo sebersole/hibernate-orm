@@ -8,11 +8,9 @@ package org.hibernate.orm.test.query.sqm;
 
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 
 import org.hibernate.testing.junit5.StandardTags;
@@ -24,7 +22,7 @@ import org.junit.jupiter.api.Tag;
 @Tag(StandardTags.SQM)
 public abstract class BaseSqmUnitTest
 		extends SessionFactoryBasedFunctionalTest
-		implements SqlAstBuildingContext, Callback {
+		implements Callback {
 
 	@Override
 	protected void applySettings(StandardServiceRegistryBuilder builder) {
@@ -38,20 +36,13 @@ public abstract class BaseSqmUnitTest
 	}
 
 	@Override
-	public Callback getCallback() {
-		return this;
-	}
-
-	@Override
 	public void registerAfterLoadAction(AfterLoadAction afterLoadAction) {
 	}
 
-	@Override
-	public SessionFactoryImplementor getSessionFactory() {
-		return sessionFactory();
-	}
-
 	protected SqmSelectStatement interpretSelect(String hql) {
-		return (SqmSelectStatement) getSessionFactory().getQueryEngine().getSemanticQueryProducer().interpret( hql );
+		return (SqmSelectStatement) sessionFactoryScope().getSessionFactory()
+				.getQueryEngine()
+				.getSemanticQueryProducer()
+				.interpret( hql );
 	}
 }

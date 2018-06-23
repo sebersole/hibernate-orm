@@ -6,12 +6,11 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
@@ -29,7 +28,6 @@ import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
@@ -41,11 +39,13 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey.ColumnMappings;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEntity;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.JdbcValueCollector;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -56,6 +56,10 @@ import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
+import org.hibernate.sql.ast.tree.spi.expression.StandardJdbcParameter;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
@@ -74,10 +78,8 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
@@ -317,6 +319,21 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
+	public void visitColumns(Consumer<Column> consumer) {
+		// if the FK points from the parent to the to-one, the columns we are interested in
+		// are the target columns; otherwise we want the referring columns
+		final List<Column> columnList;
+		if ( getForeignKeyDirection() == ForeignKeyDirection.FROM_PARENT ) {
+			columnList = foreignKey.getColumnMappings().getTargetColumns();
+		}
+		else {
+			columnList = foreignKey.getColumnMappings().getReferringColumns();
+		}
+
+		columnList.forEach( column -> consumer.accept( column ) );
+	}
+
+	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
@@ -338,10 +355,10 @@ public class SingularPersistentAttributeEntity<O,J>
 		// todo (6.0) (fk-to-id) : another place where we assume association fks point to the pks
 		getEntityDescriptor().getHierarchy().getIdentifierDescriptor().dehydrate(
 				value,
-				(jdbcValue, type, targetColumn) -> jdbcValueCollector.collect(
+				(jdbcValue, targetColumn, mapper) -> jdbcValueCollector.collect(
 						jdbcValue,
-						getEntityDescriptor().getHierarchy().getIdentifierDescriptor(),
-						foreignKey.getColumnMappings().findReferringColumn( targetColumn )
+						foreignKey.getColumnMappings().findReferringColumn( targetColumn ),
+						mapper
 				),
 				session
 		);
@@ -542,32 +559,40 @@ public class SingularPersistentAttributeEntity<O,J>
 	// AllowableParameterType
 
 
-	private final ValueBinder valueBinder = new ValueBinder() {
-		@Override
-		@SuppressWarnings("unchecked")
-		public void bind(
-				PreparedStatement st, Object value, int index, WrapperOptions options) throws SQLException {
-			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
-			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, index, options );
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public void bind(
-				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
-			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
-			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, name, options );
-		}
-	};
-
 	@Override
-	public ValueBinder<J> getValueBinder() {
-		return valueBinder;
+	public Expression toJdbcParameters() {
+		final List<Expression> expressions = new ArrayList<>();
+		visitColumns(
+				column -> expressions.add( new StandardJdbcParameter( column.getJdbcValueMapper() ) )
+		);
+
+		if ( expressions.isEmpty() ) {
+			throw new NotYetImplementedFor6Exception();
+		}
+		else if ( expressions.size() == 1 ) {
+			return expressions.get( 0 );
+		}
+		else {
+			return new SqlTuple( expressions );
+		}
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return null;
+	public void toJdbcParameters(BiConsumer<Column, ParameterSpec<?>> collector) {
+		visitColumns(
+				column -> collector.accept(
+						column,
+						new StandardJdbcParameter( column.getJdbcValueMapper() )
+				)
+		);
+	}
+
+	@Override
+	public void toJdbcValues(
+			Object parameterBindValue,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
+		// todo (6.0) : need a way to ask the NavigableContainer for its "association key" relative to this Navigable
 	}
 
 	@Override

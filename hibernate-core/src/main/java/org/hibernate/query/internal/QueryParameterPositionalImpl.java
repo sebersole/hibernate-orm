@@ -7,8 +7,8 @@
 
 package org.hibernate.query.internal;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.named.spi.ParameterMemento;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
 
 /**

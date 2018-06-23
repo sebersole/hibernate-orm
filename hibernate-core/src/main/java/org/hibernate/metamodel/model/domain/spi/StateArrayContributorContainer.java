@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 public interface StateArrayContributorContainer {
 	List<StateArrayContributor<?>> getStateArrayContributors();
 
-	default void visitStateArrayContributors(Consumer<StateArrayContributor<?>> consumer) {
+	default void visitStateArrayContributors(Consumer<StateArrayContributor> consumer) {
 		for ( StateArrayContributor contributor : getStateArrayContributors() ) {
 			consumer.accept( contributor );
 		}

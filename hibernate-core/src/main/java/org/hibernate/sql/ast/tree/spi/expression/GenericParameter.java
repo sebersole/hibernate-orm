@@ -6,22 +6,14 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.ast.produce.sqm.spi.ParameterSpec;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.Selectable;
 
 /**
  * @author Steve Ebersole
  */
-public interface GenericParameter extends ParameterSpec, JdbcParameterBinder, Expression, SqlExpressable, Selectable {
+public interface GenericParameter<J> extends ParameterSpec, Expression<J>, SqlExpressable<J>, Selectable {
 	@Override
-	default JdbcParameterBinder getParameterBinder() {
-		return this;
-	}
-
-	QueryParameterBinding resolveBinding(ParameterBindingContext context);
-
+	JdbcValueMapper getJdbcValueMapper();
 }

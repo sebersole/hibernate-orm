@@ -210,8 +210,8 @@ public class NamedQueryRepositoryImpl implements NamedQueryRepository {
 //					}
 //
 //					@Override
-//					public List<JdbcParameterBinder> getParameterBinders() {
-//						return parameterRecognizer.getParameterBinders();
+//					public List<JdbcParameterBinder> getJdbcValueBinders() {
+//						return parameterRecognizer.getJdbcValueBinders();
 //					}
 //
 //					@Override

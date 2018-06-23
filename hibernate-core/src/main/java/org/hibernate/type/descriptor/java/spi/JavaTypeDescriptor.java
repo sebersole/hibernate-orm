@@ -43,6 +43,8 @@ public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.jav
 	 * @param options The options
 	 * @param <X> The conversion type.
 	 *
+	 * todo (6.0) : replace WrapperOptions argument with session?
+	 *
 	 * @return The unwrapped value.
 	 */
 	<X> X unwrap(T value, Class<X> type, WrapperOptions options);
@@ -55,6 +57,8 @@ public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.jav
 	 * @param value The value to wrap.
 	 * @param options The options
 	 * @param <X> The conversion type.
+	 *
+	 * todo (6.0) : replace WrapperOptions argument with session?
 	 *
 	 * @return The wrapped value.
 	 */

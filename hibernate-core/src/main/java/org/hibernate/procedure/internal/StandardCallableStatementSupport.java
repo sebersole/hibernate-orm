@@ -12,7 +12,6 @@ import javax.persistence.ParameterMode;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.procedure.spi.ParameterStrategy;
@@ -20,6 +19,7 @@ import org.hibernate.procedure.spi.ProcedureParamBindings;
 import org.hibernate.procedure.spi.ProcedureParameterBindingImplementor;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.spi.ProcedureParameterMetadata;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.exec.internal.JdbcCallImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterBinderImpl;
 import org.hibernate.sql.exec.internal.JdbcCallParameterExtractorImpl;
@@ -27,7 +27,6 @@ import org.hibernate.sql.exec.internal.JdbcCallParameterRegistrationImpl;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 import org.hibernate.sql.exec.spi.JdbcCall;
 import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
 /**
  * Standard implementation of CallableStatementSupport

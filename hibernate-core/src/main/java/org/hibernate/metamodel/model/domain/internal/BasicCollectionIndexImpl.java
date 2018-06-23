@@ -28,8 +28,6 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.Logger;
@@ -111,17 +109,7 @@ public class BasicCollectionIndexImpl<J>
 								getBoundColumn()
 						)
 				),
-				this
+				getValueConverter()
 		);
-	}
-
-	@Override
-	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
 	}
 }

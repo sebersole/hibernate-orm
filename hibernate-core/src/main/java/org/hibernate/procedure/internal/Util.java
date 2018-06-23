@@ -70,7 +70,7 @@ public class Util {
 	/**
 	 * Context for resolving result-set-mapping definitions
 	 */
-	public static interface ResultSetMappingResolutionContext {
+	public interface ResultSetMappingResolutionContext {
 		/**
 		 * Access to the SessionFactory
 		 *
@@ -179,7 +179,8 @@ public class Util {
 							null,
 							// todo : SqlSelection
 							null,
-							context.getSessionFactory().getTypeConfiguration().getBasicTypeRegistry().getBasicType( resultType )
+							// converter
+							null
 					)
 			);
 		}

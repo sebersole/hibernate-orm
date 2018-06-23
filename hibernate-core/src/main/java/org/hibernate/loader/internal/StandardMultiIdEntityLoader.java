@@ -15,17 +15,16 @@ import org.hibernate.loader.spi.MultiIdLoaderSelectors;
 import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
-import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.expression.StandardJdbcParameter;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterBindings;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -58,21 +57,19 @@ public class StandardMultiIdEntityLoader<J>
 				entityDescriptor
 		);
 
-		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
-				.generateSelectStatement( ids.length, session.getLoadQueryInfluencers(), options.getLockOptions() );
-
-		final List<Object> loadIds = Arrays.asList( ids );
-
-		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
-				session.getFactory(),
-				QueryParameterBindings.NO_PARAM_BINDINGS,
-				loadIds
+		final SqlAstSelectDescriptor selectDescriptor = selectBuilder.generateSelectStatement(
+				ids.length,
+				session.getLoadQueryInfluencers(),
+				options.getLockOptions()
 		);
+
 
 		final JdbcSelect jdbcSelect = SqlAstSelectToJdbcSelectConverter.interpret(
 				selectDescriptor,
-				parameterBindingContext
+				entityDescriptor.getFactory()
 		);
+
+		final List<Object> loadIds = Arrays.asList( ids );
 
 		return JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
@@ -88,16 +85,25 @@ public class StandardMultiIdEntityLoader<J>
 					}
 
 					@Override
-					public ParameterBindingContext getParameterBindingContext() {
-						return parameterBindingContext;
-					}
-
-					@Override
 					public Callback getCallback() {
 						return null;
 					}
 				},
+				null,
 				RowTransformerSingularReturnImpl.instance()
 		);
+	}
+
+	private StandardJdbcParameterBindings idsToJdbcParamBindings(Object[] ids, SharedSessionContractImplementor session) {
+		final StandardJdbcParameterBindings.Builder jdbcParamBindingsBuilder = new StandardJdbcParameterBindings.Builder();
+		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
+				id,
+				(jdbcValue, boundColumn, jdbcValueMapper) -> jdbcParamBindingsBuilder.add(
+						new StandardJdbcParameter( jdbcValueMapper ),
+						jdbcValue
+				),
+				session
+		);
+		return jdbcParamBindingsBuilder.build();
 	}
 }

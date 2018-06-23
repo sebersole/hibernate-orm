@@ -9,7 +9,7 @@ package org.hibernate.sql.exec.internal;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
@@ -18,17 +18,17 @@ import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
  */
 public class JdbcSelectImpl implements JdbcSelect {
 	private final String sql;
-	private final List<JdbcParameterBinder> parameterBinders;
+	private final List<ParameterSpec> parameterSpecs;
 	private final ResultSetMappingDescriptor resultSetMapping;
 	private final Set<String> affectedTableNames;
 
 	public JdbcSelectImpl(
 			String sql,
-			List<JdbcParameterBinder> parameterBinders,
+			List<ParameterSpec> parameterSpecs,
 			ResultSetMappingDescriptor resultSetMapping,
 			Set<String> affectedTableNames) {
 		this.sql = sql;
-		this.parameterBinders = parameterBinders;
+		this.parameterSpecs = parameterSpecs;
 		this.resultSetMapping = resultSetMapping;
 		this.affectedTableNames = affectedTableNames;
 	}
@@ -39,8 +39,8 @@ public class JdbcSelectImpl implements JdbcSelect {
 	}
 
 	@Override
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
+	public List<ParameterSpec> getJdbcParameters() {
+		return parameterSpecs;
 	}
 
 	@Override

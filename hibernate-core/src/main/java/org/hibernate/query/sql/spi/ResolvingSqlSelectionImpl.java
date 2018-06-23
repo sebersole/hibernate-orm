@@ -6,17 +6,12 @@
  */
 package org.hibernate.query.sql.spi;
 
-import java.sql.CallableStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.hibernate.QueryException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -25,9 +20,9 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionReader {
+public class ResolvingSqlSelectionImpl implements SqlSelection, SqlExpressable {
 	private final String columnAlias;
-	private ValueExtractor extractor;
+	private JdbcValueMapper valueMapper;
 
 	private Integer jdbcResultSetPosition;
 
@@ -40,86 +35,34 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 		this( columnAlias, null );
 	}
 
-	public ResolvingSqlSelectionImpl(String columnAlias, ValueExtractor extractor) {
+	public ResolvingSqlSelectionImpl(String columnAlias, JdbcValueMapper valueMapper) {
 		this.columnAlias = columnAlias;
-		this.extractor = extractor;
+		this.valueMapper = valueMapper;
 	}
 
-	public ValueExtractor getExtractor() {
-		return extractor;
+	@Override
+	public JdbcValueMapper getJdbcValueMapper() {
+		return valueMapper;
 	}
 
 	@Override
 	public void prepare(
 			ResultSetMappingDescriptor.JdbcValuesMetadata jdbcResultsMetadata,
-			ResultSetMappingDescriptor.ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		// resolve the column-alias to a position
 		jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
 
-		if ( extractor == null ) {
+		if ( valueMapper == null ) {
 			// assume we should auto-discover the type
 			final SqlTypeDescriptor sqlTypeDescriptor = jdbcResultsMetadata.resolveSqlTypeDescriptor( jdbcResultSetPosition );
 
-			extractor = sqlTypeDescriptor.getExtractor(
+			valueMapper = sqlTypeDescriptor.getJdbcValueMapper(
 					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping(
-							resolutionContext.getPersistenceContext().getFactory().getTypeConfiguration()
+							sessionFactory.getTypeConfiguration()
 					)
 			);
 		}
 
-	}
-
-	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
-		return this;
-	}
-
-	@Override
-	public Object read(
-			ResultSet resultSet,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			SqlSelection sqlSelection) throws SQLException {
-		validateExtractor();
-
-		return extractor.extract(
-				resultSet,
-				sqlSelection.getJdbcResultSetIndex(),
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
-	}
-
-	private void validateExtractor() {
-		if ( extractor == null ) {
-			throw new QueryException( "Could not determine how to read JDBC value" );
-		}
-	}
-
-	@Override
-	public Object extractParameterValue(
-			CallableStatement statement,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			int jdbcParameterIndex) throws SQLException {
-		validateExtractor();
-
-		return extractor.extract(
-				statement,
-				jdbcParameterIndex,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
-	}
-
-	@Override
-	public Object extractParameterValue(
-			CallableStatement statement,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			String jdbcParameterName) throws SQLException {
-		validateExtractor();
-
-		return extractor.extract(
-				statement,
-				jdbcParameterName,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
 	}
 
 	@Override

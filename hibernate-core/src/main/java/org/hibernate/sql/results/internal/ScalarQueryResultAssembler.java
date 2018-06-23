@@ -19,20 +19,17 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class ScalarQueryResultAssembler implements QueryResultAssembler {
 	private final SqlSelection sqlSelection;
 	private final BasicValueConverter valueConverter;
-	private final JavaTypeDescriptor javaTypeDescriptor;
 
 	public ScalarQueryResultAssembler(
 			SqlSelection sqlSelection,
-			BasicValueConverter valueConverter,
-			JavaTypeDescriptor javaTypeDescriptor) {
+			BasicValueConverter valueConverter) {
 		this.sqlSelection = sqlSelection;
 		this.valueConverter = valueConverter;
-		this.javaTypeDescriptor = javaTypeDescriptor;
 	}
 
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return javaTypeDescriptor;
+		return sqlSelection.getJdbcValueMapper().getJavaTypeDescriptor();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -41,6 +38,7 @@ public class ScalarQueryResultAssembler implements QueryResultAssembler {
 			RowProcessingState rowProcessingState,
 			JdbcValuesSourceProcessingOptions options) {
 		final Object rawJdbcValue = rowProcessingState.getJdbcValue( sqlSelection );
+
 
 		if ( valueConverter != null ) {
 			return valueConverter.toDomainValue( rawJdbcValue, rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext() );

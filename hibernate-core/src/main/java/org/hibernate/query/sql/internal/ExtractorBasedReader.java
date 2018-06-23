@@ -10,18 +10,17 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
  * @author Steve Ebersole
  */
 public class ExtractorBasedReader implements SqlSelectionReader {
-	private final ValueExtractor extractor;
+	private final JdbcValueExtractor extractor;
 
-	public ExtractorBasedReader(ValueExtractor extractor) {
+	public ExtractorBasedReader(JdbcValueExtractor extractor) {
 		this.extractor = extractor;
 	}
 

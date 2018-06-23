@@ -12,13 +12,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import org.hibernate.sql.AbstractJdbcValueBinder;
+import org.hibernate.sql.AbstractJdbcValueExtractor;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.internal.JdbcLiteralFormatterNumericData;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Descriptor for {@link Types#TINYINT TINYINT} handling.
@@ -28,7 +32,7 @@ import org.hibernate.type.descriptor.sql.internal.JdbcLiteralFormatterNumericDat
  *
  * @author Steve Ebersole
  */
-public class TinyIntSqlDescriptor implements SqlTypeDescriptor {
+public class TinyIntSqlDescriptor extends AbstractTemplateSqlTypeDescriptor {
 	public static final TinyIntSqlDescriptor INSTANCE = new TinyIntSqlDescriptor();
 
 	public TinyIntSqlDescriptor() {
@@ -56,37 +60,37 @@ public class TinyIntSqlDescriptor implements SqlTypeDescriptor {
 	}
 
 	@Override
-	public <X> ValueBinder<X> getBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-		return new BasicBinder<X>( javaTypeDescriptor, this ) {
+	protected <X> JdbcValueBinder<X> createBinder(final BasicJavaDescriptor<X> javaTypeDescriptor) {
+		return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 			@Override
-			protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options) throws SQLException {
-				st.setByte( index, javaTypeDescriptor.unwrap( value, Byte.class, options ) );
+			protected void doBind(PreparedStatement st, X value, int index, ExecutionContext executionContext) throws SQLException {
+				st.setByte( index, javaTypeDescriptor.unwrap( value, Byte.class, executionContext.getSession() ) );
 			}
 
 			@Override
-			protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
+			protected void doBind(CallableStatement st, X value, String name, ExecutionContext executionContext)
 					throws SQLException {
-				st.setByte( name, javaTypeDescriptor.unwrap( value, Byte.class, options ) );
+				st.setByte( name, javaTypeDescriptor.unwrap( value, Byte.class, executionContext.getSession() ) );
 			}
 		};
 	}
 
 	@Override
-	public <X> ValueExtractor<X> getExtractor(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-		return new BasicExtractor<X>( javaTypeDescriptor, this ) {
+	protected <X> JdbcValueExtractor<X> createExtractor(final BasicJavaDescriptor<X> javaTypeDescriptor) {
+		return new AbstractJdbcValueExtractor<X>( javaTypeDescriptor, this ) {
 			@Override
-			protected X doExtract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap( rs.getByte( position ), options );
+			protected X doExtract(ResultSet rs, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException {
+				return javaTypeDescriptor.wrap( rs.getByte( sqlSelection.getJdbcResultSetIndex() ), processingState.getSession() );
 			}
 
 			@Override
-			protected X doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap( statement.getByte( index ), options );
+			protected X doExtract(CallableStatement statement, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException {
+				return javaTypeDescriptor.wrap( statement.getByte( sqlSelection.getJdbcResultSetIndex() ), processingState.getSession() );
 			}
 
 			@Override
-			protected X doExtract(CallableStatement statement, String name, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap( statement.getByte( name ), options );
+			protected X doExtract(CallableStatement statement, String name, JdbcValuesSourceProcessingState processingState) throws SQLException {
+				return javaTypeDescriptor.wrap( statement.getByte( name ), processingState.getSession() );
 			}
 		};
 	}

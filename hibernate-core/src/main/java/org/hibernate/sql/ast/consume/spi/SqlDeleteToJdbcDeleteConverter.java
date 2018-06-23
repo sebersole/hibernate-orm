@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.JdbcMutation;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -37,8 +37,8 @@ public class SqlDeleteToJdbcDeleteConverter
 			}
 
 			@Override
-			public List<JdbcParameterBinder> getParameterBinders() {
-				return walker.getParameterBinders();
+			public List<ParameterSpec> getJdbcParameters() {
+				return walker.getParameterSpecs();
 			}
 
 			@Override

@@ -14,9 +14,14 @@ import java.util.stream.Collectors;
 import org.hibernate.LockOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
+import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
+import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
 import org.hibernate.query.sqm.tree.set.SqmAssignment;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
@@ -59,13 +64,17 @@ public class SqmUpdateToSqlAstConverterMultiTable
 			SqmUpdateStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstBuildingContext sqlAstBuildingContext) {
+			ParameterBindingContext parameterBindingContext,
+			SqlAstBuildingContext sqlAstBuildingContext,
+			Map<SqmParameter,QueryParameterImplementor<?>> sqmParamToQueryParamMap) {
 
 		final SqmUpdateToSqlAstConverterMultiTable walker = new SqmUpdateToSqlAstConverterMultiTable(
 				sqmStatement,
 				idTableSelect,
 				queryOptions,
-				sqlAstBuildingContext
+				parameterBindingContext,
+				sqlAstBuildingContext,
+				sqmParamToQueryParamMap
 		);
 
 		walker.visitUpdateStatement( sqmStatement );
@@ -85,12 +94,14 @@ public class SqmUpdateToSqlAstConverterMultiTable
 
 	private Map<TableReference, UpdateStatementBuilder> updateStatementBuilderMap = new HashMap<>();
 
-	private SqmUpdateToSqlAstConverterMultiTable(
+	public SqmUpdateToSqlAstConverterMultiTable(
 			SqmUpdateStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstBuildingContext sqlAstBuildingContext) {
-		super( sqlAstBuildingContext, queryOptions );
+			ParameterBindingContext parameterBindingContext,
+			SqlAstBuildingContext sqlAstBuildingContext,
+			Map<SqmParameter,QueryParameterImplementor<?>> sqmParamToQueryParamMap) {
+		super( sqlAstBuildingContext, sqmParamToQueryParamMap );
 		this.idTableSelect = idTableSelect;
 
 		this.entityDescriptor = sqmStatement.getEntityFromElement()
@@ -221,6 +232,16 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		finally {
 			currentAssignmentContext = null;
 		}
+	}
+
+	@Override
+	public Expression visitNamedParameterExpression(SqmNamedParameter expression) {
+		return super.visitNamedParameterExpression( expression );
+	}
+
+	@Override
+	public Expression visitPositionalParameterExpression(SqmPositionalParameter expression) {
+		return super.visitPositionalParameterExpression( expression );
 	}
 
 	@Override

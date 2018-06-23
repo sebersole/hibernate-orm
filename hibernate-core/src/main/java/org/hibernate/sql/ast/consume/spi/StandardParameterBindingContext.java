@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryParameterBindings;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole

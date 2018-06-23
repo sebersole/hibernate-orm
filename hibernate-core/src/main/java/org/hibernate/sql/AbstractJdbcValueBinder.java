@@ -1,29 +1,30 @@
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.type.descriptor.sql.spi;
+package org.hibernate.sql;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.sql.spi.JdbcTypeNameMapper;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
 /**
- * Convenience base implementation of {@link ValueBinder}
+ * Convenience base implementation of {@link JdbcValueBinder}
  *
  * @author Steve Ebersole
  */
-public abstract class BasicBinder<J> implements ValueBinder<J> {
-	private static final Logger log = CoreLogging.logger( BasicBinder.class );
+public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
+	private static final Logger log = CoreLogging.logger( AbstractJdbcValueBinder.class );
 
 	private static final String BIND_MSG_TEMPLATE = "binding parameter [%s] as [%s] - [%s]";
 	private static final String NULL_BIND_MSG_TEMPLATE = "binding parameter [%s] as [%s] - [null]";
@@ -39,13 +40,13 @@ public abstract class BasicBinder<J> implements ValueBinder<J> {
 		return sqlDescriptor;
 	}
 
-	public BasicBinder(JavaTypeDescriptor<J> javaDescriptor, SqlTypeDescriptor sqlDescriptor) {
+	public AbstractJdbcValueBinder(JavaTypeDescriptor<J> javaDescriptor, SqlTypeDescriptor sqlDescriptor) {
 		this.javaDescriptor = javaDescriptor;
 		this.sqlDescriptor = sqlDescriptor;
 	}
 
 	@Override
-	public final void bind(PreparedStatement st, J value, int index, WrapperOptions options) throws SQLException {
+	public final void bind(PreparedStatement st, J value, int index, ExecutionContext executionContext) throws SQLException {
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null ) {
 			if ( traceEnabled ) {
@@ -70,12 +71,12 @@ public abstract class BasicBinder<J> implements ValueBinder<J> {
 						)
 				);
 			}
-			doBind( st, value, index, options );
+			doBind( st, value, index, executionContext );
 		}
 	}
 
 	@Override
-	public final void bind(CallableStatement st, J value, String name, WrapperOptions options) throws SQLException {
+	public final void bind(CallableStatement st, J value, String name, ExecutionContext executionContext) throws SQLException {
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null ) {
 			if ( traceEnabled ) {
@@ -100,7 +101,7 @@ public abstract class BasicBinder<J> implements ValueBinder<J> {
 						)
 				);
 			}
-			doBind( st, value, name, options );
+			doBind( st, value, name, executionContext );
 		}
 	}
 
@@ -110,11 +111,11 @@ public abstract class BasicBinder<J> implements ValueBinder<J> {
 	 * @param st The prepared statement
 	 * @param value The value to bind (not null).
 	 * @param index The index at which to bind
-	 * @param options The binding options
+	 * @param executionContext The binding options
 	 *
 	 * @throws SQLException Indicates a problem binding to the prepared statement.
 	 */
-	protected abstract void doBind(PreparedStatement st, J value, int index, WrapperOptions options)
+	protected abstract void doBind(PreparedStatement st, J value, int index, ExecutionContext executionContext)
 			throws SQLException;
 
 	/**
@@ -123,10 +124,10 @@ public abstract class BasicBinder<J> implements ValueBinder<J> {
 	 * @param st The CallableStatement
 	 * @param value The value to bind (not null).
 	 * @param name The name at which to bind
-	 * @param options The binding options
+	 * @param executionContext The binding options
 	 *
 	 * @throws SQLException Indicates a problem binding to the prepared statement.
 	 */
-	protected abstract void doBind(CallableStatement st, J value, String name, WrapperOptions options)
+	protected abstract void doBind(CallableStatement st, J value, String name, ExecutionContext executionContext)
 			throws SQLException;
 }

@@ -28,7 +28,7 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
  *
  * @author Steve Ebersole
  */
-public interface Navigable<T> extends DomainType<T> {
+public interface Navigable<T> extends DomainType<T>, ColumnContainer {
 	/**
 	 * The NavigableContainer which contains this Navigable.
 	 */
@@ -58,20 +58,20 @@ public interface Navigable<T> extends DomainType<T> {
 			SqmFrom sourceSqmFrom,
 			SqmNavigableContainerReference containerReference,
 			SqmCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
 			QueryResultCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	SqlSelectionGroupNode resolveSqlSelections(

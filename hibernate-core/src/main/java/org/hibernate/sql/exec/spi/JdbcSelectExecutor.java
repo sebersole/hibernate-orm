@@ -29,16 +29,19 @@ public interface JdbcSelectExecutor {
 	<R> List<R> list(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer);
 
 	<R> ScrollableResultsImplementor<R> scroll(
 			JdbcSelect jdbcSelect,
 			ScrollMode scrollMode,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer);
 
 	<R> Stream<R> stream(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			RowTransformer<R> rowTransformer);
 }

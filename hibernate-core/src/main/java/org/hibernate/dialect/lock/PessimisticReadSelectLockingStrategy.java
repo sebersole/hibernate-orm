@@ -18,9 +18,9 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.SimpleSelect;
 
 /**

@@ -15,8 +15,9 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.resource.jdbc.spi.LogicalConnectionImplementor;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.PreparedStatementCreator;
 
@@ -30,6 +31,7 @@ public class DeferredResultSetAccess extends AbstractResultSetAccess {
 
 	private final JdbcSelect jdbcSelect;
 	private final ExecutionContext executionContext;
+	private final JdbcParameterBindings jdbcParameterBindings;
 	private final PreparedStatementCreator statementCreator;
 
 	private PreparedStatement preparedStatement;
@@ -38,10 +40,12 @@ public class DeferredResultSetAccess extends AbstractResultSetAccess {
 	public DeferredResultSetAccess(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			PreparedStatementCreator statementCreator) {
 		super( executionContext.getSession() );
 		this.executionContext = executionContext;
 		this.jdbcSelect = jdbcSelect;
+		this.jdbcParameterBindings = jdbcParameterBindings;
 		this.statementCreator = statementCreator;
 	}
 
@@ -84,16 +88,21 @@ public class DeferredResultSetAccess extends AbstractResultSetAccess {
 
 			// todo : limit/offset
 
+			// todo : validate that all query parameters were bound?
 
-			// bind parameters
-			// 		todo : validate that all query parameters were bound?
+			// todo (6.0) (domain-jdbc) : another blurring of the lines between domain and jdbc
+			//		Here specifically, the jdbc binder has access to the domain bindings - how does
+			//		it get the jdbc value(s)?
+
 			int paramBindingPosition = 1;
-			for ( JdbcParameterBinder parameterBinder : jdbcSelect.getParameterBinders() ) {
-				paramBindingPosition += parameterBinder.bindParameterValue(
+
+			for ( ParameterSpec parameterSpec : jdbcSelect.getJdbcParameters() ) {
+				final Object bindValue = jdbcParameterBindings.getBindValue( parameterSpec );
+				parameterSpec.getJdbcValueMapper().getJdbcValueBinder().bind(
 						preparedStatement,
-						paramBindingPosition,
-						executionContext.getParameterBindingContext(),
-						executionContext.getSession()
+						bindValue,
+						paramBindingPosition++,
+						executionContext
 				);
 			}
 

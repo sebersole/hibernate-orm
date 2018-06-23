@@ -6,6 +6,8 @@
  */
 package org.hibernate.query.sqm.consume.multitable.spi;
 
+import org.hibernate.query.spi.ParameterBindingContext;
+
 /**
  * @author Steve Ebersole
  */
@@ -16,7 +18,10 @@ public interface Handler {
 	 *
 	 * @param executionContext Contextual information needed for execution
 	 *
+	 * @param parameterBindingContext
 	 * @return The "number of rows affected" count
 	 */
-	int execute(HandlerExecutionContext executionContext);
+	int execute(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext);
 }

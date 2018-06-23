@@ -1,6 +1,5 @@
 = TODO for Steve for 6.0 work
 
 * Consolidate `org.hibernate.query.criteria.LiteralHandlingMode` and `org.hibernate.query.QueryLiteralRendering`
-* (?) `org.hibernate.sql.ast.consume.spi.ConversionContext` and others all simply expose a SessionFactory.  Maybe define a root type `SessionFactoryContext` (?)
 * (?) Move output parameter value access from `org.hibernate.procedure.ProcedureOutputs` up to `org.hibernate.result.Outputs` (?)
 * Currently, while processing mappings, unqualified entity names are qualified via HQL imports - that seems wrong, seems like it ought to be "mapping scope"-based

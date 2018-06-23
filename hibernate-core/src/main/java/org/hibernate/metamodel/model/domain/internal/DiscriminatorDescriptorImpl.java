@@ -23,8 +23,6 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -74,21 +72,6 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 
 
 	@Override
-	public ValueBinder getValueBinder() {
-		return getBasicType().getValueBinder();
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor() {
-		return getBasicType().getValueExtractor();
-	}
-
-	@Override
-	public String asLoggableText() {
-		return getContainer().asLoggableText() + '.' + NAVIGABLE_NAME;
-	}
-
-	@Override
 	public PersistenceType getPersistenceType() {
 		return PersistenceType.BASIC;
 	}
@@ -114,7 +97,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 						navigableReference.getSqlExpressionQualifier(),
 						creationContext
 				),
-				this
+				null
 		);
 	}
 
@@ -128,5 +111,10 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 						getBoundColumn()
 				)
 		);
+	}
+
+	@Override
+	public String asLoggableText() {
+		return getContainer().asLoggableText() + '.' + NAVIGABLE_NAME;
 	}
 }

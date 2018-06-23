@@ -8,24 +8,21 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 
 /**
  * Represents a selection at the SQL/JDBC level.  Essentially made up of:
  *
- * 		{@link #getSqlSelectionReader}:: How to read a value from JDBC (conceptually similar to a method reference)
+ * 		{@link #getJdbcValueMapper}:: How to read a value from JDBC (conceptually similar to a method reference)
  * 		{@link #getValuesArrayPosition}:: The position for this selection in relation to the "JDBC values array" (see {@link RowProcessingState#getJdbcValue})
  * 		{@link #getJdbcResultSetIndex()}:: The position for this selection in relation to the JDBC object (ResultSet, etc)
  *
  * @author Steve Ebersole
  */
 public interface SqlSelection extends SqlSelectionGroupNode {
-
-	/**
-	 * Get the reader used to read values for this selection
-	 *
-	 */
-	SqlSelectionReader getSqlSelectionReader();
+	JdbcValueMapper getJdbcValueMapper();
 
 	/**
 	 * Get the position within the "JDBC values" array (0-based).  Negative indicates this is
@@ -42,7 +39,7 @@ public interface SqlSelection extends SqlSelectionGroupNode {
 
 	default void prepare(
 			ResultSetMappingDescriptor.JdbcValuesMetadata jdbcResultsMetadata,
-			ResultSetMappingDescriptor.ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		// By default we have nothing to do.  Here as a hook for NativeQuery mapping resolutions
 	}
 

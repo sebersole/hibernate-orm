@@ -20,7 +20,6 @@ import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * Optional contract for a Navigable that can be part of it's container's
@@ -28,7 +27,7 @@ import org.hibernate.type.descriptor.spi.ValueBinder;
  *
  * @author Steve Ebersole
  */
-public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<J>, Readable, Writeable {
+public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<J>, Readable, Writeable<J,Object> {
 	/**
 	 * Defines this contributor's position within the state array.
 	 *
@@ -47,10 +46,6 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	}
 
 	PropertyAccess getPropertyAccess();
-
-	default ValueBinder<J> getValueBinder() {
-		throw new NotYetImplementedFor6Exception( getClass().getName() );
-	}
 
 	/**
 	 * Is this value nullable?

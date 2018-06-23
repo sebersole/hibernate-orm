@@ -17,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
@@ -24,10 +25,9 @@ import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
 * @author Steve Ebersole
@@ -69,7 +69,9 @@ public class TableBasedDeleteHandlerImpl
 	}
 
 	@Override
-	protected void performMutations(HandlerExecutionContext executionContext) {
+	protected void performMutations(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 		// todo (6.0) : see TableBasedUpdateHandlerImpl#performMutations for general guideline
 
 		// todo (6.0) : who is responsible for injecting any strategy-specific restrictions (i.e., session-uid)?
@@ -143,7 +145,7 @@ public class TableBasedDeleteHandlerImpl
 					}
 
 					@Override
-					public List<JdbcParameterBinder> getParameterBinders() {
+					public List<ParameterSpec> getJdbcParameters() {
 						return Collections.emptyList();
 					}
 
@@ -152,7 +154,7 @@ public class TableBasedDeleteHandlerImpl
 						return Collections.singleton( table.getTableExpression() );
 					}
 				},
-				executionContext,
+				executionContext, ,
 				Connection::prepareStatement
 		);
 	}

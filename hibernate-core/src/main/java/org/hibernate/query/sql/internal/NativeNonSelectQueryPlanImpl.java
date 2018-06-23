@@ -10,8 +10,9 @@ import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 
 /**
  * @author Steve Ebersole
@@ -27,6 +28,7 @@ public class NativeNonSelectQueryPlanImpl implements NonSelectQueryPlan {
 	public int executeUpdate(
 			SharedSessionContractImplementor persistenceContext,
 			QueryOptions queryOptions,
+			JdbcParameterBindings jdbcParameterBindings,
 			ParameterBindingContext parameterBindingContext) {
 		throw new NotYetImplementedException();
 	}

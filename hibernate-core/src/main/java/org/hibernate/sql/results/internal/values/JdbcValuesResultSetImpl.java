@@ -137,11 +137,11 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 		final int numberOfSqlSelections = resultSetMapping.getSqlSelections().size();
 		final Object[] row = new Object[numberOfSqlSelections];
 		for ( SqlSelection sqlSelection : resultSetMapping.getSqlSelections() ) {
-			row[ sqlSelection.getValuesArrayPosition() ] = sqlSelection.getSqlSelectionReader().read(
-					resultSetAccess.getResultSet(),
-					rowProcessingState.getJdbcValuesSourceProcessingState(),
-					sqlSelection
-			);
+			row[ sqlSelection.getValuesArrayPosition() ] = sqlSelection.getJdbcValueMapper().getJdbcValueExtractor().extract(
+								resultSetAccess.getResultSet(),
+								sqlSelection,
+								rowProcessingState.getJdbcValuesSourceProcessingState()
+						);
 		}
 		return row;
 	}

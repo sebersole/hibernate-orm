@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 
 /**
@@ -16,5 +17,8 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  */
 public interface SqlAstBuildingContext {
 	SessionFactoryImplementor getSessionFactory();
+
+	QueryOptions getQueryOptions();
+
 	Callback getCallback();
 }

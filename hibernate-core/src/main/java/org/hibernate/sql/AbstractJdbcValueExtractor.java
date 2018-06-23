@@ -1,34 +1,36 @@
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.type.descriptor.sql.spi;
+package org.hibernate.sql;
 
 import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.sql.spi.JdbcTypeNameMapper;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
 /**
- * Convenience base implementation of {@link ValueExtractor}
+ * Convenience base implementation of {@link JdbcValueExtractor}
  *
  * @author Steve Ebersole
  */
-public abstract class BasicExtractor<J> implements ValueExtractor<J> {
-	private static final Logger log = CoreLogging.logger( BasicExtractor.class );
+public abstract class AbstractJdbcValueExtractor<J> implements JdbcValueExtractor<J> {
+	private static final Logger log = CoreLogging.logger( AbstractJdbcValueExtractor.class );
 
 	private final JavaTypeDescriptor<J> javaDescriptor;
 	private final SqlTypeDescriptor sqlDescriptor;
 
-	public BasicExtractor(JavaTypeDescriptor<J> javaDescriptor, SqlTypeDescriptor sqlDescriptor) {
+	public AbstractJdbcValueExtractor(JavaTypeDescriptor<J> javaDescriptor, SqlTypeDescriptor sqlDescriptor) {
 		this.javaDescriptor = javaDescriptor;
 		this.sqlDescriptor = sqlDescriptor;
 	}
@@ -42,14 +44,14 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 	}
 
 	@Override
-	public J extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-		final J value = doExtract( rs, position, options );
+	public J extract(ResultSet rs, SqlSelection selectionMemento, JdbcValuesSourceProcessingState processingState) throws SQLException {
+		final J value = doExtract( rs, selectionMemento, processingState );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || rs.wasNull() ) {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted value ([%s] : [%s]) - [null]",
-						position,
+						selectionMemento,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getJdbcTypeCode() )
 				);
 			}
@@ -59,7 +61,7 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted value ([%s] : [%s]) - [%s]",
-						position,
+						selectionMemento,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getJdbcTypeCode() ),
 						getJavaDescriptor().extractLoggableRepresentation( value )
 				);
@@ -70,23 +72,14 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 
 	/**
 	 * Perform the extraction.
-	 * <p/>
-	 * Called from {@link #extract}.  Null checking of the value (as well as consulting {@link ResultSet#wasNull}) is
-	 * done there.
 	 *
-	 * @param rs The result set
-	 * @param position The position of the value to extract.
-	 * @param options The binding options
-	 *
-	 * @return The extracted value.
-	 *
-	 * @throws SQLException Indicates a problem access the result set
+	 * @implSpec Null checking of the value (including {@link ResultSet#wasNull} checking) is done in caller.
 	 */
-	protected abstract J doExtract(ResultSet rs, int position, WrapperOptions options) throws SQLException;
+	protected abstract J doExtract(ResultSet rs, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException;
 
 	@Override
-	public J extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-		final J value = doExtract( statement, index, options );
+	public J extract(CallableStatement statement, SqlSelection index, JdbcValuesSourceProcessingState processingState) throws SQLException {
+		final J value = doExtract( statement, index, processingState );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || statement.wasNull() ) {
 			if ( traceEnabled ) {
@@ -113,23 +106,14 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 
 	/**
 	 * Perform the extraction.
-	 * <p/>
-	 * Called from {@link #extract}.  Null checking of the value (as well as consulting {@link ResultSet#wasNull}) is
-	 * done there.
 	 *
-	 * @param statement The callable statement containing the output parameter
-	 * @param index The index (position) of the output parameter
-	 * @param options The binding options
-	 *
-	 * @return The extracted value.
-	 *
-	 * @throws SQLException Indicates a problem accessing the parameter value
+	 * @implSpec Null checking of the value (including {@link ResultSet#wasNull} checking) is done in caller.
 	 */
-	protected abstract J doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException;
+	protected abstract J doExtract(CallableStatement statement, SqlSelection sqlSelection, JdbcValuesSourceProcessingState processingState) throws SQLException;
 
 	@Override
-	public J extract(CallableStatement statement, String name, WrapperOptions options) throws SQLException {
-		final J value = doExtract( statement, name, options );
+	public J extract(CallableStatement statement, String name, JdbcValuesSourceProcessingState processingState) throws SQLException {
+		final J value = doExtract( statement, name, processingState );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || statement.wasNull() ) {
 			if ( traceEnabled ) {
@@ -156,17 +140,8 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 
 	/**
 	 * Perform the extraction.
-	 * <p/>
-	 * Called from {@link #extract}.  Null checking of the value (as well as consulting {@link ResultSet#wasNull}) is
-	 * done there.
 	 *
-	 * @param statement The callable statement containing the output parameter
-	 * @param name The output parameter name
-	 * @param options The binding options
-	 *
-	 * @return The extracted value.
-	 *
-	 * @throws SQLException Indicates a problem accessing the parameter value
+	 * @implSpec Null checking of the value (including {@link ResultSet#wasNull} checking) is done in caller.
 	 */
-	protected abstract J doExtract(CallableStatement statement, String name, WrapperOptions options) throws SQLException;
+	protected abstract J doExtract(CallableStatement statement, String name, JdbcValuesSourceProcessingState processingState) throws SQLException;
 }

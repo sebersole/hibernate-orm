@@ -12,12 +12,11 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -120,12 +119,12 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public JdbcValueBinder getValueBinder() {
 		return getSqlTypeDescriptor().getBinder( getJavaTypeDescriptor() );
 	}
 
 	@Override
-	public ValueExtractor<T> getValueExtractor() {
+	public JdbcValueExtractor<T> getValueExtractor() {
 		return getSqlTypeDescriptor().getExtractor( getJavaTypeDescriptor() );
 	}
 }

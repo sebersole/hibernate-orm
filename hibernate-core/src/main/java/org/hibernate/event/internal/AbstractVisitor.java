@@ -15,7 +15,7 @@ import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
  * Abstract superclass of algorithms that walk
@@ -103,8 +103,8 @@ public abstract class AbstractVisitor {
 	 */
 	final Object processValue(Object value, PersistentAttribute attribute) throws HibernateException {
 
-		if ( attribute instanceof PluralAttributeCollection ) {
-			return processCollection( value, (PluralAttributeCollection) attribute );
+		if ( attribute instanceof PluralPersistentAttribute ) {
+			return processCollection( value, (PluralPersistentAttribute) attribute );
 		}
 		if ( attribute instanceof EntityDescriptor ) {
 			return processEntity( value, (EntityDescriptor) attribute );
@@ -132,13 +132,11 @@ public abstract class AbstractVisitor {
 	}
 
 	/**
-	 * Visit a collection. Default superclass
-	 * implementation is a no-op.
-	 * @param collection
-	 * @param attributeCollection
-	 * @throws HibernateException
+	 * Visit a collection.
+	 *
+	 * @implNote This implementation simply no-ops.  Intended for sub-class hooks
 	 */
-	Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+	Object processCollection(Object collection, PluralPersistentAttribute attributeCollection) throws HibernateException {
 		return null;
 	}
 

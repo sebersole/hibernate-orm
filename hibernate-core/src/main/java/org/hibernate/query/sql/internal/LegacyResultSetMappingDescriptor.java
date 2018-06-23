@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NativeQuery;
@@ -78,7 +79,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 	@Override
 	public ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		if ( roots == null || roots.isEmpty() ) {
 
 		}

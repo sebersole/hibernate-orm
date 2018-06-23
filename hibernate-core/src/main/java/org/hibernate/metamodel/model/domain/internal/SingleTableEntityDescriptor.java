@@ -49,7 +49,6 @@ import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -179,8 +178,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	private ExecutionContext getExecutionContext(SharedSessionContractImplementor session) {
 		return new ExecutionContext() {
-			private final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
-
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;
@@ -189,11 +186,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			@Override
 			public QueryOptions getQueryOptions() {
 				return new QueryOptionsImpl();
-			}
-
-			@Override
-			public ParameterBindingContext getParameterBindingContext() {
-				return parameterBindingContext;
 			}
 
 			@Override
@@ -216,9 +208,9 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		getHierarchy().getIdentifierDescriptor().dehydrate(
 				unresolvedId,
-				(jdbcValue, type, boundColumn) -> {
+				(jdbcValue, boundColumn, mapper) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-					insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+					insertStatement.addValue( new LiteralParameter( jdbcValue, mapper ) );
 				},
 				session
 		);
@@ -230,7 +222,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							getDiscriminatorValue(),
-							getHierarchy().getDiscriminatorDescriptor()
+							getHierarchy().getDiscriminatorDescriptor().getBasicType()
 					)
 			);
 		}
@@ -242,7 +234,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							session.getTenantIdentifier(),
-							getHierarchy().getTenantDiscrimination()
+							getHierarchy().getTenantDiscrimination().getBasicType()
 					)
 			);
 		}
@@ -255,10 +247,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					if ( columns != null && ! columns.isEmpty() ) {
 						contributor.dehydrate(
 								contributor.unresolve( domainValue, session ),
-								(jdbcValue, type, boundColumn) -> {
+								(jdbcValue, boundColumn, mapper) -> {
 									if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
 										insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-										insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+										insertStatement.addValue( new LiteralParameter( jdbcValue, mapper ) );
 									}
 								},
 								session
@@ -270,9 +262,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
 				InsertToJdbcInsertConverter.createJdbcInsert(
 						insertStatement,
-						executionContext.getParameterBindingContext()
+						new TemplateParameterBindingContext( session.getFactory() )
+
 				),
-				executionContext,
+				executionContext, ,
 				Connection::prepareStatement
 		);
 	}

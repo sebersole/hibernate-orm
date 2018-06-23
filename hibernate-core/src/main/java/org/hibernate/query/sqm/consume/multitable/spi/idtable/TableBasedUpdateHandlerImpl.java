@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.util.List;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.consume.multitable.spi.UpdateHandler;
@@ -60,7 +61,9 @@ public class TableBasedUpdateHandlerImpl
 	}
 
 	@Override
-	protected void performMutations(HandlerExecutionContext executionContext) {
+	protected void performMutations(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 		boolean hasNoSecondaryTables = getSqmDeleteOrUpdateStatement().getEntityFromElement()
 				.getNavigableReference()
 				.getEntityDescriptor()
@@ -70,22 +73,26 @@ public class TableBasedUpdateHandlerImpl
 		final List<SqlAstUpdateDescriptor> updateDescriptors = SqmUpdateToSqlAstConverterMultiTable.interpret(
 				getSqmDeleteOrUpdateStatement(),
 				generateIdTableSelect( executionContext ),
-				executionContext.getQueryOptions(),
-				executionContext
+				executionContext.getExecutionContext().getQueryOptions(),
+				parameterBindingContext,
+
+				executionContext.getExecutionContext()
 		);
 
 		for ( SqlAstUpdateDescriptor updateDescriptor : updateDescriptors ) {
 			// convert each SQL AST UpdateStatement into a JdbcUpdate operation
 			// 		and execute it
 
+			updateDescriptor.
 			final JdbcUpdate jdbcUpdate = SqlUpdateToJdbcUpdateConverter.interpret(
 					updateDescriptor,
 					executionContext.getParameterBindingContext()
 			);
 
+
 			JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
 					jdbcUpdate,
-					executionContext,
+					executionContext, ,
 					Connection::prepareStatement
 			);
 

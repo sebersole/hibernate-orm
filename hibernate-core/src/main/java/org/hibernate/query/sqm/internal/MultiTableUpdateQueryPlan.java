@@ -8,11 +8,12 @@ package org.hibernate.query.sqm.internal;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.consume.multitable.spi.UpdateHandler;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 
 /**
  * @author Steve Ebersole
@@ -28,6 +29,7 @@ public class MultiTableUpdateQueryPlan implements NonSelectQueryPlan {
 	public int executeUpdate(
 			SharedSessionContractImplementor persistenceContext,
 			QueryOptions queryOptions,
+			JdbcParameterBindings jdbcParameterBindings,
 			ParameterBindingContext parameterBindingContext) {
 		return updateHandler.execute(
 				new HandlerExecutionContext() {
@@ -50,7 +52,7 @@ public class MultiTableUpdateQueryPlan implements NonSelectQueryPlan {
 					public Callback getCallback() {
 						return afterLoadAction -> {};
 					}
-				}
+				},
 		);
 	}
 }

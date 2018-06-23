@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import javax.persistence.criteria.JoinType;
 
 import org.hibernate.Session;
@@ -20,8 +19,8 @@ import org.hibernate.envers.internal.entities.RevisionTypeType;
 import org.hibernate.envers.internal.tools.MutableInteger;
 import org.hibernate.envers.internal.tools.StringTools;
 import org.hibernate.envers.internal.tools.Triple;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.Query;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * A class for incrementally building a HQL query.

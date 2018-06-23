@@ -7,6 +7,7 @@
 package org.hibernate.query.spi;
 
 import org.hibernate.Incubating;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.sql.internal.NativeSelectQueryPlanImpl;
 import org.hibernate.query.sql.spi.NativeNonSelectQueryDefinition;
@@ -14,7 +15,6 @@ import org.hibernate.query.sql.spi.NativeNonSelectQueryPlan;
 import org.hibernate.query.sql.spi.NativeSelectQueryDefinition;
 import org.hibernate.query.sql.spi.NativeSelectQueryPlan;
 import org.hibernate.service.Service;
-import org.hibernate.NotYetImplementedFor6Exception;
 
 /**
  * Service contract for dealing with native queries.
@@ -42,7 +42,7 @@ public interface NativeQueryInterpreter extends Service {
 		return new NativeSelectQueryPlanImpl<R>(
 				queryDefinition.getSqlString(),
 				queryDefinition.getAffectedTableNames(),
-				queryDefinition.getParameterBinders(),
+				queryDefinition.getParameterSpecs(),
 				queryDefinition.getResultSetMapping(),
 				queryDefinition.getRowTransformer()
 		);

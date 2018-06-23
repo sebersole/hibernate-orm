@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.List;
 import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

@@ -8,7 +8,7 @@ package org.hibernate.sql.exec.internal;
 
 import javax.persistence.ParameterMode;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.exec.spi.JdbcCallFunctionReturn;
 
 /**

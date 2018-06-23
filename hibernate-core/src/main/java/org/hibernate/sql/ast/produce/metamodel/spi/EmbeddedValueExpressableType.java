@@ -8,11 +8,11 @@ package org.hibernate.sql.ast.produce.metamodel.spi;
 
 import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
+import org.hibernate.query.sqm.AllowableParameterType;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -31,12 +31,12 @@ public interface EmbeddedValueExpressableType<T> extends ExpressableType<T>, All
 	}
 
 	@Override
-	default ValueBinder getValueBinder() {
+	default JdbcValueBinder getValueBinder() {
 		return getEmbeddedDescriptor().getValueBinder();
 	}
 
 	@Override
-	default ValueExtractor getValueExtractor() {
+	default JdbcValueExtractor getValueExtractor() {
 		return getEmbeddedDescriptor().getValueExtractor();
 	}
 

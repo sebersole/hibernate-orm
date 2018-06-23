@@ -71,11 +71,15 @@ public final class CollectionEntry implements Serializable {
 		// during flush shouldn't be ignored
 		ignore = false;
 
+//		setLoadedDescriptor( collectionDescriptor );
+//		this.loadedKey = collection.getKey();
+
 		collection.clearDirty(); //a newly wrapped collection is NOT dirty (or we get unnecessary version updates)
 
 		snapshot = collectionDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ?
 				collection.getSnapshot(collectionDescriptor) :
 				null;
+
 		collection.setSnapshot( loadedKey, collectionDescriptor.getNavigableRole(), snapshot );
 	}
 
@@ -86,8 +90,7 @@ public final class CollectionEntry implements Serializable {
 			final PersistentCollection collection,
 			final PersistentCollectionDescriptor loadedPersister,
 			final Object loadedKey,
-			final boolean ignore
-	) {
+			final boolean ignore) {
 		this.ignore=ignore;
 
 		//collection.clearDirty()
@@ -123,7 +126,7 @@ public final class CollectionEntry implements Serializable {
 		ignore = false;
 
 		loadedKey = collection.getKey();
-		setLoadedDescriptor( factory.getMetamodel().findCollectionDescriptor( collection.getRole() ) );
+		setLoadedDescriptor( factory.getMetamodel().getCollectionDescriptor( collection.getRole() ) );
 
 		snapshot = collection.getStoredSnapshot();
 	}
@@ -217,7 +220,7 @@ public final class CollectionEntry implements Serializable {
 	}
 
 	public void postInitialize(PersistentCollection collection) throws HibernateException {
-		snapshot = getLoadedCollectionDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable()
+		snapshot = getLoadedCollectionDescriptor().isMutable()
 				? collection.getSnapshot( getLoadedCollectionDescriptor() )
 				: null;
 		collection.setSnapshot(loadedKey, role, snapshot);
@@ -309,7 +312,7 @@ public final class CollectionEntry implements Serializable {
 	void afterDeserialize(SessionFactoryImplementor factory) {
 		loadedCollectionDescriptor = ( factory == null ?
 				null :
-				factory.getMetamodel().findCollectionDescriptor( role.getFullPath() ) );
+				factory.getMetamodel().getCollectionDescriptor( role ) );
 	}
 
 	public boolean wasDereferenced() {

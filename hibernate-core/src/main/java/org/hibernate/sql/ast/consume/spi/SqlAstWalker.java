@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
+import java.util.List;
+
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
@@ -24,19 +26,20 @@ import org.hibernate.sql.ast.tree.spi.expression.CountStarFunction;
 import org.hibernate.sql.ast.tree.spi.expression.CurrentDateFunction;
 import org.hibernate.sql.ast.tree.spi.expression.CurrentTimeFunction;
 import org.hibernate.sql.ast.tree.spi.expression.CurrentTimestampFunction;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.ExtractFunction;
 import org.hibernate.sql.ast.tree.spi.expression.GenericParameter;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.LengthFunction;
 import org.hibernate.sql.ast.tree.spi.expression.LocateFunction;
 import org.hibernate.sql.ast.tree.spi.expression.LowerFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MaxFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MinFunction;
 import org.hibernate.sql.ast.tree.spi.expression.ModFunction;
-import org.hibernate.sql.ast.tree.spi.expression.NamedParameter;
 import org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction;
 import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
-import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
-import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpecGroup;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.SqrtFunction;
 import org.hibernate.sql.ast.tree.spi.expression.SumFunction;
 import org.hibernate.sql.ast.tree.spi.expression.TrimFunction;
@@ -112,13 +115,15 @@ public interface SqlAstWalker {
 
 	void visitCoalesceFunction(CoalesceFunction coalesceExpression);
 
-	void visitNamedParameter(NamedParameter namedParameter);
-
 	void visitGenericParameter(GenericParameter parameter);
 
-	void visitPositionalParameter(PositionalParameter positionalParameter);
+	void visitParameterGroup(ParameterSpecGroup parameterSpecGroup);
 
-	void visitQueryLiteral(QueryLiteral queryLiteral);
+	void visitLiteral(GenericSqlLiteral queryLiteral);
+
+	void visitTuple(SqlTuple sqlTuple);
+
+	void visitTuple(List<Expression> expressions);
 
 	void visitUnaryOperationExpression(UnaryOperation unaryOperationExpression);
 

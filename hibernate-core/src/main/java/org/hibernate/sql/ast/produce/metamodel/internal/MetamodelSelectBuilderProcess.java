@@ -20,13 +20,13 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
+import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.produce.internal.UniqueIdGenerator;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
@@ -43,8 +43,6 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.domain.BasicValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
@@ -52,9 +50,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerRefere
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
-import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -151,7 +147,6 @@ public class MetamodelSelectBuilderProcess
 
 		if ( navigablesToSelect != null && ! navigablesToSelect.isEmpty() ) {
 			queryResults = new ArrayList<>();
-			int jdbcSelectionCount = 0;
 			for ( Navigable navigable : navigablesToSelect ) {
 				final NavigableReference navigableReference = makeNavigableReference( rootTableGroup, navigable );
 				queryResults.add(
@@ -187,41 +182,15 @@ public class MetamodelSelectBuilderProcess
 			fetchParentStack.push( (FetchParent) queryResult );
 		}
 
-
 		// add the id/uk/fk restriction
-		final List keyReferences = restrictedNavigable.resolveColumnReferences(
-				rootTableSpace.getRootTableGroup(),
-				this
+		rootQuerySpec.addRestriction(
+				AstNodeHelper.createRestriction(
+						numberOfKeysToLoad,
+						rootTableGroup,
+						this,
+						restrictedNavigable
+				)
 		);
-
-		final Expression restrictedExpression;
-
-		if ( keyReferences.size() == 1 ) {
-			restrictedExpression = (Expression) keyReferences.get( 0 );
-		}
-		else {
-			restrictedExpression = new SqlTuple( keyReferences );
-		}
-
-		if ( numberOfKeysToLoad <= 1 ) {
-			rootQuerySpec.addRestriction(
-					new RelationalPredicate(
-							RelationalPredicate.Operator.EQUAL,
-							restrictedExpression,
-							new LoadIdParameter( (AllowableParameterType) restrictedNavigable )
-					)
-			);
-		}
-		else {
-			final InListPredicate predicate = new InListPredicate( restrictedExpression );
-			for ( int i = 0; i < numberOfKeysToLoad; i++ ) {
-				predicate.addExpression(
-						new LoadIdParameter( i, (AllowableParameterType) restrictedNavigable )
-				);
-			}
-			rootQuerySpec.addRestriction( predicate );
-		}
-
 
 		return new SqlAstSelectDescriptorImpl(
 				selectStatement,
@@ -346,6 +315,11 @@ public class MetamodelSelectBuilderProcess
 	}
 
 	@Override
+	public QueryOptions getQueryOptions() {
+		return QueryOptions.NONE;
+	}
+
+	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
 		return sqlExpressionResolver;
 	}
@@ -363,5 +337,4 @@ public class MetamodelSelectBuilderProcess
 	public LockOptions getLockOptions() {
 		return lockOptions;
 	}
-
 }

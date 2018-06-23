@@ -19,7 +19,7 @@ import org.hibernate.engine.spi.Status;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 
 import org.jboss.logging.Logger;
@@ -146,7 +146,7 @@ public final class Collections {
      */
 	public static void processReachableCollection(
 			PersistentCollection collection,
-			PluralAttributeCollection attributeCollection,
+			PluralPersistentAttribute attributeCollection,
 			Object entity,
 			SessionImplementor session) {
 		collection.setOwner( entity );
@@ -161,7 +161,7 @@ public final class Collections {
 		final SessionFactoryImplementor factory = session.getFactory();
 		final PersistentCollectionDescriptor descriptor = factory
 				.getMetamodel()
-				.findCollectionDescriptor( attributeCollection.getNavigableName() );
+				.getCollectionDescriptor( attributeCollection.getNavigableRole() );
 		ce.setCurrentPersister( descriptor );
 
 		//TODO: better to pass the id in as an argument?

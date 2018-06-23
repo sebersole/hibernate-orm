@@ -8,13 +8,13 @@ package org.hibernate.event.internal;
 
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
+import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.internal.Collections;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
  * Process collections reachable from an entity. This
@@ -28,7 +28,7 @@ public class FlushVisitor extends AbstractVisitor {
 	private Object owner;
 
 	@Override
-	Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+	Object processCollection(Object collection, PluralPersistentAttribute attributeCollection) throws HibernateException {
 
 		if ( collection == PersistentCollectionDescriptor.UNFETCHED_COLLECTION ) {
 			return null;

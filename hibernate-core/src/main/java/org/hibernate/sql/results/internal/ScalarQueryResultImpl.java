@@ -7,8 +7,7 @@
 package org.hibernate.sql.results.internal;
 
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
-import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.ScalarQueryResult;
@@ -20,27 +19,18 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
  */
 public class ScalarQueryResultImpl implements ScalarQueryResult {
 	private final String resultVariable;
-	private final BasicValuedExpressableType expressableType;
+	private final JdbcValueMapper jdbcValueMapper;
 
 	private final QueryResultAssembler assembler;
 
 	public ScalarQueryResultImpl(
 			String resultVariable,
 			SqlSelection sqlSelection,
-			BasicValuedExpressableType expressableType) {
+			BasicValueConverter valueConverter) {
 		this.resultVariable = resultVariable;
-		this.expressableType = expressableType;
+		this.jdbcValueMapper = sqlSelection.getJdbcValueMapper();
 
-		// todo (6.0) : consider using `org.hibernate.metamodel.model.domain.spi.BasicValueConverter` instead
-		//		I'd like to get rid of exposing the AttributeConverter from the model
-
-		/// todo (6.0) : actually, conversions ought to occur as part of
-		BasicValueConverter valueConverter = null;
-		if ( expressableType instanceof ConvertibleNavigable ) {
-			valueConverter = ( (ConvertibleNavigable) expressableType ).getValueConverter();
-		}
-
-		this.assembler = new ScalarQueryResultAssembler( sqlSelection, valueConverter, expressableType.getJavaTypeDescriptor() );
+		this.assembler = new ScalarQueryResultAssembler( sqlSelection, valueConverter );
 	}
 
 	@Override
@@ -50,7 +40,7 @@ public class ScalarQueryResultImpl implements ScalarQueryResult {
 
 	@Override
 	public BasicJavaDescriptor getJavaTypeDescriptor() {
-		return expressableType.getJavaTypeDescriptor();
+		return jdbcValueMapper.getJavaTypeDescriptor();
 	}
 
 	@Override

@@ -12,10 +12,12 @@ import java.sql.SQLException;
 
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.resource.jdbc.spi.LogicalConnectionImplementor;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
+import org.hibernate.sql.exec.spi.MultiSetJdbcParameterBindings;
 import org.hibernate.sql.exec.spi.PreparedStatementCreator;
 
 /**
@@ -34,6 +36,7 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 	public int execute(
 			JdbcMutation jdbcMutation,
 			ExecutionContext executionContext,
+			JdbcParameterBindings jdbcParameterBindings,
 			PreparedStatementCreator statementCreator) {
 		final LogicalConnectionImplementor logicalConnection = executionContext.getSession().getJdbcCoordinator().getLogicalConnection();
 		final Connection connection = logicalConnection.getPhysicalConnection();
@@ -53,19 +56,22 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 					preparedStatement.setQueryTimeout( executionContext.getQueryOptions().getTimeout() );
 				}
 
-				// bind parameters
-				// 		todo : validate that all query parameters were bound?
-				int paramBindingPosition = 1;
-				for ( JdbcParameterBinder parameterBinder : jdbcMutation.getParameterBinders() ) {
-					paramBindingPosition += parameterBinder.bindParameterValue(
-							preparedStatement,
-							paramBindingPosition,
-							executionContext.getParameterBindingContext(),
-							executionContext.getSession()
-					);
+				// todo (6.0) : if multi-set, use jdbc batching
+				// todo (6.0) : validate that all query parameters were bound?
+
+				int rowCount = 0;
+
+				if ( jdbcParameterBindings instanceof MultiSetJdbcParameterBindings ) {
+					final MultiSetJdbcParameterBindings multiSetJdbcParameterBindings = (MultiSetJdbcParameterBindings) jdbcParameterBindings;
+					while ( multiSetJdbcParameterBindings.next() ) {
+						rowCount += performExecution( jdbcMutation, multiSetJdbcParameterBindings, executionContext, preparedStatement );
+					}
+				}
+				else {
+					rowCount = performExecution( jdbcMutation, jdbcParameterBindings, executionContext, preparedStatement );
 				}
 
-				return preparedStatement.executeUpdate();
+				return rowCount;
 			}
 			finally {
 				logicalConnection.getResourceRegistry().release( preparedStatement );
@@ -82,5 +88,23 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 				logicalConnection.afterStatement();
 			}
 		}
+	}
+
+	private int performExecution(
+			JdbcMutation jdbcMutation,
+			JdbcParameterBindings jdbcParameterBindings,
+			ExecutionContext executionContext,
+			PreparedStatement preparedStatement) throws SQLException {
+		int paramBindingPosition = 1;
+		for ( ParameterSpec parameterSpec : jdbcMutation.getJdbcParameters() ) {
+			parameterSpec.bindValue(
+					preparedStatement,
+					jdbcParameterBindings,
+					paramBindingPosition++,
+					executionContext
+			);
+		}
+
+		return preparedStatement.executeUpdate();
 	}
 }

@@ -15,18 +15,17 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
-import org.hibernate.sql.ast.consume.spi.StandardParameterBindingContext;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByNaturalIdBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 import org.jboss.logging.Logger;
 
@@ -67,14 +66,8 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 			}
 		}
 
-		final ParameterBindingContext parameterBindingContext = new StandardParameterBindingContext(
-				session.getFactory(),
-				QueryParameterBindings.NO_PARAM_BINDINGS,
-				naturalIdToLoad
-		);
-
 		if ( xrefSelect == null ) {
-			xrefSelect = generatePkByNaturalIdSelect( parameterBindingContext );
+			xrefSelect = generatePkByNaturalIdSelect();
 		}
 
 		final ExecutionContext executionContext = new ExecutionContext() {
@@ -89,19 +82,31 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 			}
 
 			@Override
-			public ParameterBindingContext getParameterBindingContext() {
-				return parameterBindingContext;
-			}
-
-			@Override
 			public Callback getCallback() {
-				return null;
+				return afterLoadAction -> {};
 			}
 		};
+
+		if ( simple ) {
+
+		}
+		else {
+
+		}
+
+		final List<NonIdPersistentAttribute<?,?>> individualAttributes = entityDescriptor.getHierarchy().getNaturalIdDescriptor().getPersistentAttributes();
+		for ( NonIdPersistentAttribute<?, ?> individualAttribute : individualAttributes ) {
+			individualAttribute.
+		}
+
+		// todo (6.0) : build jdbc param bindings
+		//		1)
+		final JdbcParameterBindings jdbcParameterBindings = null;
 
 		final List list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				xrefSelect,
 				executionContext,
+				jdbcParameterBindings,
 				RowTransformerSingularReturnImpl.instance()
 		);
 
@@ -112,7 +117,7 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 		return list.get( 0 );
 	}
 
-	private JdbcSelect generatePkByNaturalIdSelect(ParameterBindingContext parameterBindingContext) {
+	private JdbcSelect generatePkByNaturalIdSelect() {
 		final SelectByNaturalIdBuilder selectBuilder = new SelectByNaturalIdBuilder(
 				entityDescriptor.getFactory(),
 				entityDescriptor
@@ -123,7 +128,7 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 
 		return SqlAstSelectToJdbcSelectConverter.interpret(
 				selectDescriptor,
-				parameterBindingContext
+				entityDescriptor.getFactory()
 		);
 	}
 

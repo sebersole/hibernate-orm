@@ -8,38 +8,43 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Collection;
-import javax.persistence.TemporalType;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
-public class LiteralParameter implements GenericParameter, QueryParameterBinding {
+public class LiteralParameter implements GenericParameter, SqlExpressable {
 	private final Object value;
-	private final AllowableParameterType type;
+	private final JdbcValueMapper valueMapper;
 
-	public LiteralParameter(Object value, AllowableParameterType type) {
+	public LiteralParameter(Object value, JdbcValueMapper type) {
 		this.value = value;
-		this.type = type;
+		this.valueMapper = type;
 	}
 
 	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
-		return this;
+	public JdbcValueMapper getJdbcValueMapper() {
+		return valueMapper;
 	}
 
 	@Override
-	public ExpressableType getType() {
-		return type;
+	public void bindValue(
+			PreparedStatement preparedStatement,
+			JdbcParameterBindings jdbcParameterBindings,
+			int position,
+			ExecutionContext executionContext) throws SQLException {
+		getJdbcValueMapper().getJdbcValueBinder().bind(
+				preparedStatement,
+				value,
+				position,
+				executionContext
+		);
 	}
 
 	@Override
@@ -50,79 +55,5 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
 		sqlTreeWalker.visitGenericParameter( this );
-	}
-
-	@Override
-	public boolean isBound() {
-		return true;
-	}
-
-	@Override
-	public boolean allowsMultiValued() {
-		return false;
-	}
-
-	@Override
-	public boolean isMultiValued() {
-		return false;
-	}
-
-	@Override
-	public AllowableParameterType getBindType() {
-		return type;
-	}
-
-	@Override
-	public void setBindValue(Object value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValue(Object value, AllowableParameterType clarifiedType) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValue(Object value, TemporalType temporalTypePrecision) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Object getBindValue() {
-		return value;
-	}
-
-	@Override
-	public void setBindValues(Collection values) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValues(Collection values, AllowableParameterType clarifiedType) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValues(
-			Collection values,
-			TemporalType temporalTypePrecision,
-			TypeConfiguration typeConfiguration) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection getBindValues() {
-		return null;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public int bindParameterValue(
-			PreparedStatement statement,
-			int startPosition,
-			ParameterBindingContext context,
-			SharedSessionContractImplementor session) throws SQLException {
-		type.getValueBinder().bind( statement, value, startPosition, session );
-		return 1;
 	}
 }

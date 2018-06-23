@@ -10,8 +10,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultAssembler;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
 import org.hibernate.sql.results.spi.InitializerCollector;
@@ -21,9 +24,7 @@ import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.ScalarQueryResult;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -40,14 +41,12 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 
 	public static ResultSetMapping resolveStatic(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		final int columnCount = jdbcResultsMetadata.getColumnCount();
 		final HashSet<SqlSelection> sqlSelections = new HashSet<>( columnCount );
 		final List<QueryResult> queryResults = CollectionHelper.arrayList( columnCount );
 
-		final TypeConfiguration typeConfiguration = resolutionContext.getPersistenceContext()
-				.getFactory()
-				.getTypeConfiguration();
+		final TypeConfiguration typeConfiguration = sessionFactory.getTypeConfiguration();
 
 		for ( int columnPosition = 0; columnPosition < columnCount; columnPosition++ ) {
 			final String columnName = jdbcResultsMetadata.resolveColumnName( columnPosition );
@@ -83,7 +82,7 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 
 						@Override
 						public QueryResultAssembler getResultAssembler() {
-							return new ScalarQueryResultAssembler( sqlSelection, null, javaTypeDescriptor );
+							return new ScalarQueryResultAssembler( sqlSelection, null );
 						}
 					}
 			);
@@ -107,27 +106,27 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 	@Override
 	public ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
-		return resolveStatic( jdbcResultsMetadata, resolutionContext );
+			SessionFactoryImplementor sessionFactory) {
+		return resolveStatic( jdbcResultsMetadata, sessionFactory );
 	}
 
-	private static class SqlSelectionImpl implements SqlSelection {
+	private static class SqlSelectionImpl implements SqlSelection, SqlExpressable {
 		private final int valuesArrayPosition;
-		private SqlSelectionReader sqlSelectionReader;
+		private JdbcValueMapper valueMapper;
 
 		public SqlSelectionImpl(
 				int columnPosition,
 				String columnName,
-				JavaTypeDescriptor javaTypeDescriptor,
+				BasicJavaDescriptor javaTypeDescriptor,
 				SqlTypeDescriptor sqlTypeDescriptor) {
 			log.tracef( "Creating SqlSelection for auto-discovered column : %s (%s)", columnName, columnPosition );
 			this.valuesArrayPosition = columnPosition - 1;
-			this.sqlSelectionReader = new ExtractorBasedReader( sqlTypeDescriptor.getExtractor( javaTypeDescriptor ) );
+			valueMapper = sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor );
 		}
 
 		@Override
-		public SqlSelectionReader getSqlSelectionReader() {
-			return sqlSelectionReader;
+		public JdbcValueMapper getJdbcValueMapper() {
+			return valueMapper;
 		}
 
 		@Override

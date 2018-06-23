@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @param <H> The data's
  * @param <D>
  */
-public interface Readable<V,H,D> {
+public interface Readable<V,H,D> extends ColumnContainer {
 
 	// todo (6.0) : "hydrate" relies on SqlSelection and jdbc value processing uses those to build the hydrated values itself.
 	//		seems like this contract should define a `hydrateState` method, but implementing

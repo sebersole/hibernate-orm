@@ -10,9 +10,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SelfRenderingExpression;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -27,6 +32,8 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.Selectable;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * Representation of a function call in the SQL AST for impls that know how to
@@ -72,7 +79,6 @@ public class SelfRenderingFunctionSqlAstExpression
 		);
 	}
 
-
 	@Override
 	public QueryResult createQueryResult(
 			String resultVariable,
@@ -80,7 +86,9 @@ public class SelfRenderingFunctionSqlAstExpression
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
-				(BasicValuedExpressableType) getType()
+				sqmExpression.getExpressableType() instanceof ConvertibleNavigable
+						? ( (ConvertibleNavigable) sqmExpression.getExpressableType() ).getValueConverter()
+						: null
 		);
 	}
 
@@ -90,5 +98,33 @@ public class SelfRenderingFunctionSqlAstExpression
 			SqlAstWalker walker,
 			SessionFactoryImplementor sessionFactory) {
 		sqmExpression.getRenderingSupport().render( sqlAppender, sqlAstArguments,walker, sessionFactory );
+	}
+
+	@Override
+	public JdbcValueMapper getJdbcValueMapper() {
+		return ( (BasicValuedExpressableType) sqmExpression.getJavaTypeDescriptor() ).getBasicType();
+	}
+
+	// todo (6.0) : consider ways to allow returning non-basic types from SQM functions
+	//		the issue really is the combining SQM function and SQL-AST function into one
+
+	@Override
+	public BasicJavaDescriptor getJavaTypeDescriptor() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public SqlTypeDescriptor getSqlTypeDescriptor() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public JdbcValueBinder getJdbcValueBinder() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public JdbcValueExtractor getJdbcValueExtractor() {
+		throw new NotYetImplementedFor6Exception();
 	}
 }

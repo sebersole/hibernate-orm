@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.sqm.consume.multitable.spi.Handler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
@@ -22,7 +23,7 @@ import org.hibernate.sql.ast.produce.sqm.internal.IdSelectGenerator;
 import org.hibernate.sql.ast.tree.spi.InsertSelectStatement;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.AbstractTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
@@ -91,20 +92,22 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	}
 
 	@Override
-	public int execute(HandlerExecutionContext executionContext) {
+	public int execute(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 
 		// In general:
 		//		1) prepare for use - this is completely a subclass hook
 		//		2) perform execution
 		//		3) release after use - again, completely a subclass hook
 
-		beforeExecution( executionContext );
+		beforeExecution( executionContext, parameterBindingContext );
 
 		try {
-			return performExecution( executionContext );
+			return performExecution( executionContext, parameterBindingContext );
 		}
 		finally {
-			afterExecution( executionContext );
+			afterExecution( executionContext, parameterBindingContext );
 		}
 	}
 
@@ -112,26 +115,32 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	 * Allow subclasses a chance to perform any preliminary work they need
 	 * to perform prior to execution
 	 */
-	protected void beforeExecution(HandlerExecutionContext executionContext) {
+	protected void beforeExecution(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 	}
 
 	/**
 	 * Allow subclasses a chance to perform any clean-up work they need
 	 * to perform after execution
 	 */
-	protected void afterExecution(HandlerExecutionContext executionContext) {
+	protected void afterExecution(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 	}
 
-	protected int performExecution(HandlerExecutionContext executionContext) {
+	protected int performExecution(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext) {
 		performBeforeUseActions( executionContext );
 
 		try {
 			// 1) save the matching ids into the id table
-			final int affectedRowCount = saveMatchingIdsIntoIdTable( executionContext );
+			final int affectedRowCount = saveMatchingIdsIntoIdTable( executionContext, parameterBindingContext );
 
 			// 2) perform the actual individual update or deletes, using
 			// 		inclusion in the id-table as restriction
-			performMutations( executionContext );
+			performMutations( executionContext, parameterBindingContext );
 
 			return affectedRowCount;
 		}
@@ -155,16 +164,18 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		}
 	}
 
-	protected int saveMatchingIdsIntoIdTable(HandlerExecutionContext executionContext) {
+	protected int saveMatchingIdsIntoIdTable(
+			HandlerExecutionContext handlerExecutionContext,
+			ParameterBindingContext parameterBindingContext) {
 		final QuerySpec entityIdSelect = generateEntityIdSelect(
 				entityDescriptor,
 				sqmDeleteOrUpdateStatement,
-				executionContext
+				handlerExecutionContext
 		);
 		if ( sessionUidSupport.needsSessionUidColumn() ) {
 			// we need to insert the uid into the id-table to properly identify the rows later
 			entityIdSelect.getSelectClause().addSqlSelection(
-					generateSessionUidLiteralExpression( executionContext ).createSqlSelection(
+					generateSessionUidLiteralExpression( handlerExecutionContext ).createSqlSelection(
 							idTableInfo.getPhysicalColumns().size()
 					)
 			);
@@ -177,18 +188,20 @@ public abstract class AbstractTableBasedHandler implements Handler {
 
 		final JdbcInsertSelect insertSelectCall = SqlInsertSelectToJdbcInsertSelectConverter.interpret(
 				idTableInsertSelectAst,
-				executionContext
+				handlerExecutionContext.getExecutionContext()
 		);
 
 		return JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
 				insertSelectCall,
-				executionContext,
+				handlerExecutionContext.getExecutionContext(),
+				// todo (6.0) : build JDBC param bindings
+				null,
 				Connection::prepareStatement
 		);
 	}
 
-	private QueryLiteral generateSessionUidLiteralExpression(HandlerExecutionContext executionContext) {
-		return new QueryLiteral(
+	private GenericSqlLiteral generateSessionUidLiteralExpression(HandlerExecutionContext executionContext) {
+		return new GenericSqlLiteral(
 				sessionUidSupport.extractUid( executionContext.getSession() ),
 				StandardSpiBasicTypes.STRING,
 				true
@@ -198,15 +211,15 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	protected static QuerySpec generateEntityIdSelect(
 			EntityDescriptor entityDescriptor,
 			SqmDeleteOrUpdateStatement sqmUpdateStatement,
-			HandlerExecutionContext executionContext) {
+			HandlerExecutionContext handlerExecutionContext) {
 		// todo (6.0) : we are parsing the SQM multiple times here:
 		//		1) generateEntityIdSelect
 		//		2) generateIdTableInsertSelect
 		return IdSelectGenerator.generateEntityIdSelect(
 				entityDescriptor,
 				sqmUpdateStatement,
-				executionContext.getQueryOptions(),
-				executionContext.getSession().getFactory()
+				handlerExecutionContext.getExecutionContext().getQueryOptions(),
+				handlerExecutionContext.getSession().getFactory()
 		);
 	}
 
@@ -223,7 +236,9 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		return insertSelect;
 	}
 
-	protected abstract void performMutations(HandlerExecutionContext executionContext);
+	protected abstract void performMutations(
+			HandlerExecutionContext executionContext,
+			ParameterBindingContext parameterBindingContext);
 
 	protected QuerySpec generateIdTableSelect(HandlerExecutionContext executionContext) {
 		QuerySpec idTableSelect = new QuerySpec( false );

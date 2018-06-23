@@ -7,7 +7,6 @@
 package org.hibernate.query.sql.spi;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -15,8 +14,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class QueryResultBuilderScalar
-		implements WrappableQueryResultBuilder, SqlExpressable {
+public class QueryResultBuilderScalar implements WrappableQueryResultBuilder {
 
 	// todo (6.0) : as far as potentially building a (Sql)Expression keep in mind that this is a scalar return at the root level
 	//		meaning that the instantiator itself could act as the qualifier for
@@ -44,7 +42,7 @@ public class QueryResultBuilderScalar
 		return new ScalarQueryResultImpl(
 				columnName,
 				new ResolvingSqlSelectionImpl( columnName ),
-				type
+				null
 		);
 	}
 }

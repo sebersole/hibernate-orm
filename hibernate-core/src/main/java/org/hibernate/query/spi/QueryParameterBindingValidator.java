@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Date;
 import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * @author Andrea Boriero

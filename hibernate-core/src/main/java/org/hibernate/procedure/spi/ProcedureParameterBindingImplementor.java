@@ -6,8 +6,8 @@
  */
 package org.hibernate.procedure.spi;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.procedure.ProcedureParameterBinding;
+import org.hibernate.query.sqm.AllowableParameterType;
 
 /**
  * @author Steve Ebersole

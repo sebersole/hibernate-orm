@@ -19,14 +19,16 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.spi.QueryParameterImplementor;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSearched;
@@ -50,6 +52,7 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
 import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
 import org.hibernate.query.sqm.tree.expression.SqmUnaryOperation;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityIdentifierReference;
@@ -105,6 +108,7 @@ import org.hibernate.query.sqm.tree.predicate.RelationalPredicateOperator;
 import org.hibernate.query.sqm.tree.predicate.RelationalSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
 import org.hibernate.query.sqm.tree.select.SqmSelectClause;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.ConversionException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -141,17 +145,17 @@ import org.hibernate.sql.ast.tree.spi.expression.CurrentTimeFunction;
 import org.hibernate.sql.ast.tree.spi.expression.CurrentTimestampFunction;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.ExtractFunction;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.LengthFunction;
 import org.hibernate.sql.ast.tree.spi.expression.LocateFunction;
 import org.hibernate.sql.ast.tree.spi.expression.LowerFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MaxFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MinFunction;
 import org.hibernate.sql.ast.tree.spi.expression.ModFunction;
-import org.hibernate.sql.ast.tree.spi.expression.NamedParameter;
 import org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction;
 import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
-import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
-import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpecGroup;
 import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.SumFunction;
 import org.hibernate.sql.ast.tree.spi.expression.TrimFunction;
@@ -185,7 +189,6 @@ import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
-import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 import org.jboss.logging.Logger;
@@ -207,7 +210,10 @@ public abstract class BaseSqmToSqlAstConverter
 	}
 
 	private final SqlAstBuildingContext sqlAstBuildingContext;
-	private final QueryOptions queryOptions;
+	private final Map<SqmParameter,QueryParameterImplementor<?>> sqmParamToQueryParamMap;
+
+	private final Map<Expression,QueryParameterImplementor> sqlParamExprToQueryParam;
+
 
 	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
 
@@ -231,12 +237,19 @@ public abstract class BaseSqmToSqlAstConverter
 
 	public BaseSqmToSqlAstConverter(
 			SqlAstBuildingContext sqlAstBuildingContext,
-			QueryOptions queryOptions) {
+			Map<SqmParameter,QueryParameterImplementor<?>> sqmParamToQueryParamMap) {
 		super( sqlAstBuildingContext.getSessionFactory() );
 		this.sqlAstBuildingContext = sqlAstBuildingContext;
-		this.queryOptions = queryOptions;
+		this.sqmParamToQueryParamMap = sqmParamToQueryParamMap;
+
+		this.sqlParamExprToQueryParam = sqmParamToQueryParamMap == null || sqmParamToQueryParamMap.isEmpty()
+				? Collections.emptyMap()
+				: CollectionHelper.mapOfSize( CollectionHelper.determineProperSizing( sqmParamToQueryParamMap ) );
 	}
 
+	public Map<Expression, QueryParameterImplementor> getSqlParamExprToQueryParam() {
+		return sqlParamExprToQueryParam;
+	}
 
 	public SqlAstBuildingContext getSqlAstBuildingContext() {
 		return sqlAstBuildingContext;
@@ -251,7 +264,7 @@ public abstract class BaseSqmToSqlAstConverter
 	}
 
 	public QueryOptions getQueryOptions() {
-		return queryOptions;
+		return sqlAstBuildingContext.getQueryOptions();
 	}
 
 	public SqlAliasBaseManager getSqlAliasBaseManager() {
@@ -518,7 +531,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 					@Override
 					public LockOptions getLockOptions() {
-						return queryOptions.getLockOptions();
+						return sqlAstBuildingContext.getQueryOptions().getLockOptions();
 					}
 				}
 		);
@@ -603,7 +616,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 					@Override
 					public LockOptions getLockOptions() {
-						return queryOptions.getLockOptions();
+						return sqlAstBuildingContext.getQueryOptions().getLockOptions();
 					}
 				}
 		);
@@ -667,7 +680,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 					@Override
 					public LockOptions getLockOptions() {
-						return queryOptions.getLockOptions();
+						return sqlAstBuildingContext.getQueryOptions().getLockOptions();
 					}
 				}
 		);
@@ -755,7 +768,7 @@ public abstract class BaseSqmToSqlAstConverter
 				sqmAttributeReference.getNavigablePath(),
 				// todo (6.0) : need the qualifier covering both FK tables
 				containerReference.getSqlExpressionQualifier(),
-				queryOptions.getLockOptions().getEffectiveLockMode( sqmAttributeReference.getIdentificationVariable() )
+				sqlAstBuildingContext.getQueryOptions().getLockOptions().getEffectiveLockMode( sqmAttributeReference.getIdentificationVariable() )
 		);
 	}
 
@@ -806,171 +819,201 @@ public abstract class BaseSqmToSqlAstConverter
 	}
 
 	@Override
-	public QueryLiteral visitLiteralStringExpression(SqmLiteralString expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralStringExpression(SqmLiteralString expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.STRING ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.STRING ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
-	protected BasicValuedExpressableType resolveType(
+	protected JdbcValueMapper resolveJdbcValueMapper(
 			BasicValuedExpressableType expressionType,
-			BasicType defaultType) {
-		return expressionType != null
-				? expressionType
-				: defaultType;
+			JdbcValueMapper defaultMapper) {
+		return expressionType != null && expressionType.getBasicType() != null
+				? expressionType.getBasicType()
+				: defaultMapper;
 	}
 
 	@Override
-	public QueryLiteral visitLiteralCharacterExpression(SqmLiteralCharacter expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralCharacterExpression(SqmLiteralCharacter expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.CHARACTER ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.CHARACTER ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralDoubleExpression(SqmLiteralDouble expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralDoubleExpression(SqmLiteralDouble expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.DOUBLE ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.DOUBLE ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralIntegerExpression(SqmLiteralInteger expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralIntegerExpression(SqmLiteralInteger expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.INTEGER ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.INTEGER ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralBigIntegerExpression(SqmLiteralBigInteger expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralBigIntegerExpression(SqmLiteralBigInteger expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_INTEGER ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.BIG_INTEGER ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralBigDecimalExpression(SqmLiteralBigDecimal expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralBigDecimalExpression(SqmLiteralBigDecimal expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_DECIMAL ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.BIG_DECIMAL ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralFloatExpression(SqmLiteralFloat expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralFloatExpression(SqmLiteralFloat expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.FLOAT ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.FLOAT ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralLongExpression(SqmLiteralLong expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralLongExpression(SqmLiteralLong expression) {
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.LONG ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.LONG ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralTrueExpression(SqmLiteralTrue expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralTrueExpression(SqmLiteralTrue expression) {
+		return new GenericSqlLiteral(
 				Boolean.TRUE,
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralFalseExpression(SqmLiteralFalse expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralFalseExpression(SqmLiteralFalse expression) {
+		return new GenericSqlLiteral(
 				Boolean.FALSE,
-				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralNullExpression(SqmLiteralNull expression) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralNullExpression(SqmLiteralNull expression) {
+		return new GenericSqlLiteral(
 				null,
-				expression.getExpressableType(),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.SERIALIZABLE ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralTimestampExpression(SqmLiteralTimestamp literal) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralTimestampExpression(SqmLiteralTimestamp literal) {
+		return new GenericSqlLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType(),
+				resolveJdbcValueMapper( literal.getExpressableType(), StandardSpiBasicTypes.TIMESTAMP ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralDateExpression(SqmLiteralDate literal) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralDateExpression(SqmLiteralDate literal) {
+		return new GenericSqlLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType(),
+				resolveJdbcValueMapper( literal.getExpressableType(), StandardSpiBasicTypes.DATE ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public QueryLiteral visitLiteralTimeExpression(SqmLiteralTime literal) {
-		return new QueryLiteral(
+	public GenericSqlLiteral visitLiteralTimeExpression(SqmLiteralTime literal) {
+		return new GenericSqlLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType(),
+				resolveJdbcValueMapper( literal.getExpressableType(), StandardSpiBasicTypes.TIME ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
 	public Object visitConstantEnumExpression(SqmConstantEnum expression) {
-		return new QueryLiteral(
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				expression.getExpressableType(),
+				resolveJdbcValueMapper( expression.getExpressableType(), StandardSpiBasicTypes.INTEGER ),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
 	public Object visitConstantFieldReference(SqmConstantFieldReference expression) {
-		return new QueryLiteral(
+		return new GenericSqlLiteral(
 				expression.getLiteralValue(),
-				expression.getExpressableType(),
+				expression.getExpressableType().getBasicType(),
 				getCurrentClauseStack().getCurrent() == Clause.SELECT
 		);
 	}
 
 	@Override
-	public NamedParameter visitNamedParameterExpression(SqmNamedParameter expression) {
-		return new NamedParameter(
-				expression.getName(),
-				(AllowableParameterType) expression.getExpressableType()
+	public Expression visitNamedParameterExpression(SqmNamedParameter expression) {
+		final AllowableParameterType<?> parameterType = (AllowableParameterType) expression.getExpressableType();
+
+		final List<ParameterSpec<?>> sqlParamSpecs = new ArrayList<>();
+		parameterType.toJdbcParameters(
+				(parameterSpec, jdbcValueMapper) -> sqlParamSpecs.add( parameterSpec )
 		);
+
+		final Expression result;
+		if ( sqlParamSpecs.size() == 1 ) {
+			result = sqlParamSpecs.get( 0 );
+		}
+		else {
+			result = new ParameterSpecGroup( sqlParamSpecs );
+		}
+
+		final QueryParameterImplementor<?> queryParameter = sqmParamToQueryParamMap.get( expression );
+		sqlParamExprToQueryParam.put( result, queryParameter );
+
+		return result;
 	}
 
 	@Override
-	public PositionalParameter visitPositionalParameterExpression(SqmPositionalParameter expression) {
-		return new PositionalParameter(
-				expression.getPosition(),
-				(AllowableParameterType) expression.getExpressableType()
+	public Expression visitPositionalParameterExpression(SqmPositionalParameter expression) {
+		final AllowableParameterType<?> parameterType = (AllowableParameterType) expression.getExpressableType();
+
+		final List<ParameterSpec<?>> sqlParamSpecs = new ArrayList<>();
+		parameterType.toJdbcParameters(
+				(parameterSpec, jdbcValueMapper) -> sqlParamSpecs.add( parameterSpec )
 		);
+
+		final Expression result;
+		if ( sqlParamSpecs.size() == 1 ) {
+			result = sqlParamSpecs.get( 0 );
+		}
+		else {
+			result = new ParameterSpecGroup( sqlParamSpecs );
+		}
+
+		final QueryParameterImplementor<?> queryParameter = sqmParamToQueryParamMap.get( expression );
+		sqlParamExprToQueryParam.put( result, queryParameter );
+
+		return result;
 	}
 
 

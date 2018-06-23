@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.sqm.tree;
 
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
@@ -23,4 +24,6 @@ public interface SqmStatement extends SqmNode {
 	//		the details.  Review this an decide if this is a problem or ok
 
 	Set<SqmParameter> getQueryParameters();
+
+	List<SqmParameter> getSqmParameterList();
 }

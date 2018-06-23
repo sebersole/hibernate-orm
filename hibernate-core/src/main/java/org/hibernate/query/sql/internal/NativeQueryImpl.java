@@ -41,7 +41,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.Limit;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
@@ -57,7 +56,9 @@ import org.hibernate.query.spi.MutableQueryOptions;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.NativeQueryInterpreter;
 import org.hibernate.query.spi.NonSelectQueryPlan;
+import org.hibernate.query.spi.ParameterBindingContext;
 import org.hibernate.query.spi.ParameterMetadataImplementor;
+import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.QueryPlanCache;
@@ -67,11 +68,14 @@ import org.hibernate.query.spi.SelectQueryPlan;
 import org.hibernate.query.sql.spi.NativeSelectQueryDefinition;
 import org.hibernate.query.sql.spi.NonSelectInterpretationsKey;
 import org.hibernate.query.sql.spi.SelectInterpretationsKey;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
+import org.hibernate.sql.ast.tree.spi.expression.StandardJdbcParameter;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterBindings;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.transform.ResultTransformer;
 import org.hibernate.type.Type;
@@ -89,8 +93,6 @@ public class NativeQueryImpl<R>
 
 	private final ParameterMetadataImpl parameterMetadata;
 	private final QueryParameterBindings parameterBindings;
-
-	private final List<JdbcParameterBinder> parameterBinders;
 
 	private final QueryOptionsImpl queryOptions = new QueryOptionsImpl();
 
@@ -128,11 +130,10 @@ public class NativeQueryImpl<R>
 
 		this.parameterMetadata = new ParameterMetadataImpl(
 				parameterRecognizer.getPositionalQueryParameters(),
-				parameterRecognizer.getNamedQueryParameters()
+				parameterRecognizer.getNamedQueryParameters(),
+				queryParameterList
 		);
 		this.parameterBindings = QueryParameterBindingsImpl.from( parameterMetadata, session.getFactory() );
-
-		this.parameterBinders = parameterRecognizer.getParameterBinders();
 	}
 
 	/**
@@ -181,16 +182,6 @@ public class NativeQueryImpl<R>
 	}
 
 	@Override
-	public ParameterBindingContext getParameterBindingContext() {
-		return this;
-	}
-
-	@Override
-	public SessionFactoryImplementor getSessionFactory() {
-		return getSession().getFactory();
-	}
-
-	@Override
 	public Callback getCallback() {
 		return null;
 	}
@@ -208,18 +199,13 @@ public class NativeQueryImpl<R>
 	@Override
 	public Set<Parameter<?>> getParameters() {
 		final HashSet<Parameter<?>> parameters = new HashSet<>();
-		parameterMetadata.collectAllParameters( parameters::add );
+		parameterMetadata.visitParameters( parameters::add );
 		return parameters;
 	}
 
 	@Override
 	public QueryParameterBindings getQueryParameterBindings() {
 		return parameterBindings;
-	}
-
-	@SuppressWarnings("WeakerAccess")
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
 	}
 
 
@@ -249,7 +235,7 @@ public class NativeQueryImpl<R>
 
 	protected LegacyResultSetMappingDescriptor resolveLegacyResultSetMappingDescriptor() {
 		if ( legacyResultSetMappingDescriptor == null ) {
-			legacyResultSetMappingDescriptor = new LegacyResultSetMappingDescriptor( getSessionFactory().getTypeConfiguration() );
+			legacyResultSetMappingDescriptor = new LegacyResultSetMappingDescriptor( getSession().getSessionFactory().getTypeConfiguration() );
 		}
 		return legacyResultSetMappingDescriptor;
 	}
@@ -402,9 +388,17 @@ public class NativeQueryImpl<R>
 	@Override
 	@SuppressWarnings("unchecked")
 	protected List<R> doList() {
-		getSession().prepareForQueryExecution( false );
+		final StandardJdbcParameterBindings.Builder jdbcBindingsBuilder = new StandardJdbcParameterBindings.Builder();
 
-		return resolveSelectQueryPlan().performList( this );
+		final SelectQueryPlan<R> queryPlan = resolveSelectQueryPlan( jdbcBindingsBuilder ) ;
+
+
+		// 1) convert query-param + bindings => jdbc-param + bindings
+		parameterBindings
+		getSession().prepareForQueryExecution( false );
+		final StandardJdbcParameterBindings.Builder builder = new StandardJdbcParameterBindings.Builder();
+
+		return resolveSelectQueryPlan( builder ).performList( this, this );
 	}
 
 	private boolean shouldFlush() {
@@ -429,22 +423,89 @@ public class NativeQueryImpl<R>
 	}
 
 	@SuppressWarnings("unchecked")
-	private SelectQueryPlan<R> resolveSelectQueryPlan() {
+	private SelectQueryPlan<R> resolveSelectQueryPlan(StandardJdbcParameterBindings.Builder builder) {
 		SelectQueryPlan<R> queryPlan = null;
 
 		final org.hibernate.sql.results.spi.ResultSetMappingDescriptor resultSetMapping = resolveResultMapping();
-		final RowTransformer rowTransformer = resolveRowTransformer();
 
 		final QueryPlanCache.Key cacheKey = generateSelectInterpretationsKey( resultSetMapping );
 		if ( cacheKey != null ) {
 			queryPlan = getSession().getFactory().getQueryEngine().getQueryPlanCache().getSelectQueryPlan( cacheKey );
 		}
 
-		if ( queryPlan == null ) {
-			queryPlan = getNativeQueryInterpreter().createQueryPlan(
-					generateSelectQueryDefinition(),
-					getSessionFactory()
+		if ( queryPlan != null ) {
+			// NOTE : it is important to re-use the ParameterSpec instances from the SelectQueryPlan
+			queryPlan.
+			parameterMetadata.visitRegistrations(
+					param -> {
+						final QueryParameterBinding binding = getQueryParameterBindings().getBinding( param );
+						param.getHibernateType().toJdbcValues(
+								binding,
+								(jdbcValue, boundColumn, consumer) -> {
+									final StandardJdbcParameter jdbcParameter = new StandardJdbcParameter( boundColumn.getJdbcValueMapper() );
+									parameterSpecs.add( jdbcParameter );
+									builder.add( jdbcParameter, jdbcValue );
+								},
+								getSession()
+						);
+					}
 			);
+		}
+		else {
+			final List<ParameterSpec> parameterSpecs = new ArrayList<>();
+
+			parameterMetadata.visitRegistrations(
+					param -> {
+						final QueryParameterBinding binding = getQueryParameterBindings().getBinding( param );
+						param.getHibernateType().toJdbcValues(
+								binding,
+								(jdbcValue, boundColumn, consumer) -> {
+									final StandardJdbcParameter jdbcParameter = new StandardJdbcParameter( boundColumn.getJdbcValueMapper() );
+									parameterSpecs.add( jdbcParameter );
+									builder.add( jdbcParameter, jdbcValue );
+								},
+								getSession()
+						);
+					}
+			);
+
+			final NativeSelectQueryDefinition queryDefinition = new NativeSelectQueryDefinition() {
+				@Override
+				public String getSqlString() {
+					return NativeQueryImpl.this.getQueryString();
+				}
+
+				@Override
+				public boolean isCallable() {
+					return false;
+				}
+
+				@Override
+				public List<ParameterSpec> getParameterSpecs() {
+					return parameterSpecs;
+				}
+
+				@Override
+				public org.hibernate.sql.results.spi.ResultSetMappingDescriptor getResultSetMapping() {
+					return NativeQueryImpl.this.resolveResultMapping();
+				}
+
+				@Override
+				public RowTransformer getRowTransformer() {
+					return NativeQueryImpl.this.resolveRowTransformer();
+				}
+
+				@Override
+				public Set<String> getAffectedTableNames() {
+					return affectedTableNames;
+				}
+			};
+
+			queryPlan = getNativeQueryInterpreter().createQueryPlan(
+					queryDefinition,
+					getSession().getSessionFactory()
+			);
+
 			if ( cacheKey != null ) {
 				getSession().getFactory()
 						.getQueryEngine()
@@ -457,41 +518,30 @@ public class NativeQueryImpl<R>
 	}
 
 	private NativeQueryInterpreter getNativeQueryInterpreter() {
-		return getSessionFactory().getServiceRegistry().getService( NativeQueryInterpreter.class );
+		return getSession().getSessionFactory().getServiceRegistry().getService( NativeQueryInterpreter.class );
 	}
 
 	private NativeSelectQueryDefinition generateSelectQueryDefinition() {
-		return new NativeSelectQueryDefinition() {
-			@Override
-			public String getSqlString() {
-				return NativeQueryImpl.this.getQueryString();
-			}
+		final List<ParameterSpec> parameterSpecs = new ArrayList<>();
+		final StandardJdbcParameterBindings.Builder builder = new StandardJdbcParameterBindings.Builder();
 
-			@Override
-			public boolean isCallable() {
-				return false;
-			}
+		parameterMetadata.visitRegistrations(
+				param -> {
+					final QueryParameterBinding binding = getQueryParameterBindings().getBinding( param );
+					param.getHibernateType().toJdbcValues(
+							binding,
+							(jdbcValue, boundColumn, consumer) -> {
+								final StandardJdbcParameter jdbcParameter = new StandardJdbcParameter(
+										boundColumn.getJdbcValueMapper() );
+								parameterSpecs.add( jdbcParameter );
+								builder.add( jdbcParameter, jdbcValue );
+							},
+							getSession()
+					);
+				}
+		);
 
-			@Override
-			public List<JdbcParameterBinder> getParameterBinders() {
-				return NativeQueryImpl.this.getParameterBinders();
-			}
-
-			@Override
-			public org.hibernate.sql.results.spi.ResultSetMappingDescriptor getResultSetMapping() {
-				return NativeQueryImpl.this.resolveResultMapping();
-			}
-
-			@Override
-			public RowTransformer getRowTransformer() {
-				return NativeQueryImpl.this.resolveRowTransformer();
-			}
-
-			@Override
-			public Set<String> getAffectedTableNames() {
-				return affectedTableNames;
-			}
-		};
+		return
 	}
 
 	private org.hibernate.sql.results.spi.ResultSetMappingDescriptor resolveResultMapping() {
@@ -539,7 +589,7 @@ public class NativeQueryImpl<R>
 		getSession().prepareForQueryExecution( false );
 		prepareForExecution();
 
-		return resolveSelectQueryPlan().performScroll( scrollMode, this );
+		return resolveSelectQueryPlan().performScroll( scrollMode, this, );
 	}
 
 	protected int doExecuteUpdate() {
@@ -549,8 +599,26 @@ public class NativeQueryImpl<R>
 		return resolveNonSelectQueryPlan().executeUpdate(
 				getSession(),
 				getQueryOptions(),
+				resolveJdbcValueBindings(),
 				this
 		);
+	}
+
+	private JdbcParameterBindings resolveJdbcValueBindings() {
+		final StandardJdbcParameterBindings.Builder builder = new StandardJdbcParameterBindings.Builder();
+
+		parameterMetadata.visitRegistrations(
+				param -> {
+					final QueryParameterBinding<?> binding = parameterBindings.getBinding( param );
+					binding.getBindType().toJdbcValues(
+							binding.getBindValue(),
+							(jdbcValue, boundColumn, consumer) -> builder.add( (ParameterSpec) param, jdbcValue ),
+							getSession()
+					);
+				}
+		);
+
+		return builder.build();
 	}
 
 	private NonSelectQueryPlan resolveNonSelectQueryPlan() {

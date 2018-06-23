@@ -26,7 +26,6 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractManagedType;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
@@ -38,16 +37,19 @@ import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.query.sqm.AllowableParameterType;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -194,13 +196,13 @@ public class EmbeddedTypeDescriptorImpl<J>
 		return collectColumns().size();
 	}
 
-	private final ValueBinder binder = new ValueBinder() {
+	private final JdbcValueBinder binder = new JdbcValueBinder() {
 		@Override
 		public void bind(
 				PreparedStatement st,
 				Object value,
 				int index,
-				WrapperOptions options) throws SQLException {
+				ExecutionContext executionContext) throws SQLException {
 			final Object[] values = extractValues( value );
 
 			int position = index;
@@ -211,7 +213,7 @@ public class EmbeddedTypeDescriptorImpl<J>
 						st,
 						values[ position ],
 						position,
-						options
+						executionContext
 				);
 				position += contributor.getColumns().size();
 			}
@@ -230,32 +232,32 @@ public class EmbeddedTypeDescriptorImpl<J>
 
 		@Override
 		public void bind(
-				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
+				CallableStatement st, Object value, String name, ExecutionContext executionContext) throws SQLException {
 
 		}
 	};
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public JdbcValueBinder getValueBinder() {
 		return binder;
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return new ValueExtractor() {
+	public JdbcValueExtractor getValueExtractor() {
+		return new JdbcValueExtractor() {
 			@Override
-			public Object extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
+			public Object extract(ResultSet rs, SqlSelection selectionMemento, JdbcValuesSourceProcessingState processingState) throws SQLException {
 				return null;
 			}
 
 			@Override
-			public Object extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
+			public Object extract(CallableStatement statement, SqlSelection index, JdbcValuesSourceProcessingState processingState) throws SQLException {
 				return null;
 			}
 
 			@Override
 			public Object extract(
-					CallableStatement statement, String name, WrapperOptions options) throws SQLException {
+					CallableStatement statement, String name, JdbcValuesSourceProcessingState processingState) throws SQLException {
 				return null;
 			}
 		};

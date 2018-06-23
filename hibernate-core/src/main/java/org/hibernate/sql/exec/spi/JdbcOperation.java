@@ -6,9 +6,10 @@
  */
 package org.hibernate.sql.exec.spi;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 
 /**
  * Unifying contract for any SQL statement we want to execute via JDBC.
@@ -26,10 +27,7 @@ public interface JdbcOperation {
 	 */
 	String getSql();
 
-	/**
-	 * Get the list of parameter binders for the generated PreparedStatement
-	 */
-	List<JdbcParameterBinder> getParameterBinders();
+	List<ParameterSpec> getJdbcParameters();
 
 	Set<String> getAffectedTableNames();
 }

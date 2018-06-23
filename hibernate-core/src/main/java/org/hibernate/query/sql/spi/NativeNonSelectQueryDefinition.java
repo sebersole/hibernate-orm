@@ -8,7 +8,7 @@ package org.hibernate.query.sql.spi;
 
 import java.util.List;
 
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.JdbcValueBinder;
 
 /**
  * Access the values defining a native non-select query
@@ -17,7 +17,7 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinder;
  */
 public interface NativeNonSelectQueryDefinition {
 	String getSqlString();
-	List<JdbcParameterBinder> getParameterBinders();
+	List<JdbcValueBinder> getJdbcValueBinders();
 
 	// todo (6.0) : affected table - either table names or Table references
 

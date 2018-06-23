@@ -9,12 +9,12 @@ package org.hibernate.sql.exec.internal;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.query.sqm.AllowableParameterType;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.exec.spi.JdbcCallParameterExtractor;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 
 /**
  * Standard implementation of JdbcCallParameterExtractor
@@ -63,7 +63,7 @@ public class JdbcCallParameterExtractorImpl<T> implements JdbcCallParameterExtra
 		final boolean useNamed = shouldUseJdbcNamedParameters
 				&& parameterName != null;
 
-		final ValueExtractor valueExtractor = ( (BasicValuedExpressableType) ormType ).getBasicType()
+		final JdbcValueExtractor valueExtractor = ( (BasicValuedExpressableType) ormType ).getBasicType()
 				.getSqlTypeDescriptor()
 				.getExtractor( ormType.getJavaTypeDescriptor() );
 

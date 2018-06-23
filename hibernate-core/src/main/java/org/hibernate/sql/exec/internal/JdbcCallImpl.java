@@ -7,7 +7,6 @@
 package org.hibernate.sql.exec.internal;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -15,13 +14,12 @@ import java.util.Set;
 import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.procedure.spi.ParameterStrategy;
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.exec.spi.JdbcCall;
 import org.hibernate.sql.exec.spi.JdbcCallFunctionReturn;
 import org.hibernate.sql.exec.spi.JdbcCallParameterExtractor;
 import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 import org.hibernate.sql.exec.spi.JdbcCallRefCursorExtractor;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
  * Models the actual call, allowing iterative building of the parts.

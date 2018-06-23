@@ -18,11 +18,11 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -99,7 +99,7 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public JdbcValueExtractor getValueExtractor() {
 		return null;
 	}
 

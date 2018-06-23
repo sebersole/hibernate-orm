@@ -12,11 +12,10 @@ import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.jdbc.cursor.spi.RefCursorSupport;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.sqm.AllowableParameterType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.exec.spi.JdbcCallParameterExtractor;
 import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**

@@ -13,6 +13,9 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
  * @author Steve Ebersole
  */
 public interface SqlSelectionResolutionContext {
+
+	// todo (6.0) : shouldn't this all just be part of SqlAstBuildingContext?
+
 	SessionFactoryImplementor getSessionFactory();
 
 	SqlExpressionResolver getSqlSelectionResolver();

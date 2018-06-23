@@ -8,7 +8,7 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
-import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.sql.JdbcValueBinder;
 
 /**
  * @author Steve Ebersole
@@ -35,7 +35,7 @@ public interface RowIdDescriptor<J> extends VirtualNavigable<J>, BasicValuedNavi
 	}
 
 	@Override
-	default ValueBinder getValueBinder() {
+	default JdbcValueBinder getValueBinder() {
 		throw new HibernateException( "Illegal attempt to bind ROW_ID value" );
 	}
 

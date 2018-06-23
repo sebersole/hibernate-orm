@@ -7,17 +7,16 @@
 package org.hibernate.sql.ast.consume.spi;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.QueryLiteralRendering;
-import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.query.sqm.QueryException;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.sqm.tree.order.SqmSortOrder;
-import org.hibernate.sql.ast.consume.SemanticException;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
@@ -40,17 +39,19 @@ import org.hibernate.sql.ast.tree.spi.expression.CurrentTimestampFunction;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.ExtractFunction;
 import org.hibernate.sql.ast.tree.spi.expression.GenericParameter;
+import org.hibernate.sql.ast.tree.spi.expression.GenericSqlLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.LengthFunction;
+import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
 import org.hibernate.sql.ast.tree.spi.expression.LocateFunction;
 import org.hibernate.sql.ast.tree.spi.expression.LowerFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MaxFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MinFunction;
 import org.hibernate.sql.ast.tree.spi.expression.ModFunction;
-import org.hibernate.sql.ast.tree.spi.expression.NamedParameter;
 import org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction;
 import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
-import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
-import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpecGroup;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.SqrtFunction;
 import org.hibernate.sql.ast.tree.spi.expression.SumFunction;
 import org.hibernate.sql.ast.tree.spi.expression.TrimFunction;
@@ -75,12 +76,9 @@ import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -94,19 +92,31 @@ public abstract class AbstractSqlAstWalker
 
 	// In-flight state
 	private final StringBuilder sqlBuffer = new StringBuilder();
-	private final List<JdbcParameterBinder> parameterBinders = new ArrayList<>();
+	private final List<ParameterSpec> parameterSpecs = new ArrayList<>();
+	private final SessionFactoryImplementor sessionFactory;
 
 	// rendering expressions often has to be done differently if it occurs in certain contexts
 	private boolean currentlyInPredicate;
 	private boolean currentlyInSelections;
+
+	public AbstractSqlAstWalker(SessionFactoryImplementor sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// for now, for tests
 	public String getSql() {
 		return sqlBuffer.toString();
 	}
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
+
+	Map<QueryParameterImplementor,Collection<List<ParameterSpec>>> parameterMappings;
+
+	public Map<QueryParameterImplementor,Collection<List<ParameterSpec>>> getParameterMappings() {
+		return parameterMappings;
+	}
+
+	public List<ParameterSpec> getParameterSpecs() {
+		return parameterSpecs;
 	}
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -677,100 +687,32 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitGenericParameter(GenericParameter parameter) {
-		parameterBinders.add( parameter.getParameterBinder() );
+		parameterSpecs.add( parameter );
 
-		final int columnCount = resolveType( parameter ).getNumberOfJdbcParametersToBind();
-		final boolean needsParens = currentlyInPredicate && columnCount > 1;
+		appendSql( "?" );
+	}
 
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
+	@Override
+	public void visitParameterGroup(ParameterSpecGroup parameterSpecGroup) {
+		boolean firstPass = true;
+		appendSql( "(" );
+		for ( ParameterSpec parameter : parameterSpecGroup.getGroupedParameters() ) {
+			parameterSpecs.add( parameter );
 
-		if ( needsParens ) {
-			appendSql( "(" );
-		}
-
-		String separator = "";
-		for ( int i = 0; i < columnCount; i++ ) {
-			appendSql( separator );
+			if ( firstPass ) {
+				firstPass = false;
+			}
+			else {
+				appendSql( "," );
+			}
 			appendSql( "?" );
-			separator = ", ";
+
 		}
-
-		if ( needsParens ) {
-			appendSql( ")" );
-		}
-	}
-
-	private AllowableParameterType resolveType(GenericParameter parameter) {
-		// todo (6.0) : decide which types of ExpressableTypes to support for parameters.  see below in method too
-		// 		for now limit parameters to just basic types.
-
-		final QueryParameterBinding parameterBinding = parameter.resolveBinding( getParameterBindingContext() );
-		if ( parameterBinding == null || !parameterBinding.isBound() ) {
-			throw new SemanticException( "Parameter [" + parameter + "] found in SQL AST had no binding" );
-		}
-
-		// todo (6.0) : depending on decision for above, these casts should be moved to use those as the return types for Parameter#getType and ParameterBinding#getBindType
-		if ( parameterBinding.getBindType() != null ) {
-			return parameterBinding.getBindType();
-		}
-
-		if ( parameter.getType() != null ) {
-			return (AllowableParameterType) parameter.getType();
-		}
-
-		if ( parameterBinding.isMultiValued() ) {
-			// can't be "multi-valued" unless there are actually bound value(s)
-			return resolveBasicValueType( parameterBinding.getBindValues().iterator().next() );
-		}
-
-		if ( parameterBinding.getBindValue() != null ) {
-			return resolveBasicValueType( parameterBinding.getBindValue() );
-		}
-
-		throw new QueryException( "Unable to determine Type for parameter [" + parameter + "]" );
-
-	}
-
-	protected abstract ParameterBindingContext getParameterBindingContext();
-
-	private BasicType resolveBasicValueType(Object value) {
-		return getSessionFactory().getTypeConfiguration()
-				.getBasicTypeRegistry()
-				.getBasicType( value.getClass() );
+		appendSql( ")" );
 	}
 
 	@Override
-	public void visitNamedParameter(NamedParameter namedParameter) {
-		visitGenericParameter( namedParameter );
-	}
-
-	@Override
-	public void visitPositionalParameter(PositionalParameter positionalParameter) {
-		parameterBinders.add( positionalParameter.getParameterBinder() );
-
-		final int columnCount = resolveType( positionalParameter ).getNumberOfJdbcParametersToBind();
-		final boolean needsParens = currentlyInPredicate && columnCount > 1;
-
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
-
-		if ( needsParens ) {
-			appendSql( "(" );
-		}
-
-		String separator = "";
-		for ( int i = 0; i < columnCount; i++ ) {
-			appendSql( separator );
-			appendSql( "?" );
-			separator = ", ";
-		}
-
-		if ( needsParens ) {
-			appendSql( ")" );
-		}
-	}
-
-	@Override
-	public void visitQueryLiteral(QueryLiteral queryLiteral) {
+	public void visitLiteral(GenericSqlLiteral queryLiteral) {
 		final QueryLiteralRendering queryLiteralRendering = getSessionFactory().getSessionFactoryOptions()
 				.getQueryLiteralRendering();
 
@@ -800,7 +742,7 @@ public abstract class AbstractSqlAstWalker
 		}
 	}
 
-	private void renderAsLiteral(QueryLiteral queryLiteral) {
+	private void renderAsLiteral(GenericSqlLiteral queryLiteral) {
 		// todo : define approach to rendering these literals.
 		//		my preference is to define `BasicType#getJdbcLiteralRenderer` (as well as a
 		// 		`BasicType#getJdbcLiteralConsumer` and a `BasicType#getLiteralConsumer`
@@ -820,28 +762,66 @@ public abstract class AbstractSqlAstWalker
 		}
 	}
 
-	private void renderAsParameter(QueryLiteral queryLiteral) {
-		parameterBinders.add( queryLiteral );
+	private void renderAsParameter(GenericSqlLiteral queryLiteral) {
+		parameterSpecs.add(
+				new LiteralParameter(
+						queryLiteral.getValue(),
+						queryLiteral.getJdbcValueMapper()
+				)
+		);
 
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
+		appendSql( "?" );
+//
+//		 // todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
+//
+//		// NOTE : use the same rules regarding "allowable types" for literals as we use for parameters...
+//		final int physicalJdbcParamCount = queryLiteral.getType().getNumberOfJdbcParametersToBind();
+//		final boolean needsParens = currentlyInPredicate && physicalJdbcParamCount > 1;
+//
+//		if ( needsParens ) {
+//			appendSql( "(" );
+//		}
+//
+//		String separator = "";
+//		for ( int i = 0; i < physicalJdbcParamCount; i++ ) {
+//			appendSql( separator );
+//			appendSql( "?" );
+//			separator = ", ";
+//		}
+//
+//		if ( needsParens ) {
+//			appendSql( ")" );
+//		}
+	}
 
-		// NOTE : use the same rules regarding "allowable types" for literals as we use for parameters...
-		final int physicalJdbcParamCount = queryLiteral.getType().getNumberOfJdbcParametersToBind();
-		final boolean needsParens = currentlyInPredicate && physicalJdbcParamCount > 1;
+	@Override
+	public void visitTuple(SqlTuple sqlTuple) {
+		visitTuple( sqlTuple.getExpressions() );
+	}
 
-		if ( needsParens ) {
-			appendSql( "(" );
+	@Override
+	public void visitTuple(List<Expression> expressions) {
+		if ( expressions == null || expressions.isEmpty() ) {
+			throw new IllegalArgumentException( "List of expressions for a SQL tuple cannot be null" );
 		}
 
-		String separator = "";
-		for ( int i = 0; i < physicalJdbcParamCount; i++ ) {
-			appendSql( separator );
-			appendSql( "?" );
-			separator = ", ";
+		if ( expressions.size() == 1 ) {
+			expressions.get( 0 ).accept( this );
 		}
+		else {
+			boolean firstPass = true;
 
-		if ( needsParens ) {
-			appendSql( ")" );
+			sqlAppender.appendSql( "(" );
+			for ( Expression expression : expressions ) {
+				if ( firstPass ) {
+					firstPass = false;
+				}
+				else {
+					sqlAppender.appendSql( ", " );
+				}
+				expression.accept( this );
+			}
+			sqlAppender.appendSql( ")" );
 		}
 	}
 
@@ -1031,6 +1011,6 @@ public abstract class AbstractSqlAstWalker
 	}
 
 	public SessionFactoryImplementor getSessionFactory() {
-		return getParameterBindingContext().getSessionFactory();
+		return sessionFactory;
 	}
 }

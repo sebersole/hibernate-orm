@@ -6,46 +6,49 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.sqm.AllowableParameterType;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueCollector;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
+import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
-public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, AllowableParameterType<J> {
+public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, AllowableParameterType<J>, Writeable<J,Object> {
 	private final EntityHierarchy hierarchy;
 	private final NaturalIdDataAccess cacheRegionAccess;
 	private final NavigableRole navigableRole;
 
 	private List<NaturalIdAttributeInfo> attributes;
 
-	private ValueBinder<J> valueBinder;
-	private ValueExtractor<J> valueExtractor;
+	private JdbcValueBinder<J> valueBinder;
+	private JdbcValueExtractor<J> valueExtractor;
 	private Integer numberOfParameterBinds;
 
 
@@ -129,11 +132,25 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
+	public void visitColumns(Consumer<Column> consumer) {
+		attributes.forEach(
+				naturalIdAttributeInfo -> naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().visitColumns( consumer )
+		);
+	}
+
+	@Override
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		final List<SqlSelectionGroupNode> selections = new ArrayList<>();
-		attributes.forEach( attributeInfo -> selections.add( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, resolutionContext ) ) );
+		attributes.forEach(
+				naturalIdAttributeInfo -> {
+					naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().visitColumns(
+							column -> naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, resolutionContext )
+					);
+				}
+		);
+
 		return new AggregateSqlSelectionGroupNode( selections );
 	}
 
@@ -142,7 +159,11 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		final List<ColumnReference> columnRefs = new ArrayList<>();
-		attributes.forEach( attributeInfo -> columnRefs.addAll( attributeInfo.getUnderlyingAttributeDescriptor().resolveColumnReferences( qualifier, resolutionContext ) ) );
+
+		visitColumns(
+				column -> columnRefs.add( qualifier.resolveColumnReference( column ) )
+		);
+
 		return columnRefs;
 	}
 
@@ -162,47 +183,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
-		if ( valueBinder == null ) {
-			if ( attributes.size() == 1 ) {
-				valueBinder = ( (AllowableParameterType) attributes.get( 0 ).getUnderlyingAttributeDescriptor() ).getValueBinder();
-			}
-			else {
-				valueBinder = new ValueBinder<J>() {
-					@Override
-					public void bind(PreparedStatement st, J value, int index, WrapperOptions options)
-							throws SQLException {
-						int segmentStart = index;
-						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
-							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
-									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder().bind( st, value, segmentStart, options );
-							segmentStart += attributeDescriptor.getNumberOfJdbcParametersToBind();
-						}
-					}
-
-					@Override
-					public void bind(CallableStatement st, J value, String name, WrapperOptions options)
-							throws SQLException {
-						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
-							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
-									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder().bind( st, value, name, options );
-						}
-					}
-				};
-			}
-		}
-
-		return valueBinder;
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor() {
-		return null;
-	}
-
-	@Override
 	public int getNumberOfJdbcParametersToBind() {
 		return numberOfParameterBinds;
 	}
@@ -219,6 +199,39 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 			}
 		}
 
+		throw new UnsupportedOperationException(  );
+	}
+
+
+	@Override
+	public Expression toJdbcParameters() {
+		final TableGroup currentTableGroup = walker.getTableGroupStack().getCurrent();
+
+		final List<Expression> expressions = new ArrayList<>();
+		visitColumns(
+				column -> {
+					expressions.add( currentTableGroup.resolveColumnReference( column ) );
+				}
+		);
+
+		if ( expressions.size() == 1 ) {
+			return expressions.get( 0 );
+		}
+		else {
+			return new SqlTuple( expressions );
+		}
+	}
+
+	@Override
+	public Object unresolve(J value, SharedSessionContractImplementor session) {
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 }

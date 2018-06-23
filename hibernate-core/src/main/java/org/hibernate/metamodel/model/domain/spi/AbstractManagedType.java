@@ -240,7 +240,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	}
 
 	@Override
-	public void visitStateArrayContributors(Consumer<StateArrayContributor<?>> consumer) {
+	public void visitStateArrayContributors(Consumer<StateArrayContributor> consumer) {
 		visitAttributes(
 				attribute -> {
 					if ( attribute != null ) {

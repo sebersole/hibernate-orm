@@ -92,6 +92,13 @@ public interface PersistentCollection<E> {
 	PersistentCollectionDescriptor<?,?,E> getCollectionMetadata();
 
 	/**
+	 * Get the current collection key value
+	 *
+	 * @return the current collection key value
+	 */
+	Object getKey();
+
+	/**
 	 * Get the owning entity. Note that the owner is only
 	 * set during the flush cycle, and when a new collection
 	 * wrapper is created while loading an entity.
@@ -359,13 +366,6 @@ public interface PersistentCollection<E> {
 	 * @return The orphaned elements
 	 */
 	Collection getQueuedOrphans(String entityName);
-	
-	/**
-	 * Get the current collection key value
-	 *
-	 * @return the current collection key value
-	 */
-	Object getKey();
 
 	/**
 	 * Is the collection unreferenced?

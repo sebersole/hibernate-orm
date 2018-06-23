@@ -9,9 +9,9 @@ package org.hibernate.query.sql.spi;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
+import org.hibernate.sql.ast.tree.spi.expression.ParameterSpec;
 import org.hibernate.sql.exec.spi.RowTransformer;
+import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
  * Access the values defining a native select query
@@ -20,7 +20,7 @@ import org.hibernate.sql.exec.spi.RowTransformer;
  */
 public interface NativeSelectQueryDefinition<R> {
 	String getSqlString();
-	List<JdbcParameterBinder> getParameterBinders();
+	List<ParameterSpec> getParameterSpecs();
 	ResultSetMappingDescriptor getResultSetMapping();
 
 	Set<String> getAffectedTableNames();

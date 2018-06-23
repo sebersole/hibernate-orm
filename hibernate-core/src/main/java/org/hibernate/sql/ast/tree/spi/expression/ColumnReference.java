@@ -12,12 +12,10 @@ import java.util.Objects;
 
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.internal.SqlSelectionReaderImpl;
 import org.hibernate.sql.results.spi.SqlSelection;
 
 /**
@@ -44,7 +42,7 @@ public class ColumnReference implements Expression {
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				new SqlSelectionReaderImpl( column.getSqlTypeDescriptor().getJdbcTypeCode() )
+				column.getJdbcValueMapper()
 		);
 	}
 
@@ -59,12 +57,6 @@ public class ColumnReference implements Expression {
 	@Override
 	public void accept(SqlAstWalker  interpreter) {
 		interpreter.visitColumnReference( this );
-	}
-
-	@Override
-	public ExpressableType getType() {
-		// n/a
-		return null;
 	}
 
 	@Override

@@ -6,48 +6,39 @@
  */
 package org.hibernate.orm.test.query.sqm.sql;
 
-import org.hibernate.engine.spi.SessionFactoryImplementor;
+import java.util.Collections;
+
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
-import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 
 /**
  * @author Steve Ebersole
  */
-public class BaseSqmSqlTest extends BaseSqmUnitTest {
+public abstract class BaseSqmSqlTest extends BaseSqmUnitTest {
 
 	protected JdbcSelect buildJdbcSelect(
 			String hql,
-			ExecutionContext executionContext) {
+			SqlAstBuildingContext sqlAstBuildingContext) {
 
 		final SqmSelectStatement sqm = interpretSelect( hql );
 
-		final SqmSelectToSqlAstConverter sqmConveter = new SqmSelectToSqlAstConverter(
-				executionContext.getQueryOptions(),
-				new SqlAstBuildingContext() {
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return executionContext.getSession().getFactory();
-					}
+		final SqmSelectToSqlAstConverter sqmConverter = new SqmSelectToSqlAstConverter( sqlAstBuildingContext, Collections.emptyMap() );
 
-					@Override
-					public Callback getCallback() {
-						return executionContext.getCallback();
-					}
-				}
-		);
-
-		final SqlAstSelectDescriptor interpretation = sqmConveter.interpret( sqm );
+		final SqlAstSelectDescriptor interpretation = sqmConverter.interpret( sqm );
 
 		return SqlAstSelectToJdbcSelectConverter.interpret(
 				interpretation,
-				executionContext.getParameterBindingContext()
+				sqlAstBuildingContext.getSessionFactory()
 		);
+	}
+
+	private SqlAstBuildingContext createSqlAstCreationContext(SharedSessionContractImplementor session) {
+		return null;
 	}
 }

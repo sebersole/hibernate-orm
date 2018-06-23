@@ -6,9 +6,10 @@
  */
 package org.hibernate.procedure.internal;
 
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 
 /**
  * Standard SqlSelection implementation for procedure/function based
@@ -17,17 +18,17 @@ import org.hibernate.sql.results.spi.SqlSelectionReader;
  * @author Steve Ebersole
  */
 public class SqlSelectionImpl implements SqlSelection {
-	private final SqlSelectionReader reader;
+	private final SqlExpressable sqlExpressable;
 	private final int position;
 
-	public SqlSelectionImpl(SqlSelectionReader reader, int position) {
-		this.reader = reader;
+	public SqlSelectionImpl(SqlExpressable sqlExpressable, int position) {
+		this.sqlExpressable = sqlExpressable;
 		this.position = position;
 	}
 
 	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
-		return reader;
+	public JdbcValueMapper getJdbcValueMapper() {
+		return sqlExpressable.getJdbcValueMapper();
 	}
 
 	@Override

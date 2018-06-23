@@ -99,7 +99,7 @@ public class ProcedureParameterMetadata<P extends ProcedureParameterImplementor<
 	}
 
 	@Override
-	public void collectAllParameters(ParameterCollector<P> collector) {
+	public void visitParameters(Consumer<P> collector) {
 		parameters.forEach( collector::collect );
 	}
 

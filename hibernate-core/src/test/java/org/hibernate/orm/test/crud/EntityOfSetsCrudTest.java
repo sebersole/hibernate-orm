@@ -12,13 +12,13 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfSets;
 
-import org.hibernate.testing.junit5.FailureExpected;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Steve Ebersole
  */
-@FailureExpected( "Lots still to implement for collection support" )
+//@FailureExpected( "Lots still to implement for collection support" )
 public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
@@ -31,15 +31,21 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		return true;
 	}
 
-
-	@Test
-	public void testOperations() {
+	@BeforeEach
+	public void setUpData() {
 		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
 
 		final EntityOfSets entity = new EntityOfSets( 1 );
 
 		entity.getSetOfBasics().add( "first string" );
 		entity.getSetOfBasics().add( "second string" );
+
+		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+	}
+
+	@Test
+	public void testOperations() {
+
 
 //		entity.getSetOfComponents().add(
 //				new Component(
@@ -54,13 +60,12 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 //				)
 //		);
 
-		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
-		sessionFactoryScope().inTransaction(
-				session -> {
-					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
-					assert value == 1;
-				}
-		);
+//		sessionFactoryScope().inTransaction(
+//				session -> {
+//					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
+//					assert value == 1;
+//				}
+//		);
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );

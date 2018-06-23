@@ -6,55 +6,31 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.internal;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
  */
 public class LoadIdParameter extends AbstractParameter {
+
+	// todo (6.0) (domain-jdbc) : should be moved domain query package (org.hibernate.query.?)
+
 	private final int idValueIndex;
 
-	public LoadIdParameter(AllowableParameterType type) {
-		this( 0, type );
+	public LoadIdParameter(JdbcValueMapper mapper) {
+		this( 0, mapper );
 
 	}
 
-	public LoadIdParameter(int idValueIndex, AllowableParameterType restrictedNavigable) {
-		super( restrictedNavigable );
+	public LoadIdParameter(int idValueIndex, JdbcValueMapper mapper) {
+		super( mapper );
 		this.idValueIndex = idValueIndex;
 	}
 
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
 		sqlTreeWalker.visitGenericParameter( this );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
-		return new LoadIdParameterBinding(
-				context.getLoadIdentifiers(),
-				getType(),
-				idValueIndex
-		);
-	}
-
-	@Override
-	protected void warnNoBinding() {
-		throw new IllegalStateException(  );
-	}
-
-	@Override
-	protected void unresolvedType() {
-		throw new IllegalStateException(  );
-	}
-
-	@Override
-	protected void warnNullBindValue() {
-//		throw new IllegalStateException(  );
 	}
 }

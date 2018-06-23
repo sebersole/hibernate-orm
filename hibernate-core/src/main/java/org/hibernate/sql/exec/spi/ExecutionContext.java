@@ -6,28 +6,26 @@
  */
 package org.hibernate.sql.exec.spi;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
+import org.hibernate.sql.results.spi.MappingResolutionContext;
 
 /**
- * Contextual information needed while executing some JDBC operation,
- * generally including conversion from SQL AST to JdbcOperation(s)
+ * Contextual information needed while executing some JDBC operation.
  *
  * @author Steve Ebersole
  */
-public interface ExecutionContext extends ResultSetMappingDescriptor.ResolutionContext {
+public interface ExecutionContext extends MappingResolutionContext {
 	SharedSessionContractImplementor getSession();
 
 	QueryOptions getQueryOptions();
 
-	ParameterBindingContext getParameterBindingContext();
-
 	Callback getCallback();
 
 	@Override
-	default SharedSessionContractImplementor getPersistenceContext() {
-		return getSession();
+	default SessionFactoryImplementor getSessionFactory() {
+		return getSession().getFactory();
 	}
 }

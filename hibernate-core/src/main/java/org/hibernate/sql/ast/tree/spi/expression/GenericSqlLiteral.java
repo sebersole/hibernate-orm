@@ -6,27 +6,21 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.type.spi.BasicType;
 
 /**
  * A literal specified in the source query.
  *
  * @author Steve Ebersole
  */
-public class QueryLiteral extends AbstractLiteral {
-	public QueryLiteral(Object value, BasicValuedExpressableType expressableType, boolean inSelect) {
-		super( value, expressableType, inSelect );
-	}
-
-	@Override
-	public BasicType getType() {
-		return ( (BasicValuedExpressableType) super.getType() ).getBasicType();
+public class GenericSqlLiteral extends AbstractLiteral {
+	public GenericSqlLiteral(Object value, JdbcValueMapper jdbcValueMapper, boolean inSelect) {
+		super( value, jdbcValueMapper, inSelect );
 	}
 
 	@Override
 	public void accept(SqlAstWalker  walker) {
-		walker.visitQueryLiteral( this );
+		walker.visitLiteral( this );
 	}
 }
