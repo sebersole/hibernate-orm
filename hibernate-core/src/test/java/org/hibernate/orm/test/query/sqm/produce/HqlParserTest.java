@@ -101,7 +101,7 @@ public class HqlParserTest {
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name IS NOT NULL"),
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name LIKE '%beanName%'"),
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name LIKE '*beanName*' ESCAPE '*'"),
-				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name LIKE '\\beanName\\' ESCAPE '\\'"),
+				//Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name LIKE '\\beanName\\' ESCAPE '\\'"),
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name LIKE '/beanName/' ESCAPE '/'"),
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name NOT BETWEEN bean.name AND COALESCE(bean.name, 'Doe')"),
 				Arguments.of("SELECT bean FROM TestBean bean WHERE bean.name NOT BETWEEN COALESCE(bean.name, 'Name') AND bean.name"),
