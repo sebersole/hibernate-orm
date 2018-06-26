@@ -6,6 +6,8 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
+import java.util.Map;
+
 import org.hibernate.query.sqm.NotYetImplementedException;
 import org.hibernate.type.descriptor.java.spi.AbstractManagedJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
@@ -61,5 +63,27 @@ public class EmbeddableJavaDescriptorImpl<J>
 	@Override
 	public <X> X unwrap(J value, Class<X> type, WrapperOptions options) {
 		throw new NotYetImplementedException(  );
+	}
+
+	@Override
+	public boolean isInstance(Object value) {
+		// Dynamic Components do not have a java-type but is represented by a HashMap
+		// We check this use case here since its applicable to Embeddable only.
+		if ( getJavaType() == null && ( value instanceof Map ) ) {
+			return true;
+		}
+
+		return super.isInstance( value );
+	}
+
+	@Override
+	public boolean isAssignableFrom(Class checkType) {
+		// Dynamic Components do not have a java-type but is represented by a HashMap
+		// We check this use case here since its applicable to Embeddable only.
+		if ( getJavaType() == null && Map.class.isAssignableFrom( checkType ) ) {
+			return true;
+		}
+
+		return super.isAssignableFrom( checkType );
 	}
 }
