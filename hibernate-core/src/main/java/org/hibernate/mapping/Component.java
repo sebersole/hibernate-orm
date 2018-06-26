@@ -325,8 +325,10 @@ public class Component extends SimpleValue
 	@Override
 	public java.util.List<MappedColumn> getMappedColumns() {
 		final java.util.List<MappedColumn> columns = new ArrayList<>();
-		for ( PersistentAttributeMapping p : declaredAttributeMappings.values() ) {
-			columns.addAll( p.getValueMapping().getMappedColumns() );
+		if ( declaredAttributeMappings != null ) {
+			for ( PersistentAttributeMapping p: declaredAttributeMappings.values() ) {
+				columns.addAll( p.getValueMapping().getMappedColumns() );
+			}
 		}
 		return columns;
 	}
@@ -539,7 +541,9 @@ public class Component extends SimpleValue
 	@Deprecated
 	@Override
 	public List<Property> getDeclaredProperties() {
-		return declaredAttributeMappings.values().stream().map( p -> (Property) p ).collect( Collectors.toList() );
+		return declaredAttributeMappings == null
+				? Collections.emptyList()
+				: declaredAttributeMappings.values().stream().map( p -> (Property) p ).collect( Collectors.toList() );
 	}
 
 	@Override
