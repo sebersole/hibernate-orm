@@ -43,7 +43,6 @@ public class RootClass extends PersistentClass implements TableOwner {
 	private boolean lazyPropertiesCacheable = true;
 	private String naturalIdCacheRegionName;
 
-	private Value discriminator;
 	private boolean mutable = true;
 	private boolean explicitPolymorphism;
 	private Class entityPersisterClass;
@@ -52,9 +51,6 @@ public class RootClass extends PersistentClass implements TableOwner {
 	private MappedTable table;
 	private boolean discriminatorInsertable = true;
 	private int nextSubclassId;
-	private Property declaredIdentifierProperty;
-	private Property declaredVersion;
-	private boolean cachingExplicitlyRequested;
 
 	public RootClass(
 			MetadataBuildingContext metadataBuildingContext,

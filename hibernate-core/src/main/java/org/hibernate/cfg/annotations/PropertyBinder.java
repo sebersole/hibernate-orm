@@ -95,7 +95,6 @@ public class PropertyBinder {
 	private XClass returnedClass;
 	private boolean isId;
 	private Map<XClass, InheritanceState> inheritanceStatePerClass;
-	private Property mappingProperty;
 
 	public void setInsertable(boolean insertable) {
 		this.insertable = insertable;
@@ -328,7 +327,6 @@ public class PropertyBinder {
 		}
 
 		LOG.tracev( "Cascading {0} with {1}", name, cascade );
-		this.mappingProperty = prop;
 		return prop;
 	}
 

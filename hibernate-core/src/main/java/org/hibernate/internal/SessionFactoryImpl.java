@@ -39,6 +39,7 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Interceptor;
 import org.hibernate.MappingException;
+import org.hibernate.Metamodel;
 import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
 import org.hibernate.SessionEventListener;
@@ -198,8 +199,6 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 				.getService( SessionFactoryServiceRegistryFactory.class )
 				.buildServiceRegistry( this, bootstrapContext, options );
 
-		prepareEventListeners( metadata );
-
 		final CfgXmlAccessService cfgXmlAccessService = serviceRegistry.getService( CfgXmlAccessService.class );
 
 		String sfName = settings.getSessionFactoryName();
@@ -290,7 +289,10 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			LOG.debug( "Instantiated session factory" );
 
 			this.typeConfiguration = metadata.getTypeConfiguration();
+
 			this.metamodel = typeConfiguration.scope( this, bootstrapContext );
+
+			prepareEventListeners( metamodel );
 
 			this.sqmFunctionRegistry = new SqmFunctionRegistry();
 			jdbcServices.getDialect().initializeFunctionRegistry( sqmFunctionRegistry );
@@ -359,12 +361,12 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		}
 	}
 
-	private void prepareEventListeners(MetadataImplementor metadata) {
+	private void prepareEventListeners(Metamodel metamodel) {
 		final EventListenerRegistry eventListenerRegistry = serviceRegistry.getService( EventListenerRegistry.class );
 		final ConfigurationService cfgService = serviceRegistry.getService( ConfigurationService.class );
 		final ClassLoaderService classLoaderService = serviceRegistry.getService( ClassLoaderService.class );
 
-		eventListenerRegistry.prepare( metadata );
+		eventListenerRegistry.prepare( metamodel );
 
 		for ( Map.Entry entry : ( (Map<?, ?>) cfgService.getSettings() ).entrySet() ) {
 			if ( !String.class.isInstance( entry.getKey() ) ) {
