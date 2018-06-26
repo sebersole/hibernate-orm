@@ -28,7 +28,7 @@ import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.jpa.event.spi.Callback;
 import org.hibernate.jpa.event.spi.CallbackBuilder;
 import org.hibernate.jpa.event.spi.CallbackType;
-import org.hibernate.mapping.Property;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 
@@ -83,15 +83,16 @@ public class CallbackBuilderLegacyImpl implements CallbackBuilder {
 
 	@Override
 	public void buildCallbacksForEmbeddable(
-			Property embeddableProperty, String entityClassName, CallbackRegistrar callbackRegistrar) {
+			SingularPersistentAttributeEmbedded embeddableAttribute,
+			String entityClassName,
+			CallbackRegistrar callbackRegistrar){
 		try {
 			final XClass entityXClass = reflectionManager.classForName( entityClassName );
 			final Class entityClass = reflectionManager.toClass( entityXClass );
 
 			for ( CallbackType callbackType : CallbackType.values() ) {
 				final Callback[] callbacks = resolveEmbeddableCallbacks(
-						entityClass,
-						embeddableProperty,
+						embeddableAttribute,
 						callbackType,
 						reflectionManager
 				);
@@ -240,11 +241,12 @@ public class CallbackBuilderLegacyImpl implements CallbackBuilder {
 	}
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
-	public Callback[] resolveEmbeddableCallbacks(Class entityClass, Property embeddableProperty, CallbackType callbackType, ReflectionManager reflectionManager) {
+	public Callback[] resolveEmbeddableCallbacks(SingularPersistentAttributeEmbedded embeddableAttribute, CallbackType callbackType, ReflectionManager reflectionManager) {
 
-		final String embeddableClassName = embeddableProperty.getValue().getJavaTypeMapping().getTypeName();
-		final XClass embeddableXClass = reflectionManager.classForName( embeddableClassName );
-		final Getter embeddableGetter = embeddableProperty.getGetter( entityClass );
+		final XClass embeddableXClass = reflectionManager.toXClass(
+				embeddableAttribute.getJavaTypeDescriptor().getJavaType()
+		);
+		final Getter embeddableGetter = embeddableAttribute.getPropertyAccess().getGetter();
 		final boolean debugEnabled = log.isDebugEnabled();
 		final List<Callback> callbacks = new ArrayList<>();
 		final List<String> callbacksMethodNames = new ArrayList<>();
