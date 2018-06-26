@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.ExcludeDefaultListeners;
@@ -28,6 +29,7 @@ import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.jpa.event.spi.Callback;
 import org.hibernate.jpa.event.spi.CallbackBuilder;
 import org.hibernate.jpa.event.spi.CallbackType;
+import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
@@ -91,6 +93,14 @@ public class CallbackBuilderLegacyImpl implements CallbackBuilder {
 			final Class entityClass = reflectionManager.toClass( entityXClass );
 
 			for ( CallbackType callbackType : CallbackType.values() ) {
+				final RepresentationMode mode = embeddableAttribute.getEmbeddedDescriptor()
+						.getRepresentationStrategy()
+						.getMode();
+
+				if ( !mode.equals( RepresentationMode.POJO ) ) {
+					continue;
+				}
+
 				final Callback[] callbacks = resolveEmbeddableCallbacks(
 						embeddableAttribute,
 						callbackType,
@@ -242,7 +252,6 @@ public class CallbackBuilderLegacyImpl implements CallbackBuilder {
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
 	public Callback[] resolveEmbeddableCallbacks(SingularPersistentAttributeEmbedded embeddableAttribute, CallbackType callbackType, ReflectionManager reflectionManager) {
-
 		final XClass embeddableXClass = reflectionManager.toXClass(
 				embeddableAttribute.getJavaTypeDescriptor().getJavaType()
 		);
