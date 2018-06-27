@@ -133,7 +133,7 @@ public class EnversSessionFactoryBasedFunctionalTest
 	 * Return the base package path for HBM mappings.  The default is {@code 'org/hibernate/test'}.
 	 */
 	protected String getBaseForMappings() {
-		return "org/hibernate/test";
+		return "org/hibernate/envers/test/";
 	}
 
 	/**
