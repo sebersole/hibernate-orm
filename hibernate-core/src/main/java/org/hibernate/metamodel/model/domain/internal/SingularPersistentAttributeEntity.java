@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
@@ -75,6 +76,7 @@ import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -94,7 +96,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
 	private final EntityDescriptor<J> entityDescriptor;
-
+	private final String referencedAttributeName;
 	private final ForeignKey foreignKey;
 
 	public SingularPersistentAttributeEntity(
@@ -132,9 +134,40 @@ public class SingularPersistentAttributeEntity<O,J>
 		// todo (6.0) : we need to delay resolving this.
 		//		this is essentially a "second pass".  for now we assume it
 		// 		points to the target entity's PK
-		assert valueMapping.isReferenceToPrimaryKey();
+//		assert valueMapping.isReferenceToPrimaryKey();
 
-		this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
+		// taken from ToOneFkSecondPass
+		if ( valueMapping.getForeignKey() != null ) {
+			this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
+			this.referencedAttributeName = null;
+		}
+		else {
+			if ( valueMapping.getReferencedPropertyName() != null ) {
+				this.referencedAttributeName = valueMapping.getReferencedPropertyName();
+			}
+			else {
+				this.referencedAttributeName = null;
+				throw new NotYetImplementedFor6Exception(  );
+			}
+			this.foreignKey = null;
+			//			/*
+//			ManyToOne manyToOne = (ManyToOne) value;
+//			PersistentClass ref = (PersistentClass) persistentClasses.get( manyToOne.getReferencedEntityName() );
+//			if ( ref == null ) {
+//				throw new AnnotationException(
+//						"@OneToOne or @ManyToOne on "
+//								+ StringHelper.qualify( entityClassName, path )
+//								+ " references an unknown entity: "
+//								+ manyToOne.getReferencedEntityName()
+//				);
+//			}
+//			manyToOne.setPropertyName( path );
+//			BinderHelper.createSyntheticPropertyReference( columns, ref, null, manyToOne, false, buildingContext );
+//			TableBinder.bindFk( ref, null, columns, manyToOne, unique, buildingContext );
+//			if ( !manyToOne.isIgnoreNotFound() ) manyToOne.createPropertyRefConstraints( persistentClasses );
+//			 */
+//			//throw new NotYetImplementedFor6Exception(  );
+		}
 
 		if ( SingularAttributeClassification.MANY_TO_ONE.equals( classification ) ) {
 			persistentAttributeType = PersistentAttributeType.MANY_TO_ONE;
@@ -352,7 +385,10 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	@Override
 	public List<Column> getColumns() {
-		return foreignKey.getColumnMappings().getReferringColumns();
+		if ( foreignKey != null ) {
+			return foreignKey.getColumnMappings().getReferringColumns();
+		}
+		return new ArrayList<>();
 	}
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
@@ -391,19 +427,35 @@ public class SingularPersistentAttributeEntity<O,J>
 		private Predicate makePredicate(TableGroup lhs, TableReference rhs) {
 			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
 
-			for ( ColumnMappings.ColumnMapping columnMapping : foreignKey.getColumnMappings().getColumnMappings() ) {
-				final ColumnReference referringColumnReference = lhs.resolveColumnReference(  columnMapping.getReferringColumn() );
-				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
+			if ( foreignKey != null ) {
+				for ( ColumnMappings.ColumnMapping columnMapping: foreignKey.getColumnMappings().getColumnMappings() ) {
+					final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
+					final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
 
-				// todo (6.0) : we need some kind of validation here that the column references are properly defined
+					// todo (6.0) : we need some kind of validation here that the column references are properly defined
 
-				conjunction.add(
-						new RelationalPredicate(
-								RelationalPredicate.Operator.EQUAL,
-								referringColumnReference,
-								targetColumnReference
-						)
-				);
+					conjunction.add(
+							new RelationalPredicate(
+									RelationalPredicate.Operator.EQUAL,
+									referringColumnReference,
+									targetColumnReference
+							)
+					);
+				}
+			}
+			else {
+				final SingularPersistentAttributeEntity attribute = (SingularPersistentAttributeEntity)
+						entityDescriptor.getSingularAttribute( referencedAttributeName );
+				final ForeignKey otherForeignKey = attribute.getForeignKey();
+				for ( ColumnMappings.ColumnMapping columnMapping : otherForeignKey.getColumnMappings().getColumnMappings() ) {
+					conjunction.add(
+							new RelationalPredicate(
+									RelationalPredicate.Operator.EQUAL,
+									lhs.resolveColumnReference( columnMapping.getTargetColumn() ),
+									rhs.resolveColumnReference( columnMapping.getReferringColumn() )
+							)
+					);
+				}
 			}
 
 			return conjunction;
@@ -443,25 +495,29 @@ public class SingularPersistentAttributeEntity<O,J>
 		// todo (6.0) : handle fetching here?  or at a "higher level"?
 		//
 		// 		for now we just load the FK
-		if ( foreignKey.getColumnMappings().getReferringColumns().size() == 1 ) {
-			return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-					resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-							qualifier,
-							foreignKey.getColumnMappings().getReferringColumns().get( 0 )
-					)
-			);
+		if ( foreignKey != null ) {
+			if ( foreignKey.getColumnMappings().getReferringColumns().size() == 1 ) {
+				return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+						resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+								qualifier,
+								foreignKey.getColumnMappings().getReferringColumns().get( 0 )
+						)
+				);
+			}
 		}
 
 		final List<SqlSelection> selections = new ArrayList<>();
-		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
-			selections.add(
-					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-									qualifier,
-									column
-							)
-					)
-			);
+		if ( foreignKey != null ) {
+			for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
+				selections.add(
+						resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+								resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+										qualifier,
+										column
+								)
+						)
+				);
+			}
 		}
 
 		return new AggregateSqlSelectionGroupNode( selections );
@@ -632,9 +688,27 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		List<ColumnReference> columnReferences = new ArrayList<>();
-		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
-			columnReferences.add( new ColumnReference( qualifier, column ) );
+		if ( foreignKey != null ) {
+			for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
+				columnReferences.add( new ColumnReference( qualifier, column ) );
+			}
 		}
 		return columnReferences;
+	}
+
+	@Override
+	protected void instantiationComplete(
+			PersistentAttributeMapping bootModelAttribute,
+			RuntimeModelCreationContext context) {
+		super.instantiationComplete( bootModelAttribute, context );
+
+		// todo (6.0) : determine mutability plan based
+		// for now its set to immutable
+
+		this.mutabilityPlan = ImmutableMutabilityPlan.INSTANCE;
+	}
+
+	public ForeignKey getForeignKey() {
+		return foreignKey;
 	}
 }
