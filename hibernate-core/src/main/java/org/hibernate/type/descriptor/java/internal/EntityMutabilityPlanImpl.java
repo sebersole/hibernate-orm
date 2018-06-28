@@ -42,7 +42,7 @@ public class EntityMutabilityPlanImpl implements EntityMutabilityPlan {
 
 	@Override
 	public Object deepCopy(Object value) {
-		throw new NotYetImplementedFor6Exception();
+		return value;
 	}
 
 	@Override
