@@ -9,6 +9,7 @@ package org.hibernate.cfg;
 import java.util.Map;
 import java.util.Optional;
 import javax.persistence.ConstraintMode;
+import javax.persistence.PrimaryKeyJoinColumn;
 
 import org.hibernate.AnnotationException;
 import org.hibernate.MappingException;
@@ -117,6 +118,34 @@ public class OneToOneSecondPass implements SecondPass {
 
 		Property prop = binder.makeProperty();
 		prop.setOptional( optional );
+
+		final ForeignKey fk = inferredData.getProperty().getAnnotation( ForeignKey.class );
+		if ( fk != null && !BinderHelper.isEmptyAnnotationValue( fk.name() ) ) {
+			value.setForeignKeyName( fk.name() );
+		}
+		else {
+			final javax.persistence.ForeignKey jpaFk = inferredData.getProperty().getAnnotation( javax.persistence.ForeignKey.class );
+			if ( jpaFk != null ) {
+				if ( jpaFk.value() == ConstraintMode.NO_CONSTRAINT ) {
+					value.setForeignKeyName( "none" );
+				}
+				else {
+					value.setForeignKeyName( StringHelper.nullIfEmpty( jpaFk.name() ) );
+					value.setForeignKeyDefinition( StringHelper.nullIfEmpty( jpaFk.foreignKeyDefinition() ) );
+				}
+			}
+			PrimaryKeyJoinColumn primaryKeyJoinColumn = inferredData.getProperty()
+					.getAnnotation( PrimaryKeyJoinColumn.class );
+			if ( primaryKeyJoinColumn != null ) {
+				final PersistentClass otherSide = (PersistentClass) persistentClasses.get( value.getReferencedEntityName() );
+
+				value.setConstrained( true );
+
+				value.setReferencedPropertyName( otherSide.getRootClass().getIdentifierAttributeMapping().getName() );
+				value.setForeignKeyName( null );
+				value.setForeignKeyDefinition( null );
+			}
+		}
 
 		if ( BinderHelper.isEmptyAnnotationValue( mappedBy ) ) {
 			/*
@@ -239,23 +268,6 @@ public class OneToOneSecondPass implements SecondPass {
 								+ " in mappedBy of "
 								+ StringHelper.qualify( ownerEntity, ownerProperty )
 				);
-			}
-		}
-
-		final ForeignKey fk = inferredData.getProperty().getAnnotation( ForeignKey.class );
-		if ( fk != null && !BinderHelper.isEmptyAnnotationValue( fk.name() ) ) {
-			value.setForeignKeyName( fk.name() );
-		}
-		else {
-			final javax.persistence.ForeignKey jpaFk = inferredData.getProperty().getAnnotation( javax.persistence.ForeignKey.class );
-			if ( jpaFk != null ) {
-				if ( jpaFk.value() == ConstraintMode.NO_CONSTRAINT ) {
-					value.setForeignKeyName( "none" );
-				}
-				else {
-					value.setForeignKeyName( StringHelper.nullIfEmpty( jpaFk.name() ) );
-					value.setForeignKeyDefinition( StringHelper.nullIfEmpty( jpaFk.foreignKeyDefinition() ) );
-				}
 			}
 		}
 	}
