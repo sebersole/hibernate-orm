@@ -44,6 +44,7 @@ import org.hibernate.sql.results.internal.CompositeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -313,5 +314,18 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		}
 
 		return false;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	protected void instantiationComplete(
+			PersistentAttributeMapping bootModelAttribute,
+			RuntimeModelCreationContext context) {
+		super.instantiationComplete( bootModelAttribute, context );
+
+		// todo (6.0) : determine mutability plan based on JTD & @Immutable
+		//		for now just use the JTD MP
+
+		this.mutabilityPlan = new EmbeddedMutabilityPlanImpl( embeddedDescriptor );
 	}
 }

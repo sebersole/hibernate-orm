@@ -74,5 +74,11 @@ public class EntityOfCompositesCrudTest extends SessionFactoryBasedFunctionalTes
 					assert "the string".equals( loaded.getComponent().getBasicString() );
 				}
 		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					session.delete( session.find( EntityOfComposites.class, 1 ) );
+				}
+		);
 	}
 }

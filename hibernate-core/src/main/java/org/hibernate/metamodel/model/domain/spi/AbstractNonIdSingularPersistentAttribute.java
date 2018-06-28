@@ -31,8 +31,8 @@ public abstract class AbstractNonIdSingularPersistentAttribute<O,J>
 	private final boolean includedInDirtyChecking;
 
 	private int stateArrayPosition;
-	private MutabilityPlan<J> mutabilityPlan;
 
+	protected MutabilityPlan<J> mutabilityPlan;
 
 	public AbstractNonIdSingularPersistentAttribute(
 			ManagedTypeDescriptor<O> runtimeContainer,
