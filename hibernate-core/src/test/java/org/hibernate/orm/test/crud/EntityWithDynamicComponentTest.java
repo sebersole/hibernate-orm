@@ -85,7 +85,7 @@ public class EntityWithDynamicComponentTest extends SessionFactoryBasedFunctiona
 
 		// Delete entity
 		sessionFactoryScope().inTransaction( session -> {
-			session.delete( session.find( EntityOfDynamicComponent.class, 1L ) );
+			session.delete( session.find( EntityOfDynamicComponent.class, 1 ) );
 		} );
 
 		// Test entity was deleted properly
