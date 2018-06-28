@@ -2,6 +2,7 @@ package org.hibernate.orm.test.crud;
 
 import java.util.Calendar;
 
+import org.hamcrest.CoreMatchers;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithOneToOne;
@@ -10,6 +11,7 @@ import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -74,15 +76,28 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 				}
 		);
 
-		// todo (6.0) - this is does not yet work but should.
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithOneToOne loaded = session.get( EntityWithOneToOne.class, 1 );
+					assert loaded != null;
+					assert loaded.getOther() != null;
+					session.remove( loaded );
+				}
+		);
 
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final EntityWithOneToOne loaded = session.get( EntityWithOneToOne.class, 1 );
-//					assert loaded != null;
-//					session.remove( loaded );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithOneToOne notfound = session.find( EntityWithOneToOne.class, 1 );
+					assertThat( notfound, CoreMatchers.nullValue() );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity simpleEntity = session.find( SimpleEntity.class, 2 );
+					assertThat( simpleEntity, notNullValue() );
+				}
+		);
 	}
 }
 

@@ -145,6 +145,10 @@ public class SingularPersistentAttributeEntity<O,J>
 			if ( valueMapping.getReferencedPropertyName() != null ) {
 				this.referencedAttributeName = valueMapping.getReferencedPropertyName();
 			}
+			else if ( valueMapping.isReferenceToPrimaryKey() ) {
+				// do nothing
+				this.referencedAttributeName = null;
+			}
 			else {
 				this.referencedAttributeName = null;
 				throw new NotYetImplementedFor6Exception(  );
