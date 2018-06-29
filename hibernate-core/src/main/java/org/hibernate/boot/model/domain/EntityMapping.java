@@ -29,4 +29,6 @@ public interface EntityMapping extends IdentifiableTypeMapping, Filterable {
 	}
 
 	MappedTable getRootTable();
+
+	boolean hasProxy();
 }

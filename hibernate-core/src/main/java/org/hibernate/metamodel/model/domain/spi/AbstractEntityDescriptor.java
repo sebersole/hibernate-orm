@@ -117,6 +117,8 @@ public abstract class AbstractEntityDescriptor<J>
 	private final boolean canReadFromCache;
 	private final boolean canWriteToCache;
 
+	private final boolean hasProxy;
+
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
 			EntityMapping bootMapping,
@@ -174,6 +176,8 @@ public abstract class AbstractEntityDescriptor<J>
 
 		// Handle any filters applied to the class level
 		this.filterHelper = new FilterHelper( bootMapping.getFilters(), factory );
+
+		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -295,6 +299,11 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	public boolean canWriteToCache() {
 		return canWriteToCache;
+	}
+
+	@Override
+	public boolean hasProxy() {
+		return hasProxy;
 	}
 
 	@Override
@@ -689,6 +698,11 @@ public abstract class AbstractEntityDescriptor<J>
 		final J instance = instantiator.instantiate( session );
 		setIdentifier( instance, id, session );
 		return instance;
+	}
+
+	@Override
+	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
+		return instantiator.createProxy( id, session );
 	}
 
 	@Override

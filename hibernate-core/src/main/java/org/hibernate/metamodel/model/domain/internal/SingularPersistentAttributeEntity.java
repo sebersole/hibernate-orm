@@ -389,6 +389,7 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	@Override
 	public List<Column> getColumns() {
+		// if there is no foreign key stored for this attribute, no columns exist for this side
 		if ( foreignKey != null ) {
 			return foreignKey.getColumnMappings().getReferringColumns();
 		}
@@ -431,7 +432,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		private Predicate makePredicate(TableGroup lhs, TableReference rhs) {
 			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
 
-			if ( foreignKey != null ) {
+			//if ( foreignKey != null ) {
 				for ( ColumnMappings.ColumnMapping columnMapping: foreignKey.getColumnMappings().getColumnMappings() ) {
 					final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
 					final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
@@ -446,21 +447,21 @@ public class SingularPersistentAttributeEntity<O,J>
 							)
 					);
 				}
-			}
-			else {
-				final SingularPersistentAttributeEntity attribute = (SingularPersistentAttributeEntity)
-						entityDescriptor.getSingularAttribute( referencedAttributeName );
-				final ForeignKey otherForeignKey = attribute.getForeignKey();
-				for ( ColumnMappings.ColumnMapping columnMapping : otherForeignKey.getColumnMappings().getColumnMappings() ) {
-					conjunction.add(
-							new RelationalPredicate(
-									RelationalPredicate.Operator.EQUAL,
-									lhs.resolveColumnReference( columnMapping.getTargetColumn() ),
-									rhs.resolveColumnReference( columnMapping.getReferringColumn() )
-							)
-					);
-				}
-			}
+//			}
+//			else {
+//				final SingularPersistentAttributeEntity attribute = (SingularPersistentAttributeEntity)
+//						entityDescriptor.getSingularAttribute( referencedAttributeName );
+//				final ForeignKey otherForeignKey = attribute.getForeignKey();
+//				for ( ColumnMappings.ColumnMapping columnMapping : otherForeignKey.getColumnMappings().getColumnMappings() ) {
+//					conjunction.add(
+//							new RelationalPredicate(
+//									RelationalPredicate.Operator.EQUAL,
+//									lhs.resolveColumnReference( columnMapping.getTargetColumn() ),
+//									rhs.resolveColumnReference( columnMapping.getReferringColumn() )
+//							)
+//					);
+//				}
+//			}
 
 			return conjunction;
 		}
@@ -692,11 +693,11 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		List<ColumnReference> columnReferences = new ArrayList<>();
-		if ( foreignKey != null ) {
+//		if ( foreignKey != null ) {
 			for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
 				columnReferences.add( new ColumnReference( qualifier, column ) );
 			}
-		}
+//		}
 		return columnReferences;
 	}
 

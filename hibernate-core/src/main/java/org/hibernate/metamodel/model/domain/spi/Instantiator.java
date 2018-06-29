@@ -20,6 +20,9 @@ public interface Instantiator<J> {
 	 */
 	J instantiate(SharedSessionContractImplementor session);
 
+	// todo (6.0) - need to confirm if this is the appropriate place for this
+	J createProxy(Object id, SharedSessionContractImplementor session);
+
 	/**
 	 * Performs and "instance of" check to see if the given object is an
 	 * instance of managed structure

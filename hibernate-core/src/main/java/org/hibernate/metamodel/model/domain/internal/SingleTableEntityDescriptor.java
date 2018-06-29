@@ -96,11 +96,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public boolean hasProxy() {
-		return false;
-	}
-
-	@Override
 	public int[] findDirty(
 			Object[] currentState,
 			Object[] previousState,
@@ -572,11 +567,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	@Override
 	public void afterReassociate(Object entity, SharedSessionContractImplementor session) {
 
-	}
-
-	@Override
-	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
-		return null;
 	}
 
 	@Override
