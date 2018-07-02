@@ -215,6 +215,9 @@ public class RuntimeModelCreationProcess {
 			moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
 		}
 
+		// todo (6.0) - add a finishInitialization iteration over Navigables
+		//		could this be done in finishUp below?
+		
 		descriptorFactory.finishUp( creationContext );
 
 		mappingMetadata.getNamedEntityGraphs().values().forEach( this::applyNamedEntityGraph );
