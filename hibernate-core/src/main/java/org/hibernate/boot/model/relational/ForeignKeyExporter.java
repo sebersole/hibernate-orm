@@ -13,6 +13,11 @@ import org.hibernate.boot.model.domain.ValueMapping;
  *
  * @author Steve Ebersole
  */
-// todo (6.0) : do we really need to extend ValueMapping? do we really need this contract?
 public interface ForeignKeyExporter extends ValueMapping {
+	/**
+	 * The foreign key this value represents.
+	 */
+	default MappedForeignKey getForeignKey() {
+		return null;
+	}
 }

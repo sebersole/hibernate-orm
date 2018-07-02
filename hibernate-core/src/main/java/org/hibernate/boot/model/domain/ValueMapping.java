@@ -10,7 +10,6 @@ import java.util.List;
 
 import org.hibernate.FetchMode;
 import org.hibernate.boot.model.relational.MappedColumn;
-import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.service.ServiceRegistry;
@@ -25,13 +24,6 @@ public interface ValueMapping<J> {
 	MappedTable getMappedTable();
 
 	List<MappedColumn> getMappedColumns();
-
-	/**
-	 * The foreign key this value represents.
-	 */
-	default MappedForeignKey getForeignKey() {
-		return null;
-	}
 
 	FetchMode getFetchMode();
 
