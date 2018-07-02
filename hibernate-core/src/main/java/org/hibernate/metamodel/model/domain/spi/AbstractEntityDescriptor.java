@@ -6,6 +6,9 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +27,7 @@ import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
@@ -33,6 +37,7 @@ import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.bytecode.internal.BytecodeEnhancementMetadataNonPojoImpl;
 import org.hibernate.bytecode.internal.BytecodeEnhancementMetadataPojoImpl;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
+import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.EntityEntryFactory;
@@ -42,6 +47,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
+import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.loader.internal.StandardMultiIdEntityLoader;
 import org.hibernate.loader.internal.StandardNaturalIdLoader;
 import org.hibernate.loader.internal.StandardSingleIdEntityLoader;
@@ -66,6 +72,11 @@ import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.property.access.spi.Getter;
+import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.property.access.spi.Setter;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -118,6 +129,9 @@ public abstract class AbstractEntityDescriptor<J>
 	private final boolean canWriteToCache;
 
 	private final boolean hasProxy;
+	private final Class proxyInterface;
+
+	private ProxyFactory proxyFactory;
 
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
@@ -178,6 +192,93 @@ public abstract class AbstractEntityDescriptor<J>
 		this.filterHelper = new FilterHelper( bootMapping.getFilters(), factory );
 
 		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
+		proxyInterface = bootMapping.getProxyInterface();
+	}
+
+	private ProxyFactory createProxy(EntityIdentifier<Object, Object> identifierDescriptor) {
+		PropertyAccess propertyAccess = identifierDescriptor.asAttribute( identifierDescriptor.getJavaType() )
+				.getPropertyAccess();
+		final Getter idGetter = propertyAccess.getGetter();
+		final Setter idSetter = propertyAccess.getSetter();
+		Set<Class> proxyInterfaces = new java.util.LinkedHashSet<>();
+
+		Class mappedClass = getJavaTypeDescriptor().getJavaType();
+		addProxyInterfaces( proxyInterfaces );
+
+		if ( mappedClass.isInterface() ) {
+			proxyInterfaces.add( mappedClass );
+		}
+
+		Collection<InheritanceCapable<? extends J>> subclassTypes = getSubclassTypes();
+		subclassTypes.forEach( inheritanceCapable -> {
+			if ( AbstractEntityDescriptor.class.isInstance( inheritanceCapable ) ) {
+				addProxyInterfaces( proxyInterfaces );
+			}
+		} );
+
+		proxyInterfaces.add( HibernateProxy.class );
+		visitAttributes( attribute -> {
+			PropertyAccess attributePropertyAccess = attribute.getPropertyAccess();
+			Method method = attributePropertyAccess.getGetter().getMethod();
+			if ( method != null && Modifier.isFinal( method.getModifiers() ) ) {
+				log.gettersOfLazyClassesCannotBeFinal( getEntityName(), attribute.getAttributeName() );
+			}
+			method = attributePropertyAccess.getSetter().getMethod();
+			if ( method != null && Modifier.isFinal( method.getModifiers() ) ) {
+				log.settersOfLazyClassesCannotBeFinal( getEntityName(), attribute.getAttributeName() );
+			}
+		} );
+
+		Method idGetterMethod = idGetter == null ? null : idGetter.getMethod();
+		Method idSetterMethod = idSetter == null ? null : idSetter.getMethod();
+
+		Method proxyGetIdentifierMethod = idGetterMethod == null || proxyInterface == null ?
+				null :
+				ReflectHelper.getMethod( proxyInterface, idGetterMethod );
+		Method proxySetIdentifierMethod = idSetterMethod == null || proxyInterface == null ?
+				null :
+				ReflectHelper.getMethod( proxyInterface, idSetterMethod );
+
+		ProxyFactory pf = buildProxyFactoryInternal( idGetter, idSetter );
+		EmbeddedTypeDescriptor embeddedIdTypeDescritor = null;
+		if ( EmbeddedTypeDescriptor.class.isInstance( embeddedIdTypeDescritor ) ) {
+			embeddedIdTypeDescritor = (EmbeddedTypeDescriptor) identifierDescriptor;
+		}
+		try {
+			pf.postInstantiate(
+					getEntityName(),
+					mappedClass,
+					proxyInterfaces,
+					proxyGetIdentifierMethod,
+					proxySetIdentifierMethod,
+					embeddedIdTypeDescritor
+			);
+		}
+		catch (HibernateException he) {
+			log.unableToCreateProxyFactory( getEntityName(), he );
+			pf = null;
+		}
+		return pf;
+	}
+
+	protected void addProxyInterfaces(Set<Class> proxyInterfaces){
+		Class<J> javaClass = getJavaTypeDescriptor().getJavaType();
+		if ( proxyInterface != null && !javaClass.equals( proxyInterface ) ) {
+			if ( !proxyInterface.isInterface() ) {
+				throw new MappingException(
+						"proxy must be either an interface, or the class itself: " + getNavigableName()
+				);
+			}
+			proxyInterfaces.add( proxyInterface );
+		}
+	}
+
+	protected ProxyFactory buildProxyFactoryInternal(
+			Getter idGetter,
+			Setter idSetter) {
+		// TODO : YUCK!!!  fix after HHH-1907 is complete
+		return Environment.getBytecodeProvider().getProxyFactoryFactory().buildProxyFactory( getFactory() );
+//		return getFactory().getSettings().getBytecodeProvider().getProxyFactoryFactory().buildProxyFactory();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -279,6 +380,12 @@ public abstract class AbstractEntityDescriptor<J>
 				getJavaTypeDescriptor().getEntityName(),
 				getJavaTypeDescriptor().getJpaEntityName()
 		);
+		if ( hasProxy ) {
+			this.proxyFactory = createProxy( getHierarchy().getIdentifierDescriptor() );
+		}
+		else {
+			this.proxyFactory = null;
+		}
 	}
 
 	@Override
@@ -702,7 +809,7 @@ public abstract class AbstractEntityDescriptor<J>
 
 	@Override
 	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
-		return instantiator.createProxy( id, session );
+		return proxyFactory.getProxy( (Serializable) id, session );
 	}
 
 	@Override

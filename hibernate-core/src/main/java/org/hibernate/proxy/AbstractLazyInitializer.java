@@ -18,6 +18,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.type.descriptor.java.MutabilityPlan;
 
 /**
  * Convenience base class for lazy initialization handlers.  Centralizes the basic plumbing of doing lazy
@@ -120,7 +121,11 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 				if ( readOnlyBeforeAttachedToSession == null ) {
 					// use the default read-only/modifiable setting
 					final EntityDescriptor entityDescriptor = s.getFactory().getEntityPersister( entityName );
-					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() );
+					MutabilityPlan mutabilityPlan = entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan();
+					if ( mutabilityPlan == null ) {
+						mutabilityPlan = entityDescriptor.getHierarchy().getMutabilityPlan();
+					}
+					setReadOnly( s.getPersistenceContext().isDefaultReadOnly() || !mutabilityPlan.isMutable() );
 				}
 				else {
 					// use the read-only/modifiable setting indicated during deserialization

@@ -160,6 +160,7 @@ public abstract class PersistentClass
 		}
 	}
 
+	@Override
 	public Class getProxyInterface() {
 		if ( proxyInterfaceName == null ) {
 			return null;
@@ -1153,8 +1154,8 @@ public abstract class PersistentClass
 		//				!ReflectHelper.isFinalClass( persistentClass.getProxyInterface() )
 		//		);
 		return isLazy() && (
-				getExplicitRepresentationMode().equals( RepresentationMode.POJO ) ||
-				!ReflectHelper.isFinalClass( getProxyInterface() )
+				!getExplicitRepresentationMode().equals( RepresentationMode.POJO ) || (
+						getProxyInterface() != null && !ReflectHelper.isFinalClass( getProxyInterface() ))
 		);
 	}
 }

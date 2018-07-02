@@ -6,9 +6,7 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
@@ -39,10 +37,5 @@ public abstract class AbstractPojoInstantiator implements Instantiator {
 	@Override
 	public boolean isInstance(Object object, SessionFactoryImplementor sessionFactory) {
 		return mappedPojoClass.isInstance( object );
-	}
-
-	@Override
-	public Object createProxy(Object id, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
 	}
 }

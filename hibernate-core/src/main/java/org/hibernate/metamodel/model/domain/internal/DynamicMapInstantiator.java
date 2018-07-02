@@ -9,7 +9,6 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -34,11 +33,6 @@ public class DynamicMapInstantiator implements Instantiator<Map> {
 			map.put( KEY, navigableRole.getFullPath() );
 		}
 		return map;
-	}
-
-	@Override
-	public Map createProxy(Object id, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
 	}
 
 	protected Map generateMap() {

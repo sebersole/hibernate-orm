@@ -61,4 +61,5 @@ public class PojoInstantiatorImpl<J> extends AbstractPojoInstantiator {
 			}
 		}
 	}
+
 }
