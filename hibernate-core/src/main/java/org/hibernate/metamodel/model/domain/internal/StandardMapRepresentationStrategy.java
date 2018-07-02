@@ -9,12 +9,15 @@ package org.hibernate.metamodel.model.domain.internal;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.bytecode.spi.BytecodeProvider;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
+import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.property.access.internal.PropertyAccessStrategyMapImpl;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.proxy.ProxyFactory;
 
 /**
  * @author Steve Ebersole
@@ -37,6 +40,14 @@ public class StandardMapRepresentationStrategy implements ManagedTypeRepresentat
 			ManagedTypeDescriptor runtimeModel,
 			BytecodeProvider bytecodeProvider) {
 		return new DynamicMapInstantiator( runtimeModel.getNavigableRole() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <J> ProxyFactory generateProxyFactory(
+			AbstractEntityDescriptor<J> runtimeDescriptor,
+			RuntimeModelCreationContext creationContext) {
+		return StandardMapProxyFactoryInstantiator.INSTANCE.instantiate( runtimeDescriptor, creationContext );
 	}
 
 	@Override

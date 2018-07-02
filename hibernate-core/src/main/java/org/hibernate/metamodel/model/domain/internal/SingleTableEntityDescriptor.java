@@ -620,11 +620,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Class getConcreteProxyClass() {
-		return null;
-	}
-
-	@Override
 	public boolean hasUninitializedLazyProperties(Object object) {
 		return false;
 	}
