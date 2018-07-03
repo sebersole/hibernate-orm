@@ -51,6 +51,24 @@ public interface Navigable<T> extends DomainType<T> {
 	 */
 	void visitNavigable(NavigableVisitationStrategy visitor);
 
+	/**
+	 * Finish initialization step.
+	 *
+	 * It's important to understand that the runtime creation process will call this
+	 * method on the navigable until one of several conditions are met
+	 *
+	 * <ul>
+	 *     <li>All navigables have returned true.</li>
+	 *     <li>The navigable returned false and needs to wait for other dependencies.</li>
+	 *     <li>The list of navigables have some missing or cyclic dependency</li>
+	 * </ul>
+	 *
+	 * @return true if initialization complete, false if not yet done.
+	 */
+	default boolean finishInitialization() {
+		return true;
+	}
+
 	default SqmNavigableReference createSqmExpression(
 			// todo (6.0) : remove `sourceSqmFrom` - we should be able to deduce this based on the `containerReference` and this implementation
 			//		and passing it in here makes it impossible for the SqmNavigableReference to create these as proper

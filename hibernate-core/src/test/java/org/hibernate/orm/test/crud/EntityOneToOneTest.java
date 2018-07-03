@@ -28,6 +28,7 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 	public static class Parent {
 		@Id
 		private Integer id;
+		private String description;
 		@OneToOne(mappedBy = "parent")
 		private Child child;
 
@@ -47,6 +48,14 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 			this.id = id;
 		}
 
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
 		public Child getChild() {
 			return child;
 		}
@@ -64,12 +73,13 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 				return false;
 			}
 			Parent parent = (Parent) o;
-			return Objects.equals( id, parent.id );
+			return Objects.equals( id, parent.id ) &&
+					Objects.equals( description, parent.description );
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash( id );
+			return Objects.hash( id, description );
 		}
 	}
 
@@ -77,6 +87,7 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 	public static class Child {
 		@Id
 		private Integer id;
+		private String name;
 		@OneToOne
 		private Parent parent;
 
@@ -98,6 +109,14 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 			this.id = id;
 		}
 
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
 		public Parent getParent() {
 			return parent;
 		}
@@ -116,12 +135,13 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 			}
 			Child child = (Child) o;
 			return Objects.equals( id, child.id ) &&
+					Objects.equals( name, child.name ) &&
 					Objects.equals( parent, child.parent );
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash( id, parent );
+			return Objects.hash( id, name, parent );
 		}
 	}
 
@@ -143,21 +163,29 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 		sessionFactoryScope().inTransaction( session -> {
 			Parent parent = new Parent( 1 );
 			Child child = new Child( 1, parent );
+			child.setName( "Acme" );
 			session.save( parent );
 			session.save( child );
 		} );
 
-		sessionFactoryScope().inTransaction( session -> {
-			Parent parent = session.createQuery(
-						"SELECT p FROM Parent p JOIN p.child WHERE p.id = :id",
-						Parent.class
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final Parent parent = session.createQuery(
+							"SELECT p FROM Parent p JOIN p.child WHERE p.id = :id",
+							Parent.class
 					)
 					.setParameter( "id", 1 )
 					.getSingleResult();
-//			final Parent parent = session.find( Parent.class, 1 );
-//			final Child child = session.find( Child.class, 1 );
-//			assertThat( child.getParent(), CoreMatchers.is( parent ) );
+
+					assertThat( parent.getChild(), CoreMatchers.notNullValue() );
+					assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
+				}
+		);
+
+		sessionFactoryScope().inTransaction( session -> {
+			final Parent parent = session.get( Parent.class, 1 );
 			assertThat( parent.getChild(), CoreMatchers.notNullValue() );
+			assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
 		} );
 	}
 }

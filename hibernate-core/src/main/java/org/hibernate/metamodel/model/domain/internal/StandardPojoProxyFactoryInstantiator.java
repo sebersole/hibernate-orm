@@ -45,6 +45,7 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 			RuntimeModelCreationContext creationContext) {
 		final EntityIdentifier identifierDescriptor = runtimeDescriptor.getHierarchy().getIdentifierDescriptor();
 
+		// todo (6.0) - can refactor some of this out with the bytecode provider
 		PropertyAccess propertyAccess = identifierDescriptor.asAttribute( identifierDescriptor.getJavaType() )
 				.getPropertyAccess();
 		final Getter idGetter = propertyAccess.getGetter();
