@@ -7,22 +7,23 @@
 package org.hibernate.orm.test.crud;
 
 import java.util.Objects;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
-import org.hamcrest.CoreMatchers;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
+
 import org.junit.jupiter.api.Test;
+
+import org.hamcrest.CoreMatchers;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Chris Cranford
  */
-public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
+public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunctionalTest {
 
 	@Entity(name = "Parent")
 	public static class Parent {
@@ -162,7 +163,8 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 	public void testOneToOne() {
 		sessionFactoryScope().inTransaction( session -> {
 			Parent parent = new Parent( 1 );
-			Child child = new Child( 1, parent );
+			parent.setDescription( "Hibernate" );
+			Child child = new Child( 2, parent );
 			child.setName( "Acme" );
 			session.save( parent );
 			session.save( child );
@@ -170,16 +172,36 @@ public class EntityOneToOneTest extends SessionFactoryBasedFunctionalTest {
 
 		sessionFactoryScope().inTransaction(
 				session -> {
+					final Child child = session.createQuery(
+							"SELECT c FROM Child c JOIN c.parent d WHERE d.id = :id",
+							Child.class
+					)
+							.setParameter( "id", 1 )
+							.getSingleResult();
+
+					assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
+					String description = child.getParent().getDescription();
+					assertThat( description, CoreMatchers.notNullValue() );
+				}
+
+		);
+
+
+		sessionFactoryScope().inTransaction(
+				session -> {
 					final Parent parent = session.createQuery(
 							"SELECT p FROM Parent p JOIN p.child WHERE p.id = :id",
 							Parent.class
 					)
-					.setParameter( "id", 1 )
-					.getSingleResult();
+							.setParameter( "id", 1 )
+							.getSingleResult();
 
 					assertThat( parent.getChild(), CoreMatchers.notNullValue() );
-					assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
+					String name = parent.getChild().getName();
+					assertThat( name, CoreMatchers.notNullValue() );
 				}
+
 		);
 
 		sessionFactoryScope().inTransaction( session -> {

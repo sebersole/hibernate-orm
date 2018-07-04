@@ -14,7 +14,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  *
  * @author Steve Ebersole
  */
-public interface NaturalIdLoader {
+public interface NaturalIdLoader extends Loader {
 	interface LoadOptions {
 		/**
 		 * The locking options for the loaded entity

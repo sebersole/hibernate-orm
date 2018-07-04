@@ -16,6 +16,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
@@ -23,8 +24,11 @@ import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.EntityUniqueKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.loader.internal.StandardSingleUniqueKeyEntityLoader;
+import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -114,7 +118,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
 
 		final ToOne valueMapping = (ToOne) bootModelAttribute.getValueMapping();
-
+		referencedAttributeName = valueMapping.getReferencedPropertyName();
 
 		if ( valueMapping.getReferencedEntityName() == null ) {
 			throw new MappingException(
@@ -142,15 +146,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		// taken from ToOneFkSecondPass
 		if ( valueMapping.getForeignKey() != null ) {
 			this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
-			this.referencedAttributeName = null;
-		}
-		else {
-			if ( valueMapping.getReferencedPropertyName() != null ) {
-				this.referencedAttributeName = valueMapping.getReferencedPropertyName();
-			}
-			else {
-				this.referencedAttributeName = null;
-			}
 		}
 
 		if ( SingularAttributeClassification.MANY_TO_ONE.equals( classification ) ) {
@@ -185,6 +180,7 @@ public class SingularPersistentAttributeEntity<O,J>
 						foreignKeyOwning.getName(),
 						false,
 						foreignKeyOwning.getKeyDefinition(),
+						false,
 						false,
 						foreignKeyOwning.getTargetTable(),
 						foreignKeyOwning.getReferringTable(),
@@ -540,54 +536,74 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		// todo (6.0) : WrongClassException?
 
+		if ( foreignKey.isReferenceToPrimaryKey() ) {
+			// step 1 - generate EntityKey based on hydrated id form
+			final Object resolvedIdentifier = getEntityDescriptor().getHierarchy()
+					.getIdentifierDescriptor()
+					.resolveHydratedState(
+							hydratedForm,
+							resolutionContext,
+							session,
+							null
+					);
+			final EntityKey entityKey = new EntityKey( resolvedIdentifier, getEntityDescriptor() );
 
-		// step 1 - generate EntityKey based on hydrated id form
-		final Object resolvedIdentifier = getEntityDescriptor().getHierarchy().getIdentifierDescriptor().resolveHydratedState(
-				hydratedForm,
-				resolutionContext,
-				session,
-				null
-		);
-		final EntityKey entityKey = new EntityKey( resolvedIdentifier, getEntityDescriptor() );
 
+			// step 2 - look for a matching entity (by EntityKey) on the context
+			//		NOTE - we pass `! isOptional()` as `eager` to `resolveEntityInstance` because
+			//		if it were being fetched dynamically (join fetch) that would have lead to an
+			//		EntityInitializer for this entity being created and it would be available in the
+			//		`resolutionContext`
+			final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, !isOptional() );
+			if ( entityInstance != null ) {
+				return entityInstance;
+			}
 
-		// step 2 - look for a matching entity (by EntityKey) on the context
-		//		NOTE - we pass `! isOptional()` as `eager` to `resolveEntityInstance` because
-		//		if it were being fetched dynamically (join fetch) that would have lead to an
-		//		EntityInitializer for this entity being created and it would be available in the
-		//		`resolutionContext`
-		final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, ! isOptional() );
-		if ( entityInstance != null ) {
-			return entityInstance;
+			// try loading it...
+			//
+			// todo (6.0) : need to make sure that the "JdbcValues" we are processing here have been added to the Session's stack of "load contexts"
+			//		that allows the loader(s) to resolve entity's that are being loaded here.
+			//
+			//		NOTE : this is how we get around having to register a "holder" EntityEntry with the PersistenceContext
+			//		but still letting other (recursive) loads find references we are loading.
+
+			J loaded = getEntityDescriptor().getSingleIdLoader().load(
+					resolvedIdentifier,
+					NO_LOAD_OPTIONS,
+					session
+			);
+			if ( loaded != null ) {
+				return loaded;
+			}
+			throw new EntityNotFoundException(
+					String.format(
+							Locale.ROOT,
+							"Unable to resolve entity-valued association [%s] foreign key value [%s] to associated entity instance of type [%s]",
+							getNavigableRole(),
+							resolvedIdentifier,
+							getEntityDescriptor().getJavaTypeDescriptor()
+					)
+			);
 		}
-
-		// try loading it...
-		//
-		// todo (6.0) : need to make sure that the "JdbcValues" we are processing here have been added to the Session's stack of "load contexts"
-		//		that allows the loader(s) to resolve entity's that are being loaded here.
-		//
-		//		NOTE : this is how we get around having to register a "holder" EntityEntry with the PersistenceContext
-		//		but still letting other (recursive) loads find references we are loading.
-
-		J loaded = getEntityDescriptor().getSingleIdLoader().load(
-				resolvedIdentifier,
-				NO_LOAD_OPTIONS,
-				session
-		);
-
-		if ( loaded != null ) {
+		else if ( referencedAttributeName != null ) {
+			SingleUniqueKeyEntityLoader<J> loader = new StandardSingleUniqueKeyEntityLoader(
+					referencedAttributeName,
+					getEntityDescriptor()
+			);
+			EntityUniqueKey euk = new EntityUniqueKey(
+					getEntityDescriptor().getEntityName(),
+					referencedAttributeName,
+					hydratedForm,
+					getJavaTypeDescriptor(),
+					getEntityDescriptor().getHierarchy().getRepresentation(),
+					session.getFactory()
+			);
+			// todo (6.0) : look into resolutionContext
+			J loaded = loader.load( containerInstance, session, () -> LockOptions.NONE );
+			// todo (6.0) : if loaded != null add it to the resolutionContext
 			return loaded;
 		}
-
-		throw new EntityNotFoundException(
-				String.format(
-						Locale.ROOT,
-						"Unable to resolve entity-valued association [%s] foreign key value [%s] to associated entity instance of type [%s]",
-						getNavigableRole(),
-						resolvedIdentifier,
-						getEntityDescriptor().getJavaTypeDescriptor()
-				)
-		);
+		return null;
 	}
 
 	@Override

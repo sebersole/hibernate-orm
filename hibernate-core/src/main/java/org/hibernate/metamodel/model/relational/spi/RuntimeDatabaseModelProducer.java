@@ -250,6 +250,7 @@ public class RuntimeDatabaseModelProducer {
 								bootFk.isCreationEnabled() && bootFk.isPhysicalConstraint(),
 								bootFk.getKeyDefinition(),
 								bootFk.isCascadeDeleteEnabled(),
+								bootFk.isReferenceToPrimaryKey(),
 								runtimeTargetTable,
 								new ColumnMappingsImpl(
 										runtimeReferringTable,

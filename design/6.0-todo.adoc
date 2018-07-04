@@ -37,14 +37,13 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 * Mappings
 ** ManyToOne
 	*** Bidirectional
+** OneToOne
 ** OneToMany
 ** ManyToMany
-** OneToOne
-** Inheritance
 
+* Fetching
 * Cascading
 * Batching
-* RepresentationMode
 
 * CRUD
 ** Delete
@@ -53,12 +52,8 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 * [.line-through]#Drop `Query#iterate` support (shallow queries)?#
 * [.line-through]#Determine how to deal with `JpaExpression#getExpressionSqmType`.
 	It is only used in "basic contexts" (function return types, arithmetic results, etc)#
-* [.line-through]#split concept of NavigablePath and NavigableRole (PropertyPath renamed).  NavigablePath
-	represents an ongoing path in a query; NavigableRole represents the static role of an attribute
-	in relation to a root entity#
-* [.line-through]#find all usage of `LoadPlan` and replace it with
-	`org.hibernate.sql.ast.produce.spi.SqlSelectPlan` / `org.hibernate.sql.exec.spi.JdbcSelect`.  This will
-	include the following (and more probably) replacements:
+* [.line-through]#split concept of NavigablePath and NavigableRole (PropertyPath renamed). NavigablePath represents an ongoing path in a query; NavigableRole represents the static role of an attribute in relation to a root entity#
+* [.line-through]#find all usage of `LoadPlan` and replace it with	`org.hibernate.sql.ast.produce.spi.SqlSelectPlan` / `org.hibernate.sql.exec.spi.JdbcSelect`. This will include the following (and more probably) replacements:#
 	** `AssociationVisitationStrategy` -> `NavigableVisitationStrategy`
 	** `EntityDefinition` -> ? `EntityReference` or `EntityPersister`?
 	** `AttributeSource` -> ? `PersistentAttribute` or `Navigable`?
@@ -71,12 +66,12 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 	** `org.hibernate.loader.plan.spi.QuerySpaces` -> `org.hibernate.sql.ast.tree.spi.from.FromClause` ?
 		*** `org.hibernate.loader.plan.spi.QuerySpace` -> `org.hibernate.sql.ast.tree.spi.from.TableSpace`
 		*** etc..
-	** etc..#
+	** etc..
 * need to investigate the impact on counter-parts for "result assembly".
 * be sure to test bi-directional "key-many-to-one" references.  That is something LoadPlan code does a lot of
 	work to handle properly.  Need to find the test that Gail wrote for this.
 * prior to release, look at the Alpha2 list and see if there is any "low-hanging fruit" we could
-* Make Byte Buddy the default bytecode provider
+* [.line-through]#Make Byte Buddy the default bytecode provider#
 * Make sure we have added `@since 6.0` to all major API/SPI contracts we have added in 6.0 dev.  Also,
  	add `@Incubating` to those where appropriate.  ? - Is it valid to apply the `@Incubating` annotation
  	at the package level?
@@ -84,6 +79,11 @@ As always the "trigger" for Beta1 is (relatively) stable API.
 
 
 === Alpha2
+
+* Mappings
+	** Inheritance
+
+* RepresentationMode
 
 * General "literal as JDBC parameter" feature based on SQM?  I currently have
 		added this via the `org.hibernate.query.QueryLiteralRendering` enum and

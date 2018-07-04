@@ -81,6 +81,7 @@ public abstract class AbstractTable implements InflightTable {
 			boolean export,
 			String keyDefinition,
 			boolean cascadeDeleteEnabled,
+			boolean isReferenceToPrimaryKey,
 			Table targetTable,
 			ForeignKey.ColumnMappings columnMappings) {
 		final ForeignKey foreignKey = new ForeignKey(
@@ -88,6 +89,7 @@ public abstract class AbstractTable implements InflightTable {
 				export,
 				keyDefinition,
 				cascadeDeleteEnabled,
+				isReferenceToPrimaryKey,
 				this,
 				targetTable,
 				columnMappings
