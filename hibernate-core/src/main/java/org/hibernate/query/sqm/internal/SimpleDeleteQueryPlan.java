@@ -16,7 +16,7 @@ import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmDeleteToSqlAstConverterSimple;
@@ -46,7 +46,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 		final DeleteStatement deleteStatement = SqmDeleteToSqlAstConverterSimple.interpret(
 				sqmStatement,
 				queryOptions,
-				new SqlAstBuildingContext() {
+				new SqlAstCreationContext() {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return session.getFactory();

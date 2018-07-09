@@ -116,7 +116,7 @@ import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
@@ -208,7 +208,7 @@ public abstract class BaseSqmToSqlAstConverter
 		SUBQUERY
 	}
 
-	private final SqlAstBuildingContext sqlAstBuildingContext;
+	private final SqlAstCreationContext sqlAstCreationContext;
 	private final QueryOptions queryOptions;
 
 	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
@@ -232,16 +232,16 @@ public abstract class BaseSqmToSqlAstConverter
 
 
 	public BaseSqmToSqlAstConverter(
-			SqlAstBuildingContext sqlAstBuildingContext,
+			SqlAstCreationContext sqlAstCreationContext,
 			QueryOptions queryOptions) {
-		super( sqlAstBuildingContext.getSessionFactory() );
-		this.sqlAstBuildingContext = sqlAstBuildingContext;
+		super( sqlAstCreationContext.getSessionFactory() );
+		this.sqlAstCreationContext = sqlAstCreationContext;
 		this.queryOptions = queryOptions;
 	}
 
 
-	public SqlAstBuildingContext getSqlAstBuildingContext() {
-		return sqlAstBuildingContext;
+	public SqlAstCreationContext getSqlAstCreationContext() {
+		return sqlAstCreationContext;
 	}
 
 	protected Set<String> affectedTableNames() {

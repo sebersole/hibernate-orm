@@ -17,11 +17,9 @@
  *
  * == From HQL/JPQL
  *
- * SemanticQueryProducer defines just a single method for producing SQM based on HQL:
+ * `SemanticQueryProducer` defines just a single method for producing SQM based on HQL:
  * {@link org.hibernate.query.sqm.produce.spi.SemanticQueryProducer#interpret(java.lang.String)}.
- * We have just a single method here because we do not inherently understand from just a String
- * whether we have a SELECT, UPDATE, etc.  See {@link org.hibernate.query.sqm.produce.internal.hql}
- * for details
+ * See {@link org.hibernate.query.sqm.produce.internal.hql} for details
  *
  * == From Criteria
  *
@@ -30,10 +28,13 @@
  * [NOTE]
  * ====
  * Would be nice later to be able to define our JPA Criteria impls based
- * on the SQM tree itself, meaning no walking to convert - we'd kind of
- * build the SQM as the user defines the Criteria, rather than a separate
- * "conversion walk".  However, this absolutely requires folding the SQM
- * project into ORM.
+ * on the SQM tree itself, meaning no walking to convert.  The conceptual
+ * challenge here is that SQM is inherently "scoped" to a context
+ * ({@link org.hibernate.query.sqm.produce.spi.SqmCreationContext}, which is
+ * generally the Query instance). However, Criteria is inherently un-scoped -
+ * it is created from the {@link javax.persistence.criteria.CriteriaBuilder}
+ * which is "global" to the SessionFactory/EntityManagerFactory; it must first
+ * be turned into a Query through a Session.
  * ====
  *
  * == Exceptions

@@ -27,7 +27,7 @@ import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -59,13 +59,13 @@ public class SqmUpdateToSqlAstConverterMultiTable
 			SqmUpdateStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstBuildingContext sqlAstBuildingContext) {
+			SqlAstCreationContext sqlAstCreationContext) {
 
 		final SqmUpdateToSqlAstConverterMultiTable walker = new SqmUpdateToSqlAstConverterMultiTable(
 				sqmStatement,
 				idTableSelect,
 				queryOptions,
-				sqlAstBuildingContext
+				sqlAstCreationContext
 		);
 
 		walker.visitUpdateStatement( sqmStatement );
@@ -89,8 +89,8 @@ public class SqmUpdateToSqlAstConverterMultiTable
 			SqmUpdateStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstBuildingContext sqlAstBuildingContext) {
-		super( sqlAstBuildingContext, queryOptions );
+			SqlAstCreationContext sqlAstCreationContext) {
+		super( sqlAstCreationContext, queryOptions );
 		this.idTableSelect = idTableSelect;
 
 		this.entityDescriptor = sqmStatement.getEntityFromElement()

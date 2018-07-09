@@ -8,13 +8,15 @@ package org.hibernate.sql.ast.produce.ordering.internal;
 
 import java.util.List;
 
+import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.sqm.produce.internal.hql.HqlParseTreeBuilder;
 import org.hibernate.query.sqm.produce.internal.hql.HqlParseTreePrinter;
 import org.hibernate.query.sqm.produce.internal.hql.grammar.HqlParser;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 
@@ -26,7 +28,7 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class OrderByFragmentTranslator implements SqlAstBuildingContext {
+public class OrderByFragmentTranslator implements SqlAstCreationContext, SqlQueryOptions {
 	private static final Logger LOG = Logger.getLogger( OrderByFragmentTranslator.class.getName() );
 
 	/**
@@ -94,5 +96,34 @@ public class OrderByFragmentTranslator implements SqlAstBuildingContext {
 
 		return OrderByFragmentRenderer.renderOrderByFragment( translationContext, collectionDescriptor, sortSpecifications );
 
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// SqlQueryOptions
+
+	@Override
+	public Integer getFirstRow() {
+		return null;
+	}
+
+	@Override
+	public Integer getMaxRows() {
+		return null;
+	}
+
+	@Override
+	public LockOptions getLockOptions() {
+		return LockOptions.NONE;
+	}
+
+	@Override
+	public String getComment() {
+		return null;
+	}
+
+	@Override
+	public List<String> getDatabaseHints() {
+		return null;
 	}
 }

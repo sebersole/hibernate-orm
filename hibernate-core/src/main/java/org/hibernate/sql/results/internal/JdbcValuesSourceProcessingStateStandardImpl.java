@@ -264,7 +264,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 	@Override
 	public void finishUp() {
-		executionContext.getPersistenceContext().getPersistenceContext().getLoadContexts().register( this );
+		executionContext.getSession().getPersistenceContext().getLoadContexts().register( this );
 
 		try {
 			// for arrays, we should end the collection load beforeQuery resolving the entities, since the

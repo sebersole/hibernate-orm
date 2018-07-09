@@ -45,7 +45,7 @@ import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
@@ -78,11 +78,11 @@ import org.jboss.logging.Logger;
  */
 public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		implements MetamodelDrivenSqlSelectPlanBuilder, RootTableGroupContext, JoinedTableGroupContext,
-		QueryResultCreationContext, SqlAstBuildingContext {
+		QueryResultCreationContext, SqlAstCreationContext {
 
 	private static final Logger log = Logger.getLogger( AbstractMetamodelDrivenSqlSelectPlanBuilder.class );
 
-	private final SqlAstBuildingContext buildingContext;
+	private final SqlAstCreationContext buildingContext;
 	private final LoadQueryInfluencers loadQueryInfluencers;
 	private final LockOptions lockOptions;
 
@@ -125,7 +125,7 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 	 * @param lockOptions The requested locking profile
 	 */
 	public AbstractMetamodelDrivenSqlSelectPlanBuilder(
-			SqlAstBuildingContext buildingContext,
+			SqlAstCreationContext buildingContext,
 			LoadQueryInfluencers loadQueryInfluencers,
 			LockOptions lockOptions) {
 		this.buildingContext = buildingContext;

@@ -9,6 +9,7 @@ package org.hibernate.query.sql.internal;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
@@ -35,9 +36,9 @@ public class ResultSetMappingDescriptorDefined implements ResultSetMappingDescri
 	@Override
 	public ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		for ( SqlSelection sqlSelection : resolvedMapping.getSqlSelections() ) {
-			sqlSelection.prepare( jdbcResultsMetadata, resolutionContext );
+			sqlSelection.prepare( jdbcResultsMetadata, sessionFactory );
 		}
 
 		return resolvedMapping;

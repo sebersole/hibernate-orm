@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.results.internal.ScalarQueryResultAssembler;
@@ -40,14 +41,12 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 
 	public static ResultSetMapping resolveStatic(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		final int columnCount = jdbcResultsMetadata.getColumnCount();
 		final HashSet<SqlSelection> sqlSelections = new HashSet<>( columnCount );
 		final List<QueryResult> queryResults = CollectionHelper.arrayList( columnCount );
 
-		final TypeConfiguration typeConfiguration = resolutionContext.getPersistenceContext()
-				.getFactory()
-				.getTypeConfiguration();
+		final TypeConfiguration typeConfiguration = sessionFactory.getTypeConfiguration();
 
 		for ( int columnPosition = 0; columnPosition < columnCount; columnPosition++ ) {
 			final String columnName = jdbcResultsMetadata.resolveColumnName( columnPosition );
@@ -107,8 +106,8 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 	@Override
 	public ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
-			ResolutionContext resolutionContext) {
-		return resolveStatic( jdbcResultsMetadata, resolutionContext );
+			SessionFactoryImplementor sessionFactory) {
+		return resolveStatic( jdbcResultsMetadata, sessionFactory );
 	}
 
 	private static class SqlSelectionImpl implements SqlSelection {

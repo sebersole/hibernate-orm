@@ -37,9 +37,10 @@ import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
+import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
@@ -63,7 +64,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
  * @author Steve Ebersole
  */
 public class MetamodelSelectBuilderProcess
-		implements QueryResultCreationContext, SqlAstBuildingContext {
+		implements QueryResultCreationContext, SqlAstCreationContext, SqlQueryOptions {
 
 	public static SqlAstSelectDescriptor createSelect(
 			SessionFactoryImplementor sessionFactory,
@@ -276,8 +277,7 @@ public class MetamodelSelectBuilderProcess
 
 					@Override
 					public String getIdentificationVariable() {
-						// todo (6.0) : is "root" a reserved word?
-						return "root";
+						return "this";
 					}
 
 					@Override
@@ -357,7 +357,32 @@ public class MetamodelSelectBuilderProcess
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// QueryResultCreationContext
+	// SqlQueryOptions
+
+	@Override
+	public Integer getFirstRow() {
+		return null;
+	}
+
+	@Override
+	public Integer getMaxRows() {
+		return null;
+	}
+
+	@Override
+	public String getComment() {
+		// todo (6.0) : add generated sql comment based on Navigable + type-of-select
+		return null;
+	}
+
+	@Override
+	public List<String> getDatabaseHints() {
+		return null;
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// SqlQueryOptions && QueryResultCreationContext
 
 	@Override
 	public LockOptions getLockOptions() {

@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.hibernate.QueryException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
@@ -52,7 +53,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 	@Override
 	public void prepare(
 			ResultSetMappingDescriptor.JdbcValuesMetadata jdbcResultsMetadata,
-			ResultSetMappingDescriptor.ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		// resolve the column-alias to a position
 		jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
 
@@ -61,9 +62,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 			final SqlTypeDescriptor sqlTypeDescriptor = jdbcResultsMetadata.resolveSqlTypeDescriptor( jdbcResultSetPosition );
 
 			extractor = sqlTypeDescriptor.getExtractor(
-					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping(
-							resolutionContext.getPersistenceContext().getFactory().getTypeConfiguration()
-					)
+					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping( sessionFactory.getTypeConfiguration() )
 			);
 		}
 

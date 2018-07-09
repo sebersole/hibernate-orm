@@ -12,7 +12,8 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 
 import org.hibernate.testing.junit5.StandardTags;
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.Tag;
 @Tag(StandardTags.SQM)
 public abstract class BaseSqmUnitTest
 		extends SessionFactoryBasedFunctionalTest
-		implements SqlAstBuildingContext, Callback {
+		implements SqlAstCreationContext, Callback {
 
 	@Override
 	protected void applySettings(StandardServiceRegistryBuilder builder) {

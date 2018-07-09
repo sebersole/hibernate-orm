@@ -15,11 +15,12 @@ import org.hibernate.LockOptions;
 import org.hibernate.query.Limit;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
+import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 
 /**
  * @author Steve Ebersole
  */
-public interface QueryOptions {
+public interface QueryOptions extends SqlQueryOptions {
 	Limit getLimit();
 	Integer getFetchSize();
 	String getComment();
@@ -55,6 +56,16 @@ public interface QueryOptions {
 		}
 
 		return false;
+	}
+
+	@Override
+	default Integer getFirstRow() {
+		return getLimit().getFirstRow();
+	}
+
+	@Override
+	default Integer getMaxRows() {
+		return getLimit().getMaxRows();
 	}
 
 	/**

@@ -16,7 +16,7 @@ import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
 import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
@@ -24,13 +24,13 @@ import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 /**
  * @author Steve Ebersole
  */
-public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implements SqlAstBuildingContext {
+public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implements SqlAstCreationContext {
 	public static final QueryOptions QUERY_OPTIONS = new QueryOptionsImpl();
 
 	public static List<SortSpecification> convertOrderByFragmentSqmTree(
-			SqlAstBuildingContext sqlAstBuildingContext,
+			SqlAstCreationContext sqlAstCreationContext,
 			SqmOrderByClause sqmOrderByClause) {
-		return new OrderByFragmentConverter( sqlAstBuildingContext ).doConversion( sqmOrderByClause );
+		return new OrderByFragmentConverter( sqlAstCreationContext ).doConversion( sqmOrderByClause );
 	}
 
 	private final List<SortSpecification> collectedSortSpecs = new ArrayList<>();
@@ -41,13 +41,13 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 	);
 
 
-	protected OrderByFragmentConverter(SqlAstBuildingContext sqlAstBuildingContext) {
-		super( sqlAstBuildingContext, QUERY_OPTIONS );
+	protected OrderByFragmentConverter(SqlAstCreationContext sqlAstCreationContext) {
+		super( sqlAstCreationContext, QUERY_OPTIONS );
 	}
 
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
-		return getSqlAstBuildingContext().getSessionFactory();
+		return getSqlAstCreationContext().getSessionFactory();
 	}
 
 	@Override

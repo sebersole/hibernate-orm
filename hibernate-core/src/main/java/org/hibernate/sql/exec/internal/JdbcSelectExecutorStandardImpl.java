@@ -293,7 +293,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final CacheMode cacheMode = resolveCacheMode(  executionContext );
 
 		final ResultSetMapping resultSetMapping = jdbcSelect.getResultSetMapping()
-				.resolve( resultSetAccess, executionContext );
+				.resolve( resultSetAccess, executionContext.getSession().getSessionFactory() );
 
 		final QueryKey queryResultsCacheKey;
 

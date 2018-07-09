@@ -39,7 +39,6 @@ import org.hibernate.sql.exec.spi.JdbcCallParameterRegistration;
 import org.hibernate.sql.exec.spi.JdbcCallRefCursorExtractor;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -49,10 +48,7 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public class ProcedureOutputsImpl extends OutputsImpl
-		implements ProcedureOutputs,
-		ExecutionContext,
-		ResultSetMappingDescriptor.ResolutionContext,
-		ParameterBindingContext, Callback {
+		implements ProcedureOutputs, ExecutionContext, ParameterBindingContext, Callback {
 	private static final Logger log = Logger.getLogger( ProcedureOutputsImpl.class );
 
 	private final ParameterStrategy parameterStrategy;

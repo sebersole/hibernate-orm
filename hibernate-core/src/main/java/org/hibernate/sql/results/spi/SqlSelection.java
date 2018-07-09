@@ -8,6 +8,7 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 
 /**
@@ -42,7 +43,7 @@ public interface SqlSelection extends SqlSelectionGroupNode {
 
 	default void prepare(
 			ResultSetMappingDescriptor.JdbcValuesMetadata jdbcResultsMetadata,
-			ResultSetMappingDescriptor.ResolutionContext resolutionContext) {
+			SessionFactoryImplementor sessionFactory) {
 		// By default we have nothing to do.  Here as a hook for NativeQuery mapping resolutions
 	}
 

@@ -20,7 +20,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstBuildingContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -216,7 +216,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 			SessionFactoryImplementor sessionFactory) {
 		super(
 				queryOptions,
-				new SqlAstBuildingContext() {
+				new SqlAstCreationContext() {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return sessionFactory;
