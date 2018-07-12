@@ -16,12 +16,12 @@ import java.sql.Types;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.jdbc.BinaryStream;
 import org.hibernate.engine.jdbc.internal.BinaryStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.SerializationHelper;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.MutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -92,7 +92,7 @@ public class SerializableJavaDescriptor<T extends Serializable> extends Abstract
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -109,14 +109,14 @@ public class SerializableJavaDescriptor<T extends Serializable> extends Abstract
 			return (X) new BinaryStreamImpl( toBytes( value ) );
 		}
 		else if ( Blob.class.isAssignableFrom( type )) {
-			return (X) options.getLobCreator().createBlob( toBytes(value) );
+			return (X) session.getLobCreator().createBlob( toBytes( value) );
 		}
 		
 		throw unknownUnwrap( type );
 	}
 
 	@SuppressWarnings("unchecked")
-	public <X> T wrap(X value, WrapperOptions options) {
+	public <X> T wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

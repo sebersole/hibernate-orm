@@ -139,7 +139,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 				// todo : ok to bind right away?  Or do we need to wait until after all parameters are registered?
 				final JdbcParameterBinder binder = registration.getParameterBinder();
 				if ( binder != null ) {
-					binder.bindParameterValue( callableStatement, jdbcPosition, this, getSession() );
+					binder.bindParameterValue( callableStatement, jdbcPosition, this );
 				}
 
 				final JdbcCallParameterExtractor parameterExtractor = registration.getParameterExtractor();
@@ -229,7 +229,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 	@SuppressWarnings("unchecked")
 	public <T> T getOutputParameterValue(ProcedureParameterImplementor<T> parameterRegistration) {
 		final JdbcCallParameterExtractor extractor = resolveJdbcParameterExtractor( parameterRegistration );
-		return (T) extractor.extractValue( callableStatement, parameterStrategy == ParameterStrategy.NAMED, procedureCall.getSession() );
+		return (T) extractor.extractValue( callableStatement, parameterStrategy == ParameterStrategy.NAMED, this );
 	}
 
 	@SuppressWarnings("unchecked")

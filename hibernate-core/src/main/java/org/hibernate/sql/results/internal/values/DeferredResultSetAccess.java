@@ -92,8 +92,7 @@ public class DeferredResultSetAccess extends AbstractResultSetAccess {
 				paramBindingPosition += parameterBinder.bindParameterValue(
 						preparedStatement,
 						paramBindingPosition,
-						executionContext.getParameterBindingContext(),
-						executionContext.getSession()
+						executionContext
 				);
 			}
 

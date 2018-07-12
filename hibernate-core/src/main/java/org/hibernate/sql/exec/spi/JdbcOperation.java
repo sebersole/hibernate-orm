@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.exec.spi;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 

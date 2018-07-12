@@ -9,12 +9,10 @@ package org.hibernate.query.sql.internal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * Abstract ParameterBinder implementation for QueryParameter binding.
@@ -26,20 +24,19 @@ public abstract class AbstractParameterBinder implements JdbcParameterBinder {
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context,
-			SharedSessionContractImplementor session) throws SQLException {
-		final QueryParameterBinding binding = getBinding( context.getQueryParameterBindings() );
-		return bindParameterValue(  statement, startPosition, binding, session );
+			ExecutionContext executionContext) throws SQLException {
+		final QueryParameterBinding binding = getBinding( executionContext );
+		return bindParameterValue(  statement, startPosition, binding, executionContext );
 	}
 
-	protected abstract QueryParameterBinding getBinding(QueryParameterBindings queryParameterBindings);
+	protected abstract QueryParameterBinding getBinding(ExecutionContext executionContext);
 
 	@SuppressWarnings("unchecked")
 	private int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
 			QueryParameterBinding valueBinding,
-			SharedSessionContractImplementor session) throws SQLException {
+			ExecutionContext executionContext) throws SQLException {
 		final AllowableParameterType bindType;
 		final Object bindValue;
 
@@ -65,9 +62,10 @@ public abstract class AbstractParameterBinder implements JdbcParameterBinder {
 			warnNullBindValue();
 		}
 
-		bindType.getValueBinder().bind( statement, bindValue, startPosition, session );
+		bindType.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+				.bind( statement, startPosition, bindValue, executionContext );
 
-		return bindType.getNumberOfJdbcParametersToBind();
+		return bindType.getNumberOfJdbcParametersNeeded();
 	}
 
 	protected abstract void warnNoBinding();

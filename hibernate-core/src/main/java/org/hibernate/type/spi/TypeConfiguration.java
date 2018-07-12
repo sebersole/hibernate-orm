@@ -10,6 +10,9 @@ import java.io.InvalidObjectException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
@@ -27,9 +30,13 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationProcess;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmLiteral;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.tree.spi.expression.Function;
 import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptorRegistry;
 import org.hibernate.type.internal.TypeConfigurationRegistry;
 
@@ -67,6 +74,7 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	private final transient SqlTypeDescriptorRegistry sqlTypeDescriptorRegistry;
 	private final transient BasicTypeRegistry basicTypeRegistry;
 
+	private final transient Map<SqlTypeDescriptor,Map<BasicJavaDescriptor,JdbcValueMapper>> jdbcValueMapperCache = new ConcurrentHashMap<>();
 
 	public TypeConfiguration() {
 		this.scope = new Scope();
@@ -102,6 +110,18 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 
 	public BasicTypeRegistry getBasicTypeRegistry() {
 		return basicTypeRegistry;
+	}
+
+	public JdbcValueMapper resolveJdbcValueMapper(
+			SqlTypeDescriptor sqlTypeDescriptor,
+			BasicJavaDescriptor javaDescriptor,
+			java.util.function.Function<BasicJavaDescriptor,JdbcValueMapper> creator) {
+		final Map<BasicJavaDescriptor, JdbcValueMapper> cacheForSqlType = jdbcValueMapperCache.computeIfAbsent(
+				sqlTypeDescriptor,
+				x -> new ConcurrentHashMap<>()
+		);
+
+		return cacheForSqlType.computeIfAbsent( javaDescriptor, x -> creator.apply( javaDescriptor ) );
 	}
 
 

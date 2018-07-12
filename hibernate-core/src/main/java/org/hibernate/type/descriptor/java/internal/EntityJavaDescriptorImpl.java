@@ -8,12 +8,12 @@ package org.hibernate.type.descriptor.java.internal;
 
 import java.util.Comparator;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractIdentifiableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -82,12 +82,12 @@ public class EntityJavaDescriptorImpl<J>
 	}
 
 	@Override
-	public Object wrap(Object value, WrapperOptions options) {
+	public Object wrap(Object value, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
-	public Object unwrap(Object value, Class type, WrapperOptions options) {
+	public Object unwrap(Object value, Class type, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 }

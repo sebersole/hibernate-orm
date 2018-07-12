@@ -10,10 +10,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Types;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractNumericJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.Primitive;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -46,7 +46,7 @@ public class FloatJavaDescriptor extends AbstractNumericJavaDescriptor<Float> im
 
 	@SuppressWarnings({ "unchecked" })
 	@Override
-	public <X> X unwrap(Float value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Float value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -80,7 +80,7 @@ public class FloatJavaDescriptor extends AbstractNumericJavaDescriptor<Float> im
 		throw unknownUnwrap( type );
 	}
 	@Override
-	public <X> Float wrap(X value, WrapperOptions options) {
+	public <X> Float wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

@@ -22,7 +22,10 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.exec.spi.BasicExecutionContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -75,7 +78,10 @@ public class PessimisticReadUpdateLockingStrategy implements LockingStrategy {
 			throw new HibernateException( "write locks via update not supported for non-versioned entities [" + lockable.getEntityName() + "]" );
 		}
 
+		final ExecutionContext executionContext = new BasicExecutionContext( session );
 		final SessionFactoryImplementor factory = session.getFactory();
+		final TypeConfiguration typeConfiguration = factory.getTypeConfiguration();
+
 		try {
 			try {
 				final PreparedStatement st = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql );
@@ -83,16 +89,16 @@ public class PessimisticReadUpdateLockingStrategy implements LockingStrategy {
 					final ValueBinder versionValueBinder = lockable.getHierarchy()
 							.getVersionDescriptor()
 							.getBasicType()
-							.getValueBinder();
-					versionValueBinder.bind( st, version, 1, session );
+							.getValueBinder( typeConfiguration );
+					versionValueBinder.bind( st, 1, version, executionContext );
 					int offset = 2;
 
-					final AllowableParameterType identifierParameterType = (AllowableParameterType) lockable.getHierarchy()
+					final AllowableParameterType identifierParameterType = lockable.getHierarchy()
 							.getIdentifierDescriptor();
-					identifierParameterType.getValueBinder().bind( st, id, offset, session );
-					offset += identifierParameterType.getNumberOfJdbcParametersToBind();
+					identifierParameterType.getValueBinder( typeConfiguration ).bind( st, offset, id, executionContext );
+					offset += identifierParameterType.getNumberOfJdbcParametersNeeded();
 
-					versionValueBinder.bind( st, version, offset, session );
+					versionValueBinder.bind( st, offset, version, executionContext );
 
 					final int affected = session.getJdbcCoordinator().getResultSetReturn().executeUpdate( st );
 					// todo:  should this instead check for exactly one row modified?

@@ -79,7 +79,7 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	List<Column> getColumns();
 
 	@Override
-	default int getNumberOfJdbcParametersToBind() {
+	default int getNumberOfJdbcParametersNeeded() {
 		return getColumns().size();
 	}
 

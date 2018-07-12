@@ -17,11 +17,19 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public interface AllowableParameterType<T> extends ExpressableType<T> {
-	ValueBinder getValueBinder();
-	ValueExtractor getValueExtractor();
+	/**
+	 * The number of JDBC parameters needed for this type.  Should
+	 * be the same as each {@link ValueBinder#getNumberOfJdbcParametersNeeded()}
+	 * and {@link ValueExtractor#getNumberOfJdbcParametersNeeded()}
+	 */
+	int getNumberOfJdbcParametersNeeded();
 
-	// todo (6.0) - move this to ValueBinder?
-	int getNumberOfJdbcParametersToBind();
+	/**
+	 * Get a binder for values of the given type
+	 */
+	ValueBinder getValueBinder(TypeConfiguration typeConfiguration);
+
+	ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration);
 
 	AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration);
 }

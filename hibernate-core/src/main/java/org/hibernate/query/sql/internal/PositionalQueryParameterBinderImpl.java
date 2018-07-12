@@ -8,7 +8,7 @@ package org.hibernate.query.sql.internal;
 
 import org.hibernate.QueryException;
 import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 import org.jboss.logging.Logger;
 
@@ -25,8 +25,8 @@ public class PositionalQueryParameterBinderImpl extends AbstractParameterBinder 
 	}
 
 	@Override
-	protected QueryParameterBinding getBinding(QueryParameterBindings queryParameterBindings) {
-		return queryParameterBindings.getBinding( position );
+	protected QueryParameterBinding getBinding(ExecutionContext executionContext) {
+		return executionContext.getParameterBindingContext().getQueryParameterBindings().getBinding( position );
 	}
 
 	@Override

@@ -19,11 +19,11 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import javax.persistence.TemporalType;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.LocalDateTimeVersionSupport;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -70,7 +70,7 @@ public class LocalDateTimeJavaDescriptor
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> X unwrap(LocalDateTime value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(LocalDateTime value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -112,7 +112,7 @@ public class LocalDateTimeJavaDescriptor
 	}
 
 	@Override
-	public <X> LocalDateTime wrap(X value, WrapperOptions options) {
+	public <X> LocalDateTime wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

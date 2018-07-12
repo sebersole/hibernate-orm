@@ -9,10 +9,10 @@ package org.hibernate.type.descriptor.java.internal;
 import java.sql.Types;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.Primitive;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -46,7 +46,7 @@ public class CharacterJavaDescriptor extends AbstractBasicJavaDescriptor<Charact
 
 	@SuppressWarnings({ "unchecked" })
 	@Override
-	public <X> X unwrap(Character value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Character value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -63,7 +63,7 @@ public class CharacterJavaDescriptor extends AbstractBasicJavaDescriptor<Charact
 	}
 
 	@Override
-	public <X> Character wrap(X value, WrapperOptions options) {
+	public <X> Character wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

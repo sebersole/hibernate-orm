@@ -17,12 +17,12 @@ import java.util.GregorianCalendar;
 import javax.persistence.TemporalType;
 
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.compare.CalendarComparator;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.MutableMutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -127,7 +127,7 @@ public class CalendarJavaDescriptor
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(Calendar value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Calendar value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -149,7 +149,7 @@ public class CalendarJavaDescriptor
 		throw unknownUnwrap( type );
 	}
 
-	public <X> Calendar wrap(X value, WrapperOptions options) {
+	public <X> Calendar wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

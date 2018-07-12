@@ -55,11 +55,6 @@ public interface BasicType<T>
 	}
 
 	@Override
-	default int getNumberOfJdbcParametersToBind() {
-		return 1;
-	}
-
-	@Override
 	default Class<T> getJavaType() {
 		return getJavaTypeDescriptor().getJavaType();
 	}

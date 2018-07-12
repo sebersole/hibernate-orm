@@ -13,10 +13,10 @@ import java.util.Arrays;
 
 import org.hibernate.engine.jdbc.CharacterStream;
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ArrayMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -61,7 +61,7 @@ public class PrimitiveCharacterArrayJavaDescriptor extends AbstractBasicJavaDesc
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(char[] value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(char[] value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -72,7 +72,7 @@ public class PrimitiveCharacterArrayJavaDescriptor extends AbstractBasicJavaDesc
 			return (X) new String( value );
 		}
 		if ( Clob.class.isAssignableFrom( type ) ) {
-			return (X) options.getLobCreator().createClob( new String( value ) );
+			return (X) session.getLobCreator().createClob( new String( value ) );
 		}
 		if ( Reader.class.isAssignableFrom( type ) ) {
 			return (X) new StringReader( new String( value ) );
@@ -83,7 +83,7 @@ public class PrimitiveCharacterArrayJavaDescriptor extends AbstractBasicJavaDesc
 		throw unknownUnwrap( type );
 	}
 
-	public <X> char[] wrap(X value, WrapperOptions options) {
+	public <X> char[] wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

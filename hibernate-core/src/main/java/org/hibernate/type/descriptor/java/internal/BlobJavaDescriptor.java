@@ -20,11 +20,11 @@ import org.hibernate.engine.jdbc.BlobImplementer;
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.hibernate.engine.jdbc.WrappedBlob;
 import org.hibernate.engine.jdbc.internal.BinaryStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -107,7 +107,7 @@ public class BlobJavaDescriptor extends AbstractBasicJavaDescriptor<Blob> {
 
 	@Override
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(Blob value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Blob value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -148,7 +148,7 @@ public class BlobJavaDescriptor extends AbstractBasicJavaDescriptor<Blob> {
 	}
 
 	@Override
-	public <X> Blob wrap(X value, WrapperOptions options) {
+	public <X> Blob wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -156,15 +156,15 @@ public class BlobJavaDescriptor extends AbstractBasicJavaDescriptor<Blob> {
 		// Support multiple return types from
 		// org.hibernate.type.descriptor.sql.BlobTypeDescriptor
 		if ( Blob.class.isAssignableFrom( value.getClass() ) ) {
-			return options.getLobCreator().wrap( (Blob) value );
+			return session.getLobCreator().wrap( (Blob) value );
 		}
 		else if ( byte[].class.isAssignableFrom( value.getClass() ) ) {
-			return options.getLobCreator().createBlob( ( byte[] ) value);
+			return session.getLobCreator().createBlob( ( byte[] ) value);
 		}
 		else if ( InputStream.class.isAssignableFrom( value.getClass() ) ) {
 			InputStream inputStream = ( InputStream ) value;
 			try {
-				return options.getLobCreator().createBlob( inputStream, inputStream.available() );
+				return session.getLobCreator().createBlob( inputStream, inputStream.available() );
 			}
 			catch ( IOException e ) {
 				throw unknownWrap( value.getClass() );

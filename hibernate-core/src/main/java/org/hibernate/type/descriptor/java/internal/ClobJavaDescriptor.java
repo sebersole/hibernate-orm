@@ -19,11 +19,11 @@ import org.hibernate.engine.jdbc.ClobImplementer;
 import org.hibernate.engine.jdbc.ClobProxy;
 import org.hibernate.engine.jdbc.WrappedClob;
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -98,7 +98,7 @@ public class ClobJavaDescriptor extends AbstractBasicJavaDescriptor<Clob> {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(final Clob value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(final Clob value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -128,7 +128,7 @@ public class ClobJavaDescriptor extends AbstractBasicJavaDescriptor<Clob> {
 		throw unknownUnwrap( type );
 	}
 
-	public <X> Clob wrap(X value, WrapperOptions options) {
+	public <X> Clob wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -136,11 +136,11 @@ public class ClobJavaDescriptor extends AbstractBasicJavaDescriptor<Clob> {
 		// Support multiple return types from
 		// ClobTypeDescriptor
 		if ( Clob.class.isAssignableFrom( value.getClass() ) ) {
-			return options.getLobCreator().wrap( (Clob) value );
+			return session.getLobCreator().wrap( (Clob) value );
 		}
 		else if ( Reader.class.isAssignableFrom( value.getClass() ) ) {
 			Reader reader = (Reader) value;
-			return options.getLobCreator().createClob( LobStreamDataHelper.extractString( reader ) );
+			return session.getLobCreator().createClob( LobStreamDataHelper.extractString( reader ) );
 		}
 
 		throw unknownWrap( value.getClass() );

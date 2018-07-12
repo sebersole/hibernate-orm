@@ -8,10 +8,10 @@ package org.hibernate.type.descriptor.java.internal;
 
 import java.util.Comparator;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -24,12 +24,12 @@ public class AnyTypeJavaDescriptor implements JavaTypeDescriptor {
 	}
 
 	@Override
-	public Object wrap(Object value, WrapperOptions options) {
+	public Object wrap(Object value, SharedSessionContractImplementor session) {
 		return null;
 	}
 
 	@Override
-	public Object unwrap(Object value, Class type, WrapperOptions options) {
+	public Object unwrap(Object value, Class type, SharedSessionContractImplementor session) {
 		return null;
 	}
 

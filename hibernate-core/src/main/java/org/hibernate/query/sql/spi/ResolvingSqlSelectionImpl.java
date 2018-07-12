@@ -12,13 +12,14 @@ import java.sql.SQLException;
 
 import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Implementation of SqlSelection for native-SQL queries
@@ -28,10 +29,11 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  */
 public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionReader {
 	private final String columnAlias;
-	private ValueExtractor extractor;
+	private JdbcValueMapper jdbcValueMapper;
 
 	private Integer jdbcResultSetPosition;
 
+	@SuppressWarnings("unused")
 	public ResolvingSqlSelectionImpl(String columnAlias, int jdbcResultSetPosition) {
 		this.columnAlias = columnAlias;
 		this.jdbcResultSetPosition = jdbcResultSetPosition;
@@ -41,13 +43,9 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 		this( columnAlias, null );
 	}
 
-	public ResolvingSqlSelectionImpl(String columnAlias, ValueExtractor extractor) {
+	public ResolvingSqlSelectionImpl(String columnAlias, JdbcValueMapper jdbcValueMapper) {
 		this.columnAlias = columnAlias;
-		this.extractor = extractor;
-	}
-
-	public ValueExtractor getExtractor() {
-		return extractor;
+		this.jdbcValueMapper = jdbcValueMapper;
 	}
 
 	@Override
@@ -57,12 +55,14 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 		// resolve the column-alias to a position
 		jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
 
-		if ( extractor == null ) {
+		if ( jdbcValueMapper == null ) {
 			// assume we should auto-discover the type
 			final SqlTypeDescriptor sqlTypeDescriptor = jdbcResultsMetadata.resolveSqlTypeDescriptor( jdbcResultSetPosition );
 
-			extractor = sqlTypeDescriptor.getExtractor(
-					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping( sessionFactory.getTypeConfiguration() )
+			final TypeConfiguration typeConfiguration = sessionFactory.getTypeConfiguration();
+			jdbcValueMapper = sqlTypeDescriptor.getJdbcValueMapper(
+					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping( typeConfiguration ),
+					typeConfiguration
 			);
 		}
 
@@ -80,15 +80,15 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 			SqlSelection sqlSelection) throws SQLException {
 		validateExtractor();
 
-		return extractor.extract(
+		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				resultSet,
 				sqlSelection.getJdbcResultSetIndex(),
-				jdbcValuesSourceProcessingState.getPersistenceContext()
+				jdbcValuesSourceProcessingState.getExecutionContext()
 		);
 	}
 
 	private void validateExtractor() {
-		if ( extractor == null ) {
+		if ( jdbcValueMapper == null ) {
 			throw new QueryException( "Could not determine how to read JDBC value" );
 		}
 	}
@@ -100,10 +100,10 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 			int jdbcParameterIndex) throws SQLException {
 		validateExtractor();
 
-		return extractor.extract(
+		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterIndex,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
+				jdbcValuesSourceProcessingState.getExecutionContext()
 		);
 	}
 
@@ -114,10 +114,10 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 			String jdbcParameterName) throws SQLException {
 		validateExtractor();
 
-		return extractor.extract(
+		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterName,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
+				jdbcValuesSourceProcessingState.getExecutionContext()
 		);
 	}
 

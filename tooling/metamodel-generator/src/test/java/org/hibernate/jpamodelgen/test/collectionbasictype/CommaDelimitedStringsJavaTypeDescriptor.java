@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.MutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -55,12 +55,12 @@ public class CommaDelimitedStringsJavaTypeDescriptor extends AbstractBasicJavaDe
     }
 
     @Override
-    public <X> X unwrap(List value, Class<X> type, WrapperOptions options) {
+    public <X> X unwrap(List value, Class<X> type, SharedSessionContractImplementor session) {
         return (X) toString( value );
     }
 
     @Override
-    public <X> List wrap(X value, WrapperOptions options) {
+    public <X> List wrap(X value, SharedSessionContractImplementor session) {
         return fromString( (String) value );
     }
 }

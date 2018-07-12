@@ -9,11 +9,10 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.QueryResult;
@@ -49,12 +48,11 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext bindingContext,
-			SharedSessionContractImplementor session) throws SQLException {
+			ExecutionContext executionContext) throws SQLException {
 		final AllowableParameterType bindType;
 		final Object bindValue;
 
-		final QueryParameterBinding valueBinding = resolveBinding( bindingContext );
+		final QueryParameterBinding valueBinding = resolveBinding( executionContext );
 		if ( valueBinding == null ) {
 			warnNoBinding();
 			bindType = null;
@@ -78,9 +76,10 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 			warnNullBindValue();
 		}
 
-		bindType.getValueBinder().bind( statement, bindValue, startPosition, session );
+		bindType.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+				.bind( statement, startPosition, bindValue, executionContext );
 
-		return bindType.getNumberOfJdbcParametersToBind();
+		return bindType.getNumberOfJdbcParametersNeeded();
 	}
 
 	protected abstract void warnNoBinding();

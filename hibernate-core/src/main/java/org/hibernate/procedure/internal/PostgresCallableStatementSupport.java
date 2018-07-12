@@ -81,7 +81,7 @@ public class PostgresCallableStatementSupport implements CallableStatementSuppor
 				throw new HibernateException( "PostgreSQL supports only one REF_CURSOR parameter, but multiple were registered" );
 			}
 
-			for ( int x = 0, max = parameter.getParameterType().getNumberOfJdbcParametersToBind(); x < max; x++ ) {
+			for ( int x = 0, max = parameter.getParameterType().getNumberOfJdbcParametersNeeded(); x < max; x++ ) {
 				buffer.append( sep ).append( "?" );
 				sep = ",";
 			}

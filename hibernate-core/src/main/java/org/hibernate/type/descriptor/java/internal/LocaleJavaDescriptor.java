@@ -9,9 +9,9 @@ package org.hibernate.type.descriptor.java.internal;
 import java.util.Comparator;
 import java.util.Locale;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -95,7 +95,7 @@ public class LocaleJavaDescriptor extends AbstractBasicJavaDescriptor<Locale> {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(Locale value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Locale value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -105,7 +105,7 @@ public class LocaleJavaDescriptor extends AbstractBasicJavaDescriptor<Locale> {
 		throw unknownUnwrap( type );
 	}
 
-	public <X> Locale wrap(X value, WrapperOptions options) {
+	public <X> Locale wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

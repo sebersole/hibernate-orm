@@ -28,6 +28,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -102,13 +103,13 @@ public class BasicCollectionElementImpl<J>
 //	}
 
 	@Override
-	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return basicType.getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return basicType.getValueExtractor( typeConfiguration );
 	}
 
 	@Override

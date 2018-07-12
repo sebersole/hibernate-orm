@@ -28,6 +28,7 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -41,7 +42,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 	private final BasicType<J> basicType;
 	private final IdentifierGenerator identifierGenerator;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "WeakerAccess"})
 	public EntityIdentifierSimpleImpl(
 			EntityHierarchyImpl runtimeModelHierarchy,
 			RootClass bootModelRootEntity,
@@ -150,13 +151,13 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
-		return basicType.getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return basicType.getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return basicType.getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return basicType.getValueExtractor( typeConfiguration );
 	}
 
 	@Override

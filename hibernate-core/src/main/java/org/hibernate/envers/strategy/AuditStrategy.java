@@ -23,6 +23,10 @@ import org.hibernate.envers.internal.tools.query.QueryBuilder;
  * @author Chris Cranford
  */
 public interface AuditStrategy {
+	// todo (6.0) : these methods need to change to accept ExecutionContext rather than just Session
+	//		this (^^) will also allow Envers to work against StatelessSession whereas
+	//		it is currently limited to just Session
+
 	/**
 	 * Perform the persistence of audited data for regular entities.
 	 *  @param session Session, which can be used to persist the data.

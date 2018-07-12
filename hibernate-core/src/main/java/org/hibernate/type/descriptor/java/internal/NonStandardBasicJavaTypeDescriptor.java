@@ -6,9 +6,9 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -37,12 +37,12 @@ public class NonStandardBasicJavaTypeDescriptor<T>
 	}
 
 	@Override
-	public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session) {
 		return null;
 	}
 
 	@Override
-	public <X> T wrap(X value, WrapperOptions options) {
+	public <X> T wrap(X value, SharedSessionContractImplementor session) {
 		return null;
 	}
 

@@ -6,16 +6,16 @@
  */
 package org.hibernate.sql.exec.internal;
 
-import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -49,14 +49,13 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context,
-			SharedSessionContractImplementor session) throws SQLException {
+			ExecutionContext executionContext) throws SQLException {
 		final QueryParameterBinding binding;
 		if ( parameterName != null ) {
-			binding = context.getQueryParameterBindings().getBinding( parameterName );
+			binding = executionContext.getParameterBindingContext().getQueryParameterBindings().getBinding( parameterName );
 		}
 		else {
-			binding = context.getQueryParameterBindings().getBinding( parameterPosition );
+			binding = executionContext.getParameterBindingContext().getQueryParameterBindings().getBinding( parameterPosition );
 		}
 
 		if ( binding == null ) {
@@ -89,25 +88,27 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 			// for the time being we assume the param is basic-type.  See discussion in other
 			//		ParameterBinder impls
 
-			final ValueBinder valueBinder = ormType.getValueBinder();
+			final SessionFactoryImplementor factory = executionContext.getSession().getFactory();
+			final TypeConfiguration typeConfiguration = factory.getTypeConfiguration();
+			final ValueBinder valueBinder = ormType.getValueBinder( typeConfiguration );
 			if ( parameterName != null ) {
 				valueBinder.bind(
-						(CallableStatement) statement,
-						bindValue,
+						statement,
 						parameterName,
-						session
+						bindValue,
+						executionContext
 				);
 			}
 			else {
 				valueBinder.bind(
 						statement,
-						bindValue,
 						startPosition,
-						session
+						bindValue,
+						executionContext
 				);
 			}
 		}
 
-		return ormType.getNumberOfJdbcParametersToBind();
+		return ormType.getNumberOfJdbcParametersNeeded();
 	}
 }

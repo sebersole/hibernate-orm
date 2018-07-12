@@ -26,6 +26,7 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -39,6 +40,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 
 	private final NavigableRole navigableRole;
 
+	@SuppressWarnings("WeakerAccess")
 	public DiscriminatorDescriptorImpl(
 			EntityHierarchy hierarchy,
 			BasicValueMapping<J> valueMapping,
@@ -74,13 +76,13 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 
 
 	@Override
-	public ValueBinder getValueBinder() {
-		return getBasicType().getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return getBasicType().getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueExtractor( typeConfiguration );
 	}
 
 	@Override

@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,6 +23,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
@@ -31,7 +31,6 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -44,8 +43,9 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 
 	private List<NaturalIdAttributeInfo> attributes;
 
-	private ValueBinder<J> valueBinder;
-	private ValueExtractor<J> valueExtractor;
+	private ValueBinder valueBinder;
+	private ValueExtractor valueExtractor;
+
 	private Integer numberOfParameterBinds;
 
 
@@ -66,7 +66,7 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 
 		for ( int i = 0; i < attributes.size(); i++ ) {
 			this.attributes.add( new NaturalIdAttributeInfoImpl( attributes.get( i ), i ) );
-			this.numberOfParameterBinds += ( (AllowableParameterType) attributes.get( i ) ).getNumberOfJdbcParametersToBind();
+			this.numberOfParameterBinds += ( (AllowableParameterType) attributes.get( i ) ).getNumberOfJdbcParametersNeeded();
 		}
 	}
 
@@ -162,32 +162,52 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public int getNumberOfJdbcParametersNeeded() {
+		return numberOfParameterBinds;
+	}
+
+	@Override
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 		if ( valueBinder == null ) {
 			if ( attributes.size() == 1 ) {
-				valueBinder = ( (AllowableParameterType) attributes.get( 0 ).getUnderlyingAttributeDescriptor() ).getValueBinder();
+				valueBinder = ( (AllowableParameterType) attributes.get( 0 ).getUnderlyingAttributeDescriptor() )
+						.getValueBinder( typeConfiguration );
 			}
 			else {
-				valueBinder = new ValueBinder<J>() {
+				valueBinder = new ValueBinder() {
 					@Override
-					public void bind(PreparedStatement st, J value, int index, WrapperOptions options)
-							throws SQLException {
-						int segmentStart = index;
+					public int getNumberOfJdbcParametersNeeded() {
+						return numberOfParameterBinds;
+					}
+
+					@Override
+					public void bind(
+							PreparedStatement st,
+							int position,
+							Object value,
+							ExecutionContext executionContext) throws SQLException {
+						int segmentStart = position;
+
 						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
 							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
 									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder().bind( st, value, segmentStart, options );
-							segmentStart += attributeDescriptor.getNumberOfJdbcParametersToBind();
+							attributeDescriptor.getValueBinder( typeConfiguration )
+									.bind( st, segmentStart, value, executionContext );
+							segmentStart += attributeDescriptor.getNumberOfJdbcParametersNeeded();
 						}
 					}
 
 					@Override
-					public void bind(CallableStatement st, J value, String name, WrapperOptions options)
-							throws SQLException {
+					public void bind(
+							PreparedStatement st,
+							String name,
+							Object value,
+							ExecutionContext executionContext) throws SQLException {
 						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
 							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
 									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder().bind( st, value, name, options );
+							attributeDescriptor.getValueBinder( typeConfiguration )
+									.bind( st, name, value, executionContext );
 						}
 					}
 				};
@@ -198,13 +218,8 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return null;
-	}
-
-	@Override
-	public int getNumberOfJdbcParametersToBind() {
-		return numberOfParameterBinds;
 	}
 
 	@Override

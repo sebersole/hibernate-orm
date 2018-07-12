@@ -27,6 +27,7 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -41,7 +42,7 @@ public class VersionDescriptorImpl<O,J>
 	private final String unsavedValue;
 
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "WeakerAccess"})
 	public VersionDescriptorImpl(
 			EntityHierarchyImpl runtimeModelHierarchy,
 			RootClass bootModelRootEntity,
@@ -139,13 +140,13 @@ public class VersionDescriptorImpl<O,J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
-		return getBasicType().getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return getBasicType().getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueExtractor( typeConfiguration );
 	}
 
 	@Override

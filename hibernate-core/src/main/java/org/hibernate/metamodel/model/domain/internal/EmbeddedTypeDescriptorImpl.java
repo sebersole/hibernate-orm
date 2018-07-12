@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -39,6 +40,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
@@ -47,7 +49,6 @@ import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -190,28 +191,55 @@ public class EmbeddedTypeDescriptorImpl<J>
 	}
 
 	@Override
-	public int getNumberOfJdbcParametersToBind() {
+	public int getNumberOfJdbcParametersNeeded() {
 		return collectColumns().size();
+	}
+
+	private final Predicate<StateArrayContributor> PERSIST_INCUSIONS = new Predicate<StateArrayContributor>() {
+		@Override
+		public boolean test(StateArrayContributor stateArrayContributor) {
+			return stateArrayContributor.isInsertable();
+		}
+	};
+
+	private final Predicate<StateArrayContributor> UPDATE_INCLUSIONS = new Predicate<StateArrayContributor>() {
+		@Override
+		public boolean test(StateArrayContributor stateArrayContributor) {
+			return stateArrayContributor.isUpdatable();
+		}
+	};
+
+	enum OperationType {
+		PERSIST,
+		MERGE,
+		UPDATE,
+		DELETE,
+		LOAD,
+		QUERY
 	}
 
 	private final ValueBinder binder = new ValueBinder() {
 		@Override
+		public int getNumberOfJdbcParametersNeeded() {
+			return collectColumns().size();
+		}
+
+		@Override
 		public void bind(
 				PreparedStatement st,
+				int position,
 				Object value,
-				int index,
-				WrapperOptions options) throws SQLException {
+				ExecutionContext executionContext) throws SQLException {
 			final Object[] values = extractValues( value );
 
-			int position = index;
 			for ( StateArrayContributor contributor : getStateArrayContributors() ) {
 				final Object subValue = values[ contributor.getStateArrayPosition() ];
 
 				contributor.getValueBinder().bind(
 						st,
-						values[ position ],
 						position,
-						options
+						subValue,
+						executionContext
 				);
 				position += contributor.getColumns().size();
 			}
@@ -219,10 +247,9 @@ public class EmbeddedTypeDescriptorImpl<J>
 		}
 
 		private Object[] extractValues(Object value) {
-			assert value instanceof Object[];
+			assert getEmbeddedDescriptor().getJavaTypeDescriptor().isInstance( value );
 
-
-			final Object[] values = (Object[]) value;
+			final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
 			assert values.length == getStateArrayContributors().size();
 
 			return values;
@@ -230,35 +257,81 @@ public class EmbeddedTypeDescriptorImpl<J>
 
 		@Override
 		public void bind(
-				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
+				PreparedStatement st,
+				String name,
+				Object value,
+				ExecutionContext executionContext) {
+			throw new UnsupportedOperationException( "Cannot bind parameter value by name for composite types" );
 
 		}
 	};
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 		return binder;
 	}
 
+	private final ValueExtractor valueExtractor = new ValueExtractor() {
+		@Override
+		public int getNumberOfJdbcParametersNeeded() {
+			return collectColumns().size();
+		}
+
+		@Override
+		public Object extract(ResultSet rs, int position, ExecutionContext executionContext) throws SQLException {
+			throw new NotYetImplementedFor6Exception( getClass() );
+//			final Object[] values = new Object[ getStateArrayContributors().size() ];
+//
+//			int currentJdbcPosition = position;
+//			for ( StateArrayContributor<?> contributor: getStateArrayContributors() ) {
+//					values[ contributor.getStateArrayPosition() ] = contributor.getValueExtractor().extract(
+//							rs,
+//							currentJdbcPosition,
+//							executionContext
+//					);
+//					currentJdbcPosition += contributor.getColumns().size();
+//			}
+//
+//			final J instance = getEmbeddedDescriptor().instantiate( executionContext.getSession() );
+//			getEmbeddedDescriptor().setPropertyValues( instance, values );
+//			return instance;
+		}
+
+		@Override
+		public Object extract(
+				CallableStatement statement,
+				int position,
+				ExecutionContext executionContext) throws SQLException {
+			throw new NotYetImplementedFor6Exception( getClass() );
+//			final Object[] values = new Object[ getStateArrayContributors().size() ];
+//
+//			int currentJdbcPosition = position;
+//			for ( StateArrayContributor<?> contributor: getStateArrayContributors() ) {
+//				values[ contributor.getStateArrayPosition() ] = contributor.getValueExtractor().extract(
+//						statement,
+//						currentJdbcPosition,
+//						executionContext
+//				);
+//				currentJdbcPosition += contributor.getColumns().size();
+//			}
+//
+//			final J instance = getEmbeddedDescriptor().instantiate( executionContext.getSession() );
+//			getEmbeddedDescriptor().setPropertyValues( instance, values );
+//			return instance;
+		}
+
+		@Override
+		public Object extract(
+				CallableStatement statement,
+				String name,
+				ExecutionContext executionContext) throws SQLException {
+			throw new UnsupportedOperationException( "Cannot extract parameter value by name for composite types" );
+		}
+	};
+
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return new ValueExtractor() {
-			@Override
-			public Object extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-				return null;
-			}
-
-			@Override
-			public Object extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-				return null;
-			}
-
-			@Override
-			public Object extract(
-					CallableStatement statement, String name, WrapperOptions options) throws SQLException {
-				return null;
-			}
-		};
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return valueExtractor;
 	}
 
 	@Override

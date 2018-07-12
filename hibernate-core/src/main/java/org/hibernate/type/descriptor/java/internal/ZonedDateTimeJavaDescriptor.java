@@ -16,11 +16,11 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import javax.persistence.TemporalType;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -59,7 +59,7 @@ public class ZonedDateTimeJavaDescriptor
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> X unwrap(ZonedDateTime zonedDateTime, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(ZonedDateTime zonedDateTime, Class<X> type, SharedSessionContractImplementor session) {
 		if ( zonedDateTime == null ) {
 			return null;
 		}
@@ -96,7 +96,7 @@ public class ZonedDateTimeJavaDescriptor
 	}
 
 	@Override
-	public <X> ZonedDateTime wrap(X value, WrapperOptions options) {
+	public <X> ZonedDateTime wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

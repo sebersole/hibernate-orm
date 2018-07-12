@@ -6,10 +6,10 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.Primitive;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 import static java.lang.Boolean.FALSE;
@@ -75,7 +75,7 @@ public class BooleanJavaDescriptor extends AbstractBasicJavaDescriptor<Boolean> 
 
 	@SuppressWarnings({ "unchecked" })
 	@Override
-	public <X> X unwrap(Boolean value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Boolean value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -111,7 +111,7 @@ public class BooleanJavaDescriptor extends AbstractBasicJavaDescriptor<Boolean> 
 	}
 
 	@Override
-	public <X> Boolean wrap(X value, WrapperOptions options) {
+	public <X> Boolean wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

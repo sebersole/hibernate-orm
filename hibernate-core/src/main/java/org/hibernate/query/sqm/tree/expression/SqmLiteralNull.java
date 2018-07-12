@@ -10,15 +10,12 @@ import org.hibernate.HibernateException;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -57,12 +54,17 @@ public class SqmLiteralNull implements SqmLiteral<Void> {
 
 	private static BasicValuedExpressableType NULL_TYPE = new BasicValuedExpressableType() {
 		@Override
-		public ValueBinder getValueBinder() {
+		public int getNumberOfJdbcParametersNeeded() {
+			return 0;
+		}
+
+		@Override
+		public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 			return null;
 		}
 
 		@Override
-		public ValueExtractor getValueExtractor() {
+		public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 			return null;
 		}
 

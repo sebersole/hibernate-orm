@@ -14,11 +14,11 @@ import java.util.Comparator;
 
 import org.hibernate.engine.jdbc.CharacterStream;
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ArrayMutabilityPlan;
 import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -71,7 +71,7 @@ public class CharacterArrayJavaDescriptor extends AbstractBasicJavaDescriptor<Ch
 
 	@SuppressWarnings({ "unchecked" })
 	@Override
-	public <X> X unwrap(Character[] value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Character[] value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -82,7 +82,7 @@ public class CharacterArrayJavaDescriptor extends AbstractBasicJavaDescriptor<Ch
 			return (X) new String( unwrapChars( value ) );
 		}
 		if ( Clob.class.isAssignableFrom( type ) ) {
-			return (X) options.getLobCreator().createClob( new String( unwrapChars( value ) ) );
+			return (X) session.getLobCreator().createClob( new String( unwrapChars( value ) ) );
 		}
 		if ( Reader.class.isAssignableFrom( type ) ) {
 			return (X) new StringReader( new String( unwrapChars( value ) ) );
@@ -94,7 +94,7 @@ public class CharacterArrayJavaDescriptor extends AbstractBasicJavaDescriptor<Ch
 	}
 
 	@Override
-	public <X> Character[] wrap(X value, WrapperOptions options) {
+	public <X> Character[] wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

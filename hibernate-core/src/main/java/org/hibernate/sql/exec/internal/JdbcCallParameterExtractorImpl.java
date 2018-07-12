@@ -9,12 +9,14 @@ package org.hibernate.sql.exec.internal;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcCallParameterExtractor;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Standard implementation of JdbcCallParameterExtractor
@@ -53,7 +55,7 @@ public class JdbcCallParameterExtractorImpl<T> implements JdbcCallParameterExtra
 	public T extractValue(
 			CallableStatement callableStatement,
 			boolean shouldUseJdbcNamedParameters,
-			SharedSessionContractImplementor session) {
+			ExecutionContext executionContext) {
 		if ( !BasicValuedExpressableType.class.isInstance( ormType ) ) {
 			throw new NotYetImplementedFor6Exception(
 					"Support for JDBC CallableStatement parameter extraction not yet supported for non-basic types"
@@ -63,20 +65,22 @@ public class JdbcCallParameterExtractorImpl<T> implements JdbcCallParameterExtra
 		final boolean useNamed = shouldUseJdbcNamedParameters
 				&& parameterName != null;
 
-		final ValueExtractor valueExtractor = ( (BasicValuedExpressableType) ormType ).getBasicType()
+		final TypeConfiguration typeConfiguration = executionContext.getSession().getFactory().getTypeConfiguration();
+		final JdbcValueExtractor valueExtractor = ( (BasicValuedExpressableType) ormType ).getBasicType()
 				.getSqlTypeDescriptor()
-				.getExtractor( ormType.getJavaTypeDescriptor() );
+				.getJdbcValueMapper( ( BasicJavaDescriptor) ormType.getJavaTypeDescriptor(), typeConfiguration )
+				.getJdbcValueExtractor();
 
 		try {
 			if ( useNamed ) {
-				return (T) valueExtractor.extract( callableStatement, parameterName, session );
+				return (T) valueExtractor.extract( callableStatement, parameterName, executionContext );
 			}
 			else {
-				return (T) valueExtractor.extract( callableStatement, parameterPosition, session );
+				return (T) valueExtractor.extract( callableStatement, parameterPosition, executionContext );
 			}
 		}
 		catch (SQLException e) {
-			throw session.getJdbcServices().getSqlExceptionHelper().convert(
+			throw executionContext.getSession().getJdbcServices().getSqlExceptionHelper().convert(
 					e,
 					"Unable to extract OUT/INOUT parameter value"
 			);

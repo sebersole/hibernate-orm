@@ -17,11 +17,11 @@ import java.util.Comparator;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.jdbc.BinaryStream;
 import org.hibernate.engine.jdbc.internal.BinaryStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ArrayMutabilityPlan;
 import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -96,7 +96,7 @@ public class ByteArrayJavaDescriptor extends AbstractBasicJavaDescriptor<Byte[]>
 
 	@SuppressWarnings({ "unchecked" })
 	@Override
-	public <X> X unwrap(Byte[] value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Byte[] value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -113,14 +113,14 @@ public class ByteArrayJavaDescriptor extends AbstractBasicJavaDescriptor<Byte[]>
 			return (X) new BinaryStreamImpl( unwrapBytes( value ) );
 		}
 		if ( Blob.class.isAssignableFrom( type ) ) {
-			return (X) options.getLobCreator().createBlob( unwrapBytes( value ) );
+			return (X) session.getLobCreator().createBlob( unwrapBytes( value ) );
 		}
 
 		throw unknownUnwrap( type );
 	}
 
 	@Override
-	public <X> Byte[] wrap(X value, WrapperOptions options) {
+	public <X> Byte[] wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

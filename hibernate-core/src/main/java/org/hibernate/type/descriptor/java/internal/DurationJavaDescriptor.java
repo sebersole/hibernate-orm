@@ -9,10 +9,10 @@ package org.hibernate.type.descriptor.java.internal;
 import java.sql.Types;
 import java.time.Duration;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -52,7 +52,7 @@ public class DurationJavaDescriptor extends AbstractBasicJavaDescriptor<Duration
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> X unwrap(Duration duration, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(Duration duration, Class<X> type, SharedSessionContractImplementor session) {
 		if ( duration == null ) {
 			return null;
 		}
@@ -73,7 +73,7 @@ public class DurationJavaDescriptor extends AbstractBasicJavaDescriptor<Duration
 	}
 
 	@Override
-	public <X> Duration wrap(X value, WrapperOptions options) {
+	public <X> Duration wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

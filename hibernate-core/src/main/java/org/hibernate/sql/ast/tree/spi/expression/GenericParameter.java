@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.sqm.spi.ParameterSpec;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.Selectable;
@@ -20,6 +21,10 @@ public interface GenericParameter extends ParameterSpec, JdbcParameterBinder, Ex
 	@Override
 	default JdbcParameterBinder getParameterBinder() {
 		return this;
+	}
+
+	default QueryParameterBinding resolveBinding(ExecutionContext executionContext) {
+		return resolveBinding( executionContext.getParameterBindingContext() );
 	}
 
 	QueryParameterBinding resolveBinding(ParameterBindingContext context);

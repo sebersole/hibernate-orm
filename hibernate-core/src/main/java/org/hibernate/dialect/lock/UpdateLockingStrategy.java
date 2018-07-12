@@ -22,7 +22,10 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.exec.spi.BasicExecutionContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -77,26 +80,31 @@ public class UpdateLockingStrategy implements LockingStrategy {
 			throw new HibernateException( "write locks via update not supported for non-versioned entities [" + lockable.getEntityName() + "]" );
 		}
 
-		// todo : should we additionally check the current isolation mode explicitly?
+		final ExecutionContext executionContext = new BasicExecutionContext( session );
 		final SessionFactoryImplementor factory = session.getFactory();
+		final TypeConfiguration typeConfiguration = factory.getTypeConfiguration();
+
+		// todo : should we additionally check the current isolation mode explicitly?
+
 		try {
 			final PreparedStatement st = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql );
 			try {
 				final ValueBinder versionValueBinder = lockable.getHierarchy()
 						.getVersionDescriptor()
 						.getBasicType()
-						.getValueBinder();
-				versionValueBinder.bind( st, version, 1, session );
+						.getValueBinder( typeConfiguration );
+				versionValueBinder.bind( st, 1, version, executionContext );
 				int offset = 2;
 
-				final AllowableParameterType identifierParameterType = (AllowableParameterType) lockable.getHierarchy()
+				final AllowableParameterType identifierParameterType = lockable.getHierarchy()
 						.getIdentifierDescriptor();
 
-				identifierParameterType.getValueBinder().bind( st, id, offset, session );
+				identifierParameterType.getValueBinder( typeConfiguration )
+						.bind( st, offset, id, executionContext );
 
-				offset += identifierParameterType.getNumberOfJdbcParametersToBind();
+				offset += identifierParameterType.getNumberOfJdbcParametersNeeded();
 
-				versionValueBinder.bind( st, version, offset, session );
+				versionValueBinder.bind( st, offset, version, executionContext );
 
 				final int affected = session.getJdbcCoordinator().getResultSetReturn().executeUpdate( st );
 				if ( affected < 0 ) {
@@ -138,4 +146,5 @@ public class UpdateLockingStrategy implements LockingStrategy {
 	protected LockMode getLockMode() {
 		return lockMode;
 	}
+
 }

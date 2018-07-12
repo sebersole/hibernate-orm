@@ -13,12 +13,12 @@ import java.util.function.BiFunction;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.TypeContributor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.SerializationHelper;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.internal.JavaTypeDescriptorBaseline;
 import org.hibernate.type.descriptor.java.internal.JavaTypeDescriptorBasicAdaptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.VarbinarySqlDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -256,7 +256,7 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 		}
 
 		@Override
-		public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
+		public <X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session) {
 			if ( type.equals( byte[].class ) ) {
 				throw new UnsupportedOperationException( "Cannot unwrap Serializable to format other than byte[]" );
 			}
@@ -266,7 +266,7 @@ public class JavaTypeDescriptorRegistry implements Serializable, JavaTypeDescrip
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <X> T wrap(X value, WrapperOptions options) {
+		public <X> T wrap(X value, SharedSessionContractImplementor session) {
 			if ( value == null ) {
 				return null;
 			}

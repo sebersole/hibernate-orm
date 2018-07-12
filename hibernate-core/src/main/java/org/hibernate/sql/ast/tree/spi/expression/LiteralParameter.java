@@ -11,11 +11,11 @@ import java.sql.SQLException;
 import java.util.Collection;
 import javax.persistence.TemporalType;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -120,9 +120,9 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
-			ParameterBindingContext context,
-			SharedSessionContractImplementor session) throws SQLException {
-		type.getValueBinder().bind( statement, value, startPosition, session );
+			ExecutionContext executionContext) throws SQLException {
+		type.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+				.bind( statement, startPosition, value, executionContext );
 		return 1;
 	}
 }

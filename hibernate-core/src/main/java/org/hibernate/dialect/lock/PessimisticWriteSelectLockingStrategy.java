@@ -22,6 +22,9 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.SimpleSelect;
+import org.hibernate.sql.exec.spi.BasicExecutionContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * A pessimistic locking strategy where the locks are obtained through select statements.
@@ -54,24 +57,29 @@ public class PessimisticWriteSelectLockingStrategy extends AbstractSelectLocking
 	@Override
 	public void lock(Serializable id, Object version, Object object, int timeout, SharedSessionContractImplementor session) {
 		final String sql = determineSql( timeout );
+
+		final ExecutionContext executionContext = new BasicExecutionContext( session );
 		final SessionFactoryImplementor factory = session.getFactory();
+		final TypeConfiguration typeConfiguration = factory.getTypeConfiguration();
+
 		try {
 			try {
 				final PreparedStatement st = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql );
 				try {
-					final AllowableParameterType identifierParameterType = (AllowableParameterType) getLockable().getHierarchy()
+					final AllowableParameterType identifierParameterType = getLockable().getHierarchy()
 							.getIdentifierDescriptor();
-					identifierParameterType.getValueBinder().bind( st, id, 1, session );
+					identifierParameterType.getValueBinder( typeConfiguration )
+							.bind( st, 1, id, executionContext );
 					if ( StringHelper.isNotEmpty( getLockable().getVersionColumnName() ) ) {
 						getLockable().getHierarchy()
 								.getVersionDescriptor()
 								.getBasicType()
-								.getValueBinder()
+								.getValueBinder( typeConfiguration )
 								.bind(
 										st,
+										identifierParameterType.getNumberOfJdbcParametersNeeded() + 1,
 										version,
-										identifierParameterType.getNumberOfJdbcParametersToBind() + 1,
-										session
+										executionContext
 								);
 					}
 

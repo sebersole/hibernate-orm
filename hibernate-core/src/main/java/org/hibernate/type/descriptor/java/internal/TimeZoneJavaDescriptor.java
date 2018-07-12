@@ -9,9 +9,9 @@ package org.hibernate.type.descriptor.java.internal;
 import java.util.Comparator;
 import java.util.TimeZone;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -53,7 +53,7 @@ public class TimeZoneJavaDescriptor extends AbstractBasicJavaDescriptor<TimeZone
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(TimeZone value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(TimeZone value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -63,7 +63,7 @@ public class TimeZoneJavaDescriptor extends AbstractBasicJavaDescriptor<TimeZone
 		throw unknownUnwrap( type );
 	}
 
-	public <X> TimeZone wrap(X value, WrapperOptions options) {
+	public <X> TimeZone wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

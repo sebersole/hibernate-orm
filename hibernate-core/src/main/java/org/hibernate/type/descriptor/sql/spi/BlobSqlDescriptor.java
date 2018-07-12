@@ -14,11 +14,14 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import org.hibernate.engine.jdbc.BinaryStream;
+import org.hibernate.sql.AbstractJdbcValueBinder;
+import org.hibernate.sql.AbstractJdbcValueExtractor;
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Descriptor for {@link Types#BLOB BLOB} handling.
@@ -27,7 +30,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Gail Badner
  * @author Brett Meyer
  */
-public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
+public abstract class BlobSqlDescriptor extends AbstractTemplateSqlTypeDescriptor {
 
 	private BlobSqlDescriptor() {
 	}
@@ -49,32 +52,41 @@ public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
 	}
 
 	@Override
-	public <X> ValueExtractor<X> getExtractor(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-		return new BasicExtractor<X>( javaTypeDescriptor, this ) {
+	protected <X> JdbcValueExtractor<X> createExtractor(BasicJavaDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+		return new AbstractJdbcValueExtractor<X>( javaTypeDescriptor, this ) {
 			@Override
-			protected X doExtract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap( rs.getBlob( position ), options );
+			protected X doExtract(
+					ResultSet rs,
+					int position,
+					ExecutionContext executionContext) throws SQLException {
+				return javaTypeDescriptor.wrap( rs.getBlob( position ), executionContext.getSession() );
 			}
 
 			@Override
-			protected X doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-				return javaTypeDescriptor.wrap( statement.getBlob( index ), options );
+			protected X doExtract(
+					CallableStatement statement,
+					int position,
+					ExecutionContext executionContext) throws SQLException {
+				return javaTypeDescriptor.wrap( statement.getBlob( position ), executionContext.getSession() );
 			}
 
 			@Override
-			protected X doExtract(CallableStatement statement, String name, WrapperOptions options)
-					throws SQLException {
-				return javaTypeDescriptor.wrap( statement.getBlob( name ), options );
+			protected X doExtract(
+					CallableStatement statement,
+					String name,
+					ExecutionContext executionContext) throws SQLException {
+				return javaTypeDescriptor.wrap( statement.getBlob( name ), executionContext.getSession() );
 			}
 		};
 	}
 
-	protected abstract <X> BasicBinder<X> getBlobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor);
-
 	@Override
-	public <X> BasicBinder<X> getBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-		return getBlobBinder( javaTypeDescriptor );
+	protected <X> JdbcValueBinder<X> createBinder(BasicJavaDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+		return getBlobBinder( javaTypeDescriptor, typeConfiguration );
 	}
+
+	protected abstract <X> JdbcValueBinder<X> getBlobBinder(JavaTypeDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration);
+
 
 	public static final BlobSqlDescriptor DEFAULT = new BlobSqlDescriptor() {
 		@Override
@@ -83,34 +95,46 @@ public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
 		}
 
 		@Override
-		public <X> BasicBinder<X> getBlobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueBinder<X> getBlobBinder(JavaTypeDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
-						throws SQLException {
+				protected void doBind(
+						PreparedStatement st,
+						int index, X value,
+						ExecutionContext executionContext) throws SQLException {
 					BlobSqlDescriptor descriptor = BLOB_BINDING;
 					if ( byte[].class.isInstance( value ) ) {
 						// performance shortcut for binding BLOB data in byte[] format
 						descriptor = PRIMITIVE_ARRAY_BINDING;
 					}
-					else if ( options.useStreamForLobBinding() ) {
+					else if ( executionContext.getSession().useStreamForLobBinding() ) {
 						descriptor = STREAM_BINDING;
 					}
-					descriptor.getBlobBinder( javaTypeDescriptor ).doBind( st, value, index, options );
+
+					descriptor.getBlobBinder( javaTypeDescriptor, typeConfiguration ).bind( st,
+																							index,
+																							value,
+																							executionContext );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
-						throws SQLException {
+				protected void doBind(
+						CallableStatement st,
+						String name, X value,
+						ExecutionContext executionContext) throws SQLException {
 					BlobSqlDescriptor descriptor = BLOB_BINDING;
 					if ( byte[].class.isInstance( value ) ) {
 						// performance shortcut for binding BLOB data in byte[] format
 						descriptor = PRIMITIVE_ARRAY_BINDING;
 					}
-					else if ( options.useStreamForLobBinding() ) {
+					else if ( executionContext.getSession().useStreamForLobBinding() ) {
 						descriptor = STREAM_BINDING;
 					}
-					descriptor.getBlobBinder( javaTypeDescriptor ).doBind( st, value, name, options );
+
+					descriptor.getBlobBinder( javaTypeDescriptor, typeConfiguration ).bind( st,
+																							name,
+																							value,
+																							executionContext );
 				}
 			};
 		}
@@ -123,18 +147,22 @@ public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
 		}
 
 		@Override
-		public <X> BasicBinder<X> getBlobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueBinder<X> getBlobBinder(JavaTypeDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				public void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
-						throws SQLException {
-					st.setBytes( index, javaTypeDescriptor.unwrap( value, byte[].class, options ) );
+				protected void doBind(
+						PreparedStatement st,
+						int index, X value,
+						ExecutionContext executionContext) throws SQLException {
+					st.setBytes( index, javaTypeDescriptor.unwrap( value, byte[].class, executionContext.getSession() ) );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
-						throws SQLException {
-					st.setBytes( name, javaTypeDescriptor.unwrap( value, byte[].class, options ) );
+				protected void doBind(
+						CallableStatement st,
+						String name, X value,
+						ExecutionContext executionContext) throws SQLException {
+					st.setBytes( name, javaTypeDescriptor.unwrap( value, byte[].class, executionContext.getSession() ) );
 				}
 			};
 		}
@@ -147,18 +175,22 @@ public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
 		}
 
 		@Override
-		public <X> BasicBinder<X> getBlobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueBinder<X> getBlobBinder(JavaTypeDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
-						throws SQLException {
-					st.setBlob( index, javaTypeDescriptor.unwrap( value, Blob.class, options ) );
+				protected void doBind(
+						PreparedStatement st,
+						int index, X value,
+						ExecutionContext executionContext) throws SQLException {
+					st.setBlob( index, javaTypeDescriptor.unwrap( value, Blob.class, executionContext.getSession() ) );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
-						throws SQLException {
-					st.setBlob( name, javaTypeDescriptor.unwrap( value, Blob.class, options ) );
+				protected void doBind(
+						CallableStatement st,
+						String name, X value,
+						ExecutionContext executionContext) throws SQLException {
+					st.setBlob( name, javaTypeDescriptor.unwrap( value, Blob.class, executionContext.getSession() ) );
 				}
 			};
 		}
@@ -171,26 +203,30 @@ public abstract class BlobSqlDescriptor implements SqlTypeDescriptor {
 		}
 
 		@Override
-		public <X> BasicBinder<X> getBlobBinder(final JavaTypeDescriptor<X> javaTypeDescriptor) {
-			return new BasicBinder<X>( javaTypeDescriptor, this ) {
+		public <X> JdbcValueBinder<X> getBlobBinder(JavaTypeDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
+			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
 				@Override
-				protected void doBind(PreparedStatement st, X value, int index, WrapperOptions options)
-						throws SQLException {
+				protected void doBind(
+						PreparedStatement st,
+						int index, X value,
+						ExecutionContext executionContext) throws SQLException {
 					final BinaryStream binaryStream = javaTypeDescriptor.unwrap(
 							value,
 							BinaryStream.class,
-							options
+							executionContext.getSession()
 					);
 					st.setBinaryStream( index, binaryStream.getInputStream(), binaryStream.getLength() );
 				}
 
 				@Override
-				protected void doBind(CallableStatement st, X value, String name, WrapperOptions options)
-						throws SQLException {
+				protected void doBind(
+						CallableStatement st,
+						String name, X value,
+						ExecutionContext executionContext) throws SQLException {
 					final BinaryStream binaryStream = javaTypeDescriptor.unwrap(
 							value,
 							BinaryStream.class,
-							options
+							executionContext.getSession()
 					);
 					st.setBinaryStream( name, binaryStream.getInputStream(), binaryStream.getLength() );
 				}

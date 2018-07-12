@@ -39,7 +39,7 @@ public class CompositeQueryResultAssembler implements QueryResultAssembler {
 	@Override
 	public Object assemble(RowProcessingState rowProcessingState, JdbcValuesSourceProcessingOptions options) {
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState()
-				.getPersistenceContext();
+				.getSession();
 		final Object[] values = (Object[]) sqlSelectionGroup.hydrateStateArray( rowProcessingState );
 //		embeddedDescriptor.visitStateArrayNavigables(
 //				contributor -> {

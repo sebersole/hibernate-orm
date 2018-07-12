@@ -11,6 +11,8 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.hibernate.annotations.Remove;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -22,8 +24,10 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
- * @author Steve Ebersole
+ * @deprecated Use {@link org.hibernate.sql.JdbcValueExtractor} instead
  */
+@Deprecated
+@Remove
 public class SqlSelectionReaderImpl implements SqlSelectionReader {
 	private final Reader reader;
 
@@ -99,7 +103,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 				JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 				int position) throws SQLException {
 			// todo (6.0) - we should cache the SqlTypeDescriptor in the ctor...
-			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getPersistenceContext()
+			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getSession()
 					.getFactory()
 					.getMetamodel()
 					.getTypeConfiguration()
@@ -107,7 +111,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 					.getDescriptor( jdbcTypeCode );
 
 			final JavaTypeDescriptor javaTypeDescriptor = sqlDescriptor.getJdbcRecommendedJavaTypeMapping(
-					jdbcValuesSourceProcessingState.getPersistenceContext().getFactory().getMetamodel().getTypeConfiguration()
+					jdbcValuesSourceProcessingState.getSession().getFactory().getMetamodel().getTypeConfiguration()
 			);
 
 			return extractRawJdbcValue(
@@ -124,7 +128,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 				CallableStatement statement,
 				JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 				int jdbcParameterIndex) throws SQLException {
-			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getPersistenceContext()
+			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getSession()
 					.getFactory()
 					.getMetamodel()
 					.getTypeConfiguration()
@@ -132,7 +136,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 					.getDescriptor( jdbcTypeCode );
 
 			final JavaTypeDescriptor<T> javaTypeDescriptor = sqlDescriptor.getJdbcRecommendedJavaTypeMapping(
-					jdbcValuesSourceProcessingState.getPersistenceContext().getFactory().getMetamodel().getTypeConfiguration()
+					jdbcValuesSourceProcessingState.getSession().getFactory().getMetamodel().getTypeConfiguration()
 			);
 
 			return extractRawJdbcParameterValue(
@@ -149,7 +153,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 				CallableStatement statement,
 				JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 				String jdbcParameterName) throws SQLException {
-			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getPersistenceContext()
+			final SqlTypeDescriptor sqlDescriptor = jdbcValuesSourceProcessingState.getSession()
 					.getFactory()
 					.getMetamodel()
 					.getTypeConfiguration()
@@ -157,7 +161,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 					.getDescriptor( jdbcTypeCode );
 
 			final JavaTypeDescriptor<T> javaTypeDescriptor = sqlDescriptor.getJdbcRecommendedJavaTypeMapping(
-					jdbcValuesSourceProcessingState.getPersistenceContext().getFactory().getMetamodel().getTypeConfiguration()
+					jdbcValuesSourceProcessingState.getSession().getFactory().getMetamodel().getTypeConfiguration()
 			);
 
 			return extractRawJdbcParameterValue(
@@ -170,25 +174,26 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> T extractRawJdbcValue(
 			ResultSet resultSet,
 			BasicJavaDescriptor<T> javaTypeDescriptor,
 			SqlTypeDescriptor sqlTypeDescriptor,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			int position) throws SQLException {
+			int jdbcParameterIndex) throws SQLException {
 		assert resultSet != null;
 		assert javaTypeDescriptor != null;
 		assert sqlTypeDescriptor != null;
 		assert jdbcValuesSourceProcessingState != null;
-		assert position > 0;
+		assert jdbcParameterIndex > 0;
 
-		return sqlTypeDescriptor.getExtractor( javaTypeDescriptor ).extract(
-				resultSet,
-				position,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
+		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
+		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+				.getJdbcValueExtractor()
+				.extract( resultSet, jdbcParameterIndex, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> T extractRawJdbcParameterValue(
 			CallableStatement statement,
 			BasicJavaDescriptor<T> javaTypeDescriptor,
@@ -200,13 +205,13 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		assert sqlTypeDescriptor != null;
 		assert jdbcValuesSourceProcessingState != null;
 
-		return sqlTypeDescriptor.getExtractor( javaTypeDescriptor ).extract(
-				statement,
-				jdbcParameterIndex,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
+		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
+		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+				.getJdbcValueExtractor()
+				.extract( statement, jdbcParameterIndex, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> T extractRawJdbcParameterValue(
 			CallableStatement statement,
 			BasicJavaDescriptor<T> javaTypeDescriptor,
@@ -218,11 +223,10 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		assert sqlTypeDescriptor != null;
 		assert jdbcValuesSourceProcessingState != null;
 
-		return sqlTypeDescriptor.getExtractor( javaTypeDescriptor ).extract(
-				statement,
-				jdbcParameterName,
-				jdbcValuesSourceProcessingState.getPersistenceContext()
-		);
+		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
+		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+				.getJdbcValueExtractor()
+				.extract( statement, jdbcParameterName, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}
 
 	private class BasicTypeReaderAdapterImpl implements Reader {

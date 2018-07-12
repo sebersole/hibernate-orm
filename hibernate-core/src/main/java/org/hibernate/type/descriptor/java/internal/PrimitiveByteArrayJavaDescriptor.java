@@ -15,10 +15,10 @@ import java.util.Arrays;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.jdbc.BinaryStream;
 import org.hibernate.engine.jdbc.internal.BinaryStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ArrayMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.BinaryVersionSupport;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
@@ -84,7 +84,7 @@ public class PrimitiveByteArrayJavaDescriptor extends AbstractBasicJavaDescripto
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(byte[] value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(byte[] value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -98,13 +98,13 @@ public class PrimitiveByteArrayJavaDescriptor extends AbstractBasicJavaDescripto
 			return (X) new BinaryStreamImpl( value );
 		}
 		if ( Blob.class.isAssignableFrom( type ) ) {
-			return (X) options.getLobCreator().createBlob( value );
+			return (X) session.getLobCreator().createBlob( value );
 		}
 
 		throw unknownUnwrap( type );
 	}
 
-	public <X> byte[] wrap(X value, WrapperOptions options) {
+	public <X> byte[] wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

@@ -31,19 +31,22 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceBasic;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.spi.Util;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -52,14 +55,13 @@ import org.jboss.logging.Logger;
  */
 public class BasicSingularPersistentAttribute<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder<J>, ValueExtractor<J> {
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder, ValueExtractor<J> {
 	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
 
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
+	private final JdbcValueMapper jdbcValueMapper;
 	private final BasicValueConverter valueConverter;
-	private final ValueBinder realBinder;
-	private final ValueExtractor realExtractor;
 
 	@SuppressWarnings("unchecked")
 	public BasicSingularPersistentAttribute(
@@ -88,21 +90,21 @@ public class BasicSingularPersistentAttribute<O, J>
 					getNavigableRole()
 			);
 
-			realBinder = basicType.getSqlTypeDescriptor().getBinder(
-					valueConverter.getRelationalJavaDescriptor()
-			);
-
-			realExtractor = basicType.getSqlTypeDescriptor().getExtractor(
-					valueConverter.getDomainJavaDescriptor()
+			jdbcValueMapper = basicType.getSqlTypeDescriptor().getJdbcValueMapper(
+					valueConverter.getRelationalJavaDescriptor(),
+					context.getSessionFactory().getTypeConfiguration()
 			);
 		}
 		else {
-			realBinder = basicType.getValueBinder();
-			realExtractor = basicType.getValueExtractor();
+			jdbcValueMapper = basicType.getSqlTypeDescriptor().getJdbcValueMapper(
+					basicType.getJavaTypeDescriptor(),
+					context.getSessionFactory().getTypeConfiguration()
+			);
 		}
 
 		instantiationComplete( bootAttribute, context );
 	}
+
 
 	@Override
 	public SingularAttributeClassification getAttributeTypeClassification() {
@@ -174,15 +176,14 @@ public class BasicSingularPersistentAttribute<O, J>
 		return basicType;
 	}
 
+
 	@Override
-	public ValueBinder getValueBinder() {
-//		return basicType.getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 		return this;
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-//		return basicType.getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return this;
 	}
 
@@ -235,41 +236,60 @@ public class BasicSingularPersistentAttribute<O, J>
 		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
 
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// ValueBinder
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public void bind(
 			PreparedStatement st,
-			J value,
-			int index,
-			WrapperOptions options) throws SQLException {
-		final Object bindValue = valueConverter == null
-				? value
-				: valueConverter.toRelationalValue( value, options.getSession() );
+			int position,
+			Object value,
+			ExecutionContext executionContext) throws SQLException {
+		final Object bindValue = bindValue( value, executionContext.getSession() );
 
-		realBinder.bind( st, bindValue, index, options );
+		jdbcValueMapper.getJdbcValueBinder().bind( st, position, bindValue, executionContext );
+	}
+
+	@SuppressWarnings("unchecked")
+	private Object bindValue(Object value, SharedSessionContractImplementor session) {
+		return valueConverter == null
+				? value
+				: valueConverter.toRelationalValue( value, session );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public void bind(
-			CallableStatement st,
-			J value,
+			PreparedStatement st,
 			String name,
-			WrapperOptions options) throws SQLException {
-		final Object bindValue = valueConverter == null
-				? value
-				: valueConverter.toRelationalValue( value, options.getSession() );
+			Object value,
+			ExecutionContext executionContext) throws SQLException {
+		final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
+		final Object bindValue = bindValue( value, executionContext.getSession() );
 
-		realBinder.bind( st, bindValue, name, options );
+		jdbcValueMapper.getJdbcValueBinder().bind( callable, name, bindValue, executionContext );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public J extract(ResultSet rs, int position, WrapperOptions options) throws SQLException {
-		final Object value = realExtractor.extract( rs, position, options );
-		return (J) (valueConverter == null
-						? value
-						: valueConverter.toDomainValue( value, options.getSession() ) );
+	public J extract(ResultSet rs, int position, ExecutionContext executionContext) throws SQLException {
+		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( rs, position, executionContext );
+		return extractValue( executionContext, value );
+	}
+
+	@SuppressWarnings("unchecked")
+	private J extractValue(ExecutionContext executionContext, Object value) {
+		return (J) ( valueConverter == null
+				? value
+				: valueConverter.toDomainValue( value, executionContext.getSession() ) );
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersNeeded() {
+		return 1;
 	}
 
 	@Override
@@ -277,11 +297,9 @@ public class BasicSingularPersistentAttribute<O, J>
 	public J extract(
 			CallableStatement statement,
 			int position,
-			WrapperOptions options) throws SQLException {
-		final Object value = realExtractor.extract( statement, position, options );
-		return (J) (valueConverter == null
-				? value
-				: valueConverter.toDomainValue( value, options.getSession() ) );
+			ExecutionContext executionContext) throws SQLException {
+		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( statement, position, executionContext );
+		return extractValue( executionContext, value );
 	}
 
 	@Override
@@ -289,10 +307,8 @@ public class BasicSingularPersistentAttribute<O, J>
 	public J extract(
 			CallableStatement statement,
 			String name,
-			WrapperOptions options) throws SQLException {
-		final Object value = realExtractor.extract( statement, name, options );
-		return (J) (valueConverter == null
-				? value
-				: valueConverter.toDomainValue( value, options.getSession() ) );
+			ExecutionContext executionContext) throws SQLException {
+		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( statement, name, executionContext );
+		return extractValue( executionContext, value );
 	}
 }

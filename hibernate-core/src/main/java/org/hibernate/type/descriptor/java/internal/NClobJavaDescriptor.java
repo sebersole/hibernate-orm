@@ -20,11 +20,11 @@ import org.hibernate.engine.jdbc.NClobImplementer;
 import org.hibernate.engine.jdbc.NClobProxy;
 import org.hibernate.engine.jdbc.WrappedClob;
 import org.hibernate.engine.jdbc.internal.CharacterStreamImpl;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.IncomparableComparator;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -99,7 +99,7 @@ public class NClobJavaDescriptor extends AbstractBasicJavaDescriptor<NClob> {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(final NClob value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(final NClob value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -129,7 +129,7 @@ public class NClobJavaDescriptor extends AbstractBasicJavaDescriptor<NClob> {
 		throw unknownUnwrap( type );
 	}
 
-	public <X> NClob wrap(X value, WrapperOptions options) {
+	public <X> NClob wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -137,11 +137,11 @@ public class NClobJavaDescriptor extends AbstractBasicJavaDescriptor<NClob> {
 		// Support multiple return types from
 		// ClobTypeDescriptor
 		if ( NClob.class.isAssignableFrom( value.getClass() ) ) {
-			return options.getLobCreator().wrap( (NClob) value );
+			return session.getLobCreator().wrap( (NClob) value );
 		}
 		else if ( Reader.class.isAssignableFrom( value.getClass() ) ) {
 			Reader reader = (Reader) value;
-			return options.getLobCreator().createNClob( LobStreamDataHelper.extractString( reader ) );
+			return session.getLobCreator().createNClob( LobStreamDataHelper.extractString( reader ) );
 		}
 
 		throw unknownWrap( value.getClass() );

@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -65,6 +64,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.internal.EntityFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
@@ -77,7 +77,6 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
@@ -229,13 +228,11 @@ public class SingularPersistentAttributeEntity<O,J>
 			SqmFrom sourceSqmFrom,
 			SqmNavigableContainerReference containerReference,
 			SqmCreationContext creationContext) {
-		final SqmSingularAttributeReferenceEntity reference = new SqmSingularAttributeReferenceEntity(
+		return new SqmSingularAttributeReferenceEntity(
 				containerReference,
 				this,
 				creationContext
 		);
-
-		return reference;
 	}
 
 	@Override
@@ -336,6 +333,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
@@ -364,6 +362,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		private List<TableReferenceJoin> tableReferenceJoins;
 		private Predicate predicate;
 
+		@SuppressWarnings("WeakerAccess")
 		public TableReferenceJoinCollectorImpl(JoinedTableGroupContext tableGroupJoinContext) {
 			this.tableGroupJoinContext = tableGroupJoinContext;
 		}
@@ -418,6 +417,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			tableReferenceJoins.add( tableReferenceJoin );
 		}
 
+		@SuppressWarnings("WeakerAccess")
 		public TableGroupJoin generateTableGroup(
 				JoinType joinType,
 				TableGroupInfo tableGroupInfoSource,
@@ -468,6 +468,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
 			Object hydratedForm,
 			ResolutionContext resolutionContext,
@@ -549,34 +550,57 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	private final ValueBinder valueBinder = new ValueBinder() {
 		@Override
-		@SuppressWarnings("unchecked")
-		public void bind(
-				PreparedStatement st, Object value, int index, WrapperOptions options) throws SQLException {
-			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
-			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, index, options );
+		public int getNumberOfJdbcParametersNeeded() {
+			return getEntityDescriptor().getHierarchy()
+					.getIdentifierDescriptor()
+					.getNumberOfJdbcParametersNeeded();
 		}
 
 		@Override
 		@SuppressWarnings("unchecked")
 		public void bind(
-				CallableStatement st, Object value, String name, WrapperOptions options) throws SQLException {
-			final Object identifier = value == null ? null : getEntityDescriptor().getIdentifier( value, options.getSession() );
-			getEntityDescriptor().getHierarchy().getIdentifierDescriptor().getValueBinder().bind( st, identifier, name, options );
+				PreparedStatement st,
+				int index,
+				Object value,
+				ExecutionContext executionContext) throws SQLException {
+			final Object identifier = value == null
+					? null
+					: getEntityDescriptor().getIdentifier( value, executionContext.getSession() );
+			getEntityDescriptor().getHierarchy()
+					.getIdentifierDescriptor()
+					.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+					.bind( st, index, identifier, executionContext );
+		}
+
+		@Override
+		public void bind(
+				PreparedStatement st,
+				String name,
+				Object value,
+				ExecutionContext executionContext) throws SQLException {
+			final Object identifier = value == null
+					? null
+					: getEntityDescriptor().getIdentifier( value, executionContext.getSession() );
+			getEntityDescriptor().getHierarchy()
+					.getIdentifierDescriptor()
+					.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+					.bind( st, name, identifier, executionContext
+			);
 		}
 	};
 
 	@Override
-	public ValueBinder<J> getValueBinder() {
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 		return valueBinder;
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return null;
 	}
 
 	@Override
-	public int getNumberOfJdbcParametersToBind() {
+	public int getNumberOfJdbcParametersNeeded() {
 		return foreignKey.getColumnMappings().getColumnMappings().size();
 	}
 

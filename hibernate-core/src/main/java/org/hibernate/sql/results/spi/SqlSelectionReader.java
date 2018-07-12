@@ -10,6 +10,8 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.hibernate.annotations.Remove;
+
 /**
  * A low-level reader for extracting JDBC results.  We always extract "basic" values
  * via this contract; various other contracts may consume those basic vales into compositions
@@ -20,8 +22,10 @@ import java.sql.SQLException;
  * is generally used to populate the "current row JDBC values" array
  * ({@link RowProcessingState#getJdbcValue})
  *
- * @author Steve Ebersole
+ * @deprecated Use {@link org.hibernate.sql.JdbcValueExtractor} instead
  */
+@Deprecated
+@Remove
 public interface SqlSelectionReader<T> {
 
 	// todo (6.0) : rename these methods for consistency
@@ -38,10 +42,12 @@ public interface SqlSelectionReader<T> {
 	 *
 	 * @throws SQLException Exceptions from the underlying JDBC objects are simply re-thrown.
 	 */
-	T read(
+	default T read(
 			ResultSet resultSet,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			SqlSelection sqlSelection) throws SQLException;
+			SqlSelection sqlSelection) throws SQLException {
+		throw new UnsupportedOperationException( "SqlSelectionReader is going away : " + getClass() );
+	}
 
 
 	/**
@@ -55,10 +61,12 @@ public interface SqlSelectionReader<T> {
 	 *
 	 * @throws SQLException Exceptions from the underlying JDBC objects are simply re-thrown.
 	 */
-	T extractParameterValue(
+	default T extractParameterValue(
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			int jdbcParameterIndex) throws SQLException;
+			int jdbcParameterIndex) throws SQLException {
+		throw new UnsupportedOperationException( "SqlSelectionReader is going away : " + getClass() );
+	}
 
 	/**
 	 * Extract the value of an INOUT/OUT parameter from the JDBC CallableStatement *by name*
@@ -71,8 +79,10 @@ public interface SqlSelectionReader<T> {
 	 *
 	 * @throws SQLException Exceptions from the underlying JDBC objects are simply re-thrown.
 	 */
-	T extractParameterValue(
+	default T extractParameterValue(
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			String jdbcParameterName) throws SQLException;
+			String jdbcParameterName) throws SQLException {
+		throw new UnsupportedOperationException( "SqlSelectionReader is going away : " + getClass() );
+	}
 }

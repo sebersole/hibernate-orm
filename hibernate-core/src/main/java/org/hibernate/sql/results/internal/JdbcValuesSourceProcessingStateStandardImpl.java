@@ -78,6 +78,11 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
+	public ExecutionContext getExecutionContext() {
+		return executionContext;
+	}
+
+	@Override
 	public QueryOptions getQueryOptions() {
 		return executionContext.getQueryOptions();
 	}
@@ -258,7 +263,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
-	public SharedSessionContractImplementor getPersistenceContext() {
+	public SharedSessionContractImplementor getSession() {
 		return executionContext.getSession();
 	}
 

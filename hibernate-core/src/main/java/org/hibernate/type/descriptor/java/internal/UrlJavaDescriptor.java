@@ -10,9 +10,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -46,7 +46,7 @@ public class UrlJavaDescriptor extends AbstractBasicJavaDescriptor<URL> {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public <X> X unwrap(URL value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(URL value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}
@@ -56,7 +56,7 @@ public class UrlJavaDescriptor extends AbstractBasicJavaDescriptor<URL> {
 		throw unknownUnwrap( type );
 	}
 
-	public <X> URL wrap(X value, WrapperOptions options) {
+	public <X> URL wrap(X value, SharedSessionContractImplementor session) {
 		if ( value == null ) {
 			return null;
 		}

@@ -22,7 +22,7 @@ public class QueryLiteral extends AbstractLiteral {
 
 	@Override
 	public BasicType getType() {
-		return ( (BasicValuedExpressableType) super.getType() ).getBasicType();
+		return super.getType().getBasicType();
 	}
 
 	@Override

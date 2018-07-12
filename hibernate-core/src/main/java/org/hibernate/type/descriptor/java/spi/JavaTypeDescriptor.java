@@ -6,9 +6,8 @@
  */
 package org.hibernate.type.descriptor.java.spi;
 
-import org.hibernate.type.descriptor.java.internal.NoWrapperOptions;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -38,27 +37,28 @@ public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.jav
 	 * <p/>
 	 * Intended use is during {@link java.sql.PreparedStatement} binding.
 	 *
+	 * @param <X> The conversion type.
+	 *
 	 * @param value The value to unwrap
 	 * @param type The type as which to unwrap
-	 * @param options The options
-	 * @param <X> The conversion type.
+	 * @param session The Session
 	 *
 	 * @return The unwrapped value.
 	 */
-	<X> X unwrap(T value, Class<X> type, WrapperOptions options);
+	<X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session);
 
 	/**
 	 * Wrap a value as our handled Java type.
 	 * <p/>
 	 * Intended use is during {@link java.sql.ResultSet} extraction.
 	 *
-	 * @param value The value to wrap.
-	 * @param options The options
 	 * @param <X> The conversion type.
 	 *
+	 * @param value The value to wrap.
+	 * @param session The options
 	 * @return The wrapped value.
 	 */
-	<X> T wrap(X value, WrapperOptions options);
+	<X> T wrap(X value, SharedSessionContractImplementor session);
 
 	/**
 	 * To be honest we have no idea when this is useful.  But older versions
@@ -67,14 +67,14 @@ public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.jav
 	 * the default impl here does exactly that.
 	 */
 	default String toString(T value) {
-		return unwrap( value, String.class, NoWrapperOptions.INSTANCE );
+		return unwrap( value, String.class, null );
 	}
 
 	/**
 	 * The inverse of {@link #toString}.  See discussion there.
 	 */
 	default T fromString(String value) {
-		return wrap( value, NoWrapperOptions.INSTANCE );
+		return wrap( value, null );
 	}
 
 	default boolean isInstance(Object value) {

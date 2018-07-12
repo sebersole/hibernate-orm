@@ -7,13 +7,12 @@
 package org.hibernate.type.descriptor.java.internal;
 
 import java.sql.Types;
-import java.util.Locale;
 import javax.persistence.EnumType;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -56,13 +55,13 @@ public class EnumJavaDescriptor<T extends Enum> extends AbstractBasicJavaDescrip
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> X unwrap(T value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session) {
 		return (X) value;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> T wrap(X value, WrapperOptions options) {
+	public <X> T wrap(X value, SharedSessionContractImplementor session) {
 		return (T) value;
 	}
 

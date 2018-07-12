@@ -127,21 +127,21 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			throw new ExecutionException( "Entity identifier state not yet hydrated on call to resolve EntityKey" );
 		}
 
-		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext();
-		concreteDescriptor = resolveConcreteEntityDescriptor( rowProcessingState, persistenceContext );
+		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
+		concreteDescriptor = resolveConcreteEntityDescriptor( rowProcessingState, session );
 
 		//		1) resolve the value(s) into its identifier representation
 		final Object id = concreteDescriptor.getHierarchy()
 				.getIdentifierDescriptor()
-				.resolveHydratedState( identifierHydratedState, rowProcessingState, persistenceContext.getSession(), null );
+				.resolveHydratedState( identifierHydratedState, rowProcessingState, session.getSession(), null );
 
 		//		2) build and register an EntityKey
 		this.entityKey = new EntityKey( id, concreteDescriptor.getEntityDescriptor() );
 
 		//		3) schedule the EntityKey for batch loading, if possible
 		if ( shouldBatchFetch() && concreteDescriptor.getEntityDescriptor().isBatchLoadable() ) {
-			if ( !persistenceContext.getPersistenceContext().containsEntity( entityKey ) ) {
-				persistenceContext.getPersistenceContext().getBatchFetchQueue().addBatchLoadableEntityKey( entityKey );
+			if ( !session.getPersistenceContext().containsEntity( entityKey ) ) {
+				session.getPersistenceContext().getBatchFetchQueue().addBatchLoadableEntityKey( entityKey );
 			}
 		}
 	}
@@ -191,7 +191,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 		hydratedEntityState = (Object[]) sqlSelectionMappings.hydrateStateArray( rowProcessingState );
 
-		final SharedSessionContractImplementor persistenceContext = rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext();
+		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 
 		// this isEntityReturn bit is just for entity loaders, not hql/criteria
 		if ( isEntityReturn() ) {
@@ -202,7 +202,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		}
 
 		if ( entityInstance == null ) {
-			entityInstance = persistenceContext.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
+			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
 		}
 
 		loadingEntityEntry = rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
@@ -272,9 +272,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	public void resolveEntityState(RowProcessingState rowProcessingState) {
 		final Object entityIdentifier = entityKey.getIdentifier();
 
-		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState()
-				.getPersistenceContext();
-
+		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 
 		preLoad( rowProcessingState );
 
@@ -429,8 +427,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	}
 
 	private void preLoad(RowProcessingState rowProcessingState) {
-		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState()
-				.getPersistenceContext();
+		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 
 		final PreLoadEvent preLoadEvent = rowProcessingState.getJdbcValuesSourceProcessingState().getPreLoadEvent();
 		preLoadEvent.reset();

@@ -6,10 +6,11 @@
  */
 package org.hibernate.type.descriptor.sql.spi;
 
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -45,27 +46,12 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 	 */
 	<T> BasicJavaDescriptor<T> getJdbcRecommendedJavaTypeMapping(TypeConfiguration typeConfiguration);
 
+	/**
+	 * todo (6.0) : move to JdbcValueMapper
+	 */
 	<T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor);
 
-	/**
-	 * Get the binder (setting JDBC in-going parameter values) capable of handling values of the type described by the
-	 * passed descriptor.
-	 *
-	 * @param javaTypeDescriptor The descriptor describing the types of Java values to be bound
-	 *
-	 * @return The appropriate binder.
-	 */
-	<X> ValueBinder<X> getBinder(JavaTypeDescriptor<X> javaTypeDescriptor);
-
-	/**
-	 * Get the extractor (pulling out-going values from JDBC objects) capable of handling values of the type described
-	 * by the passed descriptor.
-	 *
-	 * @param javaTypeDescriptor The descriptor describing the types of Java values to be extracted
-	 *
-	 * @return The appropriate extractor
-	 */
-	<X> ValueExtractor<X> getExtractor(JavaTypeDescriptor<X> javaTypeDescriptor);
-
-	// todo (6.0) : write a base class and define `#toString()` based on type-code
+	<T> JdbcValueMapper getJdbcValueMapper(
+			BasicJavaDescriptor<T> javaTypeDescriptor,
+			TypeConfiguration typeConfiguration);
 }

@@ -43,7 +43,7 @@ public class ScalarQueryResultAssembler implements QueryResultAssembler {
 		final Object rawJdbcValue = rowProcessingState.getJdbcValue( sqlSelection );
 
 		if ( valueConverter != null ) {
-			return valueConverter.toDomainValue( rawJdbcValue, rowProcessingState.getJdbcValuesSourceProcessingState().getPersistenceContext() );
+			return valueConverter.toDomainValue( rawJdbcValue, rowProcessingState.getJdbcValuesSourceProcessingState().getSession() );
 		}
 
 		return rawJdbcValue;

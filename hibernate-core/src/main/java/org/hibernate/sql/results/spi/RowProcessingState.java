@@ -40,7 +40,7 @@ public interface RowProcessingState extends Readable.ResolutionContext {
 	default Object resolveEntityInstance(EntityKey entityKey, boolean eager) {
 		// First, look for it in the PC as a managed entity
 		final Object managedEntity = getJdbcValuesSourceProcessingState()
-				.getPersistenceContext()
+				.getSession()
 				.getPersistenceContext()
 				.getEntity( entityKey );
 		if ( managedEntity != null ) {
@@ -50,7 +50,7 @@ public interface RowProcessingState extends Readable.ResolutionContext {
 
 		// Next, check currently loading entities
 		final LoadingEntityEntry loadingEntry = getJdbcValuesSourceProcessingState()
-				.getPersistenceContext()
+				.getSession()
 				.getPersistenceContext()
 				.getLoadContexts()
 				.findLoadingEntityEntry( entityKey );
@@ -59,7 +59,7 @@ public interface RowProcessingState extends Readable.ResolutionContext {
 		}
 
 		// Lastly, try to load from database
-		return getJdbcValuesSourceProcessingState().getPersistenceContext().internalLoad(
+		return getJdbcValuesSourceProcessingState().getSession().internalLoad(
 				entityKey.getEntityName(),
 				entityKey.getIdentifier(),
 				eager,

@@ -24,6 +24,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -99,7 +100,7 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return null;
 	}
 

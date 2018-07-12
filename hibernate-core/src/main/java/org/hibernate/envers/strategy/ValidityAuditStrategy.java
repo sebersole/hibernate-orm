@@ -16,11 +16,13 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.Session;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.boot.spi.AuditServiceOptions;
@@ -52,7 +54,7 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.Update;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.MIDDLE_ENTITY_ALIAS;
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.REVISION_PARAMETER;
@@ -101,68 +103,69 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			final Object id,
 			final Object data,
 			final Object revision) {
-		final String auditedEntityName = auditService.getAuditEntityName( entityName );
-		final AuditServiceOptions options = auditService.getOptions();
-
-		// When application reuses identifiers of previously removed entities:
-		// The UPDATE statement will no-op if an entity with a given identifier has been
-		// inserted for the first time. But in case a deleted primary key value was
-		// reused, this guarantees correct strategy behavior: exactly one row with
-		// null end date exists for each identifier.
-		final boolean reuseIdentifierNames = options.isAllowIdentifierReuseEnabled();
-
-		// Save the audit data
-		session.save( auditedEntityName, data );
-
-		// Update the end date of the previous row.
-		if ( reuseIdentifierNames || getRevisionType( options, data ) != RevisionType.ADD ) {
-			// Register transaction completion process to guarantee execution of UPDATE statement after INSERT.
-			( (EventSource) session ).getActionQueue().registerProcess(
-					new BeforeTransactionCompletionProcess() {
-						@Override
-						public void doBeforeTransactionCompletion(final SessionImplementor sessionImplementor) {
-							// construct the update contexts.
-							final List<UpdateContext> updateContexts = getUpdateContexts(
-									entityName,
-									auditedEntityName,
-									sessionImplementor,
-									auditService,
-									id,
-									revision
-							);
-
-							if ( updateContexts.isEmpty() ) {
-								throw new RuntimeException(
-										String.format(
-												Locale.ROOT,
-												"Failed to build update contexts for entity %s and id %s",
-												auditedEntityName,
-												id
-										)
-								);
-							}
-
-							// execute the update(s)
-							for ( UpdateContext updateContext : updateContexts ) {
-								if ( executeUpdate( sessionImplementor, updateContext ) != 1 ) {
-									final RevisionType revisionType = getRevisionType( options, data );
-									if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
-										throw new RuntimeException(
-												String.format(
-														"Cannot update previous revision for entity %s and id %s",
-														auditedEntityName,
-														id
-												)
-										);
-									}
-								}
-							}
-						}
-					}
-			);
-		}
-
-		sessionCacheCleaner.scheduleAuditDataRemoval( session, data );
+		throw new NotYetImplementedFor6Exception( getClass() );
+//		final String auditedEntityName = auditService.getAuditEntityName( entityName );
+//		final AuditServiceOptions options = auditService.getOptions();
+//
+//		// When application reuses identifiers of previously removed entities:
+//		// The UPDATE statement will no-op if an entity with a given identifier has been
+//		// inserted for the first time. But in case a deleted primary key value was
+//		// reused, this guarantees correct strategy behavior: exactly one row with
+//		// null end date exists for each identifier.
+//		final boolean reuseIdentifierNames = options.isAllowIdentifierReuseEnabled();
+//
+//		// Save the audit data
+//		session.save( auditedEntityName, data );
+//
+//		// Update the end date of the previous row.
+//		if ( reuseIdentifierNames || getRevisionType( options, data ) != RevisionType.ADD ) {
+//			// Register transaction completion process to guarantee execution of UPDATE statement after INSERT.
+//			( (EventSource) session ).getActionQueue().registerProcess(
+//					new BeforeTransactionCompletionProcess() {
+//						@Override
+//						public void doBeforeTransactionCompletion(final SessionImplementor sessionImplementor) {
+//							// construct the update contexts.
+//							final List<UpdateContext> updateContexts = getUpdateContexts(
+//									entityName,
+//									auditedEntityName,
+//									sessionImplementor,
+//									auditService,
+//									id,
+//									revision
+//							);
+//
+//							if ( updateContexts.isEmpty() ) {
+//								throw new RuntimeException(
+//										String.format(
+//												Locale.ROOT,
+//												"Failed to build update contexts for entity %s and id %s",
+//												auditedEntityName,
+//												id
+//										)
+//								);
+//							}
+//
+//							// execute the update(s)
+//							for ( UpdateContext updateContext : updateContexts ) {
+//								if ( executeUpdate( sessionImplementor, updateContext ) != 1 ) {
+//									final RevisionType revisionType = getRevisionType( options, data );
+//									if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
+//										throw new RuntimeException(
+//												String.format(
+//														"Cannot update previous revision for entity %s and id %s",
+//														auditedEntityName,
+//														id
+//												)
+//										);
+//									}
+//								}
+//							}
+//						}
+//					}
+//			);
+//		}
+//
+//		sessionCacheCleaner.scheduleAuditDataRemoval( session, data );
 	}
 
 	@Override
@@ -368,12 +371,13 @@ public class ValidityAuditStrategy implements AuditStrategy {
 	/**
 	 * Executes the {@link UpdateContext} within the bounds of the specified {@link SessionImplementor}.
 	 *
-	 * @param session The session.
+	 * @param executionContext The session.
 	 * @param updateContext The UpdateContext.
 	 *
 	 * @return the number of rows affected.
 	 */
-	private int executeUpdate(SessionImplementor session, UpdateContext updateContext) {
+	private int executeUpdate(ExecutionContext executionContext, UpdateContext updateContext) {
+		final SharedSessionContractImplementor session = executionContext.getSession();
 		final String updateSql = updateContext.toStatementString();
 		final JdbcCoordinator jdbcCoordinator = session.getJdbcCoordinator();
 		final PreparedStatement preparedStatement = jdbcCoordinator.getStatementPreparer().prepareStatement( updateSql );
@@ -382,7 +386,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 					try {
 						int index = 1;
 						for ( QueryParameterBinding binding : updateContext.getBindings() ) {
-							index += binding.bind( index, preparedStatement, session );
+							index += binding.bind( index, preparedStatement, executionContext );
 						}
 						return jdbcCoordinator.getResultSetReturn().executeUpdate( preparedStatement );
 					}
@@ -822,9 +826,10 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		 *
 		 * @throws SQLException Thrown if a SQL exception occured.
 		 */
-		public int bind(int index, PreparedStatement ps, WrapperOptions options) throws SQLException {
-			type.getValueBinder().bind( ps, value, index, options );
-			return type.getNumberOfJdbcParametersToBind();
+		public int bind(int index, PreparedStatement ps, ExecutionContext options) throws SQLException {
+			type.getValueBinder( options.getSession().getFactory().getTypeConfiguration() )
+					.bind( ps, index, value, options );
+			return type.getNumberOfJdbcParametersNeeded();
 		}
 	}
 }

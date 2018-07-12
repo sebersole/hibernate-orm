@@ -6,11 +6,11 @@
  */
 package org.hibernate.type.descriptor.java.internal;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.sqm.NotYetImplementedException;
 import org.hibernate.type.descriptor.java.spi.AbstractManagedJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -54,12 +54,12 @@ public class EmbeddableJavaDescriptorImpl<J>
 	}
 
 	@Override
-	public J wrap(Object value, WrapperOptions options) {
+	public J wrap(Object value, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedException(  );
 	}
 
 	@Override
-	public <X> X unwrap(J value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(J value, Class<X> type, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedException(  );
 	}
 }

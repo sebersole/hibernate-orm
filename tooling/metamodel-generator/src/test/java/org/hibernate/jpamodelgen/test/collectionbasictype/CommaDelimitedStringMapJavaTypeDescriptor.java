@@ -10,8 +10,8 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.spi.AbstractBasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.java.spi.MutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -51,12 +51,12 @@ public class CommaDelimitedStringMapJavaTypeDescriptor extends AbstractBasicJava
     }
 
     @Override
-    public <X> X unwrap(Map value, Class<X> type, WrapperOptions options) {
+    public <X> X unwrap(Map value, Class<X> type, SharedSessionContractImplementor session) {
         return (X) toString( value );
     }
 
     @Override
-    public <X> Map wrap(X value, WrapperOptions options) {
+    public <X> Map wrap(X value, SharedSessionContractImplementor session) {
         return fromString( (String) value );
     }
 }

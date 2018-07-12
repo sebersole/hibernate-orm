@@ -24,7 +24,6 @@ import org.hibernate.sql.results.spi.ScalarQueryResult;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -39,6 +38,7 @@ import org.jboss.logging.Logger;
 public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDescriptor {
 	private static final Logger log = Logger.getLogger( ResultSetMappingDescriptorUndefined.class );
 
+	@SuppressWarnings("WeakerAccess")
 	public static ResultSetMapping resolveStatic(
 			JdbcValuesMetadata jdbcResultsMetadata,
 			SessionFactoryImplementor sessionFactory) {
@@ -53,14 +53,14 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 			log.tracef( "Discovering JDBC result column metadata : %s (%s)", columnName, columnPosition );
 
 			final SqlTypeDescriptor sqlTypeDescriptor = jdbcResultsMetadata.resolveSqlTypeDescriptor( columnPosition );
-			final BasicJavaDescriptor javaTypeDescriptor = sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping(
-					typeConfiguration );
+			final BasicJavaDescriptor javaTypeDescriptor = sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping( typeConfiguration );
 
 			final SqlSelection sqlSelection = new SqlSelectionImpl(
 					columnPosition,
 					columnName,
 					javaTypeDescriptor,
-					sqlTypeDescriptor
+					sqlTypeDescriptor,
+					typeConfiguration
 			);
 			sqlSelections.add( sqlSelection );
 
@@ -114,14 +114,18 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 		private final int valuesArrayPosition;
 		private SqlSelectionReader sqlSelectionReader;
 
+		@SuppressWarnings("unchecked")
 		public SqlSelectionImpl(
 				int columnPosition,
 				String columnName,
-				JavaTypeDescriptor javaTypeDescriptor,
-				SqlTypeDescriptor sqlTypeDescriptor) {
+				BasicJavaDescriptor javaTypeDescriptor,
+				SqlTypeDescriptor sqlTypeDescriptor,
+				TypeConfiguration typeConfiguration) {
 			log.tracef( "Creating SqlSelection for auto-discovered column : %s (%s)", columnName, columnPosition );
 			this.valuesArrayPosition = columnPosition - 1;
-			this.sqlSelectionReader = new ExtractorBasedReader( sqlTypeDescriptor.getExtractor( javaTypeDescriptor ) );
+			this.sqlSelectionReader = new ExtractorBasedReader(
+					sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration )
+			);
 		}
 
 		@Override

@@ -22,22 +22,22 @@ public interface EmbeddedValueExpressableType<T> extends ExpressableType<T>, All
 	EmbeddedTypeDescriptor getEmbeddedDescriptor();
 
 	default int getNumberOfJdbcParametersForRestriction() {
-		return getNumberOfJdbcParametersToBind();
+		return getNumberOfJdbcParametersNeeded();
 	}
 
 	@Override
-	default int getNumberOfJdbcParametersToBind() {
-		return getEmbeddedDescriptor().getNumberOfJdbcParametersToBind();
+	default int getNumberOfJdbcParametersNeeded() {
+		return getEmbeddedDescriptor().getNumberOfJdbcParametersNeeded();
 	}
 
 	@Override
-	default ValueBinder getValueBinder() {
-		return getEmbeddedDescriptor().getValueBinder();
+	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	default ValueExtractor getValueExtractor() {
-		return getEmbeddedDescriptor().getValueExtractor();
+	default ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueExtractor( typeConfiguration );
 	}
 
 	@Override
@@ -46,6 +46,7 @@ public interface EmbeddedValueExpressableType<T> extends ExpressableType<T>, All
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	default JavaTypeDescriptor<T> getJavaTypeDescriptor() {
 		return getEmbeddedDescriptor().getJavaTypeDescriptor();
 	}

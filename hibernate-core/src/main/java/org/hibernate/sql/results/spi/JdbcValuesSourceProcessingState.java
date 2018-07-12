@@ -16,6 +16,7 @@ import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * Provides a context for processing the processing of the complete
@@ -36,9 +37,15 @@ import org.hibernate.query.spi.QueryOptions;
  * @author Steve Ebersole
  */
 public interface JdbcValuesSourceProcessingState {
-	SharedSessionContractImplementor getPersistenceContext();
+	ExecutionContext getExecutionContext();
 
-	QueryOptions getQueryOptions();
+	default SharedSessionContractImplementor getSession() {
+		return getExecutionContext().getSession();
+	}
+
+	default QueryOptions getQueryOptions() {
+		return getExecutionContext().getQueryOptions();
+	}
 
 	JdbcValuesSourceProcessingOptions getProcessingOptions();
 

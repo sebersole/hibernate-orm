@@ -687,7 +687,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitGenericParameter(GenericParameter parameter) {
 		parameterBinders.add( parameter.getParameterBinder() );
 
-		final int columnCount = resolveType( parameter ).getNumberOfJdbcParametersToBind();
+		final int columnCount = resolveType( parameter ).getNumberOfJdbcParametersNeeded();
 		final boolean needsParens = currentlyInPredicate && columnCount > 1;
 
 		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
@@ -756,7 +756,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitPositionalParameter(PositionalParameter positionalParameter) {
 		parameterBinders.add( positionalParameter.getParameterBinder() );
 
-		final int columnCount = resolveType( positionalParameter ).getNumberOfJdbcParametersToBind();
+		final int columnCount = resolveType( positionalParameter ).getNumberOfJdbcParametersNeeded();
 		final boolean needsParens = currentlyInPredicate && columnCount > 1;
 
 		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
@@ -834,7 +834,7 @@ public abstract class AbstractSqlAstWalker
 		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
 
 		// NOTE : use the same rules regarding "allowable types" for literals as we use for parameters...
-		final int physicalJdbcParamCount = queryLiteral.getType().getNumberOfJdbcParametersToBind();
+		final int physicalJdbcParamCount = queryLiteral.getType().getNumberOfJdbcParametersNeeded();
 		final boolean needsParens = currentlyInPredicate && physicalJdbcParamCount > 1;
 
 		if ( needsParens ) {

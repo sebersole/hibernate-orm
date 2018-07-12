@@ -6,11 +6,20 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import javax.persistence.TemporalType;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.spi.Util;
+import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -29,9 +38,47 @@ public interface BasicValuedExpressableType<J>
 	@Override
 	BasicJavaDescriptor<J> getJavaTypeDescriptor();
 
+	default SqlTypeDescriptor getSqlTypeDescriptor() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
 	@Override
-	default int getNumberOfJdbcParametersToBind() {
+	default int getNumberOfJdbcParametersNeeded() {
 		return 1;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return new ValueBinder() {
+			@Override
+			public int getNumberOfJdbcParametersNeeded() {
+				return 1;
+			}
+
+			@Override
+			public void bind(PreparedStatement st, int position, Object value, ExecutionContext executionContext) throws SQLException {
+				final JdbcValueMapper jdbcValueMapper = getSqlTypeDescriptor().getJdbcValueMapper(
+						getJavaTypeDescriptor(),
+						executionContext.getSession().getFactory().getTypeConfiguration()
+				);
+				jdbcValueMapper.getJdbcValueBinder().bind( st, position, value, executionContext );
+			}
+
+			@Override
+			public void bind(
+					PreparedStatement st,
+					String name,
+					Object value,
+					ExecutionContext executionContext) throws SQLException {
+				final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
+				final JdbcValueMapper jdbcValueMapper = getSqlTypeDescriptor().getJdbcValueMapper(
+						getJavaTypeDescriptor(),
+						executionContext.getSession().getFactory().getTypeConfiguration()
+				);
+				jdbcValueMapper.getJdbcValueBinder().bind( callable, name, value, executionContext );
+			}
+		};
 	}
 
 	@Override

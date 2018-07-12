@@ -182,13 +182,13 @@ public class SingularPersistentAttributeEmbedded<O,J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ValueBinder<J> getValueBinder() {
-		return getEmbeddedDescriptor().getValueBinder();
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueBinder( typeConfiguration );
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
-		return getEmbeddedDescriptor().getValueExtractor();
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueExtractor( typeConfiguration );
 	}
 
 	@Override

@@ -16,6 +16,7 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -82,12 +83,12 @@ public class TenantDiscriminationImpl implements TenantDiscrimination {
 	}
 
 	@Override
-	public ValueBinder getValueBinder() {
+	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
-	public ValueExtractor getValueExtractor() {
+	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception();
 	}
 }

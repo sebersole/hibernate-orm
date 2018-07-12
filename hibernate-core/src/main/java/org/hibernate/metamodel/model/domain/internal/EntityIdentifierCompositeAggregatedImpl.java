@@ -167,7 +167,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
-	public int getNumberOfJdbcParametersToBind() {
+	public int getNumberOfJdbcParametersNeeded() {
 		return getColumns().size();
 	}
 

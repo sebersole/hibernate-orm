@@ -62,7 +62,7 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	}
 
 	@Override
-	default int getNumberOfJdbcParametersToBind() {
-		return getEmbeddedDescriptor().getNumberOfJdbcParametersToBind();
+	default int getNumberOfJdbcParametersNeeded() {
+		return getEmbeddedDescriptor().getNumberOfJdbcParametersNeeded();
 	}
 }

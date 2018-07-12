@@ -8,12 +8,12 @@ package org.hibernate.type.descriptor.java.internal;
 
 import java.util.Comparator;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.AbstractIdentifiableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.MappedSuperclassJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.spi.WrapperOptions;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -38,12 +38,12 @@ public class MappedSuperclassJavaDescriptorImpl<J>
 	}
 
 	@Override
-	public <X> X unwrap(J value, Class<X> type, WrapperOptions options) {
+	public <X> X unwrap(J value, Class<X> type, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
-	public <X> J wrap(X value, WrapperOptions options) {
+	public <X> J wrap(X value, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 

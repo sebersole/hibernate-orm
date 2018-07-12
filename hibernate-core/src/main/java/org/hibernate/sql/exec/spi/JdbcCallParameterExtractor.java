@@ -9,7 +9,6 @@ package org.hibernate.sql.exec.spi;
 
 import java.sql.CallableStatement;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.exec.internal.JdbcCallRefCursorExtractorImpl;
 
 /**
@@ -26,5 +25,5 @@ public interface JdbcCallParameterExtractor<T> {
 	T extractValue(
 			CallableStatement callableStatement,
 			boolean shouldUseJdbcNamedParameters,
-			SharedSessionContractImplementor session);
+			ExecutionContext executionContext);
 }
