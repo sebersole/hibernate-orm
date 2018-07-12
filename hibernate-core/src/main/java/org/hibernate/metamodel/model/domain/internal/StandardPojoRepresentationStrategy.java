@@ -21,6 +21,7 @@ import org.hibernate.bytecode.spi.ReflectionOptimizer;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
+import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
@@ -28,6 +29,7 @@ import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.property.access.spi.BuiltInPropertyAccessStrategies;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.property.access.spi.PropertyAccessStrategy;
+import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
@@ -121,6 +123,14 @@ public class StandardPojoRepresentationStrategy implements ManagedTypeRepresenta
 		else {
 			return new PojoInstantiatorImpl<>( runtimeDescriptor.getJavaTypeDescriptor() );
 		}
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <J> ProxyFactory generateProxyFactory(
+			AbstractEntityDescriptor<J> runtimeDescriptor,
+			RuntimeModelCreationContext creationContext) {
+		return StandardPojoProxyFactoryInstantiator.INSTANCE.instantiate( runtimeDescriptor, creationContext );
 	}
 
 	@Override

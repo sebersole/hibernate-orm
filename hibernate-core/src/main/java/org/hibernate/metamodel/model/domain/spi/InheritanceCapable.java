@@ -50,4 +50,5 @@ public interface InheritanceCapable<T> extends ManagedTypeDescriptor<T> {
 	 * of the type described by this descriptor
 	 */
 	boolean isSubclassTypeName(String name);
+
 }

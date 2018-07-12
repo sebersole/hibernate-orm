@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  *
  * @author Steve Ebersole
  */
-public interface SingleUniqueKeyEntityLoader extends Loader {
+public interface SingleUniqueKeyEntityLoader<T> extends Loader {
 	// todo (6.0) - any additional Options info?
 
 	interface Options {
@@ -26,5 +26,5 @@ public interface SingleUniqueKeyEntityLoader extends Loader {
 		LockOptions getLockOptions();
 	}
 
-	Object load(Serializable uk, SharedSessionContractImplementor session, Options options);
+	T load(Object uk, SharedSessionContractImplementor session, Options options);
 }

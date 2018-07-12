@@ -11,10 +11,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
@@ -22,8 +24,11 @@ import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.EntityUniqueKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.loader.internal.StandardSingleUniqueKeyEntityLoader;
+import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -36,6 +41,8 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
+import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
+import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey.ColumnMappings;
@@ -75,6 +82,7 @@ import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -94,8 +102,9 @@ public class SingularPersistentAttributeEntity<O,J>
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
 	private final EntityDescriptor<J> entityDescriptor;
+	private final String referencedAttributeName;
 
-	private final ForeignKey foreignKey;
+	private ForeignKey foreignKey;
 
 	public SingularPersistentAttributeEntity(
 			ManagedTypeDescriptor<O> runtimeModelContainer,
@@ -109,7 +118,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
 
 		final ToOne valueMapping = (ToOne) bootModelAttribute.getValueMapping();
-
+		referencedAttributeName = valueMapping.getReferencedPropertyName();
 
 		if ( valueMapping.getReferencedEntityName() == null ) {
 			throw new MappingException(
@@ -132,9 +141,12 @@ public class SingularPersistentAttributeEntity<O,J>
 		// todo (6.0) : we need to delay resolving this.
 		//		this is essentially a "second pass".  for now we assume it
 		// 		points to the target entity's PK
-		assert valueMapping.isReferenceToPrimaryKey();
+//		assert valueMapping.isReferenceToPrimaryKey();
 
-		this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
+		// taken from ToOneFkSecondPass
+		if ( valueMapping.getForeignKey() != null ) {
+			this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
+		}
 
 		if ( SingularAttributeClassification.MANY_TO_ONE.equals( classification ) ) {
 			persistentAttributeType = PersistentAttributeType.MANY_TO_ONE;
@@ -145,7 +157,47 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		this.sqlAliasStem =  SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( bootModelAttribute.getName() );
 
+		context.registerNavigable( this );
 		instantiationComplete( bootModelAttribute, context );
+	}
+
+	@Override
+	public boolean finishInitialization() {
+
+		if ( this.foreignKey == null ) {
+			SingularPersistentAttributeEntity foreignKeyOwningAttribute = (SingularPersistentAttributeEntity)
+					entityDescriptor.getSingularAttribute( referencedAttributeName );
+
+			if ( foreignKeyOwningAttribute != null && foreignKeyOwningAttribute.getForeignKey() != null ) {
+				final ForeignKey foreignKeyOwning = foreignKeyOwningAttribute.getForeignKey();
+
+				List<ColumnMappings.ColumnMapping> columns = new ArrayList<>();
+				for ( ColumnMappings.ColumnMapping columnMapping : foreignKeyOwning.getColumnMappings().getColumnMappings() ) {
+					columns.add( new ColumnMappingImpl( columnMapping.getTargetColumn(), columnMapping.getReferringColumn() ) );
+				}
+
+				this.foreignKey = new ForeignKey(
+						foreignKeyOwning.getName(),
+						false,
+						foreignKeyOwning.getKeyDefinition(),
+						false,
+						false,
+						foreignKeyOwning.getTargetTable(),
+						foreignKeyOwning.getReferringTable(),
+						new ColumnMappingsImpl(
+								foreignKeyOwning.getTargetTable(),
+								foreignKeyOwning.getReferringTable(),
+								columns
+						)
+				);
+
+				return true;
+			}
+
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override
@@ -352,7 +404,11 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	@Override
 	public List<Column> getColumns() {
-		return foreignKey.getColumnMappings().getReferringColumns();
+		// todo (6.0) - is this really necessary to use export-enabled
+		if ( foreignKey.isExportationEnabled() ) {
+			return foreignKey.getColumnMappings().getReferringColumns();
+		}
+		return new ArrayList<>();
 	}
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
@@ -391,8 +447,8 @@ public class SingularPersistentAttributeEntity<O,J>
 		private Predicate makePredicate(TableGroup lhs, TableReference rhs) {
 			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
 
-			for ( ColumnMappings.ColumnMapping columnMapping : foreignKey.getColumnMappings().getColumnMappings() ) {
-				final ColumnReference referringColumnReference = lhs.resolveColumnReference(  columnMapping.getReferringColumn() );
+			for ( ColumnMappings.ColumnMapping columnMapping: foreignKey.getColumnMappings().getColumnMappings() ) {
+				final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
 				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
 
 				// todo (6.0) : we need some kind of validation here that the column references are properly defined
@@ -453,7 +509,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 
 		final List<SqlSelection> selections = new ArrayList<>();
-		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
+		for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
 			selections.add(
 					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
@@ -480,54 +536,74 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		// todo (6.0) : WrongClassException?
 
+		if ( foreignKey.isReferenceToPrimaryKey() ) {
+			// step 1 - generate EntityKey based on hydrated id form
+			final Object resolvedIdentifier = getEntityDescriptor().getHierarchy()
+					.getIdentifierDescriptor()
+					.resolveHydratedState(
+							hydratedForm,
+							resolutionContext,
+							session,
+							null
+					);
+			final EntityKey entityKey = new EntityKey( resolvedIdentifier, getEntityDescriptor() );
 
-		// step 1 - generate EntityKey based on hydrated id form
-		final Object resolvedIdentifier = getEntityDescriptor().getHierarchy().getIdentifierDescriptor().resolveHydratedState(
-				hydratedForm,
-				resolutionContext,
-				session,
-				null
-		);
-		final EntityKey entityKey = new EntityKey( resolvedIdentifier, getEntityDescriptor() );
 
+			// step 2 - look for a matching entity (by EntityKey) on the context
+			//		NOTE - we pass `! isOptional()` as `eager` to `resolveEntityInstance` because
+			//		if it were being fetched dynamically (join fetch) that would have lead to an
+			//		EntityInitializer for this entity being created and it would be available in the
+			//		`resolutionContext`
+			final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, !isOptional() );
+			if ( entityInstance != null ) {
+				return entityInstance;
+			}
 
-		// step 2 - look for a matching entity (by EntityKey) on the context
-		//		NOTE - we pass `! isOptional()` as `eager` to `resolveEntityInstance` because
-		//		if it were being fetched dynamically (join fetch) that would have lead to an
-		//		EntityInitializer for this entity being created and it would be available in the
-		//		`resolutionContext`
-		final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, ! isOptional() );
-		if ( entityInstance != null ) {
-			return entityInstance;
+			// try loading it...
+			//
+			// todo (6.0) : need to make sure that the "JdbcValues" we are processing here have been added to the Session's stack of "load contexts"
+			//		that allows the loader(s) to resolve entity's that are being loaded here.
+			//
+			//		NOTE : this is how we get around having to register a "holder" EntityEntry with the PersistenceContext
+			//		but still letting other (recursive) loads find references we are loading.
+
+			J loaded = getEntityDescriptor().getSingleIdLoader().load(
+					resolvedIdentifier,
+					NO_LOAD_OPTIONS,
+					session
+			);
+			if ( loaded != null ) {
+				return loaded;
+			}
+			throw new EntityNotFoundException(
+					String.format(
+							Locale.ROOT,
+							"Unable to resolve entity-valued association [%s] foreign key value [%s] to associated entity instance of type [%s]",
+							getNavigableRole(),
+							resolvedIdentifier,
+							getEntityDescriptor().getJavaTypeDescriptor()
+					)
+			);
 		}
-
-		// try loading it...
-		//
-		// todo (6.0) : need to make sure that the "JdbcValues" we are processing here have been added to the Session's stack of "load contexts"
-		//		that allows the loader(s) to resolve entity's that are being loaded here.
-		//
-		//		NOTE : this is how we get around having to register a "holder" EntityEntry with the PersistenceContext
-		//		but still letting other (recursive) loads find references we are loading.
-
-		J loaded = getEntityDescriptor().getSingleIdLoader().load(
-				resolvedIdentifier,
-				NO_LOAD_OPTIONS,
-				session
-		);
-
-		if ( loaded != null ) {
+		else if ( referencedAttributeName != null ) {
+			SingleUniqueKeyEntityLoader<J> loader = new StandardSingleUniqueKeyEntityLoader(
+					referencedAttributeName,
+					getEntityDescriptor()
+			);
+			EntityUniqueKey euk = new EntityUniqueKey(
+					getEntityDescriptor().getEntityName(),
+					referencedAttributeName,
+					hydratedForm,
+					getJavaTypeDescriptor(),
+					getEntityDescriptor().getHierarchy().getRepresentation(),
+					session.getFactory()
+			);
+			// todo (6.0) : look into resolutionContext
+			J loaded = loader.load( containerInstance, session, () -> LockOptions.NONE );
+			// todo (6.0) : if loaded != null add it to the resolutionContext
 			return loaded;
 		}
-
-		throw new EntityNotFoundException(
-				String.format(
-						Locale.ROOT,
-						"Unable to resolve entity-valued association [%s] foreign key value [%s] to associated entity instance of type [%s]",
-						getNavigableRole(),
-						resolvedIdentifier,
-						getEntityDescriptor().getJavaTypeDescriptor()
-				)
-		);
+		return null;
 	}
 
 	@Override
@@ -632,9 +708,25 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			SqlSelectionResolutionContext resolutionContext) {
 		List<ColumnReference> columnReferences = new ArrayList<>();
-		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
+		for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
 			columnReferences.add( new ColumnReference( qualifier, column ) );
 		}
 		return columnReferences;
+	}
+
+	@Override
+	protected void instantiationComplete(
+			PersistentAttributeMapping bootModelAttribute,
+			RuntimeModelCreationContext context) {
+		super.instantiationComplete( bootModelAttribute, context );
+
+		// todo (6.0) : determine mutability plan based
+		// for now its set to immutable
+
+		this.mutabilityPlan = ImmutableMutabilityPlan.INSTANCE;
+	}
+
+	public ForeignKey getForeignKey() {
+		return foreignKey;
 	}
 }

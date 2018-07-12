@@ -24,7 +24,7 @@ public class EntityWithManyToOneSelfReference {
 	private EntityWithManyToOneSelfReference other;
 	private Integer someInteger;
 
-	private EntityWithManyToOneSelfReference() {
+	EntityWithManyToOneSelfReference() {
 	}
 
 	public EntityWithManyToOneSelfReference(Integer id, String name, Integer someInteger) {

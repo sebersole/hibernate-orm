@@ -8,12 +8,11 @@ package org.hibernate.event.service.internal;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
+import org.hibernate.Metamodel;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.internal.DefaultAutoFlushEventListener;
 import org.hibernate.event.internal.DefaultDeleteEventListener;
@@ -45,9 +44,9 @@ import org.hibernate.event.spi.EventType;
 import org.hibernate.jpa.event.internal.CallbackBuilderLegacyImpl;
 import org.hibernate.jpa.event.internal.CallbackRegistryImpl;
 import org.hibernate.jpa.event.spi.CallbackBuilder;
-import org.hibernate.mapping.Component;
-import org.hibernate.mapping.PersistentClass;
-import org.hibernate.mapping.Property;
+import org.hibernate.metamodel.model.domain.RepresentationMode;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
+import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 import org.hibernate.service.spi.Stoppable;
 
@@ -120,27 +119,24 @@ public class EventListenerRegistryImpl implements EventListenerRegistry, Stoppab
 	}
 
 	@Override
-	public void prepare(MetadataImplementor metadata) {
-		for ( PersistentClass persistentClass : metadata.getEntityBindings() ) {
-			if ( persistentClass.getClassName() == null ) {
-				// we can have non java class persisted by hibernate
-				continue;
-			}
-			callbackBuilder.buildCallbacksForEntity( persistentClass.getClassName(), callbackRegistry );
+	public void prepare(Metamodel metamodel) {
+		metamodel.visitEntityDescriptors( entityDescriptor -> {
+			String entityName = entityDescriptor.getJavaTypeDescriptor().getTypeName();
+			if ( entityName != null && entityDescriptor.getRepresentationStrategy().getMode() == RepresentationMode.POJO ) {
+				callbackBuilder.buildCallbacksForEntity( entityName, callbackRegistry );
 
-			for ( Iterator propertyIterator = persistentClass.getDeclaredPropertyIterator();
-					propertyIterator.hasNext(); ) {
-				Property property = (Property) propertyIterator.next();
-
-				if ( property.getValue() instanceof Component ) {
-					callbackBuilder.buildCallbacksForEmbeddable(
-							property,
-							persistentClass.getClassName(),
-							callbackRegistry
-					);
-				}
+				entityDescriptor.visitDeclaredNavigables( new NavigableVisitationStrategy() {
+					@Override
+					public void visitSingularAttributeEmbedded(SingularPersistentAttributeEmbedded attribute) {
+						callbackBuilder.buildCallbacksForEmbeddable(
+								attribute,
+								entityName,
+								callbackRegistry
+						);
+					}
+				} );
 			}
-		}
+		});
 	}
 
 	@SuppressWarnings({ "unchecked" })

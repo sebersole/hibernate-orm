@@ -18,7 +18,7 @@ import org.hibernate.id.factory.IdentifierGeneratorFactory;
  * joined subclass table.
  * @author Gavin King
  */
-public interface KeyValue extends Value, ValueMapping {
+public interface KeyValue extends Value {
 
 	boolean isIdentityColumn(IdentifierGeneratorFactory identifierGeneratorFactory);
 

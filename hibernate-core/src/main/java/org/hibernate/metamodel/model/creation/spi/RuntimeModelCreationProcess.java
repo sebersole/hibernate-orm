@@ -6,7 +6,10 @@
  */
 package org.hibernate.metamodel.model.creation.spi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -43,12 +46,15 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
@@ -91,6 +97,8 @@ public class RuntimeModelCreationProcess {
 	private final Map<Collection,PersistentCollectionDescriptor> collectonRuntimeByBoot = new HashMap<>();
 
 	private final Map<String, DomainDataRegionConfigImpl.Builder> regionConfigBuilders = new ConcurrentHashMap<>();
+
+	private final List<Navigable> navigables = new ArrayList<>();
 
 	private RuntimeModelCreationProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -213,6 +221,13 @@ public class RuntimeModelCreationProcess {
 				entry.getValue().finishInitialization( entry.getKey(), creationContext );
 			}
 			moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
+		}
+
+		// todo (6.0) - could this be moved to descriptorFactory#finishUp?
+		while ( true ) {
+			if ( !navigables.removeIf( Navigable::finishInitialization ) ) {
+				break;
+			}
 		}
 
 		descriptorFactory.finishUp( creationContext );
@@ -552,6 +567,11 @@ public class RuntimeModelCreationProcess {
 				EmbeddedValueMappingImplementor bootDescriptor) {
 			embeddableRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
 			inFlightRuntimeModel.addEmbeddedDescriptor( runtimeDescriptor );
+		}
+
+		@Override
+		public void registerNavigable(Navigable navigable) {
+			navigables.add( navigable );
 		}
 
 		@Override

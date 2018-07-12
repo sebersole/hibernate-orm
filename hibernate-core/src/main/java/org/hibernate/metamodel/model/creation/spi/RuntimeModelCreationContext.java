@@ -29,6 +29,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
@@ -102,6 +103,8 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 	void registerEmbeddableDescriptor(
 			EmbeddedTypeDescriptor runtimeDescriptor,
 			EmbeddedValueMappingImplementor bootDescriptor);
+
+	void registerNavigable(Navigable navigable);
 
 	default Table resolve(MappedTable mappedTable) {
 		final Namespace namespace = getDatabaseModel().getNamespace(

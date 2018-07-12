@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
@@ -66,6 +68,7 @@ import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -116,6 +119,11 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private final boolean canReadFromCache;
 	private final boolean canWriteToCache;
+
+	private final boolean hasProxy;
+	private final Class proxyInterface;
+
+	private ProxyFactory proxyFactory;
 
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
@@ -174,6 +182,9 @@ public abstract class AbstractEntityDescriptor<J>
 
 		// Handle any filters applied to the class level
 		this.filterHelper = new FilterHelper( bootMapping.getFilters(), factory );
+
+		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
+		proxyInterface = bootMapping.getProxyInterface();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -275,6 +286,10 @@ public abstract class AbstractEntityDescriptor<J>
 				getJavaTypeDescriptor().getEntityName(),
 				getJavaTypeDescriptor().getJpaEntityName()
 		);
+
+		if ( hasProxy ) {
+			this.proxyFactory = getRepresentationStrategy().generateProxyFactory( this, creationContext );
+		}
 	}
 
 	@Override
@@ -295,6 +310,11 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	public boolean canWriteToCache() {
 		return canWriteToCache;
+	}
+
+	@Override
+	public boolean hasProxy() {
+		return hasProxy;
 	}
 
 	@Override
@@ -692,6 +712,11 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
+	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
+		return proxyFactory.getProxy( (Serializable) id, session );
+	}
+
+	@Override
 	public boolean isInstance(Object object) {
 		return instantiator.isInstance( object, getFactory() );
 	}
@@ -751,5 +776,19 @@ public abstract class AbstractEntityDescriptor<J>
 			Object object,
 			SharedSessionContractImplementor session) {
 		return insertInternal( null, fields, object, session );
+	}
+
+	public Class getProxyInterface() {
+		return proxyInterface;
+	}
+
+	@Override
+	public Class getConcreteProxyClass() {
+		if ( getRepresentationStrategy().getMode().equals( RepresentationMode.POJO ) ) {
+			return getProxyInterface();
+		}
+		else {
+			return Map.class;
+		}
 	}
 }

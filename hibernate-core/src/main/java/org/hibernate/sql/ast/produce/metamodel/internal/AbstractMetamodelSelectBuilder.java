@@ -20,9 +20,9 @@ import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
  * @author Steve Ebersole
  */
 public abstract class AbstractMetamodelSelectBuilder implements MetamodelSelectBuilder {
-	private final SessionFactoryImplementor sessionFactory;
-	private final NavigableContainer rootNavigable;
-	private final Navigable restrictedNavigable;
+	protected final SessionFactoryImplementor sessionFactory;
+	protected final NavigableContainer rootNavigable;
+	protected final Navigable restrictedNavigable;
 
 	public AbstractMetamodelSelectBuilder(
 			SessionFactoryImplementor sessionFactory,

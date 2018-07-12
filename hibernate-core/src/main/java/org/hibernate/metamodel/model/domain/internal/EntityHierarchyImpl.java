@@ -205,7 +205,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 					runtimeModelHierarchy,
 					( (EmbeddedValueMappingImplementor) bootModelRootEntity.getIdentifier() ).makeRuntimeDescriptor(
 							runtimeModelRootEntity,
-							bootModelRootEntity.getIdentifierProperty().getName(),
+							bootModelRootEntity.getEntityMappingHierarchy().getIdentifierEmbeddedValueMapping().getName(),
 							SingularPersistentAttribute.Disposition.ID,
 							creationContext
 					),
@@ -214,14 +214,14 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		}
 		else if ( bootModelRootEntity.getIdentifier() instanceof EmbeddedValueMappingImplementor ) {
 			// indicates we have an aggregated composite identifier (should)
-			assert !bootModelRootEntity.getIdentifierProperty().isOptional();
+			assert !bootModelRootEntity.getIdentifierAttributeMapping().isOptional();
 
 			return  new EntityIdentifierCompositeAggregatedImpl(
 					runtimeModelHierarchy,
 					bootModelRootEntity,
 					( (EmbeddedValueMappingImplementor) bootModelRootEntity.getIdentifier() ).makeRuntimeDescriptor(
 							runtimeModelHierarchy.getRootEntityType(),
-							bootModelRootEntity.getIdentifierProperty().getName(),
+							bootModelRootEntity.getIdentifierAttributeMapping().getName(),
 							SingularPersistentAttribute.Disposition.ID,
 							creationContext
 					),
@@ -230,7 +230,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 		}
 		else {
 			// should indicate a simple identifier
-			assert !bootModelRootEntity.getIdentifierProperty().isOptional();
+			assert !bootModelRootEntity.getIdentifierAttributeMapping().isOptional();
 
 			return new EntityIdentifierSimpleImpl(
 					runtimeModelHierarchy,

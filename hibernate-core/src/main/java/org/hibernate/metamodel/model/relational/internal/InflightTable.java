@@ -23,6 +23,7 @@ public interface InflightTable extends Table {
 			boolean export,
 			String keyDefinition,
 			boolean cascadeDeleteEnabled,
+			boolean isReferenceToPrimaryKey,
 			Table targetTable,
 			ForeignKey.ColumnMappings columnMappings);
 

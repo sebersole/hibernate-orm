@@ -45,6 +45,7 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
 import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
@@ -59,6 +60,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -85,6 +87,12 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
+	public List<ColumnReference> resolveColumnReferences(
+			ColumnReferenceQualifier qualifier, SqlSelectionResolutionContext resolutionContext) {
+		return getIdentifierDescriptor().resolveColumnReferences( qualifier, resolutionContext );
+	}
+
+	@Override
 	public String asLoggableText() {
 		return String.format( "SingleTableEntityDescriptor<%s>", getEntityName() );
 
@@ -93,11 +101,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	@Override
 	public Set<String> getAffectedTableNames() {
 		return Collections.emptySet();
-	}
-
-	@Override
-	public boolean hasProxy() {
-		return false;
 	}
 
 	@Override
@@ -575,11 +578,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object createProxy(Object id, SharedSessionContractImplementor session) throws HibernateException {
-		return null;
-	}
-
-	@Override
 	public Boolean isTransient(Object object, SharedSessionContractImplementor session) throws HibernateException {
 		return null;
 	}
@@ -627,11 +625,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	@Override
 	public boolean implementsLifecycle() {
 		return false;
-	}
-
-	@Override
-	public Class getConcreteProxyClass() {
-		return null;
 	}
 
 	@Override

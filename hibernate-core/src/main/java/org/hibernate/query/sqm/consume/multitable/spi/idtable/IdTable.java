@@ -70,6 +70,7 @@ public class IdTable extends PhysicalTable {
 			boolean export,
 			String keyDefinition,
 			boolean cascadeDeleteEnabled,
+			boolean isReferenceToPrimaryKey,
 			Table targetTable,
 			ForeignKey.ColumnMappings columnMappings) {
 		throw new UnsupportedOperationException( "Cannot generate FK on entity id table" );

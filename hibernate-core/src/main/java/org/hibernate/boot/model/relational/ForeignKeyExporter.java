@@ -7,7 +7,6 @@
 package org.hibernate.boot.model.relational;
 
 import org.hibernate.boot.model.domain.ValueMapping;
-import org.hibernate.mapping.ForeignKey;
 
 /**
  * Any ValueMapping which exports a foreign key
@@ -15,4 +14,10 @@ import org.hibernate.mapping.ForeignKey;
  * @author Steve Ebersole
  */
 public interface ForeignKeyExporter extends ValueMapping {
+	/**
+	 * The foreign key this value represents.
+	 */
+	default MappedForeignKey getForeignKey() {
+		return null;
+	}
 }

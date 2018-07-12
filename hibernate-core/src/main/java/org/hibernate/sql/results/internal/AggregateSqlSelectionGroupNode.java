@@ -25,6 +25,9 @@ public class AggregateSqlSelectionGroupNode implements SqlSelectionGroupNode {
 
 	@Override
 	public Object hydrateStateArray(RowProcessingState currentRowState) {
+		if ( subNodes.size() == 0 ) {
+			return null;
+		}
 		if ( subNodes.size() == 1 ) {
 			return subNodes.get( 0 ).hydrateStateArray( currentRowState );
 		}

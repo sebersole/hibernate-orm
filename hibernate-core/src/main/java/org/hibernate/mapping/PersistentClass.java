@@ -34,6 +34,7 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.internal.FilterConfiguration;
+import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.EmptyIterator;
 import org.hibernate.internal.util.collections.JoinedIterator;
@@ -159,6 +160,7 @@ public abstract class PersistentClass
 		}
 	}
 
+	@Override
 	public Class getProxyInterface() {
 		if ( proxyInterfaceName == null ) {
 			return null;
@@ -1140,6 +1142,20 @@ public abstract class PersistentClass
 				this,
 				superTypeDescriptor,
 				creationContext
+		);
+	}
+
+	@Override
+	public boolean hasProxy() {
+		// EntityMetamodel
+		// lazy = persistentClass.isLazy() && (
+		//				// TODO: this disables laziness even in non-pojo entity modes:
+		//				!persistentClass.hasPojoRepresentation() ||
+		//				!ReflectHelper.isFinalClass( persistentClass.getProxyInterface() )
+		//		);
+		return isLazy() && (
+				!getExplicitRepresentationMode().equals( RepresentationMode.POJO ) || (
+						getProxyInterface() != null && !ReflectHelper.isFinalClass( getProxyInterface() ))
 		);
 	}
 }

@@ -40,7 +40,7 @@ public class SetSchemaCreationTest extends BaseSchemaCreationTestCase {
 		);
 
 		assertThatActionIsGenerated(
-				"alter table image add constraint (.*) foreign key \\(item_id\\) references item \\(id\\)"
+				"alter table image add constraint (.*) foreign key \\(item_id\\) references item"
 		);
 	}
 

@@ -3289,10 +3289,19 @@ public final class AnnotationBinder {
 		else {
 			//has a FK on the table
 			bindManyToOne(
-					cascadeStrategy, joinColumns, optional, ignoreNotFound, cascadeOnDelete,
+					cascadeStrategy,
+					joinColumns,
+					optional,
+					ignoreNotFound,
+					cascadeOnDelete,
 					targetEntity,
-					propertyHolder, inferredData, true, isIdentifierMapper, inSecondPass,
-					propertyBinder, context
+					propertyHolder,
+					inferredData,
+					true,
+					isIdentifierMapper,
+					inSecondPass,
+					propertyBinder,
+					context
 			);
 		}
 	}

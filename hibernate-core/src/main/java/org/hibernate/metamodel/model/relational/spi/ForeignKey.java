@@ -21,6 +21,7 @@ public class ForeignKey implements Exportable {
 	private final Table targetTable;
 	private final ColumnMappings columnMappings;
 	private final boolean cascadeDeleteEnabled;
+	private final boolean isReferenceToPrimaryKey;
 	private final boolean export;
 	private final String keyDefinition;
 
@@ -29,6 +30,7 @@ public class ForeignKey implements Exportable {
 			boolean export,
 			String keyDefinition,
 			boolean cascadeDeleteEnabled,
+			boolean isReferenceToPrimaryKey,
 			Table referringTable,
 			Table targetTable,
 			ColumnMappings columnMappings) {
@@ -36,6 +38,7 @@ public class ForeignKey implements Exportable {
 		this.export = export;
 		this.keyDefinition = keyDefinition;
 		this.cascadeDeleteEnabled = cascadeDeleteEnabled;
+		this.isReferenceToPrimaryKey = isReferenceToPrimaryKey;
 		this.referringTable = referringTable;
 		this.targetTable = targetTable;
 		this.columnMappings = columnMappings;
@@ -70,7 +73,7 @@ public class ForeignKey implements Exportable {
 	 * Does this foreignkey reference the primary key of the reference table
 	 */
 	public boolean isReferenceToPrimaryKey() {
-		return getColumnMappings().getTargetColumns().isEmpty();
+		return isReferenceToPrimaryKey;
 	}
 
 	public String getKeyDefinition() {
