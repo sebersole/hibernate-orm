@@ -54,6 +54,7 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.Update;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
+import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.MIDDLE_ENTITY_ALIAS;
@@ -103,69 +104,70 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			final Object id,
 			final Object data,
 			final Object revision) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-//		final String auditedEntityName = auditService.getAuditEntityName( entityName );
-//		final AuditServiceOptions options = auditService.getOptions();
-//
-//		// When application reuses identifiers of previously removed entities:
-//		// The UPDATE statement will no-op if an entity with a given identifier has been
-//		// inserted for the first time. But in case a deleted primary key value was
-//		// reused, this guarantees correct strategy behavior: exactly one row with
-//		// null end date exists for each identifier.
-//		final boolean reuseIdentifierNames = options.isAllowIdentifierReuseEnabled();
-//
-//		// Save the audit data
-//		session.save( auditedEntityName, data );
-//
-//		// Update the end date of the previous row.
-//		if ( reuseIdentifierNames || getRevisionType( options, data ) != RevisionType.ADD ) {
-//			// Register transaction completion process to guarantee execution of UPDATE statement after INSERT.
-//			( (EventSource) session ).getActionQueue().registerProcess(
-//					new BeforeTransactionCompletionProcess() {
-//						@Override
-//						public void doBeforeTransactionCompletion(final SessionImplementor sessionImplementor) {
-//							// construct the update contexts.
-//							final List<UpdateContext> updateContexts = getUpdateContexts(
-//									entityName,
-//									auditedEntityName,
-//									sessionImplementor,
-//									auditService,
-//									id,
-//									revision
-//							);
-//
-//							if ( updateContexts.isEmpty() ) {
-//								throw new RuntimeException(
-//										String.format(
-//												Locale.ROOT,
-//												"Failed to build update contexts for entity %s and id %s",
-//												auditedEntityName,
-//												id
-//										)
-//								);
-//							}
-//
-//							// execute the update(s)
-//							for ( UpdateContext updateContext : updateContexts ) {
-//								if ( executeUpdate( sessionImplementor, updateContext ) != 1 ) {
-//									final RevisionType revisionType = getRevisionType( options, data );
-//									if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
-//										throw new RuntimeException(
-//												String.format(
-//														"Cannot update previous revision for entity %s and id %s",
-//														auditedEntityName,
-//														id
-//												)
-//										);
-//									}
-//								}
-//							}
-//						}
-//					}
-//			);
-//		}
-//
-//		sessionCacheCleaner.scheduleAuditDataRemoval( session, data );
+		final String auditedEntityName = auditService.getAuditEntityName( entityName );
+		final AuditServiceOptions options = auditService.getOptions();
+
+		// When application reuses identifiers of previously removed entities:
+		// The UPDATE statement will no-op if an entity with a given identifier has been
+		// inserted for the first time. But in case a deleted primary key value was
+		// reused, this guarantees correct strategy behavior: exactly one row with
+		// null end date exists for each identifier.
+		final boolean reuseIdentifierNames = options.isAllowIdentifierReuseEnabled();
+
+		// Save the audit data
+		session.save( auditedEntityName, data );
+
+		// Update the end date of the previous row.
+		if ( reuseIdentifierNames || getRevisionType( options, data ) != RevisionType.ADD ) {
+			// Register transaction completion process to guarantee execution of UPDATE statement after INSERT.
+			( (EventSource) session ).getActionQueue().registerProcess(
+					new BeforeTransactionCompletionProcess() {
+						@Override
+						public void doBeforeTransactionCompletion(final SessionImplementor sessionImplementor) {
+							final BasicExecutionContext executionContext = new BasicExecutionContext( sessionImplementor );
+
+							// construct the update contexts.
+							final List<UpdateContext> updateContexts = getUpdateContexts(
+									entityName,
+									auditedEntityName,
+									sessionImplementor,
+									auditService,
+									id,
+									revision
+							);
+
+							if ( updateContexts.isEmpty() ) {
+								throw new RuntimeException(
+										String.format(
+												Locale.ROOT,
+												"Failed to build update contexts for entity %s and id %s",
+												auditedEntityName,
+												id
+										)
+								);
+							}
+
+							// execute the update(s)
+							for ( UpdateContext updateContext : updateContexts ) {
+								if ( executeUpdate( executionContext, updateContext ) != 1 ) {
+									final RevisionType revisionType = getRevisionType( options, data );
+									if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
+										throw new RuntimeException(
+												String.format(
+														"Cannot update previous revision for entity %s and id %s",
+														auditedEntityName,
+														id
+												)
+										);
+									}
+								}
+							}
+						}
+					}
+			);
+		}
+
+		sessionCacheCleaner.scheduleAuditDataRemoval( session, data );
 	}
 
 	@Override
