@@ -167,18 +167,6 @@ public class Component extends SimpleValue
 		return columnSpan;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public Iterator<Selectable> getColumnIterator() {
-		Iterator[] iters = new Iterator[getPropertySpan()];
-		Iterator iter = getPropertyIterator();
-		int i = 0;
-		while ( iter.hasNext() ) {
-			iters[i++] = ( (Property) iter.next() ).getColumnIterator();
-		}
-		return new JoinedIterator( iters );
-	}
-
 	public boolean isEmbedded() {
 		return embedded;
 	}
@@ -197,7 +185,7 @@ public class Component extends SimpleValue
 	}
 
 	public Class getComponentClass() throws MappingException {
-		final ClassLoaderService classLoaderService = getBuildingContext().getBuildingOptions()
+		final ClassLoaderService classLoaderService = getMetadataBuildingContext().getBuildingOptions()
 				.getServiceRegistry()
 				.getService( ClassLoaderService.class );
 		try {

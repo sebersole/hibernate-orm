@@ -20,7 +20,6 @@ import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.model.domain.ResolutionContext;
-import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
@@ -80,7 +79,7 @@ public class BasicValue
 
 		this.javaTypeMapping = new BasicJavaTypeMapping( this );
 		buildingContext.getMetadataCollector().registerValueMappingResolver( resolutionContext ->
-			resolve ( resolutionContext, null)
+			resolve ( resolutionContext )
 		 );
 	}
 
@@ -92,8 +91,7 @@ public class BasicValue
 	@Override
 	@SuppressWarnings("unchecked")
 	public Boolean resolve(
-			ResolutionContext context,
-			ValueMappingContainer container) {
+			ResolutionContext context) {
 		final String name = getTypeName();
 
 		if ( basicType == null && name != null ) {

@@ -36,15 +36,15 @@ public class Set extends Collection {
 
 	public void validate() throws MappingException {
 		super.validate();
-		//for backward compatibility, disable this:
-		/*Iterator iter = getElement().getColumnIterator();
-		while ( iter.hasNext() ) {
-			Column col = (Column) iter.next();
-			if ( !col.isNullable() ) {
-				return;
-			}
-		}
-		throw new MappingException("set element mappings must have at least one non-nullable column: " + getRole() );*/
+
+//for backward compatibility, disable this:
+//		for ( MappedColumn mappedColumn : getElement().getMappedColumns() ) {
+//			// assume a formula is nullable
+//			if ( mappedColumn instanceof Column && ( (Column) mappedColumn ).isNullable() ) {
+//				return;
+//			}
+//		}
+//		throw new MappingException("set element mappings must have at least one non-nullable column: " + getRole() );*/
 	}
 
 	public boolean isSet() {

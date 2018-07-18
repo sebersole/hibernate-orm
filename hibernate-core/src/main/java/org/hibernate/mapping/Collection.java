@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -19,8 +18,6 @@ import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.NotYetResolvedException;
-import org.hibernate.boot.model.domain.ResolutionContext;
-import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedForeignKey;
@@ -117,7 +114,7 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 		return key;
 	}
 
-	public Value getElement() {
+	public Value<?> getElement() {
 		return element;
 	}
 
@@ -391,10 +388,6 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 		if ( !isOneToMany() ) {
 			checkColumnDuplication( cols, getElement() );
 		}
-	}
-
-	public Iterator<Selectable> getColumnIterator() {
-		return Collections.<Selectable>emptyList().iterator();
 	}
 
 	public int getColumnSpan() {

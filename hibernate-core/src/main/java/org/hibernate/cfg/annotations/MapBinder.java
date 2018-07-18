@@ -117,15 +117,17 @@ public class MapBinder extends CollectionBinder {
 		final org.hibernate.mapping.Map map = (org.hibernate.mapping.Map) this.collection;
 		if ( map.isOneToMany() &&
 				property.isAnnotationPresent( MapKeyColumn.class ) ) {
-			final Value indexValue = map.getIndex();
+			final Value<?> indexValue = map.getIndex();
 			if ( indexValue.getColumnSpan() != 1 ) {
 				throw new AssertionFailure( "Map key mapped by @MapKeyColumn does not have 1 column" );
 			}
-			final Selectable selectable = (Selectable) indexValue.getColumnIterator().next();
-			if ( selectable.isFormula() ) {
+
+			final MappedColumn mappedColumn = indexValue.getMappedColumns().get( 0 );
+			if ( mappedColumn.isFormula() ) {
 				throw new AssertionFailure( "Map key mapped by @MapKeyColumn is a Formula" );
 			}
-			Column column = (Column) map.getIndex().getColumnIterator().next();
+
+			final Column column = (Column) map.getIndex().getMappedColumns().get( 0 );
 			if ( !column.isNullable() ) {
 				final PersistentClass persistentClass = ( ( OneToMany ) map.getElement() ).getAssociatedClass();
 				// check if the index column has been mapped by the associated entity to a property;
@@ -141,18 +143,19 @@ public class MapBinder extends CollectionBinder {
 	}
 
 	private boolean propertyIteratorContainsColumn(Iterator propertyIterator, Column column) {
-		for ( Iterator it = propertyIterator; it.hasNext(); ) {
-			final Property property = (Property) it.next();
-			for ( Iterator<Selectable> selectableIterator = property.getColumnIterator(); selectableIterator.hasNext(); ) {
-				final Selectable selectable = selectableIterator.next();
-				if ( column.equals( selectable ) ) {
-					final Column iteratedColumn = (Column) selectable;
+		while ( propertyIterator.hasNext() ) {
+			final Property property = (Property) propertyIterator.next();
+
+			for ( MappedColumn mappedColumn : property.getMappedColumns() ) {
+				if ( column.equals( mappedColumn ) ) {
+					final Column iteratedColumn = (Column) mappedColumn;
 					if ( column.getTableName().equals( iteratedColumn.getTableName() ) ) {
 						return true;
 					}
 				}
 			}
 		}
+
 		return false;
 	}
 

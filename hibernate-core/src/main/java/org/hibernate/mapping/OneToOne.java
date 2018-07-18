@@ -7,10 +7,12 @@
 package org.hibernate.mapping;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.ForeignKeyDirection;
@@ -20,7 +22,6 @@ import org.hibernate.type.ForeignKeyDirection;
  * @author Gavin King
  */
 public class OneToOne extends ToOne {
-
 	private boolean constrained;
 	private ForeignKeyDirection foreignKeyType;
 	private KeyValue identifier;
@@ -29,7 +30,6 @@ public class OneToOne extends ToOne {
 
 
 	/**
-	 *
 	 * @deprecated since 6.0, use {@link #OneToOne(MetadataBuildingContext, MappedTable, PersistentClass)} instead
 	 */
 	@Deprecated
@@ -37,12 +37,20 @@ public class OneToOne extends ToOne {
 		super( metadata, table );
 		this.identifier = owner.getKey();
 		this.entityName = owner.getEntityName();
+
+		registerResolver( metadata );
 	}
 
 	public OneToOne(MetadataBuildingContext metadata, MappedTable table, PersistentClass owner) throws MappingException {
 		super( metadata, table );
 		this.identifier = owner.getKey();
 		this.entityName = owner.getEntityName();
+
+		registerResolver( metadata );
+	}
+
+	private void registerResolver(MetadataBuildingContext metadata) {
+		metadata.getMetadataCollector().registerValueMappingResolver( this::resolve );
 	}
 
 	public String getPropertyName() {
@@ -79,7 +87,34 @@ public class OneToOne extends ToOne {
 		return foreignKey;
 	}
 
+	@Override
+	public Boolean resolve(ResolutionContext context) {
+		getJavaTypeMapping().getJavaTypeDescriptor();
 
+		final ForeignKey foreignKey = getForeignKey();
+
+		if ( foreignKey == null ) {
+			// the assumption here is that all `#createForeignKey` calls have
+			//		been done and therefore this is not the side that owns the
+			//		FK...
+			return true;
+		}
+
+		// conversely, we assume here that this side does own the FK
+		//		so we manage the cross-column config
+
+		final Iterator<Column> targetColumnItr = foreignKey.getTargetColumns().iterator();
+		for ( Column column : foreignKey.getColumns() ) {
+			assert targetColumnItr.hasNext();
+
+			final Column targetColumn = targetColumnItr.next();
+			column.setJavaTypeMapping( targetColumn.getJavaTypeMapping() );
+			column.setSqlTypeDescriptorAccess( targetColumn::getSqlTypeDescriptor );
+		}
+		assert !targetColumnItr.hasNext();
+
+		return true;
+	}
 
 	@Override
 	protected void setTypeDescriptorResolver(Column column) {

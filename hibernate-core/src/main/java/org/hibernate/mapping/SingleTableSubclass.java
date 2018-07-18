@@ -7,10 +7,12 @@
 package org.hibernate.mapping;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.internal.util.collections.JoinedIterator;
 
@@ -36,12 +38,12 @@ public class SingleTableSubclass extends Subclass {
 	}
 
 	@Override
-	protected Iterator getDiscriminatorColumnIterator() {
+	protected List<MappedColumn> getDiscriminatorColumns() {
 		if ( isDiscriminatorInsertable() && !getDiscriminator().hasFormula() ) {
-			return getDiscriminator().getColumnIterator();
+			return getDiscriminator().getMappedColumns();
 		}
 		else {
-			return super.getDiscriminatorColumnIterator();
+			return super.getDiscriminatorColumns();
 		}
 	}
 

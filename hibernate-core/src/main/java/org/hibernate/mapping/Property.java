@@ -111,14 +111,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return value.getColumnSpan();
 	}
 
-	/**
-	 * @deprecated since 6.0, use {@link #getMappedColumns()}
-	 */
-	@Deprecated
-	public Iterator getColumnIterator() {
-		return value.getColumnIterator();
-	}
-
+	@SuppressWarnings("unchecked")
 	public List<MappedColumn> getMappedColumns(){
 		return value.getMappedColumns();
 	}

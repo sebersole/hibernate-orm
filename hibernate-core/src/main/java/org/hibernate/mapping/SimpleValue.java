@@ -75,14 +75,6 @@ public abstract class SimpleValue implements KeyValue {
 		return buildingContext;
 	}
 
-	/**
-	 * @deprecated Use {@link #getMetadataBuildingContext()} instead
-	 */
-	@Deprecated
-	public MetadataBuildingContext getBuildingContext() {
-		return getMetadataBuildingContext();
-	}
-
 	@Override
 	public ServiceRegistry getServiceRegistry() {
 		return buildingContext.getMetadataCollector().getMetadataBuildingOptions().getServiceRegistry();
@@ -130,15 +122,6 @@ public abstract class SimpleValue implements KeyValue {
 	@Override
 	public int getColumnSpan() {
 		return columns.size();
-	}
-
-	/**
-	 * @deprecated since 6.0, use {@link #getMappedColumns()}.
-	 */
-	@Override
-	@Deprecated
-	public Iterator<Selectable> getColumnIterator() {
-		return columns.iterator();
 	}
 
 	@Override

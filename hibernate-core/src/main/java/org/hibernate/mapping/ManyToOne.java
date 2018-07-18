@@ -6,12 +6,14 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Iterator;
 import java.util.Locale;
 
 import org.hibernate.HibernateError;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
@@ -30,10 +32,16 @@ public class ManyToOne extends ToOne {
 	@Deprecated
 	public ManyToOne(MetadataBuildingContext metadata, Table table) {
 		super( metadata, table );
+		registerResolver( metadata );
 	}
 
 	public ManyToOne(MetadataBuildingContext metadata, MappedTable table) {
 		super( metadata, table );
+		registerResolver( metadata );
+	}
+
+	private void registerResolver(MetadataBuildingContext metadata) {
+		metadata.getMetadataCollector().registerValueMappingResolver( this::resolve );
 	}
 
 	@Override
@@ -41,6 +49,28 @@ public class ManyToOne extends ToOne {
 		throw new UnsupportedOperationException( "Cant add a column to a many-to-one" );
 	}
 
+	@Override
+	public Boolean resolve(ResolutionContext context) {
+		getJavaTypeMapping().getJavaTypeDescriptor();
+
+		final MappedForeignKey foreignKey = getForeignKey();
+
+		if ( foreignKey == null ) {
+			return false;
+		}
+
+		final Iterator<Column> targetColumnItr = foreignKey.getTargetColumns().iterator();
+		for ( Column column : foreignKey.getColumns() ) {
+			assert targetColumnItr.hasNext();
+
+			final Column targetColumn = targetColumnItr.next();
+			column.setJavaTypeMapping( targetColumn.getJavaTypeMapping() );
+			column.setSqlTypeDescriptorAccess( targetColumn::getSqlTypeDescriptor );
+		}
+		assert !targetColumnItr.hasNext();
+
+		return true;
+	}
 
 	@Override
 	public ForeignKey getForeignKey() {

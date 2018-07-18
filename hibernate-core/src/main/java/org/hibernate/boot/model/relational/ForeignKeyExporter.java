@@ -6,9 +6,13 @@
  */
 package org.hibernate.boot.model.relational;
 
+import java.util.function.Supplier;
+
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.NotYetResolvedException;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMapping;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.RuntimeCreationHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;

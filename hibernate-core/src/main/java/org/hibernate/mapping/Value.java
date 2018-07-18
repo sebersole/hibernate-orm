@@ -7,14 +7,9 @@
 package org.hibernate.mapping;
 
 import java.io.Serializable;
-import java.util.Iterator;
 
 import org.hibernate.MappingException;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.annotations.Remove;
-import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMapping;
-import org.hibernate.boot.model.domain.ValueMappingContainer;
 
 /**
  * A value is anything that is persisted by value, instead of
@@ -27,12 +22,6 @@ import org.hibernate.boot.model.domain.ValueMappingContainer;
  */
 public interface Value<J> extends ValueMapping<J>, Serializable {
 	int getColumnSpan();
-
-	/**
-	 * @deprecated since 6.0, use {@link #getMappedColumns()} instead.
-	 */
-	@Deprecated
-	Iterator<Selectable> getColumnIterator();
 
 	boolean isSame(Value other);
 

@@ -6,9 +6,7 @@
  */
 package org.hibernate.mapping;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,8 +55,8 @@ public class OneToMany implements ForeignKeyExporter, Value {
 	}
 
 	@Override
-	public Iterator<Selectable> getColumnIterator() {
-		return associatedClass.getKey().getMappedColumns().iterator();
+	public List<MappedColumn> getMappedColumns() {
+		return Collections.unmodifiableList( associatedClass.getKey().getMappedColumns() );
 	}
 
 	@Override
@@ -88,11 +86,6 @@ public class OneToMany implements ForeignKeyExporter, Value {
 	@Override
 	public MappedTable getMappedTable() {
 		return referencingTable;
-	}
-
-	@Override
-	public List<MappedColumn> getMappedColumns() {
-		return Collections.unmodifiableList( new ArrayList<>( referencingTable.getMappedColumns() ) );
 	}
 
 	@Override

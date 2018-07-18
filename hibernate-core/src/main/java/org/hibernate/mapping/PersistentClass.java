@@ -1000,8 +1000,8 @@ public abstract class PersistentClass
 		return getUnjoinedPropertyIterator();
 	}
 
-	protected Iterator getDiscriminatorColumnIterator() {
-		return EmptyIterator.INSTANCE;
+	protected List<MappedColumn> getDiscriminatorColumns() {
+		return Collections.emptyList();
 	}
 
 	protected void checkColumnDuplication() {
@@ -1011,7 +1011,7 @@ public abstract class PersistentClass
 			//and checked later, so it needs to be excluded
 			checkColumnDuplication( cols, getKey().getMappedColumns() );
 		}
-		checkColumnDuplication( cols, getDiscriminatorColumnIterator() );
+		checkColumnDuplication( cols, getDiscriminatorColumns() );
 		checkPropertyColumnDuplication( cols, getNonDuplicatedPropertyIterator() );
 		joins.forEach( join -> {
 			cols.clear();
