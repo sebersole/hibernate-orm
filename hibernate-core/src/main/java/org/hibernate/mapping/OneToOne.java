@@ -79,6 +79,8 @@ public class OneToOne extends ToOne {
 		return foreignKey;
 	}
 
+
+
 	@Override
 	protected void setTypeDescriptorResolver(Column column) {
 		throw new UnsupportedOperationException( "Cant add a column to a one-to-one" );

@@ -42,7 +42,7 @@ public interface Writeable<D,I> {
 
 	@FunctionalInterface
 	interface JdbcValueCollector {
-		void collect(Object jdbcValue, BasicJavaDescriptor javaTypeDescriptor, Column boundColumn);
-//		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
+//		void collect(Object jdbcValue, BasicJavaDescriptor javaTypeDescriptor, Column boundColumn);
+		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
 	}
 }

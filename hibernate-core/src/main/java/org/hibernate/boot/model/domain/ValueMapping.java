@@ -33,7 +33,7 @@ public interface ValueMapping<J> {
 
 	ServiceRegistry getServiceRegistry();
 
-	default boolean resolve(ResolutionContext context, ValueMappingContainer container) {
+	default Boolean resolve(ResolutionContext context, ValueMappingContainer container) {
 		// force resolution of the Value's JavaTypeDescriptor
 		getJavaTypeMapping().getJavaTypeDescriptor();
 		return true;

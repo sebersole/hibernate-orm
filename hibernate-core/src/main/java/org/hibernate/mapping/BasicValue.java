@@ -21,6 +21,7 @@ import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMappingContainer;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -78,6 +79,9 @@ public class BasicValue
 		this.preferredJdbcTypeCodeForBoolean = buildingContext.getPreferredSqlTypeCodeForBoolean();
 
 		this.javaTypeMapping = new BasicJavaTypeMapping( this );
+		buildingContext.getMetadataCollector().registerValueMappingResolver( resolutionContext ->
+			resolve ( resolutionContext, null)
+		 );
 	}
 
 	@Override
@@ -87,7 +91,7 @@ public class BasicValue
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean resolve(
+	public Boolean resolve(
 			ResolutionContext context,
 			ValueMappingContainer container) {
 		final String name = getTypeName();
@@ -202,9 +206,12 @@ public class BasicValue
 			}
 		}
 
-		getMappedColumn().setJavaTypeMapping( javaTypeMapping );
-		getMappedColumn().setSqlTypeDescriptorAccess( () -> basicType.getSqlTypeDescriptor() );
-
+		MappedColumn mappedColumn = getMappedColumn();
+		if ( mappedColumn instanceof Column ) {
+			Column column = (Column) mappedColumn;
+			column.setJavaTypeMapping( javaTypeMapping );
+			column.setSqlTypeDescriptorAccess( () -> basicType.getSqlTypeDescriptor() );
+		}
 		return true;
 	}
 

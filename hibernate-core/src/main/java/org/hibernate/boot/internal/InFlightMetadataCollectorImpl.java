@@ -1988,7 +1988,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	 */
 	public MetadataImpl buildMetadataInstance(MetadataBuildingContext buildingContext) {
 		processSecondPasses( buildingContext );
-		processExportableProducers( );
+		finalizeBootModel( );
 
 		try {
 			return new MetadataImpl(
@@ -2016,6 +2016,45 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 		}
 		finally {
 			getBootstrapContext().release();
+		}
+	}
+
+	private void finalizeBootModel() {
+		final List<Function<ResolutionContext, Boolean>> resolvers = getValueMappingResolvers();
+		ResolutionContextImpl resolutionContext = new ResolutionContextImpl( bootstrapContext );
+		while ( true ) {
+			final boolean anyRemoved = resolvers.removeIf(
+					resolver -> resolver.apply( resolutionContext )
+			);
+
+			if ( ! anyRemoved ) {
+				if ( ! resolvers.isEmpty() ) {
+					throw new MappingException( "Unable to complete initialization of boot meta-model" );
+				}
+
+				break;
+			}
+		}
+		processExportableProducers();
+	}
+
+	public static class ResolutionContextImpl implements ResolutionContext{
+
+		private final BootstrapContext bootstrapContext;
+
+		public ResolutionContextImpl(
+				BootstrapContext bootstrapContext) {
+			this.bootstrapContext = bootstrapContext;
+		}
+
+		@Override
+		public BootstrapContext getBootstrapContext() {
+			return bootstrapContext;
+		}
+
+		@Override
+		public MetadataBuildingContext getMetadataBuildingContext() {
+			return null;
 		}
 	}
 

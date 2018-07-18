@@ -23,6 +23,7 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -42,8 +43,9 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 		column = new DerivedColumn(
 				hierarchy.getRootEntityType().getPrimaryTable(),
 				"ROW_ID",
-				() -> creationContext.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.INTEGER ),
-				() -> getJavaTypeDescriptor()
+				creationContext.getTypeConfiguration()
+						.getSqlTypeDescriptorRegistry()
+						.getDescriptor( Types.INTEGER )
 		);
 	}
 

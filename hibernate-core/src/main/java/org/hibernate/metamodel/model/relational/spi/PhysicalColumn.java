@@ -92,12 +92,10 @@ public class PhysicalColumn implements Column {
 		return javaTypeDescriptorAccess.get();
 	}
 
-	@Override
 	public Supplier<SqlTypeDescriptor> getSqlTypeDescriptorAccess() {
 		return sqlTypeDescriptorAccess;
 	}
 
-	@Override
 	public Supplier<BasicJavaDescriptor> getJavaTypeDescriptorAccess() {
 		return javaTypeDescriptorAccess;
 	}

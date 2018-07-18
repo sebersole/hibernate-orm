@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.persistence.NamedAttributeNode;
 import javax.persistence.NamedEntityGraph;
@@ -99,7 +98,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 
 	private final Map<String, DomainDataRegionConfigImpl.Builder> regionConfigBuilders = new ConcurrentHashMap<>();
 
-	private final List<Navigable> navigables = new ArrayList<>();
+	private final List<Navigable> navigablesToFinalize = new ArrayList<>();
 
 	private RuntimeModelCreationProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -132,8 +131,6 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 	public MetamodelImplementor execute() {
 		final InFlightMetadataCollector mappingMetadata = metadataBuildingContext.getMetadataCollector();
 
-		finalizeBootModel( mappingMetadata );
-
 		final DatabaseObjectResolutionContextImpl dbObjectResolver = new DatabaseObjectResolutionContextImpl();
 		final DatabaseModel databaseModel = new RuntimeDatabaseModelProducer( metadataBuildingContext.getBootstrapContext() )
 				.produceDatabaseModel( mappingMetadata.getDatabase(), dbObjectResolver, dbObjectResolver );
@@ -162,7 +159,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 					|| runtimeRootByBootHierarchy.containsKey( bootHierarchy ) ) {
 				throw new HibernateException(
 						"Entity boot hierarchy was encountered twice while transforming to runtime model : " +
-						bootHierarchy.getRootType().getName()
+								bootHierarchy.getRootType().getName()
 				);
 			}
 
@@ -215,8 +212,8 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 			runtimeRootEntity.getHierarchy().finishInitialization( creationContext, bootRootEntity );
 		}
 
-		boolean moreEmbeddables = ! embeddableRuntimeByBoot.isEmpty();
-		boolean moreCollections = ! collectionRuntimeByBoot.isEmpty();
+		boolean moreEmbeddables = !embeddableRuntimeByBoot.isEmpty();
+		boolean moreCollections = !collectionRuntimeByBoot.isEmpty();
 
 		while ( moreEmbeddables || moreCollections ) {
 			final int initialEmbeddableCount = embeddableRuntimeByBoot.size();
@@ -233,12 +230,21 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 
 		// todo (6.0) - could this be moved to descriptorFactory#finishUp?
-		while ( true ) {
-			if ( !navigables.removeIf( navigable -> navigable.finishInitialization( creationContext ) ) ) {
-				if ( navigables.isEmpty() ) {
-					throw new MappingException( "Unable to complete initialization of run-time meta-model" );
+		int navigablesCounter = navigablesToFinalize.size();
+		if ( navigablesCounter > 0 ) {
+			while ( true ) {
+				if ( !navigablesToFinalize.removeIf( navigable -> navigable.finishInitialization( creationContext ) ) ) {
+
+					break;
 				}
-				break;
+				else {
+					if ( navigablesToFinalize.size() == navigablesCounter ) {
+						throw new MappingException( "Unable to complete initialization of run-time meta-model" );
+					}
+					else {
+						navigablesCounter = navigablesToFinalize.size();
+					}
+				}
 			}
 		}
 
@@ -263,24 +269,6 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		);
 
 		return inFlightRuntimeModel.complete( sessionFactory, metadataBuildingContext );
-	}
-
-	private void finalizeBootModel(InFlightMetadataCollector mappingMetadata) {
-		final List<Function<ResolutionContext, Boolean>> resolvers = mappingMetadata.getValueMappingResolvers();
-
-		while ( true ) {
-			final boolean anyRemoved = resolvers.removeIf(
-					resolver -> resolver.apply( this )
-			);
-
-			if ( ! anyRemoved ) {
-				if ( ! resolvers.isEmpty() ) {
-					throw new MappingException( "Unable to complete initialization of boot meta-model" );
-				}
-
-				break;
-			}
-		}
 	}
 
 //	private void resolveForeignKeys(
@@ -621,7 +609,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 
 		@Override
 		public void registerNavigable(Navigable navigable) {
-			navigables.add( navigable );
+			navigablesToFinalize.add( navigable );
 		}
 
 		@Override
