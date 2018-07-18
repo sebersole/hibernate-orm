@@ -335,7 +335,7 @@ public class RevisionInfoConfigurationBuilder {
 							property.getName(),
 							property.getName(),
 							accessType,
-							value.getValueMapping().getJavaTypeMapping().resolveJavaTypeDescriptor()
+							value.getValueMapping().getJavaTypeMapping().getJavaTypeDescriptor()
 					);
 					revisionTimestampFound.set();
 				}

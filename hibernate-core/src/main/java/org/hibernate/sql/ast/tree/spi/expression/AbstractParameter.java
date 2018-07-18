@@ -19,21 +19,20 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
-
-import org.jboss.logging.Logger;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractParameter implements GenericParameter, QueryResultProducer {
-	private static final Logger log = Logger.getLogger( AbstractParameter.class );
-
 	private final AllowableParameterType inferredType;
 
 	public AbstractParameter(AllowableParameterType inferredType) {
 		this.inferredType = inferredType;
 	}
 
+	@SuppressWarnings("WeakerAccess")
 	public AllowableParameterType getInferredType() {
 		return inferredType;
 	}
@@ -94,17 +93,25 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 
 
 	@Override
-	public QueryResult createQueryResult(
-			String resultVariable, QueryResultCreationContext creationContext) {
+	public QueryResult createQueryResult(String resultVariable, QueryResultCreationContext creationContext) {
+		final BasicValuedExpressableType type = (BasicValuedExpressableType) getType();
+
 		return new ScalarQueryResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
-				(BasicValuedExpressableType) getType()
+				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+						this,
+						type.getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
+				type
 		);
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(int jdbcPosition) {
+	public SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
 		// todo (6.0) : we should really just access the parameter bind value here rather than reading from ResultSet
 		//		should be more performant - double so if we can resolve the bind here
 		//		and encode it into the SqlSelectionReader
@@ -114,7 +121,7 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getSqlSelectionReader()
+				( (BasicValuedExpressableType) getType() ).getBasicType().getJdbcValueMapper( typeConfiguration )
 		);
 	}
 }

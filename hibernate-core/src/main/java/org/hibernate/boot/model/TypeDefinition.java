@@ -14,12 +14,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.hibernate.MappingException;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.model.type.spi.TypeResolverTemplate;
 import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.type.Type;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.ParameterizedType;
-import org.hibernate.type.Type;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -27,12 +28,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * to delay instantiation of the actual {@link Type} instance.
  *
  * Generally speaking this information would come from annotations
- * ({@link org.hibernate.annotations.TypeDef}) or XML mappings.  An alternative form of
- * supplying custom types is programmatically via one of:<ul>
- *     <li>{@link org.hibernate.boot.MetadataBuilder#applyBasicType(org.hibernate.type.BasicType)}</li>
- *     <li>{@link org.hibernate.boot.MetadataBuilder#applyBasicType(org.hibernate.usertype.UserType, String[])}</li>
- *     <li>{@link org.hibernate.boot.MetadataBuilder#applyTypes(TypeContributor)}</li>
- * </ul>
+ * ({@link org.hibernate.annotations.TypeDef}) or XML mappings.
  *
  * @author Steve Ebersole
  * @author John Verhaeg
@@ -71,17 +67,17 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 		this.typeImplementorClass = typeImplementorClass;
 		this.registrationKeys= registrationKeys;
 		this.parameters = parameters == null
-				? Collections.<String, String>emptyMap()
+				? Collections.emptyMap()
 				: extractStrings( parameters );
 		this.typeConfiguration = typeConfiguration;
 	}
 
 	private Map<String, String> extractStrings(Properties properties) {
-		final Map<String, String> parameters = new HashMap<String, String>();
+		final Map<String, String> parameters = new HashMap<>();
 
 		for ( Map.Entry entry : properties.entrySet() ) {
-			if ( String.class.isInstance( entry.getKey() )
-					&& String.class.isInstance( entry.getValue() ) ) {
+			if ( entry.getKey() instanceof String
+					&& entry.getValue() instanceof String ) {
 				parameters.put(
 						(String) entry.getKey(),
 						(String) entry.getValue()
@@ -139,7 +135,7 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 			private BasicType basicType;
 
 			@Override
-			public <T> BasicType<T> resolveBasicType() {
+			public <T> BasicType<T> resolveBasicType(ResolutionContext context) {
 				if ( basicType == null ) {
 					basicType = instantiateBasicType();
 					injectParameters( basicType, parameters );

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -60,7 +61,6 @@ import org.hibernate.mapping.Join;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.mapping.SyntheticProperty;
 import org.hibernate.mapping.ToOne;
@@ -69,18 +69,6 @@ import org.hibernate.naming.Identifier;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  * @author Emmanuel Bernard
@@ -114,20 +102,7 @@ public class BinderHelper {
 	 * create a property copy reusing the same value
 	 */
 	public static Property shallowCopy(Property property) {
-		Property clone = new Property();
-		clone.setCascade( property.getCascade() );
-		clone.setInsertable( property.isInsertable() );
-		clone.setLazy( property.isLazy() );
-		clone.setName( property.getName() );
-		clone.setNaturalIdentifier( property.isNaturalIdentifier() );
-		clone.setOptimisticLocked( property.isOptimisticLocked() );
-		clone.setOptional( property.isOptional() );
-		clone.setPersistentClass( (PersistentClass) property.getEntity() );
-		clone.setPropertyAccessorName( property.getPropertyAccessorName() );
-		clone.setSelectable( property.isSelectable() );
-		clone.setUpdateable( property.isUpdateable() );
-		clone.setValue( property.getValue() );
-		return clone;
+		return property.shallowCopy();
 	}
 
 // This is sooooooooo close in terms of not generating a synthetic property if we do not have to (where property ref
@@ -307,7 +282,7 @@ public class BinderHelper {
 					clone.setValueGenerationStrategy( property.getValueGenerationStrategy() );
 					embeddedComp.addDeclaredPersistentAttribute( clone );
 				}
-				synthProp = new SyntheticProperty();
+				synthProp = new SyntheticProperty( context );
 				synthProp.setName( syntheticPropertyName );
 				synthProp.setPersistentClass( ownerEntity );
 				synthProp.setUpdateable( false );

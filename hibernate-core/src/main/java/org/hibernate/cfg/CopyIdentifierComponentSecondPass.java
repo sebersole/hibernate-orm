@@ -23,7 +23,6 @@ import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Component;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
-import org.hibernate.mapping.Selectable;
 
 import org.jboss.logging.Logger;
 
@@ -115,7 +114,7 @@ public class CopyIdentifierComponentSecondPass implements SecondPass {
 			Map<String, Ejb3JoinColumn> columnByReferencedName,
 			AtomicInteger index,
 			PersistentAttributeMapping referencedProperty ) {
-		final Property property = new Property();
+		final Property property = new Property( buildingContext );
 		property.setName( referencedProperty.getName() );
 		//FIXME set optional?
 		//property.setOptional( property.isOptional() );
@@ -125,7 +124,7 @@ public class CopyIdentifierComponentSecondPass implements SecondPass {
 
 		property.setValue( value );
 		final Component referencedValue = (Component) referencedProperty.getValueMapping();
-		value.setTypeName( referencedValue.getTypeName() );
+		value.setExplicitTypeName( referencedValue.getTypeName() );
 		value.setTypeParameters( referencedValue.getTypeParameters() );
 		value.setComponentClassName( referencedValue.getEmbeddableClassName() );
 
@@ -162,16 +161,17 @@ public class CopyIdentifierComponentSecondPass implements SecondPass {
 			Map<String, Ejb3JoinColumn> columnByReferencedName,
 			AtomicInteger index,
 			PersistentAttributeMapping referencedProperty ) {
-		final Property property = new Property();
+		final Property property = new Property( buildingContext );
 		property.setName( referencedProperty.getName() );
 		//FIXME set optional?
 		//property.setOptional( property.isOptional() );
 		property.setPersistentClass( component.getOwner() );
 		property.setPropertyAccessorName( referencedProperty.getPropertyAccessorName() );
-		final BasicValue value = new BasicValue( buildingContext, component.getMappedTable() );
+		final BasicValue value = new BasicValue( buildingContext, component.getMappedTable()
+		);
 		property.setValue( value );
 		final BasicValue referencedValue = (BasicValue) referencedProperty.getValueMapping();
-		value.setTypeName( referencedValue.getTypeName() );
+		value.setExplicitTypeName( referencedValue.getTypeName() );
 		value.setTypeParameters( referencedValue.getTypeParameters() );
 		final List<MappedColumn> mappedColumns = referencedValue.getMappedColumns();
 		if ( joinColumns[0].isNameDeferred() ) {

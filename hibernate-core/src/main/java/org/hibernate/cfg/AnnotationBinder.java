@@ -72,6 +72,7 @@ import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.Cascade;
@@ -129,7 +130,6 @@ import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.internal.EntityJavaTypeMappingImpl;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.EntityNamingSource;
-import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.InFlightMetadataCollector.EntityTableXref;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -1111,7 +1111,7 @@ public final class AnnotationBinder {
 				persistentClass.setDeclaredIdentifierMapper( mapper );
 			}
 
-			Property property = new Property();
+			Property property = new Property( context );
 			property.setName( NavigablePath.IDENTIFIER_MAPPER_PROPERTY );
 			property.setUpdateable( false );
 			property.setInsertable( false );
@@ -1120,8 +1120,8 @@ public final class AnnotationBinder {
 			persistentClass.addProperty( property );
 			entityBinder.setIgnoreIdAnnotations( true );
 
-			mapper.getDeclaredPersistentAttributes().forEach( attribute ->
-																	  idPropertiesIfIdClass.add( attribute.getName() )
+			mapper.getDeclaredPersistentAttributes().forEach(
+					attribute -> idPropertiesIfIdClass.add( attribute.getName() )
 			);
 			return true;
 		}
@@ -1526,14 +1526,12 @@ public final class AnnotationBinder {
 			}
 			discriminatorColumn.setJoins( secondaryTables );
 			discriminatorColumn.setPropertyHolder( propertyHolder );
-			BasicValue discriminatorColumnBinding = new BasicValue( context, rootClass.getTable() );
-			discriminatorColumnBinding.setBasicTypeResolver( new BasicTypeResolverExplicitNamedImpl(
-					context,
-					discriminatorColumn.getDiscriminatorTypeName()
-			) );
+			BasicValue discriminatorColumnBinding = new BasicValue( context, rootClass.getTable()
+			);
+			discriminatorColumnBinding.setExplicitTypeName( discriminatorColumn.getDiscriminatorTypeName() );
 			rootClass.setDiscriminatorValueMapping( discriminatorColumnBinding );
 			discriminatorColumn.linkWithValue( discriminatorColumnBinding );
-			discriminatorColumnBinding.setTypeName( discriminatorColumn.getDiscriminatorTypeName() );
+			discriminatorColumnBinding.setExplicitTypeName( discriminatorColumn.getDiscriminatorTypeName() );
 			rootClass.setPolymorphic( true );
 			if ( LOG.isTraceEnabled() ) {
 				LOG.tracev( "Setting discriminator for entity {0}", rootClass.getEntityName() );
@@ -3091,7 +3089,7 @@ public final class AnnotationBinder {
 			}
 
 		}
-		value.setTypeName( inferredData.getClassOrElementName() );
+		value.setExplicitTypeName( inferredData.getClassOrElementName() );
 		final String propertyName = inferredData.getPropertyName();
 		value.setTypeUsingReflection( propertyHolder.getClassName(), propertyName );
 
@@ -3259,6 +3257,7 @@ public final class AnnotationBinder {
 				}
 			}
 		}
+
 		if ( trueOneToOne || mapToPK || !BinderHelper.isEmptyAnnotationValue( mappedBy ) ) {
 			//is a true one-to-one
 			//FIXME referencedColumnName ignored => ordering may fail.

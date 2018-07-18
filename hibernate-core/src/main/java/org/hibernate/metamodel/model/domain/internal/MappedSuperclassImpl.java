@@ -24,6 +24,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -42,7 +43,7 @@ public class MappedSuperclassImpl<J>
 		super(
 				bootMapping,
 				superTypeDescriptor,
-				bootMapping.getJavaTypeMapping().resolveJavaTypeDescriptor(),
+				(IdentifiableJavaDescriptor<J>) bootMapping.getJavaTypeMapping().getJavaTypeDescriptor(),
 				creationContext
 		);
 		this.hierarchy = hierarchy;

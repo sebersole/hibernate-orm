@@ -11,12 +11,16 @@ import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
- * Descriptor for the Java side of a value mapping.
+ * Descriptor for the Java side of a value mapping.  We abstract from
+ * {@link Class} because domain types might be "virtual".
+ *
+ * Note however that we do require that all basic types be based on
+ * a real Java {@link Class}
  *
  * @author Steve Ebersole
  */
 public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.java.JavaTypeDescriptor<T>  {
-	// todo (6.0) : Use this as a cache for reflection lookups on the Java type
+	// todo (6.0) : Use this as a cache for reflection look-ups on the Java type
 
 	/**
 	 * Obtain the "recommended" SQL type descriptor for this Java type.  The recommended

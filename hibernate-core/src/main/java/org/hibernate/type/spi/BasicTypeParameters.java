@@ -6,11 +6,9 @@
  */
 package org.hibernate.type.spi;
 
-import java.util.Comparator;
-
 import org.hibernate.Incubating;
+import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
@@ -22,9 +20,17 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 @Incubating
 public interface BasicTypeParameters<T> {
 	BasicJavaDescriptor<T> getJavaTypeDescriptor();
+
 	SqlTypeDescriptor getSqlTypeDescriptor();
+
+	/**
+	 * @deprecated 6.0 no longer implements "attribute conversion" at the BasicType level.
+	 *
+	 * @see org.hibernate.sql.JdbcValueMapper
+	 */
+	@Remove
+	@Deprecated
 	ConverterDescriptor getAttributeConverterDescriptor();
-	MutabilityPlan<T> getMutabilityPlan();
-	Comparator<T> getComparator();
+
 	javax.persistence.TemporalType getTemporalPrecision();
 }

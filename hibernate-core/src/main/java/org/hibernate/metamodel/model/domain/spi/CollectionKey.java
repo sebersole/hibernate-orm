@@ -113,7 +113,7 @@ public class CollectionKey {
 
 	private static JavaTypeDescriptor resolveJavaTypeDescriptor(Collection collectionValue) {
 		if ( collectionValue.getJavaTypeMapping() != null ) {
-			return collectionValue.getJavaTypeMapping().resolveJavaTypeDescriptor();
+			return collectionValue.getJavaTypeMapping().getJavaTypeDescriptor();
 		}
 		return null;
 	}

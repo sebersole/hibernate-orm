@@ -124,7 +124,9 @@ public class BasicCollectionElementImpl<J>
 						creationContext.getSqlSelectionResolver().resolveSqlExpression(
 								navigableReference.getSqlExpressionQualifier(),
 								getBoundColumn()
-						)
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				this
 		);

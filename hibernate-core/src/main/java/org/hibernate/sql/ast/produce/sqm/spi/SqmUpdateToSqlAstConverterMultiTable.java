@@ -163,6 +163,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		getFromClauseIndex().crossReference( sqmStatement.getEntityFromElement(), tableGroup );
 
 		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection

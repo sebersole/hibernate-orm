@@ -9,16 +9,16 @@ package org.hibernate.mapping;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.service.ServiceRegistry;
 
 /**

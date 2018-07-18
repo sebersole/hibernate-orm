@@ -111,14 +111,14 @@ public abstract class AbstractJdbcValueExtractor<J> implements JdbcValueExtracto
 	protected abstract J doExtract(CallableStatement statement, int position, ExecutionContext executionContext) throws SQLException;
 
 	@Override
-	public J extract(CallableStatement statement, String name, ExecutionContext executionContext) throws SQLException {
-		final J value = doExtract( statement, name, executionContext );
+	public J extract(CallableStatement statement, String jdbcParameterName, ExecutionContext executionContext) throws SQLException {
+		final J value = doExtract( statement, jdbcParameterName, executionContext );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || statement.wasNull() ) {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted named procedure output  parameter ([%s] : [%s]) - [null]",
-						name,
+						jdbcParameterName,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getJdbcTypeCode() )
 				);
 			}
@@ -128,7 +128,7 @@ public abstract class AbstractJdbcValueExtractor<J> implements JdbcValueExtracto
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted named procedure output  parameter ([%s] : [%s]) - [%s]",
-						name,
+						jdbcParameterName,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getJdbcTypeCode() ),
 						getJavaDescriptor().extractLoggableRepresentation( value )
 				);

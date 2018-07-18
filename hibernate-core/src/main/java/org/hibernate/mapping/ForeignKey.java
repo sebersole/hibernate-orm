@@ -12,11 +12,14 @@ import java.util.List;
 import java.util.Locale;
 
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.util.JavaTypeHelper;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 
 /**
  * A foreign key constraint
@@ -33,6 +36,14 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	public ForeignKey() {
 	}
 
+	public org.hibernate.metamodel.model.relational.spi.ForeignKey generateRuntimeModel(
+			RuntimeModelCreationContext creationContext,
+			ForeignKeyExporter exporter) {
+		// todo (6.0) : needed?  Depends how "ForeignKey resolver" works
+		//		see `org.hibernate.boot.spi.InFlightMetadataCollector#registerForeignKeyCreator`
+		throw new NotYetImplementedFor6Exception();
+	}
+
 	@Override
 	public void setName(String name) {
 		super.setName( name );
@@ -47,6 +58,12 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	public MappedTable getReferencedTable() {
 		return referencedTable;
 	}
+
+	@Override
+	public MappedTable getTargetTable() {
+		return getMappedTable();
+	}
+
 
 	private void appendColumns(StringBuilder buf, List<Selectable> columns) {
 		boolean firstPass = true;

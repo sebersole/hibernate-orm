@@ -23,12 +23,12 @@ import org.hibernate.collection.spi.CollectionSemantics;
  * @author Gavin King
  */
 public class Set extends Collection {
-	private final CollectionJavaDescriptorResolver javaTypeMapping;
+	private final CollectionJavaTypeMapping javaTypeMapping;
 
 	public Set(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				java.util.Set.class
 		);

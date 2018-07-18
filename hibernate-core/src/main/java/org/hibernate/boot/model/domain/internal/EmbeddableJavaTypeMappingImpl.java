@@ -7,12 +7,14 @@
 package org.hibernate.boot.model.domain.internal;
 
 import org.hibernate.boot.model.domain.EmbeddableJavaTypeMapping;
+import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 
@@ -43,7 +45,7 @@ public class EmbeddableJavaTypeMappingImpl<T>
 	}
 
 	@Override
-	public EmbeddableJavaDescriptor<T> resolveJavaTypeDescriptor() {
+	public JavaTypeDescriptor<T> getJavaTypeDescriptor() throws NotYetResolvedException {
 		final BootstrapContext bootstrapContext = getMetadataBuildingContext().getBootstrapContext();
 		final JavaTypeDescriptorRegistry registry = bootstrapContext.getTypeConfiguration().getJavaTypeDescriptorRegistry();
 

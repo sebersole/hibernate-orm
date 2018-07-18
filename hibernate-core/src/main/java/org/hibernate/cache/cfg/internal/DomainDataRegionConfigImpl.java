@@ -97,7 +97,7 @@ public class DomainDataRegionConfigImpl implements DomainDataRegionConfig {
 									(Supplier<Comparator>) () -> ( bootEntityDescriptor.getVersionAttributeMapping()
 											.getValueMapping()
 											.getJavaTypeMapping()
-											.resolveJavaTypeDescriptor() ).getComparator()
+											.getJavaTypeDescriptor() ).getComparator()
 									:
 									null,
 							bootEntityDescriptor.isMutable(),

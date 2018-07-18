@@ -24,14 +24,8 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T> {
+	/**
+	 * The "java type" descriptor
+	 */
 	JavaTypeDescriptor<T> getJavaTypeDescriptor();
-
-	// todo (6.0) : need to account for binding and extracting at this level
-	//		now encapsulates AttributeConverter, so this is appropriate.
-	//
-	// 		However	value extraction is a 2-part process:
-	//			1) extract the "raw" SQL value - pushed into JdbcValues#getCurrentRowValuesArray()
-	//			2) use ExpressableType to access the "current row JDBC value"
-
-
 }

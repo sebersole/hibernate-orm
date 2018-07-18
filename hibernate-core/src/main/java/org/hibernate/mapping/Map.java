@@ -21,12 +21,12 @@ import org.hibernate.collection.spi.CollectionSemantics;
  * the key columns + index columns.
  */
 public class Map extends IndexedCollection {
-	private final CollectionJavaDescriptorResolver javaTypeMapping;
+	private final CollectionJavaTypeMapping javaTypeMapping;
 
 	public Map(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				java.util.Map.class
 		);

@@ -32,7 +32,9 @@ import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.JdbcInsertSelect;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -161,11 +163,17 @@ public abstract class AbstractTableBasedHandler implements Handler {
 				sqmDeleteOrUpdateStatement,
 				executionContext
 		);
+
 		if ( sessionUidSupport.needsSessionUidColumn() ) {
+			final QueryLiteral sessUidLiteral = generateSessionUidLiteralExpression( executionContext );
+			final TypeConfiguration typeConfiguration = executionContext.getSessionFactory().getTypeConfiguration();
+
 			// we need to insert the uid into the id-table to properly identify the rows later
 			entityIdSelect.getSelectClause().addSqlSelection(
-					generateSessionUidLiteralExpression( executionContext ).createSqlSelection(
-							idTableInfo.getPhysicalColumns().size()
+					sessUidLiteral.createSqlSelection(
+							entityIdSelect.getSelectClause().getSqlSelections().size(),
+							(BasicJavaDescriptor) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( String.class ),
+							typeConfiguration
 					)
 			);
 		}

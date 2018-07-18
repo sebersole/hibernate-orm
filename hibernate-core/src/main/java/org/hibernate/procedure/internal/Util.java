@@ -245,7 +245,8 @@ public class Util {
 			//		aliases here as a key to resolve SqlSelections
 			//	todo : implement ^^
 
-			throw new NotYetImplementedFor6Exception(  );
+			throw new NotYetImplementedFor6Exception();
+		}
 //			for ( NativeSQLQueryReturn nativeQueryReturn : mapping.getQueryResultBuilders() ) {
 //				if ( nativeQueryReturn instanceof NativeSQLQueryScalarReturn ) {
 //					final NativeSQLQueryScalarReturn rtn = (NativeSQLQueryScalarReturn) nativeQueryReturn;
@@ -296,18 +297,19 @@ public class Util {
 //					// tod finish
 //				}
 //			}
-		}
-
-		private SqlSelection resolveSqlSelection(BasicType ormType, String alias) {
-			return sqlSelectionMap.computeIfAbsent(
-					alias,
-					s -> new SqlSelectionImpl(
-							new SqlSelectionReaderImpl( ormType ),
-							selectablesCount++
-					)
-			);
-		}
-
+//		}
+//
+//		private SqlSelection resolveSqlSelection(BasicType ormType, String alias) {
+//			return sqlSelectionMap.computeIfAbsent(
+//					alias,
+//					s -> new SqlSelectionImpl(
+//							ormType.getSqlSelectionReader()
+//							new SqlSelectionReaderImpl( ormType ),
+//							selectablesCount++
+//					)
+//			);
+//		}
+//
 //		private QueryResultAssembler buildDynamicInstantiationAssembler(NativeSQLQueryConstructorReturn nativeQueryReturn) {
 //			final JavaTypeDescriptor resultType = context.getSessionFactory()
 //					.getTypeConfiguration()

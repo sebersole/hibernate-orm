@@ -66,6 +66,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 public class MetamodelSelectBuilderProcess
 		implements QueryResultCreationContext, SqlAstCreationContext, SqlQueryOptions {
 
+	@SuppressWarnings("WeakerAccess")
 	public static SqlAstSelectDescriptor createSelect(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigableContainer,
@@ -107,11 +108,7 @@ public class MetamodelSelectBuilderProcess
 
 	private final QuerySpec rootQuerySpec = new QuerySpec( true );
 
-	private final StandardSqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
-			() -> rootQuerySpec,
-			expression -> expression,
-			(expression, selection) -> {}
-	);
+	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -130,6 +127,12 @@ public class MetamodelSelectBuilderProcess
 		this.numberOfKeysToLoad = numberOfKeysToLoad;
 		this.loadQueryInfluencers = loadQueryInfluencers;
 		this.lockOptions = lockOptions != null ? lockOptions : LockOptions.NONE;
+
+		this.sqlExpressionResolver = new StandardSqlExpressionResolver(
+				() -> rootQuerySpec,
+				expression -> expression,
+				(expression, selection) -> {}
+		);
 	}
 
 	private SqlAstSelectDescriptor execute() {

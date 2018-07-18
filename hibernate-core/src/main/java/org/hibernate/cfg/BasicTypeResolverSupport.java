@@ -6,14 +6,13 @@
  */
 package org.hibernate.cfg;
 
-import java.util.Comparator;
 import javax.persistence.EnumType;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
@@ -45,7 +44,7 @@ public abstract class BasicTypeResolverSupport<T>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public BasicType<T> resolveBasicType() {
+	public BasicType<T> resolveBasicType(ResolutionContext context) {
 		if ( basicType == null ) {
 			resolveJavaAndSqlTypeDescriptors();
 			basicType = getTypeConfiguration().getBasicTypeRegistry().resolveBasicType(
@@ -105,16 +104,6 @@ public abstract class BasicTypeResolverSupport<T>
 
 	@Override
 	public ConverterDescriptor getAttributeConverterDescriptor() {
-		return null;
-	}
-
-	@Override
-	public MutabilityPlan<T> getMutabilityPlan() {
-		return null;
-	}
-
-	@Override
-	public Comparator getComparator() {
 		return null;
 	}
 

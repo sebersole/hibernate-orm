@@ -153,6 +153,8 @@ public class BasicTypeRegistry {
 		BasicJavaDescriptor<T> javaTypeDescriptor = parameters.getJavaTypeDescriptor();
 		SqlTypeDescriptor sqlTypeDescriptor = parameters.getSqlTypeDescriptor();
 
+		// todo (6.0) - should no longer handle "attribute converter here.
+		// 		see note on `BasicTypeParameters#getAttributeConverterDescriptor`
 		if ( parameters.getAttributeConverterDescriptor() != null ) {
 			// we have an attribute converter, use that to either:
 			//		1) validate the BasicJavaDescriptor/SqlTypeDescriptor defined on parameters

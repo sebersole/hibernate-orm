@@ -20,7 +20,9 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.Selectable;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -47,11 +49,14 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(int jdbcPosition) {
+	public SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getSqlSelectionReader()
+				getType().getBasicType().getJdbcValueMapper( typeConfiguration ).getJdbcValueExtractor()
 		);
 	}
 
@@ -66,7 +71,11 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 			QueryResultCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
+				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+						this,
+						getType().getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
 				getType()
 		);
 	}

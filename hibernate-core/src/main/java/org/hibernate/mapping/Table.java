@@ -40,6 +40,7 @@ import org.hibernate.metamodel.model.relational.spi.PrimaryKey;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
 import org.hibernate.naming.Identifier;
 import org.hibernate.naming.QualifiedTableName;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -761,17 +762,17 @@ public class Table implements MappedTable<Column>, Serializable {
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment,
 			IdentifierGeneratorFactory identifierGeneratorFactory,
-			RuntimeDatabaseModelProducer.Callback callback) {
+			RuntimeDatabaseModelProducer.Callback callback, TypeConfiguration typeConfiguration) {
 
 		InflightTable runtimeTable;
 		if ( getSubselect() != null ) {
 			runtimeTable = new DerivedTable( getUid(), getSubselect(), isAbstract() );
 		}
 		else {
-			runtimeTable = createRuntimePhysicalTable( namingStrategy, jdbcEnvironment, identifierGeneratorFactory );
+			runtimeTable = createRuntimePhysicalTable( namingStrategy, jdbcEnvironment, identifierGeneratorFactory, typeConfiguration );
 		}
 
-		addColumnsToInflightTable( runtimeTable, namingStrategy, jdbcEnvironment, callback );
+		addColumnsToInflightTable( runtimeTable, namingStrategy, jdbcEnvironment, callback, typeConfiguration );
 		callback.tableBuilt( this, runtimeTable );
 		return runtimeTable;
 	}
@@ -780,14 +781,16 @@ public class Table implements MappedTable<Column>, Serializable {
 			InflightTable runtimeTable,
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment,
-			RuntimeDatabaseModelProducer.Callback callback) {
+			RuntimeDatabaseModelProducer.Callback callback,
+			TypeConfiguration typeConfiguration) {
 		final Map<MappedColumn, org.hibernate.metamodel.model.relational.spi.Column> tableColumnXref = new HashMap<>();
 
 		for ( MappedColumn mappedColumn : getMappedColumns() ) {
 			final org.hibernate.metamodel.model.relational.spi.Column column = mappedColumn.generateRuntimeColumn(
 					runtimeTable,
 					namingStrategy,
-					jdbcEnvironment
+					jdbcEnvironment,
+					typeConfiguration
 			);
 			runtimeTable.addColumn( column );
 			callback.columnBuilt( mappedColumn, column );
@@ -823,7 +826,8 @@ public class Table implements MappedTable<Column>, Serializable {
 	private InflightTable createRuntimePhysicalTable(
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment,
-			IdentifierGeneratorFactory identifierGeneratorFactory) {
+			IdentifierGeneratorFactory identifierGeneratorFactory,
+			TypeConfiguration typeConfiguration) {
 		final PhysicalTable runtimeTable = new PhysicalTable(
 				getUid(),
 				catalog,
@@ -846,7 +850,8 @@ public class Table implements MappedTable<Column>, Serializable {
 			runtimeTable.addIndex( ( (Index) index ).generateRuntimeIndex(
 					runtimeTable,
 					namingStrategy,
-					jdbcEnvironment
+					jdbcEnvironment,
+					typeConfiguration
 			) );
 		}
 

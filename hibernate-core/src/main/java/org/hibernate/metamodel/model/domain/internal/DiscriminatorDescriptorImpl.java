@@ -128,7 +128,9 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 				resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 						qualifier,
 						getBoundColumn()
-				)
+				),
+				getJavaTypeDescriptor(),
+				resolutionContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 }

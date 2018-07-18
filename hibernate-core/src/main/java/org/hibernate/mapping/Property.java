@@ -21,8 +21,10 @@ import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.boot.model.relational.MappedColumn;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.collection.internal.StandardArraySemantics;
 import org.hibernate.collection.internal.StandardBagSemantics;
 import org.hibernate.collection.internal.StandardIdentifierBagSemantics;
@@ -61,6 +63,7 @@ import org.hibernate.tuple.ValueGeneration;
  * @author Gavin King
  */
 public class Property implements Serializable, PersistentAttributeMapping {
+	private final MetadataBuildingContext context;
 	private String name;
 	private Value value;
 	private String cascade;
@@ -77,6 +80,10 @@ public class Property implements Serializable, PersistentAttributeMapping {
 	private PersistentClass persistentClass;
 	private boolean naturalIdentifier;
 	private boolean lob;
+
+	public Property(MetadataBuildingContext context) {
+		this.context = context;
+	}
 
 	@Override
 	public ValueMapping getValueMapping() {
@@ -569,4 +576,20 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return ManyToOne.class.isInstance( value );
 	}
 
+	public Property shallowCopy() {
+		Property clone = new Property( context );
+		clone.setCascade( getCascade() );
+		clone.setInsertable( isInsertable() );
+		clone.setLazy( isLazy() );
+		clone.setName( getName() );
+		clone.setNaturalIdentifier( isNaturalIdentifier() );
+		clone.setOptimisticLocked( isOptimisticLocked() );
+		clone.setOptional( isOptional() );
+		clone.setPersistentClass( (PersistentClass) getEntity() );
+		clone.setPropertyAccessorName( getPropertyAccessorName() );
+		clone.setSelectable( isSelectable() );
+		clone.setUpdateable( isUpdateable() );
+		clone.setValue( getValue() );
+		return clone;
+	}
 }

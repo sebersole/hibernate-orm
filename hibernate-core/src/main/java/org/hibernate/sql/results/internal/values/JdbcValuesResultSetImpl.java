@@ -11,10 +11,10 @@ import java.sql.SQLException;
 import org.hibernate.CacheMode;
 import org.hibernate.cache.spi.QueryKey;
 import org.hibernate.cache.spi.QueryResultsCache;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.Limit;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.exec.ExecutionException;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManager;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManagerDisabledImpl;
 import org.hibernate.sql.results.internal.caching.QueryCachePutManagerEnabledImpl;
@@ -32,7 +32,7 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 
 	private final ResultSetAccess resultSetAccess;
 	private final ResultSetMapping resultSetMapping;
-	private final SharedSessionContractImplementor session;
+	private final ExecutionContext executionContext;
 
 	// todo (6.0) - manage limit-based skips
 
@@ -49,13 +49,13 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 			QueryKey queryCacheKey,
 			QueryOptions queryOptions,
 			ResultSetMapping resultSetMapping,
-			SharedSessionContractImplementor session) {
+			ExecutionContext executionContext) {
 		super(
-				resolveQueryCachePutManager( session, queryOptions, queryCacheKey )
+				resolveQueryCachePutManager( executionContext, queryOptions, queryCacheKey )
 		);
 		this.resultSetAccess = resultSetAccess;
 		this.resultSetMapping = resultSetMapping;
-		this.session = session;
+		this.executionContext = executionContext;
 
 		// todo (6.0) : decide how to handle paged/limited results
 		this.numberOfRowsToProcess = interpretNumberOfRowsToProcess( queryOptions );
@@ -74,14 +74,17 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 	}
 
 	private static QueryCachePutManager resolveQueryCachePutManager(
-			SharedSessionContractImplementor persistenceContext,
+			ExecutionContext executionContext,
 			QueryOptions queryOptions,
 			QueryKey queryCacheKey) {
-		final boolean queryCacheEnabled = persistenceContext.getFactory().getSessionFactoryOptions().isQueryCacheEnabled();
+		final boolean queryCacheEnabled = executionContext.getSession()
+				.getFactory()
+				.getSessionFactoryOptions()
+				.isQueryCacheEnabled();
 		final CacheMode cacheMode = queryOptions.getCacheMode();
 
 		if ( queryCacheEnabled && cacheMode.isPutEnabled() ) {
-			final QueryResultsCache queryCache = persistenceContext.getFactory()
+			final QueryResultsCache queryCache = executionContext.getSession().getFactory()
 					.getCache()
 					.getQueryResultsCache( queryOptions.getResultCacheRegionName() );
 
@@ -126,7 +129,7 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 	private ExecutionException makeExecutionException(String message, SQLException cause) {
 		return new ExecutionException(
 				message,
-				session.getJdbcServices().getSqlExceptionHelper().convert(
+				executionContext.getSession().getJdbcServices().getSqlExceptionHelper().convert(
 						cause,
 						message
 				)
@@ -137,10 +140,10 @@ public class JdbcValuesResultSetImpl extends AbstractJdbcValues {
 		final int numberOfSqlSelections = resultSetMapping.getSqlSelections().size();
 		final Object[] row = new Object[numberOfSqlSelections];
 		for ( SqlSelection sqlSelection : resultSetMapping.getSqlSelections() ) {
-			row[ sqlSelection.getValuesArrayPosition() ] = sqlSelection.getSqlSelectionReader().read(
+			row[ sqlSelection.getValuesArrayPosition() ] = sqlSelection.getJdbcValueExtractor().extract(
 					resultSetAccess.getResultSet(),
-					rowProcessingState.getJdbcValuesSourceProcessingState(),
-					sqlSelection
+					sqlSelection.getJdbcResultSetIndex(),
+					executionContext
 			);
 		}
 		return row;

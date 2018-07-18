@@ -11,6 +11,7 @@ import org.hibernate.naming.Identifier;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableColumn;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.SessionUidSupport;
+import org.hibernate.type.descriptor.java.internal.StringJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.VarcharSqlDescriptor;
 
 /**
@@ -29,6 +30,7 @@ public class PersistentTableSessionUidSupport implements SessionUidSupport {
 						idTable,
 						Identifier.toIdentifier( SESSION_ID_COLUMN_NAME ),
 						VarcharSqlDescriptor.INSTANCE,
+						StringJavaDescriptor.INSTANCE,
 						null,
 						"CHAR(36)"
 				)

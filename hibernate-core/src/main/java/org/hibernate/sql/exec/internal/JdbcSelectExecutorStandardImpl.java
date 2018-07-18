@@ -348,7 +348,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 					queryResultsCacheKey,
 					executionContext.getQueryOptions(),
 					resultSetMapping,
-					executionContext.getSession()
+					executionContext
 			);
 		}
 		else {

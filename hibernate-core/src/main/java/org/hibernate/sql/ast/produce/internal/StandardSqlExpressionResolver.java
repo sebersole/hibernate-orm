@@ -21,6 +21,8 @@ import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.internal.EmptySqlSelection;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -34,8 +36,8 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 
 	public StandardSqlExpressionResolver(
 			Supplier<QuerySpec> querySpecSupplier,
-			Function<Expression,Expression> normalizer,
-			BiConsumer<Expression,SqlSelection> selectionConsumer) {
+			Function<Expression, Expression> normalizer,
+			BiConsumer<Expression, SqlSelection> selectionConsumer) {
 		this.querySpecSupplier = querySpecSupplier;
 		this.normalizer = normalizer;
 		this.selectionConsumer = selectionConsumer;
@@ -54,7 +56,10 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 	}
 
 	@Override
-	public SqlSelection resolveSqlSelection(Expression expression) {
+	public SqlSelection resolveSqlSelection(
+			Expression expression,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
 		final SqlSelection existing;
 		if ( sqlSelectionMap == null ) {
 			sqlSelectionMap = new HashMap<>();
@@ -68,7 +73,12 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 			return existing;
 		}
 
-		final SqlSelection sqlSelection = expression.createSqlSelection( sqlSelectionMap.size() );
+
+		final SqlSelection sqlSelection = expression.createSqlSelection(
+				sqlSelectionMap.size(),
+				javaTypeDescriptor,
+				typeConfiguration
+		);
 		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
 		selectionConsumer.accept( expression, sqlSelection );
 

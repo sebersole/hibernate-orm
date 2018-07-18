@@ -9,6 +9,8 @@ package org.hibernate.boot.model.relational;
 import java.util.List;
 
 import org.hibernate.mapping.Column;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 
 /**
  * Contract for a relational foreign key constraint.
@@ -17,6 +19,8 @@ import org.hibernate.mapping.Column;
  */
 public interface MappedForeignKey extends MappedConstraint {
 	MappedTable getReferencedTable();
+
+	MappedTable getTargetTable();
 
 	void setReferencedTable(MappedTable table);
 

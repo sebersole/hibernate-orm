@@ -162,7 +162,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
-	public boolean finishInitialization() {
+	public boolean finishInitialization(RuntimeModelCreationContext creationContext) {
 
 		if ( this.foreignKey == null ) {
 			SingularPersistentAttributeEntity foreignKeyOwningAttribute = (SingularPersistentAttributeEntity)
@@ -499,12 +499,19 @@ public class SingularPersistentAttributeEntity<O,J>
 		// todo (6.0) : handle fetching here?  or at a "higher level"?
 		//
 		// 		for now we just load the FK
+		//
+		// todo (6.0) : we need to know the corresponding BasicJavaDescriptor per Column
+		//		how to implement that?
+
 		if ( foreignKey.getColumnMappings().getReferringColumns().size() == 1 ) {
+			final Column column = foreignKey.getColumnMappings().getReferringColumns().get( 0 );
 			return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 					resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 							qualifier,
-							foreignKey.getColumnMappings().getReferringColumns().get( 0 )
-					)
+							column
+					),
+					column.getJavaTypeDescriptor(),
+					resolutionContext.getSessionFactory().getTypeConfiguration()
 			);
 		}
 
@@ -515,7 +522,9 @@ public class SingularPersistentAttributeEntity<O,J>
 							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 									qualifier,
 									column
-							)
+							),
+							column.getJavaTypeDescriptor(),
+							resolutionContext.getSessionFactory().getTypeConfiguration()
 					)
 			);
 		}
@@ -670,7 +679,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		return valueBinder;
 	}
 
-	@Override
 	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return null;
 	}
@@ -680,7 +688,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		return foreignKey.getColumnMappings().getColumnMappings().size();
 	}
 
-	@Override
 	public AllowableParameterType resolveTemporalPrecision(
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {

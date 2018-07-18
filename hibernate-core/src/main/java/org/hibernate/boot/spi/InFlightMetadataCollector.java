@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.DuplicateMappingException;
@@ -18,14 +20,17 @@ import org.hibernate.annotations.AnyMetaDef;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
-import org.hibernate.boot.model.domain.EntityMappingHierarchy;
-import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
-import org.hibernate.boot.model.convert.internal.InstanceBasedConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.ConverterAutoApplyHandler;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
+import org.hibernate.boot.model.domain.EntityMappingHierarchy;
+import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.domain.ValueMapping;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
+import org.hibernate.boot.model.query.spi.NamedHqlQueryDefinition;
 import org.hibernate.boot.model.query.spi.NamedNativeQueryDefinition;
 import org.hibernate.boot.model.query.spi.NamedQueryDefinition;
 import org.hibernate.boot.model.relational.Database;
+import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedAuxiliaryDatabaseObject;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
@@ -40,9 +45,11 @@ import org.hibernate.cfg.annotations.NamedProcedureCallDefinition;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.FetchProfile;
+import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.Join;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.mapping.PersistentClass;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.naming.Identifier;
 import org.hibernate.type.spi.BasicType;
 
@@ -288,6 +295,11 @@ public interface InFlightMetadataCollector extends MetadataImplementor {
 	 * a resolution for BasicType using "registry keys".
 	 */
 	<T> BasicType<T> basicType(String registrationKey);
+
+
+	void registerValueMappingResolver(Function<ResolutionContext,Boolean> resolver);
+	List<Function<ResolutionContext,Boolean>> getValueMappingResolvers();
+
 
 	interface DelayedPropertyReferenceHandler extends Serializable {
 		void process(InFlightMetadataCollector metadataCollector);

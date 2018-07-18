@@ -23,6 +23,7 @@ import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.naming.Identifier;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * A relational table index
@@ -125,17 +126,18 @@ public class Index implements MappedIndex, Serializable {
 	public org.hibernate.metamodel.model.relational.spi.Index generateRuntimeIndex(
 			ExportableTable runtimeTable,
 			PhysicalNamingStrategy namingStrategy,
-			JdbcEnvironment jdbcEnvironment) {
+			JdbcEnvironment jdbcEnvironment, TypeConfiguration typeConfiguration) {
 		org.hibernate.metamodel.model.relational.spi.Index index = new org.hibernate.metamodel.model.relational.spi.Index( name, runtimeTable );
 		for ( Column column : columns ) {
-			PhysicalColumn runttimeColumn = column.generateRuntimeColumn(
+			PhysicalColumn runtimeColumn = column.generateRuntimeColumn(
 					runtimeTable,
 					namingStrategy,
-					jdbcEnvironment
+					jdbcEnvironment,
+					typeConfiguration
 			);
-			index.addColumn( runttimeColumn );
+			index.addColumn( runtimeColumn );
 			if ( columnOrderMap.containsKey( column ) ) {
-				index.addColumnOrder( runttimeColumn, columnOrderMap.get( column ) );
+				index.addColumnOrder( runtimeColumn, columnOrderMap.get( column ) );
 			}
 		}
 		return index;

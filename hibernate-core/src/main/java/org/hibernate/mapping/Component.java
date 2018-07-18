@@ -22,6 +22,8 @@ import org.hibernate.boot.model.domain.EmbeddableJavaTypeMapping;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.model.domain.internal.EmbeddableJavaTypeMappingImpl;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.boot.model.relational.Database;

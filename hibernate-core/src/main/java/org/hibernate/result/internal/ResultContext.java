@@ -24,8 +24,10 @@ import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
  * @author Steve Ebersole
  */
 public interface ResultContext extends ExecutionContext {
+	@Override
 	SharedSessionContractImplementor getSession();
 
+	@Override
 	QueryOptions getQueryOptions();
 
 	@Override

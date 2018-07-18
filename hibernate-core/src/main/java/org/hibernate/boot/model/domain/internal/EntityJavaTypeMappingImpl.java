@@ -8,12 +8,14 @@ package org.hibernate.boot.model.domain.internal;
 
 import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.IdentifiableJavaTypeMapping;
+import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.model.source.internal.SourceHelper;
 import org.hibernate.boot.model.source.spi.EntityNamingSource;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Chris Cranford
@@ -43,7 +45,8 @@ public class EntityJavaTypeMappingImpl<T> extends AbstractIdentifiableJavaTypeMa
 	}
 
 	@Override
-	public IdentifiableJavaDescriptor<T> resolveJavaTypeDescriptor() {
+	@SuppressWarnings("unchecked")
+	public JavaTypeDescriptor<T> getJavaTypeDescriptor() throws NotYetResolvedException {
 		final String name;
 		if ( entityNamingSource.getClassName() == null ) {
 			name = entityNamingSource.getTypeName();
@@ -60,7 +63,7 @@ public class EntityJavaTypeMappingImpl<T> extends AbstractIdentifiableJavaTypeMa
 						getTypeName(),
 						getEntityName(),
 						SourceHelper.resolveJavaType( entityNamingSource.getClassName(), bootstrapContext ),
-						getSuperType() == null ? null : getSuperType().resolveJavaTypeDescriptor(),
+						getSuperType() == null ? null : (IdentifiableJavaDescriptor) getSuperType().getJavaTypeDescriptor(),
 						null,
 						null
 				)

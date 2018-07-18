@@ -19,6 +19,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.Util;
 import org.hibernate.type.descriptor.spi.ValueBinder;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -81,12 +82,13 @@ public interface BasicValuedExpressableType<J>
 		};
 	}
 
-	@Override
 	default AllowableParameterType resolveTemporalPrecision(
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {
 		return getBasicType().resolveTemporalPrecision( temporalType, typeConfiguration );
 	}
+
+	ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration);
 
 	// todo (6.0) : moved this down to BasicValuedNavigable#getSqlTypeDescriptor
 	//		uncomment if we find this is needed as part of being queryable

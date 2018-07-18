@@ -16,12 +16,12 @@ import org.hibernate.collection.spi.CollectionSemantics;
  * just the identifier column
  */
 public class IdentifierBag extends IdentifierCollection {
-	private final CollectionJavaDescriptorResolver javaTypeMapping;
+	private final CollectionJavaTypeMapping javaTypeMapping;
 
 	public IdentifierBag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				java.util.Collection.class
 		);

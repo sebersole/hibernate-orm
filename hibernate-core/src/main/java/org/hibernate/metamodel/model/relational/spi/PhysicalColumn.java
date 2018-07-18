@@ -7,8 +7,10 @@
 package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import org.hibernate.naming.Identifier;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -18,9 +20,11 @@ public class PhysicalColumn implements Column {
 	private final Table table;
 	private final Identifier name;
 
-	private final SqlTypeDescriptor sqlTypeDescriptor;
+	private final Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess;
 	private Size size;
 	private String sqlType;
+
+	private Supplier<BasicJavaDescriptor> javaTypeDescriptorAccess;
 
 	private final String defaultValue;
 	private String checkConstraint;
@@ -34,18 +38,20 @@ public class PhysicalColumn implements Column {
 	public PhysicalColumn(
 			Table table,
 			Identifier name,
-			SqlTypeDescriptor sqlTypeDescriptor,
+			Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess,
+			Supplier<BasicJavaDescriptor> javaTypeDescriptorAccess,
 			String defaultValue,
 			String sqlType,
 			boolean isNullable,
 			boolean isUnique) {
-		this( table, name, sqlTypeDescriptor, defaultValue, sqlType, isNullable, isUnique, null );
+		this( table, name, sqlTypeDescriptorAccess, javaTypeDescriptorAccess, defaultValue, sqlType, isNullable, isUnique, null );
 	}
 
 	public PhysicalColumn(
 			Table table,
 			Identifier name,
-			SqlTypeDescriptor sqlTypeDescriptor,
+			Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess,
+			Supplier<BasicJavaDescriptor> javaTypeDescriptorAccess,
 			String defaultValue,
 			String sqlType,
 			boolean isNullable,
@@ -53,7 +59,8 @@ public class PhysicalColumn implements Column {
 			String comment) {
 		this.table = table;
 		this.name = name;
-		this.sqlTypeDescriptor = sqlTypeDescriptor;
+		this.sqlTypeDescriptorAccess = sqlTypeDescriptorAccess;
+		this.javaTypeDescriptorAccess = javaTypeDescriptorAccess;
 		this.defaultValue = defaultValue;
 		this.sqlType = sqlType;
 		this.isNullable = isNullable;
@@ -77,7 +84,22 @@ public class PhysicalColumn implements Column {
 
 	@Override
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
-		return sqlTypeDescriptor;
+		return sqlTypeDescriptorAccess.get();
+	}
+
+	@Override
+	public BasicJavaDescriptor getJavaTypeDescriptor() {
+		return javaTypeDescriptorAccess.get();
+	}
+
+	@Override
+	public Supplier<SqlTypeDescriptor> getSqlTypeDescriptorAccess() {
+		return sqlTypeDescriptorAccess;
+	}
+
+	@Override
+	public Supplier<BasicJavaDescriptor> getJavaTypeDescriptorAccess() {
+		return javaTypeDescriptorAccess;
 	}
 
 	@Override

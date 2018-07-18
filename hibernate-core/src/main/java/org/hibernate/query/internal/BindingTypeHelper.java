@@ -15,6 +15,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.Internal;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.AllowableTemporalParameterType;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
@@ -42,7 +43,11 @@ public class BindingTypeHelper {
 			TemporalType precision,
 			AllowableParameterType baseType,
 			TypeConfiguration typeConfiguration) {
-		return baseType.resolveTemporalPrecision( precision, typeConfiguration );
+		if ( ! ( baseType instanceof AllowableTemporalParameterType ) ) {
+			throw new UnsupportedOperationException( "Cannot treat non-temporal parameter type with temporal precision" );
+		}
+
+		return ( (AllowableTemporalParameterType) baseType ).resolveTemporalPrecision( precision, typeConfiguration );
 	}
 
 	public BasicType resolveTimestampTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
@@ -79,11 +84,11 @@ public class BindingTypeHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public BasicType resolveDateTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
+	public AllowableParameterType resolveDateTemporalTypeVariant(Class javaType, AllowableParameterType baseType) {
 		// prefer to use any Type already known
 		if ( baseType != null && baseType instanceof BasicType ) {
 			if ( baseType.getJavaTypeDescriptor().getJavaType().isAssignableFrom( javaType ) ) {
-				return (BasicType) baseType;
+				return baseType;
 			}
 		}
 

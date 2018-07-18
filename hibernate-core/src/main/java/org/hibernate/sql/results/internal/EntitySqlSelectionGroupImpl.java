@@ -150,7 +150,9 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 									qualifier,
 									tenantDiscrimination.getBoundColumn()
-							)
+							),
+							tenantDiscrimination.getJavaTypeDescriptor(),
+							resolutionContext.getSessionFactory().getTypeConfiguration()
 					)
 			);
 		}
@@ -175,7 +177,9 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 									qualifier,
 									rowIdDescriptor.getBoundColumn()
-							)
+							),
+							rowIdDescriptor.getJavaTypeDescriptor(),
+							resolutionContext.getSessionFactory().getTypeConfiguration()
 					)
 			);
 		}

@@ -336,6 +336,7 @@ public class MapBinder extends CollectionBinder {
 					elementBinder.setColumns( elementColumns );
 					//do not call setType as it extract the type from @Type
 					//the algorithm generally does not apply for map key anyway
+					mapValue.setIndex( elementBinder.make() );
 					elementBinder.setType(
 							property,
 							keyXClass,
@@ -343,7 +344,6 @@ public class MapBinder extends CollectionBinder {
 							holder.mapKeyAttributeConverterDescriptor( property, keyXClass )
 					);
 					elementBinder.setPersistentClassName( propertyHolder.getEntityName() );
-					mapValue.setIndex( elementBinder.make() );
 				}
 			}
 			//FIXME pass the Index Entity JoinColumns
@@ -469,7 +469,7 @@ public class MapBinder extends CollectionBinder {
 			attributes.stream()
 					.map( Property.class::cast )
 					.forEach( current -> {
-						Property newProperty = new Property();
+						Property newProperty = new Property( getBuildingContext() );
 						newProperty.setCascade( current.getCascade() );
 						newProperty.setValueGenerationStrategy( current.getValueGenerationStrategy() );
 						newProperty.setInsertable( false );
@@ -503,7 +503,8 @@ public class MapBinder extends CollectionBinder {
 				targetValue = targetManyToOne;
 			}
 			else if ( value instanceof BasicValue ) {
-				targetValue = new BasicValue( getBuildingContext(), collection.getMappedTable() );
+				targetValue = new BasicValue( getBuildingContext(), collection.getMappedTable()
+				);
 				targetValue.copyTypeFrom( sourceValue );
 			}
 			else {

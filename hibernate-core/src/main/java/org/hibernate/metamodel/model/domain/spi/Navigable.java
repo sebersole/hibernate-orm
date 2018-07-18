@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.List;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
@@ -63,9 +64,12 @@ public interface Navigable<T> extends DomainType<T> {
 	 *     <li>The list of navigables have some missing or cyclic dependency</li>
 	 * </ul>
 	 *
+	 * @param creationContext The context in which the Navigable is being created and
+	 * finalized.
+	 *
 	 * @return true if initialization complete, false if not yet done.
 	 */
-	default boolean finishInitialization() {
+	default boolean finishInitialization(RuntimeModelCreationContext creationContext) {
 		return true;
 	}
 

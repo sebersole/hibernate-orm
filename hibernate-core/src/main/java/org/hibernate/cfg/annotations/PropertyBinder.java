@@ -264,7 +264,7 @@ public class PropertyBinder {
 	public Property makeProperty() {
 		validateMake();
 		LOG.debugf( "Building property %s", name );
-		Property prop = new Property();
+		Property prop = new Property( buildingContext );
 		prop.setName( name );
 		prop.setValue( value );
 		prop.setLazy( lazy );

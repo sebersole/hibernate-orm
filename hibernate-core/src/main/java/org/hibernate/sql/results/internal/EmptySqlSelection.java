@@ -6,10 +6,11 @@
  */
 package org.hibernate.sql.results.internal;
 
+import org.hibernate.sql.EmptyJdbcValueExtractor;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 
 /**
  * @author Steve Ebersole
@@ -22,8 +23,8 @@ public class EmptySqlSelection implements SqlSelection {
 	}
 
 	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
-		return EmptySqlSelectionReader.INSTANCE;
+	public JdbcValueExtractor getJdbcValueExtractor() {
+		return EmptyJdbcValueExtractor.INSTANCE;
 	}
 
 	@Override

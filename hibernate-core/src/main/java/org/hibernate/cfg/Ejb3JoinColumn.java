@@ -51,7 +51,7 @@ import org.hibernate.mapping.Value;
 @SuppressWarnings("unchecked")
 public class Ejb3JoinColumn extends Ejb3Column {
 	/**
-	 * property name repated to this column
+	 * property name related to this column
 	 */
 	private String referencedColumn;
 	private String mappedBy;

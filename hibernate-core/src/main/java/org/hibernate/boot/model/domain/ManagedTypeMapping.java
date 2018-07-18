@@ -71,5 +71,4 @@ public interface ManagedTypeMapping {
 	 * Get all super managed type mappings associated with this managed type or empty list.
 	 */
 	List<ManagedTypeMapping> getSuperManagedTypeMappings();
-
 }

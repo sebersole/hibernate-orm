@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.model.type.spi;
 
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -30,5 +31,5 @@ import org.hibernate.type.spi.BasicType;
  * @author Steve Ebersole
  */
 public interface BasicTypeResolver {
-	<T> BasicType<T> resolveBasicType();
+	<T> BasicType<T> resolveBasicType(ResolutionContext context);
 }

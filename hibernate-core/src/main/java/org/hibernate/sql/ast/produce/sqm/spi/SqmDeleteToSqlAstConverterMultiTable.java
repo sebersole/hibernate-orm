@@ -126,6 +126,7 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 		getFromClauseIndex().crossReference( sqmStatement.getEntityFromElement(), entityTableGroup );
 
 		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection

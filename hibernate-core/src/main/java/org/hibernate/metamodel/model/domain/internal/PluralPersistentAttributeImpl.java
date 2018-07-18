@@ -31,7 +31,6 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -39,12 +38,10 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -63,6 +60,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	private final PersistentCollectionDescriptor collectionDescriptor;
 	private int stateArrayPosition;
 
+	@SuppressWarnings("unchecked")
 	public PluralPersistentAttributeImpl(
 			PersistentCollectionDescriptor collectionDescriptor,
 			Property bootProperty,
@@ -240,11 +238,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 		// todo (6.0) : this depends on whether the collection is fetched...
 		//
 		// for now, return nada
-		return resolveSqlSelection(
-				qualifier,
-				resolutionContext,
-				collectionDescriptor.getCollectionKeyDescriptor().getJoinForeignKey().getColumnMappings().getColumnMappings().get( 0 )
-		);
+
+		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
+	}
+
 //		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
 //		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
 //				.getJoinForeignKey()
@@ -260,18 +257,21 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 //			sqlSelections.add( resolveSqlSelection( qualifier, resolutionContext, columnMapping ) );
 //		}
 //		return new AggregateSqlSelectionGroupNode( sqlSelections );
-	}
-
-	private SqlSelection resolveSqlSelection(
-			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext,
-			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
-		final Expression expression = resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-				qualifier,
-				columnMapping.getTargetColumn()
-		);
-		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection( expression );
-	}
+//	}
+//
+//	private SqlSelection resolveSqlSelection(
+//			ColumnReferenceQualifier qualifier,
+//			SqlSelectionResolutionContext resolutionContext,
+//			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
+//		final Expression expression = resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+//				qualifier,
+//				columnMapping.getTargetColumn()
+//		);
+//		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+//				expression,
+//				,
+//		);
+//	}
 
 	@Override
 	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
@@ -376,6 +376,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
 		return !getJavaTypeDescriptor().areEqual( originalValue, currentValue );
 	}

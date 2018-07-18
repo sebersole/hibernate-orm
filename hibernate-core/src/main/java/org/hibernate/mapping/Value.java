@@ -10,7 +10,11 @@ import java.io.Serializable;
 import java.util.Iterator;
 
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.annotations.Remove;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMapping;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
 
 /**
  * A value is anything that is persisted by value, instead of

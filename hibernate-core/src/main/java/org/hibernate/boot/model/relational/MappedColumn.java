@@ -13,6 +13,7 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Models any mapped "selectable reference".  This might be a reference to a
@@ -32,7 +33,8 @@ public interface MappedColumn {
 	Column generateRuntimeColumn(
 			Table runtimeTable,
 			PhysicalNamingStrategy namingStrategy,
-			JdbcEnvironment jdbcEnvironment);
+			JdbcEnvironment jdbcEnvironment,
+			TypeConfiguration typeConfiguration);
 
 	boolean isFormula();
 

@@ -6,12 +6,22 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
+
 /**
  * @author Steve Ebersole
  */
 public interface SqlSelectionProducer {
 	/**
 	 * Create a SqlSelection for the given JDBC ResultSet position
+	 *
+	 * @param jdbcPosition The position within the SQL selections
+	 * @param javaTypeDescriptor The descriptor for the Java type to read the value as
+	 * @param typeConfiguration The associated TypeConfiguration
 	 */
-	SqlSelection createSqlSelection(int jdbcPosition);
+	SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration);
 }

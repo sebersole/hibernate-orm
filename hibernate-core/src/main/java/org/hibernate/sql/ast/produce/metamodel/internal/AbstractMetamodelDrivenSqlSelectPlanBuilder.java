@@ -110,11 +110,7 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 	private TableGroup rootTableGroup;
 	private HashMap<SqlExpressable,SqlSelection> sqlSelectionMap = new HashMap<>();
 
-	private final StandardSqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
-			this::getQuerySpec,
-			expression -> expression,
-			(expression, selection) -> {}
-	);
+	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
 	/**
 	 *
@@ -134,6 +130,11 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 
 		this.querySpec = new QuerySpec( true );
 		this.tableSpace = querySpec.getFromClause().makeTableSpace();
+		this.sqlExpressionResolver = new StandardSqlExpressionResolver(
+				this::getQuerySpec,
+				expression -> expression,
+				(expression, selection) -> {}
+		);
 	}
 
 	@Override

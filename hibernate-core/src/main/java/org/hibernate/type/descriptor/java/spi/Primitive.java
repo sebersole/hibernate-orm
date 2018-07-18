@@ -13,7 +13,7 @@ import java.io.Serializable;
  *
  * @author Steve Ebersole
  */
-public interface Primitive<J extends Serializable> extends JavaTypeDescriptor<J> {
+public interface Primitive<J extends Serializable> extends BasicJavaDescriptor<J> {
 	/**
 	 * Retrieve the primitive counterpart to the wrapper type identified by
 	 * this descriptor

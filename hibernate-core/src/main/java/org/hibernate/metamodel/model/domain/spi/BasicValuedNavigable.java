@@ -35,7 +35,10 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 				resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 						qualifier,
 						getBoundColumn()
-				)
+				),
+				getBasicType().getJavaTypeDescriptor()
+				,
+				resolutionContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 }

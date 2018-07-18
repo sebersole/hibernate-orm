@@ -22,12 +22,12 @@ import org.hibernate.type.descriptor.java.spi.Primitive;
  */
 public class Array extends List {
 	private String elementClassName;
-	private final CollectionJavaDescriptorResolver javaTypeMapping;
+	private final CollectionJavaTypeMapping javaTypeMapping;
 
 	public Array(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				Object[].class
 		);
@@ -37,8 +37,8 @@ public class Array extends List {
 	public Class getElementClass() throws MappingException {
 		if ( elementClassName == null ) {
 			return isPrimitiveArray()
-					? ( (Primitive) getElement().getJavaTypeMapping().resolveJavaTypeDescriptor() ).getPrimitiveClass()
-					: getElement().getJavaTypeMapping().resolveJavaTypeDescriptor().getJavaType();
+					? ( (Primitive) getElement().getJavaTypeMapping().getJavaTypeDescriptor() ).getPrimitiveClass()
+					: getElement().getJavaTypeMapping().getJavaTypeDescriptor().getJavaType();
 		}
 		else {
 			try {

@@ -6,11 +6,16 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import java.util.Comparator;
+import java.util.function.Supplier;
+
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
+import org.hibernate.annotations.Remove;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -21,6 +26,9 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 public interface Column extends QualifiableSqlExpressable {
 	Table getSourceTable();
 
+	/**
+	 * A simple "loggable" String representation of the Column
+	 */
 	String getExpression();
 
 	// todo : nullable, size, etc
@@ -47,6 +55,9 @@ public interface Column extends QualifiableSqlExpressable {
 
 	SqlTypeDescriptor getSqlTypeDescriptor();
 
+	BasicJavaDescriptor getJavaTypeDescriptor();
+
+
 	@Override
 	default Expression createSqlExpression(ColumnReferenceQualifier qualifier) {
 		return new ColumnReference( qualifier, this );
@@ -56,8 +67,10 @@ public interface Column extends QualifiableSqlExpressable {
 	 * @deprecated Use {@link #getSqlTypeDescriptor()} instead
 	 */
 	@Deprecated
+	@Remove
 	default int getJdbcType() {
 		return getSqlTypeDescriptor().getJdbcTypeCode();
 	}
 
+	Comparator<Column> COLUMN_COMPARATOR = Comparator.comparing( Column::getExpression );
 }

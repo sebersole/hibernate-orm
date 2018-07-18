@@ -27,7 +27,7 @@ public class List extends IndexedCollection {
 	public List(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				java.util.List.class
 		);

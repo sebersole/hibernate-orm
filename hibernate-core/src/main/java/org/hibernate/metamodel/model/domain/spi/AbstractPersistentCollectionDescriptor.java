@@ -157,7 +157,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		);
 		spaces.addAll( collectionBinding.getSynchronizedTables() );
 
-		this.keyJavaTypeDescriptor = collectionBinding.getKey().getJavaTypeMapping().resolveJavaTypeDescriptor();
+		this.keyJavaTypeDescriptor = collectionBinding.getKey().getJavaTypeMapping().getJavaTypeDescriptor();
 
 		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( pluralProperty.getName() );
 
@@ -268,7 +268,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.indexDescriptor = resolveIndexDescriptor( this, collectionBinding, creationContext );
 		this.elementDescriptor = resolveElementDescriptor( this, collectionBinding, separateCollectionTable, creationContext );
 
-		this.javaTypeDescriptor = (CollectionJavaDescriptor<C>) collectionBinding.getJavaTypeMapping().resolveJavaTypeDescriptor();
+		this.javaTypeDescriptor = (CollectionJavaDescriptor<C>) collectionBinding.getJavaTypeMapping().getJavaTypeDescriptor();
 
 		this.fullyInitialized = true;
 	}

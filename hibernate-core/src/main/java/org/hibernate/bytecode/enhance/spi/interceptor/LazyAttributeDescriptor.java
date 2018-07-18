@@ -6,7 +6,6 @@
  */
 package org.hibernate.bytecode.enhance.spi.interceptor;
 
-import org.hibernate.boot.model.JavaTypeDescriptor;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
@@ -24,7 +23,7 @@ public class LazyAttributeDescriptor {
 		String fetchGroupName = attributeMapping.getLazyGroup();
 		if ( fetchGroupName == null ) {
 			final JavaTypeMapping javaTypeMapping = attributeMapping.getValueMapping().getJavaTypeMapping();
-			fetchGroupName = javaTypeMapping.resolveJavaTypeDescriptor() instanceof CollectionJavaDescriptor
+			fetchGroupName = javaTypeMapping.getJavaTypeDescriptor() instanceof CollectionJavaDescriptor
 					? attributeMapping.getName()
 					: "DEFAULT";
 		}

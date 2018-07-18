@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * Represents a value that can ultimately be written to the database.  The process of
@@ -41,6 +42,7 @@ public interface Writeable<D,I> {
 
 	@FunctionalInterface
 	interface JdbcValueCollector {
-		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
+		void collect(Object jdbcValue, BasicJavaDescriptor javaTypeDescriptor, Column boundColumn);
+//		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
 	}
 }

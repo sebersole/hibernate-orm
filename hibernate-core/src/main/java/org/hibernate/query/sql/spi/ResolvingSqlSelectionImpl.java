@@ -12,12 +12,12 @@ import java.sql.SQLException;
 
 import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -27,7 +27,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  *
  * @author Steve Ebersole
  */
-public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionReader {
+public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtractor {
 	private final String columnAlias;
 	private JdbcValueMapper jdbcValueMapper;
 
@@ -39,10 +39,12 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 		this.jdbcResultSetPosition = jdbcResultSetPosition;
 	}
 
+	@SuppressWarnings("WeakerAccess")
 	public ResolvingSqlSelectionImpl(String columnAlias) {
 		this( columnAlias, null );
 	}
 
+	@SuppressWarnings("WeakerAccess")
 	public ResolvingSqlSelectionImpl(String columnAlias, JdbcValueMapper jdbcValueMapper) {
 		this.columnAlias = columnAlias;
 		this.jdbcValueMapper = jdbcValueMapper;
@@ -69,21 +71,18 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 	}
 
 	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
+	public JdbcValueExtractor getJdbcValueExtractor() {
 		return this;
 	}
 
 	@Override
-	public Object read(
-			ResultSet resultSet,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			SqlSelection sqlSelection) throws SQLException {
+	public Object extract(ResultSet resultSet, int position, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
 		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				resultSet,
-				sqlSelection.getJdbcResultSetIndex(),
-				jdbcValuesSourceProcessingState.getExecutionContext()
+				position,
+				executionContext
 		);
 	}
 
@@ -94,30 +93,24 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, SqlSelectionRead
 	}
 
 	@Override
-	public Object extractParameterValue(
-			CallableStatement statement,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			int jdbcParameterIndex) throws SQLException {
+	public Object extract(CallableStatement statement, int jdbcParameterPosition, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
 		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				statement,
-				jdbcParameterIndex,
-				jdbcValuesSourceProcessingState.getExecutionContext()
+				jdbcParameterPosition,
+				executionContext
 		);
 	}
 
 	@Override
-	public Object extractParameterValue(
-			CallableStatement statement,
-			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
-			String jdbcParameterName) throws SQLException {
+	public Object extract(CallableStatement statement, String jdbcParameterName, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
 		return jdbcValueMapper.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterName,
-				jdbcValuesSourceProcessingState.getExecutionContext()
+				executionContext
 		);
 	}
 

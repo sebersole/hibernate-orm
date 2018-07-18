@@ -139,7 +139,9 @@ public class EntityIdentifierSimpleImpl<O,J>
 						creationContext.getSqlSelectionResolver().resolveSqlExpression(
 								navigableReference.getSqlExpressionQualifier(),
 								column
-						)
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				this
 		);

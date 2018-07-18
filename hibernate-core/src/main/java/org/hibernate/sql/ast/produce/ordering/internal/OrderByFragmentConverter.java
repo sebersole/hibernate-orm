@@ -25,8 +25,10 @@ import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
  * @author Steve Ebersole
  */
 public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implements SqlAstCreationContext {
+	@SuppressWarnings("WeakerAccess")
 	public static final QueryOptions QUERY_OPTIONS = new QueryOptionsImpl();
 
+	@SuppressWarnings("WeakerAccess")
 	public static List<SortSpecification> convertOrderByFragmentSqmTree(
 			SqlAstCreationContext sqlAstCreationContext,
 			SqmOrderByClause sqmOrderByClause) {
@@ -35,12 +37,14 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 
 	private final List<SortSpecification> collectedSortSpecs = new ArrayList<>();
 	private final NonSelectSqlExpressionResolver sqlExpressionResolver = new NonSelectSqlExpressionResolver(
+			getSqlAstCreationContext().getSessionFactory(),
 			() -> null,
 			expression -> expression,
 			(expression, selection) -> {}
 	);
 
 
+	@SuppressWarnings("WeakerAccess")
 	protected OrderByFragmentConverter(SqlAstCreationContext sqlAstCreationContext) {
 		super( sqlAstCreationContext, QUERY_OPTIONS );
 	}

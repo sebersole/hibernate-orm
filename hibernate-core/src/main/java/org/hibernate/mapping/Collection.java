@@ -18,6 +18,9 @@ import java.util.Properties;
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.NotYetResolvedException;
+import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedForeignKey;
@@ -729,15 +732,13 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 
 	public abstract <C> CollectionSemantics<C> getCollectionSemantics();
 
-	protected static class CollectionJavaDescriptorResolver implements JavaTypeMapping {
+	protected static class CollectionJavaTypeMapping implements JavaTypeMapping {
 		private final TypeConfiguration typeConfiguration;
 		private final Class javaClass;
 
 		private CollectionJavaDescriptor resolvedDescriptor;
 
-		public CollectionJavaDescriptorResolver(
-				TypeConfiguration typeConfiguration,
-				Class javaClass) {
+		public CollectionJavaTypeMapping(TypeConfiguration typeConfiguration, Class javaClass) {
 			this.typeConfiguration = typeConfiguration;
 			this.javaClass = javaClass;
 		}
@@ -748,9 +749,10 @@ public abstract class Collection implements Fetchable, Value, ForeignKeyExporter
 		}
 
 		@Override
-		public CollectionJavaDescriptor resolveJavaTypeDescriptor() {
+		public CollectionJavaDescriptor getJavaTypeDescriptor() throws NotYetResolvedException {
 			if ( resolvedDescriptor == null ) {
-				resolvedDescriptor = (CollectionJavaDescriptor) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( javaClass );
+				resolvedDescriptor = (CollectionJavaDescriptor) typeConfiguration.getJavaTypeDescriptorRegistry()
+						.getDescriptor( javaClass );
 			}
 			return resolvedDescriptor;
 		}

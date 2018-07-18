@@ -424,7 +424,7 @@ public class CollectionPropertyHolder extends AbstractPropertyHolder {
 
 		if ( collection.getElement() != null ) {
 			if ( collection.getElement().getJavaTypeMapping() != null ) {
-				return collection.getElement().getJavaTypeMapping().resolveJavaTypeDescriptor().getJavaType();
+				return collection.getElement().getJavaTypeMapping().getJavaTypeDescriptor().getJavaType();
 			}
 		}
 

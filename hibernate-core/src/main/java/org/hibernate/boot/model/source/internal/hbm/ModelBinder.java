@@ -798,7 +798,7 @@ public class ModelBinder {
 		);
 
 		if ( propertyName != null ) {
-			Property prop = new Property();
+			Property prop = new Property( metadataBuildingContext );
 			prop.setValue( idValue );
 			bindProperty(
 					sourceDocument,
@@ -968,7 +968,7 @@ public class ModelBinder {
 			);
 
 			rootEntityDescriptor.setIdentifierMapper(mapper);
-			Property property = new Property();
+			Property property = new Property( metadataBuildingContext );
 			property.setName( NavigablePath.IDENTIFIER_MAPPER_PROPERTY );
 			property.setUpdateable( false );
 			property.setInsertable( false );
@@ -1011,7 +1011,7 @@ public class ModelBinder {
 			}
 		}
 		else {
-			Property prop = new Property();
+			Property prop = new Property( metadataBuildingContext );
 			prop.setValue( cid );
 			bindProperty(
 					sourceDocument,
@@ -1054,15 +1054,10 @@ public class ModelBinder {
 				versionAttributeSource.getRelationalValueSources(),
 				versionValue,
 				false,
-				new RelationalObjectBinder.ColumnNamingDelegate() {
-					@Override
-					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						return implicitNamingStrategy.determineBasicColumnName( versionAttributeSource );
-					}
-				}
+				context -> implicitNamingStrategy.determineBasicColumnName( versionAttributeSource )
 		);
 
-		Property prop = new Property();
+		Property prop = new Property( metadataBuildingContext );
 		prop.setValue( versionValue );
 		bindProperty(
 				sourceDocument,
@@ -1481,7 +1476,7 @@ public class ModelBinder {
 
 		sourceDocument.getMetadataCollector().addCollectionBinding( collectionBinding );
 
-		final Property attribute = new Property();
+		final Property attribute = new Property( metadataBuildingContext );
 		attribute.setValue( collectionBinding );
 		bindProperty(
 				sourceDocument,
@@ -1906,7 +1901,7 @@ public class ModelBinder {
 
 		final Property attribute;
 		if ( embeddedSource.isVirtualAttribute() ) {
-			attribute = new SyntheticProperty() {
+			attribute = new SyntheticProperty( metadataBuildingContext ) {
 				@Override
 				public String getPropertyAccessorName() {
 					return "embedded";
@@ -1914,7 +1909,7 @@ public class ModelBinder {
 			};
 		}
 		else {
-			attribute = new Property();
+			attribute = new Property( metadataBuildingContext );
 		}
 		attribute.setValue( componentBinding );
 		bindProperty(
@@ -1948,12 +1943,7 @@ public class ModelBinder {
 				attributeSource.getRelationalValueSources(),
 				value,
 				attributeSource.areValuesNullableByDefault(),
-				new RelationalObjectBinder.ColumnNamingDelegate() {
-					@Override
-					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						return implicitNamingStrategy.determineBasicColumnName( attributeSource );
-					}
-				}
+				context -> implicitNamingStrategy.determineBasicColumnName( attributeSource )
 		);
 
 
@@ -1988,7 +1978,7 @@ public class ModelBinder {
 
 		value.createForeignKey();
 
-		Property property = new Property();
+		Property property = new Property( metadataBuildingContext );
 		property.setValue( value );
 //		property.setLob( value.isLob() );
 		bindProperty(
@@ -2068,7 +2058,7 @@ public class ModelBinder {
 
 		oneToOneBinding.createForeignKey();
 
-		Property prop = new Property();
+		Property prop = new Property( metadataBuildingContext );
 		prop.setValue( oneToOneBinding );
 		bindProperty(
 				sourceDocument,
@@ -2249,7 +2239,7 @@ public class ModelBinder {
 			);
 		}
 
-		Property prop = new Property();
+		Property prop = new Property( metadataBuildingContext );
 		prop.setValue( manyToOneBinding );
 		bindProperty(
 				sourceDocument,
@@ -2369,7 +2359,7 @@ public class ModelBinder {
 		// An ANY mapping does not use a FK
 		anyBinding.createForeignKey();
 
-		Property prop = new Property();
+		Property prop = new Property( metadataBuildingContext );
 		prop.setValue( anyBinding );
 		bindProperty(
 				sourceDocument,
@@ -2397,7 +2387,7 @@ public class ModelBinder {
 		anyBinding.setDiscriminatorTypeResolver( discriminatorTypeResolver );
 		anyBinding.setIdentifierTypeResolver( identifierTypeResolver );
 
-		final BasicType discriminatorType = discriminatorTypeResolver.resolveBasicType();
+		final BasicType discriminatorType = discriminatorTypeResolver.resolveBasicType( metadataBuildingContext );
 
 		for ( Map.Entry<String,String> discriminatorValueMappings : discriminatorSource.getValueMappings().entrySet() ) {
 			try {
@@ -2426,14 +2416,7 @@ public class ModelBinder {
 				discriminatorSource.getRelationalValueSource(),
 				anyBinding,
 				true,
-				new RelationalObjectBinder.ColumnNamingDelegate() {
-					@Override
-					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						return implicitNamingStrategy.determineAnyDiscriminatorColumnName(
-								discriminatorSource
-						);
-					}
-				}
+				context -> implicitNamingStrategy.determineAnyDiscriminatorColumnName( discriminatorSource )
 		);
 
 		relationalObjectBinder.bindColumnsAndFormulas(
@@ -2441,14 +2424,7 @@ public class ModelBinder {
 				anyMapping.getKeySource().getRelationalValueSources(),
 				anyBinding,
 				true,
-				new RelationalObjectBinder.ColumnNamingDelegate() {
-					@Override
-					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						return implicitNamingStrategy.determineAnyKeyColumnName(
-								anyMapping.getKeySource()
-						);
-					}
-				}
+				context -> implicitNamingStrategy.determineAnyKeyColumnName( anyMapping.getKeySource() )
 		);
 	}
 
@@ -2737,7 +2713,8 @@ public class ModelBinder {
 				attribute = createBasicAttribute(
 						sourceDocument,
 						(SingularAttributeSourceBasic) attributeSource,
-						new BasicValue( sourceDocument, component.getMappedTable() ),
+						new BasicValue( sourceDocument, component.getMappedTable()
+						),
 						component.getEmbeddableClassName()
 				);
 			}
@@ -2804,12 +2781,7 @@ public class ModelBinder {
 			}
 
 			if ( !StringHelper.isEmpty( typeSource.getName() ) ) {
-				basicValue.setBasicTypeResolver(
-						new BasicTypeResolverExplicitNamedImpl(
-								mappingDocument,
-								typeSource.getName()
-						)
-				);
+				basicValue.setExplicitTypeName( typeSource.getName() );
 			}
 		}
 	}
@@ -3246,7 +3218,7 @@ public class ModelBinder {
 				// for non-inverse one-to-many, with a not-null fk, add a backref!
 				String entityName = ( (OneToMany) collectionBinding.getElement() ).getReferencedEntityName();
 				PersistentClass referenced = mappingDocument.getMetadataCollector().getEntityBinding( entityName );
-				Backref prop = new Backref();
+				Backref prop = new Backref( metadataBuildingContext );
 				prop.setName( '_' + collectionBinding.getOwnerEntityName() + "." + pluralAttributeSource.getName() + "Backref" );
 				prop.setUpdateable( false );
 				prop.setSelectable( false );
@@ -3642,7 +3614,7 @@ public class ModelBinder {
 					&& !indexIsFormula ) {
 				final String entityName = ( (OneToMany) getCollectionBinding().getElement() ).getReferencedEntityName();
 				final PersistentClass referenced = getMappingDocument().getMetadataCollector().getEntityBinding( entityName );
-				final IndexBackref ib = new IndexBackref();
+				final IndexBackref ib = new IndexBackref( metadataBuildingContext );
 				ib.setName( '_' + getCollectionBinding().getOwnerEntityName() + "." + getPluralAttributeSource().getName() + "IndexBackref" );
 				ib.setUpdateable( false );
 				ib.setSelectable( false );
@@ -3712,7 +3684,7 @@ public class ModelBinder {
 				&& !collectionBinding.isInverse() ) {
 			final String entityName = ( (OneToMany) collectionBinding.getElement() ).getReferencedEntityName();
 			final PersistentClass referenced = mappingDocument.getMetadataCollector().getEntityBinding( entityName );
-			final IndexBackref ib = new IndexBackref();
+			final IndexBackref ib = new IndexBackref( metadataBuildingContext );
 			ib.setName( '_' + collectionBinding.getOwnerEntityName() + "." + pluralAttributeSource.getName() + "IndexBackref" );
 			ib.setUpdateable( false );
 			ib.setSelectable( false );
@@ -4073,11 +4045,12 @@ public class ModelBinder {
 
 		@Override
 		public void doSecondPass(Map persistentClasses) throws org.hibernate.MappingException {
+			// this should be part of the more generalized ValueMapping#resolve process
 			if ( referencedEntityAttributeName == null ) {
 				manyToOneBinding.createForeignKey();
 			}
 			else {
-				manyToOneBinding.createPropertyRefConstraints( mappingDocument.getMetadataCollector().getEntityBindingMap() );
+				manyToOneBinding.createPropertyRefConstraints( mappingDocument );
 			}
 		}
 

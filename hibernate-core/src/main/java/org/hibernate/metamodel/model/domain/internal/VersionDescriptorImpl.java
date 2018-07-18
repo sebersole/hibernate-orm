@@ -133,7 +133,9 @@ public class VersionDescriptorImpl<O,J>
 						creationContext.getSqlSelectionResolver().resolveSqlExpression(
 								navigableReference.getSqlExpressionQualifier(),
 								VersionDescriptorImpl.this.column
-						)
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				this
 		);

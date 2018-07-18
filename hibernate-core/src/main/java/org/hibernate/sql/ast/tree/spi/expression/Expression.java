@@ -12,6 +12,8 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.SqlAstNode;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionProducer;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Models an expression at the SQL-level.
@@ -53,5 +55,8 @@ public interface Expression extends SqlAstNode, SqlSelectionProducer {
 	 * position, etc) that can be used to read its value.
 	 */
 	@Override
-	SqlSelection createSqlSelection(int jdbcPosition);
+	SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration);
 }

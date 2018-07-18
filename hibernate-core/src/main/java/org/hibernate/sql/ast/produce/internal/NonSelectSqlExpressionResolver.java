@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -21,11 +22,16 @@ public class NonSelectSqlExpressionResolver extends PerQuerySpecSqlExpressionRes
 	private final StandardSqlExpressionResolver rootResolver;
 
 	public NonSelectSqlExpressionResolver(
+			SessionFactoryImplementor sessionFactory,
 			Supplier<QuerySpec> querySpecSupplier,
 			Function<Expression, Expression> normalizer,
 			BiConsumer<Expression, SqlSelection> selectionConsumer) {
-		super( querySpecSupplier, normalizer, selectionConsumer );
-		this.rootResolver = new StandardSqlExpressionResolver( querySpecSupplier, normalizer, selectionConsumer );
+		super( sessionFactory, querySpecSupplier, normalizer, selectionConsumer );
+		this.rootResolver = new StandardSqlExpressionResolver(
+				querySpecSupplier,
+				normalizer,
+				selectionConsumer
+		);
 	}
 
 	@Override

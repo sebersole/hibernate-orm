@@ -32,6 +32,7 @@ import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
 import org.hibernate.metamodel.model.relational.internal.DatabaseModelImpl;
 import org.hibernate.metamodel.model.relational.internal.InflightTable;
 import org.hibernate.metamodel.model.relational.internal.NamespaceImpl;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -48,6 +49,7 @@ public class RuntimeDatabaseModelProducer {
 	private final PhysicalNamingStrategy namingStrategy;
 	private final JdbcEnvironment jdbcEnvironment;
 	private final IdentifierGeneratorFactory identifierGeneratorFactory;
+	private final TypeConfiguration typeConfiguration;
 
 	public RuntimeDatabaseModelProducer(BootstrapContext bootstrapContext) {
 		this.namingStrategy = bootstrapContext.getMetadataBuildingOptions().getPhysicalNamingStrategy();
@@ -55,9 +57,14 @@ public class RuntimeDatabaseModelProducer {
 		final StandardServiceRegistry serviceRegistry = bootstrapContext.getServiceRegistry();
 		this.jdbcEnvironment = serviceRegistry.getService( JdbcServices.class ).getJdbcEnvironment();
 		this.identifierGeneratorFactory = serviceRegistry.getService( MutableIdentifierGeneratorFactory.class );
+
+		this.typeConfiguration = bootstrapContext.getTypeConfiguration();
 	}
 
-	public DatabaseModel produceDatabaseModel(Database database, DatabaseObjectResolver dbObjectResolver, Callback callback) {
+	public DatabaseModel produceDatabaseModel(
+			Database database,
+			DatabaseObjectResolver dbObjectResolver,
+			Callback callback) {
 		return new Process( callback, dbObjectResolver, database ).execute();
 	}
 
@@ -138,7 +145,8 @@ public class RuntimeDatabaseModelProducer {
 							namingStrategy,
 							jdbcEnvironment,
 							identifierGeneratorFactory,
-							callback
+							callback,
+							typeConfiguration
 					);
 					runtimeModelNamespace.addTable( runtimeTable );
 				}

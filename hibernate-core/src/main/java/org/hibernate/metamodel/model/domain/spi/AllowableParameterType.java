@@ -6,8 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import javax.persistence.TemporalType;
-
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -29,7 +27,4 @@ public interface AllowableParameterType<T> extends ExpressableType<T> {
 	 */
 	ValueBinder getValueBinder(TypeConfiguration typeConfiguration);
 
-	ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration);
-
-	AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration);
 }

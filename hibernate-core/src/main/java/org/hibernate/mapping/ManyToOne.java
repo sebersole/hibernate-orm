@@ -7,21 +7,20 @@
 package org.hibernate.mapping;
 
 import java.util.Locale;
-import java.util.Map;
 
 import org.hibernate.HibernateError;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * A many-to-one association mapping
  * @author Gavin King
  */
 public class ManyToOne extends ToOne {
+	private ForeignKey foreignKey;
 	private boolean ignoreNotFound;
 	private boolean isLogicalOneToOne;
 
@@ -39,45 +38,15 @@ public class ManyToOne extends ToOne {
 
 	@Override
 	protected void setTypeDescriptorResolver(Column column) {
-		column.setTypeDescriptorResolver( new ManyToOneTypeDescriptorResolver( columns.size() - 1 ) );
+		throw new UnsupportedOperationException( "Cant add a column to a many-to-one" );
 	}
 
-	public class ManyToOneTypeDescriptorResolver implements TypeDescriptorResolver {
-		private int index;
-
-		public ManyToOneTypeDescriptorResolver(int index) {
-			this.index = index;
-		}
-
-		@Override
-		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
-			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
-					.getMetadataCollector()
-					.getEntityBinding( getReferencedEntityName() );
-			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
-				return ( (Column) referencedPersistentClass.getIdentifier()
-						.getMappedColumns()
-						.get( index ) ).getSqlTypeDescriptor();
-			}
-			else {
-				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
-						getReferencedPropertyName() );
-				return ( (Column) referencedProperty.getValue()
-						.getMappedColumns()
-						.get( index ) ).getSqlTypeDescriptor();
-			}
-		}
-
-		@Override
-		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
-			return getJavaTypeMapping().resolveJavaTypeDescriptor();
-		}
-	}
-
-	private ForeignKey foreignKey;
 
 	@Override
 	public ForeignKey getForeignKey() {
+		if ( foreignKey == null ) {
+			throw new MappingException( "ManyToOne is not yet resolved - cannot yet access ForeignKey" );
+		}
 		return foreignKey;
 	}
 
@@ -101,7 +70,7 @@ public class ManyToOne extends ToOne {
 		return foreignKey;
 	}
 
-	public ForeignKey createPropertyRefConstraints(Map persistentClasses) {
+	public ForeignKey createPropertyRefConstraints(ResolutionContext context) {
 		if ( foreignKey != null ) {
 			return foreignKey;
 		}
@@ -110,7 +79,9 @@ public class ManyToOne extends ToOne {
 			throw new HibernateError( "#createForeignKey should have created ForeignKey, but none was found" );
 		}
 
-		final PersistentClass pc = (PersistentClass) persistentClasses.get( getReferencedEntityName() );
+		final PersistentClass pc = context.getMetadataBuildingContext()
+				.getMetadataCollector()
+				.getEntityBinding( getReferencedEntityName() );
 		final Property property = pc.getReferencedProperty( getReferencedPropertyName() );
 
 		if ( property == null ) {

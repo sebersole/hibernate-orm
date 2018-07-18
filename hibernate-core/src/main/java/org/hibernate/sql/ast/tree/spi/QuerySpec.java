@@ -19,6 +19,11 @@ import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 
 /**
+ * todo (6.0) : potentially have QuerySpec/SelectClause be the thing that tracks SqlSelections in terms of uniquing them
+ * 		this would most likely require access to the QuerySpec/SelectClause when
+ * 		"resolving" the SqlSelection.	Could also manage the "virtual selection"
+ * 		todo discussion in SqlSelection
+ *
  * @author Steve Ebersole
  */
 public class QuerySpec implements SqlAstNode {

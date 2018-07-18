@@ -269,7 +269,7 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private static <T> IdentifiableJavaDescriptor<T> resolveJavaTypeDescriptorFromJavaTypeMapping(
 			EntityMapping entityMapping) {
-		return (IdentifiableJavaDescriptor<T>) entityMapping.getJavaTypeMapping().resolveJavaTypeDescriptor();
+		return (IdentifiableJavaDescriptor<T>) entityMapping.getJavaTypeMapping().getJavaTypeDescriptor();
 	}
 
 	@Override

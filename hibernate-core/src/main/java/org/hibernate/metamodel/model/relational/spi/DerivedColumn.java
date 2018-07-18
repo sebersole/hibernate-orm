@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -14,9 +15,14 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 public class DerivedColumn implements Column {
 	private final Table table;
 	private final String expression;
-	private SqlTypeDescriptor sqlTypeDescriptor;
 
-	public DerivedColumn(Table table, String expression, SqlTypeDescriptor sqlTypeDescriptor) {
+	private SqlTypeDescriptor sqlTypeDescriptor;
+	private BasicJavaDescriptor javaTypeDescriptor;
+
+	public DerivedColumn(
+			Table table,
+			String expression,
+			SqlTypeDescriptor sqlTypeDescriptor) {
 		this.table = table;
 		this.expression = expression;
 		this.sqlTypeDescriptor = sqlTypeDescriptor;
@@ -50,4 +56,12 @@ public class DerivedColumn implements Column {
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
 		return sqlTypeDescriptor;
 	}
+
+	@Override
+	public BasicJavaDescriptor getJavaTypeDescriptor() {
+		return javaTypeDescriptor;
+	}
+
+
+
 }

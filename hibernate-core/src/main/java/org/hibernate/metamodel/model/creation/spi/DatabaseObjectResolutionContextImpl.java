@@ -88,8 +88,8 @@ public class DatabaseObjectResolutionContextImpl
 		final ArrayList<Column> targetColumns = new ArrayList<>();
 
 		for ( int i = 0; i < columns.size(); i++ ) {
-			final MappedColumn bootReferencingColumn = (MappedColumn) columns.get( i );
-			final MappedColumn bootTargetColumn = (MappedColumn) otherColumns.get( i );
+			final MappedColumn bootReferencingColumn = columns.get( i );
+			final MappedColumn bootTargetColumn = otherColumns.get( i );
 
 			final Column referencingColumn = resolveColumn( bootReferencingColumn );
 			final Column targetColumn = resolveColumn( bootTargetColumn );

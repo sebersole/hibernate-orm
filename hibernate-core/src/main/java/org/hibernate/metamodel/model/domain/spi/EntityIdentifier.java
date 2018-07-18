@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.TemporalType;
+
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -17,6 +19,8 @@ import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Descriptor for an entity's identifier
@@ -102,4 +106,6 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	}
 
 	boolean matchesNavigableName(String navigableName);
+
+	ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration);
 }

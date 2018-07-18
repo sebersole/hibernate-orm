@@ -8,6 +8,7 @@ package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.naming.Identifier;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -24,12 +25,14 @@ public class IdTableColumn extends PhysicalColumn {
 			IdTable containingTable,
 			Identifier columnName,
 			SqlTypeDescriptor sqlTypeDescriptor,
+			BasicJavaDescriptor javaTypeDescriptor,
 			String defaultValue,
 			String sqlTypeDefinition) {
 		super(
 				containingTable,
 				columnName,
-				sqlTypeDescriptor,
+				() -> sqlTypeDescriptor,
+				() -> javaTypeDescriptor,
 				defaultValue,
 				sqlTypeDefinition,
 				false,

@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.model.type.internal;
 
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.spi.BasicType;
@@ -23,7 +24,8 @@ public class BasicTypeResolverExplicitNamedImpl implements BasicTypeResolver {
 	}
 
 	@Override
-	public <T> BasicType<T> resolveBasicType() {
+	@SuppressWarnings("unchecked")
+	public <T> BasicType<T> resolveBasicType(ResolutionContext context) {
 		return buildingContext.getBootstrapContext().getTypeConfiguration()
 				.getBasicTypeRegistry()
 				.getBasicType( name );

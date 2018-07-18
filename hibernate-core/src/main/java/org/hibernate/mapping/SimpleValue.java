@@ -15,6 +15,7 @@ import java.util.Properties;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
+import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
@@ -31,6 +32,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.service.ServiceRegistry;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -102,9 +104,13 @@ public abstract class SimpleValue implements KeyValue {
 		if ( !columns.contains( column ) ) {
 			columns.add( column );
 		}
-		setTypeDescriptorResolver(column);
 	}
 
+	/**
+	 * @deprecated todo (6.0) : replaced by each Value/ValueContainer resolve handling
+	 */
+	@Remove
+	@Deprecated
 	protected abstract void setTypeDescriptorResolver(Column column);
 
 	public void addFormula(Formula formula) {
@@ -148,7 +154,7 @@ public abstract class SimpleValue implements KeyValue {
 		return typeName;
 	}
 
-	public void setTypeName(String typeName) {
+	public void setExplicitTypeName(String typeName) {
 		this.typeName = typeName;
 	}
 
@@ -262,7 +268,7 @@ public abstract class SimpleValue implements KeyValue {
 		identifierGeneratorFactory.setDialect( dialect );
 		identifierGenerator = identifierGeneratorFactory.createIdentifierGenerator(
 				identifierGeneratorStrategy,
-				getJavaTypeMapping().resolveJavaTypeDescriptor(),
+				getJavaTypeMapping().getJavaTypeDescriptor(),
 				params
 		);
 
@@ -455,7 +461,7 @@ public abstract class SimpleValue implements KeyValue {
 	}
 
 	public void copyTypeFrom( SimpleValue sourceValue ) {
-		setTypeName( sourceValue.getTypeName() );
+		setExplicitTypeName( sourceValue.getTypeName() );
 		setTypeParameters( sourceValue.getTypeParameters() );
 	}
 
@@ -480,6 +486,13 @@ public abstract class SimpleValue implements KeyValue {
 	public interface TypeDescriptorResolver {
 		SqlTypeDescriptor resolveSqlTypeDescriptor();
 		JavaTypeDescriptor resolveJavaTypeDescriptor();
+	}
+
+	public interface BasicTypeDescriptorResolver extends TypeDescriptorResolver {
+		SqlTypeDescriptor resolveSqlTypeDescriptor();
+
+		@Override
+		BasicJavaDescriptor resolveJavaTypeDescriptor();
 	}
 
 

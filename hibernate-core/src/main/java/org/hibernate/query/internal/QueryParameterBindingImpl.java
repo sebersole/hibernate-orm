@@ -132,7 +132,10 @@ public class QueryParameterBindingImpl<T> implements QueryParameterBinding<T> {
 
 		bindValue( value );
 
-		this.bindType = getBindType().resolveTemporalPrecision( temporalTypePrecision, null );
+		this.bindType = BindingTypeHelper.INSTANCE.resolveDateTemporalTypeVariant(
+				getBindType().getJavaType(),
+				getBindType()
+		);
 	}
 
 

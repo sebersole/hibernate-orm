@@ -6,15 +6,10 @@
  */
 package org.hibernate.boot.model.domain;
 
-import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
-
 /**
  * @author Chris Cranford
  */
 public interface EmbeddableJavaTypeMapping<T> extends ManagedJavaTypeMapping<T> {
 	@Override
 	EmbeddableJavaTypeMapping<? super T> getSuperType();
-
-	@Override
-	EmbeddableJavaDescriptor<T> resolveJavaTypeDescriptor();
 }

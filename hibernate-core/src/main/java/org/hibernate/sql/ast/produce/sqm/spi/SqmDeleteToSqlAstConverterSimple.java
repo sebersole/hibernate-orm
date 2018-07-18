@@ -40,6 +40,7 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 			QueryOptions queryOptions) {
 		super( sqlAstCreationContext, queryOptions );
 		this.expressionResolver = new NonSelectSqlExpressionResolver(
+				sqlAstCreationContext.getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection

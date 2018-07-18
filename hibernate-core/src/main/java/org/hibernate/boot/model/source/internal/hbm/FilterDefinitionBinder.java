@@ -14,8 +14,11 @@ import javax.xml.bind.JAXBElement;
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmFilterDefinitionType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmFilterParameterType;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
+import org.hibernate.boot.spi.BootstrapContext;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.spi.FilterDefinition;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.type.Type;
@@ -80,7 +83,22 @@ public class FilterDefinitionBinder {
 								.getParameterValueTypeName()
 				);
 
-				parameterMap.put( jaxbParameterMapping.getParameterName(), basicTypeResolver.resolveBasicType() );
+				parameterMap.put(
+						jaxbParameterMapping.getParameterName(),
+						basicTypeResolver.resolveBasicType(
+								new ResolutionContext() {
+									@Override
+									public BootstrapContext getBootstrapContext() {
+										return context.getBootstrapContext();
+									}
+
+									@Override
+									public MetadataBuildingContext getMetadataBuildingContext() {
+										return context;
+									}
+								}
+						)
+				);
 			}
 		}
 

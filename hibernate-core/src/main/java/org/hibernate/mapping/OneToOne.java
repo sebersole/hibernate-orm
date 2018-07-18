@@ -7,17 +7,13 @@
 package org.hibernate.mapping;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.ForeignKeyDirection;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
  * A one-to-one association mapping
@@ -85,46 +81,49 @@ public class OneToOne extends ToOne {
 
 	@Override
 	protected void setTypeDescriptorResolver(Column column) {
-		column.setTypeDescriptorResolver( new OneToOneTypeDescriptorResolverImpl( columns.size() - 1 ) );
+		throw new UnsupportedOperationException( "Cant add a column to a one-to-one" );
 	}
-
-	public class OneToOneTypeDescriptorResolverImpl implements TypeDescriptorResolver {
-
-		private int index;
-
-		public OneToOneTypeDescriptorResolverImpl(int index) {
-			this.index = index;
-		}
-
-		@Override
-		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
-			final List<MappedColumn> mappedColumns = getMappedColumns();
-			if ( mappedColumns.size() == 0 ) {
-				throw new IllegalStateException( "No SqlType code to resolve for " + entityName );
-
-			}
-			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
-					.getMetadataCollector()
-					.getEntityBinding( getReferencedEntityName() );
-
-			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
-				return ( (Column) referencedPersistentClass.getIdentifier()
-						.getMappedColumns()
-						.get( index ) ).getSqlTypeDescriptor();
-			}
-			else {
-				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
-						getReferencedPropertyName() );
-				return ( (Column) referencedProperty.getValue()
-						.getMappedColumns().get( index ) ).getSqlTypeDescriptor();
-			}
-		}
-
-		@Override
-		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
-			return getJavaTypeMapping().resolveJavaTypeDescriptor();
-		}
-	}
+//
+//		column.setTypeDescriptorResolver( new OneToOneTypeDescriptorResolverImpl( columns.size() - 1 ) );
+//	}
+//
+//	public class OneToOneTypeDescriptorResolverImpl implements TypeDescriptorResolver {
+//
+//		private int index;
+//
+//		public OneToOneTypeDescriptorResolverImpl(int index) {
+//			this.index = index;
+//		}
+//
+//		@Override
+//		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
+//			final List<MappedColumn> mappedColumns = getMappedColumns();
+//			if ( mappedColumns.size() == 0 ) {
+//				throw new IllegalStateException( "No SqlType code to resolve for " + entityName );
+//
+//			}
+//			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
+//					.getMetadataCollector()
+//					.getEntityBinding( getReferencedEntityName() );
+//
+//			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
+//				return ( (Column) referencedPersistentClass.getIdentifier()
+//						.getMappedColumns()
+//						.get( index ) ).getSqlTypeDescriptor();
+//			}
+//			else {
+//				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
+//						getReferencedPropertyName() );
+//				return ( (Column) referencedProperty.getValue()
+//						.getMappedColumns().get( index ) ).getSqlTypeDescriptor();
+//			}
+//		}
+//
+//		@Override
+//		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
+//			return getJavaTypeMapping().resolveJavaTypeDescriptor();
+//		}
+//	}
 
 	public java.util.List<Selectable> getConstraintColumns() {
 		final ArrayList<Selectable> list = new ArrayList();

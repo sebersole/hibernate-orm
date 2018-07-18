@@ -6,12 +6,16 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import javax.persistence.TemporalType;
+
+import org.hibernate.query.internal.BindingTypeHelper;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityIdentifierReferenceSimple;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityTypedReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -49,6 +53,13 @@ public interface EntityIdentifierSimple<O,J>
 				(SqmEntityTypedReference) containerReference,
 				this
 		);
+	}
+
+	@Override
+	default AllowableParameterType resolveTemporalPrecision(
+			TemporalType temporalType,
+			TypeConfiguration typeConfiguration) {
+		return BindingTypeHelper.INSTANCE.resolveTemporalPrecision( temporalType, this, typeConfiguration );
 	}
 
 	@Override

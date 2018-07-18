@@ -11,13 +11,15 @@ import java.util.Objects;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
+import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
-import org.hibernate.internal.util.StringHelper;
 import org.hibernate.sql.Template;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * A formula is a derived column value
@@ -53,15 +55,12 @@ public class Formula implements Selectable, Serializable {
 		return sqlTypeDescriptor;
 	}
 
-	public void setSqlTypeDescriptor(SqlTypeDescriptor sqlTypeDescriptor) {
-		this.sqlTypeDescriptor = sqlTypeDescriptor;
-	}
-
 	@Override
 	public Column generateRuntimeColumn(
-			org.hibernate.metamodel.model.relational.spi.Table runtimeTable,
+			Table runtimeTable,
 			PhysicalNamingStrategy namingStrategy,
-			JdbcEnvironment jdbcEnvironment) {
+			JdbcEnvironment jdbcEnvironment,
+			TypeConfiguration typeConfiguration) {
 		return new DerivedColumn( runtimeTable, formula, sqlTypeDescriptor );
 	}
 

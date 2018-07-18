@@ -11,12 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.relational.MappedTable;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A Hibernate "any" type (ie. polymorphic association to
@@ -108,33 +106,33 @@ public class Any extends SimpleValue {
 
 	@Override
 	protected void setTypeDescriptorResolver(Column column) {
-		column.setTypeDescriptorResolver( new AnyTypeDescriptorResolver( columns.size() - 1  ) );
+//		column.setTypeDescriptorResolver( new AnyTypeDescriptorResolver( columns.size() - 1  ) );
 	}
 
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
 		return null;
 	}
-
-	public class AnyTypeDescriptorResolver implements TypeDescriptorResolver {
-		BasicTypeResolver[] typesResolvers = new BasicTypeResolver[2];
-
-		private int index;
-
-		public AnyTypeDescriptorResolver(int index) {
-			this.index = index;
-			typesResolvers[0] = discriminatorTypeResolver;
-			typesResolvers[1] = keyTypeResolver;
-		}
-
-		@Override
-		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
-			return typesResolvers[index].resolveBasicType().getSqlTypeDescriptor();
-		}
-
-		@Override
-		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
-			return typesResolvers[index].resolveBasicType().getJavaTypeDescriptor();
-		}
-	}
+//
+//	public class AnyTypeDescriptorResolver implements TypeDescriptorResolver {
+//		BasicTypeResolver[] typesResolvers = new BasicTypeResolver[2];
+//
+//		private int index;
+//
+//		public AnyTypeDescriptorResolver(int index) {
+//			this.index = index;
+//			typesResolvers[0] = discriminatorTypeResolver;
+//			typesResolvers[1] = keyTypeResolver;
+//		}
+//
+//		@Override
+//		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
+//			return typesResolvers[index].resolveBasicType().getSqlTypeDescriptor();
+//		}
+//
+//		@Override
+//		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
+//			return typesResolvers[index].resolveBasicType().getJavaTypeDescriptor();
+//		}
+//	}
 }

@@ -35,7 +35,8 @@ public class MappedSuperclassJavaTypeMappingImpl<T>
 	}
 
 	@Override
-	public IdentifiableJavaDescriptor<T> resolveJavaTypeDescriptor() {
+	@SuppressWarnings("unchecked")
+	public IdentifiableJavaDescriptor<T> getJavaTypeDescriptor() {
 		final BootstrapContext bootstrapContext = getMetadataBuildingContext().getBootstrapContext();
 		final JavaTypeDescriptorRegistry registry = bootstrapContext.getTypeConfiguration().getJavaTypeDescriptorRegistry();
 
@@ -44,7 +45,7 @@ public class MappedSuperclassJavaTypeMappingImpl<T>
 			javaDescriptor = new MappedSuperclassJavaDescriptorImpl(
 					typeName,
 					SourceHelper.resolveJavaType( typeName, bootstrapContext ),
-					getSuperType() == null ? null : getSuperType().resolveJavaTypeDescriptor(),
+					getSuperType() == null ? null : (IdentifiableJavaDescriptor) getSuperType().getJavaTypeDescriptor(),
 					null,
 					null
 			);
@@ -54,4 +55,5 @@ public class MappedSuperclassJavaTypeMappingImpl<T>
 
 		return javaDescriptor;
 	}
+
 }

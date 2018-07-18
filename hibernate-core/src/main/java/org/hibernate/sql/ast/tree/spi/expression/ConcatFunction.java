@@ -15,6 +15,8 @@ import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -45,7 +47,10 @@ public class ConcatFunction implements StandardFunction {
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(int jdbcPosition) {
+	public SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
 		return null;
 	}
 
@@ -56,7 +61,11 @@ public class ConcatFunction implements StandardFunction {
 			QueryResultCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
+				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+						this,
+						(BasicJavaDescriptor) getType().getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
 				(BasicValuedExpressableType) getType()
 		);
 	}

@@ -7,10 +7,8 @@
 package org.hibernate.boot.spi;
 
 import org.hibernate.boot.model.TypeDefinition;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.naming.ObjectNameNormalizer;
-import org.hibernate.boot.model.source.spi.HibernateTypeSource;
-import org.hibernate.boot.model.type.spi.BasicTypeResolver;
-import org.hibernate.boot.model.type.spi.TypeDefinitionRegistry;
 
 /**
  * Describes the context in which the process of building Metadata out of MetadataSources occurs.
@@ -22,7 +20,13 @@ import org.hibernate.boot.model.type.spi.TypeDefinitionRegistry;
  *
  * @since 5.0
  */
-public interface MetadataBuildingContext {
+public interface MetadataBuildingContext extends ResolutionContext {
+	@Override
+	default MetadataBuildingContext getMetadataBuildingContext() {
+		return this;
+	}
+
+	@Override
 	BootstrapContext getBootstrapContext();
 
 	TypeDefinition resolveTypeDefinition(String typeName);

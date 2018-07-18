@@ -35,12 +35,10 @@ public interface EmbeddedValueExpressableType<T> extends ExpressableType<T>, All
 		return getEmbeddedDescriptor().getValueBinder( typeConfiguration );
 	}
 
-	@Override
 	default ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return getEmbeddedDescriptor().getValueExtractor( typeConfiguration );
 	}
 
-	@Override
 	default AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		return getEmbeddedDescriptor().resolveTemporalPrecision( temporalType, typeConfiguration );
 	}

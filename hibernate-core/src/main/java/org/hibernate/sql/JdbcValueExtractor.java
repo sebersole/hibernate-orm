@@ -33,7 +33,7 @@ public interface JdbcValueExtractor<J>  {
 	 */
 	J extract(
 			CallableStatement statement,
-			int position,
+			int jdbcParameterPosition,
 			ExecutionContext executionContext) throws SQLException;
 
 	/**
@@ -42,5 +42,5 @@ public interface JdbcValueExtractor<J>  {
 	 * todo (6.0) : name (String) versus SqlSelection?  SqlSelection is *just* a memento so in theory it should be fine
 	 * 		this overload may get "folded" into the form above depending on the answer to this ^^ question
 	 */
-	J extract(CallableStatement statement, String name, ExecutionContext executionContext) throws SQLException;
+	J extract(CallableStatement statement, String jdbcParameterName, ExecutionContext executionContext) throws SQLException;
 }

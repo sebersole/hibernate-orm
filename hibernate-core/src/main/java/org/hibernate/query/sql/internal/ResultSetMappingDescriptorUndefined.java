@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.results.internal.ScalarQueryResultAssembler;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
@@ -22,7 +23,6 @@ import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.ScalarQueryResult;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -112,7 +112,7 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 
 	private static class SqlSelectionImpl implements SqlSelection {
 		private final int valuesArrayPosition;
-		private SqlSelectionReader sqlSelectionReader;
+		private JdbcValueExtractor jdbcValueExtractor;
 
 		@SuppressWarnings("unchecked")
 		public SqlSelectionImpl(
@@ -123,14 +123,14 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 				TypeConfiguration typeConfiguration) {
 			log.tracef( "Creating SqlSelection for auto-discovered column : %s (%s)", columnName, columnPosition );
 			this.valuesArrayPosition = columnPosition - 1;
-			this.sqlSelectionReader = new ExtractorBasedReader(
-					sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration )
-			);
+
+			this.jdbcValueExtractor = sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration )
+					.getJdbcValueExtractor();
 		}
 
 		@Override
-		public SqlSelectionReader getSqlSelectionReader() {
-			return sqlSelectionReader;
+		public JdbcValueExtractor getJdbcValueExtractor() {
+			return jdbcValueExtractor;
 		}
 
 		@Override

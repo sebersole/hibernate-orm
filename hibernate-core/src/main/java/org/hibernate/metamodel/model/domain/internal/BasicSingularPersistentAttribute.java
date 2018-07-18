@@ -140,7 +140,9 @@ public class BasicSingularPersistentAttribute<O, J>
 						creationContext.getSqlSelectionResolver().resolveSqlExpression(
 								navigableReference.getSqlExpressionQualifier(),
 								boundColumn
-						)
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				getType()
 		);

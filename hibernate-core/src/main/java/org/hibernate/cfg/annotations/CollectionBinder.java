@@ -888,7 +888,7 @@ public abstract class CollectionBinder {
 			// for non-inverse one-to-many, with a not-null fk, add a backref!
 			String entityName = oneToMany.getReferencedEntityName();
 			PersistentClass referenced = buildingContext.getMetadataCollector().getEntityBinding( entityName );
-			Backref prop = new Backref();
+			Backref prop = new Backref( buildingContext );
 			prop.setName( '_' + fkJoinColumns[0].getPropertyName() + '_' + fkJoinColumns[0].getLogicalColumnName() + "Backref" );
 			prop.setUpdateable( false );
 			prop.setSelectable( false );
@@ -1132,7 +1132,7 @@ public abstract class CollectionBinder {
 					.getValue();
 		}
 		DependantValue key = new DependantValue( buildingContext, collValue.getCollectionTable(), keyVal );
-		key.setTypeName( null );
+		key.setExplicitTypeName( null );
 		Ejb3Column.checkPropertyConsistency( joinColumns, collValue.getOwnerEntityName() );
 		key.setNullable( joinColumns.length == 0 || joinColumns[0].isNullable() );
 		key.setUpdateable( joinColumns.length == 0 || joinColumns[0].isUpdatable() );
@@ -1212,6 +1212,8 @@ public abstract class CollectionBinder {
 				}
 			}
 		}
+
+		key.getJavaTypeMapping().getJavaTypeDescriptor();
 
 		return key;
 	}
@@ -1566,6 +1568,7 @@ public abstract class CollectionBinder {
 					column.setTable( collValue.getMappedTable() );
 				}
 				elementBinder.setColumns( elementColumns );
+				collValue.setElement( elementBinder.make() );
 				elementBinder.setType(
 						property,
 						elementClass,
@@ -1573,7 +1576,6 @@ public abstract class CollectionBinder {
 						holder.resolveElementAttributeConverterDescriptor( property, elementClass )
 				);
 				elementBinder.setPersistentClassName( propertyHolder.getEntityName() );
-				collValue.setElement( elementBinder.make() );
 				String orderBy = adjustUserSuppliedValueCollectionOrderingFragment( hqlOrderBy );
 				if ( orderBy != null ) {
 					collValue.setOrderBy( orderBy );

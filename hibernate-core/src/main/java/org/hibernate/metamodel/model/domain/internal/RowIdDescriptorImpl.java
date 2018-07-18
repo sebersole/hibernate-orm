@@ -42,7 +42,8 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 		column = new DerivedColumn(
 				hierarchy.getRootEntityType().getPrimaryTable(),
 				"ROW_ID",
-				creationContext.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.INTEGER )
+				() -> creationContext.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.INTEGER ),
+				() -> getJavaTypeDescriptor()
 		);
 	}
 

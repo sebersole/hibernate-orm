@@ -21,6 +21,7 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
 import org.hibernate.naming.Identifier;
 import org.hibernate.naming.QualifiedTableName;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Models any mapped "table reference" (e.g. a physical table, an in-lined
@@ -190,6 +191,6 @@ public interface MappedTable<T extends MappedColumn> extends Loggable {
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment,
 			IdentifierGeneratorFactory identifierGeneratorFactory,
-			RuntimeDatabaseModelProducer.Callback callback
-	);
+			RuntimeDatabaseModelProducer.Callback callback,
+			TypeConfiguration typeConfiguration);
 }

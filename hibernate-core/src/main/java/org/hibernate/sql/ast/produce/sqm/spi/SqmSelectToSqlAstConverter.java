@@ -43,6 +43,7 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -86,6 +87,7 @@ public class SqmSelectToSqlAstConverter
 				:  queryOptions.getEntityGraphQueryHint().getType();
 
 		this.expressionResolver = new PerQuerySpecSqlExpressionResolver(
+				sqlAstCreationContext.getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection
@@ -160,12 +162,17 @@ public class SqmSelectToSqlAstConverter
 
 	@Override
 	public Void visitSelection(SqmSelection sqmSelection) {
+		// todo (6.0) : this should actually be able to generate multiple SqlSelections
 		final QueryResultProducer resultProducer = (QueryResultProducer) sqmSelection.getSelectableNode().accept( this );
 
 		if ( getQuerySpecStack().depth() > 1 ) {
 			// we only need the QueryResults if we are in the top-level select-clause.
 			// but we do need to at least resolve the sql selections
-			getSqlSelectionResolver().resolveSqlSelection( (Expression) resultProducer );
+			getSqlSelectionResolver().resolveSqlSelection(
+					(Expression) resultProducer,
+					(BasicJavaDescriptor) sqmSelection.getJavaTypeDescriptor(),
+					getSqlAstCreationContext().getSessionFactory().getTypeConfiguration()
+			);
 			return null;
 		}
 

@@ -9,13 +9,17 @@ package org.hibernate.boot.model.domain;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
- * Contract which describes the Java side of a mapping that can be later resolved to a {@link JavaTypeDescriptor}
- * during the runtime model creation process.
+ * Contract which describes the Java side of a mapping that can be later
+ * resolved to a {@link JavaTypeDescriptor} during the runtime model creation process.
  *
  * @author Chris Cranford
  */
 public interface JavaTypeMapping<T> {
 	String getTypeName();
 
-	JavaTypeDescriptor<T> resolveJavaTypeDescriptor();
+	/**
+	 * @throws NotYetResolvedException Can potentially throw if JTD has not yet been resolved
+	 */
+	JavaTypeDescriptor<T> getJavaTypeDescriptor() throws NotYetResolvedException;
+
 }

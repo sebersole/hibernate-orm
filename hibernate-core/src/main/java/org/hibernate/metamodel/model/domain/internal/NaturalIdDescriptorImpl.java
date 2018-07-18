@@ -217,12 +217,10 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 		return valueBinder;
 	}
 
-	@Override
 	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 		return null;
 	}
 
-	@Override
 	public AllowableParameterType resolveTemporalPrecision(
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {
@@ -234,6 +232,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 			}
 		}
 
-		throw new UnsupportedOperationException(  );
+		throw new UnsupportedOperationException( "Composite natural-id cannot be treated as a temporal value" );
 	}
 }

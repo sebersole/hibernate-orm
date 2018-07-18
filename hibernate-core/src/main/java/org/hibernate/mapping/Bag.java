@@ -7,6 +7,8 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.collection.internal.StandardBagSemantics;
 import org.hibernate.collection.spi.CollectionSemantics;
@@ -17,12 +19,12 @@ import org.hibernate.collection.spi.CollectionSemantics;
  * @author Gavin King
  */
 public class Bag extends Collection {
-	private final CollectionJavaDescriptorResolver javaTypeMapping;
+	private final CollectionJavaTypeMapping javaTypeMapping;
 
 	public Bag(MetadataBuildingContext buildingContext, PersistentClass owner) {
 		super( buildingContext, owner );
 
-		javaTypeMapping = new CollectionJavaDescriptorResolver(
+		javaTypeMapping = new CollectionJavaTypeMapping(
 				buildingContext.getBootstrapContext().getTypeConfiguration(),
 				java.util.Collection.class
 		);

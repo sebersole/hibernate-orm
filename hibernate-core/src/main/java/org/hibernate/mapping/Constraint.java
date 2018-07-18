@@ -118,7 +118,7 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 		}
 	}
 
-	private static class ColumnComparator implements Comparator<Column> {
+	public static class ColumnComparator implements Comparator<Column> {
 		public static ColumnComparator INSTANCE = new ColumnComparator();
 
 		public int compare(Column col1, Column col2) {

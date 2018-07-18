@@ -8,10 +8,10 @@ package org.hibernate.metamodel.model.creation.spi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.persistence.NamedAttributeNode;
 import javax.persistence.NamedEntityGraph;
@@ -19,10 +19,12 @@ import javax.persistence.NamedSubgraph;
 import javax.persistence.metamodel.Attribute;
 
 import org.hibernate.HibernateException;
+import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.boot.model.domain.spi.IdentifiableTypeMappingImplementor;
 import org.hibernate.boot.spi.BootstrapContext;
@@ -46,7 +48,6 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
@@ -54,7 +55,6 @@ import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
 import org.hibernate.metamodel.model.relational.spi.RuntimeDatabaseModelProducer;
@@ -69,7 +69,7 @@ import static org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetti
 /**
  * @author Steve Ebersole
  */
-public class RuntimeModelCreationProcess {
+public class RuntimeModelCreationProcess implements ResolutionContext {
 	private static final Logger log = Logger.getLogger( RuntimeModelCreationProcess.class );
 
 	public static MetamodelImplementor execute(
@@ -77,6 +77,7 @@ public class RuntimeModelCreationProcess {
 			BootstrapContext bootstrapContext,
 			MetadataBuildingContext metadataBuildingContext) {
 		// todo (6.0) : Access to the finalized MetadataImplementor would be good
+		//		^^ why??
 		return new RuntimeModelCreationProcess( sessionFactory, bootstrapContext, metadataBuildingContext ).execute();
 	}
 
@@ -94,7 +95,7 @@ public class RuntimeModelCreationProcess {
 	private final Map<IdentifiableTypeDescriptor,IdentifiableTypeMappingImplementor> bootByRuntime = new HashMap<>();
 
 	private final Map<EmbeddedValueMappingImplementor,EmbeddedTypeDescriptor> embeddableRuntimeByBoot = new HashMap<>();
-	private final Map<Collection,PersistentCollectionDescriptor> collectonRuntimeByBoot = new HashMap<>();
+	private final Map<Collection,PersistentCollectionDescriptor> collectionRuntimeByBoot = new HashMap<>();
 
 	private final Map<String, DomainDataRegionConfigImpl.Builder> regionConfigBuilders = new ConcurrentHashMap<>();
 
@@ -114,22 +115,28 @@ public class RuntimeModelCreationProcess {
 
 	}
 
+	public SessionFactoryImplementor getSessionFactory() {
+		return sessionFactory;
+	}
+
+	@Override
+	public BootstrapContext getBootstrapContext() {
+		return bootstrapContext;
+	}
+
+	@Override
+	public MetadataBuildingContext getMetadataBuildingContext() {
+		return metadataBuildingContext;
+	}
 
 	public MetamodelImplementor execute() {
 		final InFlightMetadataCollector mappingMetadata = metadataBuildingContext.getMetadataCollector();
 
-		// todo (7.0) : better design where all FKs are created b4 we enter here
-		generateBootModelForeignKeys( mappingMetadata );
+		finalizeBootModel( mappingMetadata );
 
 		final DatabaseObjectResolutionContextImpl dbObjectResolver = new DatabaseObjectResolutionContextImpl();
 		final DatabaseModel databaseModel = new RuntimeDatabaseModelProducer( metadataBuildingContext.getBootstrapContext() )
 				.produceDatabaseModel( mappingMetadata.getDatabase(), dbObjectResolver, dbObjectResolver );
-
-		SchemaManagementToolCoordinator.process(
-				databaseModel,
-				sessionFactory.getServiceRegistry(),
-				action -> sessionFactory.addObserver( action )
-		);
 
 		final JpaStaticMetaModelPopulationSetting jpaMetaModelPopulationSetting = determineJpaMetaModelPopulationSetting(
 				sessionFactory.getProperties()
@@ -141,6 +148,8 @@ public class RuntimeModelCreationProcess {
 				jpaMetaModelPopulationSetting,
 				dbObjectResolver
 		);
+
+//		resolveForeignKeys( mappingMetadata, creationContext );
 
 		for ( EntityMappingHierarchy bootHierarchy : mappingMetadata.getEntityHierarchies() ) {
 			final EntityDescriptor<?> rootEntityDescriptor = (EntityDescriptor<?>) createIdentifiableType(
@@ -190,7 +199,7 @@ public class RuntimeModelCreationProcess {
 		//		may very well be the "root root" as well.
 		//
 		//		Anyway, the point here is that we start at the very, very top so we only ever
-		//		have to walk dowwn here as opposed to above with `#walkSupers` and `#walkSubs`
+		//		have to walk down here as opposed to above with `#walkSupers` and `#walkSubs`
 
 		for ( Map.Entry<EntityMappingHierarchy, IdentifiableTypeDescriptor> entry : runtimeRootByBootHierarchy.entrySet() ) {
 			final EntityDescriptor runtimeRootEntity = runtimeRootEntityByBootHierarchy.get( entry.getKey() );
@@ -207,7 +216,7 @@ public class RuntimeModelCreationProcess {
 		}
 
 		boolean moreEmbeddables = ! embeddableRuntimeByBoot.isEmpty();
-		boolean moreCollections = ! collectonRuntimeByBoot.isEmpty();
+		boolean moreCollections = ! collectionRuntimeByBoot.isEmpty();
 
 		while ( moreEmbeddables || moreCollections ) {
 			final int initialEmbeddableCount = embeddableRuntimeByBoot.size();
@@ -216,21 +225,30 @@ public class RuntimeModelCreationProcess {
 			}
 			moreEmbeddables = embeddableRuntimeByBoot.size() > initialEmbeddableCount;
 
-			final int initialCollectionCount = collectonRuntimeByBoot.size();
-			for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectonRuntimeByBoot.entrySet() ) {
+			final int initialCollectionCount = collectionRuntimeByBoot.size();
+			for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectionRuntimeByBoot.entrySet() ) {
 				entry.getValue().finishInitialization( entry.getKey(), creationContext );
 			}
-			moreCollections = collectonRuntimeByBoot.size() > initialCollectionCount;
+			moreCollections = collectionRuntimeByBoot.size() > initialCollectionCount;
 		}
 
 		// todo (6.0) - could this be moved to descriptorFactory#finishUp?
 		while ( true ) {
-			if ( !navigables.removeIf( Navigable::finishInitialization ) ) {
+			if ( !navigables.removeIf( navigable -> navigable.finishInitialization( creationContext ) ) ) {
+				if ( navigables.isEmpty() ) {
+					throw new MappingException( "Unable to complete initialization of run-time meta-model" );
+				}
 				break;
 			}
 		}
 
 		descriptorFactory.finishUp( creationContext );
+
+		SchemaManagementToolCoordinator.process(
+				databaseModel,
+				sessionFactory.getServiceRegistry(),
+				action -> sessionFactory.addObserver( action )
+		);
 
 		mappingMetadata.getNamedEntityGraphs().values().forEach( this::applyNamedEntityGraph );
 
@@ -246,6 +264,44 @@ public class RuntimeModelCreationProcess {
 
 		return inFlightRuntimeModel.complete( sessionFactory, metadataBuildingContext );
 	}
+
+	private void finalizeBootModel(InFlightMetadataCollector mappingMetadata) {
+		final List<Function<ResolutionContext, Boolean>> resolvers = mappingMetadata.getValueMappingResolvers();
+
+		while ( true ) {
+			final boolean anyRemoved = resolvers.removeIf(
+					resolver -> resolver.apply( this )
+			);
+
+			if ( ! anyRemoved ) {
+				if ( ! resolvers.isEmpty() ) {
+					throw new MappingException( "Unable to complete initialization of boot meta-model" );
+				}
+
+				break;
+			}
+		}
+	}
+
+//	private void resolveForeignKeys(
+//			InFlightMetadataCollector mappingMetadata,
+//			RuntimeModelCreationContext creationContext) {
+//		final List<Function<RuntimeModelCreationContext, Boolean>> resolvers = mappingMetadata.getForeignKeyCreators();
+//
+//		while ( true ) {
+//			final boolean anyRemoved = resolvers.removeIf(
+//					resolver -> resolver.apply( creationContext )
+//			);
+//
+//			if ( ! anyRemoved ) {
+//				if ( ! resolvers.isEmpty() ) {
+//					throw new MappingException( "Unable to complete initialization of boot meta-model" );
+//				}
+//
+//				break;
+//			}
+//		}
+//	}
 
 	private void walkSupers(
 			EntityMappingHierarchy bootHierarchy,
@@ -303,12 +359,6 @@ public class RuntimeModelCreationProcess {
 					creationContext
 			);
 		}
-	}
-
-	private void generateBootModelForeignKeys(InFlightMetadataCollector mappingMetadata) {
-		// walk the boot model and create all mapping FKs (so they are ready for db process)
-		// todo (6.0) : implement this
-//		throw new NotYetImplementedFor6Exception(  );
 	}
 
 	private IdentifiableTypeDescriptor<?> createIdentifiableType(
@@ -579,7 +629,7 @@ public class RuntimeModelCreationProcess {
 		public void registerCollectionDescriptor(
 				PersistentCollectionDescriptor runtimeDescriptor,
 				Collection bootDescriptor) {
-			collectonRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
+			collectionRuntimeByBoot.put( bootDescriptor, runtimeDescriptor );
 			inFlightRuntimeModel.addCollectionDescriptor( runtimeDescriptor );
 
 			final AccessType accessType = AccessType.fromExternalName( bootDescriptor.getCacheConcurrencyStrategy() );

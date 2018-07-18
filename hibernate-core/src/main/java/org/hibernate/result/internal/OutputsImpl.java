@@ -133,7 +133,7 @@ public abstract class OutputsImpl
 				null,
 				context.getQueryOptions(),
 				resultSetMapping,
-				context.getSession()
+				context
 		);
 
 		final RowReader<Object[]> rowReader = Helper.createRowReader(

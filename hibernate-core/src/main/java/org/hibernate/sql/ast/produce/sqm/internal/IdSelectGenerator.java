@@ -106,6 +106,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 		entityIdSelectionTableSpace.setRootTableGroup( rootTableGroup );
 
 		final PerQuerySpecSqlExpressionResolver sqlExpressionResolver = new PerQuerySpecSqlExpressionResolver(
+				sessionFactory,
 				() -> entityIdSelection,
 				expression -> expression,
 				(expression, selection) -> {}

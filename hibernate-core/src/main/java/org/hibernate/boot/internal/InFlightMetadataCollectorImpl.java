@@ -17,6 +17,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -37,6 +38,7 @@ import org.hibernate.boot.model.convert.internal.AttributeConverterManager;
 import org.hibernate.boot.model.convert.spi.ConverterAutoApplyHandler;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.naming.ImplicitForeignKeyNameSource;
 import org.hibernate.boot.model.naming.ImplicitIndexNameSource;
 import org.hibernate.boot.model.naming.ImplicitUniqueKeyNameSource;
@@ -148,6 +150,9 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 
 	private Map<String, SqmFunctionTemplate> sqlFunctionMap;
 
+	private List<Function<ResolutionContext, Boolean>> valueMappingResolvers = new ArrayList<>();
+
+
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// All the annotation-processing-specific state :(
 	private final Set<String> defaultIdentifierGeneratorNames = new HashSet<>();
@@ -215,6 +220,16 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			this.database = new Database( options );
 		}
 		return database;
+	}
+
+	@Override
+	public void registerValueMappingResolver(Function<ResolutionContext, Boolean> resolver) {
+		valueMappingResolvers.add( resolver );
+	}
+
+	@Override
+	public List<Function<ResolutionContext, Boolean>> getValueMappingResolvers() {
+		return valueMappingResolvers;
 	}
 
 	@Override

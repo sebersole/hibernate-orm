@@ -8,6 +8,8 @@ package org.hibernate.sql.ast.produce.spi;
 
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Resolution of a SqlSelection reference for a given SqlSelectable.  Some
@@ -42,7 +44,10 @@ public interface SqlExpressionResolver {
 	/**
 	 * Resolve the SqlSelection for the given expression
 	 */
-	SqlSelection resolveSqlSelection(Expression expression);
+	SqlSelection resolveSqlSelection(
+			Expression expression,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration);
 
 	SqlSelection emptySqlSelection();
 }

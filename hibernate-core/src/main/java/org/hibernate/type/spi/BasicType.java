@@ -12,6 +12,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.Type;
@@ -43,6 +44,13 @@ public interface BasicType<T>
 	 * from JDBC ResultSets
 	 */
 	SqlSelectionReader<T> getSqlSelectionReader();
+
+	default JdbcValueMapper getJdbcValueMapper(TypeConfiguration typeConfiguration) {
+		return getSqlTypeDescriptor().getJdbcValueMapper(
+				getJavaTypeDescriptor(),
+				typeConfiguration
+		);
+	}
 
 	@Override
 	default PersistenceType getPersistenceType() {

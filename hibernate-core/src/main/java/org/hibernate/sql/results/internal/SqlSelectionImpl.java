@@ -6,10 +6,11 @@
  */
 package org.hibernate.sql.results.internal;
 
+import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 
 /**
  * @author Steve Ebersole
@@ -17,17 +18,21 @@ import org.hibernate.sql.results.spi.SqlSelectionReader;
 public class SqlSelectionImpl implements SqlSelection {
 	private final int position;
 	private final Expression sqlExpression;
-	private final SqlSelectionReader reader;
+	private final JdbcValueExtractor jdbcValueExtractor;
 
-	public SqlSelectionImpl(int position, Expression sqlExpression, SqlSelectionReader reader) {
+	public SqlSelectionImpl(int position, Expression sqlExpression, JdbcValueMapper jdbcValueMapper) {
+		this( position, sqlExpression, jdbcValueMapper.getJdbcValueExtractor() );
+	}
+
+	public SqlSelectionImpl(int position, Expression sqlExpression, JdbcValueExtractor jdbcValueExtractor) {
 		this.position = position;
 		this.sqlExpression = sqlExpression;
-		this.reader = reader;
+		this.jdbcValueExtractor = jdbcValueExtractor;
 	}
 
 	@Override
-	public SqlSelectionReader getSqlSelectionReader() {
-		return reader;
+	public JdbcValueExtractor getJdbcValueExtractor() {
+		return jdbcValueExtractor;
 	}
 
 	@Override

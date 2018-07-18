@@ -19,6 +19,8 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * We classify literals different based on their source so that we can handle then differently
@@ -54,7 +56,10 @@ public abstract class AbstractLiteral
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(int jdbcPosition) {
+	public SqlSelection createSqlSelection(
+			int jdbcPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
 		// todo (6.0) : for literals and parameters consider simply pushing these values directly into the "current JDBC values" array
 		//		rather than reading them (the same value over and over) from the ResultSet.
 		//
@@ -63,7 +68,7 @@ public abstract class AbstractLiteral
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getSqlSelectionReader()
+				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
 		);
 	}
 
@@ -76,7 +81,11 @@ public abstract class AbstractLiteral
 
 		return new ScalarQueryResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection( this ),
+				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+						this,
+						getType().getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
 				getType()
 		);
 	}

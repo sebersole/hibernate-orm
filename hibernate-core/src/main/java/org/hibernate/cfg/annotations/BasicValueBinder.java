@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
@@ -29,13 +28,8 @@ import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.XProperty;
-import org.hibernate.boot.model.TypeDefinition;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
-import org.hibernate.boot.model.type.internal.BasicTypeResolverExplicitNamedImpl;
-import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.cfg.BasicTypeResolverConvertibleSupport;
-import org.hibernate.cfg.BasicTypeResolverSupport;
 import org.hibernate.cfg.Ejb3Column;
 import org.hibernate.cfg.Ejb3JoinColumn;
 import org.hibernate.cfg.NotYetImplementedException;
@@ -49,8 +43,6 @@ import org.hibernate.mapping.Table;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
-import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.BasicTypeParameters;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -58,7 +50,7 @@ import org.jboss.logging.Logger;
 /**
  * @author Emmanuel Bernard
  */
-public class BasicValueBinder<T> {
+public class BasicValueBinder<T> implements JdbcRecommendedSqlTypeMappingContext {
 
 	// todo (6.0) : In light of how we want to build Types (specifically BasicTypes) moving forward this Class should undergo major changes
 	//		see the comments in #setType
@@ -79,14 +71,17 @@ public class BasicValueBinder<T> {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// BasicType info
 
+	private String explicitBasicTypeName;
+	private Map explicitLocalTypeParams;
+
 	private BasicJavaDescriptor<T> javaDescriptor;
+	private SqlTypeDescriptor sqlTypeDescriptor;
 	private ConverterDescriptor converterDescriptor;
 	private boolean isNationalized;
 	private boolean isLob;
 	private javax.persistence.EnumType enumType;
 	private TemporalType temporalPrecision;
 
-	private BasicTypeResolver basicTypeResolver;
 	private BasicValue basicValue;
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,6 +110,42 @@ public class BasicValueBinder<T> {
 		this.kind = kind;
 		this.buildingContext = buildingContext;
 	}
+
+	@Override
+	public EnumType getEnumeratedType() {
+		return enumType;
+	}
+
+	@Override
+	public SqlTypeDescriptor getExplicitSqlTypeDescriptor() {
+		return sqlTypeDescriptor;
+	}
+
+	@Override
+	public boolean isLob() {
+		return isLob;
+	}
+
+	@Override
+	public TemporalType getTemporalType() {
+		return temporalPrecision;
+	}
+
+	@Override
+	public int getPreferredSqlTypeCodeForBoolean() {
+		return buildingContext.getPreferredSqlTypeCodeForBoolean();
+	}
+
+	@Override
+	public boolean isNationalized() {
+		return isNationalized;
+	}
+
+	@Override
+	public TypeConfiguration getTypeConfiguration() {
+		return buildingContext.getBootstrapContext().getTypeConfiguration();
+	}
+
 
 	public void setReferencedEntityName(String referencedEntityName) {
 		this.referencedEntityName = referencedEntityName;
@@ -219,57 +250,197 @@ public class BasicValueBinder<T> {
 		else {
 			switch ( kind ) {
 				case COLLECTION_ID: {
-					basicTypeResolver = new BasicTypeResolverCollectionIdImpl(
-							buildingContext,
-							navigableXProperty
+					final XClass valueClass = navigableXProperty.getClassOrElementClass();
+					basicValue.setJavaClass(
+							buildingContext.getBootstrapContext().getReflectionManager().toClass( valueClass )
 					);
 					break;
 				}
 				case COLLECTION_INDEX: {
 					if ( isMap ) {
-						basicTypeResolver = new BasicTypeResolverMapKeyImpl(
-								buildingContext,
-								this.converterDescriptor,
-								navigableXProperty,
-								isLob,
-								isNationalized
-						);
-
-						mapKeySupplementalDetails( navigableXProperty, buildingContext );
+						prepareMapKey( navigableXProperty );
 					}
 					else {
-						basicTypeResolver = new BasicTypeResolverListIndexImpl( buildingContext, navigableXProperty );
+						prepareListIndex( navigableXProperty );
 					}
 					break;
 				}
 				case COLLECTION_ELEMENT: {
-					basicTypeResolver = new BasicTypeResolverCollectionElementImpl(
-							buildingContext,
-							this.converterDescriptor,
-							navigableXProperty,
-							navigableXClass,
-							isLob,
-							isNationalized
-					);
-					normalSupplementalDetails( navigableXProperty, buildingContext );
+					prepareCollectionElement( navigableXProperty, navigableXClass );
 					break;
 				}
 				default: {
 					assert kind == Kind.ATTRIBUTE;
-					basicTypeResolver = new BasicTypeResolverAttributeImpl(
-							buildingContext,
-							this.converterDescriptor,
-							navigableXProperty,
-							navigableXClass,
-							isLob,
-							isNationalized
-					);
-					normalSupplementalDetails( navigableXProperty, buildingContext );
+					prepareBasicAttribute( navigableXProperty, navigableXClass );
 				}
 			}
 		}
 
 		this.typeParameters = typeParameters;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void prepareMapKey(XProperty mapAttribute) {
+		final Class javaType = buildingContext.getBootstrapContext()
+				.getReflectionManager()
+				.toClass( mapAttribute.getMapKey() );
+		basicValue.setJavaClass( javaType );
+
+		javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getOrMakeJavaDescriptor( javaType );
+
+		final MapKeyType mapKeyTypeAnn = mapAttribute.getAnnotation( MapKeyType.class );
+		if ( mapKeyTypeAnn != null ) {
+			// See BasicTypeProducerRegistry registrations in StandardBasicTypes
+			//
+			// todo (6.0) : need to move those to MetadataBuildingContext
+			//		I like the idea too of having TypeDefs fold into that
+			throw new NotYetImplementedException( "see comment at throw site" );
+		}
+
+		final MapKeyTemporal mapKeyTemporalAnn = mapAttribute.getAnnotation( MapKeyTemporal.class );
+		if ( mapKeyTemporalAnn != null ) {
+			temporalPrecision = mapKeyTemporalAnn.value();
+		}
+		else {
+			temporalPrecision = null;
+		}
+
+		if ( javaType.isEnum() ) {
+			final MapKeyEnumerated enumeratedAnn = mapAttribute.getAnnotation( MapKeyEnumerated.class );
+			if ( enumeratedAnn == null ) {
+				enumType = javax.persistence.EnumType.ORDINAL;
+			}
+			else {
+				enumType = enumeratedAnn.value();
+				if ( enumType == null ) {
+					throw new IllegalStateException(
+							"javax.persistence.EnumType was null on @javax.persistence.MapKeyEnumerated " +
+									" associated with attribute " + mapAttribute.getDeclaringClass().getName() +
+									'.' + mapAttribute.getName()
+					);
+				}
+			}
+		}
+		else {
+			enumType = null;
+		}
+
+		mapKeySupplementalDetails( mapAttribute, buildingContext );
+	}
+
+	@SuppressWarnings("unchecked")
+	private void prepareListIndex(XProperty listAttribute) {
+		javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getOrMakeJavaDescriptor( Integer.class );
+
+		basicValue.setSqlType( javaDescriptor.getJdbcRecommendedSqlType( this ) );
+	}
+
+	@SuppressWarnings("unchecked")
+	private void prepareCollectionElement(XProperty attributeDescriptor, XClass elementJavaType) {
+		// todo (6.0) : @SqlType / @SqlTypeDescriptor
+
+		final Class javaClass = buildingContext.getBootstrapContext()
+				.getReflectionManager()
+				.toClass( elementJavaType );
+
+		basicValue.setJavaClass( javaClass );
+
+		javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getOrMakeJavaDescriptor( javaClass );
+
+		final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
+		if ( temporalAnn != null ) {
+			temporalPrecision = temporalAnn.value();
+			if ( temporalPrecision == null ) {
+				throw new IllegalStateException(
+						"No javax.persistence.TemporalType defined for @javax.persistence.Temporal " +
+								"associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
+								'.' + attributeDescriptor.getName()
+				);
+			}
+		}
+		else {
+			temporalPrecision = null;
+		}
+
+		if ( javaClass.isEnum() ) {
+			final Enumerated enumeratedAnn = attributeDescriptor.getAnnotation( Enumerated.class );
+			if ( enumeratedAnn == null ) {
+				enumType = javax.persistence.EnumType.ORDINAL;
+			}
+			else {
+				enumType = enumeratedAnn.value();
+				if ( enumType == null ) {
+					throw new IllegalStateException(
+							"javax.persistence.EnumType was null on @javax.persistence.Enumerated " +
+									" associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
+									'.' + attributeDescriptor.getName()
+					);
+				}
+			}
+		}
+		else {
+			enumType = null;
+		}
+
+		normalSupplementalDetails( attributeDescriptor, buildingContext );
+	}
+
+	@SuppressWarnings("unchecked")
+	private void prepareBasicAttribute(XProperty attributeDescriptor, XClass attributeType) {
+		final Class javaType = buildingContext.getBootstrapContext()
+				.getReflectionManager()
+				.toClass( attributeType );
+
+		javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
+				.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getOrMakeJavaDescriptor( javaType );
+
+		final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
+		if ( temporalAnn != null ) {
+			this.temporalPrecision = temporalAnn.value();
+			if ( this.temporalPrecision == null ) {
+				throw new IllegalStateException(
+						"No javax.persistence.TemporalType defined for @javax.persistence.Temporal " +
+								"associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
+								'.' + attributeDescriptor.getName()
+				);
+			}
+		}
+		else {
+			this.temporalPrecision = null;
+		}
+
+		if ( javaType.isEnum() ) {
+			final Enumerated enumeratedAnn = attributeDescriptor.getAnnotation( Enumerated.class );
+			if ( enumeratedAnn == null ) {
+				this.enumType = javax.persistence.EnumType.ORDINAL;
+			}
+			else {
+				this.enumType = enumeratedAnn.value();
+				if ( this.enumType == null ) {
+					throw new IllegalStateException(
+							"javax.persistence.EnumType was null on @javax.persistence.Enumerated " +
+									" associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
+									'.' + attributeDescriptor.getName()
+					);
+				}
+			}
+		}
+		else {
+			this.enumType = null;
+		}
+
+		normalSupplementalDetails( attributeDescriptor, buildingContext );
 	}
 
 	private void mapKeySupplementalDetails(
@@ -363,13 +534,32 @@ public class BasicValueBinder<T> {
 	}
 
 	public void setExplicitType(String explicitType) {
-		this.basicTypeResolver = new BasicTypeResolverExplicitNamedImpl( buildingContext, explicitType );
+		this.explicitBasicTypeName = explicitType;
 	}
 
 	//FIXME raise an assertion failure  if setResolvedTypeMapping(String) and setResolvedTypeMapping(Type) are use at the same time
 
 	public void setExplicitType(Type typeAnn) {
-		basicTypeResolver = new BasicTypeResolverExplicitImpl( buildingContext, typeAnn );
+		setExplicitType( typeAnn.type() );
+		this.explicitLocalTypeParams = extractTypeParams( typeAnn.parameters() );
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map extractTypeParams(Parameter[] parameters) {
+		if ( parameters == null || parameters.length == 0 ) {
+			return Collections.emptyMap();
+		}
+
+		if ( parameters.length == 1 ) {
+			return Collections.singletonMap( parameters[0].name(), parameters[0].value() );
+		}
+
+		final Map map = new HashMap();
+		for ( Parameter parameter: parameters ) {
+			map.put( parameter.name(), parameter.value() );
+		}
+
+		return map;
 	}
 
 	private void validate() {
@@ -432,429 +622,19 @@ public class BasicValueBinder<T> {
 
 	public void fillSimpleValue() {
 		LOG.debugf( "Starting fillSimpleValue for %s", propertyName );
-		basicValue.setBasicTypeResolver( basicTypeResolver );
+		basicValue.setExplicitTypeName( explicitBasicTypeName );
+		basicValue.setExplicitTypeParams( explicitLocalTypeParams );
+		basicValue.setEnumType( enumType );
+		basicValue.setTemporalPrecision( temporalPrecision );
+		if ( isLob ) {
+			basicValue.makeLob();
+		}
+		if ( isNationalized ) {
+			basicValue.makeNationalized();
+		}
+		basicValue.setSqlType( sqlTypeDescriptor );
+		basicValue.setJavaTypeDescriptor( javaDescriptor );
+		basicValue.setTypeUsingReflection( persistentClassName, propertyName );
 		basicValue.setJpaAttributeConverterDescriptor( converterDescriptor );
-	}
-
-	private static class BasicTypeResolverExplicitImpl implements BasicTypeResolver {
-		// todo (6.0) : ? shouldn't this be convertible as well?
-
-		private final MetadataBuildingContext buildingContext;
-		private final String name;
-		private final Map<String,String> parameters;
-
-		BasicTypeResolverExplicitImpl(
-				MetadataBuildingContext buildingContext,
-				Type typeAnn) {
-			this.buildingContext = buildingContext;
-			this.name = typeAnn.type();
-			if ( typeAnn.parameters().length > 0 ) {
-				this.parameters = new HashMap<>(  );
-				for ( Parameter param : typeAnn.parameters() ) {
-					this.parameters.put( param.name(), param.value() );
-				}
-			}
-			else {
-				parameters = Collections.emptyMap();
-			}
-		}
-
-		@Override
-		public <T> BasicType<T> resolveBasicType() {
-			// Name could refer to:
-			//		1) a registered TypeDef
-			//		2) basic type "resolution key"
-			//
-			final TypeDefinition typeDefinition = buildingContext.resolveTypeDefinition( name );
-			if ( typeDefinition != null ) {
-				return typeDefinition.resolveTypeResolver( parameters ).resolveBasicType();
-			}
-			else {
-				return buildingContext.getBootstrapContext().getTypeConfiguration()
-						.getBasicTypeRegistry().getBasicType( name );
-			}
-		}
-	}
-
-	private class BasicTypeResolverCollectionIdImpl extends BasicTypeResolverSupport {
-		private Class reflectedValueJavaType;
-
-		public BasicTypeResolverCollectionIdImpl(
-				MetadataBuildingContext buildingContext,
-				XProperty collectionAttributeDescriptor) {
-			super( buildingContext );
-
-			this.reflectedValueJavaType = buildingContext.getBootstrapContext()
-					.getReflectionManager()
-					.toClass( collectionAttributeDescriptor.getElementClass() );
-
-			// todo (6.0) : ? not yet sure how to do that because this actually comes from the owner - SecondPass probably?
-
-		}
-
-		@Override
-		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			throw new NotYetImplementedFor6Exception(  );
-		}
-
-		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			return null;
-		}
-
-		@Override
-		protected Class getReflectedValueJavaType() {
-			return reflectedValueJavaType;
-		}
-	}
-
-	private static class BasicTypeResolverMapKeyImpl
-			extends BasicTypeResolverConvertibleSupport
-			implements JdbcRecommendedSqlTypeMappingContext, BasicTypeParameters {
-		private final XProperty mapAttribute;
-
-		private final BasicJavaDescriptor javaDescriptor;
-		private final TemporalType temporalPrecision;
-		private final javax.persistence.EnumType enumType;
-		private final boolean isLob;
-		private final boolean isNationalized;
-
-		public BasicTypeResolverMapKeyImpl(
-				MetadataBuildingContext buildingContext,
-				ConverterDescriptor converterDescriptor,
-				XProperty mapAttribute,
-				boolean isLob,
-				boolean isNationalized) {
-			super( buildingContext, converterDescriptor );
-			this.mapAttribute = mapAttribute;
-			this.isLob = isLob;
-			// todo (6.0) : need a @MapKeyNationalized annotation, then read that here
-			this.isNationalized = isNationalized;
-
-
-			final Class javaType = buildingContext.getBootstrapContext()
-					.getReflectionManager()
-					.toClass( mapAttribute.getMapKey() );
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
-					.getTypeConfiguration()
-					.getJavaTypeDescriptorRegistry()
-					.getOrMakeJavaDescriptor( javaType );
-
-			final MapKeyType mapKeyTypeAnn = mapAttribute.getAnnotation( MapKeyType.class );
-			if ( mapKeyTypeAnn != null ) {
-				// See BasicTypeProducerRegistry registrations in StandardBasicTypes
-				//
-				// todo (6.0) : need to move those to MetadataBuildingContext
-				//		I like the idea too of having TypeDefs fold into that
-				throw new NotYetImplementedException( "see comment at throw site" );
-			}
-
-			final MapKeyTemporal mapKeyTemporalAnn = mapAttribute.getAnnotation( MapKeyTemporal.class );
-			if ( mapKeyTemporalAnn != null ) {
-				temporalPrecision = mapKeyTemporalAnn.value();
-			}
-			else {
-				temporalPrecision = null;
-			}
-
-			if ( javaType.isEnum() ) {
-				final MapKeyEnumerated enumeratedAnn = mapAttribute.getAnnotation( MapKeyEnumerated.class );
-				if ( enumeratedAnn == null ) {
-					enumType = javax.persistence.EnumType.ORDINAL;
-				}
-				else {
-					enumType = enumeratedAnn.value();
-					if ( enumType == null ) {
-						throw new IllegalStateException(
-								"javax.persistence.EnumType was null on @javax.persistence.MapKeyEnumerated " +
-										" associated with attribute " + mapAttribute.getDeclaringClass().getName() +
-										'.' + mapAttribute.getName()
-						);
-					}
-				}
-			}
-			else {
-				enumType = null;
-			}
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			return javaDescriptor;
-		}
-
-		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			return null;
-		}
-
-		@Override
-		protected Class getReflectedValueJavaType() {
-			return javaDescriptor.getJavaType();
-		}
-
-		@Override
-		public TemporalType getTemporalPrecision() {
-			return temporalPrecision;
-		}
-
-		@Override
-		public boolean isNationalized() {
-			return isNationalized;
-		}
-
-		@Override
-		public boolean isLob() {
-			return isLob;
-		}
-
-		@Override
-		public javax.persistence.EnumType getEnumeratedType() {
-			return enumType;
-		}
-	}
-
-	private static class BasicTypeResolverListIndexImpl
-			extends BasicTypeResolverSupport<Integer>
-			implements JdbcRecommendedSqlTypeMappingContext, BasicTypeParameters {
-		private final MetadataBuildingContext buildingContext;
-		private final XProperty listAttribute;
-
-		public BasicTypeResolverListIndexImpl(
-				MetadataBuildingContext buildingContext,
-				XProperty listAttribute) {
-			super( buildingContext );
-
-			this.buildingContext = buildingContext;
-			this.listAttribute = listAttribute;
-		}
-
-		@Override
-		protected void resolveJavaAndSqlTypeDescriptors() {
-			setJavaTypeDescriptor(
-					(BasicJavaDescriptor) getTypeConfiguration().getJavaTypeDescriptorRegistry()
-					.getOrMakeJavaDescriptor( Integer.class )
-			);
-			setSqlTypeDescriptor(
-					getJavaTypeDescriptor().getJdbcRecommendedSqlType( this )
-			);
-		}
-
-
-		@Override
-		protected Class<Integer> getReflectedValueJavaType() {
-			return getJavaTypeDescriptor() == null ? null : getJavaTypeDescriptor().getJavaType();
-		}
-
-		@Override
-		public TypeConfiguration getTypeConfiguration() {
-			return buildingContext.getBootstrapContext().getTypeConfiguration();
-		}
-	}
-
-	private static class BasicTypeResolverAttributeImpl
-			extends BasicTypeResolverConvertibleSupport
-			implements JdbcRecommendedSqlTypeMappingContext, BasicTypeParameters {
-
-		private final BasicJavaDescriptor javaDescriptor;
-		private final TemporalType temporalPrecision;
-		private final javax.persistence.EnumType enumType;
-		private final boolean isLob;
-		private final boolean isNationalized;
-
-		@SuppressWarnings("unchecked")
-		public BasicTypeResolverAttributeImpl(
-				MetadataBuildingContext buildingContext,
-				ConverterDescriptor converterDescriptor,
-				XProperty attributeDescriptor,
-				XClass elementJavaType,
-				boolean isLob,
-				boolean isNationalized) {
-			super( buildingContext, converterDescriptor );
-			this.isLob = isLob;
-			this.isNationalized = isNationalized;
-
-			final Class javaType = buildingContext.getBootstrapContext()
-					.getReflectionManager()
-					.toClass( elementJavaType );
-
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
-					.getTypeConfiguration()
-					.getJavaTypeDescriptorRegistry()
-					.getOrMakeJavaDescriptor( javaType );
-
-			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
-			if ( temporalAnn != null ) {
-				this.temporalPrecision = temporalAnn.value();
-				if ( this.temporalPrecision == null ) {
-					throw new IllegalStateException(
-							"No javax.persistence.TemporalType defined for @javax.persistence.Temporal " +
-									"associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
-									'.' + attributeDescriptor.getName()
-					);
-				}
-			}
-			else {
-				this.temporalPrecision = null;
-			}
-
-			if ( javaType.isEnum() ) {
-				final Enumerated enumeratedAnn = attributeDescriptor.getAnnotation( Enumerated.class );
-				if ( enumeratedAnn == null ) {
-					this.enumType = javax.persistence.EnumType.ORDINAL;
-				}
-				else {
-					this.enumType = enumeratedAnn.value();
-					if ( this.enumType == null ) {
-						throw new IllegalStateException(
-								"javax.persistence.EnumType was null on @javax.persistence.Enumerated " +
-										" associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
-										'.' + attributeDescriptor.getName()
-						);
-					}
-				}
-			}
-			else {
-				this.enumType = null;
-			}
-		}
-
-		@Override
-		public EnumType getEnumType() {
-			return super.getEnumType();
-		}
-
-		@Override
-		protected Class getReflectedValueJavaType() {
-			return getJavaTypeDescriptor().getJavaType();
-		}
-
-		@Override
-		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			return javaDescriptor;
-		}
-
-		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			return null;
-		}
-
-		@Override
-		public TemporalType getTemporalPrecision() {
-			return temporalPrecision;
-		}
-
-		@Override
-		public boolean isNationalized() {
-			return isNationalized;
-		}
-
-		@Override
-		public boolean isLob() {
-			return isLob;
-		}
-
-		@Override
-		public javax.persistence.EnumType getEnumeratedType() {
-			return enumType;
-		}
-	}
-
-	private class BasicTypeResolverCollectionElementImpl
-			extends BasicTypeResolverConvertibleSupport {
-		private final boolean isLob;
-		private final boolean isNationalized;
-
-		public BasicTypeResolverCollectionElementImpl(
-				MetadataBuildingContext buildingContext,
-				ConverterDescriptor converterDescriptor,
-				XProperty attributeDescriptor,
-				XClass elementJavaType,
-				boolean isLob,
-				boolean isNationalized) {
-			super( buildingContext, converterDescriptor );
-
-			this.isLob = isLob;
-			this.isNationalized = isNationalized;
-
-			final Class javaType = buildingContext.getBootstrapContext()
-					.getReflectionManager()
-					.toClass( elementJavaType );
-			javaDescriptor = (BasicJavaDescriptor) buildingContext.getBootstrapContext()
-					.getTypeConfiguration()
-					.getJavaTypeDescriptorRegistry()
-					.getOrMakeJavaDescriptor( javaType );
-
-			final Temporal temporalAnn = attributeDescriptor.getAnnotation( Temporal.class );
-			if ( temporalAnn != null ) {
-				temporalPrecision = temporalAnn.value();
-				if ( temporalPrecision == null ) {
-					throw new IllegalStateException(
-							"No javax.persistence.TemporalType defined for @javax.persistence.Temporal " +
-									"associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
-									'.' + attributeDescriptor.getName()
-					);
-				}
-			}
-			else {
-				temporalPrecision = null;
-			}
-
-			if ( javaType.isEnum() ) {
-				final Enumerated enumeratedAnn = attributeDescriptor.getAnnotation( Enumerated.class );
-				if ( enumeratedAnn == null ) {
-					enumType = javax.persistence.EnumType.ORDINAL;
-				}
-				else {
-					enumType = enumeratedAnn.value();
-					if ( enumType == null ) {
-						throw new IllegalStateException(
-								"javax.persistence.EnumType was null on @javax.persistence.Enumerated " +
-										" associated with attribute " + attributeDescriptor.getDeclaringClass().getName() +
-										'.' + attributeDescriptor.getName()
-						);
-					}
-				}
-			}
-			else {
-				enumType = null;
-			}
-		}
-
-		@Override
-		protected Class getReflectedValueJavaType() {
-			return getJavaTypeDescriptor().getJavaType();
-		}
-
-		@Override
-		public BasicJavaDescriptor getJavaTypeDescriptor() {
-			return javaDescriptor;
-		}
-
-		@Override
-		public SqlTypeDescriptor getSqlTypeDescriptor() {
-			return null;
-		}
-
-		@Override
-		public TemporalType getTemporalPrecision() {
-			return temporalPrecision;
-		}
-
-		@Override
-		public boolean isNationalized() {
-			return isNationalized;
-		}
-
-		@Override
-		public boolean isLob() {
-			return isLob;
-		}
-
-		@Override
-		public javax.persistence.EnumType getEnumeratedType() {
-			return enumType;
-		}
 	}
 }

@@ -6,8 +6,6 @@
  */
 package org.hibernate.boot.model.domain;
 
-import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
-
 /**
  * Contract for identifiable java type mappings, which is taken from the JPA term for commonality
  * between entity and "mapped superclass" types.
@@ -20,10 +18,4 @@ public interface IdentifiableJavaTypeMapping<T> extends ManagedJavaTypeMapping<T
 	 */
 	@Override
 	IdentifiableJavaTypeMapping<? super T> getSuperType();
-
-	/**
-	 * Overriden to further qualify the resolved {@link JavaTypeDescriptor} as an identifiable descriptor.
-	 */
-	@Override
-	IdentifiableJavaDescriptor<T> resolveJavaTypeDescriptor();
 }

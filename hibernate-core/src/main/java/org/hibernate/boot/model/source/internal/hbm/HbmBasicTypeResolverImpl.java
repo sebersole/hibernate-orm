@@ -6,15 +6,14 @@
  */
 package org.hibernate.boot.model.source.internal.hbm;
 
-import java.util.Comparator;
 import javax.persistence.EnumType;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.source.spi.HibernateTypeSource;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cfg.BasicTypeResolverSupport;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -38,7 +37,7 @@ public class HbmBasicTypeResolverImpl extends BasicTypeResolverSupport
 	}
 
 	@Override
-	public BasicType resolveBasicType() {
+	public BasicType resolveBasicType(ResolutionContext context) {
 		return getTypeConfiguration().getBasicTypeRegistry().resolveBasicType( this, this );
 	}
 
@@ -64,19 +63,7 @@ public class HbmBasicTypeResolverImpl extends BasicTypeResolverSupport
 	}
 
 	@Override
-	public Comparator getComparator() {
-		// not supported
-		return null;
-	}
-
-	@Override
 	public TemporalType getTemporalPrecision() {
-		// not supported
-		return null;
-	}
-
-	@Override
-	public MutabilityPlan getMutabilityPlan() {
 		// not supported
 		return null;
 	}

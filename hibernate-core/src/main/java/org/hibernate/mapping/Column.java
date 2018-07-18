@@ -8,20 +8,24 @@ package org.hibernate.mapping;
 
 import java.io.Serializable;
 import java.util.Locale;
+import java.util.function.Supplier;
 
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.metamodel.model.relational.spi.Size;
+import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.sql.Template;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
-import static org.hibernate.mapping.SimpleValue.TypeDescriptorResolver;
+import org.jboss.logging.Logger;
 
 /**
  * A column of a relational database table
@@ -32,8 +36,8 @@ public class Column implements Selectable, Serializable, Cloneable {
 	private Identifier tableName;
 	private Identifier name;
 
-	private SqlTypeDescriptor sqlTypeDescriptor;
-	private TypeDescriptorResolver typeDescriptorResolver;
+	private Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess;
+	private JavaTypeMapping javaTypeMapping;
 
 	private String sqlType;
 
@@ -164,7 +168,7 @@ public class Column implements Selectable, Serializable, Cloneable {
 	public String toString() {
 		return String.format(
 				Locale.ROOT,
-				"Boot-model (Physical)Column : %s.%s",
+				"Boot-model physical Column : %s.%s",
 				getTableName(),
 				getName()
 		);
@@ -215,30 +219,48 @@ public class Column implements Selectable, Serializable, Cloneable {
 
 	@Override
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
-		if ( sqlTypeDescriptor == null ) {
-			sqlTypeDescriptor = typeDescriptorResolver.resolveSqlTypeDescriptor();
-		}
-		return sqlTypeDescriptor;
+		return sqlTypeDescriptorAccess.get();
 	}
 
-	protected JavaTypeDescriptor getJavaTypeDescriptor() {
-		return typeDescriptorResolver.resolveJavaTypeDescriptor();
-	}
-
-	public void setTypeDescriptorResolver(TypeDescriptorResolver typeDescriptorResolver) {
-		this.typeDescriptorResolver = typeDescriptorResolver;
+	protected BasicJavaDescriptor getJavaTypeDescriptor() {
+		return (BasicJavaDescriptor) javaTypeMapping.getJavaTypeDescriptor();
 	}
 
 	@Override
+	public void setSqlTypeDescriptorAccess(Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess) {
+		this.sqlTypeDescriptorAccess = sqlTypeDescriptorAccess;
+	}
+
+	@Override
+	public Supplier<SqlTypeDescriptor> getSqlTypeDescriptorAccess() {
+		return sqlTypeDescriptorAccess;
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
+	}
+
+	@Override
+	public void setJavaTypeMapping(JavaTypeMapping javaTypeMapping) {
+		this.javaTypeMapping = javaTypeMapping;
+	}
+
+	private static final Logger log = Logger.getLogger( Column.class );
+
+	@Override
 	public org.hibernate.metamodel.model.relational.spi.PhysicalColumn generateRuntimeColumn(
-			org.hibernate.metamodel.model.relational.spi.Table runtimeTable,
+			Table runtimeTable,
 			PhysicalNamingStrategy namingStrategy,
-			JdbcEnvironment jdbcEnvironment) {
+			JdbcEnvironment jdbcEnvironment,
+			TypeConfiguration typeConfiguration) {
 
 		final Identifier physicalName = namingStrategy.toPhysicalColumnName(
 				getName(),
 				jdbcEnvironment
 		);
+
+		log.debugf( "Creating runtime column `%s.%s`", runtimeTable.getTableExpression(), physicalName.getText()  );
 
 		final Dialect dialect = jdbcEnvironment.getDialect();
 		Size size = new Size.Builder().setLength( getLength() )
@@ -258,10 +280,14 @@ public class Column implements Selectable, Serializable, Cloneable {
 			columnSqlType = dialect.getTypeName( getSqlTypeDescriptor().getJdbcTypeCode(), size );
 		}
 
+		final SqlTypeDescriptor sqlTypeDescriptor = getSqlTypeDescriptor();
+		final BasicJavaDescriptor javaTypeDescriptor = getJavaTypeDescriptor();
+
 		final PhysicalColumn column = new PhysicalColumn(
 				runtimeTable,
 				physicalName,
-				getSqlTypeDescriptor(),
+				() -> sqlTypeDescriptor,
+				() -> javaTypeDescriptor,
 				getDefaultValue(),
 				columnSqlType,
 				isNullable(),
@@ -343,7 +369,8 @@ public class Column implements Selectable, Serializable, Cloneable {
 		copy.setDefaultValue( defaultValue );
 		copy.setCustomRead( customRead );
 		copy.setCustomWrite( customWrite );
-		copy.setTypeDescriptorResolver( typeDescriptorResolver );
+		copy.setSqlTypeDescriptorAccess( sqlTypeDescriptorAccess );
+		copy.setJavaTypeMapping( javaTypeMapping );
 		return copy;
 	}
 

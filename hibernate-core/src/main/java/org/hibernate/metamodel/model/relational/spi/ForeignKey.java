@@ -6,11 +6,20 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.hibernate.id.uuid.LocalObjectUuidHelper;
 import org.hibernate.internal.util.StringHelper;
+import org.hibernate.internal.util.collections.streams.GenericArrayCollector;
+import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
+import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
+import org.hibernate.metamodel.model.relational.internal.InflightTable;
+
+import static org.hibernate.mapping.Constraint.hashedName;
 
 /**
  * @author Steve Ebersole
@@ -161,5 +170,84 @@ public class ForeignKey implements Exportable {
 	public int hashCode() {
 
 		return Objects.hash( name, referringTable );
+	}
+
+	public static class Builder {
+		private final String name;
+		private final boolean export;
+		private final boolean referenceToPrimaryKey;
+		private final boolean cascadeDeletes;
+		private  final String explicitDefinition;
+		private final Table referringTable;
+		private final Table targetTable;
+
+		private final List<ColumnMappings.ColumnMapping> columnMappings = new ArrayList<>();
+
+		public Builder(
+				String name,
+				boolean export,
+				boolean referenceToPrimaryKey,
+				boolean cascadeDeletes, String explicitDefinition,
+				Table referringTable,
+				Table targetTable) {
+			this.name = name;
+			this.export = export;
+			this.referenceToPrimaryKey = referenceToPrimaryKey;
+			this.cascadeDeletes = cascadeDeletes;
+			this.explicitDefinition = explicitDefinition;
+			this.referringTable = referringTable;
+			this.targetTable = targetTable;
+		}
+
+		public ForeignKey build() {
+			final String name = StringHelper.isEmpty( this.name )
+					? generateSyntheticName( referringTable, columnMappings, export )
+					: this.name;
+
+			return ( (InflightTable) referringTable ).createForeignKey(
+					name,
+					export,
+					explicitDefinition,
+					cascadeDeletes,
+					referenceToPrimaryKey,
+					targetTable,
+					new ColumnMappingsImpl(
+							referringTable,
+							targetTable,
+							columnMappings
+					)
+			);
+		}
+
+		private static String generateSyntheticName(Table referringTable, List<ColumnMappings.ColumnMapping> columnMappings, boolean export) {
+			if ( ! export || ! ( referringTable instanceof PhysicalTable ) ) {
+				return LocalObjectUuidHelper.generateLocalObjectUuid();
+			}
+
+			final StringBuilder sb = new StringBuilder( "table`" + ( (PhysicalTable) referringTable ).getTableName().getText() + "`" );
+
+			// Ensure a consistent ordering of columns, regardless of the order
+			// they were bound.
+			// Clone the list, as sometimes a set of order-dependent Column
+			// bindings are given.
+			final Column[] alphabeticalColumns = columnMappings.stream()
+					.map( ColumnMappings.ColumnMapping::getReferringColumn )
+					.collect( GenericArrayCollector.forType( Column.class ) );
+
+			Arrays.sort( alphabeticalColumns, Column.COLUMN_COMPARATOR );
+
+			for ( Column column : alphabeticalColumns ) {
+				String columnName = column == null ? "" : column.getExpression();
+				sb.append( "column`" ).append( columnName ).append( "`" );
+			}
+			return "FK_" + hashedName( sb.toString() );
+		}
+
+		public void addColumnMapping(Column referringColumn, Column targetColumn) {
+			assert referringColumn.getSourceTable() == referringTable;
+			assert targetColumn.getSourceTable() == targetTable;
+
+			columnMappings.add( new ColumnMappingImpl( referringColumn,targetColumn ) );
+		}
 	}
 }

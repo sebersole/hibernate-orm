@@ -129,7 +129,7 @@ public class ListBinder extends CollectionBinder {
 			if ( list.isOneToMany() && !list.getKey().isNullable() && !list.isInverse() ) {
 				String entityName = ( (OneToMany) list.getElement() ).getReferencedEntityName();
 				PersistentClass referenced = buildingContext.getMetadataCollector().getEntityBinding( entityName );
-				IndexBackref ib = new IndexBackref();
+				IndexBackref ib = new IndexBackref( buildingContext );
 				ib.setName( '_' + propertyName + "IndexBackref" );
 				ib.setUpdateable( false );
 				ib.setSelectable( false );
