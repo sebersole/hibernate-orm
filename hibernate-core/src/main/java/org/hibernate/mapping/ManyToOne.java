@@ -12,6 +12,7 @@ import java.util.Locale;
 import org.hibernate.HibernateError;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
@@ -45,7 +46,13 @@ public class ManyToOne extends ToOne {
 
 	@Override
 	public Boolean resolve(ResolutionContext context) {
-		getJavaTypeMapping().getJavaTypeDescriptor();
+		try {
+			getJavaTypeMapping().getJavaTypeDescriptor();
+		}
+		catch ( NotYetResolvedException e ) {
+			// ignored, we need to re-resolve this later due to dependency.
+			return false;
+		}
 
 		final MappedForeignKey foreignKey = getForeignKey();
 

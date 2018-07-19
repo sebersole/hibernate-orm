@@ -1419,6 +1419,8 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			processNaturalIdUniqueKeyBinders();
 
 			processCachingOverrides();
+
+			finalizeBootModel();
 		}
 		finally {
 			inSecondPass = false;
@@ -1988,7 +1990,6 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 	 */
 	public MetadataImpl buildMetadataInstance(MetadataBuildingContext buildingContext) {
 		processSecondPasses( buildingContext );
-		finalizeBootModel( );
 
 		try {
 			return new MetadataImpl(
@@ -2036,6 +2037,7 @@ public class InFlightMetadataCollectorImpl implements InFlightMetadataCollector 
 			}
 		}
 		processExportableProducers();
+		valueMappingResolvers.clear();
 	}
 
 	public static class ResolutionContextImpl implements ResolutionContext{
