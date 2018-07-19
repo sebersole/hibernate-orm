@@ -207,12 +207,10 @@ public class BasicValue
 			}
 		}
 
-		MappedColumn mappedColumn = getMappedColumn();
-		if ( mappedColumn instanceof Column ) {
-			Column column = (Column) mappedColumn;
-			column.setJavaTypeMapping( javaTypeMapping );
-			column.setSqlTypeDescriptorAccess( () -> basicType.getSqlTypeDescriptor() );
-		}
+		MappedColumn column = getMappedColumn();
+		column.setJavaTypeMapping( javaTypeMapping );
+		column.setSqlTypeDescriptorAccess( () -> basicType.getSqlTypeDescriptor() );
+
 		return true;
 	}
 

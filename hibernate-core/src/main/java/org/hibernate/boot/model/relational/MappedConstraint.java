@@ -8,9 +8,6 @@ package org.hibernate.boot.model.relational;
 
 import java.util.List;
 
-import org.hibernate.mapping.Column;
-import org.hibernate.mapping.Selectable;
-
 /**
  * Contract for a relational constraint.
  *
@@ -47,14 +44,14 @@ public interface MappedConstraint {
 	/**
 	 * Get the columns associated with the constraint.
 	 */
-	List<Column> getColumns();
+	List<MappedColumn> getColumns();
 
 	/**
 	 * Add a column to the constraint.
 	 *
 	 * @param column The column
 	 */
-	void addColumn(Selectable column);
+	void addColumn(MappedColumn column);
 
 	/**
 	 * Add a list fo columns to the constraint.
@@ -68,7 +65,7 @@ public interface MappedConstraint {
 	 *
 	 * @param columnIndex The column index.
 	 */
-	Column getColumn(int columnIndex);
+	MappedColumn getColumn(int columnIndex);
 
 	/**
 	 * Returns the string prefix to use in generated constraint names.

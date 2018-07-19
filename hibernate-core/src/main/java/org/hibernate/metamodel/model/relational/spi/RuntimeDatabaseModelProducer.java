@@ -26,6 +26,7 @@ import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
+import org.hibernate.mapping.Selectable;
 import org.hibernate.metamodel.model.creation.spi.DatabaseObjectResolver;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
@@ -185,8 +186,8 @@ public class RuntimeDatabaseModelProducer {
 
 						final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappingList = new ArrayList<>();
 
-						final List<org.hibernate.mapping.Column> bootReferringColumns = bootFk.getColumns();
-						final List<org.hibernate.mapping.Column> bootTargetColumns = bootFk.getTargetColumns();
+						final List<MappedColumn> bootReferringColumns = bootFk.getColumns();
+						final List<MappedColumn> bootTargetColumns = bootFk.getTargetColumns();
 						assertSameNumberOfFkColumns( bootReferringColumns, bootTargetColumns );
 
 						for ( int i = 0, end = bootReferringColumns.size(); i < end; i++ ) {
@@ -273,7 +274,7 @@ public class RuntimeDatabaseModelProducer {
 			}
 		}
 
-		private Column resolveRuntimeColumn(org.hibernate.mapping.Selectable bootColumn) {
+		private Column resolveRuntimeColumn(MappedColumn bootColumn) {
 			return dbObjectResolver.resolveColumn( bootColumn );
 		}
 

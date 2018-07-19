@@ -47,7 +47,7 @@ public abstract class SimpleValue implements KeyValue {
 
 	public static final String DEFAULT_ID_GEN_STRATEGY = "assigned";
 
-	protected final List<Selectable> columns = new ArrayList<>();
+	protected final List<MappedColumn> columns = new ArrayList<>();
 	protected String typeName;
 	protected Properties typeParameters;
 	protected MappedTable table;
@@ -103,8 +103,8 @@ public abstract class SimpleValue implements KeyValue {
 
 	@Override
 	public boolean hasFormula() {
-		for ( MappedColumn selectable : getMappedColumns() ) {
-			if ( selectable.isFormula() ) {
+		for ( MappedColumn column : getMappedColumns() ) {
+			if ( column.isFormula() ) {
 				return true;
 			}
 		}
@@ -121,7 +121,7 @@ public abstract class SimpleValue implements KeyValue {
 		return Collections.unmodifiableList( columns );
 	}
 
-	public List<Selectable> getConstraintColumns() {
+	public List<MappedColumn> getConstraintColumns() {
 		return columns;
 	}
 

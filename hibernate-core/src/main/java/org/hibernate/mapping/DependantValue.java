@@ -12,6 +12,7 @@ import java.util.List;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
@@ -53,7 +54,7 @@ public class DependantValue extends SimpleValue {
 
 	@Override
 	public Boolean resolve(ResolutionContext context) {
-		Iterator<Selectable> columnsIterator = columns.iterator();
+		Iterator<MappedColumn> columnsIterator = columns.iterator();
 		List<Column> wrappedValueColumns = wrappedValue.getMappedColumns();
 		for ( Column wrappedValueColumn : wrappedValueColumns ) {
 			if ( wrappedValueColumn.getJavaTypeMapping() == null ) {

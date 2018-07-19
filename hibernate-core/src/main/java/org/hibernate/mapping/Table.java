@@ -31,6 +31,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.env.spi.QualifiedObjectNameFormatter;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
+import org.hibernate.internal.util.JavaTypeHelper;
 import org.hibernate.metamodel.model.relational.internal.InflightTable;
 import org.hibernate.metamodel.model.relational.spi.DerivedTable;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
@@ -266,14 +267,17 @@ public class Table implements MappedTable<Column>, Serializable {
 		Column old = getColumn( column );
 		if ( old == null ) {
 			if ( primaryKey != null ) {
-				for ( Column c : primaryKey.getColumns() ) {
-					if ( c.getCanonicalName().equals( column.getCanonicalName() ) ) {
-						column.setNullable( false );
-						log.debugf(
-								"Forcing column [%s] to be non-null as it is part of the primary key for table [%s]",
-								column.getCanonicalName(),
-								getNameIdentifier().getCanonicalName()
-						);
+				for ( MappedColumn pkColumn : primaryKey.getColumns() ) {
+					if ( !pkColumn.isFormula() ) {
+						Column c = (Column) pkColumn;
+						if ( c.getCanonicalName().equals( column.getCanonicalName() ) ) {
+							column.setNullable( false );
+							log.debugf(
+									"Forcing column [%s] to be non-null as it is part of the primary key for table [%s]",
+									column.getCanonicalName(),
+									getNameIdentifier().getCanonicalName()
+							);
+						}
 					}
 				}
 			}
@@ -493,7 +497,8 @@ public class Table implements MappedTable<Column>, Serializable {
 
 	@Override
 	public MappedUniqueKey createUniqueKey(List<Column> keyColumns) {
-		String keyName = Constraint.generateName( "UK_", this, keyColumns );
+		List<MappedColumn> columns = JavaTypeHelper.cast( keyColumns );
+		String keyName = Constraint.generateName( "UK_", this, columns );
 		MappedUniqueKey uk = getOrCreateUniqueKey( keyName );
 		uk.addColumns( keyColumns );
 		return uk;
@@ -799,12 +804,11 @@ public class Table implements MappedTable<Column>, Serializable {
 
 		if ( getPrimaryKey() != null ) {
 			PrimaryKey runtimeTablePrimaryKey = new PrimaryKey( runtimeTable );
-			for ( Column mappedColumn : getPrimaryKey().getColumns() ) {
-				final org.hibernate.metamodel.model.relational.spi.Column column = tableColumnXref.get( mappedColumn );
-				if ( !PhysicalColumn.class.isInstance( column ) ) {
+			for ( MappedColumn mappedColumn : getPrimaryKey().getColumns() ) {
+				if ( mappedColumn.isFormula() ) {
 					throw new MappingException( "FK column must be a physical column" );
 				}
-				runtimeTablePrimaryKey.addColumn( (PhysicalColumn) column );
+				runtimeTablePrimaryKey.addColumn( (PhysicalColumn) tableColumnXref.get( mappedColumn ) );
 				runtimeTable.addPrimaryKey( runtimeTablePrimaryKey );
 			}
 			callback.primaryKeyBuilt( primaryKey, runtimeTable.getPrimaryKey() );
@@ -812,11 +816,11 @@ public class Table implements MappedTable<Column>, Serializable {
 		getUniqueKeys().forEach( bootUk -> {
 			final org.hibernate.metamodel.model.relational.spi.UniqueKey runtimeUk = runtimeTable.createUniqueKey(
 					bootUk.getName() );
-			for ( Column mappedColumn : bootUk.getColumns() ) {
-				final org.hibernate.metamodel.model.relational.spi.Column column = tableColumnXref.get( mappedColumn );
-				if ( !PhysicalColumn.class.isInstance( column ) ) {
+			for ( MappedColumn mappedColumn : bootUk.getColumns() ) {
+				if ( mappedColumn.isFormula() ) {
 					throw new MappingException( "UK column must be a physical column" );
 				}
+				final org.hibernate.metamodel.model.relational.spi.Column column = tableColumnXref.get( mappedColumn );
 				runtimeUk.addColumn( (PhysicalColumn) column, bootUk.getColumnOrderMap().get( column ) );
 			}
 			callback.uniqueKeyBuilt( bootUk, runtimeUk );

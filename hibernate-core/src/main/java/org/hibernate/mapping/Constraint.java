@@ -11,10 +11,10 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.relational.MappedColumn;
@@ -31,7 +31,7 @@ import org.hibernate.dialect.Dialect;
 public abstract class Constraint implements MappedConstraint, Serializable {
 
 	private String name;
-	private final ArrayList<Selectable> columns = new ArrayList<>();
+	private final List<MappedColumn> columns = new ArrayList<>();
 	private MappedTable table;
 
 	private boolean creationEnabled = true;
@@ -63,7 +63,16 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 	 *
 	 * @return String The generated name
 	 */
-	public static String generateName(String prefix, MappedTable table, Column... columns) {
+	public static String generateName(String prefix, MappedTable table, List<MappedColumn> mappedColumns) {
+		final List<Column> columns = mappedColumns.stream()
+				.filter( column -> !column.isFormula() )
+				.map( Column.class::cast )
+				.collect( Collectors.toList() );
+
+		return generateNameFromColumns( prefix, table, columns );
+	}
+
+	private static String generateNameFromColumns(String prefix, MappedTable table, List<Column> columns) {
 		// Use a concatenation that guarantees uniqueness, even if identical names
 		// exist between all table and column identifiers.
 
@@ -73,22 +82,13 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 		// they were bound.
 		// Clone the list, as sometimes a set of order-dependent Column
 		// bindings are given.
-		Column[] alphabeticalColumns = columns.clone();
-		Arrays.sort( alphabeticalColumns, ColumnComparator.INSTANCE );
+		List<Column> alphabeticalColumns = new ArrayList<>( columns );
+		alphabeticalColumns.sort( ColumnComparator.INSTANCE );
 		for ( Column column : alphabeticalColumns ) {
 			String columnName = column == null ? "" : column.getName().getText();
 			sb.append( "column`" ).append( columnName ).append( "`" );
 		}
 		return prefix + hashedName( sb.toString() );
-	}
-
-	/**
-	 * Helper method for {@link #generateName(String, MappedTable, Column...)} .
-	 *
-	 * @return String The generated name
-	 */
-	public static String generateName(String prefix, MappedTable table, List<Column> columns) {
-		return generateName( prefix, table, columns.toArray( new Column[columns.size()] ) );
 	}
 
 	/**
@@ -127,18 +127,18 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 	}
 
 	/**
-	 * @deprecated Use {@link Constraint#addColumn(org.hibernate.mapping.Selectable)}
+	 * @deprecated Use {@link Constraint#addColumn(MappedColumn)}
 	 * instead.  We want to create "logical constraints", regardless of whether they
 	 * are "exportable" (a real, physical constraint).  So we open up the type of
 	 * "columns" we accept here.
 	 */
 	@Deprecated
 	public void addColumn(Column column) {
-		addColumn( (Selectable) column );
+		addColumn( (MappedColumn) column );
 	}
 
 	@Override
-	public void addColumn(Selectable column) {
+	public void addColumn(MappedColumn column) {
 		if ( !columns.contains( column ) ) {
 			columns.add( column );
 
@@ -154,8 +154,7 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 	@Deprecated
 	public void addColumns(Iterator columnIterator) {
 		while ( columnIterator.hasNext() ) {
-			Selectable col = (Selectable) columnIterator.next();
-			addColumn( col );
+			addColumn( (MappedColumn) columnIterator.next() );
 		}
 	}
 
@@ -176,29 +175,9 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 		return (Column) columns.get( i );
 	}
 
-	/**
-	 *todo (6.0) : remove this
-	 *
-	 * @deprecated Try to remove in 6.0
-	 */
-	@Deprecated
-	public Iterator<Column> getColumnIterator() {
-		return cast( columns.iterator() );
-	}
-
 	@SuppressWarnings("unchecked")
 	<T> Iterator<T> cast(Iterator itr) {
 		return itr;
-	}
-
-	/**
-	 * todo (6.0) : remove this
-	 *
-	 * @deprecated Try to remove in 6.0
-	 */
-	@Deprecated
-	public Iterator<Column> columnIterator() {
-		return getColumnIterator();
 	}
 
 	/**
@@ -232,7 +211,7 @@ public abstract class Constraint implements MappedConstraint, Serializable {
 	}
 
 	@Override
-	public List<Column> getColumns() {
+	public List<MappedColumn> getColumns() {
 		return cast( columns );
 	}
 

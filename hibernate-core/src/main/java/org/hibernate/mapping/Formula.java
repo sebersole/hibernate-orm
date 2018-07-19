@@ -8,7 +8,9 @@ package org.hibernate.mapping;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.function.Supplier;
 
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.internal.util.StringHelper;
@@ -28,7 +30,8 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class Formula implements Selectable, Serializable {
 
 	private String formula;
-	private SqlTypeDescriptor sqlTypeDescriptor;
+	private Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess;
+	private JavaTypeMapping javaTypeMapping;
 
 	public Formula(String formula) {
 		this.formula = formula;
@@ -51,8 +54,23 @@ public class Formula implements Selectable, Serializable {
 	}
 
 	@Override
+	public void setSqlTypeDescriptorAccess(Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess) {
+		this.sqlTypeDescriptorAccess = sqlTypeDescriptorAccess;
+	}
+
+	@Override
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
-		return sqlTypeDescriptor;
+		return sqlTypeDescriptorAccess.get();
+	}
+
+	@Override
+	public JavaTypeMapping getJavaTypeMapping() {
+		return javaTypeMapping;
+	}
+
+	@Override
+	public void setJavaTypeMapping(JavaTypeMapping javaTypeMapping) {
+		this.javaTypeMapping = javaTypeMapping;
 	}
 
 	@Override
@@ -61,7 +79,7 @@ public class Formula implements Selectable, Serializable {
 			PhysicalNamingStrategy namingStrategy,
 			JdbcEnvironment jdbcEnvironment,
 			TypeConfiguration typeConfiguration) {
-		return new DerivedColumn( runtimeTable, formula, sqlTypeDescriptor );
+		return new DerivedColumn( runtimeTable, formula, getSqlTypeDescriptor() );
 	}
 
 	public String getFormula() {

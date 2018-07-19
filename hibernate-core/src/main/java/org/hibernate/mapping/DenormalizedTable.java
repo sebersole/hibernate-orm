@@ -21,6 +21,7 @@ import org.hibernate.boot.model.relational.MappedNamespace;
 import org.hibernate.boot.model.relational.MappedPrimaryKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.model.relational.MappedUniqueKey;
+import org.hibernate.internal.util.JavaTypeHelper;
 import org.hibernate.naming.Identifier;
 
 /**
@@ -131,7 +132,7 @@ public class DenormalizedTable extends Table implements DenormalizedMappedTable<
 
 	@Override
 	public Collection<MappedUniqueKey> getUniqueKeys() {
-		includedTable.getUniqueKeys().forEach( uniqueKey -> createUniqueKey( uniqueKey.getColumns() ) );
+		includedTable.getUniqueKeys().forEach( uniqueKey -> createUniqueKey( JavaTypeHelper.cast( uniqueKey.getColumns() ) ) );
 		return super.getUniqueKeys();
 	}
 

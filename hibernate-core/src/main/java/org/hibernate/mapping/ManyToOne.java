@@ -14,6 +14,7 @@ import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.NotYetResolvedException;
 import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -60,12 +61,12 @@ public class ManyToOne extends ToOne {
 			return false;
 		}
 
-		final Iterator<Column> targetColumnItr = foreignKey.getTargetColumns().iterator();
+		final Iterator<MappedColumn> targetColumnItr = foreignKey.getTargetColumns().iterator();
 
-		for ( Column column : foreignKey.getColumns() ) {
+		for ( MappedColumn column : foreignKey.getColumns() ) {
 			assert targetColumnItr.hasNext();
 
-			final Column targetColumn = targetColumnItr.next();
+			final MappedColumn targetColumn = targetColumnItr.next();
 			if ( targetColumn.getJavaTypeMapping() == null ) {
 				return false;
 			}

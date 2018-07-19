@@ -659,7 +659,7 @@ public class ModelBinder {
 					int count = 0;
 					@Override
 					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						final Column column = primaryTable.getPrimaryKey().getColumn( count++ );
+						final Column column = (Column) primaryTable.getPrimaryKey().getColumn( count++ );
 						return column.getName();
 					}
 				}
@@ -1857,7 +1857,9 @@ public class ModelBinder {
 					int count = 0;
 					@Override
 					public Identifier determineImplicitName(LocalMetadataBuildingContext context) {
-						final Column correspondingColumn = entityTableXref.getPrimaryTable().getPrimaryKey().getColumn( count++ );
+						final Column correspondingColumn = (Column) entityTableXref.getPrimaryTable()
+								.getPrimaryKey()
+								.getColumn( count++ );
 						return database.toIdentifier( correspondingColumn.getQuotedName() );
 					}
 				}

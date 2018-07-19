@@ -31,7 +31,7 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	private String referencedEntityName;
 	private String keyDefinition;
 	private boolean cascadeDeleteEnabled;
-	private List<Column> referencedColumns = new ArrayList<>();
+	private List<MappedColumn> referencedColumns = new ArrayList<>();
 
 	public ForeignKey() {
 	}
@@ -166,12 +166,12 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 	 * Returns the referenced columns if the foreignkey does not refer to the primary key
 	 */
 	@Override
-	public List getReferencedColumns() {
+	public List<MappedColumn> getReferencedColumns() {
 		return referencedColumns;
 	}
 
 	@Override
-	public List<Column> getTargetColumns() {
+	public List<MappedColumn> getTargetColumns() {
 		if ( referencedColumns != null && !referencedColumns.isEmpty() ) {
 			return referencedColumns;
 		}
@@ -240,41 +240,46 @@ public class ForeignKey extends Constraint implements MappedForeignKey {
 			String constraintName,
 			String defaultCatalog,
 			String defaultSchema) {
-		String[] columnNames = new String[getColumnSpan()];
-		String[] referencedColumnNames = new String[getColumnSpan()];
+		if ( isCreationEnabled() ) {
+			String[] columnNames = new String[getColumnSpan()];
+			String[] referencedColumnNames = new String[getColumnSpan()];
 
-		final List<Column> targetColumns = getTargetColumns();
+			final List<MappedColumn> targetColumns = getTargetColumns();
 
-		final List<Column> referencingColumns = getColumns();
-		for ( int i = 0; i < referencingColumns.size(); i++ ) {
-			columnNames[i] = referencingColumns.get( i ).getName().render( dialect );
-			referencedColumnNames[i] = targetColumns.get( i ).getName().render( dialect );
+			final List<MappedColumn> referencingColumns = getColumns();
+			for ( int i = 0; i < referencingColumns.size(); i++ ) {
+				columnNames[i] = ( (Column) referencingColumns.get( i ) ).getName().render( dialect );
+				referencedColumnNames[i] = ( (Column) targetColumns.get( i ) ).getName().render( dialect );
+			}
+
+			final String result = keyDefinition != null
+					? dialect.getAddForeignKeyConstraintString(
+					constraintName,
+					keyDefinition
+			)
+					: dialect.getAddForeignKeyConstraintString(
+					constraintName,
+					columnNames,
+					// Don't pull this `#getQualifiedName` up to MappedTable - it is only
+					// 		used from legacy schema-management tooling using the boot-model.
+					//
+					//		1) it
+					( (Table) referencedTable ).getQualifiedName(
+							dialect,
+							defaultCatalog,
+							defaultSchema
+					),
+					referencedColumnNames,
+					isReferenceToPrimaryKey()
+			);
+
+			return cascadeDeleteEnabled && dialect.supportsCascadeDelete()
+					? result + " on delete cascade"
+					: result;
 		}
-
-		final String result = keyDefinition != null
-				? dialect.getAddForeignKeyConstraintString(
-						constraintName,
-						keyDefinition
-				)
-				: dialect.getAddForeignKeyConstraintString(
-						constraintName,
-						columnNames,
-						// Don't pull this `#getQualifiedName` up to MappedTable - it is only
-						// 		used from legacy schema-management tooling using the boot-model.
-						//
-						//		1) it
-						( (Table) referencedTable ).getQualifiedName(
-								dialect,
-								defaultCatalog,
-								defaultSchema
-						),
-						referencedColumnNames,
-						isReferenceToPrimaryKey()
-				);
-
-		return cascadeDeleteEnabled && dialect.supportsCascadeDelete()
-				? result + " on delete cascade"
-				: result;
+		else {
+			throw new MappingException( "A Sql constrain string cannot be created, the fk creation is disabled" );
+		}
 	}
 
 

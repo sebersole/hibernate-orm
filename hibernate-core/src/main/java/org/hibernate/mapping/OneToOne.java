@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.boot.model.domain.ResolutionContext;
+import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.ForeignKeyDirection;
@@ -98,11 +99,11 @@ public class OneToOne extends ToOne {
 		// conversely, we assume here that this side does own the FK
 		//		so we manage the cross-column config
 
-		final Iterator<Column> targetColumnItr = foreignKey.getTargetColumns().iterator();
-		for ( Column column : foreignKey.getColumns() ) {
+		final Iterator<MappedColumn> targetColumnItr = foreignKey.getTargetColumns().iterator();
+		for ( MappedColumn column : foreignKey.getColumns() ) {
 			assert targetColumnItr.hasNext();
 
-			final Column targetColumn = targetColumnItr.next();
+			final MappedColumn targetColumn = targetColumnItr.next();
 			if ( targetColumn.getJavaTypeMapping() == null ) {
 				return false;
 			}
@@ -114,9 +115,9 @@ public class OneToOne extends ToOne {
 		return true;
 	}
 
-	public java.util.List<Selectable> getConstraintColumns() {
-		final ArrayList<Selectable> list = new ArrayList();
-		identifier.getMappedColumns().forEach( o -> list.add( (Selectable) o ) );
+	public java.util.List<MappedColumn> getConstraintColumns() {
+		final ArrayList<MappedColumn> list = new ArrayList();
+		identifier.getMappedColumns().forEach( o -> list.add( (MappedColumn) o ) );
 		return list;
 	}
 	/**

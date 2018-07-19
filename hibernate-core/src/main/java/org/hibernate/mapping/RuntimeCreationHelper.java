@@ -36,11 +36,11 @@ public class RuntimeCreationHelper {
 				runtimeTargetTable
 		);
 
-		final Iterator<Column> bootTargetColumnItr = bootFk.getTargetColumns().iterator();
-		for ( MappedColumn bootReferencedColumn : (java.util.List<MappedColumn> ) bootFk.getReferencedColumns() ) {
+		final Iterator<MappedColumn> bootTargetColumnItr = bootFk.getTargetColumns().iterator();
+		for ( MappedColumn bootReferencedColumn :  bootFk.getReferencedColumns() ) {
 			assert bootTargetColumnItr.hasNext();
 
-			final Column bootTargetColumn = bootTargetColumnItr.next();
+			final MappedColumn bootTargetColumn = bootTargetColumnItr.next();
 			runtimeFkBuilder.addColumnMapping(
 					creationContext.getDatabaseObjectResolver().resolveColumn( bootReferencedColumn ),
 					creationContext.getDatabaseObjectResolver().resolveColumn( bootTargetColumn )

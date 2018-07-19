@@ -8,10 +8,6 @@ package org.hibernate.boot.model.relational;
 
 import java.util.List;
 
-import org.hibernate.mapping.Column;
-import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.relational.spi.ForeignKey;
-
 /**
  * Contract for a relational foreign key constraint.
  *
@@ -44,7 +40,7 @@ public interface MappedForeignKey extends MappedConstraint {
 
 	void alignColumns();
 
-	List<Column> getTargetColumns();
+	List<MappedColumn> getTargetColumns();
 
 	// todo (6.0) - Are there any others to pull up?
 }

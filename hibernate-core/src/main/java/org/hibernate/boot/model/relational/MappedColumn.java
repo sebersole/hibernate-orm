@@ -6,6 +6,9 @@
  */
 package org.hibernate.boot.model.relational;
 
+import java.util.function.Supplier;
+
+import org.hibernate.boot.model.domain.JavaTypeMapping;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -28,7 +31,13 @@ public interface MappedColumn {
 	 */
 	String getText();
 
+	void setSqlTypeDescriptorAccess(Supplier<SqlTypeDescriptor> sqlTypeDescriptorAccess);
+
 	SqlTypeDescriptor getSqlTypeDescriptor();
+
+	void setJavaTypeMapping(JavaTypeMapping javaTypeMapping);
+
+	JavaTypeMapping getJavaTypeMapping();
 
 	Column generateRuntimeColumn(
 			Table runtimeTable,
