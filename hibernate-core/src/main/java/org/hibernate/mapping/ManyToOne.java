@@ -31,8 +31,7 @@ public class ManyToOne extends ToOne {
 	 */
 	@Deprecated
 	public ManyToOne(MetadataBuildingContext metadata, Table table) {
-		super( metadata, table );
-		registerResolver( metadata );
+		this( metadata, (MappedTable) table );
 	}
 
 	public ManyToOne(MetadataBuildingContext metadata, MappedTable table) {
@@ -42,11 +41,6 @@ public class ManyToOne extends ToOne {
 
 	private void registerResolver(MetadataBuildingContext metadata) {
 		metadata.getMetadataCollector().registerValueMappingResolver( this::resolve );
-	}
-
-	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-		throw new UnsupportedOperationException( "Cant add a column to a many-to-one" );
 	}
 
 	@Override
@@ -60,10 +54,14 @@ public class ManyToOne extends ToOne {
 		}
 
 		final Iterator<Column> targetColumnItr = foreignKey.getTargetColumns().iterator();
+
 		for ( Column column : foreignKey.getColumns() ) {
 			assert targetColumnItr.hasNext();
 
 			final Column targetColumn = targetColumnItr.next();
+			if ( targetColumn.getJavaTypeMapping() == null ) {
+				return false;
+			}
 			column.setJavaTypeMapping( targetColumn.getJavaTypeMapping() );
 			column.setSqlTypeDescriptorAccess( targetColumn::getSqlTypeDescriptor );
 		}

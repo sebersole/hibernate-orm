@@ -78,9 +78,11 @@ public class BasicValue
 		this.preferredJdbcTypeCodeForBoolean = buildingContext.getPreferredSqlTypeCodeForBoolean();
 
 		this.javaTypeMapping = new BasicJavaTypeMapping( this );
-		buildingContext.getMetadataCollector().registerValueMappingResolver( resolutionContext ->
-			resolve ( resolutionContext )
-		 );
+		buildingContext
+				.getMetadataCollector()
+				.registerValueMappingResolver(
+						resolutionContext -> resolve( resolutionContext )
+				);
 	}
 
 	@Override
@@ -97,6 +99,7 @@ public class BasicValue
 		if ( basicType == null && name != null ) {
 			// Name could refer to:
 			//		1) a registered TypeDef
+
 			//		2) basic type "resolution key"
 			//
 			final TypeDefinition typeDefinition = getMetadataBuildingContext().resolveTypeDefinition( name );
@@ -271,10 +274,6 @@ public class BasicValue
 	}
 
 	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-	}
-
-	@Override
 	public Object accept(ValueVisitor visitor) {
 		return visitor.accept(this);
 	}
@@ -350,7 +349,6 @@ public class BasicValue
 			return getAttributeConverterDescriptor().createJpaAttributeConverter( creationContext );
 		}
 
-//		final JavaTypeDescriptor jtd = javaTypeMapping.resolveJavaTypeDescriptor();
 		final JavaTypeDescriptor jtd = basicType.getJavaTypeDescriptor();
 
 		if ( jtd instanceof EnumJavaDescriptor ) {
@@ -414,7 +412,6 @@ public class BasicValue
 		private final BasicValue basicValue;
 
 		BasicJavaTypeMapping(BasicValue basicValue) {
-
 			this.basicValue = basicValue;
 		}
 
@@ -424,6 +421,10 @@ public class BasicValue
 
 		@Override
 		public String getTypeName() {
+			String typeName = basicValue.getTypeName();
+			if ( typeName != null ) {
+				return typeName;
+			}
 			return getJavaTypeDescriptor().getTypeName();
 		}
 

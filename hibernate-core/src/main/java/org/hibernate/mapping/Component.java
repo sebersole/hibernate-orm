@@ -70,6 +70,7 @@ public class Component extends SimpleValue
 	private boolean isKey;
 	private String roleName;
 	private EmbeddableJavaTypeMapping javaTypeMapping;
+	private Integer columnSpan;
 
 	public Component(MetadataBuildingContext metadata, PersistentClass owner) throws MappingException {
 		this( metadata, owner.getMappedTable(), owner );
@@ -148,12 +149,7 @@ public class Component extends SimpleValue
 		throw new UnsupportedOperationException( "Cant add a column to a component" );
 	}
 
-	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-		throw new UnsupportedOperationException( "Cant add a column to a component" );
-	}
 
-	Integer columnSpan;
 	@Override
 	public int getColumnSpan() {
 		if ( columnSpan == null ) {

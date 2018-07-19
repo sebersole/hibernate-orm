@@ -36,7 +36,7 @@ public class EntityWithDynamicComponentTest extends SessionFactoryBasedFunctiona
 		// Create entity
 		sessionFactoryScope().inTransaction( session -> {
 			final EntityOfDynamicComponent entity = new EntityOfDynamicComponent();
-			entity.setId( 1 );
+			entity.setId( 1L );
 			entity.setNote( "Initial Commit" );
 			entity.getValues().put( "v1", 25 );
 			entity.getValuesWithProperties().put( "prop1", 50 );
@@ -46,7 +46,7 @@ public class EntityWithDynamicComponentTest extends SessionFactoryBasedFunctiona
 
 		// Test entity was saved properly
 		sessionFactoryScope().inTransaction( session -> {
-			final EntityOfDynamicComponent entity = session.find( EntityOfDynamicComponent.class, 1 );
+			final EntityOfDynamicComponent entity = session.find( EntityOfDynamicComponent.class, 1L );
 			assertThat( entity, notNullValue() );
 			assertThat( entity.getNote(), is( "Initial Commit" ) );
 			// this is only size = 1 because of $type$
@@ -85,12 +85,12 @@ public class EntityWithDynamicComponentTest extends SessionFactoryBasedFunctiona
 
 		// Delete entity
 		sessionFactoryScope().inTransaction( session -> {
-			session.delete( session.find( EntityOfDynamicComponent.class, 1 ) );
+			session.delete( session.find( EntityOfDynamicComponent.class, 1L ) );
 		} );
 
 		// Test entity was deleted properly
 		sessionFactoryScope().inTransaction( session -> {
-			final EntityOfDynamicComponent entity = session.find( EntityOfDynamicComponent.class, 1 );
+			final EntityOfDynamicComponent entity = session.find( EntityOfDynamicComponent.class, 1L );
 			assertThat( entity, nullValue() );
 		} );
 	}

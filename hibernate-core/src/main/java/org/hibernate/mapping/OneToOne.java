@@ -28,17 +28,12 @@ public class OneToOne extends ToOne {
 	private String propertyName;
 	private String entityName;
 
-
 	/**
 	 * @deprecated since 6.0, use {@link #OneToOne(MetadataBuildingContext, MappedTable, PersistentClass)} instead
 	 */
 	@Deprecated
 	public OneToOne(MetadataBuildingContext metadata, Table table, PersistentClass owner) throws MappingException {
-		super( metadata, table );
-		this.identifier = owner.getKey();
-		this.entityName = owner.getEntityName();
-
-		registerResolver( metadata );
+		this( metadata, (MappedTable) table, owner );
 	}
 
 	public OneToOne(MetadataBuildingContext metadata, MappedTable table, PersistentClass owner) throws MappingException {
@@ -108,6 +103,9 @@ public class OneToOne extends ToOne {
 			assert targetColumnItr.hasNext();
 
 			final Column targetColumn = targetColumnItr.next();
+			if ( targetColumn.getJavaTypeMapping() == null ) {
+				return false;
+			}
 			column.setJavaTypeMapping( targetColumn.getJavaTypeMapping() );
 			column.setSqlTypeDescriptorAccess( targetColumn::getSqlTypeDescriptor );
 		}
@@ -115,52 +113,6 @@ public class OneToOne extends ToOne {
 
 		return true;
 	}
-
-	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-		throw new UnsupportedOperationException( "Cant add a column to a one-to-one" );
-	}
-//
-//		column.setTypeDescriptorResolver( new OneToOneTypeDescriptorResolverImpl( columns.size() - 1 ) );
-//	}
-//
-//	public class OneToOneTypeDescriptorResolverImpl implements TypeDescriptorResolver {
-//
-//		private int index;
-//
-//		public OneToOneTypeDescriptorResolverImpl(int index) {
-//			this.index = index;
-//		}
-//
-//		@Override
-//		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
-//			final List<MappedColumn> mappedColumns = getMappedColumns();
-//			if ( mappedColumns.size() == 0 ) {
-//				throw new IllegalStateException( "No SqlType code to resolve for " + entityName );
-//
-//			}
-//			final PersistentClass referencedPersistentClass = getMetadataBuildingContext()
-//					.getMetadataCollector()
-//					.getEntityBinding( getReferencedEntityName() );
-//
-//			if ( referenceToPrimaryKey || referencedPropertyName == null ) {
-//				return ( (Column) referencedPersistentClass.getIdentifier()
-//						.getMappedColumns()
-//						.get( index ) ).getSqlTypeDescriptor();
-//			}
-//			else {
-//				final Property referencedProperty = referencedPersistentClass.getReferencedProperty(
-//						getReferencedPropertyName() );
-//				return ( (Column) referencedProperty.getValue()
-//						.getMappedColumns().get( index ) ).getSqlTypeDescriptor();
-//			}
-//		}
-//
-//		@Override
-//		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
-//			return getJavaTypeMapping().resolveJavaTypeDescriptor();
-//		}
-//	}
 
 	public java.util.List<Selectable> getConstraintColumns() {
 		final ArrayList<Selectable> list = new ArrayList();

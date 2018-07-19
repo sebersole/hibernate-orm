@@ -15,7 +15,6 @@ import java.util.Properties;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
-import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
@@ -97,13 +96,6 @@ public abstract class SimpleValue implements KeyValue {
 			columns.add( column );
 		}
 	}
-
-	/**
-	 * @deprecated todo (6.0) : replaced by each Value/ValueContainer resolve handling
-	 */
-	@Remove
-	@Deprecated
-	protected abstract void setTypeDescriptorResolver(Column column);
 
 	public void addFormula(Formula formula) {
 		columns.add( formula );

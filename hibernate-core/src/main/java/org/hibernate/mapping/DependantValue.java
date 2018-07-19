@@ -6,8 +6,12 @@
  */
 package org.hibernate.mapping;
 
+import java.util.Iterator;
+import java.util.List;
+
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.JavaTypeMapping;
+import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
@@ -24,10 +28,22 @@ public class DependantValue extends SimpleValue {
 	private boolean updateable;
 	private boolean isNationalized;
 
+	/**
+	 * @deprecated since 6.0, use {@link #DependantValue(MetadataBuildingContext, MappedTable, KeyValue)}
+	 */
 	@Deprecated
-	public DependantValue(MetadataBuildingContext buildingContext, MappedTable table, KeyValue prototype) {
-		super( buildingContext, table );
+	public DependantValue(MetadataBuildingContext metadata, Table table, KeyValue prototype) {
+		this( metadata, (MappedTable) table, prototype );
+	}
+
+	public DependantValue(MetadataBuildingContext metadata, MappedTable table, KeyValue prototype) {
+		super( metadata, table );
+		registerResolver( metadata );
 		this.wrappedValue = prototype;
+	}
+
+	private void registerResolver(MetadataBuildingContext metadata) {
+		metadata.getMetadataCollector().registerValueMappingResolver( this::resolve );
 	}
 
 	@Override
@@ -36,30 +52,19 @@ public class DependantValue extends SimpleValue {
 	}
 
 	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-		throw new UnsupportedOperationException( "Cant add a column to a DependantValue" );
+	public Boolean resolve(ResolutionContext context) {
+		Iterator<Selectable> columnsIterator = columns.iterator();
+		List<Column> wrappedValueColumns = wrappedValue.getMappedColumns();
+		for ( Column wrappedValueColumn : wrappedValueColumns ) {
+			if ( wrappedValueColumn.getJavaTypeMapping() == null ) {
+				return false;
+			}
+			Column column = (Column) columnsIterator.next();
+			column.setJavaTypeMapping( wrappedValueColumn.getJavaTypeMapping() );
+			column.setSqlTypeDescriptorAccess( wrappedValueColumn::getSqlTypeDescriptor );
+		}
+		return true;
 	}
-//		column.setTypeDescriptorResolver( new DependantValueTypeDescriptorResolver( columns.size() - 1 ) );
-//	}
-//
-//
-//	public class DependantValueTypeDescriptorResolver implements TypeDescriptorResolver {
-//		private int index;
-//
-//		public DependantValueTypeDescriptorResolver(int index) {
-//			this.index = index;
-//		}
-//
-//		@Override
-//		public SqlTypeDescriptor resolveSqlTypeDescriptor() {
-//			return ( (Column) wrappedValue.getMappedColumns().get( index ) ).getSqlTypeDescriptor();
-//		}
-//
-//		@Override
-//		public JavaTypeDescriptor resolveJavaTypeDescriptor() {
-//			return wrappedValue.getJavaTypeMapping().resolveJavaTypeDescriptor();
-//		}
-//	}
 
 	public void setTypeUsingReflection(String className, String propertyName) {}
 	

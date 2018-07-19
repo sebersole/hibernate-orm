@@ -105,11 +105,6 @@ public class Any extends SimpleValue {
 	}
 
 	@Override
-	protected void setTypeDescriptorResolver(Column column) {
-//		column.setTypeDescriptorResolver( new AnyTypeDescriptorResolver( columns.size() - 1  ) );
-	}
-
-	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
 		return null;
 	}

@@ -13,16 +13,16 @@ import java.util.Map;
  * @author Chris Cranford
  */
 public class EntityOfDynamicComponent {
-	private Integer id;
+	private Long id;
 	private String note;
 	private Map values = new HashMap<>();
 	private Map valuesWithProperties = new HashMap<>();
 
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
