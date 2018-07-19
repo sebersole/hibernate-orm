@@ -8,6 +8,7 @@ package org.hibernate.sql.results.internal;
 
 import org.hibernate.sql.EmptyJdbcValueExtractor;
 import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -35,12 +36,6 @@ public class EmptySqlSelection implements SqlSelection {
 	@Override
 	public void accept(SqlAstWalker interpreter) {
 		// todo (6.0) : see the note on `BaseSemanticQueryWalker#visitSelectClause`
-		interpreter.visitQueryLiteral(
-				new QueryLiteral(
-						null,
-						null,
-						true
-				)
-		);
+		interpreter.visitQueryLiteral( new QueryLiteral( null, null, Clause.IRRELEVANT ) );
 	}
 }

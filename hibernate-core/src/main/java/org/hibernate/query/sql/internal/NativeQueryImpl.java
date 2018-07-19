@@ -70,7 +70,6 @@ import org.hibernate.query.sql.spi.SelectInterpretationsKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.transform.ResultTransformer;
@@ -90,7 +89,7 @@ public class NativeQueryImpl<R>
 	private final ParameterMetadataImpl parameterMetadata;
 	private final QueryParameterBindings parameterBindings;
 
-	private final List<JdbcParameterBinder> parameterBinders;
+	private final List<QueryParameterImplementor> queryParameterList;
 
 	private final QueryOptionsImpl queryOptions = new QueryOptionsImpl();
 
@@ -132,7 +131,7 @@ public class NativeQueryImpl<R>
 		);
 		this.parameterBindings = QueryParameterBindingsImpl.from( parameterMetadata, session.getFactory() );
 
-		this.parameterBinders = parameterRecognizer.getParameterBinders();
+		this.queryParameterList = parameterRecognizer.getParameterList();
 	}
 
 	/**
@@ -215,11 +214,6 @@ public class NativeQueryImpl<R>
 	@Override
 	public QueryParameterBindings getQueryParameterBindings() {
 		return parameterBindings;
-	}
-
-	@SuppressWarnings("WeakerAccess")
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
 	}
 
 
@@ -473,8 +467,8 @@ public class NativeQueryImpl<R>
 			}
 
 			@Override
-			public List<JdbcParameterBinder> getParameterBinders() {
-				return NativeQueryImpl.this.getParameterBinders();
+			public List<QueryParameterImplementor> getQueryParameterList() {
+				return NativeQueryImpl.this.queryParameterList;
 			}
 
 			@Override

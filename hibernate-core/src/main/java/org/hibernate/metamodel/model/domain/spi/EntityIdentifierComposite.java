@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Predicate;
+
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityIdentifierReferenceComposite;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityTypedReference;
@@ -46,8 +48,10 @@ public interface EntityIdentifierComposite<O,J>
 	}
 
 	@Override
-	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueBinder( typeConfiguration );
+	default ValueBinder getValueBinder(
+			Predicate<StateArrayContributor> inclusionChecker,
+			TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

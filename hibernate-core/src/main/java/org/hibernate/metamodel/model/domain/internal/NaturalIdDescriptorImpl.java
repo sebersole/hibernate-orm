@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
@@ -21,6 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -167,11 +169,11 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	}
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		if ( valueBinder == null ) {
 			if ( attributes.size() == 1 ) {
 				valueBinder = ( (AllowableParameterType) attributes.get( 0 ).getUnderlyingAttributeDescriptor() )
-						.getValueBinder( typeConfiguration );
+						.getValueBinder( inclusionChecker, typeConfiguration );
 			}
 			else {
 				valueBinder = new ValueBinder() {
@@ -191,7 +193,7 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
 							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
 									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder( typeConfiguration )
+							attributeDescriptor.getValueBinder( inclusionChecker, typeConfiguration )
 									.bind( st, segmentStart, value, executionContext );
 							segmentStart += attributeDescriptor.getNumberOfJdbcParametersNeeded();
 						}
@@ -206,7 +208,7 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
 							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
 									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder( typeConfiguration )
+							attributeDescriptor.getValueBinder( inclusionChecker, typeConfiguration )
 									.bind( st, name, value, executionContext );
 						}
 					}

@@ -42,6 +42,7 @@ import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
 import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
@@ -230,7 +231,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-					insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+					insertStatement.addValue(
+							new LiteralParameter(
+									jdbcValue,
+									type,
+									Clause.INSERT,
+									session.getFactory().getTypeConfiguration()
+							)
+					);
 				},
 				session
 		);
@@ -242,7 +250,9 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							getDiscriminatorValue(),
-							getHierarchy().getDiscriminatorDescriptor()
+							getHierarchy().getDiscriminatorDescriptor(),
+							Clause.INSERT,
+							session.getFactory().getTypeConfiguration()
 					)
 			);
 		}
@@ -254,7 +264,9 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							session.getTenantIdentifier(),
-							getHierarchy().getTenantDiscrimination()
+							getHierarchy().getTenantDiscrimination(),
+							Clause.INSERT,
+							session.getFactory().getTypeConfiguration()
 					)
 			);
 		}
@@ -270,7 +282,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 								(jdbcValue, type, boundColumn) -> {
 									if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
 										insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-										insertStatement.addValue( new LiteralParameter( jdbcValue, type ) );
+										insertStatement.addValue(
+												new LiteralParameter(
+														jdbcValue,
+														type,
+														Clause.INSERT,
+														session.getFactory().getTypeConfiguration()
+												)
+										);
 									}
 								},
 								session
@@ -312,7 +331,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, type )
+									new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
 							)
 					);
 				},
@@ -375,7 +394,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 								assignments.add(
 										new Assignment(
 												new ColumnReference( boundColumn ),
-												new LiteralParameter( jdbcValue, type )
+												new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
 										)
 								);
 							}
@@ -393,7 +412,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, type )
+									new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
 							)
 					);
 				},

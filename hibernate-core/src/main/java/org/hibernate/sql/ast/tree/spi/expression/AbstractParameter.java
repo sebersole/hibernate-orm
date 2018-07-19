@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
@@ -27,9 +28,16 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public abstract class AbstractParameter implements GenericParameter, QueryResultProducer {
 	private final AllowableParameterType inferredType;
+	private final Clause clause;
+	private final TypeConfiguration typeConfiguration;
 
-	public AbstractParameter(AllowableParameterType inferredType) {
+	public AbstractParameter(
+			AllowableParameterType inferredType,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
 		this.inferredType = inferredType;
+		this.clause = clause;
+		this.typeConfiguration = typeConfiguration;
 	}
 
 	@SuppressWarnings("WeakerAccess")
@@ -40,6 +48,11 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 	@Override
 	public AllowableParameterType getType() {
 		return getInferredType();
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersNeeded() {
+		return getType().getValueBinder( clause.getInclusionChecker(), typeConfiguration ).getNumberOfJdbcParametersNeeded();
 	}
 
 	@Override
@@ -75,7 +88,7 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 			warnNullBindValue();
 		}
 
-		bindType.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+		bindType.getValueBinder( clause.getInclusionChecker(), executionContext.getSession().getFactory().getTypeConfiguration() )
 				.bind( statement, startPosition, bindValue, executionContext );
 
 		return bindType.getNumberOfJdbcParametersNeeded();

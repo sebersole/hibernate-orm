@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.OptimisticLockType;
@@ -22,6 +23,7 @@ import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Optional contract for a Navigable that can be part of it's container's
@@ -49,7 +51,9 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 
 	PropertyAccess getPropertyAccess();
 
-	default ValueBinder getValueBinder() {
+	default ValueBinder getValueBinder(
+			Predicate<StateArrayContributor> inclusionChecker,
+			TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception( getClass().getName() );
 	}
 

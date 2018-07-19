@@ -348,7 +348,10 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				new RelationalPredicate(
 						RelationalPredicate.Operator.EQUAL,
 						idExpression,
-						new LoadIdParameter( entityDescriptor.getHierarchy().getIdentifierDescriptor() )
+						new LoadIdParameter(
+								entityDescriptor.getHierarchy().getIdentifierDescriptor(),
+								resolutionContext.getSessionFactory().getTypeConfiguration()
+						)
 				)
 		);
 

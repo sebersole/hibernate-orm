@@ -18,6 +18,8 @@ import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
 import org.hibernate.query.sqm.tree.set.SqmAssignment;
+import org.hibernate.query.sqm.tree.set.SqmSetClause;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -168,6 +170,17 @@ public class SqmUpdateToSqlAstConverterMultiTable
 				this::normalizeSqlExpression,
 				this::collectSelection
 		);
+	}
+
+	@Override
+	public Object visitSetClause(SqmSetClause setClause) {
+		getCurrentClauseStack().push( Clause.UPDATE );
+		try {
+			return super.visitSetClause( setClause );
+		}
+		finally {
+			getCurrentClauseStack().pop();
+		}
 	}
 
 	@Override

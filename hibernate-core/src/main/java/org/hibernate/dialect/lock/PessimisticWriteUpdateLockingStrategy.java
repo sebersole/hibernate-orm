@@ -22,6 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -90,13 +91,13 @@ public class PessimisticWriteUpdateLockingStrategy implements LockingStrategy {
 					final ValueBinder versionValueBinder = lockable.getHierarchy()
 							.getVersionDescriptor()
 							.getBasicType()
-							.getValueBinder( typeConfiguration );
+							.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration );
 					versionValueBinder.bind( st, 1, version, executionContext );
 					int offset = 2;
 
 					final AllowableParameterType identifierParameterType = lockable.getHierarchy()
 							.getIdentifierDescriptor();
-					identifierParameterType.getValueBinder( typeConfiguration )
+					identifierParameterType.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration )
 							.bind( st, offset, id, executionContext );
 					offset += identifierParameterType.getNumberOfJdbcParametersNeeded();
 

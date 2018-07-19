@@ -12,11 +12,14 @@ import java.util.List;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.QueryLiteralRendering;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.sqm.QueryException;
 import org.hibernate.query.sqm.tree.order.SqmSortOrder;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.SemanticException;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -96,6 +99,8 @@ public abstract class AbstractSqlAstWalker
 	private final StringBuilder sqlBuffer = new StringBuilder();
 	private final List<JdbcParameterBinder> parameterBinders = new ArrayList<>();
 
+	private final Stack<Clause> clauseStack = new StandardStack<>();
+
 	// rendering expressions often has to be done differently if it occurs in certain contexts
 	private boolean currentlyInPredicate;
 	private boolean currentlyInSelections;
@@ -124,11 +129,8 @@ public abstract class AbstractSqlAstWalker
 	}
 
 	protected boolean isCurrentlyInPredicate() {
-		return currentlyInPredicate;
-	}
-
-	protected void setCurrentlyInPredicate(boolean currentlyInPredicate) {
-		this.currentlyInPredicate = currentlyInPredicate;
+		return clauseStack.getCurrent() == Clause.WHERE
+				|| clauseStack.getCurrent() == Clause.HAVING;
 	}
 
 	protected boolean isCurrentlyInSelections() {
@@ -160,13 +162,12 @@ public abstract class AbstractSqlAstWalker
 		if ( querySpec.getWhereClauseRestrictions() != null && !querySpec.getWhereClauseRestrictions().isEmpty() ) {
 			appendSql( " where " );
 
-			boolean wasPreviouslyInPredicate = isCurrentlyInPredicate();
-			setCurrentlyInPredicate( true );
+			clauseStack.push( Clause.WHERE );
 			try {
 				querySpec.getWhereClauseRestrictions().accept( this );
 			}
 			finally {
-				setCurrentlyInPredicate( wasPreviouslyInPredicate );
+				clauseStack.pop();
 			}
 		}
 
@@ -290,8 +291,7 @@ public abstract class AbstractSqlAstWalker
 			visitTableGroup( tableGroupJoin.getJoinedGroup() );
 			appendSql( ") " );
 
-			boolean wasPreviouslyInPredicate = currentlyInPredicate;
-			currentlyInPredicate = true;
+			clauseStack.push( Clause.WHERE );
 			try {
 				if ( tableGroupJoin.getPredicate() != null && !tableGroupJoin.getPredicate().isEmpty() ) {
 					appendSql( " on " );
@@ -299,7 +299,7 @@ public abstract class AbstractSqlAstWalker
 				}
 			}
 			finally {
-				currentlyInPredicate = wasPreviouslyInPredicate;
+				clauseStack.pop();
 			}
 		}
 
@@ -685,14 +685,18 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitGenericParameter(GenericParameter parameter) {
-		parameterBinders.add( parameter.getParameterBinder() );
+		visitJdbcParameterBinder( parameter );
+	}
 
-		final int columnCount = resolveType( parameter ).getNumberOfJdbcParametersNeeded();
-		final boolean needsParens = currentlyInPredicate && columnCount > 1;
+	protected void visitJdbcParameterBinder(JdbcParameterBinder jdbcParameterBinder) {
+		parameterBinders.add( jdbcParameterBinder );
+
+		final int columnCount = jdbcParameterBinder.getNumberOfJdbcParametersNeeded();
+		final boolean needsParentheses = isCurrentlyInPredicate() && columnCount > 1;
 
 		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
 
-		if ( needsParens ) {
+		if ( needsParentheses ) {
 			appendSql( "(" );
 		}
 
@@ -703,7 +707,7 @@ public abstract class AbstractSqlAstWalker
 			separator = ", ";
 		}
 
-		if ( needsParens ) {
+		if ( needsParentheses ) {
 			appendSql( ")" );
 		}
 	}
@@ -749,32 +753,12 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitNamedParameter(NamedParameter namedParameter) {
-		visitGenericParameter( namedParameter );
+		visitJdbcParameterBinder( namedParameter );
 	}
 
 	@Override
 	public void visitPositionalParameter(PositionalParameter positionalParameter) {
-		parameterBinders.add( positionalParameter.getParameterBinder() );
-
-		final int columnCount = resolveType( positionalParameter ).getNumberOfJdbcParametersNeeded();
-		final boolean needsParens = currentlyInPredicate && columnCount > 1;
-
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
-
-		if ( needsParens ) {
-			appendSql( "(" );
-		}
-
-		String separator = "";
-		for ( int i = 0; i < columnCount; i++ ) {
-			appendSql( separator );
-			appendSql( "?" );
-			separator = ", ";
-		}
-
-		if ( needsParens ) {
-			appendSql( ")" );
-		}
+		visitJdbcParameterBinder( positionalParameter );
 	}
 
 	@Override
@@ -788,7 +772,7 @@ public abstract class AbstractSqlAstWalker
 				break;
 			}
 			case AS_PARAM: {
-				renderAsParameter( queryLiteral );
+				visitJdbcParameterBinder( queryLiteral );
 				break;
 			}
 			case AS_PARAM_OUTSIDE_SELECT: {
@@ -796,7 +780,7 @@ public abstract class AbstractSqlAstWalker
 					renderAsLiteral( queryLiteral );
 				}
 				else {
-					renderAsParameter( queryLiteral );
+					visitJdbcParameterBinder( queryLiteral );
 				}
 				break;
 			}
@@ -825,31 +809,6 @@ public abstract class AbstractSqlAstWalker
 		}
 		else {
 			appendSql( queryLiteral.getValue().toString() );
-		}
-	}
-
-	private void renderAsParameter(QueryLiteral queryLiteral) {
-		parameterBinders.add( queryLiteral );
-
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
-
-		// NOTE : use the same rules regarding "allowable types" for literals as we use for parameters...
-		final int physicalJdbcParamCount = queryLiteral.getType().getNumberOfJdbcParametersNeeded();
-		final boolean needsParens = currentlyInPredicate && physicalJdbcParamCount > 1;
-
-		if ( needsParens ) {
-			appendSql( "(" );
-		}
-
-		String separator = "";
-		for ( int i = 0; i < physicalJdbcParamCount; i++ ) {
-			appendSql( separator );
-			appendSql( "?" );
-			separator = ", ";
-		}
-
-		if ( needsParens ) {
-			appendSql( ")" );
 		}
 	}
 

@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -32,16 +33,24 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 	private final String parameterName;
 	private final int parameterPosition;
 	private final AllowableParameterType ormType;
+	private final TypeConfiguration typeConfiguration;
 
 	public JdbcCallParameterBinderImpl(
 			String callName,
 			String parameterName,
 			int parameterPosition,
-			AllowableParameterType ormType) {
+			AllowableParameterType ormType, TypeConfiguration typeConfiguration) {
 		this.callName = callName;
 		this.parameterName = parameterName;
 		this.parameterPosition = parameterPosition;
 		this.ormType = ormType;
+		this.typeConfiguration = typeConfiguration;
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersNeeded() {
+		final ValueBinder valueBinder = ormType.getValueBinder( Clause.CALL.getInclusionChecker(), typeConfiguration );
+		return valueBinder.getNumberOfJdbcParametersNeeded();
 	}
 
 	@Override
@@ -90,7 +99,7 @@ public class JdbcCallParameterBinderImpl implements JdbcParameterBinder {
 
 			final SessionFactoryImplementor factory = executionContext.getSession().getFactory();
 			final TypeConfiguration typeConfiguration = factory.getTypeConfiguration();
-			final ValueBinder valueBinder = ormType.getValueBinder( typeConfiguration );
+			final ValueBinder valueBinder = ormType.getValueBinder( Clause.CALL.getInclusionChecker(), typeConfiguration );
 			if ( parameterName != null ) {
 				valueBinder.bind(
 						statement,

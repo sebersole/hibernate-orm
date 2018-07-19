@@ -13,6 +13,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -27,10 +28,22 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class LiteralParameter implements GenericParameter, QueryParameterBinding {
 	private final Object value;
 	private final AllowableParameterType type;
+	private final Clause clause;
+	private final TypeConfiguration typeConfiguration;
 
-	public LiteralParameter(Object value, AllowableParameterType type) {
+	public LiteralParameter(
+			Object value,
+			AllowableParameterType type,
+			Clause clause, TypeConfiguration typeConfiguration) {
 		this.value = value;
 		this.type = type;
+		this.clause = clause;
+		this.typeConfiguration = typeConfiguration;
+	}
+
+	@Override
+	public int getNumberOfJdbcParametersNeeded() {
+		return type.getValueBinder( clause.getInclusionChecker(), typeConfiguration ).getNumberOfJdbcParametersNeeded();
 	}
 
 	@Override
@@ -125,7 +138,7 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException {
-		type.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
+		type.getValueBinder( clause.getInclusionChecker(), executionContext.getSession().getFactory().getTypeConfiguration() )
 				.bind( statement, startPosition, value, executionContext );
 		return 1;
 	}

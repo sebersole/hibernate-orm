@@ -104,7 +104,8 @@ public class StandardCallableStatementSupport implements CallableStatementSuppor
 										procedureName,
 										queryParameter.getName(),
 										queryParameter.getPosition(),
-										ormType
+										ormType,
+										session.getFactory().getTypeConfiguration()
 								);
 							}
 							if ( queryParameter.getMode() == ParameterMode.OUT || queryParameter.getMode() == ParameterMode.INOUT ) {

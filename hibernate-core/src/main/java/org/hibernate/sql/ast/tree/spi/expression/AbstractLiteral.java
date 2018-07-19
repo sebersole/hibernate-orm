@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -34,12 +35,12 @@ public abstract class AbstractLiteral
 		implements JdbcParameterBinder, Expression, SqlExpressable, QueryResultProducer {
 	private final Object value;
 	private final BasicValuedExpressableType type;
-	private final boolean inSelect;
+	private final Clause clause;
 
-	public AbstractLiteral(Object value, BasicValuedExpressableType type, boolean inSelect) {
+	public AbstractLiteral(Object value, BasicValuedExpressableType type, Clause clause) {
 		this.value = value;
 		this.type = type;
-		this.inSelect = inSelect;
+		this.clause = clause;
 	}
 
 	public Object getValue() {
@@ -52,7 +53,7 @@ public abstract class AbstractLiteral
 	}
 
 	public boolean isInSelect() {
-		return inSelect;
+		return clause == Clause.SELECT;
 	}
 
 	@Override

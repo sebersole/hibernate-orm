@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Predicate;
+
 import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -36,7 +38,9 @@ public interface RowIdDescriptor<J> extends VirtualNavigable<J>, BasicValuedNavi
 	}
 
 	@Override
-	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+	default ValueBinder getValueBinder(
+			Predicate<StateArrayContributor> inclusionChecker,
+			TypeConfiguration typeConfiguration) {
 		throw new HibernateException( "Illegal attempt to bind ROW_ID value" );
 	}
 

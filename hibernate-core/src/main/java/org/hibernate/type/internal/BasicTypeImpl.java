@@ -6,6 +6,9 @@
  */
 package org.hibernate.type.internal;
 
+import java.util.function.Predicate;
+
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -81,7 +84,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 	}
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		final JdbcValueMapper mapperToUse = resolveJdbcValueMapper( typeConfiguration );
 
 		if ( valueBinder == null ) {

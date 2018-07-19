@@ -8,9 +8,11 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -18,13 +20,13 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 public class LoadIdParameter extends AbstractParameter {
 	private final int idValueIndex;
 
-	public LoadIdParameter(AllowableParameterType type) {
-		this( 0, type );
+	public LoadIdParameter(AllowableParameterType type, TypeConfiguration typeConfiguration) {
+		this( 0, type, typeConfiguration );
 
 	}
 
-	public LoadIdParameter(int idValueIndex, AllowableParameterType restrictedNavigable) {
-		super( restrictedNavigable );
+	public LoadIdParameter(int idValueIndex, AllowableParameterType restrictedNavigable, TypeConfiguration typeConfiguration) {
+		super( restrictedNavigable, Clause.WHERE, typeConfiguration );
 		this.idValueIndex = idValueIndex;
 	}
 

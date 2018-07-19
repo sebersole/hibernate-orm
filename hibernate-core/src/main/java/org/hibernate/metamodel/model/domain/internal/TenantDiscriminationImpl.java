@@ -6,10 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.function.Predicate;
+
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -83,7 +86,7 @@ public class TenantDiscriminationImpl implements TenantDiscrimination {
 	}
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception();
 	}
 

@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.BasicValueMapping;
@@ -15,6 +16,7 @@ import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -142,8 +144,8 @@ public class VersionDescriptorImpl<O,J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return getBasicType().getValueBinder( typeConfiguration );
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

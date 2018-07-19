@@ -177,13 +177,12 @@ public class EmbeddedTypeDescriptorImpl<J>
 	private List<Column> collectedColumns;
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public List<Column> collectColumns() {
 		if ( collectedColumns == null ) {
 			collectedColumns = new ArrayList<>();
 			visitAttributes(
-					persistentAttribute -> {
-						collectedColumns.addAll( persistentAttribute.getColumns() );
-					}
+					persistentAttribute -> collectedColumns.addAll( persistentAttribute.getColumns() )
 			);
 		}
 
@@ -195,80 +194,66 @@ public class EmbeddedTypeDescriptorImpl<J>
 		return collectColumns().size();
 	}
 
-	private final Predicate<StateArrayContributor> PERSIST_INCUSIONS = new Predicate<StateArrayContributor>() {
-		@Override
-		public boolean test(StateArrayContributor stateArrayContributor) {
-			return stateArrayContributor.isInsertable();
-		}
-	};
+	private Object[] breakDownValue(Object value) {
+		assert getEmbeddedDescriptor().getJavaTypeDescriptor().isInstance( value );
 
-	private final Predicate<StateArrayContributor> UPDATE_INCLUSIONS = new Predicate<StateArrayContributor>() {
-		@Override
-		public boolean test(StateArrayContributor stateArrayContributor) {
-			return stateArrayContributor.isUpdatable();
-		}
-	};
+		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
+		assert values.length == getStateArrayContributors().size();
 
-	enum OperationType {
-		PERSIST,
-		MERGE,
-		UPDATE,
-		DELETE,
-		LOAD,
-		QUERY
+		return values;
 	}
 
-	private final ValueBinder binder = new ValueBinder() {
+	@Override
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		final List<ValueBinder> subBinders = new ArrayList<>();
+		int subBinderParamCount = 0;
+
+		for ( StateArrayContributor<?> stateArrayContributor : getStateArrayContributors() ) {
+			final ValueBinder subBinder = stateArrayContributor.getValueBinder( inclusionChecker, typeConfiguration );
+			subBinders.add( subBinder );
+			subBinderParamCount += subBinder.getNumberOfJdbcParametersNeeded();
+		}
+
+		return new ValueBinderImpl( subBinderParamCount, subBinders, this );
+	}
+
+	private static class ValueBinderImpl implements ValueBinder {
+		private final int numberOfJdbcParamsNeeded;
+		private final List<ValueBinder> subBinders;
+		private final EmbeddedTypeDescriptorImpl embeddedTypeDescriptor;
+
+		private ValueBinderImpl(
+				int numberOfJdbcParamsNeeded,
+				List<ValueBinder> subBinders,
+				EmbeddedTypeDescriptorImpl embeddedTypeDescriptor) {
+			this.numberOfJdbcParamsNeeded = numberOfJdbcParamsNeeded;
+			this.subBinders = subBinders;
+			this.embeddedTypeDescriptor = embeddedTypeDescriptor;
+		}
+
 		@Override
 		public int getNumberOfJdbcParametersNeeded() {
-			return collectColumns().size();
+			return numberOfJdbcParamsNeeded;
 		}
 
 		@Override
-		public void bind(
-				PreparedStatement st,
-				int position,
-				Object value,
-				ExecutionContext executionContext) throws SQLException {
-			final Object[] values = extractValues( value );
+		public void bind(PreparedStatement st, int position, Object value, ExecutionContext executionContext) throws SQLException {
+			final Object[] values = embeddedTypeDescriptor.breakDownValue( value );
 
-			for ( StateArrayContributor contributor : getStateArrayContributors() ) {
-				final Object subValue = values[ contributor.getStateArrayPosition() ];
+			int inflightPosition = position;
+			int binderCount = 0;
 
-				contributor.getValueBinder().bind(
-						st,
-						position,
-						subValue,
-						executionContext
-				);
-				position += contributor.getColumns().size();
+			for ( ValueBinder subBinder : subBinders ) {
+				subBinder.bind( st, inflightPosition, values[ binderCount ], executionContext );
+				inflightPosition += subBinder.getNumberOfJdbcParametersNeeded();
+				binderCount++;
 			}
-
-		}
-
-		private Object[] extractValues(Object value) {
-			assert getEmbeddedDescriptor().getJavaTypeDescriptor().isInstance( value );
-
-			final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
-			assert values.length == getStateArrayContributors().size();
-
-			return values;
 		}
 
 		@Override
-		public void bind(
-				PreparedStatement st,
-				String name,
-				Object value,
-				ExecutionContext executionContext) {
+		public void bind(PreparedStatement st, String name, Object value, ExecutionContext executionContext) throws SQLException {
 			throw new UnsupportedOperationException( "Cannot bind parameter value by name for composite types" );
-
 		}
-	};
-
-	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return binder;
 	}
 
 	private final ValueExtractor valueExtractor = new ValueExtractor() {

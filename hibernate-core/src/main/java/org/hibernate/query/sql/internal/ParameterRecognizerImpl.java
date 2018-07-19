@@ -48,6 +48,7 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 	private int ordinalParameterImplicitPosition;
 
 	private List<JdbcParameterBinder> parameterBinders;
+	private List<QueryParameterImplementor> parameterList;
 
 	public ParameterRecognizerImpl(SessionFactoryImplementor factory) {
 		if ( factory.getSessionFactoryOptions().isJpaBootstrap() ) {
@@ -102,8 +103,8 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 		return positionalQueryParameters;
 	}
 
-	public List<JdbcParameterBinder> getParameterBinders() {
-		return parameterBinders;
+	public List<QueryParameterImplementor> getParameterList() {
+		return parameterList;
 	}
 
 
@@ -129,30 +130,48 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 
 		int implicitPosition = ordinalParameterImplicitPosition++;
 
+		QueryParameterImplementor<?> parameter = null;
+
 		if ( positionalQueryParameters == null ) {
 			positionalQueryParameters = new HashMap<>();
 		}
-		positionalQueryParameters.put( implicitPosition, QueryParameterPositionalImpl.fromNativeQuery( implicitPosition ) );
-
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
+		else {
+			parameter = positionalQueryParameters.get( implicitPosition );
 		}
-		parameterBinders.add( new PositionalQueryParameterBinderImpl( implicitPosition ) );
+
+		if ( parameter == null ) {
+			parameter = QueryParameterPositionalImpl.fromNativeQuery( implicitPosition );
+			positionalQueryParameters.put( implicitPosition, parameter );
+		}
+
+		if ( parameterList == null ) {
+			parameterList = new ArrayList<>();
+		}
+
+		parameterList.add( parameter );
 	}
 
 	@Override
 	public void namedParameter(String name, int sourcePosition) {
-		if ( !namedQueryParameters.containsKey( name ) ) {
-			if ( namedQueryParameters == null ) {
-				namedQueryParameters = new HashMap<>();
-			}
-			namedQueryParameters.put( name, QueryParameterNamedImpl.fromNativeQuery( name ) );
+		QueryParameterImplementor<?> parameter = null;
+
+		if ( namedQueryParameters == null ) {
+			namedQueryParameters = new HashMap<>();
+		}
+		else {
+			parameter = namedQueryParameters.get( name );
 		}
 
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
+		if ( parameter == null ) {
+			parameter = QueryParameterNamedImpl.fromNativeQuery( name );
+			namedQueryParameters.put( name, parameter );
 		}
-		parameterBinders.add( new NamedQueryParameterBinder( name ) );
+
+		if ( parameterList == null ) {
+			parameterList = new ArrayList<>();
+		}
+
+		parameterList.add( parameter );
 	}
 
 	@Override
@@ -167,17 +186,25 @@ public class ParameterRecognizerImpl implements ParameterRecognizer {
 
 		positionalParameterStyle = PositionalParameterStyle.JPA;
 
-		if ( positionalQueryParameters == null || !positionalQueryParameters.containsKey( position ) ) {
-			if ( positionalQueryParameters == null ) {
-				positionalQueryParameters = new HashMap<>();
-			}
-			positionalQueryParameters.put( position, QueryParameterPositionalImpl.fromNativeQuery( position ) );
+		QueryParameterImplementor<?> parameter = null;
+
+		if ( positionalQueryParameters == null ) {
+			positionalQueryParameters = new HashMap<>();
+		}
+		else {
+			parameter = positionalQueryParameters.get( position );
 		}
 
-		if ( parameterBinders == null ) {
-			parameterBinders = new ArrayList<>();
+		if ( parameter == null ) {
+			parameter = QueryParameterPositionalImpl.fromNativeQuery( position );
+			positionalQueryParameters.put( position, parameter );
 		}
-		parameterBinders.add( new PositionalQueryParameterBinderImpl( position ) );
+
+		if ( parameterList == null ) {
+			parameterList = new ArrayList<>();
+		}
+
+		parameterList.add( parameter );
 	}
 
 	@Override

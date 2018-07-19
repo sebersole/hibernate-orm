@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Predicate;
+
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.spi.ValueExtractor;
@@ -15,6 +17,10 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public interface AllowableParameterType<T> extends ExpressableType<T> {
+	Predicate<StateArrayContributor> STANDARD_INSERT_INCLUSION_CHECK = StateArrayContributor::isInsertable;
+
+	Predicate<StateArrayContributor> STANDARD_UPDATE_INCLUSION_CHECK = StateArrayContributor::isUpdatable;
+
 	/**
 	 * The number of JDBC parameters needed for this type.  Should
 	 * be the same as each {@link ValueBinder#getNumberOfJdbcParametersNeeded()}
@@ -25,6 +31,5 @@ public interface AllowableParameterType<T> extends ExpressableType<T> {
 	/**
 	 * Get a binder for values of the given type
 	 */
-	ValueBinder getValueBinder(TypeConfiguration typeConfiguration);
-
+	ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration);
 }

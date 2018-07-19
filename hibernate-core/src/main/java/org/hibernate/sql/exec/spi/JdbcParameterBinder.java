@@ -12,6 +12,12 @@ import java.sql.SQLException;
 /**
  * Performs parameter value binding to a JDBC PreparedStatement.
  *
+ * @apiNote It is important to understand a major assumption here - the
+ * JdbcParameterBinder is already "inclusion" aware based on Clause, etc.
+ * The practical implication of this is that there must be a unique
+ * JdbcParameterBinder for every usage of a parameter (named/positional)
+ * in a query
+ *
  * @author Steve Ebersole
  * @author John O'Hara
  */
@@ -21,4 +27,5 @@ public interface JdbcParameterBinder {
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException;
 
+	int getNumberOfJdbcParametersNeeded();
 }

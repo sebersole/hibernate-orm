@@ -10,6 +10,7 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -183,8 +184,8 @@ public class SingularPersistentAttributeEmbedded<O,J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueBinder( typeConfiguration );
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

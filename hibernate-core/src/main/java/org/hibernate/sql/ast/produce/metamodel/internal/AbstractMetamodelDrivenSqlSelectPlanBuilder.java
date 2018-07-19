@@ -236,7 +236,7 @@ public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		return new RelationalPredicate(
 				RelationalPredicate.Operator.EQUAL,
 				restrictionExpression,
-				new LoadIdParameter( (AllowableParameterType) restrictionExpression.getType() )
+				new LoadIdParameter( (AllowableParameterType) restrictionExpression.getType(), buildingContext.getSessionFactory().getTypeConfiguration() )
 		);
 	}
 

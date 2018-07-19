@@ -10,7 +10,9 @@ import org.hibernate.QueryException;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -24,8 +26,12 @@ public class NamedParameter extends AbstractParameter {
 
 	private final String name;
 
-	public NamedParameter(String name, AllowableParameterType inferredType) {
-		super( inferredType );
+	public NamedParameter(
+			String name,
+			AllowableParameterType inferredType,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		super( inferredType, clause, typeConfiguration );
 		this.name = name;
 	}
 

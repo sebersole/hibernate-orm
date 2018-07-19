@@ -9,11 +9,13 @@ package org.hibernate.sql.ast.produce.metamodel.spi;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -50,7 +52,9 @@ public interface BasicValuedExpressableType<J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+	default ValueBinder getValueBinder(
+			Predicate<StateArrayContributor> inclusionChecker,
+			TypeConfiguration typeConfiguration) {
 		return new ValueBinder() {
 			@Override
 			public int getNumberOfJdbcParametersNeeded() {

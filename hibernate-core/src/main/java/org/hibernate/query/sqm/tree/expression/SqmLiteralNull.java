@@ -6,7 +6,10 @@
  */
 package org.hibernate.query.sqm.tree.expression;
 
+import java.util.function.Predicate;
+
 import org.hibernate.HibernateException;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
@@ -52,14 +55,14 @@ public class SqmLiteralNull implements SqmLiteral<Void> {
 		return "<literal-null>";
 	}
 
-	private static BasicValuedExpressableType NULL_TYPE = new BasicValuedExpressableType() {
+	private static BasicValuedExpressableType NULL_TYPE = new BasicValuedExpressableType<Object>() {
 		@Override
 		public int getNumberOfJdbcParametersNeeded() {
 			return 0;
 		}
 
 		@Override
-		public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
+		public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 			return null;
 		}
 

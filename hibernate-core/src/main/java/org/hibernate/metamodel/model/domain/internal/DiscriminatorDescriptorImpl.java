@@ -7,6 +7,8 @@
 
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.function.Predicate;
+
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -15,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorMappings;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -76,8 +79,8 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return getBasicType().getValueBinder( typeConfiguration );
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

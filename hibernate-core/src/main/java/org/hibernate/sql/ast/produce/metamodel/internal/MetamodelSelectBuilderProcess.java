@@ -212,7 +212,7 @@ public class MetamodelSelectBuilderProcess
 					new RelationalPredicate(
 							RelationalPredicate.Operator.EQUAL,
 							restrictedExpression,
-							new LoadIdParameter( (AllowableParameterType) restrictedNavigable )
+							new LoadIdParameter( (AllowableParameterType) restrictedNavigable, sessionFactory.getTypeConfiguration() )
 					)
 			);
 		}
@@ -220,7 +220,7 @@ public class MetamodelSelectBuilderProcess
 			final InListPredicate predicate = new InListPredicate( restrictedExpression );
 			for ( int i = 0; i < numberOfKeysToLoad; i++ ) {
 				predicate.addExpression(
-						new LoadIdParameter( i, (AllowableParameterType) restrictedNavigable )
+						new LoadIdParameter( i, (AllowableParameterType) restrictedNavigable, sessionFactory.getTypeConfiguration() )
 				);
 			}
 			rootQuerySpec.addRestriction( predicate );

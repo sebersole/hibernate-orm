@@ -6,12 +6,19 @@
  */
 package org.hibernate.query.sql.internal;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
 import org.hibernate.ScrollMode;
+import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.query.sql.spi.NativeSelectQueryPlan;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
 import org.hibernate.sql.exec.internal.JdbcSelectImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -20,6 +27,7 @@ import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.JdbcSelectExecutor;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
+import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * @author Steve Ebersole
@@ -28,7 +36,7 @@ public class NativeSelectQueryPlanImpl<R> implements NativeSelectQueryPlan<R> {
 	private final String sql;
 	private final Set<String> affectedTableNames;
 
-	private final List<JdbcParameterBinder> parameterBinders;
+	private final List<QueryParameterImplementor> parameterList;
 
 	private final ResultSetMappingDescriptor resultSetMapping;
 	private final RowTransformer<R> rowTransformer;
@@ -36,23 +44,23 @@ public class NativeSelectQueryPlanImpl<R> implements NativeSelectQueryPlan<R> {
 	public NativeSelectQueryPlanImpl(
 			String sql,
 			Set<String> affectedTableNames,
-			List<JdbcParameterBinder> parameterBinders,
+			List<QueryParameterImplementor> parameterList,
 			ResultSetMappingDescriptor resultSetMapping,
 			RowTransformer<R> rowTransformer) {
 		this.sql = sql;
 		this.affectedTableNames = affectedTableNames;
-		this.parameterBinders = parameterBinders;
+		this.parameterList = parameterList;
 		this.resultSetMapping = resultSetMapping;
 		this.rowTransformer = rowTransformer;
 	}
 
 	@Override
 	public List<R> performList(ExecutionContext executionContext) {
-		// todo (6.0) : per email to dev group I'd like to remove this `callable` support
-		//		so for now, ignore it and simply build the JdbcSelect
+		final List<JdbcParameterBinder> jdbcParameterBinders = resolveJdbcParameterBinders( executionContext );
+
 		final JdbcSelect jdbcSelect = new JdbcSelectImpl(
 				sql,
-				parameterBinders,
+				jdbcParameterBinders,
 				resultSetMapping,
 				affectedTableNames
 		);
@@ -63,12 +71,53 @@ public class NativeSelectQueryPlanImpl<R> implements NativeSelectQueryPlan<R> {
 		return executor.list( jdbcSelect, executionContext, rowTransformer );
 	}
 
+	private List<JdbcParameterBinder> resolveJdbcParameterBinders(ExecutionContext executionContext) {
+		final List<JdbcParameterBinder> jdbcParameterBinders = CollectionHelper.arrayList( parameterList.size() );
+
+		for ( QueryParameterImplementor parameter : parameterList ) {
+			final QueryParameterBinding parameterBinding = executionContext.getParameterBindingContext()
+					.getQueryParameterBindings()
+					.getBinding( parameter );
+			AllowableParameterType type = parameterBinding.getBindType();
+			if ( type == null ) {
+				type = parameter.getHibernateType();
+			}
+
+			final ValueBinder valueBinder = type.getValueBinder(
+					Clause.IRRELEVANT.getInclusionChecker(),
+					executionContext.getSession().getFactory().getTypeConfiguration()
+			);
+
+			jdbcParameterBinders.add(
+					new JdbcParameterBinder() {
+						@Override
+						public int getNumberOfJdbcParametersNeeded() {
+							return valueBinder.getNumberOfJdbcParametersNeeded();
+						}
+
+						@Override
+						public int bindParameterValue(
+								PreparedStatement statement,
+								int startPosition,
+								ExecutionContext executionContext) throws SQLException {
+							valueBinder.bind( statement, startPosition, parameterBinding.getBindValue(), executionContext );
+							return getNumberOfJdbcParametersNeeded();
+						}
+					}
+			);
+		}
+		return jdbcParameterBinders;
+	}
+
 	@Override
 	public ScrollableResultsImplementor<R> performScroll(ScrollMode scrollMode, ExecutionContext executionContext) {
 		// todo (6.0) : see notes above in `#performList`
+
+		final List<JdbcParameterBinder> jdbcParameterBinders = resolveJdbcParameterBinders( executionContext );
+
 		final JdbcSelect jdbcSelect = new JdbcSelectImpl(
 				sql,
-				parameterBinders,
+				jdbcParameterBinders,
 				resultSetMapping,
 				affectedTableNames
 		);

@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.mapping.IndexedCollection;
@@ -17,6 +18,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmCollectionIndexReferenceBasic;
@@ -119,8 +121,8 @@ public class BasicCollectionIndexImpl<J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return basicType.getValueBinder( typeConfiguration );
+	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		return basicType.getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

@@ -9,9 +9,9 @@ package org.hibernate.query.sql.spi;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
+import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.sql.exec.spi.RowTransformer;
+import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 
 /**
  * Access the values defining a native select query
@@ -20,7 +20,13 @@ import org.hibernate.sql.exec.spi.RowTransformer;
  */
 public interface NativeSelectQueryDefinition<R> {
 	String getSqlString();
-	List<JdbcParameterBinder> getParameterBinders();
+
+	/**
+	 * @apiNote This returns query parameters in the order they were
+	 * encountered - potentially including "duplicate references" to a single parameter
+	 */
+	List<QueryParameterImplementor> getQueryParameterList();
+
 	ResultSetMappingDescriptor getResultSetMapping();
 
 	Set<String> getAffectedTableNames();

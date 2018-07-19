@@ -26,6 +26,11 @@ public interface ValueBinder {
 	 */
 	int getNumberOfJdbcParametersNeeded();
 
+	// todo (6.0) : We should allow for some form of applying exclusion of certain columns, e.g
+	// 		1) `Predicate<StateArrayContributor>`
+	// 		2) passing in an indication of the type of clause the binding is being done in (insert, where, etc)
+	//		3) ???
+
 	/**
 	 * Bind a value to a prepared statement.
 	 *

@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.lang.reflect.Member;
+import java.util.function.Predicate;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -35,8 +36,10 @@ public interface VersionDescriptor<O,J>
 	VersionSupport getVersionSupport();
 
 	@Override
-	default ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return getBasicType().getValueBinder( typeConfiguration );
+	default ValueBinder getValueBinder(
+			Predicate<StateArrayContributor> inclusionChecker,
+			TypeConfiguration typeConfiguration) {
+		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

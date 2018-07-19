@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
@@ -40,6 +39,8 @@ import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
@@ -632,13 +633,10 @@ public class SingularPersistentAttributeEntity<O,J>
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// AllowableParameterType
 
-
-	private final ValueBinder valueBinder = new ValueBinder() {
+	private static final ValueBinder SKIP_BINDER = new ValueBinder() {
 		@Override
 		public int getNumberOfJdbcParametersNeeded() {
-			return getEntityDescriptor().getHierarchy()
-					.getIdentifierDescriptor()
-					.getNumberOfJdbcParametersNeeded();
+			return 0;
 		}
 
 		@Override
@@ -647,14 +645,69 @@ public class SingularPersistentAttributeEntity<O,J>
 				PreparedStatement st,
 				int index,
 				Object value,
+				ExecutionContext executionContext) {
+			// nothing to do
+		}
+
+		@Override
+		public void bind(
+				PreparedStatement st,
+				String name,
+				Object value,
+				ExecutionContext executionContext) {
+			// nothing to do
+		}
+	};
+
+	@Override
+	public ValueBinder getValueBinder(java.util.function.Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
+		return inclusionChecker.test( this )
+				? new ValueBinderImpl( this, inclusionChecker, typeConfiguration )
+				: SKIP_BINDER;
+	}
+
+	private static class ValueBinderImpl implements ValueBinder {
+		private final SingularPersistentAttributeEntity attribute;
+		private final ValueBinder valueBinder;
+		private final FkValueExtractor fkValueExtractor;
+
+		public ValueBinderImpl(
+				SingularPersistentAttributeEntity attribute,
+				java.util.function.Predicate<StateArrayContributor> inclusionChecker,
+				TypeConfiguration typeConfiguration) {
+			this.attribute = attribute;
+
+			if ( attribute.referencedAttributeName == null ) {
+				this.valueBinder = attribute.getAssociatedEntityDescriptor().getIdentifierDescriptor().getValueBinder(
+						inclusionChecker,
+						typeConfiguration
+				);
+				this.fkValueExtractor = (owner, executionContext) -> attribute.getAssociatedEntityDescriptor().getIdentifierDescriptor().extractIdentifier(
+						owner,
+						executionContext.getSession()
+				);
+			}
+			else {
+				final NonIdPersistentAttribute referencedAttribute = attribute.getAssociatedEntityDescriptor()
+						.findPersistentAttribute( attribute.referencedAttributeName );
+				this.valueBinder = referencedAttribute.getValueBinder( inclusionChecker, typeConfiguration );
+				this.fkValueExtractor = (owner, executionContext) -> referencedAttribute.getPropertyAccess().getGetter().get( owner );
+			}
+		}
+
+		@Override
+		public int getNumberOfJdbcParametersNeeded() {
+			return valueBinder.getNumberOfJdbcParametersNeeded();
+		}
+
+		@Override
+		public void bind(
+				PreparedStatement st,
+				int position,
+				Object value,
 				ExecutionContext executionContext) throws SQLException {
-			final Object identifier = value == null
-					? null
-					: getEntityDescriptor().getIdentifier( value, executionContext.getSession() );
-			getEntityDescriptor().getHierarchy()
-					.getIdentifierDescriptor()
-					.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
-					.bind( st, index, identifier, executionContext );
+			final Object fkValue = fkValueExtractor.extractFkValue( value, executionContext );
+			valueBinder.bind( st, position, fkValue, executionContext );
 		}
 
 		@Override
@@ -663,20 +716,9 @@ public class SingularPersistentAttributeEntity<O,J>
 				String name,
 				Object value,
 				ExecutionContext executionContext) throws SQLException {
-			final Object identifier = value == null
-					? null
-					: getEntityDescriptor().getIdentifier( value, executionContext.getSession() );
-			getEntityDescriptor().getHierarchy()
-					.getIdentifierDescriptor()
-					.getValueBinder( executionContext.getSession().getFactory().getTypeConfiguration() )
-					.bind( st, name, identifier, executionContext
-			);
+			final Object fkValue = fkValueExtractor.extractFkValue( value, executionContext );
+			valueBinder.bind( st, name, fkValue, executionContext );
 		}
-	};
-
-	@Override
-	public ValueBinder getValueBinder(TypeConfiguration typeConfiguration) {
-		return valueBinder;
 	}
 
 	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
@@ -735,5 +777,9 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	public ForeignKey getForeignKey() {
 		return foreignKey;
+	}
+
+	private interface FkValueExtractor {
+		Object extractFkValue(Object owner, ExecutionContext executionContext);
 	}
 }

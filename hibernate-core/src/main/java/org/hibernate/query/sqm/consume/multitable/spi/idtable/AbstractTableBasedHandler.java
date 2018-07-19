@@ -15,6 +15,7 @@ import org.hibernate.query.sqm.consume.multitable.spi.Handler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.tree.SqmDeleteOrUpdateStatement;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.consume.spi.SqlInsertSelectToJdbcInsertSelectConverter;
@@ -199,7 +200,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		return new QueryLiteral(
 				sessionUidSupport.extractUid( executionContext.getSession() ),
 				StandardSpiBasicTypes.STRING,
-				true
+				Clause.IRRELEVANT
 		);
 	}
 

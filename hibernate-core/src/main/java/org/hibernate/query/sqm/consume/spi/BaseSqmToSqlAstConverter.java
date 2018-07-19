@@ -123,7 +123,7 @@ import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmToSqlAstConverter;
-import org.hibernate.sql.ast.tree.spi.Clause;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.AbsFunction;
 import org.hibernate.sql.ast.tree.spi.expression.AvgFunction;
@@ -812,7 +812,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.STRING ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -829,7 +829,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.CHARACTER ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -838,7 +838,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.DOUBLE ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -847,7 +847,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.INTEGER ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -856,7 +856,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_INTEGER ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -865,7 +865,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_DECIMAL ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -874,7 +874,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.FLOAT ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -883,7 +883,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.LONG ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -892,7 +892,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				Boolean.TRUE,
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -901,7 +901,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				Boolean.FALSE,
 				resolveType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -910,7 +910,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				null,
 				expression.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -919,7 +919,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				literal.getLiteralValue(),
 				literal.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -928,7 +928,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				literal.getLiteralValue(),
 				literal.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -937,7 +937,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				literal.getLiteralValue(),
 				literal.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -946,7 +946,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				expression.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -955,7 +955,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				expression.getExpressableType(),
-				getCurrentClauseStack().getCurrent() == Clause.SELECT
+				getCurrentClauseStack().getCurrent()
 		);
 	}
 
@@ -963,7 +963,9 @@ public abstract class BaseSqmToSqlAstConverter
 	public NamedParameter visitNamedParameterExpression(SqmNamedParameter expression) {
 		return new NamedParameter(
 				expression.getName(),
-				(AllowableParameterType) expression.getExpressableType()
+				(AllowableParameterType) expression.getExpressableType(),
+				currentClauseStack.getCurrent(),
+				sqlAstCreationContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 
@@ -971,7 +973,9 @@ public abstract class BaseSqmToSqlAstConverter
 	public PositionalParameter visitPositionalParameterExpression(SqmPositionalParameter expression) {
 		return new PositionalParameter(
 				expression.getPosition(),
-				(AllowableParameterType) expression.getExpressableType()
+				(AllowableParameterType) expression.getExpressableType(),
+				currentClauseStack.getCurrent(),
+				sqlAstCreationContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 

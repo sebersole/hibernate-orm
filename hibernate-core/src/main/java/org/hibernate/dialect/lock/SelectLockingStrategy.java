@@ -22,6 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.SimpleSelect;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -68,14 +69,14 @@ public class SelectLockingStrategy extends AbstractSelectLockingStrategy {
 				final AllowableParameterType identifierParameterType = getLockable().getHierarchy()
 						.getIdentifierDescriptor();
 
-				identifierParameterType.getValueBinder( typeConfiguration )
+				identifierParameterType.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration )
 						.bind( st, 1, id, executionContext );
 
 				if ( StringHelper.isNotEmpty( getLockable().getVersionColumnName() ) ) {
 					getLockable().getHierarchy()
 							.getVersionDescriptor()
 							.getBasicType()
-							.getValueBinder( typeConfiguration )
+							.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration )
 							.bind(
 									st,
 									identifierParameterType.getNumberOfJdbcParametersNeeded() + 1,

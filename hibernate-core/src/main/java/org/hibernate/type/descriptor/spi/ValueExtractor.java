@@ -13,7 +13,9 @@ import java.sql.SQLException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.InitializerCollector;
+import org.hibernate.sql.results.spi.QueryResult;
 
 /**
  * Contract for extracting value via JDBC (from {@link ResultSet} or as output
@@ -30,6 +32,11 @@ public interface ValueExtractor<X> {
 	int getNumberOfJdbcParametersNeeded();
 
 
+
+	default QueryResult createQueryResult(java.util.function.Consumer<Initializer> collector) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// todo (6.0) : fix this...
 	// 		while this contract is intended to operate at the domain level,
@@ -39,9 +46,9 @@ public interface ValueExtractor<X> {
 	//		as it is simply used to determine the number of JDBC parameter
 	//		placeholders (`?`) to render into the SQL query string
 
-	default void registerInitializers(InitializerCollector collector) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
+//	default void registerInitializers(InitializerCollector collector) {
+//		throw new NotYetImplementedFor6Exception( getClass() );
+//	}
 
 	/**
 	 * Extract value from result set, by position

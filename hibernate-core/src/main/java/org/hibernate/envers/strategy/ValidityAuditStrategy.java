@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.LockOptions;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.Session;
 import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
@@ -53,6 +52,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -829,7 +829,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		 * @throws SQLException Thrown if a SQL exception occured.
 		 */
 		public int bind(int index, PreparedStatement ps, ExecutionContext options) throws SQLException {
-			type.getValueBinder( options.getSession().getFactory().getTypeConfiguration() )
+			// todo (6.0) (chris) : what is the correct Clause / inclusion-Predicate?
+			type.getValueBinder( Clause.UPDATE.getInclusionChecker(), options.getSession().getFactory().getTypeConfiguration() )
 					.bind( ps, index, value, options );
 			return type.getNumberOfJdbcParametersNeeded();
 		}
