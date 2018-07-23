@@ -36,7 +36,6 @@ import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.internal.FilterConfiguration;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.internal.util.collections.EmptyIterator;
 import org.hibernate.internal.util.collections.JoinedIterator;
 import org.hibernate.internal.util.collections.SingletonIterator;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -106,9 +105,8 @@ public abstract class PersistentClass
 
 	public PersistentClass(
 			MetadataBuildingContext metadataBuildingContext,
-			EntityJavaTypeMapping javaTypeMapping,
 			EntityMappingHierarchy entityMappingHierarchy) {
-		super( entityMappingHierarchy, javaTypeMapping );
+		super( entityMappingHierarchy);
 		this.metadataBuildingContext = metadataBuildingContext;
 	}
 
@@ -1158,4 +1156,5 @@ public abstract class PersistentClass
 						getProxyInterface() != null && !ReflectHelper.isFinalClass( getProxyInterface() ))
 		);
 	}
+
 }

@@ -42,9 +42,7 @@ public abstract class AbstractIdentifiableTypeMapping
 	private EmbeddedValueMapping declaredIdentifierEmbeddedValueMapping;
 
 	public AbstractIdentifiableTypeMapping(
-			EntityMappingHierarchy entityMappingHierarchy,
-			IdentifiableJavaTypeMapping javaTypeMapping) {
-		super( javaTypeMapping );
+			EntityMappingHierarchy entityMappingHierarchy) {
 		this.entityMappingHierarchy = entityMappingHierarchy;
 	}
 

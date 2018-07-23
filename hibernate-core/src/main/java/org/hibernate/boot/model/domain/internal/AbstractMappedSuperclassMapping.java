@@ -24,9 +24,8 @@ public abstract class AbstractMappedSuperclassMapping
 		implements MappedSuperclassImplementor {
 
 	public AbstractMappedSuperclassMapping(
-			EntityMappingHierarchy entityMappingHierarchy,
-			MappedSuperclassJavaTypeMapping javaTypeMapping) {
-		super( entityMappingHierarchy, javaTypeMapping );
+			EntityMappingHierarchy entityMappingHierarchy) {
+		super( entityMappingHierarchy);
 	}
 
 	@Override

@@ -15,6 +15,7 @@ import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.boot.model.domain.internal.EntityJavaTypeMappingImpl;
 import org.hibernate.boot.model.domain.spi.IdentifiableTypeMappingImplementor;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -26,18 +27,31 @@ import org.hibernate.internal.util.collections.SingletonIterator;
  * A sublass in a table-per-class-hierarchy mapping
  * @author Gavin King
  */
-public class Subclass extends PersistentClass {
+public abstract class Subclass extends PersistentClass {
 	private IdentifiableTypeMapping superclass;
 	private Class classPersisterClass;
 	private final int subclassId;
 	
 	public Subclass(
 			IdentifiableTypeMapping superclass,
-			EntityJavaTypeMapping javaTypeMapping,
 			MetadataBuildingContext metadataBuildingContext) {
-		super( metadataBuildingContext, javaTypeMapping, superclass.getEntityMappingHierarchy() );
+		super( metadataBuildingContext, superclass.getEntityMappingHierarchy() );
+		setJavaTypeMapping( resolveJavaTypeMapping(
+				superclass,
+				metadataBuildingContext
+		) );
 		this.superclass = superclass;
 		this.subclassId = ( (IdentifiableTypeMappingImplementor) superclass ).nextSubclassId();
+	}
+
+	private EntityJavaTypeMapping resolveJavaTypeMapping(
+			IdentifiableTypeMapping superEntity,
+			MetadataBuildingContext metadataBuildingContext) {
+		return new EntityJavaTypeMappingImpl(
+				metadataBuildingContext,
+				this,
+				superEntity == null ? null : superEntity.getJavaTypeMapping()
+		);
 	}
 
 	@Override

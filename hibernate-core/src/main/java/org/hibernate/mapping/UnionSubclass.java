@@ -23,9 +23,8 @@ public class UnionSubclass extends Subclass implements TableOwner {
 
 	public UnionSubclass(
 			PersistentClass superclass,
-			EntityJavaTypeMapping javaTypeMapping,
 			MetadataBuildingContext metadataBuildingContext) {
-		super( superclass, javaTypeMapping, metadataBuildingContext );
+		super( superclass, metadataBuildingContext );
 	}
 
 	@Override

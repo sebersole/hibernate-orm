@@ -72,7 +72,6 @@ import org.hibernate.AnnotationException;
 import org.hibernate.AssertionFailure;
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.Cascade;
@@ -126,8 +125,6 @@ import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.IdentifierGeneratorDefinition;
 import org.hibernate.boot.model.TypeDefinition;
-import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
-import org.hibernate.boot.model.domain.internal.EntityJavaTypeMappingImpl;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.EntityNamingSource;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
@@ -1189,46 +1186,20 @@ public final class AnnotationBinder {
 			MetadataBuildingContext metadataBuildingContext) {
 		//we now know what kind of persistent entity it is
 		if ( !inheritanceState.hasParents() ) {
-			return new RootClass(
-					metadataBuildingContext,
-					resolveJavaTypeMapping( inheritanceState, null, metadataBuildingContext )
-			);
+			return new RootClass( metadataBuildingContext );
 		}
 		else if ( InheritanceType.SINGLE_TABLE.equals( inheritanceState.getType() ) ) {
-			return new SingleTableSubclass(
-					superEntity,
-					resolveJavaTypeMapping( inheritanceState, superEntity, metadataBuildingContext ),
-					metadataBuildingContext
-			);
+			return new SingleTableSubclass( superEntity, metadataBuildingContext );
 		}
 		else if ( InheritanceType.JOINED.equals( inheritanceState.getType() ) ) {
-			return new JoinedSubclass(
-					superEntity,
-					resolveJavaTypeMapping( inheritanceState, superEntity, metadataBuildingContext ),
-					metadataBuildingContext
-			);
+			return new JoinedSubclass( superEntity, metadataBuildingContext );
 		}
 		else if ( InheritanceType.TABLE_PER_CLASS.equals( inheritanceState.getType() ) ) {
-			return new UnionSubclass(
-					superEntity,
-					resolveJavaTypeMapping( inheritanceState, superEntity, metadataBuildingContext ),
-					metadataBuildingContext
-			);
+			return new UnionSubclass( superEntity, metadataBuildingContext );
 		}
 		else {
 			throw new AssertionFailure( "Unknown inheritance type: " + inheritanceState.getType() );
 		}
-	}
-
-	private static EntityJavaTypeMapping resolveJavaTypeMapping(
-			InheritanceState inheritanceState,
-			PersistentClass superEntity,
-			MetadataBuildingContext metadataBuildingContext) {
-		return new EntityJavaTypeMappingImpl(
-				metadataBuildingContext,
-				resolveEntityNamingSource( inheritanceState ),
-				superEntity == null ? null : superEntity.getJavaTypeMapping()
-		);
 	}
 
 	private static EntityNamingSource resolveEntityNamingSource(InheritanceState inheritanceState) {

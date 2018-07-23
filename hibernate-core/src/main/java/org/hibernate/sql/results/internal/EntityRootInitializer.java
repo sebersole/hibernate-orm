@@ -8,7 +8,6 @@ package org.hibernate.sql.results.internal;
 
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 
 /**
@@ -16,8 +15,7 @@ import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
  * @author Steve Ebersole
  */
 public class EntityRootInitializer
-		extends AbstractEntityInitializer
-		implements EntityInitializer {
+		extends AbstractEntityInitializer {
 	public EntityRootInitializer(
 			EntityDescriptor entityDescriptor,
 			EntitySqlSelectionGroup sqlSelectionMappings,

@@ -24,11 +24,9 @@ public class JoinedSubclass extends Subclass implements TableOwner {
 
 	public JoinedSubclass(
 			EntityMapping superclass,
-			EntityJavaTypeMapping javaTypeMapping,
 			MetadataBuildingContext metadataBuildingContext) {
-		super( superclass, javaTypeMapping, metadataBuildingContext );
+		super( superclass, metadataBuildingContext );
 	}
-
 
 	@Override
 	public Table getTable() {

@@ -28,18 +28,19 @@ import org.jboss.logging.Logger;
 public abstract class AbstractManagedTypeMapping implements ManagedTypeMappingImplementor {
 	private static final Logger log = Logger.getLogger( AbstractManagedTypeMapping.class );
 
-	private final ManagedJavaTypeMapping javaTypeMapping;
+	private ManagedJavaTypeMapping javaTypeMapping;
 
 	private ManagedTypeMapping superTypeMapping;
 	private TreeMap<String, PersistentAttributeMapping> declaredAttributeMappings;
 
-	public AbstractManagedTypeMapping(ManagedJavaTypeMapping javaTypeMapping) {
-		this.javaTypeMapping = javaTypeMapping;
-	}
 
 	@Override
 	public JavaTypeMapping getJavaTypeMapping() {
 		return javaTypeMapping;
+	}
+
+	protected void setJavaTypeMapping(ManagedJavaTypeMapping javaTypeMapping) {
+		this.javaTypeMapping = javaTypeMapping;
 	}
 
 	@Override

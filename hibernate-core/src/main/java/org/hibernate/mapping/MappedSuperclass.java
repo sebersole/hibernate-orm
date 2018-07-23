@@ -21,6 +21,7 @@ import org.hibernate.boot.model.domain.MappedSuperclassJavaTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.internal.AbstractMappedSuperclassMapping;
+import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
 
@@ -46,7 +47,8 @@ public class MappedSuperclass extends AbstractMappedSuperclassMapping implements
 			EntityMappingHierarchy entityMappingHierarchy,
 			IdentifiableTypeMapping superIdentifiableTypeMapping,
 			MappedSuperclassJavaTypeMapping javaTypeMapping) {
-		super( entityMappingHierarchy, javaTypeMapping );
+		super( entityMappingHierarchy );
+		setJavaTypeMapping( javaTypeMapping );
 		setSuperManagedType( superIdentifiableTypeMapping );
 	}
 
@@ -239,5 +241,10 @@ public class MappedSuperclass extends AbstractMappedSuperclassMapping implements
 	@Override
 	public Collection<MappedJoin> getMappedJoins() {
 		throw new NotYetImplementedException( "Mapped superclass secondary tables is not implemented yet" );
+	}
+
+	@Override
+	public MappedTable getMappedTable() {
+		throw new MappingException( "This should not be called on a MappedSuperclass" );
 	}
 }

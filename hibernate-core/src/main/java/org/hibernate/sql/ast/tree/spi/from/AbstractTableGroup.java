@@ -18,7 +18,7 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
  */
 public abstract class AbstractTableGroup
 		extends AbstractColumnReferenceQualifier
-		implements TableGroup, ColumnReferenceQualifier {
+		implements TableGroup {
 
 	private final TableSpace tableSpace;
 

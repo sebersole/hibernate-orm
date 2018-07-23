@@ -17,15 +17,12 @@ import org.hibernate.type.descriptor.java.spi.EntityMutabilityPlan;
  * @author Steve Ebersole
  */
 public class EntityMutabilityPlanImpl implements EntityMutabilityPlan {
-	private final EntityDescriptor entityDescriptor;
 	private final EntityEntryFactory entityEntryFactory;
 	private final boolean isMutable;
 
 	public EntityMutabilityPlanImpl(
-			EntityDescriptor entityDescriptor,
 			EntityEntryFactory entityEntryFactory,
 			boolean isMutable) {
-		this.entityDescriptor = entityDescriptor;
 		this.entityEntryFactory = entityEntryFactory;
 		this.isMutable = isMutable;
 	}

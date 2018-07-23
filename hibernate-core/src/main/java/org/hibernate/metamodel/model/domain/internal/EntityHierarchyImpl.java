@@ -15,8 +15,6 @@ import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.engine.OptimisticLockStyle;
-import org.hibernate.engine.internal.ImmutableEntityEntry;
-import org.hibernate.engine.internal.MutableEntityEntryFactory;
 import org.hibernate.mapping.JoinedSubclass;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
@@ -35,7 +33,6 @@ import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
-import org.hibernate.type.descriptor.java.internal.EntityMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EntityMutabilityPlan;
 
 import org.jboss.logging.Logger;
@@ -117,39 +114,10 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 
 		this.implicitPolymorphismEnabled = !rootBootDescriptor.isExplicitPolymorphism();
 		this.optimisticLockStyle = rootBootDescriptor.getEntityMappingHierarchy().getOptimisticLockStyle();
-		this.mutabilityPlan = determineMutabilityPlan( rootBootDescriptor, rootRuntimeDescriptor, creationContext );
+		this.mutabilityPlan = (EntityMutabilityPlan) rootBootDescriptor.getJavaTypeMapping()
+				.getJavaTypeDescriptor()
+				.getMutabilityPlan();
 		this.whereFragment = rootBootDescriptor.getWhere();
-	}
-
-	private static EntityMutabilityPlan determineMutabilityPlan(
-			RootClass rootBootDescriptor,
-			EntityDescriptor rootRuntimeDescriptor,
-			RuntimeModelCreationContext creationContext) {
-		if ( rootBootDescriptor.isMutable() ) {
-			return new EntityMutabilityPlanImpl(
-					rootRuntimeDescriptor,
-					MutableEntityEntryFactory.INSTANCE,
-					true
-			);
-		}
-		else {
-			return new EntityMutabilityPlanImpl(
-					rootRuntimeDescriptor,
-					(status, loadedState, rowId, id, version, lockMode, existsInDatabase, descriptor, disableVersionIncrement, persistenceContext) -> new ImmutableEntityEntry(
-							status,
-							loadedState,
-							rowId,
-							id,
-							version,
-							lockMode,
-							existsInDatabase,
-							descriptor,
-							disableVersionIncrement,
-							persistenceContext
-					),
-					false
-			);
-		}
 	}
 
 	private static RepresentationMode determineRepresentationMode(

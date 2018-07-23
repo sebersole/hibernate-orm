@@ -11,9 +11,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.ValueMapping;
+import org.hibernate.boot.model.domain.internal.EntityJavaTypeMappingImpl;
 import org.hibernate.boot.model.domain.internal.EntityMappingHierarchyImpl;
 import org.hibernate.boot.model.domain.spi.EntityMappingHierarchyImplementor;
 import org.hibernate.boot.model.relational.MappedTable;
@@ -22,7 +22,6 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.SingletonIterator;
-import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
  * The root class of an inheritance hierarchy
@@ -52,10 +51,13 @@ public class RootClass extends PersistentClass implements TableOwner {
 	private boolean discriminatorInsertable = true;
 	private int nextSubclassId;
 
-	public RootClass(
-			MetadataBuildingContext metadataBuildingContext,
-			EntityJavaTypeMapping javaTypeMapping) {
-		super( metadataBuildingContext, javaTypeMapping, new EntityMappingHierarchyImpl() );
+	public RootClass(MetadataBuildingContext metadataBuildingContext) {
+		super( metadataBuildingContext, new EntityMappingHierarchyImpl() );
+		setJavaTypeMapping( new EntityJavaTypeMappingImpl(
+				metadataBuildingContext,
+				this,
+				null
+		) );
 		getEntityMappingHierarchy().setRootType( this );
 	}
 
