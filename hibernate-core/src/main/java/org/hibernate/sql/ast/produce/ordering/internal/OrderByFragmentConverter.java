@@ -16,7 +16,7 @@ import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
 import org.hibernate.query.sqm.tree.order.SqmSortSpecification;
 import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
@@ -24,20 +24,20 @@ import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 /**
  * @author Steve Ebersole
  */
-public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implements SqlAstCreationContext {
+public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implements SqlAstProducerContext {
 	@SuppressWarnings("WeakerAccess")
 	public static final QueryOptions QUERY_OPTIONS = new QueryOptionsImpl();
 
 	@SuppressWarnings("WeakerAccess")
 	public static List<SortSpecification> convertOrderByFragmentSqmTree(
-			SqlAstCreationContext sqlAstCreationContext,
+			SqlAstProducerContext producerContext,
 			SqmOrderByClause sqmOrderByClause) {
-		return new OrderByFragmentConverter( sqlAstCreationContext ).doConversion( sqmOrderByClause );
+		return new OrderByFragmentConverter( producerContext ).doConversion( sqmOrderByClause );
 	}
 
 	private final List<SortSpecification> collectedSortSpecs = new ArrayList<>();
 	private final NonSelectSqlExpressionResolver sqlExpressionResolver = new NonSelectSqlExpressionResolver(
-			getSqlAstCreationContext().getSessionFactory(),
+			getProducerContext().getSessionFactory(),
 			() -> null,
 			expression -> expression,
 			(expression, selection) -> {}
@@ -45,13 +45,13 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 
 
 	@SuppressWarnings("WeakerAccess")
-	protected OrderByFragmentConverter(SqlAstCreationContext sqlAstCreationContext) {
-		super( sqlAstCreationContext, QUERY_OPTIONS );
+	protected OrderByFragmentConverter(SqlAstProducerContext producerContext) {
+		super( producerContext, QUERY_OPTIONS );
 	}
 
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
-		return getSqlAstCreationContext().getSessionFactory();
+		return getProducerContext().getSessionFactory();
 	}
 
 	@Override

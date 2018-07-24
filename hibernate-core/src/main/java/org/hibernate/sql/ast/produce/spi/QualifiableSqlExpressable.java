@@ -16,6 +16,7 @@ import org.hibernate.sql.ast.tree.spi.expression.Expression;
  * @author Steve Ebersole
  */
 public interface QualifiableSqlExpressable extends SqlExpressable {
-	// todo (6.0) : anything else to pass in?
-	Expression createSqlExpression(ColumnReferenceQualifier qualifier);
+	Expression createSqlExpression(
+			ColumnReferenceQualifier qualifier,
+			SqlAstProducerContext creationContext);
 }

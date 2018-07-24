@@ -37,7 +37,7 @@ import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
@@ -64,7 +64,7 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
  * @author Steve Ebersole
  */
 public class MetamodelSelectBuilderProcess
-		implements QueryResultCreationContext, SqlAstCreationContext, SqlQueryOptions {
+		implements QueryResultCreationContext, SqlAstProducerContext, SqlQueryOptions {
 
 	@SuppressWarnings("WeakerAccess")
 	public static SqlAstSelectDescriptor createSelect(

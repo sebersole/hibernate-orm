@@ -15,7 +15,7 @@ import org.hibernate.query.sqm.produce.internal.hql.HqlParseTreeBuilder;
 import org.hibernate.query.sqm.produce.internal.hql.HqlParseTreePrinter;
 import org.hibernate.query.sqm.produce.internal.hql.grammar.HqlParser;
 import org.hibernate.query.sqm.tree.order.SqmOrderByClause;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
@@ -28,7 +28,7 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class OrderByFragmentTranslator implements SqlAstCreationContext, SqlQueryOptions {
+public class OrderByFragmentTranslator implements SqlAstProducerContext, SqlQueryOptions {
 	private static final Logger LOG = Logger.getLogger( OrderByFragmentTranslator.class.getName() );
 
 	/**

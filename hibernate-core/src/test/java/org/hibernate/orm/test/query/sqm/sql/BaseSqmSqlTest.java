@@ -10,7 +10,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -30,7 +30,7 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 
 		final SqmSelectToSqlAstConverter sqmConveter = new SqmSelectToSqlAstConverter(
 				executionContext.getQueryOptions(),
-				new SqlAstCreationContext() {
+				new SqlAstProducerContext() {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return executionContext.getSession().getFactory();

@@ -22,7 +22,7 @@ import org.hibernate.query.spi.SelectQueryPlan;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -156,7 +156,7 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 	private JdbcSelect buildJdbcSelect(ExecutionContext executionContext) {
 		final SqmSelectToSqlAstConverter sqmConveter = new SqmSelectToSqlAstConverter(
 				executionContext.getQueryOptions(),
-				new SqlAstCreationContext() {
+				new SqlAstProducerContext() {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return executionContext.getSession().getFactory();

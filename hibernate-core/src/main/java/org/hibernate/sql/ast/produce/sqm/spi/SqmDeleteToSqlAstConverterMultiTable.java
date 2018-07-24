@@ -19,7 +19,7 @@ import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
@@ -41,13 +41,13 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 			SqmDeleteStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstCreationContext sqlAstCreationContext) {
+			SqlAstProducerContext producerContext) {
 
 		final SqmDeleteToSqlAstConverterMultiTable walker = new SqmDeleteToSqlAstConverterMultiTable(
 				sqmStatement,
 				idTableSelect,
 				queryOptions,
-				sqlAstCreationContext
+				producerContext
 		);
 
 		walker.visitDeleteStatement( sqmStatement );
@@ -64,8 +64,8 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 			SqmDeleteStatement sqmStatement,
 			QuerySpec idTableSelect,
 			QueryOptions queryOptions,
-			SqlAstCreationContext sqlAstCreationContext) {
-		super( sqlAstCreationContext, queryOptions );
+			SqlAstProducerContext producerContext) {
+		super( producerContext, queryOptions );
 		this.idTableSelect = idTableSelect;
 
 		this.entityDescriptor = sqmStatement.getEntityFromElement()

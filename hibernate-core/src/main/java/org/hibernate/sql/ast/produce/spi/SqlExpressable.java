@@ -7,10 +7,8 @@
 package org.hibernate.sql.ast.produce.spi;
 
 /**
- * Unifying contract for things that are capable of being an expression at
- * the SQL level.
- *
- * Such an expressable can also be part of the SQL select-clause
+ * Unifying contract for things that are capable of being an expression in
+ * the SQL AST.
  *
  * @author Steve Ebersole
  */

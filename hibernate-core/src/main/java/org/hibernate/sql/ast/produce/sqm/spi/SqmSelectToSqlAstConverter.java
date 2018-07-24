@@ -29,7 +29,7 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.internal.FetchGraphBuilder;
@@ -79,15 +79,15 @@ public class SqmSelectToSqlAstConverter
 
 	public SqmSelectToSqlAstConverter(
 			QueryOptions queryOptions,
-			SqlAstCreationContext sqlAstCreationContext) {
-		super( sqlAstCreationContext, queryOptions );
-		this.fetchDepthLimit = sqlAstCreationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
+			SqlAstProducerContext producerContext) {
+		super( producerContext, queryOptions );
+		this.fetchDepthLimit = producerContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
 		this.entityGraphQueryHintType = queryOptions.getEntityGraphQueryHint() == null
 				? EntityGraphQueryHint.Type.NONE
 				:  queryOptions.getEntityGraphQueryHint().getType();
 
 		this.expressionResolver = new PerQuerySpecSqlExpressionResolver(
-				sqlAstCreationContext.getSessionFactory(),
+				producerContext.getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection
@@ -109,7 +109,7 @@ public class SqmSelectToSqlAstConverter
 
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
-		return getSqlAstCreationContext().getSessionFactory();
+		return getProducerContext().getSessionFactory();
 	}
 
 	@Override
@@ -171,7 +171,7 @@ public class SqmSelectToSqlAstConverter
 			getSqlSelectionResolver().resolveSqlSelection(
 					(Expression) resultProducer,
 					(BasicJavaDescriptor) sqmSelection.getJavaTypeDescriptor(),
-					getSqlAstCreationContext().getSessionFactory().getTypeConfiguration()
+					getProducerContext().getSessionFactory().getTypeConfiguration()
 			);
 			return null;
 		}

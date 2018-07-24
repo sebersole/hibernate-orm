@@ -14,7 +14,7 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  *
  * @author Steve Ebersole
  */
-public interface SqlAstCreationContext {
+public interface SqlAstProducerContext {
 	SessionFactoryImplementor getSessionFactory();
 
 	Callback getCallback();

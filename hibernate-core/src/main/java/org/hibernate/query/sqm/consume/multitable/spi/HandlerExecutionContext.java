@@ -7,13 +7,13 @@
 package org.hibernate.query.sqm.consume.multitable.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * @author Steve Ebersole
  */
-public interface HandlerExecutionContext extends ExecutionContext, SqlAstCreationContext {
+public interface HandlerExecutionContext extends ExecutionContext, SqlAstProducerContext {
 	@Override
 	default SessionFactoryImplementor getSessionFactory() {
 		return getSession().getFactory();

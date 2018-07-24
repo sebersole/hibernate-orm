@@ -116,7 +116,7 @@ import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
@@ -208,7 +208,7 @@ public abstract class BaseSqmToSqlAstConverter
 		SUBQUERY
 	}
 
-	private final SqlAstCreationContext sqlAstCreationContext;
+	private final SqlAstProducerContext producerContext;
 	private final QueryOptions queryOptions;
 
 	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
@@ -232,16 +232,16 @@ public abstract class BaseSqmToSqlAstConverter
 
 
 	public BaseSqmToSqlAstConverter(
-			SqlAstCreationContext sqlAstCreationContext,
+			SqlAstProducerContext producerContext,
 			QueryOptions queryOptions) {
-		super( sqlAstCreationContext.getSessionFactory() );
-		this.sqlAstCreationContext = sqlAstCreationContext;
+		super( producerContext.getSessionFactory() );
+		this.producerContext = producerContext;
 		this.queryOptions = queryOptions;
 	}
 
 
-	public SqlAstCreationContext getSqlAstCreationContext() {
-		return sqlAstCreationContext;
+	public SqlAstProducerContext getProducerContext() {
+		return producerContext;
 	}
 
 	protected Set<String> affectedTableNames() {
@@ -965,7 +965,7 @@ public abstract class BaseSqmToSqlAstConverter
 				expression.getName(),
 				(AllowableParameterType) expression.getExpressableType(),
 				currentClauseStack.getCurrent(),
-				sqlAstCreationContext.getSessionFactory().getTypeConfiguration()
+				producerContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 
@@ -975,7 +975,7 @@ public abstract class BaseSqmToSqlAstConverter
 				expression.getPosition(),
 				(AllowableParameterType) expression.getExpressableType(),
 				currentClauseStack.getCurrent(),
-				sqlAstCreationContext.getSessionFactory().getTypeConfiguration()
+				producerContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 

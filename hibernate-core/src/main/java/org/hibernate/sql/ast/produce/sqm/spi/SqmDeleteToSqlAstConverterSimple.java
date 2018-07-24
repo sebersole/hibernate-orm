@@ -10,7 +10,7 @@ import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.produce.internal.NonSelectSqlExpressionResolver;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
@@ -23,7 +23,7 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 	public static DeleteStatement interpret(
 			SqmDeleteStatement sqmStatement,
 			QueryOptions queryOptions,
-			SqlAstCreationContext buildingContext) {
+			SqlAstProducerContext buildingContext) {
 		final SqmDeleteToSqlAstConverterSimple walker = new SqmDeleteToSqlAstConverterSimple(
 				buildingContext,
 				queryOptions
@@ -36,11 +36,11 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 	private DeleteStatement deleteStatement;
 
 	private SqmDeleteToSqlAstConverterSimple(
-			SqlAstCreationContext sqlAstCreationContext,
+			SqlAstProducerContext producerContext,
 			QueryOptions queryOptions) {
-		super( sqlAstCreationContext, queryOptions );
+		super( producerContext, queryOptions );
 		this.expressionResolver = new NonSelectSqlExpressionResolver(
-				sqlAstCreationContext.getSessionFactory(),
+				producerContext.getSessionFactory(),
 				() -> getQuerySpecStack().getCurrent(),
 				this::normalizeSqlExpression,
 				this::collectSelection

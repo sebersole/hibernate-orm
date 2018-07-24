@@ -7,12 +7,12 @@
 package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.Comparator;
-import java.util.function.Supplier;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.Remove;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -59,7 +59,9 @@ public interface Column extends QualifiableSqlExpressable {
 
 
 	@Override
-	default Expression createSqlExpression(ColumnReferenceQualifier qualifier) {
+	default Expression createSqlExpression(
+			ColumnReferenceQualifier qualifier,
+			SqlAstProducerContext creationContext) {
 		return new ColumnReference( qualifier, this );
 	}
 
