@@ -9,7 +9,6 @@ package org.hibernate.metamodel.model.relational.spi;
 import java.util.Comparator;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.annotations.Remove;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
@@ -57,21 +56,11 @@ public interface Column extends QualifiableSqlExpressable {
 
 	BasicJavaDescriptor getJavaTypeDescriptor();
 
-
 	@Override
 	default Expression createSqlExpression(
 			ColumnReferenceQualifier qualifier,
 			SqlAstProducerContext creationContext) {
 		return new ColumnReference( qualifier, this );
-	}
-
-	/**
-	 * @deprecated Use {@link #getSqlTypeDescriptor()} instead
-	 */
-	@Deprecated
-	@Remove
-	default int getJdbcType() {
-		return getSqlTypeDescriptor().getJdbcTypeCode();
 	}
 
 	Comparator<Column> COLUMN_COMPARATOR = Comparator.comparing( Column::getExpression );
