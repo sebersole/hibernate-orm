@@ -133,7 +133,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		//		1) resolve the value(s) into its identifier representation
 		final Object id = concreteDescriptor.getHierarchy()
 				.getIdentifierDescriptor()
-				.resolveHydratedState( identifierHydratedState, rowProcessingState, session.getSession(), null );
+				.resolveHydratedState( identifierHydratedState, rowProcessingState, session, null );
 
 		//		2) build and register an EntityKey
 		this.entityKey = new EntityKey( id, concreteDescriptor.getEntityDescriptor() );

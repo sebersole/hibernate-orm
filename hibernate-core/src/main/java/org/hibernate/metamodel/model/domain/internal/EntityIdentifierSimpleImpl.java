@@ -22,6 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
@@ -178,6 +179,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}

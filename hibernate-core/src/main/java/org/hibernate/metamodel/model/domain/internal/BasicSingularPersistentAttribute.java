@@ -34,6 +34,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceBasic;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
@@ -233,6 +234,7 @@ public class BasicSingularPersistentAttribute<O, J>
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 //		if ( valueConverter != null ) {
 //			value = valueConverter.toRelationalValue( value, session );

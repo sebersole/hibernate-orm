@@ -53,6 +53,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEntity;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -390,6 +391,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		// todo (6.0) (fk-to-id) : another place where we assume association fks point to the pks
 		getEntityDescriptor().getHierarchy().getIdentifierDescriptor().dehydrate(
@@ -399,6 +401,7 @@ public class SingularPersistentAttributeEntity<O,J>
 						getEntityDescriptor().getHierarchy().getIdentifierDescriptor(),
 						foreignKey.getColumnMappings().findReferringColumn( targetColumn )
 				),
+				clause,
 				session
 		);
 	}

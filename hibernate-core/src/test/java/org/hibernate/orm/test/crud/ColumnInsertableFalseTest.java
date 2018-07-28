@@ -14,7 +14,6 @@ import javax.persistence.Id;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -25,7 +24,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author Andrea Boriero
  */
-@FailureExpected( value= "Insertable false has not yet been implementd" )
 public class ColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
@@ -39,26 +37,34 @@ public class ColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest
 	}
 
 	@Test
-	public void testIt() {
-		Price price = new Price( 1, "first", 12 );
+	public void testSavingAndUpdating() {
 		sessionFactoryScope().inTransaction(
 				session -> {
+					Price price = new Price( 1, "first", 12 );
 					session.save( price );
 				}
 		);
 
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					session.update( price );
-//					price.setInitalPrice( 20 );
-//					price.setDescription( "first item" );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					assertThat( session.get( Price.class, 1 ).getInitalPrice(), equalTo( 12 ) );
+					assertThat( session.get( Price.class, 1 ).getDescription(), nullValue() );
+				}
+		);
 
 		sessionFactoryScope().inTransaction(
 				session -> {
-					assertThat( session.get( Price.class, price.getId() ).getInitalPrice(), equalTo( 12 ) );
-					assertThat( session.get( Price.class, price.getId() ).getDescription(), nullValue() );
+					Price price = session.get( Price.class, 1 );
+					session.update( price );
+					price.setInitalPrice( 20 );
+					price.setDescription( "first item" );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					assertThat( session.get( Price.class, 1 ).getInitalPrice(), equalTo( 20 ) );
+					assertThat( session.get( Price.class, 1 ).getDescription(), nullValue() );
 				}
 		);
 	}
@@ -68,7 +74,7 @@ public class ColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest
 		@Id
 		private Integer id;
 
-		@Column(insertable = false)
+		@Column(insertable = false, updatable = false)
 		private String description;
 
 		private Integer initalPrice;

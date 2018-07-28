@@ -20,6 +20,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
@@ -162,6 +163,7 @@ public class VersionDescriptorImpl<O,J>
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}

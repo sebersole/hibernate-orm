@@ -19,6 +19,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 public enum Clause {
 	INSERT( AllowableParameterType.STANDARD_INSERT_INCLUSION_CHECK ),
 	UPDATE( AllowableParameterType.STANDARD_UPDATE_INCLUSION_CHECK),
+	DELETE( AllowableParameterType.STANDARD_UPDATE_INCLUSION_CHECK),
 	SELECT( stateArrayContributor -> true ),
 	FROM( stateArrayContributor -> true ),
 	WHERE( stateArrayContributor -> true ),

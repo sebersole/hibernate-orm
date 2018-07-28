@@ -26,6 +26,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -225,12 +226,14 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		final Object[] values = (Object[]) value;
 		getEmbeddedDescriptor().visitStateArrayContributors(
 				contributor -> contributor.dehydrate(
 						values[ contributor.getStateArrayPosition() ],
 						jdbcValueCollector,
+						clause,
 						session
 				)
 		);

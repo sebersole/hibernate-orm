@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
@@ -36,6 +37,7 @@ public interface Writeable<D,I> {
 	default void dehydrate(
 			I value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}

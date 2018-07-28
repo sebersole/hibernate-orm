@@ -39,6 +39,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEmbedded;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
@@ -283,19 +284,44 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		return values;
 	}
 
+	@Override
+	public boolean isInsertable() {
+		for ( StateArrayContributor contributor : getEmbeddedDescriptor().getStateArrayContributors() ) {
+			if ( contributor.isInsertable() ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isUpdatable() {
+		for ( StateArrayContributor contributor : getEmbeddedDescriptor().getStateArrayContributors() ) {
+			if ( contributor.isUpdatable() ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@Override
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
 			SharedSessionContractImplementor session) {
 		final Object[] values = (Object[]) value;
 		getEmbeddedDescriptor().visitStateArrayContributors(
-				contributor -> contributor.dehydrate(
-						values[ contributor.getStateArrayPosition() ],
-						jdbcValueCollector,
-						session
-				)
+				contributor -> {
+					if ( clause.getInclusionChecker().test( contributor ) ) {
+						contributor.dehydrate(
+								values[contributor.getStateArrayPosition()],
+								jdbcValueCollector,
+								clause,
+								session
+						);
+					}
+				}
 		);
 	}
 

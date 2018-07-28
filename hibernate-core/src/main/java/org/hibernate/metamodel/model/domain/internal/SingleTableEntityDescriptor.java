@@ -240,6 +240,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							)
 					);
 				},
+				Clause.INSERT,
 				session
 		);
 
@@ -273,27 +274,30 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		visitStateArrayContributors(
 				contributor -> {
-					int position = contributor.getStateArrayPosition();
-					final Object domainValue = fields[position];
-					List<Column> columns = contributor.getColumns();
-					if ( columns != null && ! columns.isEmpty() ) {
-						contributor.dehydrate(
-								contributor.unresolve( domainValue, session ),
-								(jdbcValue, type, boundColumn) -> {
-									if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
-										insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-										insertStatement.addValue(
-												new LiteralParameter(
-														jdbcValue,
-														type,
-														Clause.INSERT,
-														session.getFactory().getTypeConfiguration()
-												)
-										);
-									}
-								},
-								session
-						);
+					if ( contributor.isInsertable() ) {
+						int position = contributor.getStateArrayPosition();
+						final Object domainValue = fields[position];
+						List<Column> columns = contributor.getColumns();
+						if ( columns != null && !columns.isEmpty() ) {
+							contributor.dehydrate(
+									contributor.unresolve( domainValue, session ),
+									(jdbcValue, type, boundColumn) -> {
+										if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+											insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+											insertStatement.addValue(
+													new LiteralParameter(
+															jdbcValue,
+															type,
+															Clause.INSERT,
+															session.getFactory().getTypeConfiguration()
+													)
+											);
+										}
+									},
+									Clause.INSERT,
+									session
+							);
+						}
 					}
 				}
 		);
@@ -331,10 +335,16 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
+									new LiteralParameter(
+											jdbcValue,
+											type,
+											Clause.DELETE,
+											session.getFactory().getTypeConfiguration()
+									)
 							)
 					);
 				},
+				Clause.DELETE,
 				session
 		);
 
@@ -387,20 +397,28 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			final Object domainValue = fields[contributor.getStateArrayPosition()];
 			List<Column> columns = contributor.getColumns();
 			if ( columns != null && !columns.isEmpty() ) {
-				contributor.dehydrate(
-						contributor.unresolve( domainValue, session ),
-						(jdbcValue, type, boundColumn) -> {
-							if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
-								assignments.add(
-										new Assignment(
-												new ColumnReference( boundColumn ),
-												new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
-										)
-								);
-							}
-						},
-						session
-				);
+				if ( contributor.isUpdatable() ) {
+					contributor.dehydrate(
+							contributor.unresolve( domainValue, session ),
+							(jdbcValue, type, boundColumn) -> {
+								if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+									assignments.add(
+											new Assignment(
+													new ColumnReference( boundColumn ),
+													new LiteralParameter(
+															jdbcValue,
+															type,
+															Clause.UPDATE,
+															session.getFactory().getTypeConfiguration()
+													)
+											)
+									);
+								}
+							},
+							Clause.UPDATE,
+							session
+					);
+				}
 			}
 		}
 
@@ -412,10 +430,11 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, type, Clause.INSERT, session.getFactory().getTypeConfiguration()  )
+									new LiteralParameter( jdbcValue, type, Clause.UPDATE, session.getFactory().getTypeConfiguration()  )
 							)
 					);
 				},
+				Clause.UPDATE,
 				session
 		);
 
