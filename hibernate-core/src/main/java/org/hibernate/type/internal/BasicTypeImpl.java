@@ -13,9 +13,7 @@ import org.hibernate.sql.JdbcValueMapper;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcValueMapperValueBinderAdapter;
-import org.hibernate.type.descriptor.spi.JdbcValueMapperValueExtratorAdapter;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -29,7 +27,6 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 
 	private JdbcValueMapper jdbcValueMapper;
 	private JdbcValueMapperValueBinderAdapter valueBinder;
-	private ValueExtractor valueExtractor;
 
 //	private VersionSupport<T> versionSupport;
 
@@ -102,15 +99,4 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 		return jdbcValueMapper;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public ValueExtractor<T> getValueExtractor(TypeConfiguration typeConfiguration) {
-		final JdbcValueMapper mapperToUse = resolveJdbcValueMapper( typeConfiguration );
-
-		if ( valueExtractor == null ) {
-			valueExtractor = new JdbcValueMapperValueExtratorAdapter( mapperToUse );
-		}
-
-		return valueExtractor;
-	}
 }

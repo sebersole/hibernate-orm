@@ -32,7 +32,6 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -46,7 +45,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	private List<NaturalIdAttributeInfo> attributes;
 
 	private ValueBinder valueBinder;
-	private ValueExtractor valueExtractor;
 
 	private Integer numberOfParameterBinds;
 
@@ -217,10 +215,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 		}
 
 		return valueBinder;
-	}
-
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return null;
 	}
 
 	public AllowableParameterType resolveTemporalPrecision(

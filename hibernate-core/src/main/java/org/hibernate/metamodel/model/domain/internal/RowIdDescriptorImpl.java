@@ -22,10 +22,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -99,12 +96,6 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 	@Override
 	public DerivedColumn getBoundColumn() {
 		return column;
-	}
-
-
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return null;
 	}
 
 	@Override

@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +46,6 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.Util;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -58,7 +56,7 @@ import org.jboss.logging.Logger;
  */
 public class BasicSingularPersistentAttribute<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder, ValueExtractor<J> {
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder {
 	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
 
 	private final Column boundColumn;
@@ -187,11 +185,6 @@ public class BasicSingularPersistentAttribute<O, J>
 		return this;
 	}
 
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return this;
-	}
-
 //	@Override
 //	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
 //		return jdbcValues;
@@ -279,13 +272,6 @@ public class BasicSingularPersistentAttribute<O, J>
 		jdbcValueMapper.getJdbcValueBinder().bind( callable, name, bindValue, executionContext );
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public J extract(ResultSet rs, int position, ExecutionContext executionContext) throws SQLException {
-		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( rs, position, executionContext );
-		return extractValue( executionContext, value );
-	}
-
 	@SuppressWarnings("unchecked")
 	private J extractValue(ExecutionContext executionContext, Object value) {
 		return (J) ( valueConverter == null
@@ -298,23 +284,4 @@ public class BasicSingularPersistentAttribute<O, J>
 		return 1;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public J extract(
-			CallableStatement statement,
-			int position,
-			ExecutionContext executionContext) throws SQLException {
-		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( statement, position, executionContext );
-		return extractValue( executionContext, value );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public J extract(
-			CallableStatement statement,
-			String name,
-			ExecutionContext executionContext) throws SQLException {
-		final Object value = jdbcValueMapper.getJdbcValueExtractor().extract( statement, name, executionContext );
-		return extractValue( executionContext, value );
-	}
 }

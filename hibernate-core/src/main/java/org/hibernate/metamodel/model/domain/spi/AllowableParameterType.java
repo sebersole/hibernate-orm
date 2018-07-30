@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -24,7 +23,6 @@ public interface AllowableParameterType<T> extends ExpressableType<T> {
 	/**
 	 * The number of JDBC parameters needed for this type.  Should
 	 * be the same as each {@link ValueBinder#getNumberOfJdbcParametersNeeded()}
-	 * and {@link ValueExtractor#getNumberOfJdbcParametersNeeded()}
 	 */
 	int getNumberOfJdbcParametersNeeded();
 

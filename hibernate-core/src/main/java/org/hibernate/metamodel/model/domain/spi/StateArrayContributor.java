@@ -22,7 +22,6 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -54,10 +53,6 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	default ValueBinder getValueBinder(
 			Predicate<StateArrayContributor> inclusionChecker,
 			TypeConfiguration typeConfiguration) {
-		throw new NotYetImplementedFor6Exception( getClass().getName() );
-	}
-
-	default ValueExtractor getValueExtractor() {
 		throw new NotYetImplementedFor6Exception( getClass().getName() );
 	}
 

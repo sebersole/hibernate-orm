@@ -48,7 +48,6 @@ import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -256,77 +255,11 @@ public class EmbeddedTypeDescriptorImpl<J>
 		}
 	}
 
-	private final ValueExtractor valueExtractor = new ValueExtractor() {
-		@Override
-		public int getNumberOfJdbcParametersNeeded() {
-			return collectColumns().size();
-		}
-
-		@Override
-		public Object extract(ResultSet rs, int position, ExecutionContext executionContext) throws SQLException {
-			throw new NotYetImplementedFor6Exception( getClass() );
-//			final Object[] values = new Object[ getStateArrayContributors().size() ];
-//
-//			int currentJdbcPosition = position;
-//			for ( StateArrayContributor<?> contributor: getStateArrayContributors() ) {
-//					values[ contributor.getStateArrayPosition() ] = contributor.getValueExtractor().extract(
-//							rs,
-//							currentJdbcPosition,
-//							executionContext
-//					);
-//					currentJdbcPosition += contributor.getColumns().size();
-//			}
-//
-//			final J instance = getEmbeddedDescriptor().instantiate( executionContext.getSession() );
-//			getEmbeddedDescriptor().setPropertyValues( instance, values );
-//			return instance;
-		}
-
-		@Override
-		public Object extract(
-				CallableStatement statement,
-				int position,
-				ExecutionContext executionContext) throws SQLException {
-			throw new NotYetImplementedFor6Exception( getClass() );
-//			final Object[] values = new Object[ getStateArrayContributors().size() ];
-//
-//			int currentJdbcPosition = position;
-//			for ( StateArrayContributor<?> contributor: getStateArrayContributors() ) {
-//				values[ contributor.getStateArrayPosition() ] = contributor.getValueExtractor().extract(
-//						statement,
-//						currentJdbcPosition,
-//						executionContext
-//				);
-//				currentJdbcPosition += contributor.getColumns().size();
-//			}
-//
-//			final J instance = getEmbeddedDescriptor().instantiate( executionContext.getSession() );
-//			getEmbeddedDescriptor().setPropertyValues( instance, values );
-//			return instance;
-		}
-
-		@Override
-		public Object extract(
-				CallableStatement statement,
-				String name,
-				ExecutionContext executionContext) throws SQLException {
-			throw new UnsupportedOperationException( "Cannot extract parameter value by name for composite types" );
-		}
-	};
-
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return valueExtractor;
-	}
 
 	@Override
 	public List<InheritanceCapable<? extends J>> getSubclassTypes() {
 		return Collections.emptyList();
 	}
-
-
-
-
 
 	@Override
 	public void setPropertyValue(Object object, int i, Object value) {

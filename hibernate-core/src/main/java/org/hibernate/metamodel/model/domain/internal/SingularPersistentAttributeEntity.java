@@ -86,7 +86,6 @@ import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
@@ -722,10 +721,6 @@ public class SingularPersistentAttributeEntity<O,J>
 			final Object fkValue = fkValueExtractor.extractFkValue( value, executionContext );
 			valueBinder.bind( st, name, fkValue, executionContext );
 		}
-	}
-
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return null;
 	}
 
 	@Override

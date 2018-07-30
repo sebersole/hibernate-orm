@@ -6,9 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import org.hibernate.type.descriptor.spi.ValueExtractor;
-import org.hibernate.type.spi.TypeConfiguration;
-
 /**
  * @apiNote Generally speaking, an allowable output parameter type
  * can only effectively be a basic type.  So generally speaking, the
@@ -24,5 +21,4 @@ public interface AllowableOutputParameterType extends AllowableParameterType {
 	/**
 	 * Obtain the Value extractor.
 	 */
-	ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration);
 }

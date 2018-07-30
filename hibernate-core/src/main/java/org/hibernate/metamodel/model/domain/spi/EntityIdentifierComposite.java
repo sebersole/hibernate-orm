@@ -16,7 +16,6 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -52,10 +51,5 @@ public interface EntityIdentifierComposite<O,J>
 			Predicate<StateArrayContributor> inclusionChecker,
 			TypeConfiguration typeConfiguration) {
 		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
-	default ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueExtractor( typeConfiguration );
 	}
 }

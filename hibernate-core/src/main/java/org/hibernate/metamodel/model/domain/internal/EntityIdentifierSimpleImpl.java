@@ -29,7 +29,6 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -158,11 +157,6 @@ public class EntityIdentifierSimpleImpl<O,J>
 	@Override
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		return basicType.getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return basicType.getValueExtractor( typeConfiguration );
 	}
 
 	@Override

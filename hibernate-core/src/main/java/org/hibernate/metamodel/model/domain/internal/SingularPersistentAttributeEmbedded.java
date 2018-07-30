@@ -49,7 +49,6 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -187,11 +186,6 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@SuppressWarnings("unchecked")
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueExtractor( typeConfiguration );
 	}
 
 	@Override

@@ -27,7 +27,6 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -81,11 +80,6 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	@Override
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
-	public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
-		return getBasicType().getValueExtractor( typeConfiguration );
 	}
 
 	@Override

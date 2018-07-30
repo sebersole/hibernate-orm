@@ -16,7 +16,6 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.descriptor.spi.ValueExtractor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -63,11 +62,6 @@ public class SqmLiteralNull implements SqmLiteral<Void> {
 
 		@Override
 		public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-			return null;
-		}
-
-		@Override
-		public ValueExtractor getValueExtractor(TypeConfiguration typeConfiguration) {
 			return null;
 		}
 
