@@ -74,6 +74,7 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 							public void validate() {
 							}
 						};
+
 						private final ParameterBindingContext parameterBindingContext = new ParameterBindingContext() {
 							@Override
 							public SessionFactoryImplementor getSessionFactory() {

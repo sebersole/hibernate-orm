@@ -10,9 +10,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.util.Arrays;
 import java.util.List;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -26,11 +25,11 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class NonStandardFunction extends AbstractFunction {
 	private final String functionName;
 	private final List<Expression> arguments;
-	private final AllowableFunctionReturnType resultType;
+	private final SqlExpressableType resultType;
 
 	public NonStandardFunction(
 			String functionName,
-			AllowableFunctionReturnType resultType,
+			SqlExpressableType resultType,
 			List<Expression> arguments) {
 		this.functionName = functionName;
 		this.arguments = arguments;
@@ -39,7 +38,7 @@ public class NonStandardFunction extends AbstractFunction {
 
 	public NonStandardFunction(
 			String functionName,
-			AllowableFunctionReturnType resultType,
+			SqlExpressableType resultType,
 			Expression... arguments) {
 		this(
 				functionName,
@@ -57,7 +56,12 @@ public class NonStandardFunction extends AbstractFunction {
 	}
 
 	@Override
-	public AllowableFunctionReturnType getType() {
+	public SqlExpressableType getExpressableType() {
+		return resultType;
+	}
+
+	@Override
+	public SqlExpressableType getType() {
 		return resultType;
 	}
 
@@ -74,7 +78,7 @@ public class NonStandardFunction extends AbstractFunction {
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getJdbcValueMapper( typeConfiguration )
+				getExpressableType()
 		);
 	}
 }

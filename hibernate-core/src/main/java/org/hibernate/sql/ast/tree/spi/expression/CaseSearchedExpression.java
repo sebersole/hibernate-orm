@@ -10,8 +10,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
@@ -21,19 +21,18 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
 public class CaseSearchedExpression implements Expression, SqlExpressable, QueryResultProducer {
-	private final ExpressableType type;
+	private final SqlExpressableType type;
 
 	private List<WhenFragment> whenFragments = new ArrayList<>();
 	private Expression otherwise;
 
-	public CaseSearchedExpression(ExpressableType type) {
+	public CaseSearchedExpression(SqlExpressableType type) {
 		this.type = type;
 	}
 
@@ -55,8 +54,13 @@ public class CaseSearchedExpression implements Expression, SqlExpressable, Query
 	}
 
 	@Override
-	public BasicType getType() {
-		return (BasicType) type;
+	public SqlExpressableType getExpressableType() {
+		return type;
+	}
+
+	@Override
+	public SqlExpressableType getType() {
+		return type;
 	}
 
 	@Override
@@ -67,7 +71,7 @@ public class CaseSearchedExpression implements Expression, SqlExpressable, Query
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration ).getJdbcValueExtractor()
+				getExpressableType()
 		);
 	}
 

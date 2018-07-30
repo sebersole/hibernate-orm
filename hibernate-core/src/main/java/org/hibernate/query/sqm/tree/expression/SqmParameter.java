@@ -11,6 +11,12 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 /**
  * Models a parameter expression declared in the query.
  *
+ * @implNote Each usage of a given named/positional query parameter
+ * will result in a unique SqmParameter instance, each will simply
+ * use to the same binding.  This is important to distinguish usage
+ * of the same parameter in different clauses which effects the
+ * rendering and value binding.
+ *
  * @author Steve Ebersole
  */
 public interface SqmParameter extends ImpliedTypeSqmExpression {
@@ -49,6 +55,8 @@ public interface SqmParameter extends ImpliedTypeSqmExpression {
 	 * <p/>
 	 * NOTE: If {@link #allowMultiValuedBinding()} is true, this will indicate
 	 * the Type of the individual values.
+	 *
+	 * todo (6.0) : shouldn't this be AllowableParameterType?
 	 *
 	 * @return The anticipated Type.
 	 */

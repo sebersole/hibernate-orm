@@ -42,6 +42,7 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -191,7 +192,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		final J instance = embeddedDescriptor.instantiate( session );
@@ -199,7 +200,8 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		embeddedDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final Object subHydratedForm = hydratedValues[ contributor.getStateArrayPosition() ];
-					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm, resolutionContext, session, containerInstance );
+					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm,
+																					 executionContext, session, containerInstance );
 					hydratedValues[ contributor.getStateArrayPosition() ] = subResolvedForm;
 				}
 		);

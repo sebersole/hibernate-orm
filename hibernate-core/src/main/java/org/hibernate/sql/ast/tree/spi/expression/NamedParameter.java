@@ -6,12 +6,10 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.QueryException;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -28,7 +26,7 @@ public class NamedParameter extends AbstractParameter {
 
 	public NamedParameter(
 			String name,
-			AllowableParameterType inferredType,
+			SqlExpressableType inferredType,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
 		super( inferredType, clause, typeConfiguration );
@@ -37,26 +35,6 @@ public class NamedParameter extends AbstractParameter {
 
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
-		return context.getQueryParameterBindings().getBinding( name );
-	}
-
-	@Override
-	protected void warnNoBinding() {
-		log.debugf( "Query defined named parameter [%s], but no binding was found (setParameter not called)", getName() );
-	}
-
-	@Override
-	protected void unresolvedType() {
-		throw new QueryException( "Unable to determine Type for named parameter [" + getName() + "]" );
-	}
-
-	@Override
-	protected void warnNullBindValue() {
-		log.debugf( "Binding value for named parameter [%s] was null", getName() );
 	}
 
 	@Override

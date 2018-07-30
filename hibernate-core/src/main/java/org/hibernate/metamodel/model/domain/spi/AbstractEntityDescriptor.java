@@ -89,7 +89,7 @@ import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
@@ -671,7 +671,7 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	public EntitySqlSelectionGroup resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
 	}
 

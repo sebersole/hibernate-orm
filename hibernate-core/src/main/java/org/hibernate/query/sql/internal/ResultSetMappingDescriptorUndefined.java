@@ -124,7 +124,7 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 			log.tracef( "Creating SqlSelection for auto-discovered column : %s (%s)", columnName, columnPosition );
 			this.valuesArrayPosition = columnPosition - 1;
 
-			this.jdbcValueExtractor = sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration )
+			this.jdbcValueExtractor = sqlTypeDescriptor.getSqlExpressableType( javaTypeDescriptor, typeConfiguration )
 					.getJdbcValueExtractor();
 		}
 

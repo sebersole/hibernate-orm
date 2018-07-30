@@ -6,25 +6,20 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
 public class CastFunction extends AbstractStandardFunction {
 	private final Expression expressionToCast;
-	private final AllowableFunctionReturnType castResultType;
+	private final SqlExpressableType castResultType;
 	private final String explicitCastTargetTypeSqlExpression;
 
 	public CastFunction(
 			Expression expressionToCast,
-			AllowableFunctionReturnType castResultType,
+			SqlExpressableType castResultType,
 			String explicitCastTargetTypeSqlExpression) {
 		this.expressionToCast = expressionToCast;
 		this.castResultType = castResultType;
@@ -35,12 +30,17 @@ public class CastFunction extends AbstractStandardFunction {
 		return expressionToCast;
 	}
 
-	public AllowableFunctionReturnType getCastResultType() {
+	public SqlExpressableType getCastResultType() {
 		return castResultType;
 	}
 
 	@Override
-	public AllowableFunctionReturnType getType() {
+	public SqlExpressableType getExpressableType() {
+		return getCastResultType();
+	}
+
+	@Override
+	public SqlExpressableType getType() {
 		return getCastResultType();
 	}
 
@@ -51,17 +51,5 @@ public class CastFunction extends AbstractStandardFunction {
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
 		sqlTreeWalker.visitCastFunction( this );
-	}
-
-	@Override
-	public SqlSelection createSqlSelection(
-			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
-			TypeConfiguration typeConfiguration) {
-		return new SqlSelectionImpl(
-				jdbcPosition,
-				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getJdbcValueMapper( typeConfiguration )
-		);
 	}
 }

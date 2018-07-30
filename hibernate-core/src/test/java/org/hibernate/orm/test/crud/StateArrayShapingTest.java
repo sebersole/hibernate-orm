@@ -18,6 +18,8 @@ import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithManyToOneSelfReference;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
+import org.hibernate.sql.exec.spi.BasicExecutionContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 import org.junit.jupiter.api.Test;
 
@@ -258,7 +260,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 				entityDescriptor,
 				entityInstance,
 				stateArray,
-				(entityKey, eager) -> null,
+				new BasicExecutionContext( session ),
 				session
 		);
 	}
@@ -267,14 +269,14 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 			EntityDescriptor entityDescriptor,
 			Object entityInstance,
 			Object[] stateArray,
-			Readable.ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session) {
 		entityDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final int position = contributor.getStateArrayPosition();
 					stateArray[ position ] = contributor.resolveHydratedState(
 							stateArray[ position ],
-							resolutionContext,
+							executionContext,
 							session,
 							entityInstance
 					);

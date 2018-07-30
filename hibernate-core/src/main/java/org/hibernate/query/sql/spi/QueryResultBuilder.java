@@ -7,11 +7,15 @@
 package org.hibernate.query.sql.spi;
 
 import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * A builder for {@link QueryResult}
  * instances related to native SQL query results.
+ *
+ *
+ * todo (6.0) : Perhaps this should be a builder for QueryResultProducer instances instead?
  *
  * @author Steve Ebersole
  */
@@ -35,5 +39,5 @@ public interface QueryResultBuilder {
 
 	JavaTypeDescriptor getResultType();
 
-	QueryResult buildReturn(NodeResolutionContext resolutionContext);
+	QueryResult buildReturn(QueryResultCreationContext creationContext);
 }

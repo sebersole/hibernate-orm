@@ -14,6 +14,8 @@ import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
+ * ParameterBindingContext implementation used in load-like operations
+ *
  * @author Steve Ebersole
  */
 public class LoadParameterBindingContext implements ParameterBindingContext {

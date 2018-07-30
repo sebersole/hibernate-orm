@@ -9,8 +9,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
@@ -34,10 +34,10 @@ import org.hibernate.type.spi.TypeConfiguration;
 public abstract class AbstractLiteral
 		implements JdbcParameterBinder, Expression, SqlExpressable, QueryResultProducer {
 	private final Object value;
-	private final BasicValuedExpressableType type;
+	private final SqlExpressableType type;
 	private final Clause clause;
 
-	public AbstractLiteral(Object value, BasicValuedExpressableType type, Clause clause) {
+	public AbstractLiteral(Object value, SqlExpressableType type, Clause clause) {
 		this.value = value;
 		this.type = type;
 		this.clause = clause;
@@ -48,7 +48,7 @@ public abstract class AbstractLiteral
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return type;
 	}
 
@@ -69,7 +69,7 @@ public abstract class AbstractLiteral
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
+				getType()
 		);
 	}
 
@@ -97,11 +97,7 @@ public abstract class AbstractLiteral
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException {
-		getType().getBasicType()
-				.getSqlTypeDescriptor()
-				.getJdbcValueMapper( getType().getJavaTypeDescriptor(), executionContext.getSession().getFactory().getTypeConfiguration() )
-				.getJdbcValueBinder()
-				.bind( statement, startPosition, value, executionContext );
-		return getType().getNumberOfJdbcParametersNeeded();
+		getType().getJdbcValueBinder().bind( statement, startPosition, value, executionContext );
+		return 1;
 	}
 }

@@ -44,7 +44,7 @@ public class ScalarResultDefinitionImpl implements ResultSetMappingDefinition.Sc
 			throw noTypeException( typeName );
 		}
 
-		return new QueryResultBuilderScalar( columnAlias, basicType );
+		return new QueryResultBuilderScalar( columnAlias, basicType.getSqlExpressableType( metamodel.getTypeConfiguration() ) );
 	}
 
 	protected HibernateException noTypeException(String typeName) {

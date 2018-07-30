@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.annotations.Remove;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NativeQuery;
@@ -19,10 +20,14 @@ import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 
 /**
+ * todo (6.0) : this will go away, replaced by a `FetchGraphContext` approach - see `design/steve-todo.adoc`
+ *
  * @author Steve Ebersole
  */
+@Remove
 public class FetchBuilder implements NativeQuery.FetchReturn {
 	private final String tableAlias;
 	private final String parentTableAlias;
@@ -50,7 +55,7 @@ public class FetchBuilder implements NativeQuery.FetchReturn {
 		this.lockMode = lockMode;
 	}
 
-	public Fetch buildFetch(BuilderExecutionState builderExecutionState, NodeResolutionContext resolutionContext) {
+	public Fetch buildFetch(BuilderExecutionState builderExecutionState, QueryResultCreationContext creationContext) {
 		final FetchParent fetchParent = builderExecutionState.getFetchParentByParentAlias( parentTableAlias );
 		if ( fetchParent == null ) {
 			throw new HibernateException( "FetchParent for table-alias [" + parentTableAlias + "] not yet resolved" );
@@ -93,7 +98,7 @@ public class FetchBuilder implements NativeQuery.FetchReturn {
 				qualifier,
 				FetchStrategy.IMMEDIATE_JOIN,
 				tableAlias,
-				resolutionContext
+				creationContext
 		);
 
 		fetchParent.addFetch( fetch );

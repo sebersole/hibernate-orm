@@ -13,6 +13,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.AttributeOverride;
+import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.SecondaryTable;
+import javax.persistence.Table;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
@@ -61,7 +67,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -89,7 +95,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public List<ColumnReference> resolveColumnReferences(
-			ColumnReferenceQualifier qualifier, SqlSelectionResolutionContext resolutionContext) {
+			ColumnReferenceQualifier qualifier, SqlAstCreationContext resolutionContext) {
 		return getIdentifierDescriptor().resolveColumnReferences( qualifier, resolutionContext );
 	}
 
@@ -234,7 +240,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					insertStatement.addValue(
 							new LiteralParameter(
 									jdbcValue,
-									type,
+									boundColumn.getExpressableType(),
 									Clause.INSERT,
 									session.getFactory().getTypeConfiguration()
 							)
@@ -251,7 +257,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							getDiscriminatorValue(),
-							getHierarchy().getDiscriminatorDescriptor(),
+							getHierarchy().getDiscriminatorDescriptor().getBoundColumn().getExpressableType(),
 							Clause.INSERT,
 							session.getFactory().getTypeConfiguration()
 					)
@@ -265,7 +271,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			insertStatement.addValue(
 					new LiteralParameter(
 							session.getTenantIdentifier(),
-							getHierarchy().getTenantDiscrimination(),
+							getHierarchy().getTenantDiscrimination().getBoundColumn().getExpressableType(),
 							Clause.INSERT,
 							session.getFactory().getTypeConfiguration()
 					)
@@ -287,7 +293,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 											insertStatement.addValue(
 													new LiteralParameter(
 															jdbcValue,
-															type,
+															boundColumn.getExpressableType(),
 															Clause.INSERT,
 															session.getFactory().getTypeConfiguration()
 													)
@@ -337,7 +343,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 									new ColumnReference( boundColumn ),
 									new LiteralParameter(
 											jdbcValue,
-											type,
+											boundColumn.getExpressableType(),
 											Clause.DELETE,
 											session.getFactory().getTypeConfiguration()
 									)
@@ -372,6 +378,25 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		);
 	}
 
+	@Embeddable
+	class Name {
+		public String fname;
+		public String lname;
+	}
+
+	@Entity
+	@Table( name = "t1" )
+	@SecondaryTable( name = "t2" )
+	class Person {
+		public Integer id;
+
+		@Embedded
+		@AttributeOverride( name = "fname", column = @javax.persistence.Column( table = "t1" ) )
+		@AttributeOverride( name = "lname", column = @javax.persistence.Column( table = "t2" ) )
+		public Name name;
+	}
+
+
 	@Override
 	public void update(
 			Object id,
@@ -392,8 +417,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		final TableReference tableReference = new TableReference( getPrimaryTable(), null );
 
 		List<Assignment> assignments = new ArrayList<>();
-		for ( int i = 0; i < dirtyFields.length; ++i ) {
-			final StateArrayContributor contributor = getStateArrayContributors().get( dirtyFields[i] );
+		for ( int dirtyField : dirtyFields ) {
+			final StateArrayContributor contributor = getStateArrayContributors().get( dirtyField );
 			final Object domainValue = fields[contributor.getStateArrayPosition()];
 			List<Column> columns = contributor.getColumns();
 			if ( columns != null && !columns.isEmpty() ) {
@@ -407,7 +432,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 													new ColumnReference( boundColumn ),
 													new LiteralParameter(
 															jdbcValue,
-															type,
+															boundColumn.getExpressableType(),
 															Clause.UPDATE,
 															session.getFactory().getTypeConfiguration()
 													)
@@ -430,13 +455,15 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, type, Clause.UPDATE, session.getFactory().getTypeConfiguration()  )
+									new LiteralParameter( jdbcValue, boundColumn.getExpressableType(), Clause.UPDATE, session.getFactory().getTypeConfiguration()  )
 							)
 					);
 				},
 				Clause.UPDATE,
 				session
 		);
+
+		// todo (6.0) : depending on optimistic-lock strategy may need to adjust where clause
 
 		final UpdateStatement updateStatement = new UpdateStatement(
 				tableReference,

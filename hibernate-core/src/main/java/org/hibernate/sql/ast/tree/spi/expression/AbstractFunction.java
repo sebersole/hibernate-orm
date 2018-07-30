@@ -6,11 +6,9 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -24,10 +22,10 @@ public abstract class AbstractFunction implements Function {
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(
 						this,
-						(BasicJavaDescriptor) getType().getJavaTypeDescriptor(),
+						getType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				(BasicValuedExpressableType) getType()
+				getExpressableType()
 		);
 	}
 }

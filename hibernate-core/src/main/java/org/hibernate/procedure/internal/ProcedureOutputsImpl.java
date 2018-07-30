@@ -53,7 +53,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 
 	private final ParameterStrategy parameterStrategy;
 	private final QueryOptions queryOptions;
-	private final SharedSessionContractImplementor persistenceContext;
+	private final SharedSessionContractImplementor session;
 	private final ProcedureCallImpl procedureCall;
 	private final JdbcCall jdbcCall;
 
@@ -70,11 +70,11 @@ public class ProcedureOutputsImpl extends OutputsImpl
 			ParameterStrategy parameterStrategy,
 			QueryOptions queryOptions,
 			ProcedureParamBindings bindings,
-			SharedSessionContractImplementor persistenceContext) {
+			SharedSessionContractImplementor session) {
 		super( procedureCall );
 		this.parameterStrategy = parameterStrategy;
 		this.queryOptions = queryOptions;
-		this.persistenceContext = persistenceContext;
+		this.session = session;
 		this.procedureCall = procedureCall;
 		this.jdbcCall = jdbcCall;
 
@@ -89,7 +89,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 	}
 
 	private String buildCallableString(ProcedureParamBindings bindings) {
-		final CallableStatementSupport callableStatementSupport = persistenceContext.getJdbcServices()
+		final CallableStatementSupport callableStatementSupport = session.getJdbcServices()
 				.getJdbcEnvironment()
 				.getDialect().getCallableStatementSupport();
 
@@ -97,21 +97,21 @@ public class ProcedureOutputsImpl extends OutputsImpl
 				callableName,
 				jdbcCall,
 				bindings,
-				persistenceContext
+				session
 		);
 	}
 
 	private CallableStatement prepareCallableStatement(QueryOptions queryOptions, QueryParameterBindings bindings) {
 		try {
 			log.debugf( "Preparing procedure/function call (%s) : %s", jdbcCall.getSql(), callString );
-			final CallableStatement callableStatement = (CallableStatement) persistenceContext.getJdbcCoordinator()
+			final CallableStatement callableStatement = (CallableStatement) session.getJdbcCoordinator()
 					.getStatementPreparer()
 					.prepareStatement( callString, true );
 
 			List<JdbcCallRefCursorExtractor> refCursorExtractors = null;
 
 			if ( jdbcCall.getFunctionReturn() != null ) {
-				jdbcCall.getFunctionReturn().registerParameter( callableStatement, persistenceContext );
+				jdbcCall.getFunctionReturn().registerParameter( callableStatement, session );
 
 				final JdbcCallParameterExtractor parameterExtractor = jdbcCall.getFunctionReturn().getParameterExtractor();
 				final JdbcCallRefCursorExtractor refCursorExtractor = jdbcCall.getFunctionReturn().getRefCursorExtractor();
@@ -134,7 +134,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 
 			for ( JdbcCallParameterRegistration registration : jdbcCall.getParameterRegistrations() ) {
 				int jdbcPosition = 1;
-				registration.registerParameter( callableStatement, persistenceContext );
+				registration.registerParameter( callableStatement, session );
 
 				// todo : ok to bind right away?  Or do we need to wait until after all parameters are registered?
 				final JdbcParameterBinder binder = registration.getParameterBinder();
@@ -174,7 +174,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 			return callableStatement;
 		}
 		catch (SQLException e) {
-			throw persistenceContext.getJdbcServices().getSqlExceptionHelper().convert(
+			throw session.getJdbcServices().getSqlExceptionHelper().convert(
 					e,
 					"Error preparing CallableStatement [" + jdbcCall.getSql() + "]",
 					callString
@@ -211,14 +211,14 @@ public class ProcedureOutputsImpl extends OutputsImpl
 			@Override
 			protected Output buildExtendedReturn() {
 				final JdbcCallRefCursorExtractor extractor = refCursorExtractorIterator.next();
-				final ResultSet resultSet = extractor.extractResultSet( callableStatement, persistenceContext );
+				final ResultSet resultSet = extractor.extractResultSet( callableStatement, session );
 				return buildResultSetOutput( extractResults( resultSet, callableStatement ) );
 			}
 		};
 	}
 
 	private JDBCException convert(SQLException e, String message) {
-		return persistenceContext.getJdbcServices().getSqlExceptionHelper().convert(
+		return session.getJdbcServices().getSqlExceptionHelper().convert(
 				e,
 				message,
 				callString
@@ -276,7 +276,7 @@ public class ProcedureOutputsImpl extends OutputsImpl
 
 	@Override
 	public SharedSessionContractImplementor getSession() {
-		return persistenceContext;
+		return session;
 	}
 
 	@Override

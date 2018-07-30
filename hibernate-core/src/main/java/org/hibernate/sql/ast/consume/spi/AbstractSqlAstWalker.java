@@ -14,13 +14,9 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.QueryLiteralRendering;
-import org.hibernate.query.spi.QueryParameterBinding;
-import org.hibernate.query.sqm.QueryException;
 import org.hibernate.query.sqm.tree.order.SqmSortOrder;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.sql.ast.consume.SemanticException;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
@@ -83,7 +79,6 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -101,9 +96,6 @@ public abstract class AbstractSqlAstWalker
 
 	private final Stack<Clause> clauseStack = new StandardStack<>();
 
-	// rendering expressions often has to be done differently if it occurs in certain contexts
-	private boolean currentlyInPredicate;
-	private boolean currentlyInSelections;
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// for now, for tests
@@ -131,14 +123,6 @@ public abstract class AbstractSqlAstWalker
 	protected boolean isCurrentlyInPredicate() {
 		return clauseStack.getCurrent() == Clause.WHERE
 				|| clauseStack.getCurrent() == Clause.HAVING;
-	}
-
-	protected boolean isCurrentlyInSelections() {
-		return currentlyInSelections;
-	}
-
-	protected void setCurrentlyInSelections(boolean currentlyInSelections) {
-		this.currentlyInSelections = currentlyInSelections;
 	}
 
 
@@ -237,8 +221,7 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitSelectClause(SelectClause selectClause) {
-		boolean previouslyInSelections = currentlyInSelections;
-		currentlyInSelections = true;
+		clauseStack.push( Clause.SELECT );
 
 		try {
 			appendSql( "select " );
@@ -254,7 +237,7 @@ public abstract class AbstractSqlAstWalker
 			}
 		}
 		finally {
-			currentlyInSelections = previouslyInSelections;
+			clauseStack.pop();
 		}
 	}
 
@@ -685,7 +668,7 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitGenericParameter(GenericParameter parameter) {
-		visitJdbcParameterBinder( parameter );
+		visitJdbcParameterBinder( parameter.getParameterBinder() );
 	}
 
 	protected void visitJdbcParameterBinder(JdbcParameterBinder jdbcParameterBinder) {
@@ -712,44 +695,7 @@ public abstract class AbstractSqlAstWalker
 		}
 	}
 
-	private AllowableParameterType resolveType(GenericParameter parameter) {
-		// todo (6.0) : decide which types of ExpressableTypes to support for parameters.  see below in method too
-		// 		for now limit parameters to just basic types.
-
-		final QueryParameterBinding parameterBinding = parameter.resolveBinding( getParameterBindingContext() );
-		if ( parameterBinding == null || !parameterBinding.isBound() ) {
-			throw new SemanticException( "Parameter [" + parameter + "] found in SQL AST had no binding" );
-		}
-
-		// todo (6.0) : depending on decision for above, these casts should be moved to use those as the return types for Parameter#getType and ParameterBinding#getBindType
-		if ( parameterBinding.getBindType() != null ) {
-			return parameterBinding.getBindType();
-		}
-
-		if ( parameter.getType() != null ) {
-			return (AllowableParameterType) parameter.getType();
-		}
-
-		if ( parameterBinding.isMultiValued() ) {
-			// can't be "multi-valued" unless there are actually bound value(s)
-			return resolveBasicValueType( parameterBinding.getBindValues().iterator().next() );
-		}
-
-		if ( parameterBinding.getBindValue() != null ) {
-			return resolveBasicValueType( parameterBinding.getBindValue() );
-		}
-
-		throw new QueryException( "Unable to determine Type for parameter [" + parameter + "]" );
-
-	}
-
 	protected abstract ParameterBindingContext getParameterBindingContext();
-
-	private BasicType resolveBasicValueType(Object value) {
-		return getSessionFactory().getTypeConfiguration()
-				.getBasicTypeRegistry()
-				.getBasicType( value.getClass() );
-	}
 
 	@Override
 	public void visitNamedParameter(NamedParameter namedParameter) {

@@ -6,15 +6,14 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.engine.spi.EntityKey;
-import org.hibernate.metamodel.model.domain.spi.Readable;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * State pertaining to the processing of a single row of a JdbcValuesSource
  *
  * @author Steve Ebersole
  */
-public interface RowProcessingState extends Readable.ResolutionContext {
+public interface RowProcessingState extends ExecutionContext {
 	/**
 	 * Access to the "parent state" related to the overall processing
 	 * of the results.
@@ -35,35 +34,4 @@ public interface RowProcessingState extends Readable.ResolutionContext {
 	void registerNonExists(EntityFetch fetch);
 
 	void finishRowProcessing();
-
-	@Override
-	default Object resolveEntityInstance(EntityKey entityKey, boolean eager) {
-		// First, look for it in the PC as a managed entity
-		final Object managedEntity = getJdbcValuesSourceProcessingState()
-				.getSession()
-				.getPersistenceContext()
-				.getEntity( entityKey );
-		if ( managedEntity != null ) {
-			// todo (6.0) : check status?  aka, return deleted entities?
-			return managedEntity;
-		}
-
-		// Next, check currently loading entities
-		final LoadingEntityEntry loadingEntry = getJdbcValuesSourceProcessingState()
-				.getSession()
-				.getPersistenceContext()
-				.getLoadContexts()
-				.findLoadingEntityEntry( entityKey );
-		if ( loadingEntry != null ) {
-			return loadingEntry.getEntityInstance();
-		}
-
-		// Lastly, try to load from database
-		return getJdbcValuesSourceProcessingState().getSession().internalLoad(
-				entityKey.getEntityName(),
-				entityKey.getIdentifier(),
-				eager,
-				false
-		);
-	}
 }

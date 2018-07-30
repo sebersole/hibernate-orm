@@ -16,7 +16,7 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * Descriptor for an entity's identifier
@@ -86,7 +86,7 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	@Override
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		final ArrayList<ColumnReference> columnRefs = new ArrayList<>();
 		for ( Column column : getColumns() ) {
 			// todo (6.0) - this there a better way to deal with this in the design?

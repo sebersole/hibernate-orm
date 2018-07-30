@@ -7,7 +7,7 @@
 package org.hibernate.sql.results.spi;
 
 /**
- * Represents something that can produce a {@link QueryResultProducer}
+ * Represents something that can produce a {@link QueryResult}
  * instances which can be used as selection items and
  * dynamic-instantiation args in a domain query.
  *

@@ -10,6 +10,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
@@ -28,13 +29,13 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class CaseSimpleExpression implements Expression, Selectable, SqlExpressable, QueryResultProducer {
-	private final ExpressableType type;
+	private final SqlExpressableType type;
 	private final Expression fixture;
 
 	private List<WhenFragment> whenFragments = new ArrayList<>();
 	private Expression otherwise;
 
-	public CaseSimpleExpression(ExpressableType type, Expression fixture) {
+	public CaseSimpleExpression(SqlExpressableType type, Expression fixture) {
 		this.type = type;
 		this.fixture = fixture;
 	}
@@ -44,8 +45,8 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 	}
 
 	@Override
-	public BasicType getType() {
-		return (BasicType) type;
+	public SqlExpressableType getExpressableType() {
+		return type;
 	}
 
 	@Override
@@ -56,7 +57,7 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration ).getJdbcValueExtractor()
+				getExpressableType()
 		);
 	}
 

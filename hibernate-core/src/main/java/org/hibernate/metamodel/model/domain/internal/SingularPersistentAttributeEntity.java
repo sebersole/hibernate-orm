@@ -82,7 +82,7 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -397,7 +397,7 @@ public class SingularPersistentAttributeEntity<O,J>
 				value,
 				(jdbcValue, type, targetColumn) -> jdbcValueCollector.collect(
 						jdbcValue,
-						getEntityDescriptor().getHierarchy().getIdentifierDescriptor(),
+						type,
 						foreignKey.getColumnMappings().findReferringColumn( targetColumn )
 				),
 				clause,
@@ -498,7 +498,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		// todo (6.0) : handle fetching here?  or at a "higher level"?
 		//
 		// 		for now we just load the FK
@@ -539,7 +539,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		if ( hydratedForm == null ) {
@@ -554,7 +554,7 @@ public class SingularPersistentAttributeEntity<O,J>
 					.getIdentifierDescriptor()
 					.resolveHydratedState(
 							hydratedForm,
-							resolutionContext,
+							executionContext,
 							session,
 							null
 					);
@@ -566,7 +566,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			//		if it were being fetched dynamically (join fetch) that would have lead to an
 			//		EntityInitializer for this entity being created and it would be available in the
 			//		`resolutionContext`
-			final Object entityInstance = resolutionContext.resolveEntityInstance( entityKey, !isOptional() );
+			final Object entityInstance = executionContext.resolveEntityInstance( entityKey, !isOptional() );
 			if ( entityInstance != null ) {
 				return entityInstance;
 			}
@@ -753,7 +753,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	public List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		List<ColumnReference> columnReferences = new ArrayList<>();
 		for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
 			columnReferences.add( new ColumnReference( qualifier, column ) );

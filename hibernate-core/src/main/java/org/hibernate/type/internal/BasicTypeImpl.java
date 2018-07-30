@@ -9,7 +9,7 @@ package org.hibernate.type.internal;
 import java.util.function.Predicate;
 
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcValueMapperValueBinderAdapter;
@@ -25,7 +25,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 	private final BasicJavaDescriptor javaDescriptor;
 	private final SqlTypeDescriptor sqlTypeDescriptor;
 
-	private JdbcValueMapper jdbcValueMapper;
+	private SqlExpressableType sqlExpressableType;
 	private JdbcValueMapperValueBinderAdapter valueBinder;
 
 //	private VersionSupport<T> versionSupport;
@@ -82,7 +82,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 
 	@Override
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		final JdbcValueMapper mapperToUse = resolveJdbcValueMapper( typeConfiguration );
+		final SqlExpressableType mapperToUse = resolveJdbcValueMapper( typeConfiguration );
 
 		if ( valueBinder == null ) {
 			valueBinder = new JdbcValueMapperValueBinderAdapter( mapperToUse );
@@ -91,12 +91,12 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 		return valueBinder;
 	}
 
-	private JdbcValueMapper resolveJdbcValueMapper(TypeConfiguration typeConfiguration) {
-		if ( jdbcValueMapper == null ) {
-			jdbcValueMapper = getSqlTypeDescriptor().getJdbcValueMapper( getJavaTypeDescriptor(), typeConfiguration );
+	private SqlExpressableType resolveJdbcValueMapper(TypeConfiguration typeConfiguration) {
+		if ( sqlExpressableType == null ) {
+			sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType( getJavaTypeDescriptor(), typeConfiguration );
 		}
 
-		return jdbcValueMapper;
+		return sqlExpressableType;
 	}
 
 }

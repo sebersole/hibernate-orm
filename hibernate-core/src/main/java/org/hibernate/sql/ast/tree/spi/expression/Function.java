@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 
@@ -18,5 +18,5 @@ import org.hibernate.sql.results.spi.QueryResultProducer;
 public interface Function extends Expression, SqlExpressable, QueryResultProducer {
 
 	@Override
-	AllowableFunctionReturnType getType();
+	SqlExpressableType getType();
 }

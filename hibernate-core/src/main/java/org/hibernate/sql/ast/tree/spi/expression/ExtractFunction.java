@@ -6,12 +6,8 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -19,9 +15,9 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class ExtractFunction extends AbstractStandardFunction {
 	private final Expression unitToExtract;
 	private final Expression extractionSource;
-	private final BasicValuedExpressableType returnType;
+	private final SqlExpressableType returnType;
 
-	public ExtractFunction(Expression unitToExtract, Expression extractionSource, BasicValuedExpressableType returnType) {
+	public ExtractFunction(Expression unitToExtract, Expression extractionSource, SqlExpressableType returnType) {
 		this.unitToExtract = unitToExtract;
 		this.extractionSource = extractionSource;
 		this.returnType = returnType;
@@ -41,19 +37,12 @@ public class ExtractFunction extends AbstractStandardFunction {
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return returnType;
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(
-			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
-			TypeConfiguration typeConfiguration) {
-		return new SqlSelectionImpl(
-				jdbcPosition,
-				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
-		);
+	public SqlExpressableType getType() {
+		return returnType;
 	}
 }

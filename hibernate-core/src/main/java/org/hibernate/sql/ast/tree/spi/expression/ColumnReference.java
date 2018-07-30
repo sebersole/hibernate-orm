@@ -12,8 +12,8 @@ import java.util.Objects;
 
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
@@ -46,7 +46,7 @@ public class ColumnReference implements Expression {
 			int jdbcPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
-		final JdbcValueExtractor jdbcValueExtractor = getColumn().getSqlTypeDescriptor().getJdbcValueMapper(
+		final JdbcValueExtractor jdbcValueExtractor = getColumn().getSqlTypeDescriptor().getSqlExpressableType(
 				column.getSqlTypeDescriptor().getJdbcRecommendedJavaTypeMapping( typeConfiguration ),
 				typeConfiguration
 		).getJdbcValueExtractor();
@@ -71,7 +71,7 @@ public class ColumnReference implements Expression {
 	}
 
 	@Override
-	public ExpressableType getType() {
+	public SqlExpressableType getType() {
 		// n/a
 		return null;
 	}

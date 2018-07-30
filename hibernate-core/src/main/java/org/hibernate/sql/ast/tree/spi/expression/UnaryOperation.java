@@ -7,8 +7,8 @@
 
 package org.hibernate.sql.ast.tree.spi.expression;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
@@ -31,8 +31,9 @@ public class UnaryOperation implements Expression, SqlExpressable, QueryResultPr
 	private final Operator operator;
 
 	private final Expression operand;
-	private final BasicValuedExpressableType type;
-	public UnaryOperation(Operator operator, Expression operand, BasicValuedExpressableType type) {
+	private final SqlExpressableType type;
+
+	public UnaryOperation(Operator operator, Expression operand, SqlExpressableType type) {
 		this.operator = operator;
 		this.operand = operand;
 		this.type = type;
@@ -47,7 +48,7 @@ public class UnaryOperation implements Expression, SqlExpressable, QueryResultPr
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return type;
 	}
 
@@ -59,7 +60,7 @@ public class UnaryOperation implements Expression, SqlExpressable, QueryResultPr
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
+				getExpressableType()
 		);
 	}
 

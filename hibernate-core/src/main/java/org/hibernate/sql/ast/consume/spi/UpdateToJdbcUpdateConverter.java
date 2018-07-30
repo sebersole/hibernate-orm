@@ -9,12 +9,14 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.JdbcUpdate;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * @author Steve Ebersole
@@ -90,6 +92,13 @@ public class UpdateToJdbcUpdateConverter
 	@Override
 	@SuppressWarnings("unchecked")
 	public void visitAssignment(Assignment assignment) {
+		// ... set ..., (p.f_name, p.l_name) = (?, ?)
+		// ... set ..., p.f_name = ?, p.l_name = ?
+
+		// ... set p.name = p.otherName where ....
+
+		// ... set p.l_name = p.other_l_name
+
 		assignment.getColumnReference().accept( this );
 		appendSql( " = " );
 		assignment.getAssignedValue().accept( this );

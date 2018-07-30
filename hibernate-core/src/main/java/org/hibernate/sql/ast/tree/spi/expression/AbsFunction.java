@@ -7,8 +7,8 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.sql.JdbcValueExtractor;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -24,6 +24,11 @@ public class AbsFunction extends AbstractStandardFunction {
 		this.argument = argument;
 	}
 
+	@Override
+	public SqlExpressableType getExpressableType() {
+		return argument.getType();
+	}
+
 	public Expression getArgument() {
 		return argument;
 	}
@@ -34,8 +39,8 @@ public class AbsFunction extends AbstractStandardFunction {
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
-		return (BasicValuedExpressableType) argument.getType();
+	public SqlExpressableType getType() {
+		return getExpressableType();
 	}
 
 	@Override
@@ -45,7 +50,7 @@ public class AbsFunction extends AbstractStandardFunction {
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		final JdbcValueExtractor jdbcValueExtractor = getType().getSqlTypeDescriptor()
-				.getJdbcValueMapper( getType().getJavaTypeDescriptor(), typeConfiguration )
+				.getSqlExpressableType( getType().getJavaTypeDescriptor(), typeConfiguration )
 				.getJdbcValueExtractor();
 		return new SqlSelectionImpl(
 				jdbcPosition,

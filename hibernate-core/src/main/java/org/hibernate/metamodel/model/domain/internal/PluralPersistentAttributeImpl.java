@@ -39,12 +39,13 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReferenc
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -233,14 +234,14 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext creationContext) {
 		// collection-id (idbag)?
 
 		// todo (6.0) : this depends on whether the collection is fetched...
 		//
 		// for now, return nada
 
-		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
+		return creationContext.getSqlSelectionResolver().emptySqlSelection();
 	}
 
 //		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
@@ -282,7 +283,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		// todo (6.0) : use the collection-key descriptor to resolve the hydrated key value...

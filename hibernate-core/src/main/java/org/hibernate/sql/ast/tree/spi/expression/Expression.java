@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.tree.spi.SqlAstNode;
@@ -18,35 +19,19 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * Models an expression at the SQL-level.
  *
- * Note that these Expressions can also model a reference to a domain-model Navigable.
- * While not technically a SQL-level expression, modeling them as such makes handling
- * the easier later while processing the SQL AST to generate the appropriate
- * {@link org.hibernate.sql.exec.spi.JdbcOperation}
- *
- * todo (6.0) : ^^ this is not strictly true anymore.
- * 		we now use QueryResultProducer (via NavigableReference) for the discussed
- * 		purpose, but these are not Expression implementors and are used
- * 		only in SQM -> SQL AST conversion for generation of QueryResults.
- * 		See discussion on SqmSelectableNode#accept
- *
- *
- *
- *
  * @author Steve Ebersole
  */
 public interface Expression extends SqlAstNode, SqlSelectionProducer {
-	// todo (6.0) : does it make sense for this to be an ExpressableType?
-	//		ExpressableType is more of a domain/SQM construct.  At the SQL level,
-	//		"tuples" aside, a BasicType or JavaTypeDescriptor makes more sense.
-
 	/**
 	 * Access the type for this expression.  See {@link ExpressableType}
 	 * for more detailed description.
 	 */
-	ExpressableType getType();
+	default SqlExpressableType getType() {
+		return getExpressable().getExpressableType();
+	}
 
 	default SqlExpressable getExpressable() {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**

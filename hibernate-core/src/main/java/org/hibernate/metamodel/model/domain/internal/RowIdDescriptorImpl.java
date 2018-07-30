@@ -42,7 +42,8 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 				"ROW_ID",
 				creationContext.getTypeConfiguration()
 						.getSqlTypeDescriptorRegistry()
-						.getDescriptor( Types.INTEGER )
+						.getDescriptor( Types.INTEGER ),
+				creationContext.getTypeConfiguration()
 		);
 	}
 

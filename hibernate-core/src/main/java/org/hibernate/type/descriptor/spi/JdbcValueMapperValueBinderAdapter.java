@@ -9,17 +9,17 @@ package org.hibernate.type.descriptor.spi;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * @author Steve Ebersole
  */
 public class JdbcValueMapperValueBinderAdapter implements ValueBinder {
-	private final JdbcValueMapper jdbcValueMapper;
+	private final SqlExpressableType sqlExpressableType;
 
-	public JdbcValueMapperValueBinderAdapter(JdbcValueMapper jdbcValueMapper) {
-		this.jdbcValueMapper = jdbcValueMapper;
+	public JdbcValueMapperValueBinderAdapter(SqlExpressableType sqlExpressableType) {
+		this.sqlExpressableType = sqlExpressableType;
 	}
 
 	@Override
@@ -27,8 +27,8 @@ public class JdbcValueMapperValueBinderAdapter implements ValueBinder {
 		return 1;
 	}
 
-	public JdbcValueMapper getJdbcValueMapper() {
-		return jdbcValueMapper;
+	public SqlExpressableType getSqlExpressableType() {
+		return sqlExpressableType;
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class JdbcValueMapperValueBinderAdapter implements ValueBinder {
 			int position,
 			Object value,
 			ExecutionContext executionContext) throws SQLException {
-		jdbcValueMapper.getJdbcValueBinder().bind( st, position, value, executionContext );
+		sqlExpressableType.getJdbcValueBinder().bind( st, position, value, executionContext );
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class JdbcValueMapperValueBinderAdapter implements ValueBinder {
 			String name,
 			Object value,
 			ExecutionContext executionContext) throws SQLException {
-		jdbcValueMapper.getJdbcValueBinder().bind(
+		sqlExpressableType.getJdbcValueBinder().bind(
 				Util.asCallableStatementForNamedParam( st ),
 				name, value,
 				executionContext

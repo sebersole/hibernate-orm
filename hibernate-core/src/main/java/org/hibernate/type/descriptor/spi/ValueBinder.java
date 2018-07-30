@@ -9,6 +9,7 @@ package org.hibernate.type.descriptor.spi;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
@@ -20,6 +21,8 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
  *
  * @author Steve Ebersole
  */
+@Deprecated
+@Remove
 public interface ValueBinder {
 	/**
 	 * @see AllowableParameterType#getNumberOfJdbcParametersNeeded()

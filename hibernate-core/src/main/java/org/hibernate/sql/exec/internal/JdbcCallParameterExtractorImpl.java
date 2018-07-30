@@ -68,7 +68,7 @@ public class JdbcCallParameterExtractorImpl<T> implements JdbcCallParameterExtra
 		final TypeConfiguration typeConfiguration = executionContext.getSession().getFactory().getTypeConfiguration();
 		final JdbcValueExtractor valueExtractor = ( (BasicValuedExpressableType) ormType ).getBasicType()
 				.getSqlTypeDescriptor()
-				.getJdbcValueMapper( ( BasicJavaDescriptor) ormType.getJavaTypeDescriptor(), typeConfiguration )
+				.getSqlExpressableType( ( BasicJavaDescriptor) ormType.getJavaTypeDescriptor(), typeConfiguration )
 				.getJdbcValueExtractor();
 
 		try {

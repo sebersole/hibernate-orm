@@ -6,35 +6,19 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
 public class CountFunction extends AbstractAggregateFunction {
-	public CountFunction(Expression argument, boolean distinct, BasicValuedExpressableType resultType) {
+	public CountFunction(Expression argument, boolean distinct, SqlExpressableType resultType) {
 		super( argument, distinct, resultType );
 	}
 
 	@Override
 	public void accept(SqlAstWalker  walker) {
 		walker.visitCountFunction( this );
-	}
-
-	@Override
-	public SqlSelection createSqlSelection(
-			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
-			TypeConfiguration typeConfiguration) {
-		return new SqlSelectionImpl(
-				jdbcPosition,
-				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
-		);
 	}
 }

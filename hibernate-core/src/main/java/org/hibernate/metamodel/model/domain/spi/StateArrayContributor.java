@@ -18,7 +18,10 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -122,4 +125,5 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 			ForeignKeys.Nullifier nullifier,
 			NonNullableTransientDependencies nonNullableTransientEntities,
 			SharedSessionContractImplementor session);
+
 }

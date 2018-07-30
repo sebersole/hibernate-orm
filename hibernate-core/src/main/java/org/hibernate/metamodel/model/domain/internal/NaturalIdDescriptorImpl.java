@@ -28,7 +28,7 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -131,18 +131,18 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	@Override
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext creationContext) {
 		final List<SqlSelectionGroupNode> selections = new ArrayList<>();
-		attributes.forEach( attributeInfo -> selections.add( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, resolutionContext ) ) );
+		attributes.forEach( attributeInfo -> selections.add( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, creationContext ) ) );
 		return new AggregateSqlSelectionGroupNode( selections );
 	}
 
 	@Override
 	public List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext creationContext) {
 		final List<ColumnReference> columnRefs = new ArrayList<>();
-		attributes.forEach( attributeInfo -> columnRefs.addAll( attributeInfo.getUnderlyingAttributeDescriptor().resolveColumnReferences( qualifier, resolutionContext ) ) );
+		attributes.forEach( attributeInfo -> columnRefs.addAll( attributeInfo.getUnderlyingAttributeDescriptor().resolveColumnReferences( qualifier, creationContext ) ) );
 		return columnRefs;
 	}
 

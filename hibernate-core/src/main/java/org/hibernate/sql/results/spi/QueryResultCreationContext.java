@@ -7,6 +7,8 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.graph.spi.AttributeNodeImplementor;
 
 /**
  * Contextual information useful when creating a QueryResult.
@@ -15,6 +17,12 @@ import org.hibernate.LockOptions;
  *
  * @author Steve Ebersole
  */
-public interface QueryResultCreationContext extends SqlSelectionResolutionContext {
+public interface QueryResultCreationContext extends SqlAstCreationContext {
+	boolean shouldCreateShallowEntityResult();
+
 	LockOptions getLockOptions();
+
+	default AttributeNodeImplementor<?> locateAttributeGraphInfo(String attributeName) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 }

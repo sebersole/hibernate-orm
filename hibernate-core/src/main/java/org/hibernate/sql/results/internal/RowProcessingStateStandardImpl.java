@@ -8,7 +8,11 @@ package org.hibernate.sql.results.internal;
 
 import java.sql.SQLException;
 
+import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.EntityFetch;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.internal.values.JdbcValues;
@@ -66,5 +70,25 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 	@Override
 	public void finishRowProcessing() {
 		currentRowJdbcValues = null;
+	}
+
+	@Override
+	public SharedSessionContractImplementor getSession() {
+		return getJdbcValuesSourceProcessingState().getExecutionContext().getSession();
+	}
+
+	@Override
+	public QueryOptions getQueryOptions() {
+		return queryOptions;
+	}
+
+	@Override
+	public ParameterBindingContext getParameterBindingContext() {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public Callback getCallback() {
+		return afterLoadAction -> {};
 	}
 }

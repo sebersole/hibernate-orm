@@ -8,19 +8,19 @@ package org.hibernate.type.descriptor.sql.spi;
 
 import org.hibernate.sql.JdbcValueBinder;
 import org.hibernate.sql.JdbcValueExtractor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class JdbcValueMapperImpl implements JdbcValueMapper {
+public class StandardSqlExpressableTypeImpl implements SqlExpressableType {
 	private final BasicJavaDescriptor javaTypeDescriptor;
 	private final SqlTypeDescriptor sqlTypeDescriptor;
 	private final JdbcValueExtractor valueExtractor;
 	private final JdbcValueBinder valueBinder;
 
-	public JdbcValueMapperImpl(
+	public StandardSqlExpressableTypeImpl(
 			BasicJavaDescriptor javaTypeDescriptor,
 			SqlTypeDescriptor sqlTypeDescriptor,
 			JdbcValueExtractor valueExtractor,

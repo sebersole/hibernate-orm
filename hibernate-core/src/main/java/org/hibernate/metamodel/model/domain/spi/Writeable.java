@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Predicate;
+
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -29,7 +31,9 @@ public interface Writeable<D,I> {
 	/**
 	 * Produce a multi-dimensional array of extracted simple value
 	 */
-	I unresolve(D value, SharedSessionContractImplementor session);
+	default I unresolve(D value, SharedSessionContractImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 
 	/**
 	 * Produce a flattened array from dehydrated state
@@ -44,7 +48,6 @@ public interface Writeable<D,I> {
 
 	@FunctionalInterface
 	interface JdbcValueCollector {
-//		void collect(Object jdbcValue, BasicJavaDescriptor javaTypeDescriptor, Column boundColumn);
-		void collect(Object jdbcValue, AllowableParameterType type, Column boundColumn);
+		void collect(Object jdbcValue, BasicJavaDescriptor javaTypeDescriptor, Column boundColumn);
 	}
 }

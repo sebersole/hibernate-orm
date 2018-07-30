@@ -121,7 +121,7 @@ public class SqlTypeDescriptorRegistry implements SqlTypeDescriptorBaseline.Base
 		@SuppressWarnings("unchecked")
 		public <X> JdbcValueBinder<X> createBinder(BasicJavaDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
 			if ( Serializable.class.isAssignableFrom( javaTypeDescriptor.getJavaType() ) ) {
-				return VarbinarySqlDescriptor.INSTANCE.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration ).getJdbcValueBinder();
+				return VarbinarySqlDescriptor.INSTANCE.getSqlExpressableType( javaTypeDescriptor, typeConfiguration ).getJdbcValueBinder();
 			}
 
 			return new AbstractJdbcValueBinder<X>( javaTypeDescriptor, this ) {
@@ -150,7 +150,7 @@ public class SqlTypeDescriptorRegistry implements SqlTypeDescriptorBaseline.Base
 		@SuppressWarnings("unchecked")
 		public <X> JdbcValueExtractor<X> createExtractor(BasicJavaDescriptor<X> javaTypeDescriptor, TypeConfiguration typeConfiguration) {
 			if ( Serializable.class.isAssignableFrom( javaTypeDescriptor.getJavaType() ) ) {
-				return VarbinarySqlDescriptor.INSTANCE.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration ).getJdbcValueExtractor();
+				return VarbinarySqlDescriptor.INSTANCE.getSqlExpressableType( javaTypeDescriptor, typeConfiguration ).getJdbcValueExtractor();
 			}
 
 			return new AbstractJdbcValueExtractor<X>( javaTypeDescriptor, this ) {

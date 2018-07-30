@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import org.hibernate.QueryException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.JdbcValueExtractor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
@@ -29,7 +29,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtractor {
 	private final String columnAlias;
-	private JdbcValueMapper jdbcValueMapper;
+	private SqlExpressableType sqlExpressableType;
 
 	private Integer jdbcResultSetPosition;
 
@@ -45,9 +45,9 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 	}
 
 	@SuppressWarnings("WeakerAccess")
-	public ResolvingSqlSelectionImpl(String columnAlias, JdbcValueMapper jdbcValueMapper) {
+	public ResolvingSqlSelectionImpl(String columnAlias, SqlExpressableType sqlExpressableType) {
 		this.columnAlias = columnAlias;
-		this.jdbcValueMapper = jdbcValueMapper;
+		this.sqlExpressableType = sqlExpressableType;
 	}
 
 	@Override
@@ -57,12 +57,12 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 		// resolve the column-alias to a position
 		jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
 
-		if ( jdbcValueMapper == null ) {
+		if ( sqlExpressableType == null ) {
 			// assume we should auto-discover the type
 			final SqlTypeDescriptor sqlTypeDescriptor = jdbcResultsMetadata.resolveSqlTypeDescriptor( jdbcResultSetPosition );
 
 			final TypeConfiguration typeConfiguration = sessionFactory.getTypeConfiguration();
-			jdbcValueMapper = sqlTypeDescriptor.getJdbcValueMapper(
+			sqlExpressableType = sqlTypeDescriptor.getSqlExpressableType(
 					sqlTypeDescriptor.getJdbcRecommendedJavaTypeMapping( typeConfiguration ),
 					typeConfiguration
 			);
@@ -79,7 +79,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 	public Object extract(ResultSet resultSet, int position, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				resultSet,
 				position,
 				executionContext
@@ -87,7 +87,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 	}
 
 	private void validateExtractor() {
-		if ( jdbcValueMapper == null ) {
+		if ( sqlExpressableType == null ) {
 			throw new QueryException( "Could not determine how to read JDBC value" );
 		}
 	}
@@ -96,7 +96,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 	public Object extract(CallableStatement statement, int jdbcParameterPosition, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterPosition,
 				executionContext
@@ -107,7 +107,7 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 	public Object extract(CallableStatement statement, String jdbcParameterName, ExecutionContext executionContext) throws SQLException {
 		validateExtractor();
 
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterName,
 				executionContext

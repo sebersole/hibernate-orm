@@ -9,6 +9,7 @@ package org.hibernate.loader.internal;
 import java.util.Arrays;
 import java.util.List;
 
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.MultiIdEntityLoader;
 import org.hibernate.loader.spi.MultiIdLoaderSelectors;
@@ -26,6 +27,7 @@ import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 
 /**
  * @author Steve Ebersole

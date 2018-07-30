@@ -18,10 +18,6 @@ public class ExecutionException extends HibernateError {
 		this( message, null );
 	}
 
-	public ExecutionException(Throwable cause) {
-		this( "uncategorized", cause );
-	}
-
 	public ExecutionException(String message, Throwable cause) {
 		super( "A problem occurred in the SQL executor : " + message, cause );
 	}

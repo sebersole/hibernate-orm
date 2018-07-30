@@ -7,8 +7,8 @@
 
 package org.hibernate.sql.ast.tree.spi.expression;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
@@ -27,13 +27,13 @@ public class BinaryArithmeticExpression
 	private final Operation operation;
 	private final Expression lhsOperand;
 	private final Expression rhsOperand;
-	private final BasicValuedExpressableType resultType;
+	private final SqlExpressableType resultType;
 
 	public BinaryArithmeticExpression(
 			Operation operation,
 			Expression lhsOperand,
 			Expression rhsOperand,
-			BasicValuedExpressableType resultType) {
+			SqlExpressableType resultType) {
 		this.operation = operation;
 		this.lhsOperand = lhsOperand;
 		this.rhsOperand = rhsOperand;
@@ -41,7 +41,12 @@ public class BinaryArithmeticExpression
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
+		return resultType;
+	}
+
+	@Override
+	public SqlExpressableType getType() {
 		return resultType;
 	}
 
@@ -53,7 +58,7 @@ public class BinaryArithmeticExpression
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration ).getJdbcValueExtractor()
+				getExpressableType()
 		);
 	}
 

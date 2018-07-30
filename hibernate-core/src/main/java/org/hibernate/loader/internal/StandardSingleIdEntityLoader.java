@@ -7,7 +7,6 @@
 package org.hibernate.loader.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 
@@ -26,7 +25,6 @@ import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
@@ -46,11 +44,14 @@ import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
 import org.hibernate.sql.exec.internal.LoadParameterBindingContext;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameter;
+import org.hibernate.sql.exec.spi.JdbcParameterBinding;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -76,16 +77,32 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 //		selectByLockMode.put( LockMode.READ, base );
 	}
 
+
+	private static class JdbcParameterBindingsImpl implements JdbcParameterBindings {
+		@Override
+		public JdbcParameterBinding getBinding(JdbcParameter parameter) {
+			return null;
+		}
+	}
+
 	@Override
 	public T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session) {
-		final List<Object> loadIds = Collections.singletonList( id );
-
 		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
 				session.getFactory(),
-				loadIds
+				id
 		);
 
-		final JdbcSelect jdbcSelect = resolveJdbcSelect( id, loadOptions.getLockOptions(), parameterBindingContext, session );
+		final List<JdbcParameter> jdbcParameters = new ArrayList<>();
+		final JdbcParameterBindingsImpl jdbcParameterBindings = new JdbcParameterBindingsImpl();
+
+		final JdbcSelect jdbcSelect = resolveJdbcSelect(
+				id,
+				loadOptions.getLockOptions(),
+				parameterBindingContext,
+				jdbcParameters,
+				jdbcParameterBindings,
+				session
+		);
 
 		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
@@ -103,6 +120,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 					@Override
 					public ParameterBindingContext getParameterBindingContext() {
 						return parameterBindingContext;
+					}
+
+					@Override
+					public JdbcParameterBindings getJdbcParameterBindings() {
+						return jdbcParameterBindings;
 					}
 
 					@Override
@@ -124,6 +146,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			Object id,
 			LockOptions lockOptions,
 			ParameterBindingContext parameterBindingContext,
+			List<JdbcParameter> jdbcParameters,
+			JdbcParameterBindingsImpl jdbcParameterBindings,
 			SharedSessionContractImplementor session) {
 		final LoadQueryInfluencers loadQueryInfluencers = session.getLoadQueryInfluencers();
 		if ( entityDescriptor.isAffectedByEnabledFilters( session ) ) {
@@ -229,7 +253,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 					@Override
 					public Callback getCallback() {
-						return null;
+						return afterLoadAction -> {};
 					}
 				},
 				null
@@ -310,13 +334,13 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 							new ScalarQueryResultImpl(
 									null,
 									sqlSelection,
-									(BasicValuedExpressableType) expression.getType()
+									expression.getType()
 							)
 					);
 				}
 		);
 
-		final SqlSelectionResolutionContext resolutionContext = new SqlSelectionResolutionContext() {
+		final SqlAstCreationContext creationContext = new SqlAstCreationContext() {
 			@Override
 			public SessionFactoryImplementor getSessionFactory() {
 				return entityDescriptor.getFactory();
@@ -326,16 +350,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			public SqlExpressionResolver getSqlSelectionResolver() {
 				return sqlExpressionResolver;
 			}
-
-			@Override
-			public boolean shouldCreateShallowEntityResult() {
-				return true;
-			}
 		};
 
 		final List columnReferences = entityDescriptor.getHierarchy()
 				.getIdentifierDescriptor()
-				.resolveColumnReferences( rootTableGroup, resolutionContext );
+				.resolveColumnReferences( rootTableGroup, creationContext );
 		final Expression idExpression;
 		if ( columnReferences.size() == 1 ) {
 			idExpression = (Expression) columnReferences.get( 0 );
@@ -350,7 +369,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 						idExpression,
 						new LoadIdParameter(
 								entityDescriptor.getHierarchy().getIdentifierDescriptor(),
-								resolutionContext.getSessionFactory().getTypeConfiguration()
+								creationContext.getSessionFactory().getTypeConfiguration()
 						)
 				)
 		);

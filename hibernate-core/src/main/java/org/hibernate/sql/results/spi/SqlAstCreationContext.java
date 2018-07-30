@@ -10,12 +10,12 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 
 /**
+ * The "context" in which creation of SQL AST occurs.
+ *
  * @author Steve Ebersole
  */
-public interface SqlSelectionResolutionContext {
+public interface SqlAstCreationContext {
 	SessionFactoryImplementor getSessionFactory();
 
 	SqlExpressionResolver getSqlSelectionResolver();
-
-	boolean shouldCreateShallowEntityResult();
 }

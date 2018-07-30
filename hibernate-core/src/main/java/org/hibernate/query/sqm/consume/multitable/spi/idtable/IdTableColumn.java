@@ -10,6 +10,7 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.naming.Identifier;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * A column in a IdTable.  As the column exists in the
@@ -27,7 +28,8 @@ public class IdTableColumn extends PhysicalColumn {
 			SqlTypeDescriptor sqlTypeDescriptor,
 			BasicJavaDescriptor javaTypeDescriptor,
 			String defaultValue,
-			String sqlTypeDefinition) {
+			String sqlTypeDefinition,
+			TypeConfiguration typeConfiguration) {
 		super(
 				containingTable,
 				columnName,
@@ -37,7 +39,7 @@ public class IdTableColumn extends PhysicalColumn {
 				sqlTypeDefinition,
 				false,
 				false,
-				null
+				typeConfiguration
 		);
 	}
 

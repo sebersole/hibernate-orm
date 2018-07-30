@@ -7,8 +7,10 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -17,11 +19,12 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 
 /**
  * Models a "piece" of the application's domain model that can be navigated
@@ -83,27 +86,42 @@ public interface Navigable<T> extends DomainType<T> {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 
-	default QueryResult createQueryResult(
-			NavigableReference navigableReference,
-			String resultVariable,
-			QueryResultCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	default List<ColumnReference> resolveColumnReferences(
-			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception();
-	}
-
-	SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext);
-
 	/**
 	 * Obtain a loggable representation.
 	 *
 	 * @return The loggable representation of this reference
 	 */
 	String asLoggableText();
+
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	// todo (6.0) : NOTE - this createQueryResult is only used from NavigableReference#createQueryResult
+	//		considering the plan to centralize SQL AST concepts on NavigableReference,
+	// 		we should remove this method and incorporate that into the NavigableReference
+	//		created by each Navigable.  No need to have this exposed as a contract item -
+	//		the Navigable already influences this through the NavigableReference it builds
+
+	default QueryResult createQueryResult(
+			NavigableReference navigableReference,
+			String resultVariable,
+			QueryResultCreationContext creationContext) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	// similar to above, these methods should simply go away - they can be incorporated
+	// 		into the NavigableReference
+
+	@Remove
+	default List<ColumnReference> resolveColumnReferences(
+			ColumnReferenceQualifier qualifier,
+			SqlAstCreationContext resolutionContext) {
+		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Remove
+	SqlSelectionGroupNode resolveSqlSelections(
+			ColumnReferenceQualifier qualifier,
+			SqlAstCreationContext resolutionContext);
 }

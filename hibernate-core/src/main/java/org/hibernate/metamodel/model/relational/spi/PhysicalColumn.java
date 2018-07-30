@@ -10,8 +10,10 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.hibernate.naming.Identifier;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -26,11 +28,14 @@ public class PhysicalColumn implements Column {
 
 	private Supplier<BasicJavaDescriptor> javaTypeDescriptorAccess;
 
+	private SqlExpressableType sqlExpressableType;
+
 	private final String defaultValue;
 	private String checkConstraint;
 	private final boolean isNullable;
 	private final boolean isUnique;
 	private final String comment;
+	private final TypeConfiguration typeConfiguration;
 
 	private String customReadExpr;
 	private String customWriteExpr;
@@ -43,8 +48,20 @@ public class PhysicalColumn implements Column {
 			String defaultValue,
 			String sqlType,
 			boolean isNullable,
-			boolean isUnique) {
-		this( table, name, sqlTypeDescriptorAccess, javaTypeDescriptorAccess, defaultValue, sqlType, isNullable, isUnique, null );
+			boolean isUnique,
+			TypeConfiguration typeConfiguration) {
+		this(
+				table,
+				name,
+				sqlTypeDescriptorAccess,
+				javaTypeDescriptorAccess,
+				defaultValue,
+				sqlType,
+				isNullable,
+				isUnique,
+				null,
+				typeConfiguration
+		);
 	}
 
 	public PhysicalColumn(
@@ -56,7 +73,8 @@ public class PhysicalColumn implements Column {
 			String sqlType,
 			boolean isNullable,
 			boolean isUnique,
-			String comment) {
+			String comment,
+			TypeConfiguration typeConfiguration) {
 		this.table = table;
 		this.name = name;
 		this.sqlTypeDescriptorAccess = sqlTypeDescriptorAccess;
@@ -66,6 +84,7 @@ public class PhysicalColumn implements Column {
 		this.isNullable = isNullable;
 		this.isUnique = isUnique;
 		this.comment = comment;
+		this.typeConfiguration = typeConfiguration;
 	}
 
 	public Identifier getName() {
@@ -80,6 +99,18 @@ public class PhysicalColumn implements Column {
 	@Override
 	public String getExpression() {
 		return name.getText();
+	}
+
+	@Override
+	public SqlExpressableType getExpressableType() {
+		if ( sqlExpressableType == null ) {
+			sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType(
+					getJavaTypeDescriptor(),
+					typeConfiguration
+			);
+		}
+
+		return sqlExpressableType;
 	}
 
 	@Override
@@ -166,7 +197,6 @@ public class PhysicalColumn implements Column {
 
 	@Override
 	public int hashCode() {
-
 		return Objects.hash( table, name );
 	}
 }

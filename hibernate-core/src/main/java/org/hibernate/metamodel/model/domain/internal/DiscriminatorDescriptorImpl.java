@@ -24,8 +24,8 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
 import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -76,7 +76,6 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 		throw new NotYetImplementedException(  );
 	}
 
-
 	@Override
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
@@ -113,14 +112,14 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 						navigableReference.getSqlExpressionQualifier(),
 						creationContext
 				),
-				this
+				getBoundColumn().getExpressableType()
 		);
 	}
 
 	@Override
 	public SqlSelection resolveSqlSelection(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 				resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 						qualifier,

@@ -8,9 +8,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import java.util.List;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -23,11 +22,11 @@ import org.hibernate.type.spi.TypeConfiguration;
  */
 public class ConcatFunction implements StandardFunction {
 	private final List<Expression> expressions;
-	private final AllowableFunctionReturnType type;
+	private final SqlExpressableType type;
 
 	public ConcatFunction(
 			List<Expression> expressions,
-			AllowableFunctionReturnType type) {
+			SqlExpressableType type) {
 		this.expressions = expressions;
 		this.type = type;
 	}
@@ -37,8 +36,13 @@ public class ConcatFunction implements StandardFunction {
 	}
 
 	@Override
-	public AllowableFunctionReturnType getType() {
+	public SqlExpressableType getExpressableType() {
 		return type;
+	}
+
+	@Override
+	public SqlExpressableType getType() {
+		return getExpressableType();
 	}
 
 	@Override
@@ -63,10 +67,10 @@ public class ConcatFunction implements StandardFunction {
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(
 						this,
-						(BasicJavaDescriptor) getType().getJavaTypeDescriptor(),
+						getType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				(BasicValuedExpressableType) getType()
+				getExpressableType()
 		);
 	}
 }

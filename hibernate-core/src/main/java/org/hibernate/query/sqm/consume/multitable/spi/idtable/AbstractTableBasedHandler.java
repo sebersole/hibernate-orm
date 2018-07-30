@@ -199,7 +199,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	private QueryLiteral generateSessionUidLiteralExpression(HandlerExecutionContext executionContext) {
 		return new QueryLiteral(
 				sessionUidSupport.extractUid( executionContext.getSession() ),
-				StandardSpiBasicTypes.STRING,
+				StandardSpiBasicTypes.STRING.getSqlExpressableType( executionContext.getSessionFactory().getTypeConfiguration() ),
 				Clause.IRRELEVANT
 		);
 	}

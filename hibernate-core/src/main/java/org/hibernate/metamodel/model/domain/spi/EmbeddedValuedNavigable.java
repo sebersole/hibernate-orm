@@ -16,7 +16,7 @@ import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 
 /**
@@ -57,7 +57,7 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	@Override
 	default SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return getEmbeddedDescriptor().resolveSqlSelections( qualifier, resolutionContext );
 	}
 

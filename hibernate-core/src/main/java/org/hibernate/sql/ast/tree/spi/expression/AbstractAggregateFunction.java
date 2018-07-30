@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 
 /**
@@ -15,9 +15,9 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 public abstract class AbstractAggregateFunction extends AbstractStandardFunction implements AggregateFunction {
 	private final Expression argument;
 	private final boolean distinct;
-	private final BasicValuedExpressableType resultType;
+	private final SqlExpressableType resultType;
 
-	public AbstractAggregateFunction(Expression argument, boolean distinct, BasicValuedExpressableType resultType) {
+	public AbstractAggregateFunction(Expression argument, boolean distinct, SqlExpressableType resultType) {
 		this.argument = argument;
 		this.distinct = distinct;
 		this.resultType = resultType;
@@ -29,8 +29,13 @@ public abstract class AbstractAggregateFunction extends AbstractStandardFunction
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return resultType;
+	}
+
+	@Override
+	public SqlExpressableType getType() {
+		return getExpressableType();
 	}
 
 	@Override

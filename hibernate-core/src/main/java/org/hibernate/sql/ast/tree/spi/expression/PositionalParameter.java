@@ -6,12 +6,9 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.QueryException;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -26,7 +23,7 @@ public class PositionalParameter extends AbstractParameter {
 
 	public PositionalParameter(
 			int position,
-			AllowableParameterType inferredType,
+			SqlExpressableType inferredType,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
 		super( inferredType, clause, typeConfiguration );
@@ -35,26 +32,6 @@ public class PositionalParameter extends AbstractParameter {
 
 	public int getPosition() {
 		return position;
-	}
-
-	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
-		return context.getQueryParameterBindings().getBinding( position );
-	}
-
-	@Override
-	protected void warnNoBinding() {
-		log.debugf( "Query defined positional parameter [%s], but no binding was found (setParameter not called)", getPosition() );
-	}
-
-	@Override
-	protected void unresolvedType() {
-		throw new QueryException( "Unable to determine Type for positional parameter [" + getPosition() + "]" );
-	}
-
-	@Override
-	protected void warnNullBindValue() {
-		log.debugf( "Binding value for positional parameter [:%s] was null", getPosition() );
 	}
 
 	@Override

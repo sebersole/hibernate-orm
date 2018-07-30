@@ -23,7 +23,6 @@ import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
-import org.hibernate.metamodel.model.domain.spi.Readable;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
@@ -32,7 +31,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceBasic;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -42,7 +41,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.Util;
 import org.hibernate.type.descriptor.spi.ValueBinder;
@@ -61,7 +60,7 @@ public class BasicSingularPersistentAttribute<O, J>
 
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
-	private final JdbcValueMapper jdbcValueMapper;
+	private final SqlExpressableType sqlExpressableType;
 	private final BasicValueConverter valueConverter;
 
 	@SuppressWarnings("unchecked")
@@ -91,13 +90,13 @@ public class BasicSingularPersistentAttribute<O, J>
 					getNavigableRole()
 			);
 
-			jdbcValueMapper = basicType.getSqlTypeDescriptor().getJdbcValueMapper(
+			sqlExpressableType = basicType.getSqlTypeDescriptor().getSqlExpressableType(
 					valueConverter.getRelationalJavaDescriptor(),
 					context.getSessionFactory().getTypeConfiguration()
 			);
 		}
 		else {
-			jdbcValueMapper = basicType.getSqlTypeDescriptor().getJdbcValueMapper(
+			sqlExpressableType = basicType.getSqlTypeDescriptor().getSqlExpressableType(
 					basicType.getJavaTypeDescriptor(),
 					context.getSessionFactory().getTypeConfiguration()
 			);
@@ -145,7 +144,7 @@ public class BasicSingularPersistentAttribute<O, J>
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				getType()
+				getBoundColumn().getExpressableType()
 		);
 	}
 
@@ -194,7 +193,7 @@ public class BasicSingularPersistentAttribute<O, J>
 	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			Readable.ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		if ( valueConverter != null ) {
@@ -211,16 +210,10 @@ public class BasicSingularPersistentAttribute<O, J>
 	@Override
 	public List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return Collections.singletonList(
 				qualifier.resolveColumnReference( getBoundColumn() )
 		);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		return value;
 	}
 
 	@Override
@@ -229,10 +222,10 @@ public class BasicSingularPersistentAttribute<O, J>
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-//		if ( valueConverter != null ) {
-//			value = valueConverter.toRelationalValue( value, session );
-//		}
-		jdbcValueCollector.collect( value, this, getBoundColumn() );
+		if ( valueConverter != null ) {
+			value = valueConverter.toRelationalValue( value, session );
+		}
+		jdbcValueCollector.collect( value, getBoundColumn().getJavaTypeDescriptor(), getBoundColumn() );
 	}
 
 
@@ -249,7 +242,7 @@ public class BasicSingularPersistentAttribute<O, J>
 			ExecutionContext executionContext) throws SQLException {
 		final Object bindValue = bindValue( value, executionContext.getSession() );
 
-		jdbcValueMapper.getJdbcValueBinder().bind( st, position, bindValue, executionContext );
+		sqlExpressableType.getJdbcValueBinder().bind( st, position, bindValue, executionContext );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -269,7 +262,7 @@ public class BasicSingularPersistentAttribute<O, J>
 		final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
 		final Object bindValue = bindValue( value, executionContext.getSession() );
 
-		jdbcValueMapper.getJdbcValueBinder().bind( callable, name, bindValue, executionContext );
+		sqlExpressableType.getJdbcValueBinder().bind( callable, name, bindValue, executionContext );
 	}
 
 	@SuppressWarnings("unchecked")

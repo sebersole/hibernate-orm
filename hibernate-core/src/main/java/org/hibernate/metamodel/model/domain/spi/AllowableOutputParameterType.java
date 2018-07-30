@@ -17,8 +17,5 @@ package org.hibernate.metamodel.model.domain.spi;
  *
  * @author Steve Ebersole
  */
-public interface AllowableOutputParameterType extends AllowableParameterType {
-	/**
-	 * Obtain the Value extractor.
-	 */
+public interface AllowableOutputParameterType extends AllowableParameterType, Readable {
 }

@@ -284,7 +284,8 @@ public class Column implements Selectable, Serializable, Cloneable {
 				columnSqlType,
 				isNullable(),
 				isUnique(),
-				getComment()
+				getComment(),
+				typeConfiguration
 		);
 		column.setSize(	size );
 		column.setCheckConstraint( getCheckConstraint() );

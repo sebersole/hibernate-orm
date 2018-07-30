@@ -6,8 +6,8 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -46,7 +46,7 @@ public class SqlSelectionExpression implements Expression {
 	}
 
 	@Override
-	public ExpressableType getType() {
+	public SqlExpressableType getType() {
 		return theExpression.getType();
 	}
 

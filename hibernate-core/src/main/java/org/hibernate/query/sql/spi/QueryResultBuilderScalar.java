@@ -6,10 +6,11 @@
  */
 package org.hibernate.query.sql.spi;
 
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -25,11 +26,11 @@ public class QueryResultBuilderScalar
 	//		SQL to execute is already
 
 	private final String columnName;
-	private final BasicValuedExpressableType type;
+	private final SqlExpressableType type;
 
 	public QueryResultBuilderScalar(
 			String columnName,
-			BasicValuedExpressableType type) {
+			SqlExpressableType type) {
 		this.columnName = columnName;
 		this.type = type;
 	}
@@ -40,7 +41,12 @@ public class QueryResultBuilderScalar
 	}
 
 	@Override
-	public QueryResult buildReturn(NodeResolutionContext resolutionContext) {
+	public SqlExpressableType getExpressableType() {
+		return type;
+	}
+
+	@Override
+	public QueryResult buildReturn(QueryResultCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				columnName,
 				new ResolvingSqlSelectionImpl( columnName ),

@@ -6,9 +6,8 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -17,7 +16,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class CountStarFunction extends AbstractAggregateFunction {
-	public CountStarFunction(boolean distinct, BasicValuedExpressableType resultType) {
+	public CountStarFunction(boolean distinct, SqlExpressableType resultType) {
 		super( STAR, distinct, resultType );
 	}
 
@@ -28,20 +27,9 @@ public class CountStarFunction extends AbstractAggregateFunction {
 		walker.visitCountStarFunction( this );
 	}
 
-	@Override
-	public SqlSelection createSqlSelection(
-			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor, TypeConfiguration typeConfiguration) {
-		return new SqlSelectionImpl(
-				jdbcPosition,
-				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
-		);
-	}
-
 	static class StarExpression implements Expression {
 		@Override
-		public BasicValuedExpressableType getType() {
+		public SqlExpressableType getType() {
 			return null;
 		}
 

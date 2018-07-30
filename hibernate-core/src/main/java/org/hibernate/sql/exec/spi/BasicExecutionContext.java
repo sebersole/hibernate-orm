@@ -20,8 +20,7 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  *
  * @author Steve Ebersole
  */
-public
-class BasicExecutionContext implements ExecutionContext {
+public class BasicExecutionContext implements ExecutionContext {
 	private final SharedSessionContractImplementor session;
 	private final ParameterBindingContext parameterBindingContext;
 

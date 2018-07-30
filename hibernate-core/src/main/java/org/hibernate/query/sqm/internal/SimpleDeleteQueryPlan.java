@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
@@ -25,6 +26,7 @@ import org.hibernate.sql.exec.internal.JdbcMutationExecutorImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 
 /**
  * @author Steve Ebersole

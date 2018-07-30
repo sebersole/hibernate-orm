@@ -63,6 +63,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 
 import org.jboss.logging.Logger;
@@ -78,7 +79,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class AbstractMetamodelDrivenSqlSelectPlanBuilder
 		implements MetamodelDrivenSqlSelectPlanBuilder, RootTableGroupContext, JoinedTableGroupContext,
-		QueryResultCreationContext, SqlAstProducerContext {
+		SqlAstProducerContext, SqlAstCreationContext, QueryResultCreationContext {
 
 	private static final Logger log = Logger.getLogger( AbstractMetamodelDrivenSqlSelectPlanBuilder.class );
 

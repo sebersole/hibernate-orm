@@ -21,7 +21,6 @@ import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.internal.EntityQueryResultImpl;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.internal.SqlSelectionReaderImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -173,13 +172,18 @@ public class Util {
 				.getDescriptor( resultType );
 
 		if ( resultTypeDescriptor instanceof BasicJavaDescriptor ) {
+			final BasicType basicType = context.getSessionFactory()
+					.getTypeConfiguration()
+					.getBasicTypeRegistry()
+					.getBasicType( resultType );
+
 			context.addQueryResult(
 					new ScalarQueryResultImpl(
 							// todo (6.0) : resultVariable?
 							null,
 							// todo : SqlSelection
 							null,
-							context.getSessionFactory().getTypeConfiguration().getBasicTypeRegistry().getBasicType( resultType )
+							basicType.getSqlExpressableType( context.getSessionFactory().getTypeConfiguration() )
 					)
 			);
 		}

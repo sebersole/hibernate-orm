@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
+import org.hibernate.sql.SqlExpressableType;
+
 /**
  * Unifying contract for things that are capable of being an expression in
  * the SQL AST.
@@ -13,4 +15,9 @@ package org.hibernate.sql.ast.produce.spi;
  * @author Steve Ebersole
  */
 public interface SqlExpressable {
+	/**
+	 * Any thing that is expressable at the SQL AST level
+	 * would be of basic type.
+	 */
+	SqlExpressableType getExpressableType();
 }

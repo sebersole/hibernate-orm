@@ -10,7 +10,7 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
@@ -19,11 +19,11 @@ import org.hibernate.sql.results.spi.SqlSelectionReader;
  * @author Steve Ebersole
  */
 public class ExtractorBasedReader implements SqlSelectionReader {
-	private final JdbcValueMapper jdbcValueMapper;
+	private final SqlExpressableType sqlExpressableType;
 
 	@SuppressWarnings("WeakerAccess")
-	public ExtractorBasedReader(JdbcValueMapper jdbcValueMapper) {
-		this.jdbcValueMapper = jdbcValueMapper;
+	public ExtractorBasedReader(SqlExpressableType sqlExpressableType) {
+		this.sqlExpressableType = sqlExpressableType;
 	}
 
 	@Override
@@ -31,7 +31,7 @@ public class ExtractorBasedReader implements SqlSelectionReader {
 			ResultSet resultSet,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			SqlSelection sqlSelection) throws SQLException {
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				resultSet,
 				sqlSelection.getJdbcResultSetIndex(),
 				jdbcValuesSourceProcessingState.getExecutionContext()
@@ -43,7 +43,7 @@ public class ExtractorBasedReader implements SqlSelectionReader {
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			int jdbcParameterIndex) throws SQLException {
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterIndex,
 				jdbcValuesSourceProcessingState.getExecutionContext()
@@ -55,7 +55,7 @@ public class ExtractorBasedReader implements SqlSelectionReader {
 			CallableStatement statement,
 			JdbcValuesSourceProcessingState jdbcValuesSourceProcessingState,
 			String jdbcParameterName) throws SQLException {
-		return jdbcValueMapper.getJdbcValueExtractor().extract(
+		return sqlExpressableType.getJdbcValueExtractor().extract(
 				statement,
 				jdbcParameterName,
 				jdbcValuesSourceProcessingState.getExecutionContext()

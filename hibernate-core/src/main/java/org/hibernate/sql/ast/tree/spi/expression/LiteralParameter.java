@@ -8,16 +8,14 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Collection;
-import javax.persistence.TemporalType;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.JdbcParameterBinding;
+import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -25,34 +23,21 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * @author Steve Ebersole
  */
-public class LiteralParameter implements GenericParameter, QueryParameterBinding {
+public class LiteralParameter implements GenericParameter, JdbcParameterBinding, JdbcParameterBinder {
 	private final Object value;
-	private final AllowableParameterType type;
-	private final Clause clause;
-	private final TypeConfiguration typeConfiguration;
+	private final SqlExpressableType type;
 
 	public LiteralParameter(
 			Object value,
-			AllowableParameterType type,
-			Clause clause, TypeConfiguration typeConfiguration) {
+			SqlExpressableType type,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
 		this.value = value;
 		this.type = type;
-		this.clause = clause;
-		this.typeConfiguration = typeConfiguration;
 	}
 
 	@Override
-	public int getNumberOfJdbcParametersNeeded() {
-		return type.getValueBinder( clause.getInclusionChecker(), typeConfiguration ).getNumberOfJdbcParametersNeeded();
-	}
-
-	@Override
-	public QueryParameterBinding resolveBinding(ParameterBindingContext context) {
-		return this;
-	}
-
-	@Override
-	public ExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return type;
 	}
 
@@ -61,7 +46,16 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 			int jdbcPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
-		throw new UnsupportedOperationException();
+		return new SqlSelectionImpl(
+				jdbcPosition,
+				this,
+				getExpressableType()
+		);
+	}
+
+	@Override
+	public JdbcParameterBinder getParameterBinder() {
+		return this;
 	}
 
 	@Override
@@ -70,38 +64,8 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	}
 
 	@Override
-	public boolean isBound() {
-		return true;
-	}
-
-	@Override
-	public boolean allowsMultiValued() {
-		return false;
-	}
-
-	@Override
-	public boolean isMultiValued() {
-		return false;
-	}
-
-	@Override
-	public AllowableParameterType getBindType() {
-		return type;
-	}
-
-	@Override
-	public void setBindValue(Object value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValue(Object value, AllowableParameterType clarifiedType) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValue(Object value, TemporalType temporalTypePrecision) {
-		throw new UnsupportedOperationException();
+	public SqlExpressableType getBindType() {
+		return getExpressableType();
 	}
 
 	@Override
@@ -110,35 +74,12 @@ public class LiteralParameter implements GenericParameter, QueryParameterBinding
 	}
 
 	@Override
-	public void setBindValues(Collection values) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValues(Collection values, AllowableParameterType clarifiedType) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setBindValues(
-			Collection values,
-			TemporalType temporalTypePrecision,
-			TypeConfiguration typeConfiguration) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection getBindValues() {
-		return null;
-	}
-
-	@Override
 	@SuppressWarnings("unchecked")
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException {
-		type.getValueBinder( clause.getInclusionChecker(), executionContext.getSession().getFactory().getTypeConfiguration() )
+		getExpressableType().getJdbcValueBinder()
 				.bind( statement, startPosition, value, executionContext );
 		return 1;
 	}

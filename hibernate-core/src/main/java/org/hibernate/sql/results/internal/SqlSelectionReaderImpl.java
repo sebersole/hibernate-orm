@@ -188,7 +188,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		assert jdbcParameterIndex > 0;
 
 		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
-		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+		return (T) sqlTypeDescriptor.getSqlExpressableType( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
 				.getJdbcValueExtractor()
 				.extract( resultSet, jdbcParameterIndex, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}
@@ -206,7 +206,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		assert jdbcValuesSourceProcessingState != null;
 
 		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
-		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+		return (T) sqlTypeDescriptor.getSqlExpressableType( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
 				.getJdbcValueExtractor()
 				.extract( statement, jdbcParameterIndex, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}
@@ -224,7 +224,7 @@ public class SqlSelectionReaderImpl implements SqlSelectionReader {
 		assert jdbcValuesSourceProcessingState != null;
 
 		final SharedSessionContractImplementor session = jdbcValuesSourceProcessingState.getSession();
-		return (T) sqlTypeDescriptor.getJdbcValueMapper( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
+		return (T) sqlTypeDescriptor.getSqlExpressableType( javaTypeDescriptor, session.getFactory().getTypeConfiguration() )
 				.getJdbcValueExtractor()
 				.extract( statement, jdbcParameterName, jdbcValuesSourceProcessingState.getExecutionContext() );
 	}

@@ -45,7 +45,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.InSubQueryPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 import org.jboss.logging.Logger;
 
@@ -53,7 +53,7 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public class SqmUpdateToSqlAstConverterMultiTable
-		extends BaseSqmToSqlAstConverter implements SqlSelectionResolutionContext {
+		extends BaseSqmToSqlAstConverter implements SqlAstCreationContext {
 	private static final Logger log = Logger.getLogger( SqmUpdateToSqlAstConverterMultiTable.class );
 
 
@@ -209,12 +209,9 @@ public class SqmUpdateToSqlAstConverterMultiTable
 //			);
 //			assert sqlSelectionGroup.getSqlSelections().size() == 1;
 
-			final Assignment assignment = new Assignment(
-					// this needs to be a ColumnReference (the Expression) rather than a SqlSelection, as noted above in todos
-					//sqlSelectionGroup.getSqlSelections().get( 0 ),
-					null,
-					assignedValue
-			);
+//			final Assignment assignment = new Assignment( stateField, assignedValue, this );
+			final Assignment assignment = null;
+
 			final TableReference assignmentTableReference = currentAssignmentContext.stateFieldTableReference;
 			UpdateStatementBuilder concreteUpdateStatementBuilder = updateStatementBuilderMap.get( assignmentTableReference );
 			if ( concreteUpdateStatementBuilder == null ) {
@@ -240,11 +237,6 @@ public class SqmUpdateToSqlAstConverterMultiTable
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
 		return expressionResolver;
-	}
-
-	@Override
-	public boolean shouldCreateShallowEntityResult() {
-		return false;
 	}
 
 	private class TableGroupMock extends AbstractTableGroup implements TableGroup {

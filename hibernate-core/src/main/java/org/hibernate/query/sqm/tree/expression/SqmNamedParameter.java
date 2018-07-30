@@ -11,6 +11,8 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
+ * Represents a named query parameter in the SQM tree.
+ *
  * @author Steve Ebersole
  */
 public class SqmNamedParameter implements SqmParameter {

@@ -8,7 +8,7 @@ package org.hibernate.sql.results.internal;
 
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.ScalarQueryResult;
@@ -20,14 +20,14 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
  */
 public class ScalarQueryResultImpl implements ScalarQueryResult {
 	private final String resultVariable;
-	private final BasicValuedExpressableType expressableType;
+	private final SqlExpressableType expressableType;
 
 	private final QueryResultAssembler assembler;
 
 	public ScalarQueryResultImpl(
 			String resultVariable,
 			SqlSelection sqlSelection,
-			BasicValuedExpressableType expressableType) {
+			SqlExpressableType expressableType) {
 		this.resultVariable = resultVariable;
 		this.expressableType = expressableType;
 

@@ -21,6 +21,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
  * @author Steve Ebersole
  *
  * @see JdbcValueBinder
+ * @see SqlExpressableType
  */
 public interface JdbcValueExtractor<J>  {
 	/**
@@ -29,7 +30,7 @@ public interface JdbcValueExtractor<J>  {
 	J extract(ResultSet rs, int position, ExecutionContext executionContext) throws SQLException;
 
 	/**
-	 * Extract value from CallableStatement, by SqlSelection
+	 * Extract value from CallableStatement
 	 */
 	J extract(
 			CallableStatement statement,
@@ -37,10 +38,7 @@ public interface JdbcValueExtractor<J>  {
 			ExecutionContext executionContext) throws SQLException;
 
 	/**
-	 * Extract value from CallableStatement, by SqlSelection
-	 *
-	 * todo (6.0) : name (String) versus SqlSelection?  SqlSelection is *just* a memento so in theory it should be fine
-	 * 		this overload may get "folded" into the form above depending on the answer to this ^^ question
+	 * Extract value from CallableStatement, by name
 	 */
 	J extract(CallableStatement statement, String jdbcParameterName, ExecutionContext executionContext) throws SQLException;
 }

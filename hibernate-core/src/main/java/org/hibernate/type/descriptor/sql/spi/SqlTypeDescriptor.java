@@ -6,9 +6,7 @@
  */
 package org.hibernate.type.descriptor.sql.spi;
 
-import org.hibernate.sql.JdbcValueBinder;
-import org.hibernate.sql.JdbcValueExtractor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.descriptor.spi.WrapperOptions;
@@ -51,7 +49,7 @@ public interface SqlTypeDescriptor extends org.hibernate.type.descriptor.sql.Sql
 	 */
 	<T> JdbcLiteralFormatter<T> getJdbcLiteralFormatter(JavaTypeDescriptor<T> javaTypeDescriptor);
 
-	<T> JdbcValueMapper getJdbcValueMapper(
+	<T> SqlExpressableType getSqlExpressableType(
 			BasicJavaDescriptor<T> javaTypeDescriptor,
 			TypeConfiguration typeConfiguration);
 }

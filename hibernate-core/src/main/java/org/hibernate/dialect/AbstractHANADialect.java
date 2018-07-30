@@ -764,7 +764,7 @@ public abstract class AbstractHANADialect extends Dialect {
 					}
 
 					final TypeConfiguration typeConfiguration = session.getFactory().getTypeConfiguration();
-					descriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration)
+					descriptor.getSqlExpressableType( javaTypeDescriptor, typeConfiguration)
 							.getJdbcValueBinder().bind( st, index, value, executionContext );
 				}
 
@@ -787,7 +787,7 @@ public abstract class AbstractHANADialect extends Dialect {
 					}
 
 					final TypeConfiguration typeConfiguration = session.getFactory().getTypeConfiguration();
-					descriptor.getJdbcValueMapper( javaTypeDescriptor, typeConfiguration )
+					descriptor.getSqlExpressableType( javaTypeDescriptor, typeConfiguration )
 							.getJdbcValueBinder().bind( st, name, value, executionContext );
 				}
 			};

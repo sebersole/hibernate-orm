@@ -8,8 +8,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import java.util.List;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -25,7 +25,7 @@ public class SqlTuple implements Expression {
 	}
 
 	@Override
-	public ExpressableType getType() {
+	public SqlExpressableType getType() {
 		// todo (6.0) : what to return here?
 		return null;
 	}

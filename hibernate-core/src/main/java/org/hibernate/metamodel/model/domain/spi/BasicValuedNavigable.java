@@ -6,11 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -30,7 +32,7 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 	@Override
 	default SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 				resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
 						qualifier,
@@ -40,5 +42,19 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 				,
 				resolutionContext.getSessionFactory().getTypeConfiguration()
 		);
+	}
+
+	@Override
+	default Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
+	}
+
+	@Override
+	default void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
+			SharedSessionContractImplementor session) {
+		jdbcValueCollector.collect( value, getJavaTypeDescriptor(), getBoundColumn() );
 	}
 }

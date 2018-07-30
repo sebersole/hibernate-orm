@@ -6,12 +6,8 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -19,16 +15,16 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class ModFunction extends AbstractStandardFunction implements StandardFunction {
 	private final Expression dividend;
 	private final Expression divisor;
-	private final BasicValuedExpressableType type;
+	private final SqlExpressableType type;
 
 	public ModFunction(Expression dividend, Expression divisor) {
-		this( dividend, divisor, (BasicValuedExpressableType) dividend.getType() );
+		this( dividend, divisor, dividend.getType() );
 	}
 
 	public ModFunction(
 			Expression dividend,
 			Expression divisor,
-			BasicValuedExpressableType type) {
+			SqlExpressableType type) {
 		this.dividend = dividend;
 		this.divisor = divisor;
 		this.type = type;
@@ -48,19 +44,12 @@ public class ModFunction extends AbstractStandardFunction implements StandardFun
 	}
 
 	@Override
-	public BasicValuedExpressableType getType() {
+	public SqlExpressableType getExpressableType() {
 		return type;
 	}
 
 	@Override
-	public SqlSelection createSqlSelection(
-			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
-			TypeConfiguration typeConfiguration) {
-		return new SqlSelectionImpl(
-				jdbcPosition,
-				this,
-				getType().getBasicType().getJdbcValueMapper( typeConfiguration )
-		);
+	public SqlExpressableType getType() {
+		return type;
 	}
 }

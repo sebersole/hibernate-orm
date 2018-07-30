@@ -125,7 +125,7 @@ public class BasicCollectionElementImpl<J>
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				this
+				getBoundColumn().getExpressableType()
 		);
 	}
 }

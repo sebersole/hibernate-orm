@@ -28,6 +28,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
@@ -180,7 +181,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		if ( hydratedForm == null ) {
@@ -195,7 +196,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 						final int index = contributor.getStateArrayPosition();
 						state[index] = contributor.resolveHydratedState(
 								hydratedState[index],
-								resolutionContext,
+								executionContext,
 								session,
 								containerInstance
 						);

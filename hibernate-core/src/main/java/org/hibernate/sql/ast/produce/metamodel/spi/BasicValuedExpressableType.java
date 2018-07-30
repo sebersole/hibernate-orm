@@ -16,7 +16,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.Util;
@@ -62,11 +62,11 @@ public interface BasicValuedExpressableType<J>
 
 			@Override
 			public void bind(PreparedStatement st, int position, Object value, ExecutionContext executionContext) throws SQLException {
-				final JdbcValueMapper jdbcValueMapper = getSqlTypeDescriptor().getJdbcValueMapper(
+				final SqlExpressableType sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType(
 						getJavaTypeDescriptor(),
 						executionContext.getSession().getFactory().getTypeConfiguration()
 				);
-				jdbcValueMapper.getJdbcValueBinder().bind( st, position, value, executionContext );
+				sqlExpressableType.getJdbcValueBinder().bind( st, position, value, executionContext );
 			}
 
 			@Override
@@ -76,11 +76,11 @@ public interface BasicValuedExpressableType<J>
 					Object value,
 					ExecutionContext executionContext) throws SQLException {
 				final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
-				final JdbcValueMapper jdbcValueMapper = getSqlTypeDescriptor().getJdbcValueMapper(
+				final SqlExpressableType sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType(
 						getJavaTypeDescriptor(),
 						executionContext.getSession().getFactory().getTypeConfiguration()
 				);
-				jdbcValueMapper.getJdbcValueBinder().bind( callable, name, value, executionContext );
+				sqlExpressableType.getJdbcValueBinder().bind( callable, name, value, executionContext );
 			}
 		};
 	}

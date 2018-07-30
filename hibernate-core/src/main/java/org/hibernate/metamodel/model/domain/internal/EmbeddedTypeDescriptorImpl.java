@@ -43,7 +43,7 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
@@ -169,7 +169,7 @@ public class EmbeddedTypeDescriptorImpl<J>
 	@Override
 	public CompositeSqlSelectionGroup resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		return CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
 	}
 

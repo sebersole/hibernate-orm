@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -27,7 +27,7 @@ public class CompositeSqlSelectionGroupImpl extends AbstractSqlSelectionGroup im
 	public static CompositeSqlSelectionGroup buildSqlSelectionGroup(
 			EmbeddedTypeDescriptor<?> embeddedDescriptor,
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
+			SqlAstCreationContext resolutionContext) {
 		final Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor = new HashMap<>();
 
 		for ( StateArrayContributor<?> stateArrayContributor : embeddedDescriptor.getStateArrayContributors() ) {

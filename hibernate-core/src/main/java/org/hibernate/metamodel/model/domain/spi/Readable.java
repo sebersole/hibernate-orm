@@ -9,6 +9,10 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.spi.Initializer;
+import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.QueryResultCreationContext;
 
 /**
  *
@@ -17,6 +21,12 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @param <D>
  */
 public interface Readable<V,H,D> {
+
+	default QueryResult createQueryResult(
+			java.util.function.Consumer<Initializer> collector,
+			QueryResultCreationContext creationContext) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 
 	// todo (6.0) : "hydrate" relies on SqlSelection and jdbc value processing uses those to build the hydrated values itself.
 	//		seems like this contract should define a `hydrateState` method, but implementing
@@ -56,7 +66,7 @@ public interface Readable<V,H,D> {
 	 */
 	default D resolveHydratedState(
 			H hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		throw new NotYetImplementedFor6Exception( getClass() );

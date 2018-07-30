@@ -32,7 +32,8 @@ public class PersistentTableSessionUidSupport implements SessionUidSupport {
 						VarcharSqlDescriptor.INSTANCE,
 						StringJavaDescriptor.INSTANCE,
 						null,
-						"CHAR(36)"
+						"CHAR(36)",
+						null
 				)
 		);
 	}

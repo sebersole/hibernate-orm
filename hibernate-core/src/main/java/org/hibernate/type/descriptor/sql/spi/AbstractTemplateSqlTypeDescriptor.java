@@ -8,7 +8,7 @@ package org.hibernate.type.descriptor.sql.spi;
 
 import org.hibernate.sql.JdbcValueBinder;
 import org.hibernate.sql.JdbcValueExtractor;
-import org.hibernate.sql.JdbcValueMapper;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -30,7 +30,7 @@ public abstract class AbstractTemplateSqlTypeDescriptor implements SqlTypeDescri
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public final JdbcValueMapper getJdbcValueMapper(
+	public final SqlExpressableType getSqlExpressableType(
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return typeConfiguration.resolveJdbcValueMapper(
@@ -40,16 +40,16 @@ public abstract class AbstractTemplateSqlTypeDescriptor implements SqlTypeDescri
 					final JdbcValueBinder binder = createBinder( jtd, typeConfiguration );
 					final JdbcValueExtractor extractor = createExtractor( jtd, typeConfiguration );
 
-					return new JdbcValueMapperImpl( jtd, this, extractor, binder );
+					return new StandardSqlExpressableTypeImpl( jtd, this, extractor, binder );
 				}
 		);
 	}
 
 	/**
-	 * Called from {@link SqlTypeDescriptor#getJdbcValueMapper} when needing to create the mapper.
+	 * Called from {@link SqlTypeDescriptor#getSqlExpressableType} when needing to create the mapper.
 	 *
-	 * @implNote The value returned from here will be the {@link JdbcValueMapper#getJdbcValueBinder()}
-	 * for the mapper returned from {@link SqlTypeDescriptor#getJdbcValueMapper}
+	 * @implNote The value returned from here will be the {@link SqlExpressableType#getJdbcValueBinder()}
+	 * for the mapper returned from {@link SqlTypeDescriptor#getSqlExpressableType}
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected abstract <X> JdbcValueBinder<X> createBinder(
@@ -57,10 +57,10 @@ public abstract class AbstractTemplateSqlTypeDescriptor implements SqlTypeDescri
 			TypeConfiguration typeConfiguration);
 
 	/**
-	 * Called from {@link SqlTypeDescriptor#getJdbcValueMapper} when needing to create the mapper.
+	 * Called from {@link SqlTypeDescriptor#getSqlExpressableType} when needing to create the mapper.
 	 *
-	 * @implNote The value returned from here will be the {@link JdbcValueMapper#getJdbcValueExtractor}
-	 * for the mapper returned from {@link SqlTypeDescriptor#getJdbcValueMapper}
+	 * @implNote The value returned from here will be the {@link SqlExpressableType#getJdbcValueExtractor}
+	 * for the mapper returned from {@link SqlTypeDescriptor#getSqlExpressableType}
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected abstract <X> JdbcValueExtractor<X> createExtractor(

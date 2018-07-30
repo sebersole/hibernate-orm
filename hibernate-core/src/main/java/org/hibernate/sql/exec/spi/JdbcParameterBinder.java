@@ -27,5 +27,7 @@ public interface JdbcParameterBinder {
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException;
 
-	int getNumberOfJdbcParametersNeeded();
+	default int getNumberOfJdbcParametersNeeded() {
+		return 1;
+	}
 }

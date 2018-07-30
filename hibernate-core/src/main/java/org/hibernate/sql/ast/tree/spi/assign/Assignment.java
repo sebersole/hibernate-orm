@@ -30,9 +30,6 @@ public class Assignment implements SqlAstNode {
 		return columnReference;
 	}
 
-	/**
-	 * The new assigned value
-	 */
 	public Expression getAssignedValue() {
 		return assignedValue;
 	}

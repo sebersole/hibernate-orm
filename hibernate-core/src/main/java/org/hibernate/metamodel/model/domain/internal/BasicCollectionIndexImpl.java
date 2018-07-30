@@ -115,7 +115,7 @@ public class BasicCollectionIndexImpl<J>
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				this
+				getBoundColumn().getExpressableType()
 		);
 	}
 

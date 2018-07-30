@@ -70,7 +70,7 @@ import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.sql.results.spi.SqlSelectionResolutionContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -293,8 +293,8 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	@Override
 	public EntitySqlSelectionGroup resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
-			SqlSelectionResolutionContext resolutionContext) {
-		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
+			SqlAstCreationContext creationContext) {
+		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, creationContext );
 	}
 
 

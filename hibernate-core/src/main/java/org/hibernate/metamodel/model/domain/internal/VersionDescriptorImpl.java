@@ -139,7 +139,7 @@ public class VersionDescriptorImpl<O,J>
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				this
+				getBoundColumn().getExpressableType()
 		);
 	}
 

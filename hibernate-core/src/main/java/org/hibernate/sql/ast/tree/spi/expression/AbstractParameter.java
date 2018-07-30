@@ -9,11 +9,14 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.exec.ExecutionException;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameter;
+import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.QueryResult;
@@ -26,80 +29,59 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractParameter implements GenericParameter, QueryResultProducer {
-	private final AllowableParameterType inferredType;
+public abstract class AbstractParameter
+		implements GenericParameter, JdbcParameter, JdbcParameterBinder, QueryResultProducer {
+
+	// todo (6.0) : should not extend QueryResultProducer
+	//		QueryResultProducer is a domain query level thing, whereas this parameter is part of the SQL AST
+
+	private final SqlExpressableType type;
 	private final Clause clause;
 	private final TypeConfiguration typeConfiguration;
 
 	public AbstractParameter(
-			AllowableParameterType inferredType,
+			SqlExpressableType type,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
-		this.inferredType = inferredType;
+		this.type = type;
 		this.clause = clause;
 		this.typeConfiguration = typeConfiguration;
 	}
 
-	@SuppressWarnings("WeakerAccess")
-	public AllowableParameterType getInferredType() {
-		return inferredType;
+	@Override
+	public SqlExpressableType getExpressableType() {
+		return type;
 	}
 
 	@Override
-	public AllowableParameterType getType() {
-		return getInferredType();
+	public JdbcParameterBinder getParameterBinder() {
+		return this;
 	}
 
 	@Override
-	public int getNumberOfJdbcParametersNeeded() {
-		return getType().getValueBinder( clause.getInclusionChecker(), typeConfiguration ).getNumberOfJdbcParametersNeeded();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
 	public int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException {
-		final AllowableParameterType bindType;
-		final Object bindValue;
-
-		final QueryParameterBinding valueBinding = resolveBinding( executionContext );
-		if ( valueBinding == null ) {
-			warnNoBinding();
-			bindType = null;
-			bindValue = null;
-		}
-		else {
-			if ( valueBinding.getBindType() == null ) {
-				bindType = inferredType;
-			}
-			else {
-				bindType = valueBinding.getBindType();
-			}
-			bindValue = valueBinding.getBindValue();
+		final JdbcParameterBinding binding = executionContext.getJdbcParameterBindings().getBinding( AbstractParameter.this );
+		if ( binding == null ) {
+			throw new ExecutionException( "JDBC parameter value not bound - " + this );
 		}
 
+		final SqlExpressableType bindType = binding.getBindType();
 		if ( bindType == null ) {
-			unresolvedType();
-		}
-		assert bindType != null;
-		if ( bindValue == null ) {
-			warnNullBindValue();
+			throw new ExecutionException( "JDBC parameter bind type unresolved - " + this );
 		}
 
-		bindType.getValueBinder( clause.getInclusionChecker(), executionContext.getSession().getFactory().getTypeConfiguration() )
-				.bind( statement, startPosition, bindValue, executionContext );
+		bindType.getJdbcValueBinder().bind(
+				statement,
+				startPosition,
+				binding.getBindValue(),
+				executionContext
+		);
 
-		return bindType.getNumberOfJdbcParametersNeeded();
+		return 1;
 	}
-
-	protected abstract void warnNoBinding();
-
-	protected abstract void unresolvedType();
-
-	protected abstract void warnNullBindValue();
-
 
 
 	// todo (6.0) : both of the methods below are another manifestation of only really allowing basic (single column) valued parameters
@@ -107,8 +89,6 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 
 	@Override
 	public QueryResult createQueryResult(String resultVariable, QueryResultCreationContext creationContext) {
-		final BasicValuedExpressableType type = (BasicValuedExpressableType) getType();
-
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(
@@ -116,7 +96,7 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 						type.getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				type
+				getExpressableType()
 		);
 	}
 
@@ -134,7 +114,7 @@ public abstract class AbstractParameter implements GenericParameter, QueryResult
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getJdbcValueMapper( typeConfiguration )
+				( (BasicValuedExpressableType) getType() ).getBasicType().getSqlExpressableType( typeConfiguration )
 		);
 	}
 }

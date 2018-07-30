@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SelfRenderingExpression;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -40,12 +40,14 @@ public class SelfRenderingFunctionSqlAstExpression
 		implements SelfRenderingExpression, Selectable, SqlExpressable, QueryResultProducer {
 	private final SelfRenderingSqmFunction sqmExpression;
 	private final List<Expression> sqlAstArguments;
+	private final TypeConfiguration typeConfiguration;
 
 	public SelfRenderingFunctionSqlAstExpression(
 			SelfRenderingSqmFunction sqmExpression,
 			SqmToSqlAstConverter walker) {
 		this.sqmExpression = sqmExpression;
 		this.sqlAstArguments = resolveSqlAstArguments( sqmExpression.getSqmArguments(), walker );
+		this.typeConfiguration = walker.getSessionFactory().getTypeConfiguration();
 	}
 
 	private static List<Expression> resolveSqlAstArguments(List<SqmExpression> sqmArguments, SqmToSqlAstConverter walker) {
@@ -61,8 +63,8 @@ public class SelfRenderingFunctionSqlAstExpression
 	}
 
 	@Override
-	public AllowableFunctionReturnType getType() {
-		return sqmExpression.getExpressableType();
+	public SqlExpressableType getExpressableType() {
+		return ( (BasicValuedExpressableType) getType() ).getBasicType().getSqlExpressableType( typeConfiguration );
 	}
 
 	@Override
@@ -73,7 +75,7 @@ public class SelfRenderingFunctionSqlAstExpression
 		return new SqlSelectionImpl(
 				jdbcPosition,
 				null,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getJdbcValueMapper( typeConfiguration )
+				getExpressableType()
 		);
 	}
 
@@ -82,15 +84,14 @@ public class SelfRenderingFunctionSqlAstExpression
 	public QueryResult createQueryResult(
 			String resultVariable,
 			QueryResultCreationContext creationContext) {
-		final BasicValuedExpressableType type = (BasicValuedExpressableType) getType();
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(
 						this,
-						type.getJavaTypeDescriptor(),
+						getExpressableType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				type
+				getExpressableType()
 		);
 	}
 

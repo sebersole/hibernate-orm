@@ -78,6 +78,7 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 		}
 
 		final ExecutionContext executionContext = new ExecutionContext() {
+
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;

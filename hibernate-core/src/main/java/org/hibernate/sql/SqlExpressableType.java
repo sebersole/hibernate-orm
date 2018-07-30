@@ -12,14 +12,30 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * Models the type of a thing that can be used in a SQL query
  *
- * todo (6.0) : come up with a (much) better name : SqlExpressableType?
- *
  * @author Steve Ebersole
  */
-public interface JdbcValueMapper {
+public interface SqlExpressableType {
+	/**
+	 * The descriptor for the Java type represented by this
+	 * expressable type
+	 */
 	BasicJavaDescriptor getJavaTypeDescriptor();
+
+	/**
+	 * The descriptor for the SQL type represented by this
+	 * expressable type
+	 */
 	SqlTypeDescriptor getSqlTypeDescriptor();
 
+	/**
+	 * The strategy for extracting values of this expressable
+	 * type from JDBC ResultSets, CallableStatements, etc
+	 */
 	JdbcValueExtractor getJdbcValueExtractor();
+
+	/**
+	 * The strategy for binding values of this expressable
+	 * type to JDBC PreparedStatements, CallableStatements, etc
+	 */
 	JdbcValueBinder getJdbcValueBinder();
 }

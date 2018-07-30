@@ -24,6 +24,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -145,7 +146,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
-				this
+				getBoundColumn().getExpressableType()
 		);
 	}
 
@@ -165,23 +166,9 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
-	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		return value;
-	}
-
-	@Override
-	public void dehydrate(
-			Object value,
-			JdbcValueCollector jdbcValueCollector,
-			Clause clause,
-			SharedSessionContractImplementor session) {
-		jdbcValueCollector.collect( value, this, getBoundColumn() );
-	}
-
-	@Override
 	public Object resolveHydratedState(
 			Object hydratedForm,
-			ResolutionContext resolutionContext,
+			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		return hydratedForm;
