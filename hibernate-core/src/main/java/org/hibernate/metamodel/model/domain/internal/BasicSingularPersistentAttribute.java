@@ -225,7 +225,7 @@ public class BasicSingularPersistentAttribute<O, J>
 		if ( valueConverter != null ) {
 			value = valueConverter.toRelationalValue( value, session );
 		}
-		jdbcValueCollector.collect( value, getBoundColumn().getJavaTypeDescriptor(), getBoundColumn() );
+		jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
 	}
 
 

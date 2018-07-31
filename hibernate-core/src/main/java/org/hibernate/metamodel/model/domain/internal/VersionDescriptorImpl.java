@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 
 import org.hibernate.HibernateException;
 import org.hibernate.boot.model.domain.BasicValueMapping;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -20,7 +19,6 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
@@ -146,19 +144,5 @@ public class VersionDescriptorImpl<O,J>
 	@Override
 	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
 		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
-	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		return value;
-	}
-
-	@Override
-	public void dehydrate(
-			Object value,
-			JdbcValueCollector jdbcValueCollector,
-			Clause clause,
-			SharedSessionContractImplementor session) {
-		jdbcValueCollector.collect( value, this, getBoundColumn() );
 	}
 }

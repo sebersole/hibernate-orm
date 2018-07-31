@@ -55,6 +55,6 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-		jdbcValueCollector.collect( value, getJavaTypeDescriptor(), getBoundColumn() );
+		jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
 	}
 }
