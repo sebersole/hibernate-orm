@@ -38,10 +38,12 @@ public class SqlTuple implements Expression {
 		return null;
 	}
 
+	public List<Expression> getExpressions(){
+		return expressions;
+	}
+
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
-		for ( Expression expression : expressions ) {
-			expression.accept( sqlTreeWalker );
-		}
+		sqlTreeWalker.visitTuple( this );
 	}
 }

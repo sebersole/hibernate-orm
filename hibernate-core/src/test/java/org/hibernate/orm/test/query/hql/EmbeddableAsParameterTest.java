@@ -4,9 +4,9 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.orm.test.crud;
+package org.hibernate.orm.test.query.hql;
 
-import javax.persistence.Column;
+import java.util.List;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -14,19 +14,17 @@ import javax.persistence.Id;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.nullValue;
 
 /**
  * @author Andrea Boriero
  */
-public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest {
+public class EmbeddableAsParameterTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
 		super.applyMetadataSources( metadataSources );
@@ -38,12 +36,36 @@ public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBased
 		return true;
 	}
 
+	@Test
+	public void testAsParameterInwhereClause() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					List results = session.createQuery( "select p from Person p where p.name = :name" ).
+							setParameter( "name", new Name( "Fab", "Fab" ) ).list();
+					assertThat( results.size(), is( 1 ) );
+				} );
+	}
+
+	@Test
+	public void testAsParameterInwhereClause2() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					List results = session.createQuery( "select p from Person p where p.name = :name or p.name = :name " ).
+							setParameter( "name", new Name( "Fab", "Fab" ) ).list();
+					assertThat( results.size(), is( 1 ) );
+				} );
+	}
+
 	@BeforeEach
 	public void setUp() {
 		sessionFactoryScope().inTransaction(
 				session -> {
-					Name name = new Name( "Fabiana", "Fab" );
-					Person person = new Person( 1, name, 33 );
+					Person person = new Person(
+							1,
+							new Name( "Fab", "Fab" ),
+							33
+
+					);
 					session.save( person );
 				} );
 	}
@@ -55,45 +77,6 @@ public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBased
 					session.createQuery( "from Person p" )
 							.list()
 							.forEach( person -> session.delete( person ) );
-				} );
-	}
-
-	@Test
-	public void testSaving() {
-		sessionFactoryScope().inTransaction(
-				session -> {
-					Person person = session.get( Person.class, 1 );
-					assertThat( person.getName().getSecondName(), nullValue() );
-					assertThat( person.getName().getFirstName(), is( "Fabiana" ) );
-				} );
-	}
-
-	@Test
-	@FailureExpected("The dirty checking does not work for Embedded , the stored loadedState contains a ref to the Name object, so" +
-			" when the test executes person.getName().setFirstName( \"Fabi\" ) the loadedState Name changes as well making it equals to the current value ")
-	public void testUpdating() {
-		sessionFactoryScope().inTransaction(
-				session -> {
-					Person person = session.get( Person.class, 1 );
-					assertThat( person.getName().getSecondName(), nullValue() );
-					assertThat( person.getName().getFirstName(), is( "Fabiana" ) );
-				} );
-
-		sessionFactoryScope().inTransaction(
-				session -> {
-					Person person = session.get( Person.class, 1 );
-					person.setAge( 34 );
-					Name name = person.getName();
-					name.setSecondName( "Fabi" );
-					name.setFirstName( "Fabi" );
-				} );
-
-		sessionFactoryScope().inTransaction(
-				session -> {
-					Person person = session.get( Person.class, 1 );
-					Name name = person.getName();
-					assertThat( name.getSecondName(), nullValue() );
-					assertThat( name.getFirstName(), is( "Fabi" ) );
 				} );
 	}
 
@@ -149,7 +132,6 @@ public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBased
 	@Embeddable
 	public static class Name {
 		private String firstName;
-		@Column(insertable = false, updatable = false)
 		private String secondName;
 
 		public Name() {

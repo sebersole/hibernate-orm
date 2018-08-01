@@ -183,8 +183,12 @@ import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.TrimSpecification;
+import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
+import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 import org.jboss.logging.Logger;
 
@@ -724,12 +728,22 @@ public class SemanticQueryBuilder
 
 	@Override
 	public SqmExpression visitLimitClause(HqlParser.LimitClauseContext ctx) {
-		return (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
+		SqmExpression sqmExpression = (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
+		addImpliedTypeIdNecessary( sqmExpression, StandardSpiBasicTypes.INTEGER);
+		return sqmExpression;
 	}
 
 	@Override
 	public SqmExpression visitOffsetClause(HqlParser.OffsetClauseContext ctx) {
-		return (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
+		SqmExpression sqmExpression = (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
+		addImpliedTypeIdNecessary( sqmExpression, StandardSpiBasicTypes.INTEGER );
+		return sqmExpression;
+	}
+
+	private void addImpliedTypeIdNecessary(SqmExpression sqmExpression, ExpressableType impliedType) {
+		if ( ImpliedTypeSqmExpression.class.isInstance( sqmExpression ) && sqmExpression.getInferableType() == null ) {
+			( (ImpliedTypeSqmExpression) sqmExpression ).impliedType( impliedType );
+		}
 	}
 
 	@Override

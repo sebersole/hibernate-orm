@@ -24,10 +24,13 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.query.sqm.produce.internal.hql.grammar.HqlParser;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSearched;
@@ -82,6 +85,7 @@ import org.hibernate.query.sqm.tree.expression.function.SqmMaxFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmMinFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmModFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmNullifFunction;
+import org.hibernate.query.sqm.tree.expression.function.SqmSubstringFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmSumFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmTrimFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmUpperFunction;
@@ -1001,32 +1005,46 @@ public abstract class BaseSqmToSqlAstConverter
 		final List<JdbcParameter> jdbcParameterList;
 
 		List<JdbcParameter> existing = this.jdbcParamsBySqmParam.get( expression );
+		AllowableParameterType expressableType = expression.getExpressableType();
 		if ( existing != null ) {
-			final int number = expression.getExpressableType().getNumberOfJdbcParametersNeeded();
-			assert existing.size() == number;
+			if ( expressableType != null ) {
+				final int number = expressableType.getNumberOfJdbcParametersNeeded();
+				assert existing.size() == number;
+			}
 			jdbcParameterList = existing;
 		}
 		else {
 			jdbcParameterList = new ArrayList<>();
-
-			//noinspection Convert2Lambda
-			expression.getExpressableType().visitJdbcTypes(
-					new Consumer<SqlExpressableType>() {
-						@Override
-						public void accept(SqlExpressableType type) {
-							jdbcParameterList.add(
-									new StandardJdbcParameterImpl(
-											jdbcParameters.getJdbcParameters().size(),
-											type,
-											currentClauseStack.getCurrent(),
-											getProducerContext().getSessionFactory().getTypeConfiguration()
-									)
-							);
-						}
-					},
-					currentClauseStack.getCurrent(),
-					getProducerContext().getSessionFactory().getTypeConfiguration()
-			);
+			if ( expressableType == null ) {
+				jdbcParameterList.add(
+						new StandardJdbcParameterImpl(
+								jdbcParameters.getJdbcParameters().size(),
+								null,
+								currentClauseStack.getCurrent(),
+								getProducerContext().getSessionFactory().getTypeConfiguration()
+						)
+				);
+			}
+			else {
+				//noinspection Convert2Lambda
+				expressableType.visitJdbcTypes(
+						new Consumer<SqlExpressableType>() {
+							@Override
+							public void accept(SqlExpressableType type) {
+								jdbcParameterList.add(
+										new StandardJdbcParameterImpl(
+												jdbcParameters.getJdbcParameters().size(),
+												type,
+												currentClauseStack.getCurrent(),
+												getProducerContext().getSessionFactory().getTypeConfiguration()
+										)
+								);
+							}
+						},
+						currentClauseStack.getCurrent(),
+						getProducerContext().getSessionFactory().getTypeConfiguration()
+				);
+			}
 
 			jdbcParamsBySqmParam.put( expression, jdbcParameterList );
 			jdbcParameters.addParameters( jdbcParameterList );
@@ -1230,7 +1248,22 @@ public abstract class BaseSqmToSqlAstConverter
 		}
 
 		final List<Expression> results = new ArrayList<>();
-		sqmExpressions.forEach( sqmExpression -> results.add( (Expression) sqmExpression.accept( this ) ) );
+
+		sqmExpressions.forEach( sqmExpression -> {
+
+			final Object expression = sqmExpression.accept( this );
+			if ( BasicValuedNavigableReference.class.isInstance( expression ) ) {
+				final BasicValuedNavigableReference navigableReference = (BasicValuedNavigableReference) expression;
+				results.add( getSqlSelectionResolver().resolveSqlExpression(
+						navigableReference.getSqlExpressionQualifier(),
+						navigableReference.getNavigable().getBoundColumn()
+							 )
+				);
+			}
+			else {
+				results.add( (Expression) expression );
+			}
+		} );
 		return results;
 	}
 
