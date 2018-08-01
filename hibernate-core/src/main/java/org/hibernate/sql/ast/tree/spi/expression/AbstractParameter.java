@@ -74,6 +74,7 @@ public abstract class AbstractParameter
 
 		SqlExpressableType bindType = binding.getBindType();
 
+		SqlExpressableType bindType = binding.getBindType();
 		if ( bindType == null ) {
 			bindType = guessBindType( executionContext, binding );
 		}
