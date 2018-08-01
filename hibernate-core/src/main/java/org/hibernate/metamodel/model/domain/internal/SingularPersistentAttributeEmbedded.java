@@ -7,8 +7,10 @@
 
 package org.hibernate.metamodel.model.domain.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
@@ -40,14 +42,17 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEmbedded;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -356,4 +361,28 @@ public class SingularPersistentAttributeEmbedded<O,J>
 
 		this.mutabilityPlan = new EmbeddedMutabilityPlanImpl( embeddedDescriptor );
 	}
+
+	@Override
+	public List<ColumnReference> resolveColumnReferences(
+			ColumnReferenceQualifier qualifier, SqlAstCreationContext resolutionContext) {
+		final List<ColumnReference> columnReferences = new ArrayList<>();
+		getEmbeddedDescriptor().visitStateArrayContributors(
+				contributor ->
+						columnReferences.addAll( contributor.resolveColumnReferences(
+								qualifier,
+								resolutionContext
+						) )
+		);
+		return columnReferences;
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action, Clause clause, TypeConfiguration typeConfiguration) {
+		getEmbeddedDescriptor().visitStateArrayContributors(
+				contributor -> contributor.visitColumns( action, clause, typeConfiguration )
+
+		);
+	}
+
 }

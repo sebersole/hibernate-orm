@@ -37,6 +37,7 @@ import org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction;
 import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
 import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
 import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.SqrtFunction;
 import org.hibernate.sql.ast.tree.spi.expression.SumFunction;
 import org.hibernate.sql.ast.tree.spi.expression.TrimFunction;
@@ -169,6 +170,8 @@ public interface SqlAstWalker {
 	void visitCurrentTimeFunction(CurrentTimeFunction function);
 
 	void visitCurrentTimestampFunction(CurrentTimestampFunction function);
+
+	void visitTuple(SqlTuple tuple);
 
 	void visitExtractFunction(ExtractFunction extractFunction);
 

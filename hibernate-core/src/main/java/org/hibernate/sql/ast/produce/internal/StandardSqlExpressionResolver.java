@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;

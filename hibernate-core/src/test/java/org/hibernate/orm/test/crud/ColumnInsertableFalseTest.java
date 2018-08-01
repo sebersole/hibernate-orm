@@ -6,7 +6,6 @@
  */
 package org.hibernate.orm.test.crud;
 
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -118,4 +117,3 @@ public class ColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest
 		}
 	}
 }
-

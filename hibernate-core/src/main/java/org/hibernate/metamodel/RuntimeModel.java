@@ -65,5 +65,4 @@ public interface RuntimeModel {
 
 	Set<EntityNameResolver> getEntityNameResolvers();
 	void visitEntityNameResolvers(Consumer<EntityNameResolver> action);
-
 }

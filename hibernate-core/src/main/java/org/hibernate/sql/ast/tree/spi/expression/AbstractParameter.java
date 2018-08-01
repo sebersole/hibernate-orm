@@ -9,6 +9,8 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.sql.JdbcValueBinder;
+import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -24,6 +26,8 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.sql.spi.StandardSqlExpressableTypeImpl;
+import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -68,9 +72,9 @@ public abstract class AbstractParameter
 			throw new ExecutionException( "JDBC parameter value not bound - " + this );
 		}
 
-		final SqlExpressableType bindType = binding.getBindType();
+		SqlExpressableType bindType = binding.getBindType();
 		if ( bindType == null ) {
-			throw new ExecutionException( "JDBC parameter bind type unresolved - " + this );
+			bindType = guessBindType( executionContext, binding );
 		}
 
 		bindType.getJdbcValueBinder().bind(
@@ -81,6 +85,26 @@ public abstract class AbstractParameter
 		);
 
 		return 1;
+	}
+
+	private SqlExpressableType guessBindType(ExecutionContext executionContext, JdbcParameterBinding binding) {
+		SqlExpressableType bindType;
+		BasicType<?> basicType = executionContext.getSession()
+				.getFactory()
+				.getTypeConfiguration()
+				.getBasicTypeRegistry()
+				.getBasicType( binding.getBindValue().getClass() );
+		final JdbcValueBinder binder = basicType.getSqlExpressableType( typeConfiguration ).getJdbcValueBinder();
+		final JdbcValueExtractor extractor = basicType.getSqlExpressableType( typeConfiguration )
+				.getJdbcValueExtractor();
+
+		bindType = new StandardSqlExpressableTypeImpl(
+				basicType.getJavaTypeDescriptor(),
+				basicType.getSqlTypeDescriptor(),
+				extractor,
+				binder
+		);
+		return bindType;
 	}
 
 
