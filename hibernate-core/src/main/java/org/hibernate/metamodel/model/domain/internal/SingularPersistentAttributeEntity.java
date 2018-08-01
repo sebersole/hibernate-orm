@@ -945,7 +945,7 @@ public class SingularPersistentAttributeEntity<O, J>
 			ForeignKeys.Nullifier nullifier,
 			NonNullableTransientDependencies nonNullableTransientEntities,
 			SharedSessionContractImplementor session) {
-		if ( isNullable()
+		if ( !isNullable()
 				&& getAttributeTypeClassification() != ONE_TO_ONE
 				&& nullifier.isNullifiable( getEntityDescriptor().getEntityName(), value ) ) {
 			nonNullableTransientEntities.add( getEntityDescriptor().getEntityName(), value );
@@ -1025,10 +1025,6 @@ public class SingularPersistentAttributeEntity<O, J>
 
 	public ForeignKey getForeignKey() {
 		return foreignKey;
-	}
-
-	private interface FkValueExtractor {
-		Object extractFkValue(Object owner, ExecutionContext executionContext);
 	}
 
 	@Override

@@ -223,6 +223,7 @@ public class OneToOneSecondPass implements SecondPass {
 					prop.setValue( manyToOne );
 					otherSideJoin.get().getKey().getMappedColumns()
 							.forEach( column -> manyToOne.addColumn( ( (Column) column ).clone() ) );
+					manyToOne.createForeignKey();
 					mappedByJoin.addProperty( prop );
 				}
 				else {
@@ -304,6 +305,7 @@ public class OneToOneSecondPass implements SecondPass {
 				.getMappedColumns()
 				.forEach( column -> key.addColumn( ( (Column) column ).clone() ) );
 		persistentClass.addJoin( join );
+		join.createForeignKey();
 		return join;
 	}
 }

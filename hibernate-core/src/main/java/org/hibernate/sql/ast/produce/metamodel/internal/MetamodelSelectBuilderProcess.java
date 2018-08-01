@@ -258,7 +258,6 @@ public class MetamodelSelectBuilderProcess
 			keyParameterExpression = new SqlTuple( keyParameterReferences );
 		}
 
-
 		if ( numberOfKeysToLoad <= 1 ) {
 			rootQuerySpec.addRestriction(
 					new RelationalPredicate(
@@ -464,6 +463,7 @@ public class MetamodelSelectBuilderProcess
 		};
 
 		fetchParentStack.push( fetchParent );
+
 		try {
 			NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
 			navigableContainer.visitKeyFetchables( fetchableConsumer );

@@ -84,7 +84,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 				session.getSessionFactory()
 		);
 
-		return JdbcMutationExecutorImpl.CALL_AFTER_INSTANCE.execute(
+		return JdbcMutationExecutorImpl.WITH_AFTER_STATEMENT_CALL.execute(
 				jdbcDelete,
 				new ExecutionContext() {
 					@Override

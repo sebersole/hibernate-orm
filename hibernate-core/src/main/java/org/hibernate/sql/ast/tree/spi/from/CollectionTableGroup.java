@@ -250,5 +250,4 @@ public class CollectionTableGroup extends AbstractTableGroup {
 
 		return resolveColumnReference( column );
 	}
-
 }

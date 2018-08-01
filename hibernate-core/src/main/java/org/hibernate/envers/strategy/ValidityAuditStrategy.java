@@ -693,8 +693,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			// this is extremely hacky means to get the root table name for the union subclass style entities.
 			// hacky because it relies on internal behavior of UnionSubclassEntityPersister
 			// !!!!!! NOTICE - using subclass persister, not root !!!!!!
-			return new TableReference( auditedEntityDescriptor.getPrimaryTable(), null );
+			return new TableReference( auditedEntityDescriptor.getPrimaryTable(), null , false);
 		}
-		return new TableReference( rootAuditedEntityDescriptor.getPrimaryTable(), null );
+		return new TableReference( rootAuditedEntityDescriptor.getPrimaryTable(), null, false );
 	}
 }

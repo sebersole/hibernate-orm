@@ -1055,7 +1055,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			TableReferenceJoinCollector joinCollector) {
 
 		if ( separateCollectionTable != null ) {
-			joinCollector.addRoot( new TableReference( separateCollectionTable, sqlAliasBase.generateNewAlias() ) );
+			joinCollector.addRoot( new TableReference(
+					separateCollectionTable,
+					sqlAliasBase.generateNewAlias(),
+					false
+			) );
 		}
 
 		if ( getIndexDescriptor() != null ) {

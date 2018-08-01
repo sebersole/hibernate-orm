@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -55,15 +56,14 @@ public class AssociationKey {
 		if ( o == null || getClass() != o.getClass() ) {
 			return false;
 		}
-
-		final AssociationKey that = (AssociationKey) o;
-		return table.equals( that.table ) && columns.equals( that.columns );
-
+		AssociationKey that = (AssociationKey) o;
+		return Objects.equals( table, that.table ) &&
+				Objects.equals( columns, that.columns );
 	}
 
 	@Override
 	public int hashCode() {
-		return table.hashCode();
+		return Objects.hash( table, columns );
 	}
 
 	private String str;

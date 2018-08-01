@@ -135,7 +135,8 @@ public class EntityIdentifierSimpleImpl<O,J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(

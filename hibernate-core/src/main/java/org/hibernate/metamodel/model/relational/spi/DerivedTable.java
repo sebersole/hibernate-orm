@@ -8,6 +8,8 @@ package org.hibernate.metamodel.model.relational.spi;
 
 import java.util.UUID;
 
+import org.hibernate.dialect.Dialect;
+
 /**
  * Represents a TableSpecification derived from a subquery (inline view), as opposed to a PhysicalTableSpecification
  *
@@ -23,6 +25,11 @@ public class DerivedTable extends AbstractTable {
 
 	@Override
 	public String getTableExpression() {
+		return expression;
+	}
+
+	@Override
+	public String render(Dialect dialect) {
 		return expression;
 	}
 

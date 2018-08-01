@@ -131,6 +131,7 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 		this.table = table;
 	}
 
+	@Override
 	public MappedTable getMappedTable() {
 		return table;
 	}
@@ -138,6 +139,7 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 	public KeyValue getKey() {
 		return key;
 	}
+
 	public void setKey(KeyValue key) {
 		this.key = key;
 	}
@@ -151,6 +153,7 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 	}
 
 	private ForeignKey joinMapping;
+
 	public void createForeignKey() {
 		joinMapping = getKey().createForeignKeyOfEntity( persistentClass.getEntityName() );
 	}
@@ -226,10 +229,12 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 	public boolean isSequentialSelect() {
 		return sequentialSelect;
 	}
+
 	public void setSequentialSelect(boolean deferred) {
 		this.sequentialSelect = deferred;
 	}
 
+	@Override
 	public boolean isInverse() {
 		return inverse;
 	}
@@ -238,6 +243,7 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 		this.inverse = leftJoin;
 	}
 
+	@Override
 	public String toString() {
 		return getClass().getName() + '(' + table.toString() + ')';
 	}
@@ -253,10 +259,21 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 		return true;
 	}
 
+	@Override
 	public boolean isOptional() {
 		return optional;
 	}
+
 	public void setOptional(boolean nullable) {
 		this.optional = nullable;
+	}
+
+	public ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle() {
+		String sql = getCustomSQLUpdate();
+		boolean callable = sql != null && isCustomUpdateCallable();
+		ExecuteUpdateResultCheckStyle checkStyle = getCustomSQLUpdateCheckStyle() == null
+				? ExecuteUpdateResultCheckStyle.determineDefault( sql, callable )
+				: getCustomSQLUpdateCheckStyle();
+		return checkStyle;
 	}
 }

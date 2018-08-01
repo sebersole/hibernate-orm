@@ -8,6 +8,7 @@ package org.hibernate.sql.ast.tree.spi.from;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.hibernate.internal.util.Loggable;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -28,11 +29,14 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier, Log
 	private final Table table;
 	private final String identificationVariable;
 
+	private final boolean isOptional;
+
 	private final Map<Column,ColumnReference> columnReferenceResolutionMap = new HashMap<>();
 
-	public TableReference(Table table, String identificationVariable) {
+	public TableReference(Table table, String identificationVariable, boolean isOptional) {
 		this.table = table;
 		this.identificationVariable = identificationVariable;
+		this.isOptional = isOptional;
 	}
 
 	public Table getTable() {
@@ -41,6 +45,10 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier, Log
 
 	public String getIdentificationVariable() {
 		return identificationVariable;
+	}
+
+	public boolean isOptional() {
+		return isOptional;
 	}
 
 	@Override
@@ -83,5 +91,22 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier, Log
 	@Override
 	public String toLoggableFragment() {
 		return getTable().toLoggableFragment() + "(" + getIdentificationVariable() + ')';
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		TableReference that = (TableReference) o;
+		return Objects.equals( identificationVariable, that.identificationVariable );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( identificationVariable );
 	}
 }

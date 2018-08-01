@@ -40,6 +40,8 @@ public abstract class SessionFactoryBasedFunctionalTest
 
 	private SessionFactoryScope sessionFactoryScope;
 
+	private Metadata metadata;
+
 	protected SessionFactoryScope sessionFactoryScope() {
 		return sessionFactoryScope;
 	}
@@ -56,7 +58,6 @@ public abstract class SessionFactoryBasedFunctionalTest
 				.applySetting( AvailableSettings.HBM2DDL_AUTO, exportSchema() ? "create-drop" : "none" );
 		applySettings( ssrBuilder );
 		final StandardServiceRegistry ssr = ssrBuilder.build();
-		Metadata metadata = null;
 		try {
 			metadata = buildMetadata( ssr );
 			final SessionFactoryImplementor factory = (SessionFactoryImplementor) metadata.buildSessionFactory();
@@ -116,5 +117,9 @@ public abstract class SessionFactoryBasedFunctionalTest
 	@Override
 	public SessionFactoryProducer getSessionFactoryProducer() {
 		return this;
+	}
+
+	protected Metadata getMetadata(){
+		return  metadata;
 	}
 }

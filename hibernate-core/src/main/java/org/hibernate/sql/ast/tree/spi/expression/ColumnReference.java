@@ -26,19 +26,18 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class ColumnReference implements Expression {
-	private final ColumnReferenceQualifier qualifier;
+	private String sqlFragment;
 	private final Column column;
 
 	public ColumnReference(ColumnReferenceQualifier qualifier, Column column) {
 		assert qualifier != null;
-
-		this.qualifier = qualifier;
 		this.column = column;
+		renderSqlFragment(qualifier);
 	}
 
 	public ColumnReference(Column column) {
-		this.qualifier = null;
 		this.column = column;
+		renderSqlFragment(null);
 	}
 
 	@Override
@@ -59,16 +58,12 @@ public class ColumnReference implements Expression {
 		);
 	}
 
-	public ColumnReferenceQualifier getQualifier() {
-		return qualifier;
-	}
-
 	public Column getColumn() {
 		return column;
 	}
 
 	@Override
-	public void accept(SqlAstWalker  interpreter) {
+	public void accept(SqlAstWalker interpreter) {
 		interpreter.visitColumnReference( this );
 	}
 
@@ -83,12 +78,29 @@ public class ColumnReference implements Expression {
 		return getColumn();
 	}
 
-	public String renderSqlFragment() {
+	private void renderSqlFragment(ColumnReferenceQualifier qualifier) {
 		if ( qualifier == null ) {
-			return column.getExpression();
+			sqlFragment = column.render();
 		}
-		final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
-		return column.render( tableReference.getIdentificationVariable() );
+		else {
+			final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
+			sqlFragment = column.render( tableReference.getIdentificationVariable() );
+		}
+	}
+
+	public String renderSqlFragment() {
+		return this.sqlFragment;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				Locale.ROOT,
+				"%s(%s.%s)",
+				getClass().getSimpleName(),
+				sqlFragment,
+				column.getExpression()
+		);
 	}
 
 	@Override
@@ -99,29 +111,12 @@ public class ColumnReference implements Expression {
 		if ( o == null || getClass() != o.getClass() ) {
 			return false;
 		}
-
-		final ColumnReference that = (ColumnReference) o;
-		return Objects.equals( qualifier, that.qualifier )
-				&& getColumn().equals( that.getColumn() );
+		ColumnReference that = (ColumnReference) o;
+		return Objects.equals( sqlFragment, that.sqlFragment );
 	}
 
 	@Override
 	public int hashCode() {
-		int result = getColumn().hashCode();
-		if ( qualifier != null ) {
-			result = 31 * result + qualifier.hashCode();
-		}
-		return result;
-	}
-
-	@Override
-	public String toString() {
-		return String.format(
-				Locale.ROOT,
-				"%s(%s.%s)",
-				getClass().getSimpleName(),
-				qualifier,
-				column.getExpression()
-		);
+		return Objects.hash( sqlFragment );
 	}
 }

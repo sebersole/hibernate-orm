@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.relational.spi;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.hibernate.dialect.Dialect;
+
 import org.hibernate.internal.util.Loggable;
 
 
@@ -23,6 +25,8 @@ public interface Table extends Loggable {
 	UUID getUid();
 
 	String getTableExpression();
+
+	String render(Dialect dialect);
 
 	PrimaryKey getPrimaryKey();
 

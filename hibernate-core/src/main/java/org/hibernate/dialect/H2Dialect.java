@@ -31,6 +31,7 @@ import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.query.sqm.consume.multitable.internal.StandardIdTableSupport;
 import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableManagementTransactionality;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableSupport;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.LocalTempTableExporter;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.LocalTemporaryTableStrategy;
@@ -559,7 +560,7 @@ public class H2Dialect extends Dialect {
 	}
 
 	private IdTableSupport generateIdTableSupport() {
-		return new StandardIdTableSupport( generateIdTableExporter() );
+		return new StandardIdTableSupport( generateIdTableExporter(), IdTableManagementTransactionality.NONE );
 	}
 
 	private Exporter<IdTable> generateIdTableExporter() {

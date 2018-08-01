@@ -21,9 +21,6 @@ public class InsertStatement implements MutationStatement {
 	private List<ColumnReference> targetColumnReferences;
 	private List<Expression> values;
 
-	public InsertStatement() {
-	}
-
 	public InsertStatement(TableReference targetTable) {
 		this.targetTable = targetTable;
 	}

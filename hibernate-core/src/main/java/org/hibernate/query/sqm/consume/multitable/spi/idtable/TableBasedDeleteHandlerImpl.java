@@ -79,24 +79,23 @@ public class TableBasedDeleteHandlerImpl
 		).getSql();
 
 		for ( JoinedTableBinding joinedTable : getEntityDescriptor().getSecondaryTableBindings() ) {
-			deleteFrom( joinedTable.getTargetTable(), idTableSelectSubQuery, executionContext );
+			deleteFrom( joinedTable.getReferringTable(), idTableSelectSubQuery, executionContext );
 		}
 
 		deleteFrom( getEntityDescriptor().getPrimaryTable(), idTableSelectSubQuery, executionContext );
 	}
 
 	private void deleteFrom(Table table, String idTableSelectSubQuery, HandlerExecutionContext executionContext) {
+		final Dialect dialect = executionContext.getSessionFactory().getJdbcServices().getDialect();
 		final StringBuilder sqlBuffer = new StringBuilder(  );
 		sqlBuffer.append( "delete from " )
-				.append( table.getTableExpression() )
+				.append( table.render( dialect ) )
 				.append( " where " );
 
-		final Dialect dialect = executionContext.getSessionFactory().getJdbcServices().getDialect();
 		if ( table.getPrimaryKey().getColumns().size() == 1 ) {
 			sqlBuffer.append( table.getPrimaryKey().getColumns().get( 0 ).getName().render( dialect ) )
-					.append( "= (" )
-					.append( idTableSelectSubQuery )
-					.append( ")" );
+					.append( "= " )
+					.append( idTableSelectSubQuery );
 		}
 		else {
 			sqlBuffer.append( "(" );
@@ -110,9 +109,8 @@ public class TableBasedDeleteHandlerImpl
 				}
 				sqlBuffer.append( physicalColumn.getName().render( dialect ) );
 			}
-			sqlBuffer.append( ") = (" )
-					.append( idTableSelectSubQuery )
-					.append( ")" );
+			sqlBuffer.append( ") = " )
+					.append( idTableSelectSubQuery );
 		}
 
 		final String deleteStatement = sqlBuffer.toString();
