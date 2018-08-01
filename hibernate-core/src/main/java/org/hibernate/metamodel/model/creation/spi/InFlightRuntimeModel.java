@@ -72,7 +72,7 @@ public class InFlightRuntimeModel extends AbstractRuntimeModel {
 
 	public <T> void addEmbeddedDescriptor(EmbeddedTypeDescriptor<T> descriptor) {
 		final EmbeddedTypeDescriptor previous = getEmbeddedDescriptorMap().put(
-				descriptor.getNavigableRole().getFullPath(),
+				descriptor.getJavaTypeDescriptor().getTypeName(),
 				descriptor
 		);
 

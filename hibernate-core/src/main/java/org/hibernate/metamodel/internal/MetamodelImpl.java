@@ -28,6 +28,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.creation.spi.InFlightRuntimeModel;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.CollectionElementEntity;
 import org.hibernate.metamodel.model.domain.spi.CollectionIndexEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
@@ -42,6 +43,7 @@ import org.hibernate.sql.ast.produce.sqm.internal.PolymorphicEntityValuedExpress
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
+import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
@@ -404,5 +406,18 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 	@Override
 	public void close() {
 		// anything to do ?
+	}
+
+	@Override
+	public AllowableParameterType resolveAllowableParamterType(Class clazz) {
+		BasicType basicType = typeConfiguration.getBasicTypeRegistry().getBasicType( clazz.getName() );
+		if ( basicType != null ) {
+			return basicType;
+		}
+		EntityDescriptor entityDescriptor = findEntityDescriptor( clazz );
+		if ( entityDescriptor != null ) {
+			return entityDescriptor.getIdentifierDescriptor();
+		}
+		return findEmbeddedDescriptor( clazz );
 	}
 }

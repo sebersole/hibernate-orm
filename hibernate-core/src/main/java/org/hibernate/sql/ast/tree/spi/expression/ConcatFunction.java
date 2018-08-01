@@ -10,7 +10,9 @@ import java.util.List;
 
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -46,6 +48,11 @@ public class ConcatFunction implements StandardFunction {
 	}
 
 	@Override
+	public SqlExpressable getExpressable() {
+		return this;
+	}
+
+	@Override
 	public void accept(SqlAstWalker  walker) {
 		walker.visitConcatFunction( this );
 	}
@@ -55,7 +62,11 @@ public class ConcatFunction implements StandardFunction {
 			int jdbcPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
-		return null;
+		return new SqlSelectionImpl(
+				jdbcPosition,
+				this,
+				getType().getJdbcValueExtractor()
+		);
 	}
 
 
