@@ -41,15 +41,16 @@ public interface Column extends QualifiableSqlExpressable {
 	//		can apply the same logic (polymorphism) to DerivedColumns as well, except that:
 	//			1) the DerivedColumn's reader is always the formula expression (illegal to apply transformer)
 	//			2) the DerivedColumn's writer is always null. again illegal to apply transformer, and by definition a DerivedColumn is read-only
-
 	String render(String identificationVariable);
 
+	String render();
+
 	default String renderReadExpression(String identificationVariable) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default String renderWriteExpression(String identificationVariable) {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	SqlTypeDescriptor getSqlTypeDescriptor();

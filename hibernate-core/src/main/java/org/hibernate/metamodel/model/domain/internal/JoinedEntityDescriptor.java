@@ -203,12 +203,6 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public Object[] getDatabaseSnapshot(
-			Object id, SharedSessionContractImplementor session) throws HibernateException {
-		return new Object[0];
-	}
-
-	@Override
 	public Serializable getIdByUniqueKey(
 			Serializable key, String uniquePropertyName, SharedSessionContractImplementor session) {
 		return null;

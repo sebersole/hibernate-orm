@@ -56,7 +56,7 @@ public class PostgreSQL82Dialect extends PostgreSQL81Dialect {
 						new LocalTempTableExporter() {
 							@Override
 							public String getCreateCommand() {
-								return "create temporary  table";
+								return "create temporary table";
 							}
 						}
 				)

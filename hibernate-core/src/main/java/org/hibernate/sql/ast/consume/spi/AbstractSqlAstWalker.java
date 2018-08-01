@@ -975,6 +975,7 @@ public abstract class AbstractSqlAstWalker
 		return getSessionFactory().getTypeConfiguration();
 	}
 
+	@Override
 	public SessionFactoryImplementor getSessionFactory() {
 		return sessionFactory;
 	}

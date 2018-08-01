@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
@@ -37,6 +38,7 @@ import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.EntityEntryFactory;
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -67,6 +69,7 @@ import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -101,7 +104,6 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private final NavigableRole navigableRole;
 
-
 	private final Table rootTable;
 	private final List<JoinedTableBinding> secondaryTableBindings;
 
@@ -119,6 +121,8 @@ public abstract class AbstractEntityDescriptor<J>
 	private final Class proxyInterface;
 
 	private ProxyFactory proxyFactory;
+
+	protected final ExecuteUpdateResultCheckStyle rootUpdateResultCheckStyle;
 
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
@@ -139,6 +143,7 @@ public abstract class AbstractEntityDescriptor<J>
 		this.hierarchy = resolveEntityHierarchy( bootMapping, superTypeDescriptor, creationContext );
 
 		this.rootTable = resolveRootTable( bootMapping, creationContext );
+		rootUpdateResultCheckStyle = bootMapping.getUpdateResultCheckStyle();
 		this.secondaryTableBindings = resolveSecondaryTableBindings( bootMapping, creationContext );
 
 		final RepresentationMode representation = getRepresentationStrategy().getMode();
@@ -180,6 +185,8 @@ public abstract class AbstractEntityDescriptor<J>
 
 		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
 		proxyInterface = bootMapping.getProxyInterface();
+
+		creationContext.registerNavigable( this );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -245,7 +252,9 @@ public abstract class AbstractEntityDescriptor<J>
 		return bindings;
 	}
 
-	private JoinedTableBinding generateJoinedTableBinding(MappedJoin bootJoinTable, RuntimeModelCreationContext creationContext) {
+	private JoinedTableBinding generateJoinedTableBinding(
+			MappedJoin bootJoinTable,
+			RuntimeModelCreationContext creationContext) {
 		final Table joinedTable = resolveTable( bootJoinTable.getMappedTable(), creationContext );
 
 		// todo (6.0) : resolve "join predicate" as ForeignKey.ColumnMappings
@@ -258,7 +267,9 @@ public abstract class AbstractEntityDescriptor<J>
 				joinedTable,
 				getPrimaryTable(),
 				creationContext.getDatabaseObjectResolver().resolveForeignKey( bootJoinTable.getJoinMapping() ),
-				bootJoinTable.isOptional()
+				bootJoinTable.isOptional(),
+				bootJoinTable.isInverse(),
+				bootJoinTable.getUpdateResultCheckStyle()
 		);
 	}
 
@@ -268,12 +279,19 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
+	public void afterInitialize(Object entity, SharedSessionContractImplementor session) {
+	}
+
+	@Override
+	public void postInitialization(RuntimeModelCreationContext creationContext) {
+		this.singleIdLoader = new StandardSingleIdEntityLoader<>( this );
+	}
+
+	@Override
 	public void finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		super.finishInitialization( bootDescriptor, creationContext );
-
-		this.singleIdLoader = new StandardSingleIdEntityLoader<>( this );
 
 		log.debugf(
 				"Completed initialization of descriptor [%s] for entity [%s (%s)]",
@@ -285,6 +303,20 @@ public abstract class AbstractEntityDescriptor<J>
 		if ( hasProxy ) {
 			this.proxyFactory = getRepresentationStrategy().generateProxyFactory( this, creationContext );
 		}
+	}
+
+	@Override
+	public Object[] getDatabaseSnapshot(Object id, SharedSessionContractImplementor session) throws HibernateException {
+		if ( log.isTraceEnabled() ) {
+			log.tracev(
+					"Getting current persistent state for: {0}", MessageHelper.infoString(
+							this,
+							id,
+							getFactory()
+					)
+			);
+		}
+		return getSingleIdLoader().loadDatabaseSnapshot( id, session );
 	}
 
 	@Override
@@ -572,7 +604,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	protected TableReference resolvePrimaryTableReference(SqlAliasBase sqlAliasBase) {
-		return new TableReference( getPrimaryTable(), sqlAliasBase.generateNewAlias() );
+		return new TableReference( getPrimaryTable(), sqlAliasBase.generateNewAlias(), false );
 	}
 
 	private void resolveTableReferenceJoins(
@@ -593,7 +625,8 @@ public abstract class AbstractEntityDescriptor<J>
 			SqlAliasBase sqlAliasBase) {
 		final TableReference joinedTableReference = new TableReference(
 				joinedTableBinding.getReferringTable(),
-				sqlAliasBase.generateNewAlias()
+				sqlAliasBase.generateNewAlias(),
+				joinedTableBinding.isOptional()
 		);
 
 		return new TableReferenceJoin(
@@ -760,7 +793,6 @@ public abstract class AbstractEntityDescriptor<J>
 				hashCode()
 		);
 	}
-
 
 	@Override
 	public void insert(

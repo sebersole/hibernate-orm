@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
@@ -68,6 +69,8 @@ import org.hibernate.sql.results.spi.SqlSelection;
  * @author Andrea Boriero
  */
 public interface SqlAstWalker {
+
+	SessionFactoryImplementor getSessionFactory();
 
 	void visitAssignment(Assignment assignment);
 

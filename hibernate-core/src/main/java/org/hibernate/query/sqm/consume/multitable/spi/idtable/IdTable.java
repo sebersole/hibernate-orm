@@ -9,6 +9,7 @@ package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 import java.util.Locale;
 import java.util.UUID;
 
+import org.hibernate.dialect.Dialect;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
@@ -41,6 +42,11 @@ public class IdTable extends PhysicalTable {
 	@Override
 	public String getTableExpression() {
 		return getQualifiedTableName().getTableName().getText();
+	}
+
+	@Override
+	public String render(Dialect dialect) {
+		return getQualifiedTableName().getTableName().render( dialect );
 	}
 
 	@Override

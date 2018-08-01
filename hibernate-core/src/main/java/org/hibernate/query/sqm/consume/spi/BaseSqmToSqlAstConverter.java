@@ -242,7 +242,6 @@ public abstract class BaseSqmToSqlAstConverter
 	//		its "ok" to do it for sub-queries as well - just wondering about the overhead.
 	private Map<QuerySpec,Map<Expression, SqlSelection>> sqlExpressionToSqlSelectionMapByQuerySpec;
 
-
 	public BaseSqmToSqlAstConverter(
 			SqlAstProducerContext producerContext,
 			QueryOptions queryOptions) {
@@ -250,7 +249,6 @@ public abstract class BaseSqmToSqlAstConverter
 		this.producerContext = producerContext;
 		this.queryOptions = queryOptions;
 	}
-
 
 	public SqlAstProducerContext getProducerContext() {
 		return producerContext;

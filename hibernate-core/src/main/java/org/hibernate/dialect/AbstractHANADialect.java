@@ -258,7 +258,7 @@ public abstract class AbstractHANADialect extends Dialect {
 
 	private static class MaterializedNClob implements NClob {
 
-		private String data = null;
+		private String data;
 
 		public MaterializedNClob(String data) {
 			this.data = data;

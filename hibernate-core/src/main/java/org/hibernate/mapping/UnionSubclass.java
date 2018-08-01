@@ -11,6 +11,7 @@ import java.util.Iterator;
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 
 /**
  * A subclass in a table-per-concrete-class mapping
@@ -73,5 +74,17 @@ public class UnionSubclass extends Subclass implements TableOwner {
 	@Override
 	public Object accept(PersistentClassVisitor mv) {
 		return mv.accept(this);
+	}
+
+	@Override
+	public ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle(){
+		String sql = getCustomSQLUpdate();
+		boolean callable = sql != null && isCustomUpdateCallable();
+		ExecuteUpdateResultCheckStyle checkStyle = sql == null
+				? ExecuteUpdateResultCheckStyle.COUNT
+				: getCustomSQLUpdateCheckStyle() == null
+				? ExecuteUpdateResultCheckStyle.determineDefault( sql, callable )
+				: getCustomSQLUpdateCheckStyle();
+		return checkStyle;
 	}
 }

@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.Objects;
+
 import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -51,5 +53,24 @@ public class SqlSelectionImpl implements SqlSelection {
 	@SuppressWarnings("unchecked")
 	public void accept(SqlAstWalker interpreter) {
 		sqlExpression.accept( interpreter );
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		SqlSelectionImpl that = (SqlSelectionImpl) o;
+		return jdbcPosition == that.jdbcPosition &&
+				valuesArrayPosition == that.valuesArrayPosition &&
+				Objects.equals( sqlExpression, that.sqlExpression );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( jdbcPosition, valuesArrayPosition, sqlExpression );
 	}
 }

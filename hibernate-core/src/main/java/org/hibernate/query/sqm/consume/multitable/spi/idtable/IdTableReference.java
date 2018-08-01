@@ -20,7 +20,7 @@ public class IdTableReference extends TableReference {
 	public IdTableReference(
 			IdTable table,
 			String identificationVariable) {
-		super( table, identificationVariable );
+		super( table, identificationVariable, false );
 	}
 
 	@Override

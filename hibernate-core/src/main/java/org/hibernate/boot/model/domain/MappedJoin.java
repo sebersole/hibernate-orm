@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.hibernate.boot.model.relational.MappedForeignKey;
 import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 
 /**
  * Common representation of both SecondaryTable and joined-tables
@@ -22,9 +23,13 @@ public interface MappedJoin {
 
 	boolean isOptional();
 
+	boolean isInverse();
+
 	MappedForeignKey getJoinMapping();
 
 	List<PersistentAttributeMapping> getPersistentAttributes();
 
 	List<PersistentAttributeMapping> getDeclaredPersistentAttributes();
+
+	ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle();
 }

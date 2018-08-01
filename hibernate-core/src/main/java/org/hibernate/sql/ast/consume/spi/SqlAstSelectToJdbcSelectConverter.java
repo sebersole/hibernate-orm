@@ -68,6 +68,5 @@ public class SqlAstSelectToJdbcSelectConverter
 	@Override
 	public void visitSelectQuery(SelectStatement selectQuery) {
 		visitQuerySpec( selectQuery.getQuerySpec() );
-
 	}
 }

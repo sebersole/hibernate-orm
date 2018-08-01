@@ -75,8 +75,6 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableOutputPara
 
 	IdentifierGenerator getIdentifierValueGenerator();
 
-
-
 	/**
 	 * Given a hydrated representation of this Readable, resolve its
 	 * domain representation.
@@ -94,11 +92,6 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableOutputPara
 			Object containerInstance) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
-
-
-
-
-
 
 	/**
 	 * Retrieve the columns making up the identifier

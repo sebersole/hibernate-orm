@@ -46,6 +46,10 @@ public interface ManagedTypeDescriptor<T>
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext);
 
+	default void postInitialization(RuntimeModelCreationContext creationContext) {
+
+	}
+
 	TypeConfiguration getTypeConfiguration();
 
 	ManagedJavaDescriptor<T> getJavaTypeDescriptor();
@@ -128,9 +132,12 @@ public interface ManagedTypeDescriptor<T>
 	 */
 	default Object[] getPropertyValues(Object object) {
 		// todo (6.0) : hook in BytecodeProvider's ReflectionOptimizer (if one) for this managed-type
-		final Object[] values = new Object[ getStateArrayContributors().size() ];
+		final Object[] values = new Object[getStateArrayContributors().size()];
 		visitStateArrayContributors(
-				contributor -> values[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().get( object )
+				contributor ->
+						values[contributor.getStateArrayPosition()] = contributor
+								.getPropertyAccess().getGetter().get( object )
+
 		);
 		return values;
 	}

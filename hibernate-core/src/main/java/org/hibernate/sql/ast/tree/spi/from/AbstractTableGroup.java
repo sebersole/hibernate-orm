@@ -32,7 +32,13 @@ public abstract class AbstractTableGroup
 	}
 
 	protected void renderTableReference(TableReference tableBinding, SqlAppender sqlAppender, SqlAstWalker walker) {
-		sqlAppender.appendSql( tableBinding.getTable().getTableExpression() + " as " + tableBinding.getIdentificationVariable() );
+		final String identificationVariable = tableBinding.getIdentificationVariable();
+		String aliasString = "";
+		if ( identificationVariable != null ) {
+			aliasString = " as " + identificationVariable;
+		}
+		sqlAppender
+				.appendSql( tableBinding.getTable().render( walker.getSessionFactory().getDialect() ) + aliasString );
 	}
 
 	@Override

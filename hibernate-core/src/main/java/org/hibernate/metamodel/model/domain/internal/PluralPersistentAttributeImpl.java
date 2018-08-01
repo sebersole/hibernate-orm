@@ -256,7 +256,6 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 		);
 	}
 
-
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {
 		return fetchStrategy;

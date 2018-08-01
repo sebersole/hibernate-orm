@@ -116,7 +116,8 @@ public interface Navigable<T> extends DomainType<T> {
 	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
