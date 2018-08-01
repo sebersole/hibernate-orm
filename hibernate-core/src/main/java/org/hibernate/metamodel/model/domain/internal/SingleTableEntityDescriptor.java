@@ -234,7 +234,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		// todo (6.0) : account for non-generated identifiers
 
 		getHierarchy().getIdentifierDescriptor().dehydrate(
-				unresolvedId,
+				getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
 				(jdbcValue, type, boundColumn) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
 					insertStatement.addValue(
@@ -256,7 +256,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			);
 			insertStatement.addValue(
 					new LiteralParameter(
-							getDiscriminatorValue(),
+							getHierarchy().getDiscriminatorDescriptor().unresolve( getDiscriminatorValue(), session ),
 							getHierarchy().getDiscriminatorDescriptor().getBoundColumn().getExpressableType(),
 							Clause.INSERT,
 							session.getFactory().getTypeConfiguration()
@@ -270,7 +270,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			);
 			insertStatement.addValue(
 					new LiteralParameter(
-							session.getTenantIdentifier(),
+							getHierarchy().getTenantDiscrimination().unresolve( session.getTenantIdentifier(), session ),
 							getHierarchy().getTenantDiscrimination().getBoundColumn().getExpressableType(),
 							Clause.INSERT,
 							session.getFactory().getTypeConfiguration()
@@ -280,38 +280,33 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		visitStateArrayContributors(
 				contributor -> {
-					if ( contributor.isInsertable() ) {
-						int position = contributor.getStateArrayPosition();
-						final Object domainValue = fields[position];
-						List<Column> columns = contributor.getColumns();
-						if ( columns != null && !columns.isEmpty() ) {
-							contributor.dehydrate(
-									contributor.unresolve( domainValue, session ),
-									(jdbcValue, type, boundColumn) -> {
-										if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
-											insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-											insertStatement.addValue(
-													new LiteralParameter(
-															jdbcValue,
-															boundColumn.getExpressableType(),
-															Clause.INSERT,
-															session.getFactory().getTypeConfiguration()
-													)
-											);
-										}
-									},
-									Clause.INSERT,
-									session
-							);
-						}
-					}
+					int position = contributor.getStateArrayPosition();
+					final Object domainValue = fields[position];
+					contributor.dehydrate(
+							contributor.unresolve( domainValue, session ),
+							(jdbcValue, type, boundColumn) -> {
+								if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+									insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
+									insertStatement.addValue(
+											new LiteralParameter(
+													jdbcValue,
+													type,
+													Clause.INSERT,
+													session.getFactory().getTypeConfiguration()
+											)
+									);
+								}
+							},
+							Clause.INSERT,
+							session
+					);
 				}
 		);
 
 		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
 				InsertToJdbcInsertConverter.createJdbcInsert(
 						insertStatement,
-						executionContext.getParameterBindingContext()
+						executionContext.getSession().getSessionFactory()
 				),
 				executionContext,
 				Connection::prepareStatement
@@ -371,7 +366,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 								);
 							}
 						},
-						executionContext.getParameterBindingContext()
+						executionContext.getSession().getSessionFactory()
 				),
 				executionContext,
 				Connection::prepareStatement
@@ -474,7 +469,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
 				UpdateToJdbcUpdateConverter.createJdbcUpdate(
 						updateStatement,
-						executionContext.getParameterBindingContext()
+						executionContext.getSession().getSessionFactory()
 				),
 				executionContext,
 				Connection::prepareStatement

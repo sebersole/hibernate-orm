@@ -6,16 +6,16 @@
  */
 package org.hibernate.sql.ast.consume.spi;
 
+import java.util.Collections;
+
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.exec.internal.JdbcSelectImpl;
 import org.hibernate.sql.exec.internal.StandardResultSetMappingDescriptor;
 import org.hibernate.sql.exec.spi.JdbcSelect;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-
-import org.jboss.logging.Logger;
 
 /**
  * The final phase of query translation.  Here we take the SQL-AST an
@@ -27,38 +27,27 @@ import org.jboss.logging.Logger;
 public class SqlAstSelectToJdbcSelectConverter
 		extends AbstractSqlAstToJdbcOperationConverter
 		implements SqlSelectAstWalker, JdbcRecommendedSqlTypeMappingContext {
-	private static final Logger log = Logger.getLogger( SqlAstSelectToJdbcSelectConverter.class );
-
 	/**
 	 * Perform interpretation of a select query, returning the SqlSelectInterpretation
 	 *
 	 * @return The interpretation result
 	 */
-	public static JdbcSelect interpret(
-			QuerySpec querySpec,
-			ParameterBindingContext parameterBindingContext) {
-		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter(
-				parameterBindingContext
-		);
+	public static JdbcSelect interpret(QuerySpec querySpec, SessionFactoryImplementor sessionFactory) {
+		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter( sessionFactory );
 		walker.visitQuerySpec( querySpec );
 		return new JdbcSelectImpl(
 				walker.getSql(),
 				walker.getParameterBinders(),
-//				new StandardResultSetMappingDescriptor(
-//						querySpec.getSelectClause().getSqlSelections(),
-//						Collections.emptyList()
-//				),
-				null,
-				null
+				new StandardResultSetMappingDescriptor(
+						querySpec.getSelectClause().getSqlSelections(),
+						Collections.emptyList()
+				),
+				walker.getAffectedTableNames()
 		);
 	}
 
-	public static JdbcSelect interpret(
-			SqlAstSelectDescriptor sqlSelectPlan,
-			ParameterBindingContext parameterBindingContext) {
-		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter(
-				parameterBindingContext
-		);
+	public static JdbcSelect interpret(SqlAstSelectDescriptor sqlSelectPlan, SessionFactoryImplementor sessionFactory) {
+		final SqlAstSelectToJdbcSelectConverter walker = new SqlAstSelectToJdbcSelectConverter( sessionFactory );
 
 		walker.visitSelectQuery( sqlSelectPlan.getSqlAstStatement() );
 		return new JdbcSelectImpl(
@@ -72,8 +61,8 @@ public class SqlAstSelectToJdbcSelectConverter
 		);
 	}
 
-	private SqlAstSelectToJdbcSelectConverter(ParameterBindingContext parameterBindingContext) {
-		super( parameterBindingContext );
+	private SqlAstSelectToJdbcSelectConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	@Override

@@ -8,8 +8,19 @@ package org.hibernate.sql.exec.internal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.spi.QueryParameterBinding;
+import org.hibernate.query.spi.QueryParameterBindings;
+import org.hibernate.query.spi.QueryParameterImplementor;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameter;
+import org.hibernate.sql.exec.spi.JdbcParameterBinding;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
 import org.hibernate.sql.results.internal.values.JdbcValues;
@@ -39,5 +50,79 @@ public class Helper {
 				rowTransformer,
 				executionContext.getCallback()
 		);
+	}
+
+
+
+	public static JdbcParameterBindings createJdbcParameterBindings(
+			QueryParameterBindings<QueryParameterBinding<?>> domainParamBindings,
+			Map<QueryParameterImplementor,List<JdbcParameter>> jdbcParamsByDomainParams,
+			SharedSessionContractImplementor session) {
+		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
+
+		domainParamBindings.visitBindings(
+				(queryParameterImplementor, queryParameterBinding) -> {
+					final List<JdbcParameter> jdbcParameters = jdbcParamsByDomainParams.get( queryParameterImplementor );
+					queryParameterBinding.getBindType().dehydrate(
+							domainParamBindings.getBinding( queryParameterImplementor ).getBindValue(),
+							new Writeable.JdbcValueCollector() {
+								private int position = 0;
+
+								@Override
+								public void collect(Object jdbcValue, SqlExpressableType type, Column boundColumn) {
+									final JdbcParameter jdbcParameter = jdbcParameters.get( position );
+									jdbcParameterBindings.addBinding(
+											jdbcParameter,
+											new JdbcParameterBinding() {
+												@Override
+												public SqlExpressableType getBindType() {
+													return jdbcParameter.getType();
+												}
+
+												@Override
+												public Object getBindValue() {
+													return jdbcValue;
+												}
+											}
+									);
+									position++;
+								}
+							},
+							null,
+							session
+					);
+				}
+		);
+//		for ( Map.Entry<QueryParameterImplementor, List<JdbcParameter>> entry : jdbcParamsByDomainParams.entrySet() ) {
+//			final QueryParameterBinding<?> binding = domainParamBindings.getBinding( entry.getKey() );
+//			binding.getBindType().dehydrate(
+//					binding.getBindType().unresolve( binding.getBindValue(), session ),
+//					new Writeable.JdbcValueCollector() {
+//						private int position = 0;
+//
+//						@Override
+//						public void collect(Object jdbcValue, SqlExpressableType type, Column boundColumn) {
+//							jdbcParameterBindings.addBinding(
+//									entry.getValue().get( position ),
+//									new JdbcParameterBinding() {
+//										@Override
+//										public SqlExpressableType getBindType() {
+//											return type;
+//										}
+//
+//										@Override
+//										public Object getBindValue() {
+//											return jdbcValue;
+//										}
+//									}
+//							);
+//						}
+//					},
+//					clause,
+//					session
+//			);
+//		}
+
+		return jdbcParameterBindings;
 	}
 }

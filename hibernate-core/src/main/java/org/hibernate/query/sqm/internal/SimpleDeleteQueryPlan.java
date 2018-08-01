@@ -10,15 +10,14 @@ import java.sql.Connection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
-import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
+import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmDeleteToSqlAstConverterSimple;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
@@ -26,7 +25,6 @@ import org.hibernate.sql.exec.internal.JdbcMutationExecutorImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 
 /**
  * @author Steve Ebersole
@@ -62,6 +60,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 				}
 		);
 
+
 		final JdbcMutation jdbcDelete = SqlDeleteToJdbcDeleteConverter.interpret(
 				new SqlAstDeleteDescriptor() {
 					@Override
@@ -76,7 +75,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 						);
 					}
 				},
-				parameterBindingContext
+				session.getSessionFactory()
 		);
 
 		return JdbcMutationExecutorImpl.CALL_AFTER_INSTANCE.execute(

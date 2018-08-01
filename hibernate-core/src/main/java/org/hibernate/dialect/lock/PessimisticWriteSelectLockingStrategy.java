@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.JDBCException;
 import org.hibernate.LockMode;
@@ -18,8 +19,9 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.Lockable;
+import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.sql.SimpleSelect;
 import org.hibernate.sql.ast.Clause;
@@ -67,21 +69,51 @@ public class PessimisticWriteSelectLockingStrategy extends AbstractSelectLocking
 			try {
 				final PreparedStatement st = session.getJdbcCoordinator().getStatementPreparer().prepareStatement( sql );
 				try {
-					final AllowableParameterType identifierParameterType = getLockable().getHierarchy()
-							.getIdentifierDescriptor();
-					identifierParameterType.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration )
-							.bind( st, 1, id, executionContext );
-					if ( StringHelper.isNotEmpty( getLockable().getVersionColumnName() ) ) {
-						getLockable().getHierarchy()
-								.getVersionDescriptor()
-								.getBasicType()
-								.getValueBinder( Clause.WHERE.getInclusionChecker(), typeConfiguration )
-								.bind(
-										st,
-										identifierParameterType.getNumberOfJdbcParametersNeeded() + 1,
-										version,
-										executionContext
-								);
+					final AtomicInteger count = new AtomicInteger();
+
+					final EntityIdentifier identifierDescriptor = getLockable().getHierarchy().getIdentifierDescriptor();
+					identifierDescriptor.dehydrate(
+							identifierDescriptor.unresolve( id, session ),
+							(jdbcValue, type, boundColumn) -> {
+								try {
+									type.getJdbcValueBinder().bind(
+											st,
+											count.getAndIncrement(),
+											jdbcValue,
+											executionContext
+									);
+								}
+								catch (SQLException e) {
+									throw session.getJdbcServices().getSqlExceptionHelper().convert(
+											e,
+											"Could not bind id value(s) to lock entity: " + MessageHelper.infoString( getLockable(), id, session.getFactory() ),
+											sql
+									);
+								}
+							},
+							Clause.WHERE,
+							session
+					);
+
+					final VersionDescriptor<Object, Object> versionDescriptor = getLockable().getHierarchy().getVersionDescriptor();
+					if ( versionDescriptor != null ) {
+						versionDescriptor.dehydrate(
+								versionDescriptor.unresolve( version, session ),
+								(jdbcValue, type, boundColumn) -> {
+									try {
+										type.getJdbcValueBinder().bind( st, count.getAndIncrement(), jdbcValue, executionContext );
+									}
+									catch (SQLException e) {
+										throw session.getJdbcServices().getSqlExceptionHelper().convert(
+												e,
+												"Could not bind version value(s) to lock entity: " + MessageHelper.infoString( getLockable(), id, session.getFactory() ),
+												sql
+										);
+									}
+								},
+								Clause.WHERE,
+								session
+						);
 					}
 
 					final ResultSet rs = session.getJdbcCoordinator().getResultSetReturn().extract( st );

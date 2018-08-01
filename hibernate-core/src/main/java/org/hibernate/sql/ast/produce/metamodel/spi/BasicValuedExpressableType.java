@@ -6,21 +6,14 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.sql.SqlExpressableType;
-import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.Util;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -49,49 +42,27 @@ public interface BasicValuedExpressableType<J>
 		return 1;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	default ValueBinder getValueBinder(
-			Predicate<StateArrayContributor> inclusionChecker,
-			TypeConfiguration typeConfiguration) {
-		return new ValueBinder() {
-			@Override
-			public int getNumberOfJdbcParametersNeeded() {
-				return 1;
-			}
-
-			@Override
-			public void bind(PreparedStatement st, int position, Object value, ExecutionContext executionContext) throws SQLException {
-				final SqlExpressableType sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType(
-						getJavaTypeDescriptor(),
-						executionContext.getSession().getFactory().getTypeConfiguration()
-				);
-				sqlExpressableType.getJdbcValueBinder().bind( st, position, value, executionContext );
-			}
-
-			@Override
-			public void bind(
-					PreparedStatement st,
-					String name,
-					Object value,
-					ExecutionContext executionContext) throws SQLException {
-				final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
-				final SqlExpressableType sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType(
-						getJavaTypeDescriptor(),
-						executionContext.getSession().getFactory().getTypeConfiguration()
-				);
-				sqlExpressableType.getJdbcValueBinder().bind( callable, name, value, executionContext );
-			}
-		};
-	}
-
 	default AllowableParameterType resolveTemporalPrecision(
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {
 		return getBasicType().resolveTemporalPrecision( temporalType, typeConfiguration );
 	}
 
-	// todo (6.0) : moved this down to BasicValuedNavigable#getSqlTypeDescriptor
-	//		uncomment if we find this is needed as part of being queryable
-	//SqlTypeDescriptor getSqlTypeDescriptor();
+	@Override
+	default Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
+	}
+
+	@Override
+	default void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
+			SharedSessionContractImplementor session) {
+		jdbcValueCollector.collect(
+				value,
+				getBasicType().getSqlExpressableType( session.getFactory().getTypeConfiguration() ),
+				null
+		);
+	}
 }

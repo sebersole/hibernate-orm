@@ -9,13 +9,13 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.sql.ast.tree.spi.InsertStatement;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.exec.spi.JdbcInsert;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -26,8 +26,8 @@ public class InsertToJdbcInsertConverter
 
 	public static JdbcInsert createJdbcInsert(
 			InsertStatement sqlAst,
-			ParameterBindingContext parameterBindingContext) {
-		final InsertToJdbcInsertConverter walker = new InsertToJdbcInsertConverter( parameterBindingContext );
+			SessionFactoryImplementor sessionFactory) {
+		final InsertToJdbcInsertConverter walker = new InsertToJdbcInsertConverter( sessionFactory );
 		walker.processStatement( sqlAst );
 		return new JdbcInsert() {
 			@Override
@@ -52,8 +52,8 @@ public class InsertToJdbcInsertConverter
 		};
 	}
 
-	public InsertToJdbcInsertConverter(ParameterBindingContext parameterBindingContext) {
-		super( parameterBindingContext);
+	public InsertToJdbcInsertConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	private void processStatement(InsertStatement sqlAst) {

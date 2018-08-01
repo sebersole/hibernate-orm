@@ -6,14 +6,14 @@
  */
 package org.hibernate.type.internal;
 
-import java.util.function.Predicate;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.JdbcValueMapperValueBinderAdapter;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -26,7 +26,6 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 	private final SqlTypeDescriptor sqlTypeDescriptor;
 
 	private SqlExpressableType sqlExpressableType;
-	private JdbcValueMapperValueBinderAdapter valueBinder;
 
 //	private VersionSupport<T> versionSupport;
 
@@ -80,17 +79,6 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 		return this;
 	}
 
-	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		final SqlExpressableType mapperToUse = resolveJdbcValueMapper( typeConfiguration );
-
-		if ( valueBinder == null ) {
-			valueBinder = new JdbcValueMapperValueBinderAdapter( mapperToUse );
-		}
-
-		return valueBinder;
-	}
-
 	private SqlExpressableType resolveJdbcValueMapper(TypeConfiguration typeConfiguration) {
 		if ( sqlExpressableType == null ) {
 			sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType( getJavaTypeDescriptor(), typeConfiguration );
@@ -99,4 +87,19 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 		return sqlExpressableType;
 	}
 
+	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		action.accept( resolveJdbcValueMapper( typeConfiguration ) );
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		throw new UnsupportedOperationException( "BasicType does not define columns" );
+	}
 }

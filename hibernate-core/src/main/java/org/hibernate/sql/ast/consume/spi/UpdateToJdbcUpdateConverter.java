@@ -9,14 +9,12 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.JdbcUpdate;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * @author Steve Ebersole
@@ -30,8 +28,8 @@ public class UpdateToJdbcUpdateConverter
 
 	public static JdbcUpdate createJdbcUpdate(
 			UpdateStatement sqlAst,
-			ParameterBindingContext parameterBindingContext) {
-		final UpdateToJdbcUpdateConverter walker = new UpdateToJdbcUpdateConverter( parameterBindingContext );
+			SessionFactoryImplementor sessionFactory) {
+		final UpdateToJdbcUpdateConverter walker = new UpdateToJdbcUpdateConverter( sessionFactory );
 		walker.processUpdateStatement( sqlAst );
 		return new JdbcUpdate() {
 			@Override
@@ -51,8 +49,8 @@ public class UpdateToJdbcUpdateConverter
 		};
 	}
 
-	public UpdateToJdbcUpdateConverter(ParameterBindingContext parameterBindingContext) {
-		super( parameterBindingContext );
+	public UpdateToJdbcUpdateConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	private void processUpdateStatement(UpdateStatement updateStatement) {

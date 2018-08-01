@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.hibernate.NotYetImplementedFor6Exception;
@@ -13,7 +15,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Represents a value that can ultimately be written to the database.  The process of
@@ -28,11 +30,32 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
  *
  * @author Steve Ebersole
  */
-public interface Writeable<D,I> {
+public interface Writeable {
+	Predicate<StateArrayContributor> STANDARD_INSERT_INCLUSION_CHECK = StateArrayContributor::isInsertable;
+	Predicate<StateArrayContributor> STANDARD_UPDATE_INCLUSION_CHECK = StateArrayContributor::isUpdatable;
+
+	default void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		visitColumns(
+				(type, column) -> action.accept( type ),
+				clause,
+				typeConfiguration
+		);
+	}
+
+	default void visitColumns(
+			BiConsumer<SqlExpressableType,Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
 	/**
 	 * Produce a multi-dimensional array of extracted simple value
 	 */
-	default I unresolve(D value, SharedSessionContractImplementor session) {
+	default Object unresolve(Object value, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
@@ -40,7 +63,7 @@ public interface Writeable<D,I> {
 	 * Produce a flattened array from dehydrated state
 	 */
 	default void dehydrate(
-			I value,
+			Object value,
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {

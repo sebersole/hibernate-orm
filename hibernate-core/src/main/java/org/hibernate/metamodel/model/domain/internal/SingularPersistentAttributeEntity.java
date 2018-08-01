@@ -6,11 +6,10 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiConsumer;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TemporalType;
 
@@ -39,8 +38,6 @@ import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
-import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
@@ -53,6 +50,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeReferenceEntity;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
@@ -80,12 +78,11 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
@@ -631,98 +628,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 	}
 
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// AllowableParameterType
-
-	private static final ValueBinder SKIP_BINDER = new ValueBinder() {
-		@Override
-		public int getNumberOfJdbcParametersNeeded() {
-			return 0;
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public void bind(
-				PreparedStatement st,
-				int index,
-				Object value,
-				ExecutionContext executionContext) {
-			// nothing to do
-		}
-
-		@Override
-		public void bind(
-				PreparedStatement st,
-				String name,
-				Object value,
-				ExecutionContext executionContext) {
-			// nothing to do
-		}
-	};
-
-	@Override
-	public ValueBinder getValueBinder(java.util.function.Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return inclusionChecker.test( this )
-				? new ValueBinderImpl( this, inclusionChecker, typeConfiguration )
-				: SKIP_BINDER;
-	}
-
-	private static class ValueBinderImpl implements ValueBinder {
-		private final SingularPersistentAttributeEntity attribute;
-		private final ValueBinder valueBinder;
-		private final FkValueExtractor fkValueExtractor;
-
-		public ValueBinderImpl(
-				SingularPersistentAttributeEntity attribute,
-				java.util.function.Predicate<StateArrayContributor> inclusionChecker,
-				TypeConfiguration typeConfiguration) {
-			this.attribute = attribute;
-
-			if ( attribute.referencedAttributeName == null ) {
-				this.valueBinder = attribute.getAssociatedEntityDescriptor().getIdentifierDescriptor().getValueBinder(
-						inclusionChecker,
-						typeConfiguration
-				);
-				this.fkValueExtractor = (owner, executionContext) -> attribute.getAssociatedEntityDescriptor().getIdentifierDescriptor().extractIdentifier(
-						owner,
-						executionContext.getSession()
-				);
-			}
-			else {
-				final NonIdPersistentAttribute referencedAttribute = attribute.getAssociatedEntityDescriptor()
-						.findPersistentAttribute( attribute.referencedAttributeName );
-				this.valueBinder = referencedAttribute.getValueBinder( inclusionChecker, typeConfiguration );
-				this.fkValueExtractor = (owner, executionContext) -> referencedAttribute.getPropertyAccess().getGetter().get( owner );
-			}
-		}
-
-		@Override
-		public int getNumberOfJdbcParametersNeeded() {
-			return valueBinder.getNumberOfJdbcParametersNeeded();
-		}
-
-		@Override
-		public void bind(
-				PreparedStatement st,
-				int position,
-				Object value,
-				ExecutionContext executionContext) throws SQLException {
-			final Object fkValue = fkValueExtractor.extractFkValue( value, executionContext );
-			valueBinder.bind( st, position, fkValue, executionContext );
-		}
-
-		@Override
-		public void bind(
-				PreparedStatement st,
-				String name,
-				Object value,
-				ExecutionContext executionContext) throws SQLException {
-			final Object fkValue = fkValueExtractor.extractFkValue( value, executionContext );
-			valueBinder.bind( st, name, fkValue, executionContext );
-		}
-	}
-
 	@Override
 	public int getNumberOfJdbcParametersNeeded() {
 		return foreignKey.getColumnMappings().getColumnMappings().size();
@@ -779,5 +684,16 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	private interface FkValueExtractor {
 		Object extractFkValue(Object owner, ExecutionContext executionContext);
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		for ( ColumnMappings.ColumnMapping columnMapping : getForeignKey().getColumnMappings().getColumnMappings() ) {
+			final Column column = columnMapping.getReferringColumn();
+			action.accept( column.getExpressableType(), column );
+		}
 	}
 }

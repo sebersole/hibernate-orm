@@ -6,6 +6,8 @@
  */
 package org.hibernate.query.spi;
 
+import java.util.function.BiConsumer;
+
 import org.hibernate.Incubating;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cache.spi.QueryKey;
@@ -69,6 +71,11 @@ public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 
+	default void visitBindings(BiConsumer<QueryParameterImplementor<?>, QueryParameterBinding<?>> action) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@SuppressWarnings("unchecked")
 	QueryParameterBindings NO_PARAM_BINDINGS = new QueryParameterBindings() {
 		@Override
 		public boolean isBound(QueryParameterImplementor parameter) {
@@ -88,6 +95,10 @@ public interface QueryParameterBindings<B extends QueryParameterBinding<?>> {
 		@Override
 		public QueryParameterBinding<?> getBinding(int position) {
 			return null;
+		}
+
+		@Override
+		public void visitBindings(BiConsumer action) {
 		}
 
 		@Override

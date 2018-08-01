@@ -172,10 +172,8 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 
 		sessionFactoryScope().inTransaction(
 				session -> {
-					final Child child = session.createQuery(
-							"SELECT c FROM Child c JOIN c.parent d WHERE d.id = :id",
-							Child.class
-					)
+					final String queryString = "SELECT c FROM Child c JOIN c.parent d WHERE d.id = :id";
+					final Child child = session.createQuery( queryString, Child.class )
 							.setParameter( "id", 1 )
 							.getSingleResult();
 

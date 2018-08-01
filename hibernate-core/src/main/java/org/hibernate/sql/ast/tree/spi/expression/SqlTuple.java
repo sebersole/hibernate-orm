@@ -20,7 +20,7 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class SqlTuple implements Expression {
 	private final List<Expression> expressions;
 
-	public SqlTuple(List<Expression> expressions) {
+	public SqlTuple(List expressions) {
 		this.expressions = expressions;
 	}
 
@@ -40,6 +40,8 @@ public class SqlTuple implements Expression {
 
 	@Override
 	public void accept(SqlAstWalker sqlTreeWalker) {
-
+		for ( Expression expression : expressions ) {
+			expression.accept( sqlTreeWalker );
+		}
 	}
 }

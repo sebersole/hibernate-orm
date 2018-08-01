@@ -32,6 +32,8 @@ public class LiteralParameter implements GenericParameter, JdbcParameterBinding,
 			SqlExpressableType type,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
+		assert type.getJavaTypeDescriptor().isInstance( value );
+
 		this.value = value;
 		this.type = type;
 	}
@@ -79,8 +81,7 @@ public class LiteralParameter implements GenericParameter, JdbcParameterBinding,
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException {
-		getExpressableType().getJdbcValueBinder()
-				.bind( statement, startPosition, value, executionContext );
+		getExpressableType().getJdbcValueBinder().bind( statement, startPosition, value, executionContext );
 		return 1;
 	}
 }

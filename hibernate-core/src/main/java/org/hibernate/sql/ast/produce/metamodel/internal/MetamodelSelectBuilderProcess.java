@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
@@ -27,7 +28,10 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.internal.UniqueIdGenerator;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
@@ -44,6 +48,7 @@ import org.hibernate.sql.ast.produce.spi.SqlQueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.domain.BasicValuedNavigableReference;
@@ -56,6 +61,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
@@ -155,7 +161,6 @@ public class MetamodelSelectBuilderProcess
 
 		if ( navigablesToSelect != null && ! navigablesToSelect.isEmpty() ) {
 			queryResults = new ArrayList<>();
-			int jdbcSelectionCount = 0;
 			for ( Navigable navigable : navigablesToSelect ) {
 				final NavigableReference navigableReference = makeNavigableReference( rootTableGroup, navigable );
 				queryResults.add(
@@ -193,35 +198,56 @@ public class MetamodelSelectBuilderProcess
 
 
 		// add the id/uk/fk restriction
-		final List keyReferences = restrictedNavigable.resolveColumnReferences(
-				rootTableSpace.getRootTableGroup(),
-				this
+
+		final List<ColumnReference> keyColumnReferences = new ArrayList<>();
+		final List<StandardJdbcParameterImpl> keyParameterReferences = new ArrayList<>();
+
+		final AllowableParameterType<?> restrictedNavigableType = (AllowableParameterType) restrictedNavigable;
+		restrictedNavigableType.visitColumns(
+				new BiConsumer<SqlExpressableType, Column>() {
+					@Override
+					public void accept(SqlExpressableType type, Column column) {
+						keyColumnReferences.add( (ColumnReference) rootTableGroup.qualify( column ) );
+						keyParameterReferences.add(
+								new StandardJdbcParameterImpl(
+										keyParameterReferences.size(),
+										type,
+										Clause.WHERE,
+										getSessionFactory().getTypeConfiguration()
+								)
+						);
+					}
+				},
+				Clause.WHERE,
+				getSessionFactory().getTypeConfiguration()
 		);
 
-		final Expression restrictedExpression;
+		final Expression keyColumnExpression;
+		final Expression keyParameterExpression;
 
-		if ( keyReferences.size() == 1 ) {
-			restrictedExpression = (Expression) keyReferences.get( 0 );
+		if ( keyColumnReferences.size() == 1 ) {
+			keyColumnExpression = keyColumnReferences.get( 0 );
+			keyParameterExpression = keyParameterReferences.get( 0 );
 		}
 		else {
-			restrictedExpression = new SqlTuple( keyReferences );
+			keyColumnExpression = new SqlTuple( keyColumnReferences );
+			keyParameterExpression = new SqlTuple( keyParameterReferences );
 		}
+
 
 		if ( numberOfKeysToLoad <= 1 ) {
 			rootQuerySpec.addRestriction(
 					new RelationalPredicate(
 							RelationalPredicate.Operator.EQUAL,
-							restrictedExpression,
-							new LoadIdParameter( (AllowableParameterType) restrictedNavigable, sessionFactory.getTypeConfiguration() )
+							keyColumnExpression,
+							keyParameterExpression
 					)
 			);
 		}
 		else {
-			final InListPredicate predicate = new InListPredicate( restrictedExpression );
+			final InListPredicate predicate = new InListPredicate( keyColumnExpression );
 			for ( int i = 0; i < numberOfKeysToLoad; i++ ) {
-				predicate.addExpression(
-						new LoadIdParameter( i, (AllowableParameterType) restrictedNavigable, sessionFactory.getTypeConfiguration() )
-				);
+				predicate.addExpression( keyParameterExpression );
 			}
 			rootQuerySpec.addRestriction( predicate );
 		}

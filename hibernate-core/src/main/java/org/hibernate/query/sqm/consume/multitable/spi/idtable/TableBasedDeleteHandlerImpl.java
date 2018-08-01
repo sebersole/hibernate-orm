@@ -12,12 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.Table;
-import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
@@ -27,7 +25,6 @@ import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
 * @author Steve Ebersole
@@ -78,22 +75,7 @@ public class TableBasedDeleteHandlerImpl
 
 		String idTableSelectSubQuery = SqlAstSelectToJdbcSelectConverter.interpret(
 				idTableSelectSubQuerySpec,
-				new ParameterBindingContext() {
-					@Override
-					public <T> List<T> getLoadIdentifiers() {
-						return Collections.emptyList();
-					}
-
-					@Override
-					public QueryParameterBindings getQueryParameterBindings() {
-						return QueryParameterBindings.NO_PARAM_BINDINGS;
-					}
-
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return getEntityDescriptor().getFactory();
-					}
-				}
+				executionContext.getSessionFactory()
 		).getSql();
 
 		for ( JoinedTableBinding joinedTable : getEntityDescriptor().getSecondaryTableBindings() ) {

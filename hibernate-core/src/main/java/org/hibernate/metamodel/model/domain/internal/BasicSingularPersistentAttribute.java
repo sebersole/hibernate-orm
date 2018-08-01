@@ -6,12 +6,9 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.BiConsumer;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
@@ -23,7 +20,6 @@ import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -43,8 +39,6 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.Util;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -55,7 +49,7 @@ import org.jboss.logging.Logger;
  */
 public class BasicSingularPersistentAttribute<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, ValueBinder {
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J> {
 	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
 
 	private final Column boundColumn;
@@ -178,17 +172,6 @@ public class BasicSingularPersistentAttribute<O, J>
 		return basicType;
 	}
 
-
-	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return this;
-	}
-
-//	@Override
-//	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
-//		return jdbcValues;
-//	}
-
 	@Override
 	@SuppressWarnings("unchecked")
 	public Object resolveHydratedState(
@@ -217,59 +200,31 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		if ( valueConverter != null ) {
+			value = valueConverter.toRelationalValue( value, session );
+		}
+
+		return value;
+	}
+
+	@Override
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-		if ( valueConverter != null ) {
-			value = valueConverter.toRelationalValue( value, session );
-		}
 		jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
 	}
 
-
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// ValueBinder
-
 	@Override
-	@SuppressWarnings("unchecked")
-	public void bind(
-			PreparedStatement st,
-			int position,
-			Object value,
-			ExecutionContext executionContext) throws SQLException {
-		final Object bindValue = bindValue( value, executionContext.getSession() );
-
-		sqlExpressableType.getJdbcValueBinder().bind( st, position, bindValue, executionContext );
-	}
-
-	@SuppressWarnings("unchecked")
-	private Object bindValue(Object value, SharedSessionContractImplementor session) {
-		return valueConverter == null
-				? value
-				: valueConverter.toRelationalValue( value, session );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public void bind(
-			PreparedStatement st,
-			String name,
-			Object value,
-			ExecutionContext executionContext) throws SQLException {
-		final CallableStatement callable = Util.asCallableStatementForNamedParam( st );
-		final Object bindValue = bindValue( value, executionContext.getSession() );
-
-		sqlExpressableType.getJdbcValueBinder().bind( callable, name, bindValue, executionContext );
-	}
-
-	@SuppressWarnings("unchecked")
-	private J extractValue(ExecutionContext executionContext, Object value) {
-		return (J) ( valueConverter == null
-				? value
-				: valueConverter.toDomainValue( value, executionContext.getSession() ) );
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		if ( clause.getInclusionChecker().test( this ) ) {
+			action.accept( getBoundColumn().getExpressableType(), getBoundColumn() );
+		}
 	}
 
 	@Override

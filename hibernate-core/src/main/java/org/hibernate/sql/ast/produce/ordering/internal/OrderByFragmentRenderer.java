@@ -18,7 +18,6 @@ import org.hibernate.sql.ast.consume.spi.AbstractSqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 import org.jboss.logging.Logger;
 
@@ -30,6 +29,7 @@ import org.jboss.logging.Logger;
  */
 public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	private static final Logger LOG = CoreLogging.logger( OrderByFragmentRenderer.class );
+
 
 	public static OrderByTranslation renderOrderByFragment(
 			TranslationContext translationContext,
@@ -58,13 +58,9 @@ public class OrderByFragmentRenderer extends AbstractSqlAstWalker {
 	public OrderByFragmentRenderer(
 			TranslationContext context,
 			PersistentCollectionDescriptor collectionDescriptor) {
+		super( context.getSessionFactory() );
 		this.context = context;
 		this.collectionDescriptor = collectionDescriptor;
-	}
-
-	@Override
-	protected ParameterBindingContext getParameterBindingContext() {
-		return context;
 	}
 
 	@Override

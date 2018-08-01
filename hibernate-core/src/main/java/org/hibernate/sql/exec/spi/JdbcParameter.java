@@ -6,11 +6,11 @@
  */
 package org.hibernate.sql.exec.spi;
 
+import org.hibernate.sql.ast.tree.spi.expression.Expression;
+
 /**
- * A marker used as a key for {@link JdbcParameterBinding} instances
- * within a {@link JdbcParameterBindings}.
- *
  * @author Steve Ebersole
  */
-public interface JdbcParameter {
+public interface JdbcParameter extends Expression {
+	JdbcParameterBinder getParameterBinder();
 }

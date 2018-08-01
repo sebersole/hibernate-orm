@@ -9,24 +9,26 @@ package org.hibernate.sql.exec.spi;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.hibernate.annotations.Remove;
+
 /**
  * Performs parameter value binding to a JDBC PreparedStatement.
- *
- * @apiNote It is important to understand a major assumption here - the
- * JdbcParameterBinder is already "inclusion" aware based on Clause, etc.
- * The practical implication of this is that there must be a unique
- * JdbcParameterBinder for every usage of a parameter (named/positional)
- * in a query
  *
  * @author Steve Ebersole
  * @author John O'Hara
  */
 public interface JdbcParameterBinder {
+	// todo (6.0) : remove the return value here.  Like below, is always 1
 	int bindParameterValue(
 			PreparedStatement statement,
 			int startPosition,
 			ExecutionContext executionContext) throws SQLException;
 
+	/**
+	 * @deprecated A parameter at the JDBC level is always just a "span of 1"
+	 */
+	@Remove
+	@Deprecated
 	default int getNumberOfJdbcParametersNeeded() {
 		return 1;
 	}

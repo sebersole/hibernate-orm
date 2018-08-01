@@ -27,7 +27,6 @@ import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.JdbcSelectExecutor;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 
 /**
  * @author Steve Ebersole
@@ -83,29 +82,27 @@ public class NativeSelectQueryPlanImpl<R> implements NativeSelectQueryPlan<R> {
 				type = parameter.getHibernateType();
 			}
 
-			final ValueBinder valueBinder = type.getValueBinder(
-					Clause.IRRELEVANT.getInclusionChecker(),
-					executionContext.getSession().getFactory().getTypeConfiguration()
-			);
-
-			jdbcParameterBinders.add(
-					new JdbcParameterBinder() {
-						@Override
-						public int getNumberOfJdbcParametersNeeded() {
-							return valueBinder.getNumberOfJdbcParametersNeeded();
-						}
-
-						@Override
-						public int bindParameterValue(
-								PreparedStatement statement,
-								int startPosition,
-								ExecutionContext executionContext) throws SQLException {
-							valueBinder.bind( statement, startPosition, parameterBinding.getBindValue(), executionContext );
-							return getNumberOfJdbcParametersNeeded();
-						}
-					}
+			type.dehydrate(
+					type.unresolve( parameterBinding.getBindValue(), executionContext.getSession() ),
+					(jdbcValue, sqlExpressableType, boundColumn) -> {
+						jdbcParameterBinders.add(
+								new JdbcParameterBinder() {
+									@Override
+									public int bindParameterValue(
+											PreparedStatement statement,
+											int startPosition,
+											ExecutionContext executionContext) throws SQLException {
+										sqlExpressableType.getJdbcValueBinder().bind( statement, startPosition, jdbcValue, executionContext );
+										return 1;
+									}
+								}
+						);
+					},
+					Clause.IRRELEVANT,
+					executionContext.getSession()
 			);
 		}
+
 		return jdbcParameterBinders;
 	}
 

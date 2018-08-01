@@ -36,6 +36,10 @@ public interface ExecutionContext {
 
 	ParameterBindingContext getParameterBindingContext();
 
+	// todo (6.0) : this should go away also - it makes the execution context specific to an execution
+	//		see QuerySqmImpl implementing ExecutionContext as an example.. the ExecutionContext is
+	//		really scoped to the execution method (`#doScroll`, etc)
+
 	default JdbcParameterBindings getJdbcParameterBindings() {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}

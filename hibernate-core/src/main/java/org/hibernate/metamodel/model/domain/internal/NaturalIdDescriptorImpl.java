@@ -6,11 +6,9 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.BiConsumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
@@ -22,16 +20,16 @@ import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -43,8 +41,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 	private final NavigableRole navigableRole;
 
 	private List<NaturalIdAttributeInfo> attributes;
-
-	private ValueBinder valueBinder;
 
 	private Integer numberOfParameterBinds;
 
@@ -166,57 +162,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 		return numberOfParameterBinds;
 	}
 
-	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		if ( valueBinder == null ) {
-			if ( attributes.size() == 1 ) {
-				valueBinder = ( (AllowableParameterType) attributes.get( 0 ).getUnderlyingAttributeDescriptor() )
-						.getValueBinder( inclusionChecker, typeConfiguration );
-			}
-			else {
-				valueBinder = new ValueBinder() {
-					@Override
-					public int getNumberOfJdbcParametersNeeded() {
-						return numberOfParameterBinds;
-					}
-
-					@Override
-					public void bind(
-							PreparedStatement st,
-							int position,
-							Object value,
-							ExecutionContext executionContext) throws SQLException {
-						int segmentStart = position;
-
-						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
-							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
-									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder( inclusionChecker, typeConfiguration )
-									.bind( st, segmentStart, value, executionContext );
-							segmentStart += attributeDescriptor.getNumberOfJdbcParametersNeeded();
-						}
-					}
-
-					@Override
-					public void bind(
-							PreparedStatement st,
-							String name,
-							Object value,
-							ExecutionContext executionContext) throws SQLException {
-						for ( NaturalIdAttributeInfo attributeInfo : attributes ) {
-							final AllowableParameterType attributeDescriptor = (AllowableParameterType) attributeInfo
-									.getUnderlyingAttributeDescriptor();
-							attributeDescriptor.getValueBinder( inclusionChecker, typeConfiguration )
-									.bind( st, name, value, executionContext );
-						}
-					}
-				};
-			}
-		}
-
-		return valueBinder;
-	}
-
 	public AllowableParameterType resolveTemporalPrecision(
 			TemporalType temporalType,
 			TypeConfiguration typeConfiguration) {
@@ -229,5 +174,20 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 		}
 
 		throw new UnsupportedOperationException( "Composite natural-id cannot be treated as a temporal value" );
+	}
+
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		visitPersistentAttributes(
+				naturalIdAttributeInfo -> naturalIdAttributeInfo.getUnderlyingAttributeDescriptor().visitColumns(
+						action,
+						clause,
+						typeConfiguration
+				)
+		);
 	}
 }

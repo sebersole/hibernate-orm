@@ -71,6 +71,7 @@ public class QuerySqmImpl<R>
 
 	private final ParameterMetadataImpl parameterMetadata;
 	private final QueryParameterBindingsImpl parameterBindings;
+	private final Map<QueryParameterImplementor, SqmParameter> sqmParamByQueryParam = new HashMap<>(  );
 
 	private final QueryOptionsImpl queryOptions = new QueryOptionsImpl();
 
@@ -91,11 +92,14 @@ public class QuerySqmImpl<R>
 		this.sqmStatement = sqmStatement;
 		this.resultType = resultType;
 
-		this.parameterMetadata = buildParameterMetadata( sqmStatement );
+		this.parameterMetadata = buildParameterMetadata( sqmStatement, sqmParamByQueryParam );
 		this.parameterBindings = QueryParameterBindingsImpl.from( parameterMetadata, producer.getFactory() );
 	}
 
-	private static ParameterMetadataImpl buildParameterMetadata(SqmStatement sqm) {
+
+	private static ParameterMetadataImpl buildParameterMetadata(
+			SqmStatement sqm,
+			Map<QueryParameterImplementor, SqmParameter> queryParamBySqmParamMap) {
 		Map<String, QueryParameterImplementor<?>> namedQueryParameters = null;
 		Map<Integer, QueryParameterImplementor<?>> positionalQueryParameters = null;
 
@@ -104,19 +108,27 @@ public class QuerySqmImpl<R>
 				if ( namedQueryParameters == null ) {
 					namedQueryParameters = new HashMap<>();
 				}
-				namedQueryParameters.put(
-						parameter.getName(),
-						QueryParameterNamedImpl.fromSqm( parameter )
-				);
+				else if ( namedQueryParameters.containsKey( parameter.getName() ) ) {
+					// nothing to do
+					continue;
+				}
+
+				final QueryParameterNamedImpl<Object> queryParameter = QueryParameterNamedImpl.fromSqm( parameter );
+				namedQueryParameters.put( parameter.getName(), queryParameter );
+				queryParamBySqmParamMap.put( queryParameter, parameter );
 			}
 			else if ( parameter.getPosition() != null ) {
 				if ( positionalQueryParameters == null ) {
 					positionalQueryParameters = new HashMap<>();
 				}
-				positionalQueryParameters.put(
-						parameter.getPosition(),
-						QueryParameterPositionalImpl.fromSqm( parameter )
-				);
+				else if ( positionalQueryParameters.containsKey( parameter.getPosition() ) ) {
+					// nothing to do
+					continue;
+				}
+
+				final QueryParameterPositionalImpl<Object> queryParameter = QueryParameterPositionalImpl.fromSqm( parameter );
+				positionalQueryParameters.put( parameter.getPosition(), queryParameter );
+				queryParamBySqmParamMap.put( queryParameter, parameter );
 			}
 		}
 
@@ -325,6 +337,7 @@ public class QuerySqmImpl<R>
 			QueryOptions queryOptions) {
 		return new ConcreteSqmSelectQueryPlan<>(
 				concreteSqmStatement,
+				sqmParamByQueryParam,
 				resultType,
 				queryOptions
 		);
@@ -337,7 +350,6 @@ public class QuerySqmImpl<R>
 
 		return resolveSelectQueryPlan().performScroll( scrollMode, this );
 	}
-
 
 	@Override
 	protected int doExecuteUpdate() {

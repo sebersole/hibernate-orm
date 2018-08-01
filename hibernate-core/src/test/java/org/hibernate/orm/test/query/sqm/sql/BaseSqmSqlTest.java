@@ -47,7 +47,7 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 
 		return SqlAstSelectToJdbcSelectConverter.interpret(
 				interpretation,
-				executionContext.getParameterBindingContext()
+				executionContext.getSession().getSessionFactory()
 		);
 	}
 }

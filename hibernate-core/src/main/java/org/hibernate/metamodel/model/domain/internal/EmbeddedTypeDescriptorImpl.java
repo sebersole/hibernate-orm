@@ -6,14 +6,9 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -36,18 +31,16 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrateg
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -194,7 +187,7 @@ public class EmbeddedTypeDescriptorImpl<J>
 	}
 
 	private Object[] breakDownValue(Object value) {
-		assert getEmbeddedDescriptor().getJavaTypeDescriptor().isInstance( value );
+		assert getJavaTypeDescriptor().isInstance( value );
 
 		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
 		assert values.length == getStateArrayContributors().size();
@@ -203,58 +196,26 @@ public class EmbeddedTypeDescriptorImpl<J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		final List<ValueBinder> subBinders = new ArrayList<>();
-		int subBinderParamCount = 0;
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
+			SharedSessionContractImplementor session) {
+		assert value instanceof Object[];
+		final Object[] subValues = (Object[]) value;
 
-		for ( StateArrayContributor<?> stateArrayContributor : getStateArrayContributors() ) {
-			final ValueBinder subBinder = stateArrayContributor.getValueBinder( inclusionChecker, typeConfiguration );
-			subBinders.add( subBinder );
-			subBinderParamCount += subBinder.getNumberOfJdbcParametersNeeded();
-		}
-
-		return new ValueBinderImpl( subBinderParamCount, subBinders, this );
+		visitStateArrayContributors(
+				stateArrayContributor -> {
+					final Object subValue = subValues[stateArrayContributor.getStateArrayPosition()];
+					stateArrayContributor.dehydrate(
+							subValue,
+							jdbcValueCollector,
+							clause,
+							session
+					);
+				}
+		);
 	}
-
-	private static class ValueBinderImpl implements ValueBinder {
-		private final int numberOfJdbcParamsNeeded;
-		private final List<ValueBinder> subBinders;
-		private final EmbeddedTypeDescriptorImpl embeddedTypeDescriptor;
-
-		private ValueBinderImpl(
-				int numberOfJdbcParamsNeeded,
-				List<ValueBinder> subBinders,
-				EmbeddedTypeDescriptorImpl embeddedTypeDescriptor) {
-			this.numberOfJdbcParamsNeeded = numberOfJdbcParamsNeeded;
-			this.subBinders = subBinders;
-			this.embeddedTypeDescriptor = embeddedTypeDescriptor;
-		}
-
-		@Override
-		public int getNumberOfJdbcParametersNeeded() {
-			return numberOfJdbcParamsNeeded;
-		}
-
-		@Override
-		public void bind(PreparedStatement st, int position, Object value, ExecutionContext executionContext) throws SQLException {
-			final Object[] values = embeddedTypeDescriptor.breakDownValue( value );
-
-			int inflightPosition = position;
-			int binderCount = 0;
-
-			for ( ValueBinder subBinder : subBinders ) {
-				subBinder.bind( st, inflightPosition, values[ binderCount ], executionContext );
-				inflightPosition += subBinder.getNumberOfJdbcParametersNeeded();
-				binderCount++;
-			}
-		}
-
-		@Override
-		public void bind(PreparedStatement st, String name, Object value, ExecutionContext executionContext) throws SQLException {
-			throw new UnsupportedOperationException( "Cannot bind parameter value by name for composite types" );
-		}
-	}
-
 
 	@Override
 	public List<InheritanceCapable<? extends J>> getSubclassTypes() {

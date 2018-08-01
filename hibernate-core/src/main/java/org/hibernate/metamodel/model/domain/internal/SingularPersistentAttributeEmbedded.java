@@ -10,7 +10,6 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -49,7 +48,6 @@ import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -181,12 +179,6 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public List<Column> getColumns() {
 		return getEmbeddedDescriptor().collectColumns();
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

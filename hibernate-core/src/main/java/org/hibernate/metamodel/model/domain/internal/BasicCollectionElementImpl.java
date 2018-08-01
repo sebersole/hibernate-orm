@@ -6,8 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.util.function.Predicate;
-
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
@@ -16,7 +14,6 @@ import org.hibernate.metamodel.model.domain.spi.AbstractCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmCollectionElementReferenceBasic;
@@ -28,9 +25,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -99,15 +94,6 @@ public class BasicCollectionElementImpl<J>
 		return column;
 	}
 
-//	@Override
-//	public List<Column> getColumns() {
-//		return Collections.singletonList( getBoundColumn() );
-//	}
-
-	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return basicType.getValueBinder( inclusionChecker, typeConfiguration );
-	}
 
 	@Override
 	public QueryResult createQueryResult(

@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
@@ -49,6 +51,7 @@ import org.hibernate.query.sqm.tree.expression.SqmLiteralTime;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTimestamp;
 import org.hibernate.query.sqm.tree.expression.SqmLiteralTrue;
 import org.hibernate.query.sqm.tree.expression.SqmNamedParameter;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
 import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
 import org.hibernate.query.sqm.tree.expression.SqmSubQuery;
 import org.hibernate.query.sqm.tree.expression.SqmUnaryOperation;
@@ -148,10 +151,8 @@ import org.hibernate.sql.ast.tree.spi.expression.LowerFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MaxFunction;
 import org.hibernate.sql.ast.tree.spi.expression.MinFunction;
 import org.hibernate.sql.ast.tree.spi.expression.ModFunction;
-import org.hibernate.sql.ast.tree.spi.expression.NamedParameter;
 import org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction;
 import org.hibernate.sql.ast.tree.spi.expression.NullifFunction;
-import org.hibernate.sql.ast.tree.spi.expression.PositionalParameter;
 import org.hibernate.sql.ast.tree.spi.expression.QueryLiteral;
 import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.ast.tree.spi.expression.SubQuery;
@@ -184,6 +185,10 @@ import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
+import org.hibernate.sql.exec.internal.JdbcParametersImpl;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
+import org.hibernate.sql.exec.spi.JdbcParameter;
+import org.hibernate.sql.exec.spi.JdbcParameters;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -959,28 +964,124 @@ public abstract class BaseSqmToSqlAstConverter
 		);
 	}
 
-	@Override
-	public NamedParameter visitNamedParameterExpression(SqmNamedParameter expression) {
-		// todo (6.0) : this actually needs to break the parameter (domain query) down into JDBC parameters
-		throw new NotYetImplementedFor6Exception( getClass() );
-//		return new NamedParameter(
-//				expression.getName(),
-//				(AllowableParameterType) expression.getExpressableType(),
-//				currentClauseStack.getCurrent(),
-//				producerContext.getSessionFactory().getTypeConfiguration()
-//		);
+	private final Map<SqmParameter,List<JdbcParameter>> jdbcParamsBySqmParam = new TreeMap<>(
+			(o1, o2) -> {
+				if ( o1 instanceof SqmNamedParameter ) {
+					final SqmNamedParameter one = (SqmNamedParameter) o1;
+					final SqmNamedParameter another = (SqmNamedParameter) o2;
+
+					return one.getName().compareTo( another.getName() );
+				}
+				else if ( o1 instanceof SqmPositionalParameter ) {
+					final SqmPositionalParameter one = (SqmPositionalParameter) o1;
+					final SqmPositionalParameter another = (SqmPositionalParameter) o2;
+
+					return one.getPosition().compareTo( another.getPosition() );
+				}
+
+				throw new HibernateException( "Unexpected SqmParameter type for comparison : " + o1 + " & " + o2 );
+			}
+	);
+
+	public Map<SqmParameter, List<JdbcParameter>> getJdbcParamsBySqmParam() {
+		return jdbcParamsBySqmParam;
+	}
+
+	/**
+	 * Ultimately used for "parameter metadata" and as key for a JdbcParameterBinding
+	 */
+	private final JdbcParameters jdbcParameters = new JdbcParametersImpl();
+
+	public JdbcParameters getJdbcParameters() {
+		return jdbcParameters;
 	}
 
 	@Override
-	public PositionalParameter visitPositionalParameterExpression(SqmPositionalParameter expression) {
-		// todo (6.0) : this actually needs to break the parameter (domain query) down into JDBC parameters
-		throw new NotYetImplementedFor6Exception( getClass() );
-//		return new PositionalParameter(
-//				expression.getPosition(),
-//				(AllowableParameterType) expression.getExpressableType(),
-//				currentClauseStack.getCurrent(),
-//				producerContext.getSessionFactory().getTypeConfiguration()
-//		);
+	public Expression visitNamedParameterExpression(SqmNamedParameter expression) {
+		final List<JdbcParameter> jdbcParameterList;
+
+		List<JdbcParameter> existing = this.jdbcParamsBySqmParam.get( expression );
+		if ( existing != null ) {
+			final int number = expression.getExpressableType().getNumberOfJdbcParametersNeeded();
+			assert existing.size() == number;
+			jdbcParameterList = existing;
+		}
+		else {
+			jdbcParameterList = new ArrayList<>();
+
+			//noinspection Convert2Lambda
+			expression.getExpressableType().visitJdbcTypes(
+					new Consumer<SqlExpressableType>() {
+						@Override
+						public void accept(SqlExpressableType type) {
+							jdbcParameterList.add(
+									new StandardJdbcParameterImpl(
+											jdbcParameters.getJdbcParameters().size(),
+											type,
+											currentClauseStack.getCurrent(),
+											getProducerContext().getSessionFactory().getTypeConfiguration()
+									)
+							);
+						}
+					},
+					currentClauseStack.getCurrent(),
+					getProducerContext().getSessionFactory().getTypeConfiguration()
+			);
+
+			jdbcParamsBySqmParam.put( expression, jdbcParameterList );
+			jdbcParameters.addParameters( jdbcParameterList );
+		}
+
+		if ( jdbcParameterList.size() > 1 ) {
+			return new SqlTuple( jdbcParameterList );
+		}
+		else {
+			return jdbcParameterList.get( 0 );
+		}
+	}
+
+	@Override
+	public Object visitPositionalParameterExpression(SqmPositionalParameter expression) {
+		final List<JdbcParameter> jdbcParameterList;
+
+		List<JdbcParameter> existing = this.jdbcParamsBySqmParam.get( expression );
+		if ( existing != null ) {
+			final int number = expression.getExpressableType().getNumberOfJdbcParametersNeeded();
+			assert existing.size() == number;
+			jdbcParameterList = existing;
+		}
+		else {
+			jdbcParameterList = new ArrayList<>();
+
+			//noinspection Convert2Lambda
+			expression.getExpressableType().visitJdbcTypes(
+					new Consumer<SqlExpressableType>() {
+						@Override
+						public void accept(SqlExpressableType type) {
+							jdbcParameterList.add(
+									new StandardJdbcParameterImpl(
+											jdbcParameters.getJdbcParameters().size(),
+											type,
+											currentClauseStack.getCurrent(),
+											getProducerContext().getSessionFactory().getTypeConfiguration()
+									)
+							);
+						}
+					},
+					currentClauseStack.getCurrent(),
+					getProducerContext().getSessionFactory().getTypeConfiguration()
+			);
+
+			jdbcParamsBySqmParam.put( expression, jdbcParameterList );
+			jdbcParameters.addParameters( jdbcParameterList );
+		}
+
+		if ( jdbcParameterList.size() > 1 ) {
+			return new SqlTuple( jdbcParameterList );
+		}
+		else {
+			return jdbcParameterList.get( 0 );
+		}
 	}
 
 

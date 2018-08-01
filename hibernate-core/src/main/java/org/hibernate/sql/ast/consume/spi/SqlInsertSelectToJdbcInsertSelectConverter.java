@@ -9,10 +9,10 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.consume.SyntaxException;
 import org.hibernate.sql.ast.tree.spi.InsertSelectStatement;
 import org.hibernate.sql.ast.tree.spi.assign.Assignment;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcInsertSelect;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
@@ -30,8 +30,8 @@ public class SqlInsertSelectToJdbcInsertSelectConverter
 	 */
 	public static JdbcInsertSelect interpret(
 			InsertSelectStatement sqlAst,
-			ExecutionContext executionContext) {
-		final SqlInsertSelectToJdbcInsertSelectConverter walker = new SqlInsertSelectToJdbcInsertSelectConverter( executionContext );
+			SessionFactoryImplementor sessionFactory) {
+		final SqlInsertSelectToJdbcInsertSelectConverter walker = new SqlInsertSelectToJdbcInsertSelectConverter( sessionFactory );
 		walker.visitInsertSelectStatement( sqlAst );
 		return new JdbcInsertSelect() {
 			@Override
@@ -52,8 +52,8 @@ public class SqlInsertSelectToJdbcInsertSelectConverter
 	}
 
 
-	private SqlInsertSelectToJdbcInsertSelectConverter(ExecutionContext executionContext) {
-		super( executionContext.getParameterBindingContext() );
+	private SqlInsertSelectToJdbcInsertSelectConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	private void visitInsertSelectStatement(InsertSelectStatement sqlAst) {

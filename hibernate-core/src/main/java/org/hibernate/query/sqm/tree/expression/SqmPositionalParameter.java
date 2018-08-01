@@ -6,13 +6,9 @@
  */
 package org.hibernate.query.sqm.tree.expression;
 
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -23,26 +19,26 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class SqmPositionalParameter implements SqmParameter {
 	private final int position;
 	private final boolean canBeMultiValued;
-	private ExpressableType expressableType;
+	private AllowableParameterType expressableType;
 
 	public SqmPositionalParameter(int position, boolean canBeMultiValued) {
 		this.position = position;
 		this.canBeMultiValued = canBeMultiValued;
 	}
 
-	public SqmPositionalParameter(int position, boolean canBeMultiValued, ExpressableType expressableType) {
+	public SqmPositionalParameter(int position, boolean canBeMultiValued, AllowableParameterType expressableType) {
 		this.position = position;
 		this.canBeMultiValued = canBeMultiValued;
 		this.expressableType = expressableType;
 	}
 
 	@Override
-	public ExpressableType getExpressableType() {
+	public AllowableParameterType getExpressableType() {
 		return expressableType;
 	}
 
 	@Override
-	public ExpressableType getInferableType() {
+	public AllowableParameterType getInferableType() {
 		return getExpressableType();
 	}
 
@@ -69,7 +65,15 @@ public class SqmPositionalParameter implements SqmParameter {
 	@Override
 	public void impliedType(ExpressableType expressableType) {
 		if ( expressableType != null ) {
-			this.expressableType = expressableType;
+			if ( expressableType instanceof AllowableParameterType ) {
+				this.expressableType = (AllowableParameterType) expressableType;
+			}
+			else {
+				throw new IllegalArgumentException(
+						"The implied type for positional parameter [" +
+								getPosition() + "] was not an AllowableParameterType - " + expressableType
+				);
+			}
 		}
 	}
 
@@ -79,12 +83,12 @@ public class SqmPositionalParameter implements SqmParameter {
 	}
 
 	@Override
-	public ExpressableType getAnticipatedType() {
+	public AllowableParameterType getAnticipatedType() {
 		return getExpressableType();
 	}
 
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return expressableType.getJavaTypeDescriptor();
+		return getExpressableType().getJavaTypeDescriptor();
 	}
 }

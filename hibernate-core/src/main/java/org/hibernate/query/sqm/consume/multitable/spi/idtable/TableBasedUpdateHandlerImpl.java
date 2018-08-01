@@ -80,7 +80,7 @@ public class TableBasedUpdateHandlerImpl
 
 			final JdbcUpdate jdbcUpdate = UpdateToJdbcUpdateConverter.createJdbcUpdate(
 					updateDescriptor.getSqlAstStatement(),
-					executionContext.getParameterBindingContext()
+					executionContext.getSessionFactory()
 			);
 
 			JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(

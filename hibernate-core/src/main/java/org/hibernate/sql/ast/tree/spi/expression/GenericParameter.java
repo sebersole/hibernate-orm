@@ -7,14 +7,19 @@
 package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.ast.produce.sqm.spi.ParameterSpec;
 import org.hibernate.sql.ast.tree.spi.SqlAstNode;
+import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.results.spi.Selectable;
 
 /**
  * @author Steve Ebersole
  */
 public interface GenericParameter
-		extends ParameterSpec, SqlAstNode, SqlExpressable, Expression, Selectable {
+		extends SqlAstNode, SqlExpressable, Expression, Selectable {
+	JdbcParameterBinder getParameterBinder();
 
+	@Override
+	default SqlExpressable getExpressable() {
+		return this;
+	}
 }

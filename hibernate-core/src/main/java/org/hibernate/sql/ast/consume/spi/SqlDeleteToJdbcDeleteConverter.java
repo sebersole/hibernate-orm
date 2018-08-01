@@ -9,12 +9,12 @@ package org.hibernate.sql.ast.consume.spi;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
 /**
  * @author Steve Ebersole
@@ -25,8 +25,8 @@ public class SqlDeleteToJdbcDeleteConverter
 
 	public static JdbcMutation interpret(
 			SqlAstDeleteDescriptor sqlAst,
-			ParameterBindingContext parameterBindingContext) {
-		final SqlDeleteToJdbcDeleteConverter walker = new SqlDeleteToJdbcDeleteConverter( parameterBindingContext );
+			SessionFactoryImplementor sessionFactory) {
+		final SqlDeleteToJdbcDeleteConverter walker = new SqlDeleteToJdbcDeleteConverter( sessionFactory );
 
 		walker.processDeleteStatement( sqlAst.getSqlAstStatement() );
 
@@ -48,8 +48,8 @@ public class SqlDeleteToJdbcDeleteConverter
 		};
 	}
 
-	public SqlDeleteToJdbcDeleteConverter(ParameterBindingContext parameterBindingContext) {
-		super( parameterBindingContext );
+	public SqlDeleteToJdbcDeleteConverter(SessionFactoryImplementor sessionFactory) {
+		super( sessionFactory );
 	}
 
 	private void processDeleteStatement(DeleteStatement deleteStatement) {

@@ -7,8 +7,6 @@
 
 package org.hibernate.metamodel.model.domain.internal;
 
-import java.util.function.Predicate;
-
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -17,7 +15,6 @@ import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorMappings;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -26,9 +23,7 @@ import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -74,11 +69,6 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	public DiscriminatorMappings getDiscriminatorMappings() {
 		// todo (6.0) : will probably need to collect these dynamically during "first phase" of runtime model creation
 		throw new NotYetImplementedException(  );
-	}
-
-	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return getBasicType().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	@Override

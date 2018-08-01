@@ -6,8 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.function.Predicate;
-
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityIdentifierReferenceComposite;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityTypedReference;
@@ -15,8 +13,6 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -44,12 +40,5 @@ public interface EntityIdentifierComposite<O,J>
 	@Override
 	default int getNumberOfJdbcParametersNeeded() {
 		return getColumns().size();
-	}
-
-	@Override
-	default ValueBinder getValueBinder(
-			Predicate<StateArrayContributor> inclusionChecker,
-			TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 }

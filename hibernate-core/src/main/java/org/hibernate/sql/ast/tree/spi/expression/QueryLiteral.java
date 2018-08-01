@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 
 /**
  * A literal specified in the source query.
@@ -18,6 +19,11 @@ import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 public class QueryLiteral extends AbstractLiteral {
 	public QueryLiteral(Object value, SqlExpressableType expressableType, Clause clause) {
 		super( value, expressableType, clause );
+	}
+
+	@Override
+	public SqlExpressable getExpressable() {
+		return this;
 	}
 
 	@Override

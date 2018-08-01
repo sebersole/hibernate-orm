@@ -20,6 +20,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
+import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.AbsFunction;
 import org.hibernate.sql.ast.tree.spi.expression.AvgFunction;
@@ -74,8 +75,8 @@ import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
+import org.hibernate.sql.exec.internal.JdbcParametersImpl;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
@@ -88,13 +89,27 @@ public abstract class AbstractSqlAstWalker
 		implements SqlAstWalker, JdbcRecommendedSqlTypeMappingContext  {
 
 	// pre-req state
+	private final SessionFactoryImplementor sessionFactory;
 	private final SqlAppender sqlAppender = this::appendSql;
+
+	// HQL : from Person p where p.name = :name or p.name = :name
+	// SQL : from person p where (p.fname,p.lname) = (?,?) or (p.fname,p.lname) = (?,?)
+
+	// 2 options:
+	//		1) each parameter in the SQL is a JdbcParameter
+	//		2) parameters in the SQL are "uniqued" based on their source (here SQM parameters)
 
 	// In-flight state
 	private final StringBuilder sqlBuffer = new StringBuilder();
 	private final List<JdbcParameterBinder> parameterBinders = new ArrayList<>();
 
+	private final JdbcParametersImpl jdbcParameters = new JdbcParametersImpl();
+
 	private final Stack<Clause> clauseStack = new StandardStack<>();
+
+	protected AbstractSqlAstWalker(SessionFactoryImplementor sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -669,33 +684,21 @@ public abstract class AbstractSqlAstWalker
 	@Override
 	public void visitGenericParameter(GenericParameter parameter) {
 		visitJdbcParameterBinder( parameter.getParameterBinder() );
+
+		if ( parameter instanceof JdbcParameter ) {
+			jdbcParameters.addParameter( (JdbcParameter) parameter );
+		}
 	}
+
+
 
 	protected void visitJdbcParameterBinder(JdbcParameterBinder jdbcParameterBinder) {
 		parameterBinders.add( jdbcParameterBinder );
 
-		final int columnCount = jdbcParameterBinder.getNumberOfJdbcParametersNeeded();
-		final boolean needsParentheses = isCurrentlyInPredicate() && columnCount > 1;
+		// todo (6.0) : ? wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
 
-		// todo : (6.0) wrap in cast function call if the literal occurs in SELECT (?based on Dialect?)
-
-		if ( needsParentheses ) {
-			appendSql( "(" );
-		}
-
-		String separator = "";
-		for ( int i = 0; i < columnCount; i++ ) {
-			appendSql( separator );
-			appendSql( "?" );
-			separator = ", ";
-		}
-
-		if ( needsParentheses ) {
-			appendSql( ")" );
-		}
+		appendSql( "?" );
 	}
-
-	protected abstract ParameterBindingContext getParameterBindingContext();
 
 	@Override
 	public void visitNamedParameter(NamedParameter namedParameter) {
@@ -944,6 +947,6 @@ public abstract class AbstractSqlAstWalker
 	}
 
 	public SessionFactoryImplementor getSessionFactory() {
-		return getParameterBindingContext().getSessionFactory();
+		return sessionFactory;
 	}
 }

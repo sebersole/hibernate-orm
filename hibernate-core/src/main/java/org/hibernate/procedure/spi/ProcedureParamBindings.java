@@ -8,10 +8,12 @@ package org.hibernate.procedure.spi;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.procedure.internal.ProcedureParameterBindingImpl;
+import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
 
@@ -90,6 +92,16 @@ public class ProcedureParamBindings implements QueryParameterBindings<ProcedureP
 							//  for now, just log a warning
 						}
 					}
+				}
+		);
+	}
+
+	@Override
+	public void visitBindings(BiConsumer<QueryParameterImplementor<?>, QueryParameterBinding<?>> action) {
+		parameterMetadata.visitRegistrations(
+				queryParameter -> {
+					final ProcedureParameterBindingImplementor binding = bindingMap.get( queryParameter );
+					action.accept( (QueryParameterImplementor<?>) queryParameter, binding );
 				}
 		);
 	}

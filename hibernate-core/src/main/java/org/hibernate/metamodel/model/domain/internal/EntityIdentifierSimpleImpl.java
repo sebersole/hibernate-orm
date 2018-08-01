@@ -8,7 +8,8 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -20,7 +21,6 @@ import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -29,7 +29,6 @@ import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -156,11 +155,6 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
-	public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-		return basicType.getValueBinder( inclusionChecker, typeConfiguration );
-	}
-
-	@Override
 	public boolean isOptional() {
 		return false;
 	}
@@ -172,5 +166,22 @@ public class EntityIdentifierSimpleImpl<O,J>
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		return hydratedForm;
+	}
+
+	@Override
+	public void visitJdbcTypes(
+			Consumer action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		action.accept( getBoundColumn().getExpressableType() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void visitColumns(
+			BiConsumer action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		action.accept( getBoundColumn().getExpressableType(), getBoundColumn() );
 	}
 }

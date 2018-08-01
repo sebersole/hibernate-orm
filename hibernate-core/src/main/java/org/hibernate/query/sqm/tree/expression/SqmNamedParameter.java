@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.expression;
 
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -18,33 +19,41 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class SqmNamedParameter implements SqmParameter {
 	private final String name;
 	private final boolean canBeMultiValued;
-	private ExpressableType expressableType;
+	private AllowableParameterType expressableType;
 
 	public SqmNamedParameter(String name, boolean canBeMultiValued) {
 		this.name = name;
 		this.canBeMultiValued = canBeMultiValued;
 	}
 
-	public SqmNamedParameter(String name, boolean canBeMultiValued, ExpressableType expressableType) {
+	public SqmNamedParameter(String name, boolean canBeMultiValued, AllowableParameterType expressableType) {
 		this.name = name;
 		this.canBeMultiValued = canBeMultiValued;
 		this.expressableType = expressableType;
 	}
 
 	@Override
-	public ExpressableType getExpressableType() {
+	public AllowableParameterType getExpressableType() {
 		return expressableType;
 	}
 
 	@Override
-	public ExpressableType getInferableType() {
+	public AllowableParameterType getInferableType() {
 		return getExpressableType();
 	}
 
 	@Override
 	public void impliedType(ExpressableType expressableType) {
 		if ( expressableType != null ) {
-			this.expressableType = expressableType;
+			if ( expressableType instanceof AllowableParameterType ) {
+				this.expressableType = (AllowableParameterType) expressableType;
+			}
+			else {
+				throw new IllegalArgumentException(
+						"The implied type for named parameter [" +
+								getName() + "] was not an AllowableParameterType - " + expressableType
+				);
+			}
 		}
 	}
 
@@ -74,7 +83,7 @@ public class SqmNamedParameter implements SqmParameter {
 	}
 
 	@Override
-	public ExpressableType getAnticipatedType() {
+	public AllowableParameterType getAnticipatedType() {
 		return getExpressableType();
 	}
 

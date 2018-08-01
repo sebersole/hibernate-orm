@@ -6,14 +6,11 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
-import java.util.function.Predicate;
 import javax.persistence.TemporalType;
 
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -29,13 +26,6 @@ public interface EmbeddedValueExpressableType<T> extends ExpressableType<T>, All
 	@Override
 	default int getNumberOfJdbcParametersNeeded() {
 		return getEmbeddedDescriptor().getNumberOfJdbcParametersNeeded();
-	}
-
-	@Override
-	default ValueBinder getValueBinder(
-			Predicate<StateArrayContributor> inclusionChecker,
-			TypeConfiguration typeConfiguration) {
-		return getEmbeddedDescriptor().getValueBinder( inclusionChecker, typeConfiguration );
 	}
 
 	default AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {

@@ -7,6 +7,7 @@
 package org.hibernate.query.internal;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.hibernate.Incubating;
 import org.hibernate.QueryException;
@@ -139,4 +140,12 @@ public class QueryParameterBindingsImpl implements QueryParameterBindings {
 		);
 	}
 
+	@Override
+	public void visitBindings(BiConsumer action) {
+		parameterMetadata.visitRegistrations(
+				queryParameterImplementor -> {
+					action.accept( queryParameterImplementor, parameterBindingMap.get( queryParameterImplementor ) );
+				}
+		);
+	}
 }

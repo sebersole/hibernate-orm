@@ -6,18 +6,13 @@
  */
 package org.hibernate.query.sqm.tree.expression;
 
-import java.util.function.Predicate;
-
 import org.hibernate.HibernateException;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.ValueBinder;
 import org.hibernate.type.spi.BasicType;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -58,11 +53,6 @@ public class SqmLiteralNull implements SqmLiteral<Void> {
 		@Override
 		public int getNumberOfJdbcParametersNeeded() {
 			return 0;
-		}
-
-		@Override
-		public ValueBinder getValueBinder(Predicate<StateArrayContributor> inclusionChecker, TypeConfiguration typeConfiguration) {
-			return null;
 		}
 
 		@Override

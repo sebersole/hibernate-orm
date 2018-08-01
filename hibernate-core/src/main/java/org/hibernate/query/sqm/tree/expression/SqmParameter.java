@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.expression;
 
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 
 /**
@@ -60,5 +61,11 @@ public interface SqmParameter extends ImpliedTypeSqmExpression {
 	 *
 	 * @return The anticipated Type.
 	 */
-	ExpressableType getAnticipatedType();
+	AllowableParameterType getAnticipatedType();
+
+	@Override
+	AllowableParameterType getExpressableType();
+
+	@Override
+	AllowableParameterType getInferableType();
 }

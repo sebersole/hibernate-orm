@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.OptimisticLockType;
@@ -18,14 +17,9 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
-import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
-import org.hibernate.type.descriptor.spi.ValueBinder;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Optional contract for a Navigable that can be part of it's container's
@@ -52,12 +46,6 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	}
 
 	PropertyAccess getPropertyAccess();
-
-	default ValueBinder getValueBinder(
-			Predicate<StateArrayContributor> inclusionChecker,
-			TypeConfiguration typeConfiguration) {
-		throw new NotYetImplementedFor6Exception( getClass().getName() );
-	}
 
 	/**
 	 * Is this value nullable?

@@ -6,26 +6,31 @@
  */
 package org.hibernate.loader.internal;
 
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.spi.QueryOptions;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByUniqueKeyBuilder;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.exec.internal.JdbcParameterBindingsImpl;
 import org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl;
-import org.hibernate.sql.exec.internal.LoadParameterBindingContext;
 import org.hibernate.sql.exec.internal.RowTransformerSingularReturnImpl;
+import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcParameterBinding;
+import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 
@@ -49,23 +54,50 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 
 	@Override
 	public T load(
-			Object uk, SharedSessionContractImplementor session, Options options) {
-		final List<Object> loadIds = Collections.singletonList( uk );
-
-		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
-				session.getFactory(),
-				loadIds
-		);
+			Object uk,
+			SharedSessionContractImplementor session,
+			Options options) {
 
 		final JdbcSelect jdbcSelect = resolveJdbcSelect(
 				options.getLockOptions(),
-				parameterBindingContext,
+				session
+		);
+
+		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
+
+		final SingularPersistentAttributeEntity attribute =
+				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
+
+		attribute.dehydrate(
+				attribute.unresolve( uk, session ),
+				(jdbcValue, type, boundColumn) -> {
+					jdbcParameterBindings.addBinding(
+							new StandardJdbcParameterImpl(
+									jdbcParameterBindings.getBindings().size(),
+									type,
+									Clause.WHERE,
+									session.getFactory().getTypeConfiguration()
+							),
+							new JdbcParameterBinding() {
+								@Override
+								public SqlExpressableType getBindType() {
+									return type;
+								}
+
+								@Override
+								public Object getBindValue() {
+									return jdbcValue;
+								}
+							}
+					);
+				},
+				Clause.WHERE,
 				session
 		);
 
 		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
-				getExecutionContext( session, parameterBindingContext ),
+				getExecutionContext( session, jdbcParameterBindings ),
 				RowTransformerSingularReturnImpl.instance()
 		);
 
@@ -78,7 +110,6 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 
 	private JdbcSelect resolveJdbcSelect(
 			LockOptions lockOptions,
-			ParameterBindingContext parameterBindingContext,
 			SharedSessionContractImplementor session) {
 		final LoadQueryInfluencers loadQueryInfluencers = session.getLoadQueryInfluencers();
 		if ( entityDescriptor.isAffectedByEnabledFilters( session ) ) {
@@ -87,7 +118,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 			// This case is special because the filters need to be applied in order to
 			// 		properly restrict the SQL/JDBC results.  For this reason it has higher
 			// 		precedence than even "internal" fetch profiles.
-			return createJdbcSelect( lockOptions, loadQueryInfluencers, parameterBindingContext );
+			return createJdbcSelect( lockOptions, loadQueryInfluencers, session.getSessionFactory() );
 		}
 
 		if ( loadQueryInfluencers.getEnabledInternalFetchProfileType() != null ) {
@@ -100,7 +131,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 						internalFetchProfileType -> createJdbcSelect(
 								lockOptions,
 								loadQueryInfluencers,
-								parameterBindingContext
+								session.getSessionFactory()
 						)
 				);
 			}
@@ -114,14 +145,18 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 		if ( cacheable ) {
 			return selectByLockMode.computeIfAbsent(
 					lockOptions.getLockMode(),
-					lockMode -> createJdbcSelect( lockOptions, loadQueryInfluencers, parameterBindingContext )
+					lockMode -> createJdbcSelect(
+							lockOptions,
+							loadQueryInfluencers,
+							session.getSessionFactory()
+					)
 			);
 		}
 
 		return createJdbcSelect(
 				lockOptions,
 				loadQueryInfluencers,
-				parameterBindingContext
+				session.getSessionFactory()
 		);
 
 	}
@@ -129,7 +164,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 	private JdbcSelect createJdbcSelect(
 			LockOptions lockOptions,
 			LoadQueryInfluencers queryInfluencers,
-			ParameterBindingContext parameterBindingContext) {
+			SessionFactoryImplementor sessionFactory) {
 		SingularPersistentAttributeEntity attribute =
 				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
 
@@ -139,14 +174,13 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 				attribute
 		);
 
-		final SqlAstSelectDescriptor selectDescriptor = selectBuilder
-				.generateSelectStatement( 1, queryInfluencers, lockOptions );
-
-
-		return SqlAstSelectToJdbcSelectConverter.interpret(
-				selectDescriptor,
-				parameterBindingContext
+		final SqlAstSelectDescriptor selectDescriptor = selectBuilder.generateSelectStatement(
+				1,
+				queryInfluencers,
+				lockOptions
 		);
+
+		return SqlAstSelectToJdbcSelectConverter.interpret( selectDescriptor, sessionFactory );
 	}
 
 	@SuppressWarnings("RedundantIfStatement")
@@ -164,7 +198,9 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 
 	private ExecutionContext getExecutionContext(
 			SharedSessionContractImplementor session,
-			ParameterBindingContext parameterBindingContext) {
+			JdbcParameterBindings jdbcParameterBindings) {
+		final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
+
 		return new ExecutionContext() {
 			@Override
 			public SharedSessionContractImplementor getSession() {
@@ -179,6 +215,11 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 			@Override
 			public ParameterBindingContext getParameterBindingContext() {
 				return parameterBindingContext;
+			}
+
+			@Override
+			public JdbcParameterBindings getJdbcParameterBindings() {
+				return jdbcParameterBindings;
 			}
 
 			@Override

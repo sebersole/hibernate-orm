@@ -186,7 +186,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 
 		final JdbcInsertSelect insertSelectCall = SqlInsertSelectToJdbcInsertSelectConverter.interpret(
 				idTableInsertSelectAst,
-				executionContext
+				executionContext.getSessionFactory()
 		);
 
 		return JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(

@@ -8,8 +8,8 @@ package org.hibernate.sql.ast;
 
 import java.util.function.Predicate;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
 
 /**
  * Used to indicate which query clause we are currently processing
@@ -17,9 +17,9 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
  * @author Steve Ebersole
  */
 public enum Clause {
-	INSERT( AllowableParameterType.STANDARD_INSERT_INCLUSION_CHECK ),
-	UPDATE( AllowableParameterType.STANDARD_UPDATE_INCLUSION_CHECK),
-	DELETE( AllowableParameterType.STANDARD_UPDATE_INCLUSION_CHECK),
+	INSERT( Writeable.STANDARD_INSERT_INCLUSION_CHECK ),
+	UPDATE( Writeable.STANDARD_UPDATE_INCLUSION_CHECK),
+	DELETE( Writeable.STANDARD_UPDATE_INCLUSION_CHECK),
 	SELECT( stateArrayContributor -> true ),
 	FROM( stateArrayContributor -> true ),
 	WHERE( stateArrayContributor -> true ),

@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.Remove;
@@ -19,7 +18,6 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
