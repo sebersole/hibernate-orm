@@ -32,8 +32,6 @@ public class LiteralParameter implements GenericParameter, JdbcParameterBinding,
 			SqlExpressableType type,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
-		assert type.getJavaTypeDescriptor().isInstance( value );
-
 		this.value = value;
 		this.type = type;
 	}

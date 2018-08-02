@@ -12,6 +12,8 @@ import java.sql.SQLException;
 
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
+import org.jboss.logging.Logger;
+
 /**
  * The low-level contract for binding (writing) values to JDBC.
  *
@@ -23,6 +25,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
  * @see JdbcValueExtractor
  */
 public interface JdbcValueBinder<J> {
+	Logger BINDING_LOGGER = Logger.getLogger( JdbcValueBinder.class );
 
 	/**
 	 * Bind a value to a prepared statement.

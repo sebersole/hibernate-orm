@@ -234,7 +234,11 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		// todo (6.0) : account for non-generated identifiers
 
 		getHierarchy().getIdentifierDescriptor().dehydrate(
-				getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				// NOTE : at least according to the argument name (`unresolvedId`), the
+				// 		incoming id value should already be unresolved - so do not
+				// 		unresolve it again
+				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
 					insertStatement.addValue(
@@ -283,7 +287,13 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					int position = contributor.getStateArrayPosition();
 					final Object domainValue = fields[position];
 					contributor.dehydrate(
-							contributor.unresolve( domainValue, session ),
+							// todo (6.0) : fix this - specifically this isInstance check is bad
+							// 		sometimes the values here are unresolved and sometimes not;
+							//		need a way to ensure they are always one form or the other
+							//		during these calls (ideally unresolved)
+							contributor.getJavaTypeDescriptor().isInstance( domainValue )
+									? contributor.unresolve( domainValue, session )
+									: domainValue,
 							(jdbcValue, type, boundColumn) -> {
 								if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
 									insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );

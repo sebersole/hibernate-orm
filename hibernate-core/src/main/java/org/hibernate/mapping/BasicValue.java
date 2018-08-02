@@ -73,16 +73,13 @@ public class BasicValue
 	public BasicValue(MetadataBuildingContext buildingContext, MappedTable table) {
 		super( buildingContext, table );
 
-		this.enumType = buildingContext.getBuildingOptions().getImplicitEnumType();
 		this.typeConfiguration = buildingContext.getBootstrapContext().getTypeConfiguration();
 		this.preferredJdbcTypeCodeForBoolean = buildingContext.getPreferredSqlTypeCodeForBoolean();
 
 		this.javaTypeMapping = new BasicJavaTypeMapping( this );
-		buildingContext
-				.getMetadataCollector()
-				.registerValueMappingResolver(
-						resolutionContext -> resolve( resolutionContext )
-				);
+		buildingContext.getMetadataCollector().registerValueMappingResolver(
+				resolutionContext -> resolve( resolutionContext )
+		);
 	}
 
 	@Override
@@ -92,8 +89,7 @@ public class BasicValue
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Boolean resolve(
-			ResolutionContext context) {
+	public Boolean resolve(ResolutionContext context) {
 		final String name = getTypeName();
 
 		if ( basicType == null && name != null ) {
@@ -118,7 +114,6 @@ public class BasicValue
 			this.sqlTypeDescriptor = basicType.getSqlTypeDescriptor();
 		}
 		else {
-
 			if ( javaTypeDescriptor == null && resolvedJavaClass != null ) {
 				javaTypeDescriptor = (BasicJavaDescriptor) context.getBootstrapContext()
 						.getTypeConfiguration()
@@ -170,7 +165,9 @@ public class BasicValue
 
 							@Override
 							public EnumType getEnumeratedType() {
-								return enumType;
+								return enumType == null
+										? context.getBootstrapContext().getMetadataBuildingOptions().getImplicitEnumType()
+										: enumType;
 							}
 
 							@Override
@@ -207,8 +204,69 @@ public class BasicValue
 			}
 		}
 
-		MappedColumn column = getMappedColumn();
-		column.setJavaTypeMapping( javaTypeMapping );
+		final MappedColumn column = getMappedColumn();
+
+		final JavaTypeMapping columnJavaTypeMapping;
+
+		if ( enumType != null ) {
+			if ( enumType == EnumType.STRING ) {
+				column.setJavaTypeMapping(
+						new JavaTypeMapping() {
+							@Override
+							public String getTypeName() {
+								return null;
+							}
+
+							@Override
+							public JavaTypeDescriptor getJavaTypeDescriptor() throws NotYetResolvedException {
+								return context.getBootstrapContext().getTypeConfiguration()
+										.getJavaTypeDescriptorRegistry()
+										.getDescriptor( String.class );
+							}
+						}
+				);
+			}
+			else {
+				column.setJavaTypeMapping(
+						new JavaTypeMapping() {
+							@Override
+							public String getTypeName() {
+								return null;
+							}
+
+							@Override
+							public JavaTypeDescriptor getJavaTypeDescriptor() throws NotYetResolvedException {
+								return context.getBootstrapContext().getTypeConfiguration()
+										.getJavaTypeDescriptorRegistry()
+										.getDescriptor( Integer.class );
+							}
+						}
+				);
+			}
+		}
+		else if ( attributeConverterDescriptor != null ) {
+			column.setJavaTypeMapping(
+					new JavaTypeMapping() {
+						@Override
+						public String getTypeName() {
+							return null;
+						}
+
+						@Override
+						public JavaTypeDescriptor getJavaTypeDescriptor() throws NotYetResolvedException {
+							final Class<?> convertedRelationalJavaType = attributeConverterDescriptor.getRelationalValueResolvedType()
+									.getErasedType();
+							return context.getBootstrapContext().getTypeConfiguration()
+									.getJavaTypeDescriptorRegistry()
+									.getDescriptor( convertedRelationalJavaType );
+						}
+					}
+			);
+		}
+		else {
+			column.setJavaTypeMapping( javaTypeMapping );
+		}
+
 		column.setSqlTypeDescriptorAccess( () -> basicType.getSqlTypeDescriptor() );
 
 		return true;

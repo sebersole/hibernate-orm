@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
@@ -27,6 +28,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.loader.internal.StandardSingleUniqueKeyEntityLoader;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
+import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -38,7 +40,9 @@ import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -81,11 +85,14 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.spi.TypeConfiguration;
 
 import static org.hibernate.loader.spi.SingleIdEntityLoader.NO_LOAD_OPTIONS;
+import static org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute.SingularAttributeClassification.MANY_TO_ONE;
+import static org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute.SingularAttributeClassification.ONE_TO_ONE;
 
 
 /**
@@ -97,6 +104,7 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	private final SingularAttributeClassification classification;
 	private final PersistentAttributeType persistentAttributeType;
+	private final boolean constrained;
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
 	private final EntityDescriptor<J> entityDescriptor;
@@ -112,6 +120,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			SingularAttributeClassification classification,
 			RuntimeModelCreationContext context) {
 		super( runtimeModelContainer, bootModelAttribute, propertyAccess, disposition );
+
 		this.classification = classification;
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
 
@@ -146,11 +155,13 @@ public class SingularPersistentAttributeEntity<O,J>
 			this.foreignKey = context.getDatabaseObjectResolver().resolveForeignKey( valueMapping.getForeignKey() );
 		}
 
-		if ( SingularAttributeClassification.MANY_TO_ONE.equals( classification ) ) {
+		if ( MANY_TO_ONE.equals( classification ) ) {
 			persistentAttributeType = PersistentAttributeType.MANY_TO_ONE;
+			constrained = true;
 		}
 		else {
 			persistentAttributeType = PersistentAttributeType.ONE_TO_ONE;
+			constrained = ( (OneToOne) valueMapping ).isConstrained();
 		}
 
 		this.sqlAliasStem =  SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( bootModelAttribute.getName() );
@@ -378,8 +389,20 @@ public class SingularPersistentAttributeEntity<O,J>
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
-		// todo (6.0) : assumes FK refers to owner's PK which is not always true
-		return getEntityDescriptor().getIdentifier( value, session );
+		if ( referencedAttributeName == null ) {
+			return getAssociatedEntityDescriptor().getIdentifierDescriptor().unresolve(
+					getAssociatedEntityDescriptor().getIdentifier( value, session ),
+					session
+			);
+		}
+		else {
+			final NonIdPersistentAttribute referencedAttribute = getAssociatedEntityDescriptor()
+					.findPersistentAttribute( referencedAttributeName );
+			return referencedAttribute.unresolve(
+					referencedAttribute.getPropertyAccess().getGetter().get( value ),
+					session
+			);
+		}
 	}
 
 	@Override
@@ -389,17 +412,39 @@ public class SingularPersistentAttributeEntity<O,J>
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-		// todo (6.0) (fk-to-id) : another place where we assume association fks point to the pks
-		getEntityDescriptor().getHierarchy().getIdentifierDescriptor().dehydrate(
+		if ( !clause.getInclusionChecker().test( this ) ) {
+			return;
+		}
+
+		if ( classification == ONE_TO_ONE && isOptional() && !constrained ) {
+			return;
+		}
+
+		final Writeable writeable;
+
+		if ( referencedAttributeName == null ) {
+			writeable = getAssociatedEntityDescriptor().getIdentifierDescriptor();
+		}
+		else {
+			writeable = getAssociatedEntityDescriptor().findPersistentAttribute( referencedAttributeName );
+		}
+
+		final Iterator<Column> columnItr = foreignKey.getColumnMappings().getReferringColumns().iterator();
+		writeable.dehydrate(
 				value,
-				(jdbcValue, type, targetColumn) -> jdbcValueCollector.collect(
-						jdbcValue,
-						type,
-						foreignKey.getColumnMappings().findReferringColumn( targetColumn )
-				),
+				(jdbcValue, sqlExpressableType, boundColumn) -> {
+					assert columnItr.hasNext();
+					jdbcValueCollector.collect(
+							jdbcValue,
+							sqlExpressableType,
+							columnItr.next()
+					);
+				},
 				clause,
 				session
 		);
+
+		assert !columnItr.hasNext();
 	}
 
 	@Override
@@ -622,7 +667,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			NonNullableTransientDependencies nonNullableTransientEntities,
 			SharedSessionContractImplementor session) {
 		if ( isNullable()
-				&& getAttributeTypeClassification() != SingularAttributeClassification.ONE_TO_ONE
+				&& getAttributeTypeClassification() != ONE_TO_ONE
 				&& nullifier.isNullifiable( getEntityDescriptor().getEntityName(), value ) ) {
 			nonNullableTransientEntities.add( getEntityDescriptor().getEntityName(), value );
 		}

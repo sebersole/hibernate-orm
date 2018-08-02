@@ -110,6 +110,7 @@ public interface ManagedTypeDescriptor<T>
 	 * Set the given values to the mapped properties of the given object
 	 */
 	default void setPropertyValues(Object object, Object[] values) {
+		// todo (6.0) : hook in BytecodeProvider's ReflectionOptimizer (if one) for this managed-type
 		visitStateArrayContributors(
 				contributor -> {
 					final Object value = values[ contributor.getStateArrayPosition() ];
@@ -126,6 +127,7 @@ public interface ManagedTypeDescriptor<T>
 	 * Return the (loaded) values of the mapped properties of the object (not including backrefs)
 	 */
 	default Object[] getPropertyValues(Object object) {
+		// todo (6.0) : hook in BytecodeProvider's ReflectionOptimizer (if one) for this managed-type
 		final Object[] values = new Object[ getStateArrayContributors().size() ];
 		visitStateArrayContributors(
 				contributor -> values[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().get( object )

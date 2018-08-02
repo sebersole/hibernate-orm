@@ -10,13 +10,10 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.hibernate.internal.CoreLogging;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.JdbcTypeNameMapper;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
-
-import org.jboss.logging.Logger;
 
 /**
  * Convenience base implementation of {@link JdbcValueBinder}
@@ -24,8 +21,6 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
-	private static final Logger log = CoreLogging.logger( AbstractJdbcValueBinder.class );
-
 	private static final String BIND_MSG_TEMPLATE = "binding parameter [%s] as [%s] - [%s]";
 	private static final String NULL_BIND_MSG_TEMPLATE = "binding parameter [%s] as [%s] - [null]";
 
@@ -47,10 +42,10 @@ public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
 
 	@Override
 	public final void bind(PreparedStatement st, int parameterPosition, J value, ExecutionContext executionContext) throws SQLException {
-		final boolean traceEnabled = log.isTraceEnabled();
+		final boolean traceEnabled = BINDING_LOGGER.isTraceEnabled();
 		if ( value == null ) {
 			if ( traceEnabled ) {
-				log.trace(
+				BINDING_LOGGER.trace(
 						String.format(
 								NULL_BIND_MSG_TEMPLATE,
 								parameterPosition,
@@ -62,7 +57,7 @@ public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
 		}
 		else {
 			if ( traceEnabled ) {
-				log.trace(
+				BINDING_LOGGER.trace(
 						String.format(
 								BIND_MSG_TEMPLATE,
 								parameterPosition,
@@ -77,10 +72,10 @@ public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
 
 	@Override
 	public final void bind(CallableStatement st, String parameterName, J value, ExecutionContext executionContext) throws SQLException {
-		final boolean traceEnabled = log.isTraceEnabled();
+		final boolean traceEnabled = BINDING_LOGGER.isTraceEnabled();
 		if ( value == null ) {
 			if ( traceEnabled ) {
-				log.trace(
+				BINDING_LOGGER.trace(
 						String.format(
 								NULL_BIND_MSG_TEMPLATE,
 								parameterName,
@@ -92,7 +87,7 @@ public abstract class AbstractJdbcValueBinder<J> implements JdbcValueBinder<J> {
 		}
 		else {
 			if ( traceEnabled ) {
-				log.trace(
+				BINDING_LOGGER.trace(
 						String.format(
 								BIND_MSG_TEMPLATE,
 								parameterName,
