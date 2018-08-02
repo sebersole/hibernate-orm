@@ -276,6 +276,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	public boolean isInsertable() {
 		for ( StateArrayContributor contributor : getEmbeddedDescriptor().getStateArrayContributors() ) {
 			if ( contributor.isInsertable() ) {
+				// it is illegal to mix insertable and non-insertable
 				return true;
 			}
 		}
@@ -286,6 +287,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	public boolean isUpdatable() {
 		for ( StateArrayContributor contributor : getEmbeddedDescriptor().getStateArrayContributors() ) {
 			if ( contributor.isUpdatable() ) {
+				// it is illegal to mix updatable and non-updatable
 				return true;
 			}
 		}

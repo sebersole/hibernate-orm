@@ -450,11 +450,11 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							new RelationalPredicate(
 									RelationalPredicate.Operator.EQUAL,
 									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, boundColumn.getExpressableType(), Clause.UPDATE, session.getFactory().getTypeConfiguration()  )
+									new LiteralParameter( jdbcValue, boundColumn.getExpressableType(), Clause.WHERE, session.getFactory().getTypeConfiguration()  )
 							)
 					);
 				},
-				Clause.UPDATE,
+				Clause.WHERE,
 				session
 		);
 

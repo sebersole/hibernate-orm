@@ -214,7 +214,9 @@ public class BasicSingularPersistentAttribute<O, J>
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-		jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
+		if ( clause.getInclusionChecker().test( this ) ) {
+			jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
+		}
 	}
 
 	@Override
