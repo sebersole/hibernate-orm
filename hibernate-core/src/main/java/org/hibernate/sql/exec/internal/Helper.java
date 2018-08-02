@@ -17,6 +17,7 @@ import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
 import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameterBinding;
@@ -63,8 +64,9 @@ public class Helper {
 		domainParamBindings.visitBindings(
 				(queryParameterImplementor, queryParameterBinding) -> {
 					final List<JdbcParameter> jdbcParameters = jdbcParamsByDomainParams.get( queryParameterImplementor );
+					final Object bindValue = domainParamBindings.getBinding( queryParameterImplementor ).getBindValue();
 					queryParameterBinding.getBindType().dehydrate(
-							domainParamBindings.getBinding( queryParameterImplementor ).getBindValue(),
+							queryParameterBinding.getBindType().unresolve( bindValue, session ),
 							new Writeable.JdbcValueCollector() {
 								private int position = 0;
 
@@ -88,7 +90,7 @@ public class Helper {
 									position++;
 								}
 							},
-							null,
+							Clause.IRRELEVANT,
 							session
 					);
 				}

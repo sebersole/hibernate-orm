@@ -208,7 +208,11 @@ public class BasicValue
 
 		final JavaTypeMapping columnJavaTypeMapping;
 
-		if ( enumType != null ) {
+		if ( basicType.getJavaTypeDescriptor() instanceof EnumJavaDescriptor ) {
+			final EnumType enumType = this.enumType == null
+					? context.getBootstrapContext().getMetadataBuildingOptions().getImplicitEnumType()
+					: this.enumType;
+
 			if ( enumType == EnumType.STRING ) {
 				column.setJavaTypeMapping(
 						new JavaTypeMapping() {
@@ -408,6 +412,9 @@ public class BasicValue
 		final JavaTypeDescriptor jtd = basicType.getJavaTypeDescriptor();
 
 		if ( jtd instanceof EnumJavaDescriptor ) {
+			final EnumType enumType = this.enumType == null
+					? creationContext.getBootstrapContext().getMetadataBuildingOptions().getImplicitEnumType()
+					: this.enumType;
 			switch ( enumType ) {
 				case STRING: {
 					return new NamedEnumValueConverter( (EnumJavaDescriptor) jtd, creationContext );

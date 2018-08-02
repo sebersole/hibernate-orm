@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
@@ -53,6 +54,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
 import org.hibernate.sql.Update;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
 import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -386,9 +388,32 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		return session.doReturningWork(
 				connection -> {
 					try {
-						int index = 1;
+						final AtomicInteger count = new AtomicInteger();
 						for ( QueryParameterBinding binding : updateContext.getBindings() ) {
-							index += binding.bind( index, preparedStatement, executionContext );
+							binding.type.dehydrate(
+									binding.type.unresolve( binding.value, session ),
+									(jdbcValue, sqlExpressableType, boundColumn) -> {
+										try {
+											sqlExpressableType.getJdbcValueBinder().bind(
+													preparedStatement,
+													count.getAndIncrement(),
+													jdbcValue,
+													executionContext
+											);
+										}
+										catch (SQLException e) {
+											session.getJdbcServices().getSqlExceptionHelper().convert(
+													e,
+													"Unable to bind parameter",
+													updateSql
+											);
+										}
+									},
+									// what clause?
+									Clause.IRRELEVANT,
+									session
+							);
+//							index += binding.bind( index, preparedStatement, executionContext );
 						}
 						return jdbcCoordinator.getResultSetReturn().executeUpdate( preparedStatement );
 					}

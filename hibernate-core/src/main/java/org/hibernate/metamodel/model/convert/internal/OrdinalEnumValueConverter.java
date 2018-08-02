@@ -37,12 +37,29 @@ public class OrdinalEnumValueConverter<E extends Enum> implements EnumValueConve
 	public OrdinalEnumValueConverter(
 			EnumJavaDescriptor<E> enumJavaDescriptor,
 			RuntimeModelCreationContext creationContext) {
-		this.enumJavaDescriptor = enumJavaDescriptor;
+		this(
+				enumJavaDescriptor,
+				creationContext.getTypeConfiguration()
+						.getSqlTypeDescriptorRegistry()
+						.getDescriptor( Types.INTEGER )
+						.getJdbcRecommendedJavaTypeMapping( creationContext.getTypeConfiguration() )
+		);
+	}
 
-		final TypeConfiguration typeConfiguration = creationContext.getTypeConfiguration();
-		this.relationalJavaDescriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
-				.getDescriptor( getJdbcTypeCode() )
-				.getJdbcRecommendedJavaTypeMapping( typeConfiguration );
+	public OrdinalEnumValueConverter(EnumJavaDescriptor<E> enumJavaDescriptor, TypeConfiguration typeConfiguration) {
+		this(
+				enumJavaDescriptor,
+				typeConfiguration.getSqlTypeDescriptorRegistry()
+						.getDescriptor( Types.INTEGER )
+						.getJdbcRecommendedJavaTypeMapping( typeConfiguration )
+		);
+	}
+
+	public OrdinalEnumValueConverter(
+			EnumJavaDescriptor<E> enumJavaDescriptor,
+			BasicJavaDescriptor<Integer> relationalJavaDescriptor) {
+		this.enumJavaDescriptor = enumJavaDescriptor;
+		this.relationalJavaDescriptor = relationalJavaDescriptor;
 	}
 
 	@Override

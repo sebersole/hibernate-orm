@@ -116,15 +116,14 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 					session
 			);
 			cacheEntry = entityDescriptor.getCacheEntryStructure().structure( ce );
-			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
-			final Object ck = cache.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
+			final Object ck = cacheAccess.generateCacheKey( id, entityDescriptor.getHierarchy(), factory, session.getTenantIdentifier() );
 
 			final boolean put = cacheInsert( entityDescriptor, ck );
 
 			if ( put && factory.getStatistics().isStatisticsEnabled() ) {
 				factory.getStatistics().entityCachePut(
 						entityDescriptor.getNavigableRole(),
-						cache.getRegion().getName()
+						cacheAccess.getRegion().getName()
 				);
 			}
 		}
