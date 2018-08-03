@@ -948,8 +948,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public AllowableParameterType resolveParameterBindType(Class clazz) {
-		// for now we only support basic types as allowable for query parameters
-		return typeConfiguration.getBasicTypeRegistry().getBasicType( clazz );
+		return getMetamodel().resolveAllowableParamterType( clazz );
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Metamodel;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
@@ -42,6 +43,7 @@ public interface MetamodelImplementor extends Metamodel {
 	<T> EntityValuedExpressableType<T> resolveEntityReference(Class<T> javaType);
 	EntityValuedExpressableType resolveEntityReference(String entityName);
 
+	AllowableParameterType resolveAllowableParamterType(Class clazz);
 	/**
 	 * Close the Metamodel
 	 */

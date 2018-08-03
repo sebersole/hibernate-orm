@@ -20,6 +20,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.AbsFunction;
@@ -498,6 +499,24 @@ public abstract class AbstractSqlAstWalker
 	@Override
 	public void visitCurrentTimestampFunction(CurrentTimestampFunction function) {
 		appendSql( "current_timestamp" );
+	}
+
+	@Override
+	public void visitTuple(SqlTuple tuple) {
+		List<Expression> expressions = tuple.getExpressions();
+		String separator = "";
+		boolean isCurrentWhereClause = clauseStack.getCurrent() == Clause.WHERE;
+		if ( isCurrentWhereClause ) {
+			appendSql( "(" );
+		}
+		for ( Expression expression : expressions ) {
+			appendSql( separator );
+			expression.accept( this );
+			separator = ", ";
+		}
+		if ( isCurrentWhereClause ) {
+			appendSql( ")" );
+		}
 	}
 
 	@Override

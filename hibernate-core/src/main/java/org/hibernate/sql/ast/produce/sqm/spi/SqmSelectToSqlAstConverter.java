@@ -165,7 +165,7 @@ public class SqmSelectToSqlAstConverter
 		// todo (6.0) : this should actually be able to generate multiple SqlSelections
 		final QueryResultProducer resultProducer = (QueryResultProducer) sqmSelection.getSelectableNode().accept( this );
 
-		if ( getQuerySpecStack().depth() > 1 ) {
+		if ( getQuerySpecStack().depth() > 1 && Expression.class.isInstance( resultProducer ) ) {
 			// we only need the QueryResults if we are in the top-level select-clause.
 			// but we do need to at least resolve the sql selections
 			getSqlSelectionResolver().resolveSqlSelection(

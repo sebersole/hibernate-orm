@@ -256,4 +256,17 @@ public class EmbeddedTypeDescriptorImpl<J>
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
 	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
+		getEmbeddedDescriptor().visitStateArrayContributors(
+				contributor -> {
+					final int index = contributor.getStateArrayPosition();
+					values[index] = contributor.unresolve( values[index], session );
+				}
+		);
+
+		return values;
+	}
 }
