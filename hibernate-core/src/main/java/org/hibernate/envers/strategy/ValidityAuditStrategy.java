@@ -29,6 +29,7 @@ import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
@@ -619,10 +620,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			Object id,
 			Number revisionNumber) {
 
+		final EntityIdentifier productionIdentifier = entityDescriptor.getHierarchy().getIdentifierDescriptor();
+
 		// WHERE (entity_id) = ?
 		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
-		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
-				id,
+		productionIdentifier.dehydrate(
+				productionIdentifier.unresolve( id, session ),
 				(jdbcValue, type, boundColumn) -> {
 					identifierJunction.add(
 							new RelationalPredicate(

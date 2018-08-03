@@ -192,8 +192,12 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		embeddedDescriptor.visitStateArrayContributors(
 				contributor -> {
 					final Object subHydratedForm = hydratedValues[ contributor.getStateArrayPosition() ];
-					final Object subResolvedForm = contributor.resolveHydratedState( subHydratedForm,
-																					 executionContext, session, containerInstance );
+					final Object subResolvedForm = contributor.resolveHydratedState(
+							subHydratedForm,
+							executionContext,
+							session,
+							containerInstance
+					);
 					hydratedValues[ contributor.getStateArrayPosition() ] = subResolvedForm;
 				}
 		);
