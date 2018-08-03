@@ -6,24 +6,17 @@
  */
 package org.hibernate.envers.strategy;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.LockOptions;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.Session;
-import org.hibernate.action.spi.BeforeTransactionCompletionProcess;
-import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.boot.spi.AuditServiceOptions;
@@ -35,29 +28,27 @@ import org.hibernate.envers.internal.synchronization.SessionCacheCleaner;
 import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
-import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
-import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggregated;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
-import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.property.access.spi.Getter;
-import org.hibernate.sql.Update;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
+import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
 import org.hibernate.sql.ast.tree.spi.UpdateStatement;
+import org.hibernate.sql.ast.tree.spi.assign.Assignment;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.LiteralParameter;
+import org.hibernate.sql.ast.tree.spi.from.TableReference;
+import org.hibernate.sql.ast.tree.spi.predicate.Junction;
+import org.hibernate.sql.ast.tree.spi.predicate.NullnessPredicate;
+import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.BasicExecutionContext;
-import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.MIDDLE_ENTITY_ALIAS;
 import static org.hibernate.envers.internal.entities.mapper.relation.query.QueryConstants.REVISION_PARAMETER;
@@ -123,45 +114,51 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		if ( reuseIdentifierNames || getRevisionType( options, data ) != RevisionType.ADD ) {
 			// Register transaction completion process to guarantee execution of UPDATE statement after INSERT.
 			( (EventSource) session ).getActionQueue().registerProcess(
-					new BeforeTransactionCompletionProcess() {
-						@Override
-						public void doBeforeTransactionCompletion(final SessionImplementor sessionImplementor) {
-							final BasicExecutionContext executionContext = new BasicExecutionContext( sessionImplementor );
+					sessionImplementor -> {
+						final BasicExecutionContext executionContext = new BasicExecutionContext( sessionImplementor );
 
-							// construct the update contexts.
-							final List<UpdateContext> updateContexts = getUpdateContexts(
-									entityName,
-									auditedEntityName,
-									sessionImplementor,
-									auditService,
-									id,
-									revision
+						// construct the update statements
+						final List<SqlAstUpdateDescriptor> updateDescriptors = getUpdateDescriptors(
+								entityName,
+								auditedEntityName,
+								sessionImplementor,
+								auditService,
+								id,
+								revision
+						);
+
+						if ( updateDescriptors.isEmpty() ) {
+							throw new AuditException(
+									String.format(
+											Locale.ROOT,
+											"Failed to build update statements for entity %s and id %s",
+											auditedEntityName,
+											id
+									)
+							);
+						}
+
+						// execute the statements
+						for ( SqlAstUpdateDescriptor updateDescriptor : updateDescriptors ) {
+							final int rowsAffected = JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
+									UpdateToJdbcUpdateConverter.createJdbcUpdate(
+											updateDescriptor.getSqlAstStatement(),
+											executionContext.getSession().getSessionFactory()
+									),
+									executionContext,
+									Connection::prepareStatement
 							);
 
-							if ( updateContexts.isEmpty() ) {
-								throw new RuntimeException(
-										String.format(
-												Locale.ROOT,
-												"Failed to build update contexts for entity %s and id %s",
-												auditedEntityName,
-												id
-										)
-								);
-							}
-
-							// execute the update(s)
-							for ( UpdateContext updateContext : updateContexts ) {
-								if ( executeUpdate( executionContext, updateContext ) != 1 ) {
-									final RevisionType revisionType = getRevisionType( options, data );
-									if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
-										throw new RuntimeException(
-												String.format(
-														"Cannot update previous revision for entity %s and id %s",
-														auditedEntityName,
-														id
-												)
-										);
-									}
+							if ( rowsAffected != 1 ) {
+								final RevisionType revisionType = getRevisionType( options, data );
+								if ( !reuseIdentifierNames || revisionType != RevisionType.ADD ) {
+									throw new AuditException(
+											String.format(
+													"Cannot update previous revision for entity %s and id %s",
+													auditedEntityName,
+													id
+											)
+									);
 								}
 							}
 						}
@@ -372,73 +369,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		}
 	}
 
-	/**
-	 * Executes the {@link UpdateContext} within the bounds of the specified {@link SessionImplementor}.
-	 *
-	 * @param executionContext The session.
-	 * @param updateContext The UpdateContext.
-	 *
-	 * @return the number of rows affected.
-	 */
-	private int executeUpdate(ExecutionContext executionContext, UpdateContext updateContext) {
-		final SharedSessionContractImplementor session = executionContext.getSession();
-		final String updateSql = updateContext.toStatementString();
-		final JdbcCoordinator jdbcCoordinator = session.getJdbcCoordinator();
-		final PreparedStatement preparedStatement = jdbcCoordinator.getStatementPreparer().prepareStatement( updateSql );
-		return session.doReturningWork(
-				connection -> {
-					try {
-						final AtomicInteger count = new AtomicInteger();
-						for ( QueryParameterBinding binding : updateContext.getBindings() ) {
-							binding.type.dehydrate(
-									binding.type.unresolve( binding.value, session ),
-									(jdbcValue, sqlExpressableType, boundColumn) -> {
-										try {
-											sqlExpressableType.getJdbcValueBinder().bind(
-													preparedStatement,
-													count.getAndIncrement(),
-													jdbcValue,
-													executionContext
-											);
-										}
-										catch (SQLException e) {
-											session.getJdbcServices().getSqlExceptionHelper().convert(
-													e,
-													"Unable to bind parameter",
-													updateSql
-											);
-										}
-									},
-									// what clause?
-									Clause.IRRELEVANT,
-									session
-							);
-//							index += binding.bind( index, preparedStatement, executionContext );
-						}
-						return jdbcCoordinator.getResultSetReturn().executeUpdate( preparedStatement );
-					}
-					finally {
-						jdbcCoordinator.getLogicalConnection().getResourceRegistry().release( preparedStatement );
-						jdbcCoordinator.afterStatementExecution();
-					}
-				}
-		);
-	}
-
-	/**
-	 * Creates at least one, perhaps multiple, {@link UpdateContext}s based on the entity hierarchy of the
-	 * audited entity instance type.
-	 *
-	 * @param entityName The entity name.
-	 * @param auditedEntityName The audited entity name.
-	 * @param session The session.
-	 * @param auditService The AuditService.
-	 * @param id The entity identifier.
-	 * @param revision The revision entity.
-	 *
-	 * @return list of {@link UpdateContext}s.  Should always contain a minimum of 1 element.
-	 */
-	private List<UpdateContext> getUpdateContexts(
+	private List<SqlAstUpdateDescriptor> getUpdateDescriptors(
 			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
@@ -449,15 +380,14 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		IdentifiableTypeDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
 
+		List<SqlAstUpdateDescriptor> statements = new ArrayList<>();
+
 		// HHH-9062 - update inherited
 		if ( options.isRevisionEndTimestampEnabled() && !options.isRevisionEndTimestampLegacyBehaviorEnabled() ) {
-			// todo (6.0) - verify this is correct
 			if ( entityDescriptor.getHierarchy().getInheritanceStrategy().equals( InheritanceStrategy.JOINED ) ) {
-				List<UpdateContext> contexts = new ArrayList<>();
-				// iterate subclasses from farther descendant up the hierarchy, excluding root
 				while ( entityDescriptor.getSuperclassType() != null ) {
-					contexts.add(
-							getNonRootUpdateContext(
+					statements.add(
+							buildNonRootEntityUpdateDescriptor(
 									entityName,
 									auditedEntityName,
 									session,
@@ -466,27 +396,18 @@ public class ValidityAuditStrategy implements AuditStrategy {
 									revision
 							)
 					);
+
 					entityName = entityDescriptor.getSuperclassType().getNavigableName();
 					auditedEntityName = auditService.getAuditEntityName( entityName );
+
 					entityDescriptor = getEntityDescriptor( entityName, session );
 				}
-				// process root entity
-				contexts.add(
-						getUpdateContext(
-								entityName,
-								auditedEntityName,
-								session,
-								auditService,
-								id,
-								revision
-						)
-				);
-				return contexts;
 			}
 		}
 
-		return Collections.singletonList(
-				getUpdateContext(
+		// process root entity
+		statements.add(
+				buildUpdateDescriptor(
 						entityName,
 						auditedEntityName,
 						session,
@@ -495,21 +416,11 @@ public class ValidityAuditStrategy implements AuditStrategy {
 						revision
 				)
 		);
+
+		return statements;
 	}
 
-	/**
-	 * Creates the update context used to modify the revision end and potentially timestamp values.
-	 *
-	 * @param entityName The entity name.
-	 * @param auditedEntityName The audited entity name.
-	 * @param session The session.
-	 * @param auditService The AuditService.
-	 * @param id The entity identifier.
-	 * @param revision The revision entity.
-	 *
-	 * @return The {@link UpdateContext} instance.
-	 */
-	private UpdateContext getUpdateContext(
+	private SqlAstUpdateDescriptor buildUpdateDescriptor(
 			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
@@ -526,6 +437,12 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		final AuditServiceOptions options = auditService.getOptions();
 
+		final TableReference tableReference = getUpdateTableReference(
+				rootEntityDescriptor,
+				rootAuditedEntityDescriptor,
+				auditedEntityDescriptor
+		);
+
 		// The expected output from this method is an UPDATE statement that follows:
 		// UPDATE audit_ent
 		//	SET REVEND = ?
@@ -534,72 +451,89 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		//	AND REV <> ?
 		//	AND REVEND is null
 
-		// UPDATE audit_ent
-		final UpdateContext update = new UpdateContext( sessionFactory );
-		update.setTableName(
-				getUpdateTableName(
-						rootEntityDescriptor,
-						rootAuditedEntityDescriptor,
-						auditedEntityDescriptor
-				)
+		final UpdateStatement.UpdateStatementBuilder builder = new UpdateStatement.UpdateStatementBuilder(
+				tableReference
 		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// SET REVEND = ?
 		final Number revisionNumber = auditService.getRevisionInfoNumberReader().getRevisionNumber( revision );
-		final Navigable rootAuditedRevisionEndNavigable = getNavigableByPath(
-				rootAuditedEntityDescriptor,
-				options.getRevisionEndFieldName()
+		rootAuditedEntityDescriptor.findPersistentAttribute( options.getRevisionEndFieldName() ).dehydrate(
+				revisionNumber,
+				(jdbcValue, type, boundColumn) -> {
+					if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+						builder.addAssignment(
+								new Assignment(
+										new ColumnReference( boundColumn ),
+										new LiteralParameter(
+												jdbcValue,
+												boundColumn.getExpressableType(),
+												Clause.UPDATE,
+												session.getFactory().getTypeConfiguration()
+										)
+								)
+						);
+					}
+				},
+				Clause.UPDATE,
+				session
 		);
-		update.addColumn( rootAuditedRevisionEndNavigable );
-		update.bind( revisionNumber, rootAuditedRevisionEndNavigable );
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// [, REVEND_TSTMP = ?]
 		if ( options.isRevisionEndTimestampEnabled() ) {
-			final Navigable rootAuditedRevisionEndTimestampNavigable = getNavigableByPath(
-					rootAuditedEntityDescriptor,
-					options.getRevisionEndTimestampFieldName()
+			rootAuditedEntityDescriptor.findPersistentAttribute( options.getRevisionEndTimestampFieldName() ).dehydrate(
+					getRevisionEndTimestampValue( revision, options ),
+					(jdbcValue, type, boundColumn) -> {
+						if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+							builder.addAssignment(
+									new Assignment(
+											new ColumnReference( boundColumn ),
+											new LiteralParameter(
+													jdbcValue,
+													boundColumn.getExpressableType(),
+													Clause.UPDATE,
+													session.getFactory().getTypeConfiguration()
+											)
+									)
+							);
+						}
+					},
+					Clause.UPDATE,
+					session
 			);
-			update.addColumn( rootAuditedRevisionEndTimestampNavigable );
-			update.bind( getRevisionEndTimestampValue( revision, options ), rootAuditedRevisionEndTimestampNavigable );
 		}
 
-		applyUpdateContextWhereCommon(
-				update,
+		applyUpdateWhereCommon(
+				builder,
 				rootEntityDescriptor,
 				rootAuditedEntityDescriptor,
 				options,
+				session,
 				id,
 				revisionNumber
 		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// AND REVEND is null
-		final Navigable auditedRevisionEndNavigable = getNavigableByPath(
-				auditedEntityDescriptor,
-				options.getRevisionEndFieldName()
+		// AND REVEND is NULL
+		auditedEntityDescriptor.findPersistentAttribute( options.getRevisionEndFieldName() ).dehydrate(
+				null,
+				(jdbcValue, type, boundColumn) -> {
+					builder.addRestriction(
+							new NullnessPredicate(
+									new ColumnReference( boundColumn ),
+									false
+							)
+					);
+				},
+				Clause.WHERE,
+				session
 		);
-		update.addWhereColumn( auditedRevisionEndNavigable, " is null" );
 
-		return update;
+		return builder.createUpdateDescriptor();
 	}
 
-	/**
-	 * Creates the update context used to modify the revision end timestamp values for a non root entity.
-	 * <p>
-	 * IMPL NOTE: This is only used to set the revision end timestamp for joined inheritance non-root entity tables.
-	 *
-	 * @param entityName The entity name.
-	 * @param auditedEntityName The audited entity name.
-	 * @param session The session.
-	 * @param auditService The AuditService.
-	 * @param id The entity identifier.
-	 * @param revision The revision entity.
-	 *
-	 * @return The {@link UpdateContext} instance.
-	 */
-	private UpdateContext getNonRootUpdateContext(
+	private SqlAstUpdateDescriptor buildNonRootEntityUpdateDescriptor(
 			String entityName,
 			String auditedEntityName,
 			SessionImplementor session,
@@ -620,89 +554,125 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		final EntityDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
 		final EntityDescriptor auditedEntityDescriptor = getEntityDescriptor( auditedEntityName, session );
 
-		final UpdateContext update = new UpdateContext( sessionFactory );
-		update.setTableName( getUpdateTableName( entityDescriptor, auditedEntityDescriptor, auditedEntityDescriptor ) );
-
-		final Navigable auditedRevisionEndTimestampNavigable = getNavigableByPath(
+		final TableReference tableReference = getUpdateTableReference(
+				entityDescriptor,
 				auditedEntityDescriptor,
+				auditedEntityDescriptor
+		);
+
+		final UpdateStatement.UpdateStatementBuilder builder = new UpdateStatement.UpdateStatementBuilder( tableReference );
+
+		final NonIdPersistentAttribute revisionEndTimestampAttribute = auditedEntityDescriptor.findPersistentAttribute(
 				options.getRevisionEndTimestampFieldName()
 		);
 
-		final Object timestampValue = getRevisionEndTimestampValue( revision, options );
-		update.addColumn( auditedRevisionEndTimestampNavigable );
-		update.bind( timestampValue, auditedRevisionEndTimestampNavigable );
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// SET REVEND_TSTMP = ?
+		revisionEndTimestampAttribute.dehydrate(
+				getRevisionEndTimestampValue( revision, options ),
+				(jdbcValue, type, boundColumn) -> {
+					builder.addAssignment(
+							new Assignment(
+									new ColumnReference( boundColumn ),
+									new LiteralParameter(
+											jdbcValue,
+											boundColumn.getExpressableType(),
+											Clause.UPDATE,
+											session.getFactory().getTypeConfiguration()
+									)
+							)
+					);
+				},
+				Clause.UPDATE,
+				session
+		);
 
-		final Number revisionNumber = auditService.getRevisionInfoNumberReader().getRevisionNumber( revision );
-		applyUpdateContextWhereCommon( update, entityDescriptor, auditedEntityDescriptor, options, id, revisionNumber );
+		applyUpdateWhereCommon(
+				builder,
+				entityDescriptor,
+				auditedEntityDescriptor,
+				options,
+				session,
+				id,
+				auditService.getRevisionInfoNumberReader().getRevisionNumber( revision )
+		);
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// AND REVEND_TSTMP is null
-		update.addWhereColumn( auditedRevisionEndTimestampNavigable, " is null" );
+		revisionEndTimestampAttribute.dehydrate(
+				null,
+				(jdbcValue, type, boundColumn) -> {
+					builder.addRestriction( new NullnessPredicate( new ColumnReference( boundColumn ), false ) );
+				},
+				Clause.WHERE,
+				session
+		);
 
-		return update;
+		return builder.createUpdateDescriptor();
 	}
 
-	/**
-	 * Apply common where predicates to the update context.
-	 *
-	 * @param updateContext The update context.
-	 * @param entityDescriptor The entity descriptor.
-	 * @param auditedEntityDescriptor The audited entity descriptor.
-	 * @param options The AuditServiceOptions.
-	 * @param id The entity identifier.
-	 * @param revisionNumber The revision number.
-	 */
-	private void applyUpdateContextWhereCommon(
-			UpdateContext updateContext,
+	private void applyUpdateWhereCommon(
+			UpdateStatement.UpdateStatementBuilder builder,
 			EntityDescriptor entityDescriptor,
 			EntityDescriptor auditedEntityDescriptor,
 			AuditServiceOptions options,
+			SessionImplementor session,
 			Object id,
 			Number revisionNumber) {
-		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// WHERE (entity_id) = ? AND REV <> ? AND REVEND is null
 
-		updateContext.addPrimaryKeyColumns( getEntityDescriptorPrimaryKeyColumnNames( entityDescriptor ) );
-		updateContext.bind( id, (Navigable) entityDescriptor.getHierarchy().getIdentifierDescriptor() );
-
-		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// AND REV <> ? (REV is on the auditedEntityDescriptor)
-		final Navigable revisionNumberPath = getNavigableByPath(
-				auditedEntityDescriptor,
-				options.getOriginalIdPropName() + "." + options.getRevisionFieldName()
-//				options.getRevisionNumberPath()
+		// WHERE (entity_id) = ?
+		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
+				id,
+				(jdbcValue, type, boundColumn) -> {
+					identifierJunction.add(
+							new RelationalPredicate(
+									RelationalPredicate.Operator.EQUAL,
+									new ColumnReference( boundColumn ),
+									new LiteralParameter(
+											jdbcValue,
+											boundColumn.getExpressableType(),
+											Clause.WHERE,
+											session.getFactory().getTypeConfiguration()
+									)
+							)
+					);
+				},
+				Clause.WHERE,
+				session
 		);
-		updateContext.addWhereColumn( revisionNumberPath, " <> ?" );
-		updateContext.bind( revisionNumber, revisionNumberPath );
+		builder.addRestriction( identifierJunction );
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// AND REV <> ?
+		// todo (6.0 (chris) - there should be a better way to accomplish this?
+		auditedEntityDescriptor.getIdentifierDescriptor().getColumns().forEach( c -> {
+			final Column column = (Column)c;
+			if ( column.getExpression().equals( options.getRevisionFieldName() ) ) {
+				builder.addRestriction(
+						new RelationalPredicate(
+								RelationalPredicate.Operator.NOT_EQUAL,
+								new ColumnReference( column ),
+								new LiteralParameter(
+										revisionNumber,
+										column.getExpressableType(),
+										Clause.WHERE,
+										session.getFactory().getTypeConfiguration()
+								)
+						)
+				);
+			}
+		} );
 	}
 
 	private EntityDescriptor getEntityDescriptor(String entityName, SessionImplementor sessionImplementor) {
 		return sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
-	private String[] getEntityDescriptorPrimaryKeyColumnNames(EntityDescriptor entityDescriptor) {
-		final List<PhysicalColumn> primaryKeyColumns = entityDescriptor.getPrimaryTable().getPrimaryKey().getColumns();
-		final String[] columns = new String[primaryKeyColumns.size()];
-		for ( int i = 0; i < primaryKeyColumns.size(); ++i ) {
-			columns[i] = primaryKeyColumns.get( i ).getName().render();
-		}
-		return columns;
-	}
-
-	/**
-	 * Get the update table name based on the various queryable instances.
-	 *
-	 * @param rootEntityDescriptor The root entity descriptor.
-	 * @param rootAuditedEntityDescriptor The root audited entity descriptor.
-	 * @param auditedEntityDescriptor The audited entity descriptor.
-	 *
-	 * @return the update table name.
-	 */
-	private String getUpdateTableName(
+	private TableReference getUpdateTableReference(
 			EntityDescriptor rootEntityDescriptor,
 			EntityDescriptor rootAuditedEntityDescriptor,
 			EntityDescriptor auditedEntityDescriptor) {
-		// todo (6.0) - Verify this is correct
 		if ( rootEntityDescriptor.getHierarchy().getInheritanceStrategy().equals( InheritanceStrategy.UNION ) ) {
 			// this is the condition causing all the problems in terms of the generated SQL UPDATE
 			// the problem being that we currently try to update the in-line view made up of the union query
@@ -710,163 +680,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 			// this is extremely hacky means to get the root table name for the union subclass style entities.
 			// hacky because it relies on internal behavior of UnionSubclassEntityPersister
 			// !!!!!! NOTICE - using subclass persister, not root !!!!!!
-			return auditedEntityDescriptor.getPrimaryTable().getTableExpression();
+			return new TableReference( auditedEntityDescriptor.getPrimaryTable(), null );
 		}
-		else {
-			return rootAuditedEntityDescriptor.getPrimaryTable().getTableExpression();
-		}
-	}
-
-	private Navigable getNavigableByPath(EntityDescriptor entityDescriptor, String propertyPath) {
-		// todo: improve this for efficiency.
-		// 		we likely can determine these values more efficiently based on configuration options or by caching
-		// 		the necessary column references in the EntityConfiguration and looking that up directly here.
-		final String[] tokens = StringHelper.split( ".", propertyPath );
-		NavigableContainer container = entityDescriptor;
-		for ( int i = 0; i < tokens.length; ++i ) {
-			final Navigable navigable = container.findNavigable( tokens[i] );
-			if ( i + 1 < tokens.length && NavigableContainer.class.isInstance( navigable ) ) {
-				container = NavigableContainer.class.cast( navigable );
-			}
-			else {
-				return navigable;
-			}
-		}
-		throw new AuditException( "Failed to locate BasicValuedNavigable for property path [" + propertyPath + "]." );
-	}
-
-	/**
-	 * Represents the audit strategy's update.
-	 *
-	 * @deprecated since 6.0, use {@link UpdateStatement} instead.
-	 */
-	@Deprecated
-	private class UpdateContext extends Update {
-		private final List<QueryParameterBinding> bindings = new ArrayList<>();
-
-		public UpdateContext(SessionFactoryImplementor sessionFactory) {
-			super( sessionFactory.getJdbcServices().getDialect() );
-		}
-
-		/**
-		 * Get the query parameter bindings.
-		 *
-		 * @return list of query parameter bindings.
-		 */
-		public List<QueryParameterBinding> getBindings() {
-			return bindings;
-		}
-
-		/**
-		 * Utility method for binding a new query parameter.
-		 *
-		 * @param value the value to be bound.
-		 * @param type the type to be bound.
-		 */
-		private void bind(Object value, AllowableParameterType type) {
-			this.bindings.add( new QueryParameterBinding( value, type ) );
-		}
-
-		public void addColumn(Navigable navigable) {
-			StateArrayContributor contributor = (StateArrayContributor) navigable;
-			List<Column> columns = contributor.getColumns();
-			assert columns.size() == 1;
-
-			addColumn( columns.get( 0 ).getExpression() );
-		}
-
-		public void bind(Object value, Navigable navigable) {
-			navigable.visitNavigable( new NavigableVisitationStrategy() {
-				@Override
-				public void visitSimpleIdentifier(EntityIdentifierSimple identifier) {
-					bind( value, identifier.getBasicType() );
-				}
-
-				@Override
-				public void visitAggregateCompositeIdentifier(EntityIdentifierCompositeAggregated identifier) {
-					identifier.visitNavigables( this );
-				}
-
-				@Override
-				public void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
-					bind( value, attribute.getBasicType() );
-				}
-
-				@Override
-				public void visitSingularAttributeEntity(SingularPersistentAttributeEntity attribute) {
-					attribute.getEntityDescriptor().getIdentifierDescriptor().visitNavigable( this );
-				}
-			} );
-		}
-
-		public void addWhereColumn(Navigable navigable) {
-			addWhereColumn( navigable, "=?" );
-		}
-
-		public void addWhereColumn(Navigable navigable, String expression) {
-			navigable.visitNavigable( new NavigableVisitationStrategy() {
-				@Override
-				public void visitSimpleIdentifier(EntityIdentifierSimple identifier) {
-					addWhereColumn( identifier.getBoundColumn().getExpression(), expression );
-				}
-
-				@Override
-				public void visitAggregateCompositeIdentifier(EntityIdentifierCompositeAggregated identifier) {
-					identifier.visitNavigables( this );
-				}
-
-				@Override
-				public void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
-					addWhereColumn( attribute.getBoundColumn().getExpression(), expression );
-				}
-
-				@Override
-				public void visitSingularAttributeEntity(SingularPersistentAttributeEntity attribute) {
-					List<Column> columns = attribute.getColumns();
-					assert columns.size() == 1;
-					addWhereColumn( columns.get( 0 ).getExpression(), expression );
-				}
-			} );
-		}
-	}
-
-	/**
-	 * Represents a query parameter binding.
-	 */
-	private class QueryParameterBinding {
-		private final AllowableParameterType type;
-		private final Object value;
-
-		public QueryParameterBinding(Object value, AllowableParameterType type) {
-			this.value = value;
-			this.type = type;
-		}
-
-		/**
-		 * Bind the parameter to the provided statement.
-		 *
-		 * @param index the index to be bound.
-		 * @param ps The prepared statement.
-		 * @param options The wrapper options
-		 *
-		 * @return the number of column spans based on this binding.
-		 *
-		 * @throws SQLException Thrown if a SQL exception occured.
-		 */
-		public int bind(int index, PreparedStatement ps, ExecutionContext options) throws SQLException {
-			// todo (6.0) (chris) : what is the correct Clause / inclusion-Predicate?
-			// todo (6.0) (chris) : also, ValueBinder is going away - this should use the dehydrate / JdbcValueBinder approach
-			throw new NotYetImplementedFor6Exception( getClass() );
-//			type.visitJdbcTypes(
-//					sqlExpressableType -> {
-//						sqlExpressableType.getJdbcValueBinder().bind(
-//								p
-//						);
-//					}
-//			);
-//			type.getValueBinder( Clause.UPDATE.getInclusionChecker(), options.getSession().getFactory().getTypeConfiguration() )
-//					.bind( ps, index, value, options );
-//			return type.getNumberOfJdbcParametersNeeded();
-		}
+		return new TableReference( rootAuditedEntityDescriptor.getPrimaryTable(), null );
 	}
 }
