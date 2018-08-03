@@ -1257,7 +1257,7 @@ public abstract class BaseSqmToSqlAstConverter
 				results.add( getSqlSelectionResolver().resolveSqlExpression(
 						navigableReference.getSqlExpressionQualifier(),
 						navigableReference.getNavigable().getBoundColumn()
-							 )
+							)
 				);
 			}
 			else {
