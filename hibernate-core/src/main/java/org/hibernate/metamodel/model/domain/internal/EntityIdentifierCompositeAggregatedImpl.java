@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.persistence.TemporalType;
 
@@ -26,6 +27,7 @@ import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -238,5 +240,13 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 						session
 				)
 		);
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		getColumns().forEach( column -> action.accept( column.getExpressableType(), column ) );
 	}
 }
