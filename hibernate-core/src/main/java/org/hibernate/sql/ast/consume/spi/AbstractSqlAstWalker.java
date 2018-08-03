@@ -82,6 +82,7 @@ import org.hibernate.sql.results.internal.EmptySqlSelection;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.sql.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -780,7 +781,10 @@ public abstract class AbstractSqlAstWalker
 			appendSql( "NULL" );
 		}
 		else {
-			appendSql( queryLiteral.getValue().toString() );
+			JdbcLiteralFormatter jdbcLiteralFormatter = queryLiteral.getType()
+					.getSqlTypeDescriptor()
+					.getJdbcLiteralFormatter( queryLiteral.getType().getJavaTypeDescriptor() );
+			appendSql( jdbcLiteralFormatter.toJdbcLiteral( queryLiteral.getValue(), sessionFactory.getDialect(), null));
 		}
 	}
 
