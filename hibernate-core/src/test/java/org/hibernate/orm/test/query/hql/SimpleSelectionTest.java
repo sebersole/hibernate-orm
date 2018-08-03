@@ -61,18 +61,18 @@ public class SimpleSelectionTest extends SessionFactoryBasedFunctionalTest {
 				} );
 	}
 
-//	@Test
-//	public void testSelectACharConstant() {
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					List<Object> results = session.createQuery(
-//							"select 'a' from SimpleEntity s where s.id = :id" )
-//							.setParameter( "id", 1 )
-//							.list();
-//					assertThat( results.size(), is( 1 ) );
-//					assertThat( results.get( 0 ), is( "a" ) );
-//				} );
-//	}
+	@Test
+	public void testSelectACharConstant() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					List<Object> results = session.createQuery(
+							"select 'a' from SimpleEntity s where s.id = :id" )
+							.setParameter( "id", 1 )
+							.list();
+					assertThat( results.size(), is( 1 ) );
+					assertThat( results.get( 0 ), is( 'a' ) );
+				} );
+	}
 
 	@BeforeEach
 	public void setUp() {
