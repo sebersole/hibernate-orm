@@ -24,6 +24,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
+import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
@@ -217,12 +218,13 @@ public abstract class BaseSqmToSqlAstConverter
 
 	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
 
-	private final Map<QuerySpec,Map<SqlExpressable,SqlSelection>> sqlSelectionMapByQuerySpec = new HashMap<>();
-
 	private final FromClauseIndex fromClauseIndex = new FromClauseIndex();
+
+	private TableSpace tableSpace;
 
 	private final Stack<Clause> currentClauseStack = new StandardStack<>();
 	private final Stack<QuerySpec> querySpecStack = new StandardStack<>();
+	private final Stack<FromClause> fromClauseStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
 	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new StandardStack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
@@ -456,9 +458,6 @@ public abstract class BaseSqmToSqlAstConverter
 		return null;
 	}
 
-	final Stack<FromClause> fromClauseStack = new StandardStack<>();
-	private TableSpace tableSpace;
-
 	@Override
 	public TableSpace visitFromElementSpace(SqmFromElementSpace fromElementSpace) {
 		tableSpace = fromClauseStack.getCurrent().makeTableSpace();
@@ -689,8 +688,6 @@ public abstract class BaseSqmToSqlAstConverter
 	public Object visitQualifiedEntityJoinFromElement(SqmEntityJoin joinedFromElement) {
 		throw new NotYetImplementedFor6Exception();
 	}
-
-
 
 	@Override
 	public SelectClause visitSelectClause(SqmSelectClause selectClause) {
@@ -1001,32 +998,46 @@ public abstract class BaseSqmToSqlAstConverter
 		final List<JdbcParameter> jdbcParameterList;
 
 		List<JdbcParameter> existing = this.jdbcParamsBySqmParam.get( expression );
+		AllowableParameterType expressableType = expression.getExpressableType();
 		if ( existing != null ) {
-			final int number = expression.getExpressableType().getNumberOfJdbcParametersNeeded();
-			assert existing.size() == number;
+			if ( expressableType != null ) {
+				final int number = expressableType.getNumberOfJdbcParametersNeeded();
+				assert existing.size() == number;
+			}
 			jdbcParameterList = existing;
 		}
 		else {
 			jdbcParameterList = new ArrayList<>();
-
-			//noinspection Convert2Lambda
-			expression.getExpressableType().visitJdbcTypes(
-					new Consumer<SqlExpressableType>() {
-						@Override
-						public void accept(SqlExpressableType type) {
-							jdbcParameterList.add(
-									new StandardJdbcParameterImpl(
-											jdbcParameters.getJdbcParameters().size(),
-											type,
-											currentClauseStack.getCurrent(),
-											getProducerContext().getSessionFactory().getTypeConfiguration()
-									)
-							);
-						}
-					},
-					currentClauseStack.getCurrent(),
-					getProducerContext().getSessionFactory().getTypeConfiguration()
-			);
+			if ( expressableType == null ) {
+				jdbcParameterList.add(
+						new StandardJdbcParameterImpl(
+								jdbcParameters.getJdbcParameters().size(),
+								null,
+								currentClauseStack.getCurrent(),
+								getProducerContext().getSessionFactory().getTypeConfiguration()
+						)
+				);
+			}
+			else {
+				//noinspection Convert2Lambda
+				expressableType.visitJdbcTypes(
+						new Consumer<SqlExpressableType>() {
+							@Override
+							public void accept(SqlExpressableType type) {
+								jdbcParameterList.add(
+										new StandardJdbcParameterImpl(
+												jdbcParameters.getJdbcParameters().size(),
+												type,
+												currentClauseStack.getCurrent(),
+												getProducerContext().getSessionFactory().getTypeConfiguration()
+										)
+								);
+							}
+						},
+						currentClauseStack.getCurrent(),
+						getProducerContext().getSessionFactory().getTypeConfiguration()
+				);
+			}
 
 			jdbcParamsBySqmParam.put( expression, jdbcParameterList );
 			jdbcParameters.addParameters( jdbcParameterList );
@@ -1230,7 +1241,22 @@ public abstract class BaseSqmToSqlAstConverter
 		}
 
 		final List<Expression> results = new ArrayList<>();
-		sqmExpressions.forEach( sqmExpression -> results.add( (Expression) sqmExpression.accept( this ) ) );
+
+		sqmExpressions.forEach( sqmExpression -> {
+
+			final Object expression = sqmExpression.accept( this );
+			if ( BasicValuedNavigableReference.class.isInstance( expression ) ) {
+				final BasicValuedNavigableReference navigableReference = (BasicValuedNavigableReference) expression;
+				results.add( getSqlSelectionResolver().resolveSqlExpression(
+						navigableReference.getSqlExpressionQualifier(),
+						navigableReference.getNavigable().getBoundColumn()
+							)
+				);
+			}
+			else {
+				results.add( (Expression) expression );
+			}
+		} );
 		return results;
 	}
 

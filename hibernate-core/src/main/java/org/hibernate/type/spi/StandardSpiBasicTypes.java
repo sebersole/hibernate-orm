@@ -1069,7 +1069,6 @@ public final class StandardSpiBasicTypes {
 			String legacyTypeClassName,
 			TypeConfiguration typeConfiguration,
 			String... registrationKeys) {
-		typeConfiguration.getBasicTypeRegistry().register( type );
 
 		final BasicTypeRegistry basicTypeRegistry = typeConfiguration.getBasicTypeRegistry();
 

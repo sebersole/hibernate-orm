@@ -20,6 +20,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.SqlTreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
+import org.hibernate.sql.ast.tree.spi.expression.SqlTuple;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.AbsFunction;
@@ -80,6 +81,7 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.sql.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -501,6 +503,24 @@ public abstract class AbstractSqlAstWalker
 	}
 
 	@Override
+	public void visitTuple(SqlTuple tuple) {
+		List<Expression> expressions = tuple.getExpressions();
+		String separator = "";
+		boolean isCurrentWhereClause = clauseStack.getCurrent() == Clause.WHERE;
+		if ( isCurrentWhereClause ) {
+			appendSql( "(" );
+		}
+		for ( Expression expression : expressions ) {
+			appendSql( separator );
+			expression.accept( this );
+			separator = ", ";
+		}
+		if ( isCurrentWhereClause ) {
+			appendSql( ")" );
+		}
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public void visitExtractFunction(ExtractFunction extractFunction) {
 		appendSql( "extract(" );
@@ -757,7 +777,12 @@ public abstract class AbstractSqlAstWalker
 			appendSql( "NULL" );
 		}
 		else {
-			appendSql( queryLiteral.getValue().toString() );
+			final JdbcLiteralFormatter jdbcLiteralFormatter = queryLiteral.getType()
+					.getSqlTypeDescriptor()
+					.getJdbcLiteralFormatter(
+							queryLiteral.getType().getJavaTypeDescriptor()
+					);
+			appendSql( jdbcLiteralFormatter.toJdbcLiteral( queryLiteral.getValue(), sessionFactory.getDialect(), null));
 		}
 	}
 

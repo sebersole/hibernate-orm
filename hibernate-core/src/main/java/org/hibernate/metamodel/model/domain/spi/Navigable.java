@@ -81,7 +81,7 @@ public interface Navigable<T> extends DomainType<T> {
 			SqmFrom sourceSqmFrom,
 			SqmNavigableContainerReference containerReference,
 			SqmCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -115,7 +115,7 @@ public interface Navigable<T> extends DomainType<T> {
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Remove
