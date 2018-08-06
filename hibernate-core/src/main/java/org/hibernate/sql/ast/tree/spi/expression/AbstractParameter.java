@@ -14,7 +14,6 @@ import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.ExecutionException;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameter;
@@ -74,6 +73,7 @@ public abstract class AbstractParameter
 		}
 
 		SqlExpressableType bindType = binding.getBindType();
+
 		if ( bindType == null ) {
 			bindType = guessBindType( executionContext, binding );
 		}
@@ -89,23 +89,26 @@ public abstract class AbstractParameter
 	}
 
 	private SqlExpressableType guessBindType(ExecutionContext executionContext, JdbcParameterBinding binding) {
-		SqlExpressableType bindType;
-		BasicType<?> basicType = executionContext.getSession()
+		final BasicType<?> basicType = executionContext.getSession()
 				.getFactory()
 				.getTypeConfiguration()
 				.getBasicTypeRegistry()
 				.getBasicType( binding.getBindValue().getClass() );
-		final JdbcValueBinder binder = basicType.getSqlExpressableType( typeConfiguration ).getJdbcValueBinder();
-		final JdbcValueExtractor extractor = basicType.getSqlExpressableType( typeConfiguration )
+
+		final JdbcValueBinder binder = basicType
+				.getSqlExpressableType( typeConfiguration )
+				.getJdbcValueBinder();
+
+		final JdbcValueExtractor extractor = basicType
+				.getSqlExpressableType( typeConfiguration )
 				.getJdbcValueExtractor();
 
-		bindType = new StandardSqlExpressableTypeImpl(
+		return new StandardSqlExpressableTypeImpl(
 				basicType.getJavaTypeDescriptor(),
 				basicType.getSqlTypeDescriptor(),
 				extractor,
 				binder
 		);
-		return bindType;
 	}
 
 

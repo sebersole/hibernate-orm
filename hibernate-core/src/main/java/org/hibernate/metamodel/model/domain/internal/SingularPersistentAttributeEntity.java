@@ -389,7 +389,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
-		if ( referencedAttributeName == null ) {
+		if ( referencedAttributeName == null || classification.equals( SingularAttributeClassification.ONE_TO_ONE ) ) {
 			return getAssociatedEntityDescriptor().getIdentifierDescriptor().unresolve(
 					getAssociatedEntityDescriptor().getIdentifier( value, session ),
 					session
@@ -429,22 +429,23 @@ public class SingularPersistentAttributeEntity<O,J>
 			writeable = getAssociatedEntityDescriptor().findPersistentAttribute( referencedAttributeName );
 		}
 
-		final Iterator<Column> columnItr = foreignKey.getColumnMappings().getReferringColumns().iterator();
-		writeable.dehydrate(
-				value,
-				(jdbcValue, sqlExpressableType, boundColumn) -> {
-					assert columnItr.hasNext();
-					jdbcValueCollector.collect(
-							jdbcValue,
-							sqlExpressableType,
-							columnItr.next()
-					);
-				},
-				clause,
-				session
-		);
-
-		assert !columnItr.hasNext();
+		if ( writeable != null ) {
+			final Iterator<Column> columnItr = foreignKey.getColumnMappings().getReferringColumns().iterator();
+			writeable.dehydrate(
+					value,
+					(jdbcValue, sqlExpressableType, boundColumn) -> {
+						assert columnItr.hasNext();
+						jdbcValueCollector.collect(
+								jdbcValue,
+								sqlExpressableType,
+								columnItr.next()
+						);
+					},
+					clause,
+					session
+			);
+			assert !columnItr.hasNext();
+		}
 	}
 
 	@Override

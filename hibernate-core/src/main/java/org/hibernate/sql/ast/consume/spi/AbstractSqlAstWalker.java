@@ -777,9 +777,11 @@ public abstract class AbstractSqlAstWalker
 			appendSql( "NULL" );
 		}
 		else {
-			JdbcLiteralFormatter jdbcLiteralFormatter = queryLiteral.getType()
+			final JdbcLiteralFormatter jdbcLiteralFormatter = queryLiteral.getType()
 					.getSqlTypeDescriptor()
-					.getJdbcLiteralFormatter( queryLiteral.getType().getJavaTypeDescriptor() );
+					.getJdbcLiteralFormatter(
+							queryLiteral.getType().getJavaTypeDescriptor()
+					);
 			appendSql( jdbcLiteralFormatter.toJdbcLiteral( queryLiteral.getValue(), sessionFactory.getDialect(), null));
 		}
 	}
