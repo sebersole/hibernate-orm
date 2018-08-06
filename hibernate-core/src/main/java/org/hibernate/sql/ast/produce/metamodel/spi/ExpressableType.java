@@ -7,7 +7,6 @@
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
 import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**

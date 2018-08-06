@@ -26,11 +26,9 @@ import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.query.sqm.produce.internal.hql.grammar.HqlParser;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSearched;
@@ -85,7 +83,6 @@ import org.hibernate.query.sqm.tree.expression.function.SqmMaxFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmMinFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmModFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmNullifFunction;
-import org.hibernate.query.sqm.tree.expression.function.SqmSubstringFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmSumFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmTrimFunction;
 import org.hibernate.query.sqm.tree.expression.function.SqmUpperFunction;
@@ -221,12 +218,13 @@ public abstract class BaseSqmToSqlAstConverter
 
 	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
 
-	private final Map<QuerySpec,Map<SqlExpressable,SqlSelection>> sqlSelectionMapByQuerySpec = new HashMap<>();
-
 	private final FromClauseIndex fromClauseIndex = new FromClauseIndex();
+
+	private TableSpace tableSpace;
 
 	private final Stack<Clause> currentClauseStack = new StandardStack<>();
 	private final Stack<QuerySpec> querySpecStack = new StandardStack<>();
+	private final Stack<FromClause> fromClauseStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
 	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new StandardStack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
@@ -460,9 +458,6 @@ public abstract class BaseSqmToSqlAstConverter
 		return null;
 	}
 
-	final Stack<FromClause> fromClauseStack = new StandardStack<>();
-	private TableSpace tableSpace;
-
 	@Override
 	public TableSpace visitFromElementSpace(SqmFromElementSpace fromElementSpace) {
 		tableSpace = fromClauseStack.getCurrent().makeTableSpace();
@@ -693,8 +688,6 @@ public abstract class BaseSqmToSqlAstConverter
 	public Object visitQualifiedEntityJoinFromElement(SqmEntityJoin joinedFromElement) {
 		throw new NotYetImplementedFor6Exception();
 	}
-
-
 
 	@Override
 	public SelectClause visitSelectClause(SqmSelectClause selectClause) {

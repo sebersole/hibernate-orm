@@ -183,11 +183,8 @@ import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.TrimSpecification;
-import org.hibernate.sql.ast.tree.spi.expression.AbstractParameter;
-import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 import org.jboss.logging.Logger;
