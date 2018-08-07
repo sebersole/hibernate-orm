@@ -60,10 +60,12 @@ public class ConcatFunction implements StandardFunction {
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
-			int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
+			int valuesArrayPosition,
+			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				getType().getJdbcValueExtractor()
 		);
