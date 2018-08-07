@@ -71,6 +71,7 @@ import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
@@ -651,15 +652,33 @@ public abstract class AbstractEntityDescriptor<J>
 			String resultVariable,
 			QueryResultCreationContext creationContext) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
+		final EntityValuedNavigableReference entityValuedReference = (EntityValuedNavigableReference) navigableReference;
 
-		return new EntityQueryResultImpl(
-				(EntityValuedNavigable) navigableReference.getNavigable(),
+		final EntityQueryResultImpl entityQueryResult = new EntityQueryResultImpl(
+				entityValuedReference.getNavigable(),
 				resultVariable,
 				resolveSqlSelections( navigableReference.getSqlExpressionQualifier(), creationContext ),
-				( (EntityValuedNavigableReference) navigableReference ).getLockMode(),
+				entityValuedReference.getLockMode(),
 				navigableReference.getNavigablePath(),
 				creationContext
 		);
+
+//		entityValuedReference.getNavigable().getEntityDescriptor().visitStateArrayContributors(
+//				stateArrayContributor -> {
+//					if ( stateArrayContributor instanceof Fetchable ) {
+//						final Fetchable fetchable = ( (Fetchable) stateArrayContributor );
+//						fetchable.generateFetch(
+//								entityQueryResult,
+//								navigableReference.getSqlExpressionQualifier(),
+//								fetchable.getMappedFetchStrategy(),
+//								null,
+//								creationContext
+//						);
+//					}
+//				}
+//		);
+
+		return entityQueryResult;
 	}
 
 	// todo (6.0) : we need some way here to limit which attributes are rendered as how "deep" we render them

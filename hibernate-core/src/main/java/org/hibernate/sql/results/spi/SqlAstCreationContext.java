@@ -18,4 +18,10 @@ public interface SqlAstCreationContext {
 	SessionFactoryImplementor getSessionFactory();
 
 	SqlExpressionResolver getSqlSelectionResolver();
+
+	// todo (6.0) : ultimately the plan is to expose the
+
+	// todo (6.0) : we may instead want to just handle this as a `org.hibernate.sql.ast.consume.spi.SqlAstWalker` impl
+	//		rather than during the actual SQL AST creation.  Keep in mind though that we really want
+	//		to implement the new feature of supporting "un-fetch joins", probably just via HQL
 }

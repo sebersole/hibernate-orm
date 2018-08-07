@@ -16,6 +16,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchStyle;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -155,9 +157,14 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		);
 	}
 
+	private final FetchStrategy mappedFetchStrategy = new FetchStrategy(
+			FetchTiming.IMMEDIATE,
+			FetchStyle.JOIN
+	);
+
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {
-		throw new NotYetImplementedFor6Exception(  );
+		return mappedFetchStrategy;
 	}
 
 	@Override

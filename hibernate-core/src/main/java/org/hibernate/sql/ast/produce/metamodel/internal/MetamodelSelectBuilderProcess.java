@@ -183,8 +183,9 @@ public class MetamodelSelectBuilderProcess
 			}
 			else {
 				// create one
+				final NavigableReference rootNavigableReference = rootTableGroup.getNavigableReference();
 				queryResult = rootNavigableContainer.createQueryResult(
-						rootTableSpace.getRootTableGroup().getNavigableReference(),
+						rootNavigableReference,
 						null,
 						this
 				);

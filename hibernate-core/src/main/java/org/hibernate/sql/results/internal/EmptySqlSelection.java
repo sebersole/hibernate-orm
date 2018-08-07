@@ -29,6 +29,11 @@ public class EmptySqlSelection implements SqlSelection {
 	}
 
 	@Override
+	public int getJdbcResultSetIndex() {
+		return -1;
+	}
+
+	@Override
 	public int getValuesArrayPosition() {
 		return position;
 	}

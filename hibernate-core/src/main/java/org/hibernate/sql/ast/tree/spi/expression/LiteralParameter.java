@@ -44,10 +44,12 @@ public class LiteralParameter implements GenericParameter, JdbcParameterBinding,
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				getExpressableType()
 		);

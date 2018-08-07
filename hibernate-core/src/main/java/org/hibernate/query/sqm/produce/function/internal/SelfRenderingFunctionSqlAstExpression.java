@@ -70,10 +70,12 @@ public class SelfRenderingFunctionSqlAstExpression
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				null,
 				getExpressableType()
 		);

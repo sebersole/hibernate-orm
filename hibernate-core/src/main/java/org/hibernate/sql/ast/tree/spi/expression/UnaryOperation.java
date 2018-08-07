@@ -55,10 +55,12 @@ public class UnaryOperation implements Expression, SqlExpressable, QueryResultPr
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				getExpressableType()
 		);

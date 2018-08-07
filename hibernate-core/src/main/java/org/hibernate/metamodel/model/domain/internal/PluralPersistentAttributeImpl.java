@@ -24,6 +24,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
+import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
@@ -40,6 +41,7 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
@@ -60,6 +62,8 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	private static final Object NOT_NULL_COLLECTION = new MarkerObject( "NOT NULL COLLECTION" );
 
 	private final PersistentCollectionDescriptor collectionDescriptor;
+	private final FetchStrategy fetchStrategy;
+
 	private int stateArrayPosition;
 
 	@SuppressWarnings("unchecked")
@@ -75,6 +79,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 		this.collectionDescriptor = collectionDescriptor;
 
 		creationContext.registerCollectionDescriptor( collectionDescriptor, bootCollectionDescriptor );
+
+		final FetchStrategy fetchStrategy = Helper.determineFetchStrategy( bootCollectionDescriptor );
+
+		this.fetchStrategy = fetchStrategy;
 	}
 
 	@Override
@@ -213,12 +221,19 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 			FetchStrategy fetchStrategy,
 			String resultVariable,
 			QueryResultCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception();
+		return new PluralAttributeFetchImpl(
+				fetchParent,
+				qualifier,
+				this,
+				fetchStrategy,
+				resultVariable,
+				creationContext
+		);
 	}
 
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {
-		throw new NotYetImplementedFor6Exception();
+		return fetchStrategy;
 	}
 
 	@Override
@@ -277,6 +292,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 
 	@Override
 	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
+		if ( jdbcValues == null ) {
+			return null;
+		}
+
 		return NOT_NULL_COLLECTION;
 	}
 

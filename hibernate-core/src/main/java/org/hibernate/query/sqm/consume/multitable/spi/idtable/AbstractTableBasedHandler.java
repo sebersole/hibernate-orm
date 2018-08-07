@@ -170,9 +170,11 @@ public abstract class AbstractTableBasedHandler implements Handler {
 			final TypeConfiguration typeConfiguration = executionContext.getSessionFactory().getTypeConfiguration();
 
 			// we need to insert the uid into the id-table to properly identify the rows later
+			final int selectionCountSoFar = entityIdSelect.getSelectClause().getSqlSelections().size();
 			entityIdSelect.getSelectClause().addSqlSelection(
 					sessUidLiteral.createSqlSelection(
-							entityIdSelect.getSelectClause().getSqlSelections().size(),
+							selectionCountSoFar + 1,
+							selectionCountSoFar,
 							(BasicJavaDescriptor) typeConfiguration.getJavaTypeDescriptorRegistry().getDescriptor( String.class ),
 							typeConfiguration
 					)

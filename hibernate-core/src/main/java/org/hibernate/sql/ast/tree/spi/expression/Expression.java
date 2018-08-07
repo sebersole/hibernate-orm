@@ -42,6 +42,7 @@ public interface Expression extends SqlAstNode, SqlSelectionProducer {
 	@Override
 	SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration);
 }

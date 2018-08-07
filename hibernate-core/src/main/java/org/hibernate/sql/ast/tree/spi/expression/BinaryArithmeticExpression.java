@@ -53,10 +53,11 @@ public class BinaryArithmeticExpression
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
+			int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				getExpressableType()
 		);

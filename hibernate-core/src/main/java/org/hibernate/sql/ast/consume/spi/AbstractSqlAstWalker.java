@@ -77,6 +77,7 @@ import org.hibernate.sql.ast.tree.spi.select.SelectClause;
 import org.hibernate.sql.ast.tree.spi.sort.SortSpecification;
 import org.hibernate.sql.exec.internal.JdbcParametersImpl;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
+import org.hibernate.sql.results.internal.EmptySqlSelection;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
@@ -246,6 +247,9 @@ public abstract class AbstractSqlAstWalker
 
 			String separator = "";
 			for ( SqlSelection sqlSelection : selectClause.getSqlSelections() ) {
+				if ( sqlSelection instanceof EmptySqlSelection ) {
+					continue;
+				}
 				appendSql( separator );
 				sqlSelection.accept( this );
 				separator = ", ";

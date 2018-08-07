@@ -8,6 +8,8 @@ package org.hibernate.sql.results.internal;
 
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.sql.results.spi.FetchParent;
+import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.PluralAttributeInitializer;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -17,9 +19,16 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public class PluralAttributeFetchInitializer implements PluralAttributeInitializer {
 	private final PluralPersistentAttribute fetchedAttribute;
+	private final FetchParent fetchParent;
+	private final FetchParentAccess parentAccess;
 
-	public PluralAttributeFetchInitializer(PluralPersistentAttribute fetchedAttribute) {
+	public PluralAttributeFetchInitializer(
+			PluralPersistentAttribute fetchedAttribute,
+			FetchParent fetchParent,
+			FetchParentAccess parentAccess) {
 		this.fetchedAttribute = fetchedAttribute;
+		this.fetchParent = fetchParent;
+		this.parentAccess = parentAccess;
 	}
 
 	@Override
@@ -29,7 +38,7 @@ public class PluralAttributeFetchInitializer implements PluralAttributeInitializ
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
-
+		final Object parentInstance = parentAccess.getFetchParentInstance();
 	}
 
 	@Override

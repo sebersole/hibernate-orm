@@ -34,6 +34,7 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 	private final BiConsumer<Expression,SqlSelection> selectionConsumer;
 
 	private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
+	private int nonEmptySelections = 0;
 
 	public StandardSqlExpressionResolver(
 			Supplier<QuerySpec> querySpecSupplier,
@@ -76,12 +77,18 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 
 
 		final SqlSelection sqlSelection = expression.createSqlSelection(
+				nonEmptySelections + 1,
 				sqlSelectionMap.size(),
 				javaTypeDescriptor,
 				typeConfiguration
 		);
+
 		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
 		selectionConsumer.accept( expression, sqlSelection );
+
+		if ( ! ( sqlSelection instanceof EmptySqlSelection ) ) {
+			nonEmptySelections++;
+		}
 
 		final QuerySpec querySpec = querySpecSupplier.get();
 		querySpec.getSelectClause().addSqlSelection( sqlSelection );

@@ -36,7 +36,7 @@ public class CountStarFunction extends AbstractAggregateFunction {
 		@Override
 		public SqlSelection createSqlSelection(
 				int jdbcPosition,
-				BasicJavaDescriptor javaTypeDescriptor,
+				int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
 				TypeConfiguration typeConfiguration) {
 			throw new UnsupportedOperationException( "The star (`*`) in a `count(*) expression cannot be selected" );
 		}

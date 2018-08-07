@@ -43,6 +43,10 @@ public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch 
 		this.fetchParent = fetchParent;
 		this.qualifier = qualifier;
 		this.lockMode = lockMode;
+
+		// todo (6.0) : need the "fetch graph" / "entity graph" to really be able to perform this correctly
+		//		see org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl.Builder#create
+
 		this.sqlSelectionMappings = EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
 				getEntityDescriptor(),
 				qualifier,

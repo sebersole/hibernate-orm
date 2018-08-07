@@ -3,6 +3,7 @@ package org.hibernate.orm.test.support.domains.gambit;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
@@ -17,6 +18,9 @@ public class EntityWithOneToMany {
 	private String name;
 	private List<SimpleEntity> others = new ArrayList<>(  );
 	private Integer someInteger;
+
+	public EntityWithOneToMany() {
+	}
 
 	public EntityWithOneToMany(Integer id, String name, Integer someInteger) {
 		this.id = id;
@@ -41,7 +45,7 @@ public class EntityWithOneToMany {
 		this.name = name;
 	}
 
-	@OneToMany
+	@OneToMany(fetch = FetchType.LAZY)
 	public List<SimpleEntity> getOthers() {
 		return others;
 	}

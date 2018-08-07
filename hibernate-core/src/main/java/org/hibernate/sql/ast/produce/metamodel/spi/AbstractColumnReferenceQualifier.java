@@ -91,12 +91,16 @@ public abstract class AbstractColumnReferenceQualifier implements ColumnReferenc
 		if ( tableBinding == null ) {
 			throw new HibernateException(
 					"Problem resolving Column(" + column.toLoggableString() +
-							") to ColumnBinding via TableGroup [" + this + "]"
+							") to ColumnBinding via TableGroup [" + loggableString() + "]"
 			);
 		}
 		final ColumnReference columnBinding = new ColumnReference( tableBinding, column );
 		columnBindingMap.put( column, columnBinding );
 		return columnBinding;
+	}
+
+	private String loggableString() {
+		return "primary table = ` " + getPrimaryTableReference().getTable() + '`';
 	}
 
 	@Override

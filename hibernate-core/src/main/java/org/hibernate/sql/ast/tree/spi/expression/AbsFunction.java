@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
@@ -47,15 +46,17 @@ public class AbsFunction extends AbstractStandardFunction {
 	@SuppressWarnings("unchecked")
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
-		final JdbcValueExtractor jdbcValueExtractor = getType().getSqlTypeDescriptor()
-				.getSqlExpressableType( getType().getJavaTypeDescriptor(), typeConfiguration )
-				.getJdbcValueExtractor();
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
-				jdbcValueExtractor
+				getType().getSqlTypeDescriptor().getSqlExpressableType(
+						getType().getJavaTypeDescriptor(),
+						typeConfiguration
+				)
 		);
 	}
 }

@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.internal;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
@@ -14,13 +15,15 @@ import org.hibernate.sql.results.spi.CompositeFetch;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
  * @author Steve Ebersole
  */
-public class CompositeFetchImpl extends AbstractFetchParent implements CompositeFetch {
+public class CompositeFetchImpl extends AbstractFetchParent implements CompositeFetch, Initializer {
 	private final FetchParent fetchParent;
 	private final ColumnReferenceQualifier qualifier;
 	private final SingularPersistentAttributeEmbedded fetchedNavigable;
@@ -48,6 +51,8 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 				qualifier,
 				creationContext
 		);
+
+		fetchParent.addFetch( this );
 	}
 
 	@Override
@@ -84,7 +89,15 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 	public void registerInitializers(
 			FetchParentAccess parentAccess,
 			InitializerCollector collector) {
+		collector.addInitializer( this );
+
 		// todo (6.0) : wrong parent-access
 		registerFetchInitializers( parentAccess, collector );
+	}
+
+	@Override
+	public void finishUpRow(RowProcessingState rowProcessingState) {
+		// nothing to do here... yet
+		// todo (6.0) : this is one potential spot to managed resolving the composite's "state array" to the composite instance
 	}
 }

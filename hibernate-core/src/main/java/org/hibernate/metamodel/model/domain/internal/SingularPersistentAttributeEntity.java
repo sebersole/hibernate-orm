@@ -17,7 +17,6 @@ import javax.persistence.TemporalType;
 import org.hibernate.HibernateException;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.internal.ForeignKeys;
@@ -36,6 +35,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentA
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
@@ -85,7 +85,6 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -109,6 +108,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	private final String sqlAliasStem;
 	private final EntityDescriptor<J> entityDescriptor;
 	private final String referencedAttributeName;
+	private final FetchStrategy fetchStrategy;
 
 	private ForeignKey foreignKey;
 
@@ -168,6 +168,8 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		context.registerNavigable( this );
 		instantiationComplete( bootModelAttribute, context );
+
+		this.fetchStrategy = Helper.determineFetchStrategy( bootModelAttribute, runtimeModelContainer, entityDescriptor );
 	}
 
 	@Override
@@ -310,7 +312,7 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {
-		throw new NotYetImplementedFor6Exception(  );
+		return fetchStrategy;
 	}
 
 	@Override

@@ -50,7 +50,11 @@ public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode
 
 	@Override
 	public void registerInitializers(FetchParentAccess parentAccess, InitializerCollector collector) {
-		final PluralAttributeInitializer initializer = new PluralAttributeFetchInitializer( pluralAttribute );
+		final PluralAttributeInitializer initializer = new PluralAttributeFetchInitializer(
+				pluralAttribute,
+				fetchParent,
+				parentAccess
+		);
 
 		// todo (6.0) : how to handle index/element?
 

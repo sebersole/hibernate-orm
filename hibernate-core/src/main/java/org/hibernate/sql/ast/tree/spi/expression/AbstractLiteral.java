@@ -59,6 +59,7 @@ public abstract class AbstractLiteral
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		// todo (6.0) : for literals and parameters consider simply pushing these values directly into the "current JDBC values" array
@@ -68,6 +69,7 @@ public abstract class AbstractLiteral
 
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				getType()
 		);

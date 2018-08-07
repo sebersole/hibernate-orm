@@ -53,7 +53,7 @@ public class ConcatFunction implements StandardFunction {
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
+			int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return null;
 	}

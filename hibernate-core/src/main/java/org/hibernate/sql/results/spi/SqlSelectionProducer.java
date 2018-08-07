@@ -15,13 +15,13 @@ import org.hibernate.type.spi.TypeConfiguration;
 public interface SqlSelectionProducer {
 	/**
 	 * Create a SqlSelection for the given JDBC ResultSet position
-	 *
-	 * @param jdbcPosition The position within the SQL selections
+	 *  @param jdbcPosition The position within the SQL selections
+	 * @param valuesArrayPosition
 	 * @param javaTypeDescriptor The descriptor for the Java type to read the value as
 	 * @param typeConfiguration The associated TypeConfiguration
 	 */
 	SqlSelection createSqlSelection(
 			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
+			int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration);
 }

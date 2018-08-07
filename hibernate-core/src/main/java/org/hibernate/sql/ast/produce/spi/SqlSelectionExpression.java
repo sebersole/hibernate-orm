@@ -53,7 +53,7 @@ public class SqlSelectionExpression implements Expression {
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
-			BasicJavaDescriptor javaTypeDescriptor,
+			int valuesArrayPosition, BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		return theSelection;
 	}

@@ -16,16 +16,18 @@ import org.hibernate.sql.results.spi.SqlSelection;
  * @author Steve Ebersole
  */
 public class SqlSelectionImpl implements SqlSelection {
-	private final int position;
+	private final int jdbcPosition;
+	private final int valuesArrayPosition;
 	private final Expression sqlExpression;
 	private final JdbcValueExtractor jdbcValueExtractor;
 
-	public SqlSelectionImpl(int position, Expression sqlExpression, SqlExpressableType sqlExpressableType) {
-		this( position, sqlExpression, sqlExpressableType.getJdbcValueExtractor() );
+	public SqlSelectionImpl(int jdbcPosition, int valuesArrayPosition, Expression sqlExpression, SqlExpressableType sqlExpressableType) {
+		this( jdbcPosition, valuesArrayPosition, sqlExpression, sqlExpressableType.getJdbcValueExtractor() );
 	}
 
-	public SqlSelectionImpl(int position, Expression sqlExpression, JdbcValueExtractor jdbcValueExtractor) {
-		this.position = position;
+	public SqlSelectionImpl(int jdbcPosition, int valuesArrayPosition, Expression sqlExpression, JdbcValueExtractor jdbcValueExtractor) {
+		this.jdbcPosition = jdbcPosition;
+		this.valuesArrayPosition = valuesArrayPosition;
 		this.sqlExpression = sqlExpression;
 		this.jdbcValueExtractor = jdbcValueExtractor;
 	}
@@ -36,8 +38,13 @@ public class SqlSelectionImpl implements SqlSelection {
 	}
 
 	@Override
+	public int getJdbcResultSetIndex() {
+		return jdbcPosition;
+	}
+
+	@Override
 	public int getValuesArrayPosition() {
-		return position;
+		return valuesArrayPosition;
 	}
 
 	@Override

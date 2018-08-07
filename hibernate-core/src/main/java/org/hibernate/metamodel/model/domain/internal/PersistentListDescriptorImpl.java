@@ -54,4 +54,6 @@ public class PersistentListDescriptorImpl<O,E> extends AbstractPersistentCollect
 	public boolean contains(Object collection, Object childObject) {
 		return ( (List) collection ).contains( childObject );
 	}
+
+
 }

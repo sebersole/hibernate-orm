@@ -210,6 +210,9 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		}
 
 		public EntitySqlSelectionGroupImpl create(ColumnReferenceQualifier qualifier, SqlAstCreationContext resolutionContext) {
+			// todo (6.0) : need the "fetch graph" / "entity graph" to really be able to perform this correctly
+			//		the plan is that information would be available from SqlAstCreationContext -
+			//		something like `SqlAstCreationContext#getCurrentAttr
 			final EntityHierarchy hierarchy = entityDescriptor.getHierarchy();
 
 			applyIdSqlSelections(

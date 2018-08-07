@@ -44,6 +44,7 @@ public class ColumnReference implements Expression {
 	@Override
 	public SqlSelection createSqlSelection(
 			int jdbcPosition,
+			int valuesArrayPosition,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
 		final JdbcValueExtractor jdbcValueExtractor = getColumn().getSqlTypeDescriptor().getSqlExpressableType(
@@ -52,6 +53,7 @@ public class ColumnReference implements Expression {
 		).getJdbcValueExtractor();
 		return new SqlSelectionImpl(
 				jdbcPosition,
+				valuesArrayPosition,
 				this,
 				jdbcValueExtractor
 		);
