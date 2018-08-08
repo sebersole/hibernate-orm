@@ -32,6 +32,12 @@ public class BigDecimalJavaDescriptor extends AbstractNumericJavaDescriptor<BigD
 		return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.NUMERIC );
 	}
 
+	@Override
+	public boolean areEqual(BigDecimal one, BigDecimal another) {
+		return one == another
+				|| ( one != null && another != null && one.compareTo( another ) == 0 );
+	}
+
 	@SuppressWarnings({ "unchecked" })
 	public <X> X unwrap(BigDecimal value, Class<X> type, SharedSessionContractImplementor session) {
 		if ( value == null ) {
