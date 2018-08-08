@@ -22,6 +22,8 @@ public interface MappedJoin {
 
 	boolean isOptional();
 
+	boolean isInverse();
+
 	MappedForeignKey getJoinMapping();
 
 	List<PersistentAttributeMapping> getPersistentAttributes();

@@ -165,7 +165,7 @@ public final class EntityUpdateAction extends EntityAction {
 			TypeHelper.deepCopy(
 					entityDescriptor,
 					state,
-					previousState,
+					state,
 					StateArrayContributor::isIncludedInDirtyChecking
 			);
 

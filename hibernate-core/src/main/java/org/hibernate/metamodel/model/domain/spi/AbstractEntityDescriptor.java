@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
@@ -68,6 +67,7 @@ import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
@@ -184,6 +184,8 @@ public abstract class AbstractEntityDescriptor<J>
 
 		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
 		proxyInterface = bootMapping.getProxyInterface();
+
+		creationContext.registerNavigable( this );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -249,7 +251,9 @@ public abstract class AbstractEntityDescriptor<J>
 		return bindings;
 	}
 
-	private JoinedTableBinding generateJoinedTableBinding(MappedJoin bootJoinTable, RuntimeModelCreationContext creationContext) {
+	private JoinedTableBinding generateJoinedTableBinding(
+			MappedJoin bootJoinTable,
+			RuntimeModelCreationContext creationContext) {
 		final Table joinedTable = resolveTable( bootJoinTable.getMappedTable(), creationContext );
 
 		// todo (6.0) : resolve "join predicate" as ForeignKey.ColumnMappings
@@ -262,7 +266,8 @@ public abstract class AbstractEntityDescriptor<J>
 				joinedTable,
 				getPrimaryTable(),
 				creationContext.getDatabaseObjectResolver().resolveForeignKey( bootJoinTable.getJoinMapping() ),
-				bootJoinTable.isOptional()
+				bootJoinTable.isOptional(),
+				bootJoinTable.isInverse()
 		);
 	}
 
@@ -277,8 +282,6 @@ public abstract class AbstractEntityDescriptor<J>
 			RuntimeModelCreationContext creationContext) {
 		super.finishInitialization( bootDescriptor, creationContext );
 
-		this.singleIdLoader = new StandardSingleIdEntityLoader<>( this );
-
 		log.debugf(
 				"Completed initialization of descriptor [%s] for entity [%s (%s)]",
 				this,
@@ -289,6 +292,26 @@ public abstract class AbstractEntityDescriptor<J>
 		if ( hasProxy ) {
 			this.proxyFactory = getRepresentationStrategy().generateProxyFactory( this, creationContext );
 		}
+	}
+
+	@Override
+	public boolean finishInitialization(RuntimeModelCreationContext creationContext) {
+		this.singleIdLoader = new StandardSingleIdEntityLoader<>( this );
+		return true;
+	}
+
+	@Override
+	public Object[] getDatabaseSnapshot(Object id, SharedSessionContractImplementor session) throws HibernateException {
+		if ( log.isTraceEnabled() ) {
+			log.tracev(
+					"Getting current persistent state for: {0}", MessageHelper.infoString(
+							this,
+							id,
+							getFactory()
+					)
+			);
+		}
+		return getSingleIdLoader().loadDatabaseSnapshot( id, session );
 	}
 
 	@Override
@@ -576,7 +599,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	protected TableReference resolvePrimaryTableReference(SqlAliasBase sqlAliasBase) {
-		return new TableReference( getPrimaryTable(), sqlAliasBase.generateNewAlias() );
+		return new TableReference( getPrimaryTable(), sqlAliasBase.generateNewAlias(), false );
 	}
 
 	private void resolveTableReferenceJoins(
@@ -597,7 +620,8 @@ public abstract class AbstractEntityDescriptor<J>
 			TableGroupContext context) {
 		final TableReference joinedTableReference = new TableReference(
 				joinedTableBinding.getReferringTable(),
-				sqlAliasBase.generateNewAlias()
+				sqlAliasBase.generateNewAlias(),
+				joinedTableBinding.isOptional()
 		);
 
 		return new TableReferenceJoin(
@@ -684,7 +708,6 @@ public abstract class AbstractEntityDescriptor<J>
 	//		* how deep (associations) comes down to fetching
 
 
-
 	@Override
 	public EntitySqlSelectionGroup resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
@@ -768,7 +791,6 @@ public abstract class AbstractEntityDescriptor<J>
 				hashCode()
 		);
 	}
-
 
 	@Override
 	public void insert(

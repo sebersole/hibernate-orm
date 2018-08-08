@@ -27,11 +27,14 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier {
 	private final Table table;
 	private final String identificationVariable;
 
+	private final boolean isOptional;
+
 	private final Map<Column,ColumnReference> columnReferenceResolutionMap = new HashMap<>();
 
-	public TableReference(Table table, String identificationVariable) {
+	public TableReference(Table table, String identificationVariable, boolean isOptional) {
 		this.table = table;
 		this.identificationVariable = identificationVariable;
+		this.isOptional = isOptional;
 	}
 
 	public Table getTable() {
@@ -40,6 +43,10 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier {
 
 	public String getIdentificationVariable() {
 		return identificationVariable;
+	}
+
+	public boolean isOptional() {
+		return isOptional;
 	}
 
 	@Override

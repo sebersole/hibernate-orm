@@ -336,7 +336,7 @@ public class DefaultDeleteEventListener implements DeleteEventListener, Callback
 				entityDescriptor,
 				currentState,
 				deletedState,
-				(navigable) -> false
+				(navigable) -> true
 		);
 
 		return deletedState;

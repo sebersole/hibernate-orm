@@ -17,16 +17,19 @@ public class JoinedTableBinding {
 	private final ForeignKey joinForeignKey;
 
 	private final boolean optional;
+	private final boolean inverse;
 
 	public JoinedTableBinding(
 			Table referringTable,
 			Table targetTable,
 			ForeignKey joinForeignKey,
-			boolean optional) {
+			boolean optional,
+			boolean inverse) {
 		this.referringTable = referringTable;
 		this.targetTable = targetTable;
 		this.joinForeignKey = joinForeignKey;
 		this.optional = optional;
+		this.inverse = inverse;
 	}
 
 	public Table getReferringTable() {
@@ -43,5 +46,9 @@ public class JoinedTableBinding {
 
 	public boolean isOptional() {
 		return optional;
+	}
+
+	public boolean isInverse() {
+		return inverse;
 	}
 }

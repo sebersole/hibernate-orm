@@ -15,12 +15,12 @@ public interface JdbcMutationExecutor {
 	/**
 	 * Singleton access (calling LogicalConnection#afterStatement afterwards)
 	 */
-	public static final JdbcMutationExecutor WITH_AFTER_STATEMENT_CALL = new JdbcMutationExecutorImpl( true );
+	JdbcMutationExecutor WITH_AFTER_STATEMENT_CALL = new JdbcMutationExecutorImpl( true );
 
 	/**
 	 * Singleton access (not calling LogicalConnection#afterStatement afterwards)
 	 */
-	public static final JdbcMutationExecutor NO_AFTER_STATEMENT_CALL = new JdbcMutationExecutorImpl( false );
+	JdbcMutationExecutor NO_AFTER_STATEMENT_CALL = new JdbcMutationExecutorImpl( false );
 
 	int execute(
 			JdbcMutation jdbcMutation,

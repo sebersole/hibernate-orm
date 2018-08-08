@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -38,6 +39,7 @@ import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -49,6 +51,7 @@ import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -243,6 +246,14 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public List<Column> getColumns() {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		//nothing to do, no columns
 	}
 
 	@Override
