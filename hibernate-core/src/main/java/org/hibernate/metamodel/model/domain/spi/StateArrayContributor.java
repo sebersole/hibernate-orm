@@ -13,6 +13,8 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.OptimisticLockType;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
+import org.hibernate.engine.spi.CascadeStyle;
+import org.hibernate.engine.spi.CascadeStyles;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -74,6 +76,13 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	 * locking?
 	 */
 	boolean isIncludedInOptimisticLocking();
+
+	default CascadeStyle getCascadeStyle() {
+		// todo (6.0) - implement in each subclass.
+		//		For now return a default NONE value for all contributors since this isn't
+		//		to be supported as a part of Alpha1.
+		return CascadeStyles.NONE;
+	}
 
 	MutabilityPlan<J> getMutabilityPlan();
 

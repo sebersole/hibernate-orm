@@ -31,6 +31,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
@@ -92,19 +93,17 @@ public final class Cascade {
 				LOG.tracev( "Processing cascade {0} for: {1}", action, descriptor.getEntityName() );
 			}
 
-			final List<PersistentAttribute> persistentAttributes = descriptor.getPersistentAttributes();
-			final String[] propertyNames = descriptor.getPropertyNames();
-			final CascadeStyle[] cascadeStyles = descriptor.getPropertyCascadeStyles();
+			final List<NonIdPersistentAttribute> persistentAttributes = descriptor.getPersistentAttributes();
 			final boolean hasUninitializedLazyProperties = descriptor.hasUninitializedLazyProperties( parent );
 			final int componentPathStackDepth = 0;
 			for ( int i = 0; i < persistentAttributes.size(); i++) {
-				final CascadeStyle style = cascadeStyles[ i ];
-				final String propertyName = propertyNames[ i ];
+				final NonIdPersistentAttribute attribute = persistentAttributes.get( i );
+				final CascadeStyle style = attribute.getCascadeStyle();
+
 				final boolean isUninitializedProperty =
 						hasUninitializedLazyProperties &&
-						!descriptor.getBytecodeEnhancementMetadata().isAttributeLoaded( parent, propertyName );
+						!descriptor.getBytecodeEnhancementMetadata().isAttributeLoaded( parent, attribute.getName() );
 
-				PersistentAttribute attribute = persistentAttributes.get( i );
 				if ( style.doCascade( action ) ) {
 					final Object child;
 
@@ -128,7 +127,7 @@ public final class Cascade {
 							// The (non-collection) attribute needs to be initialized so that
 							// the action can be performed on the initialized attribute.
 							LazyAttributeLoadingInterceptor interceptor = descriptor.getBytecodeEnhancementMetadata().extractInterceptor( parent );
-							child = interceptor.fetchAttribute( parent, propertyName );
+							child = interceptor.fetchAttribute( parent, attribute.getName() );
 						}
 						else {
 							// Nothing to do, so just skip cascading to this lazy (non-collection) attribute.
@@ -147,7 +146,7 @@ public final class Cascade {
 							child,
 							attribute,
 							style,
-							propertyName,
+							attribute.getName(),
 							anything,
 							false
 					);
@@ -169,10 +168,10 @@ public final class Cascade {
 								eventSource,
 								componentPathStackDepth,
 								parent,
-								descriptor.getPropertyValue( parent, i ),
+								attribute.getPropertyAccess().getGetter().get( parent ),
 								attribute,
 								style,
-								propertyName,
+								attribute.getName(),
 								false
 						);
 					}
