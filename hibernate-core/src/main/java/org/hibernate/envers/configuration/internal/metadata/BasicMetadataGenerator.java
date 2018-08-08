@@ -56,7 +56,7 @@ public final class BasicMetadataGenerator {
 
 			// A null mapper means that we only want to add xml mappings
 			if ( mapper != null ) {
-				mapper.add( propertyAuditingData.getPropertyData() );
+				mapper.add( propertyAuditingData.resolvePropertyData( value.getJavaTypeMapping().getJavaTypeDescriptor() ) );
 			}
 			return true;
 		}
@@ -108,7 +108,7 @@ public final class BasicMetadataGenerator {
 
 		// A null mapper means that we only want to add xml mappings
 		if ( mapper != null ) {
-			mapper.add( propertyAuditingData.getPropertyData() );
+			mapper.add( propertyAuditingData.resolvePropertyData( value.getJavaTypeMapping().getJavaTypeDescriptor() ) );
 		}
 
 		return true;
