@@ -649,6 +649,30 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	@Override
 	public Boolean isTransient(Object object, SharedSessionContractImplementor session) throws HibernateException {
+		final Object id = getHierarchy().getIdentifierDescriptor().extractIdentifier( object, session );
+
+		// we *always* assume an instance with a null
+		// identifier or no identifier property is unsaved.
+		if ( id == null ) {
+			return Boolean.TRUE;
+		}
+
+		// check the version unsaved-value, if appropriate
+		final Object version = getVersion( object );
+		if ( getHierarchy().getVersionDescriptor() != null ) {
+			// let this take precedence if defined, since it works for assigned identifiers
+			// todo (6.0) - this may require some more work to handle proper comparisons.
+			return getHierarchy().getVersionDescriptor().getUnsavedValue() == version;
+		}
+
+		// check the id unsaved-value
+		// todo (6.0) - need to implement this behavior
+
+		// check to see if it is in the second-level cache
+		if ( session.getCacheMode().isGetEnabled() && canReadFromCache() ) {
+			// todo (6.0) - support reading from the cache
+		}
+
 		return null;
 	}
 
