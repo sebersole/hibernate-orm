@@ -122,14 +122,18 @@ public class DialectFilterExtension implements ExecutionCondition {
 	private Dialect getDialect(ExtensionContext context) {
 		final Optional<SessionFactoryScope> sfScope = SessionFactoryScopeExtension.findSessionFactoryScope( context );
 		if ( !sfScope.isPresent() ) {
-			final Optional<DialectAccess> dialectAccess = Optional.ofNullable(
-					(DialectAccess) context.getStore( DialectAccess.NAMESPACE )
-							.get( context.getRequiredTestInstance() ) );
-			if ( !dialectAccess.isPresent() ) {
-				throw new RuntimeException(
-						"Could not locate any DialectAccess implementation in JUnit ExtensionContext" );
+			final Optional<EntityManagerFactoryScope> emScope = EntityManagerFactoryScopeExtension.findEntityManagerFactoryScope( context );
+			if ( !emScope.isPresent() ) {
+				final Optional<DialectAccess> dialectAccess = Optional.ofNullable(
+						(DialectAccess) context.getStore( DialectAccess.NAMESPACE )
+								.get( context.getRequiredTestInstance() ) );
+				if ( !dialectAccess.isPresent() ) {
+					throw new RuntimeException(
+							"Could not locate any DialectAccess implementation in JUnit ExtensionContext" );
+				}
+				return dialectAccess.get().getDialect();
 			}
-			return dialectAccess.get().getDialect();
+			return emScope.get().getDialect();
 		}
 
 		return sfScope.get().getDialect();
