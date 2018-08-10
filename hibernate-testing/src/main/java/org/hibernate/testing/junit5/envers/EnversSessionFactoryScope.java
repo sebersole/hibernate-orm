@@ -7,6 +7,7 @@
 package org.hibernate.testing.junit5.envers;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -60,70 +61,148 @@ public class EnversSessionFactoryScope implements SessionFactoryAccess {
 		return (SessionFactoryImplementor) sessionFactory;
 	}
 
+	/**
+	 * Invoke a lambda action inside an open session without a transaction-scope.
+	 *
+	 * The session will be closed after the action completes, regardless of failure.
+	 *
+	 * @param action The lambda action to invoke.
+	 */
 	public void inSession(Consumer<SessionImplementor> action) {
-		log.trace( "#inSession(action)" );
 		inSession( getSessionFactory(), action );
 	}
 
+	/**
+	 * Invoke a lambda action with an open session without a transaction-scope.
+	 *
+	 * The session will be closed after the action completes, regardless of failure.
+	 *
+	 * @param sfi The session factory.
+	 * @param action The lambda action to invoke.
+	 */
+	public void inSession(SessionFactoryImplementor sfi, Consumer<SessionImplementor> action) {
+		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			action.accept( session );
+		}
+	}
+
+	public <R> R inSession(Function<SessionImplementor, R> action) {
+		return inSession( getSessionFactory(), action );
+	}
+
+	public <R> R inSession(SessionFactoryImplementor sfi, Function<SessionImplementor, R> action) {
+		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			return action.apply( session );
+		}
+	}
+
+	/**
+	 * Invoke a lambda action with an open session inside a new transaction.
+	 *
+	 * The session will be closed after the action completes, regardless of failure.
+	 * The transaction will be committed if successful; otherwise it will be rolled back.
+	 *
+	 * @param action The lambda action to invoke.
+	 */
 	public void inTransaction(Consumer<SessionImplementor> action) {
-		log.trace( "#inTransaction(action)" );
 		inTransaction( getSessionFactory(), action );
 	}
 
-	public void inSession(SessionFactoryImplementor sfi, Consumer<SessionImplementor> action) {
-		log.trace( "##inSession(SF,action)" );
-		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
-			log.trace( "Session opened, calling action" );
-			action.accept( session );
-			log.trace( "called action" );
-		}
-		finally {
-			log.trace( "Session close - auto-close lock" );
-		}
-	}
-
+	/**
+	 * Invoke a lambda action with an open session inside a new transaction.
+	 *
+	 * The session will be closed after the action completes, regardless of failure.
+	 * The transaction will be committed if successful; otherwise it will be rolled back.
+	 *
+	 * @param sfi The session factory.
+	 * @param action The lambda action to invoke.
+	 */
 	public void inTransaction(SessionFactoryImplementor sfi, Consumer<SessionImplementor> action) {
-		log.trace( "#inTransaction(SF,action)" );
 		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
-			log.trace( "Session opened, calling action" );
 			inTransaction( session, action );
-			log.trace( "called action" );
-		}
-		finally {
-			log.trace( "Session close - auto-close lock" );
 		}
 	}
 
+	/**
+	 * Invoke a lambda action inside a new transaction but bound to an existing open session.
+	 *
+	 * The session will not be closed after the action completes, it will be left as-is.
+	 * The transaction will be committed if successful; otherwise it will be rolled back.
+	 *
+	 * @param session The session to bind the transaction against.
+	 * @param action The lambda action to invoke.
+	 */
 	public void inTransaction(SessionImplementor session, Consumer<SessionImplementor> action) {
-		log.trace( "#inTransaction(session,action)" );
-
 		final Transaction trx = session.beginTransaction();
 		try {
-			log.trace( "Transaction started, calling action." );
 			action.accept( session );
-			log.trace( "Action called, attempting to commit transaction." );
 			trx.commit();
-			log.trace( "Commit successful." );
 		}
 		catch ( Exception e ) {
-			log.tracef( "Error calling action: %s (%s) - rolling back", e.getClass().getName(), e.getMessage() );
 			try {
 				trx.rollback();
 			}
 			catch ( Exception ignored ) {
-				log.trace( "Was unable to rollback transaction." );
 			}
 			throw e;
 		}
 	}
 
-	public void inAuditReader(Consumer<AuditReader> action) {
-		log.trace( "#inAuditReader" );
-		inAuditReader( getSessionFactory(), action );
+	public <R> R inTransaction(Function<SessionImplementor, R> action) {
+		return inTransaction( getSessionFactory(), action );
 	}
 
-	public void inAuditReader(SessionFactoryImplementor sfi, Consumer<AuditReader> action) {
+	public <R> R inTransaction(SessionFactoryImplementor sfi, Function<SessionImplementor, R> action) {
 		try ( SessionImplementor session = (SessionImplementor) sfi.openSession() ) {
+			return inTransaction( session, action );
+		}
+	}
+
+	public <R> R inTransaction(SessionImplementor session, Function<SessionImplementor, R> action) {
+		final Transaction trx = session.beginTransaction();
+		try {
+			R result = action.apply( session );
+			trx.commit();
+			return result;
+		}
+		catch ( Exception e ) {
+			try {
+				trx.rollback();
+			}
+			catch ( Exception ignored ) {
+
+			}
+			throw e;
+		}
+	}
+
+	/**
+	 * Invoke a series of lambda actions bound inside their own transaction-scope but bound to the same session.
+	 *
+	 * The session will be closed after the actions complete, regardless of failure.
+	 * The transaction associated with lambda will be committed if successful; otherwise it will be rolled back.
+	 * Should a lambda action fail, the remaining actions will be skipped.
+	 *
+	 * @param actions The lambda actions to invoke.
+	 */
+	public void inTransactions(Consumer<SessionImplementor>... actions) {
+		try( SessionImplementor session = (SessionImplementor) getSessionFactory().openSession() ) {
+			for ( Consumer<SessionImplementor> action : actions ) {
+				inTransaction( session, action );
+			}
+		}
+	}
+
+	/**
+	 * Invoke a lambda action against an {@link AuditReader} bound to a newly allocated session.
+	 *
+	 * The audit reader instance will be automatically allocated and provided to the lambda.
+	 * The underlying session will be automatically opened and closed.
+	 *
+	 * @param action The lambda action to invoke.
+	 */
+	public void inAuditReader(Consumer<AuditReader> action) {
+		try ( SessionImplementor session = (SessionImplementor) getSessionFactory().openSession() ) {
 			AuditReader auditReader = AuditReaderFactory.get( session );
 			action.accept( auditReader );
 		}

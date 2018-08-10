@@ -6,10 +6,7 @@
  */
 package org.hibernate.envers.test;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.hibernate.Metamodel;
@@ -21,18 +18,14 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.boot.AuditService;
-import org.hibernate.envers.configuration.EnversSettings;
-import org.hibernate.internal.util.StringHelper;
 import org.junit.jupiter.api.Tag;
 
 import org.jboss.logging.Logger;
 
 import org.hibernate.testing.junit5.StandardTags;
-import org.hibernate.testing.junit5.dynamictests.AbstractDynamicTest;
 import org.hibernate.testing.junit5.dynamictests.DynamicAfterAll;
 import org.hibernate.testing.junit5.envers.EnversSessionFactoryProducer;
 import org.hibernate.testing.junit5.envers.EnversSessionFactoryScope;
-import org.hibernate.testing.junit5.envers.Strategy;
 
 /**
  * Envers base test case that uses a native Hibernate {@link SessionFactory} configuration.
@@ -41,15 +34,12 @@ import org.hibernate.testing.junit5.envers.Strategy;
  */
 @Tag(StandardTags.ENVERS)
 public class EnversSessionFactoryBasedFunctionalTest
-		extends AbstractDynamicTest<EnversDynamicExecutionContext>
+		extends AbstractEnversDynamicTest
 		implements EnversSessionFactoryProducer {
 
 	private static final Logger log = Logger.getLogger( EnversSessionFactoryBasedFunctionalTest.class );
-	private static final Class<?>[] NO_CLASSES = new Class<?>[0];
-	private static final String[] NO_MAPPINGS = new String[0];
 
 	private EnversSessionFactoryScope sessionFactoryScope;
-	private String auditStrategyName;
 	private AuditReader auditReader;
 
 	protected SessionFactory sessionFactory() {
@@ -63,7 +53,7 @@ public class EnversSessionFactoryBasedFunctionalTest
 
 		final StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder();
 		ssrb.applySetting( AvailableSettings.USE_NEW_ID_GENERATOR_MAPPINGS, Boolean.TRUE.toString() );
-		ssrb.applySetting( AvailableSettings.HBM2DDL_AUTO, exportSchema() ? "create" : "none" );
+		ssrb.applySetting( AvailableSettings.HBM2DDL_AUTO, exportSchema() ? "create-drop" : "none" );
 
 		final Map<String, Object> settings = new HashMap<>();
 		addSettings( settings );
@@ -95,57 +85,8 @@ public class EnversSessionFactoryBasedFunctionalTest
 	}
 
 	@Override
-	protected Collection<EnversDynamicExecutionContext> getExecutionContexts() {
-		List<EnversDynamicExecutionContext> contexts = new ArrayList<>();
-		for ( Strategy strategy : Strategy.values() ) {
-			contexts.add( new EnversDynamicExecutionContext( strategy ) );
-		}
-		return contexts;
-	}
-
-	@Override
 	protected void injectExecutionContext(EnversDynamicExecutionContext context) {
 		sessionFactoryScope = new EnversSessionFactoryScope( this, context.getStrategy() );
-	}
-
-	/**
-	 * Returns whether the schema should be created or not.
-	 */
-	protected boolean exportSchema() {
-		return true;
-	}
-
-	/**
-	 * Return a list of annotated classes that should be added to the metadata configuration.
-	 */
-	protected Class<?>[] getAnnotatedClasses() {
-		return NO_CLASSES;
-	}
-
-	/**
-	 * Return a list of HBM mappings that should be added to the metadata configuration.
-	 */
-	protected String[] getMappings() {
-		return NO_MAPPINGS;
-	}
-
-	/**
-	 * Return the base package path for HBM mappings.  The default is {@code 'org/hibernate/test'}.
-	 */
-	protected String getBaseForMappings() {
-		return "org/hibernate/envers/test/";
-	}
-
-	/**
-	 * Add additional configuration settings to configure the test.
-	 *
-	 * @param settings A map of string-based configuration parameters.
-	 */
-	protected void addSettings(Map<String, Object> settings) {
-		settings.put( EnversSettings.USE_REVISION_ENTITY_WITH_NATIVE_ID, Boolean.FALSE.toString() );
-		if ( !StringHelper.isEmpty( auditStrategyName ) ) {
-			settings.put( EnversSettings.AUDIT_STRATEGY, auditStrategyName );
-		}
 	}
 
 	protected EnversSessionFactoryScope sessionFactoryScope() {
