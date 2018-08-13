@@ -351,6 +351,12 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			public SqlExpressionResolver getSqlSelectionResolver() {
 				return sqlExpressionResolver;
 			}
+
+			@Override
+			public LockOptions getLockOptions() {
+				// todo (6.0) : is this correct?
+				return LockOptions.READ;
+			}
 		};
 
 		final List columnReferences = entityDescriptor.getHierarchy()

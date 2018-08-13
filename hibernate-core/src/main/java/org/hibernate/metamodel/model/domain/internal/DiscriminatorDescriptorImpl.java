@@ -20,7 +20,6 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.spi.BasicType;
@@ -95,7 +94,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				resolveSqlSelection(

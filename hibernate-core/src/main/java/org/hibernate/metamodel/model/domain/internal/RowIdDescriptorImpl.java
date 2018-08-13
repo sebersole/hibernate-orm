@@ -20,7 +20,7 @@ import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DerivedColumn;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -88,7 +88,7 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		// todo (6.0) : but like with discriminator, etc we *could* if we wanted to
 		//		exposed as a "virtual attribute" such as `select p.{type} from Person p`
 		throw new HibernateException( "Selection of ROW_ID from domain query is not supported" );

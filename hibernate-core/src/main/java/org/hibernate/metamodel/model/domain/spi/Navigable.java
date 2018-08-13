@@ -20,7 +20,6 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
@@ -104,7 +103,7 @@ public interface Navigable<T> extends DomainType<T> {
 	default QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 

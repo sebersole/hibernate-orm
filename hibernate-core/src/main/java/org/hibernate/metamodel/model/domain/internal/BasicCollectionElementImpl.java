@@ -24,7 +24,7 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.Logger;
@@ -99,7 +99,7 @@ public class BasicCollectionElementImpl<J>
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		assert this.equals( navigableReference.getNavigable() );
 		return new ScalarQueryResultImpl(
 				resultVariable,

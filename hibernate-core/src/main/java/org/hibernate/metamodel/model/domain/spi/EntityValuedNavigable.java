@@ -14,7 +14,6 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -37,7 +36,7 @@ public interface EntityValuedNavigable<J>
 	default QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return getEntityDescriptor().createQueryResult(
 				navigableReference,
 				resultVariable,

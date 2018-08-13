@@ -81,7 +81,6 @@ import org.hibernate.sql.results.internal.EntityFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
@@ -302,7 +301,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return entityDescriptor.createQueryResult(
 				navigableReference,
 				resultVariable,
@@ -326,7 +325,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return new EntityFetchImpl(
 				fetchParent,
 				qualifier,

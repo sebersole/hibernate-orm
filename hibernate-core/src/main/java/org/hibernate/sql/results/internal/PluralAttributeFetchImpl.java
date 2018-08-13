@@ -14,7 +14,7 @@ import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.PluralAttributeFetch;
 import org.hibernate.sql.results.spi.PluralAttributeInitializer;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -24,7 +24,7 @@ public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode
 	private final FetchStrategy fetchStrategy;
 	private final ColumnReferenceQualifier qualifier;
 	private final PluralPersistentAttribute pluralAttribute;
-	private final QueryResultCreationContext creationContext;
+	private final SqlAstCreationContext creationContext;
 
 	public PluralAttributeFetchImpl(
 			FetchParent fetchParent,
@@ -32,7 +32,7 @@ public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode
 			PluralPersistentAttribute pluralAttribute,
 			FetchStrategy fetchStrategy,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		super( pluralAttribute, resultVariable );
 		this.fetchParent = fetchParent;
 		this.qualifier = qualifier;

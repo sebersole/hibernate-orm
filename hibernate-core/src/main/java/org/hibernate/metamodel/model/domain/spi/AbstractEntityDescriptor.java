@@ -71,7 +71,6 @@ import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
-import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
@@ -89,7 +88,6 @@ import org.hibernate.sql.results.internal.EntityQueryResultImpl;
 import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
@@ -650,7 +648,7 @@ public abstract class AbstractEntityDescriptor<J>
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
 		final EntityValuedNavigableReference entityValuedReference = (EntityValuedNavigableReference) navigableReference;
 

@@ -32,7 +32,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -126,7 +126,7 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	public QueryResult createQueryResult(
 			NavigableReference expression,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return embeddedMetadata.createQueryResult(
 				expression,
 				resultVariable,

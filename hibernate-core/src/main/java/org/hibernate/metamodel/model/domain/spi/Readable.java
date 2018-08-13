@@ -6,13 +6,15 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Consumer;
+
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  *
@@ -23,8 +25,8 @@ import org.hibernate.sql.results.spi.QueryResultCreationContext;
 public interface Readable<V,H,D> {
 
 	default QueryResult createQueryResult(
-			java.util.function.Consumer<Initializer> collector,
-			QueryResultCreationContext creationContext) {
+			Consumer<Initializer> collector,
+			SqlAstCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 

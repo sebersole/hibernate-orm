@@ -10,8 +10,8 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * Models the QueryResultProducer generated as part of walking an SQM AST
@@ -49,7 +49,7 @@ public interface NavigableReference extends QueryResultProducer {
 	@Override
 	default QueryResult createQueryResult(
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return getNavigable().createQueryResult(
 				this,
 				resultVariable,

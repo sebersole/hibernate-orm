@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.internal;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
@@ -17,8 +16,8 @@ import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.RowProcessingState;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -36,7 +35,7 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 			ColumnReferenceQualifier qualifier,
 			SingularPersistentAttributeEmbedded fetchedNavigable,
 			FetchStrategy fetchStrategy,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		super(
 				fetchedNavigable.getContainer(),
 				fetchParent.getNavigablePath().append( fetchedNavigable.getNavigableName() )

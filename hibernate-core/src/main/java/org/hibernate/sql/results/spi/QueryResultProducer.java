@@ -16,5 +16,5 @@ package org.hibernate.sql.results.spi;
 public interface QueryResultProducer {
 	QueryResult createQueryResult(
 			String resultVariable,
-			QueryResultCreationContext creationContext);
+			SqlAstCreationContext creationContext);
 }

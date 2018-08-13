@@ -8,8 +8,8 @@ package org.hibernate.sql.ast.tree.spi.expression.instantiation;
 
 import org.hibernate.sql.results.internal.instantiation.ArgumentReader;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -29,7 +29,7 @@ public class DynamicInstantiationArgument {
 	}
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
-	public ArgumentReader buildArgumentReader(QueryResultCreationContext context) {
+	public ArgumentReader buildArgumentReader(SqlAstCreationContext context) {
 		final QueryResult queryResult = argumentResultProducer.createQueryResult( alias, context );
 
 		return new ArgumentReader( queryResult.getResultAssembler(), alias );

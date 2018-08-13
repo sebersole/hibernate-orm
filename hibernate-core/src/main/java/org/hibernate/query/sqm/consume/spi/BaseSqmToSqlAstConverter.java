@@ -262,6 +262,11 @@ public abstract class BaseSqmToSqlAstConverter
 		return queryOptions;
 	}
 
+	@Override
+	public LockOptions getLockOptions() {
+		return getQueryOptions().getLockOptions();
+	}
+
 	public SqlAliasBaseManager getSqlAliasBaseManager() {
 		return sqlAliasBaseManager;
 	}

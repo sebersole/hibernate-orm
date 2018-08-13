@@ -40,8 +40,8 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
@@ -56,7 +56,7 @@ import org.jboss.logging.Logger;
 @SuppressWarnings("unchecked")
 public class SqmSelectToSqlAstConverter
 		extends BaseSqmToSqlAstConverter
-		implements QueryResultCreationContext {
+		implements SqlAstCreationContext {
 	private static final Logger log = Logger.getLogger( SqmSelectToSqlAstConverter.class );
 	private final PerQuerySpecSqlExpressionResolver expressionResolver;
 

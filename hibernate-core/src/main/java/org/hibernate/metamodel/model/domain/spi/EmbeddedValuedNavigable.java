@@ -14,7 +14,6 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.CompositeQueryResultImpl;
 import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
@@ -42,7 +41,7 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	default QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return new CompositeQueryResultImpl(
 				resultVariable,
 				getEmbeddedDescriptor(),

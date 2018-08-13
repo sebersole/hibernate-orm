@@ -27,7 +27,7 @@ import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -106,7 +106,7 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	public QueryResult createQueryResult(
 			NavigableReference expression,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return getEmbeddedDescriptor().createQueryResult(
 				expression,
 				resultVariable,

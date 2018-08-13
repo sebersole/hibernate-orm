@@ -24,8 +24,8 @@ import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationList
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationMapAssemblerImpl;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -119,7 +119,7 @@ public class DynamicInstantiation<T> implements QueryResultProducer {
 	@Override
 	public QueryResult createQueryResult(
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		boolean areAllArgumentsAliased = true;
 		boolean areAnyArgumentsAliased = false;
 		final Set<String> aliases = new HashSet<>();
@@ -162,7 +162,7 @@ public class DynamicInstantiation<T> implements QueryResultProducer {
 			boolean areAnyArgumentsAliased,
 			List<String> duplicatedAliases,
 			List<ArgumentReader> argumentReaders,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 
 		if ( dynamicInstantiation.getNature() == DynamicInstantiationNature.LIST ) {
 			if ( log.isDebugEnabled() && areAnyArgumentsAliased ) {

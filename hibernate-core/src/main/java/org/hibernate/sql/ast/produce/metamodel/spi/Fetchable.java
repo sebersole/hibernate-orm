@@ -11,7 +11,7 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -22,7 +22,7 @@ public interface Fetchable<T> extends Joinable<T> {
 			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
 			String resultVariable,
-			QueryResultCreationContext creationContext);
+			SqlAstCreationContext creationContext);
 
 	FetchStrategy getMappedFetchStrategy();
 

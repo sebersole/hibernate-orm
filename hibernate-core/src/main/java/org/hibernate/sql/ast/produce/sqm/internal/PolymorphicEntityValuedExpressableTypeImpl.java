@@ -69,7 +69,6 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
@@ -286,7 +285,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception();
 	}
 

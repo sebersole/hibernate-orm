@@ -239,6 +239,12 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		return expressionResolver;
 	}
 
+	@Override
+	public LockOptions getLockOptions() {
+		// todo (6.) : is this correct?
+		return LockOptions.NONE;
+	}
+
 	private class TableGroupMock extends AbstractTableGroup implements TableGroup {
 		private final EntityTableGroup entityTableGroup;
 

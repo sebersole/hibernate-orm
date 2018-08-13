@@ -14,7 +14,7 @@ import org.hibernate.sql.results.spi.EntityQueryResult;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * Standard ReturnEntity impl
@@ -33,7 +33,7 @@ public class EntityQueryResultImpl extends AbstractFetchParent implements Entity
 			EntitySqlSelectionGroup sqlSelectionMappings,
 			LockMode lockMode,
 			NavigablePath navigablePath,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		super( navigable, navigablePath );
 		this.resultVariable = resultVariable;
 

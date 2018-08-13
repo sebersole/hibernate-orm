@@ -23,7 +23,7 @@ import org.hibernate.sql.results.internal.EntityQueryResultImpl;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -150,7 +150,7 @@ public class Util {
 		void addQuerySpaces(String... querySpaces);
 		void addQuerySpaces(Collection<String> querySpaces);
 
-		QueryResultCreationContext getQueryResultCreationContext();
+		SqlAstCreationContext getSqlAstCreationContext();
 	}
 
 	/**
@@ -199,7 +199,7 @@ public class Util {
 							null,
 							LockMode.NONE,
 							new NavigablePath( entityDescriptor.getEntityName() ),
-							context.getQueryResultCreationContext()
+							context.getSqlAstCreationContext()
 					)
 			);
 		}

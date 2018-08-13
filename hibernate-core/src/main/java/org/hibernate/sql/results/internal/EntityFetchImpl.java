@@ -18,7 +18,7 @@ import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -38,7 +38,7 @@ public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch 
 			LockMode lockMode,
 			NavigablePath navigablePath,
 			FetchStrategy fetchStrategy,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		super( fetchedNavigable, navigablePath );
 		this.fetchParent = fetchParent;
 		this.qualifier = qualifier;

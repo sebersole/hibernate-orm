@@ -29,7 +29,7 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
@@ -113,7 +113,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 		);
 		final SqlSelectionGroupNode sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
 				rootTableGroup,
-				new QueryResultCreationContext() {
+				new SqlAstCreationContext() {
 					@Override
 					public LockOptions getLockOptions() {
 						return queryOptions.getLockOptions();

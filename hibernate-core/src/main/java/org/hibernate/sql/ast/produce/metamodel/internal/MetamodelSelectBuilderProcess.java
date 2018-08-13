@@ -64,13 +64,13 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
  */
 public class MetamodelSelectBuilderProcess
-		implements QueryResultCreationContext, SqlAstProducerContext, SqlQueryOptions {
+		implements SqlAstProducerContext, SqlAstCreationContext, SqlQueryOptions {
 
 	@SuppressWarnings("WeakerAccess")
 	public static SqlAstSelectDescriptor createSelect(

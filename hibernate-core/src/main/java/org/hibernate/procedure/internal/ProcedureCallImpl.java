@@ -70,8 +70,8 @@ import org.hibernate.sql.results.internal.RowReaderStandardImpl;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.QueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.RowReader;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 
 /**
@@ -136,7 +136,7 @@ public class ProcedureCallImpl<R>
 		Util.resolveResultClasses(
 				new Util.ResultClassesResolutionContext() {
 					@Override
-					public QueryResultCreationContext getQueryResultCreationContext() {
+					public SqlAstCreationContext getSqlAstCreationContext() {
 						throw new NotYetImplementedFor6Exception();
 					}
 
@@ -266,7 +266,7 @@ public class ProcedureCallImpl<R>
 			Util.resolveResultClasses(
 					new Util.ResultClassesResolutionContext() {
 						@Override
-						public QueryResultCreationContext getQueryResultCreationContext() {
+						public SqlAstCreationContext getSqlAstCreationContext() {
 							throw new NotYetImplementedFor6Exception();
 						}
 

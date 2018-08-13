@@ -35,7 +35,6 @@ import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.EntityQueryResult;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -121,7 +120,7 @@ public class QueryResultBuilderRootEntity
 	// NativeQueryReturnBuilder
 
 	@Override
-	public EntityQueryResult buildReturn(QueryResultCreationContext creationContext) {
+	public EntityQueryResult buildReturn(SqlAstCreationContext creationContext) {
 		return new EntityQueryResultImpl(
 				entityDescriptor,
 				this,
@@ -172,7 +171,7 @@ public class QueryResultBuilderRootEntity
 				String explicitDiscriminatorColumnAlias,
 				Map<String, AttributeMapping> explicitAttributeMapping,
 				LockMode lockMode,
-				QueryResultCreationContext creationContext) {
+				SqlAstCreationContext creationContext) {
 			super( null, new NavigablePath( entityDescriptor.getEntityName() ) );
 
 			this.entityDescriptor = entityDescriptor;
@@ -256,7 +255,7 @@ public class QueryResultBuilderRootEntity
 				String explicitDiscriminatorColumnAlias,
 				String explicitTenantDiscriminatorColumnAlias,
 				Map<String, AttributeMapping> explicitAttributeMapping,
-				QueryResultCreationContext creationContext) {
+				SqlAstCreationContext creationContext) {
 			super( entityDescriptor );
 			this.explicitRowIdColumnAlias = explicitRowIdColumnAlias;
 			this.explicitIdColumnAliases = explicitIdColumnAliases;

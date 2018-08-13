@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
@@ -51,7 +50,6 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
@@ -151,7 +149,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		// todo (6.0) : use qualifier to create the SqlSelection mappings
 		return new CompositeFetchImpl(
 				fetchParent,

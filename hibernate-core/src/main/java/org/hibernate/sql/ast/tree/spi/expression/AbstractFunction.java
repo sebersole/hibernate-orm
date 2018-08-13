@@ -8,7 +8,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -17,7 +17,7 @@ public abstract class AbstractFunction implements Function {
 	@Override
 	public QueryResult createQueryResult(
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				resultVariable,
 				creationContext.getSqlSelectionResolver().resolveSqlSelection(

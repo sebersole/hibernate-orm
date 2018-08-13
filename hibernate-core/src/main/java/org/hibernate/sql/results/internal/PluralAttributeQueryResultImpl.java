@@ -6,12 +6,12 @@
  */
 package org.hibernate.sql.results.internal;
 
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.sql.results.spi.InitializerCollector;
 import org.hibernate.sql.results.spi.PluralAttributeQueryResult;
 import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -22,7 +22,7 @@ public class PluralAttributeQueryResultImpl
 	public PluralAttributeQueryResultImpl(
 			PluralPersistentAttribute pluralAttribute,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		super( pluralAttribute, resultVariable );
 	}
 

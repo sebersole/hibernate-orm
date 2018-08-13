@@ -34,7 +34,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.EntityQueryResultImpl;
 import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -114,7 +114,7 @@ public class CollectionIndexEntityImpl<J>
 	public QueryResult createQueryResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
 		final EntityValuedNavigableReference entityReference = (EntityValuedNavigableReference) navigableReference;
 

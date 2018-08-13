@@ -10,7 +10,7 @@ import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -46,7 +46,7 @@ public class QueryResultBuilderScalar
 	}
 
 	@Override
-	public QueryResult buildReturn(QueryResultCreationContext creationContext) {
+	public QueryResult buildReturn(SqlAstCreationContext creationContext) {
 		return new ScalarQueryResultImpl(
 				columnName,
 				new ResolvingSqlSelectionImpl( columnName ),

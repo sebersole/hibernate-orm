@@ -7,7 +7,7 @@
 package org.hibernate.query.sql.spi;
 
 import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -39,5 +39,5 @@ public interface QueryResultBuilder {
 
 	JavaTypeDescriptor getResultType();
 
-	QueryResult buildReturn(QueryResultCreationContext creationContext);
+	QueryResult buildReturn(SqlAstCreationContext creationContext);
 }

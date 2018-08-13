@@ -45,7 +45,6 @@ import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -220,7 +219,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
 			String resultVariable,
-			QueryResultCreationContext creationContext) {
+			SqlAstCreationContext creationContext) {
 		return new PluralAttributeFetchImpl(
 				fetchParent,
 				qualifier,

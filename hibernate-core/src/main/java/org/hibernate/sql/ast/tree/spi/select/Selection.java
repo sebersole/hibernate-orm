@@ -6,10 +6,7 @@
  */
 package org.hibernate.sql.ast.tree.spi.select;
 
-import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
 import org.hibernate.sql.results.spi.QueryResultProducer;
 
 /**
@@ -31,9 +28,4 @@ public interface Selection {
 	String getResultVariable();
 
 	Expression getSelectedExpression();
-
-
-	QueryResult createQueryResult(
-			SqlExpressionResolver sqlSelectionResolver,
-			QueryResultCreationContext creationContext);
 }

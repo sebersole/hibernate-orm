@@ -20,7 +20,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResultCreationContext;
+import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * todo (6.0) : this will go away, replaced by a `FetchGraphContext` approach - see `design/steve-todo.adoc`
@@ -55,7 +55,7 @@ public class FetchBuilder implements NativeQuery.FetchReturn {
 		this.lockMode = lockMode;
 	}
 
-	public Fetch buildFetch(BuilderExecutionState builderExecutionState, QueryResultCreationContext creationContext) {
+	public Fetch buildFetch(BuilderExecutionState builderExecutionState, SqlAstCreationContext creationContext) {
 		final FetchParent fetchParent = builderExecutionState.getFetchParentByParentAlias( parentTableAlias );
 		if ( fetchParent == null ) {
 			throw new HibernateException( "FetchParent for table-alias [" + parentTableAlias + "] not yet resolved" );
