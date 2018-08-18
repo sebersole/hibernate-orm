@@ -193,9 +193,8 @@ public abstract class PersistentClass
 		this.dynamicUpdate = dynamicUpdate;
 	}
 
-
-	public String
-	getDiscriminatorValue() {
+	@Override
+	public String getDiscriminatorValue() {
 		return discriminatorValue;
 	}
 
@@ -270,6 +269,7 @@ public abstract class PersistentClass
 	@Deprecated
 	public abstract Table getTable();
 
+	@Override
 	public MappedTable getMappedTable(){
 		return getTable();
 	}
@@ -423,6 +423,7 @@ public abstract class PersistentClass
 	@Deprecated
 	public abstract boolean hasEmbeddedIdentifier();
 
+	@Override
 	public abstract Table getRootTable();
 
 	public Collection<Join> getJoins() {
@@ -890,6 +891,7 @@ public abstract class PersistentClass
 		return deleteCheckStyle;
 	}
 
+	@Override
 	public void addFilter(
 			String name,
 			String condition,
@@ -908,6 +910,7 @@ public abstract class PersistentClass
 		);
 	}
 
+	@Override
 	public java.util.List getFilters() {
 		return filters;
 	}
@@ -1155,6 +1158,17 @@ public abstract class PersistentClass
 				!getExplicitRepresentationMode().equals( RepresentationMode.POJO ) || (
 						getProxyInterface() != null && !ReflectHelper.isFinalClass( getProxyInterface() ))
 		);
+	}
+
+	@Override
+	public ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle(){
+		String sql = getCustomSQLUpdate();
+		boolean callable = sql != null && isCustomUpdateCallable();
+
+		ExecuteUpdateResultCheckStyle checkStyle = getCustomSQLUpdateCheckStyle() == null
+				? ExecuteUpdateResultCheckStyle.determineDefault( sql, callable )
+				: getCustomSQLUpdateCheckStyle();
+		return checkStyle;
 	}
 
 }

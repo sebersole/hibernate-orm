@@ -9,6 +9,7 @@ package org.hibernate.sql.exec.internal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.function.BiConsumer;
 
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.resource.jdbc.spi.LogicalConnectionImplementor;
@@ -22,8 +23,6 @@ import org.hibernate.sql.exec.spi.PreparedStatementCreator;
  * @author Steve Ebersole
  */
 public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
-	public static final JdbcMutationExecutorImpl CALL_AFTER_INSTANCE = new JdbcMutationExecutorImpl( true );
-	public static final JdbcMutationExecutorImpl NO_CALL_AFTER_INSTANCE = new JdbcMutationExecutorImpl( false );
 
 	private final boolean callAfterStatement;
 
@@ -31,14 +30,19 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 		this.callAfterStatement = callAfterStatement;
 	}
 
+	@Override
 	public int execute(
 			JdbcMutation jdbcMutation,
 			ExecutionContext executionContext,
-			PreparedStatementCreator statementCreator) {
-		final LogicalConnectionImplementor logicalConnection = executionContext.getSession().getJdbcCoordinator().getLogicalConnection();
+			PreparedStatementCreator statementCreator,
+			BiConsumer<Integer, PreparedStatement> expectationCkeck) {
+		final LogicalConnectionImplementor logicalConnection = executionContext.getSession()
+				.getJdbcCoordinator()
+				.getLogicalConnection();
 		final Connection connection = logicalConnection.getPhysicalConnection();
 
-		final JdbcServices jdbcServices = executionContext.getSession().getFactory().getServiceRegistry().getService( JdbcServices.class );
+		final JdbcServices jdbcServices = executionContext.getSession().getFactory().getServiceRegistry().getService(
+				JdbcServices.class );
 
 		final String sql = jdbcMutation.getSql();
 		try {
@@ -63,8 +67,9 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 							executionContext
 					);
 				}
-
-				return preparedStatement.executeUpdate();
+				int rows = preparedStatement.executeUpdate();
+				expectationCkeck.accept( rows, preparedStatement );
+				return rows;
 			}
 			finally {
 				logicalConnection.getResourceRegistry().release( preparedStatement );
@@ -81,5 +86,12 @@ public class JdbcMutationExecutorImpl implements JdbcMutationExecutor {
 				logicalConnection.afterStatement();
 			}
 		}
+	}
+
+	@Override
+	public int execute(
+			JdbcMutation jdbcMutation, ExecutionContext executionContext, PreparedStatementCreator statementCreator) {
+		return execute( jdbcMutation, executionContext, statementCreator, (integer, preparedStatement) -> {
+		} );
 	}
 }

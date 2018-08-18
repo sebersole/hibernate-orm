@@ -8,16 +8,20 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.StaleObjectStateException;
+import org.hibernate.StaleStateException;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.cache.spi.entry.CacheEntry;
@@ -30,6 +34,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.FilterAliasGenerator;
+import org.hibernate.jdbc.Expectation;
+import org.hibernate.jdbc.Expectations;
+import org.hibernate.jdbc.TooManyRowsAffectedException;
 import org.hibernate.loader.internal.TemplateParameterBindingContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
@@ -42,6 +49,7 @@ import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.pretty.MessageHelper;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -216,7 +224,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		}
 
 		final TableReference tableReference = new TableReference( tableBindings.getReferringTable(), null , tableBindings.isOptional());
-		final JdbcValuesNullCheck jdbcValuesToInsert = new JdbcValuesNullCheck();
+		final ValuesNullChecker jdbcValuesToInsert = new ValuesNullChecker();
 		final InsertStatement insertStatement = new InsertStatement( tableReference );
 
 		visitStateArrayContributors(
@@ -283,18 +291,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		}
 
 		executeInsert( executionContext, insertStatement );
-	}
-
-	private class JdbcValuesNullCheck {
-		private boolean allNull = true;
-
-		private void setNotAllNull(){
-			allNull = false;
-		}
-
-		public boolean areAllNull(){
-			return allNull;
-		}
 	}
 
 	private void executeInsert(
@@ -379,7 +375,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				insertStatement,
 				executionContext.getSession().getSessionFactory()
 		);
-		executeOperation( executionContext, jdbcInsert );
+		executeOperation( executionContext, jdbcInsert, (rows, prepareStatement) -> {} );
 	}
 
 	private void addInsertColumn(
@@ -462,7 +458,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				},
 				executionContext.getSession().getSessionFactory()
 		);
-		executeOperation( executionContext, delete );
+		executeOperation( executionContext, delete , (rows, prepareStatement) -> {} );
 	}
 
 	@Override
@@ -498,7 +494,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					session,
 					unresolvedId,
 					executionContext,
-					tableReference
+					tableReference,
+					Expectations.appropriateExpectation( rootUpdateResultCheckStyle )
 			);
 		}
 
@@ -525,7 +522,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 								session,
 								unresolvedId,
 								executionContext,
-								secondaryTableReference
+								secondaryTableReference,
+								Expectations.appropriateExpectation( secondaryTable.getUpdateResultCheckStyle() )
 						);
 
 						if ( isRowToInsert ) {
@@ -553,7 +551,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			SharedSessionContractImplementor session,
 			Object unresolvedId,
 			ExecutionContext executionContext,
-			TableReference tableReference) {
+			TableReference tableReference,
+			Expectation expectation) {
 		final boolean isRowToUpdate;
 		final boolean isNullableTable = isNullableTable( tableReference );
 		final boolean isFieldsAllNull = isAllNull( fields, tableReference.getTable() );
@@ -569,26 +568,35 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			//there is probably a row there, so try to update
 			//if no rows were updated, we will find out
 			// TODO (6.0) : update should return a boolean value to be assigned to isRowToUpdate
-			isRowToUpdate = true;
-			executeUpdate(
+			RowToUpdateChecker checker = new RowToUpdateChecker(
+					unresolvedId,
+					isNullableTable,
+					expectation,
+					getFactory(),
+					this
+			);
+			 executeUpdate(
 					fields,
 					dirtyFields,
 					session,
 					unresolvedId,
 					executionContext,
-					tableReference
+					tableReference,
+					checker
 			);
+			isRowToUpdate = checker.isRowToUpdate();
 		}
 		return !isRowToUpdate && !isFieldsAllNull;
 	}
 
-	private void executeUpdate(
+	private int executeUpdate(
 			Object[] fields,
 			int[] dirtyFields,
 			SharedSessionContractImplementor session,
 			Object unresolvedId,
 			ExecutionContext executionContext,
-			TableReference tableReference) {
+			TableReference tableReference,
+			RowToUpdateChecker checker) {
 		List<Assignment> assignments = new ArrayList<>();
 
 		for ( int dirtyField : dirtyFields ) {
@@ -649,22 +657,32 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				identifierJunction
 		);
 
-		executeUpdate( executionContext, updateStatement );
+
+		return executeUpdate( executionContext, updateStatement, checker  );
 	}
 
-	private void executeUpdate(ExecutionContext executionContext, UpdateStatement updateStatement) {
+	private int executeUpdate(ExecutionContext executionContext, UpdateStatement updateStatement,  RowToUpdateChecker checker) {
 		JdbcUpdate jdbcUpdate = UpdateToJdbcUpdateConverter.createJdbcUpdate(
 				updateStatement,
 				executionContext.getSession().getSessionFactory()
 		);
-		executeOperation( executionContext, jdbcUpdate );
+		return executeOperation(
+				executionContext,
+				jdbcUpdate,
+				(rows, prepareStatement) -> checker.check( rows, prepareStatement )
+		);
 	}
 
-	private void executeOperation(ExecutionContext executionContext, JdbcMutation operation) {
-		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
+	private int executeOperation(
+			ExecutionContext executionContext,
+			JdbcMutation operation,
+			BiConsumer<Integer, PreparedStatement> checker) {
+		final JdbcMutationExecutor executor = JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL;
+		return executor.execute(
 				operation,
 				executionContext,
-				Connection::prepareStatement
+				Connection::prepareStatement,
+				(rows, preparestatement) -> checker.accept( rows, preparestatement )
 		);
 	}
 
@@ -1028,4 +1046,69 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		return hasCollections;
 	}
+
+	private static class RowToUpdateChecker {
+		private final Object id;
+		private final boolean isNullableTable;
+		private final Expectation expectation;
+		private final SessionFactoryImplementor factory;
+		private final EntityDescriptor entityDescriptor;
+
+		private boolean isRowToUpdate;
+
+		public RowToUpdateChecker(
+				Object id,
+				boolean isNullableTable,
+				Expectation expectation,
+				SessionFactoryImplementor factory,
+				EntityDescriptor entityDescriptor) {
+			this.id = id;
+			this.isNullableTable = isNullableTable;
+			this.expectation = expectation;
+			this.factory = factory;
+			this.entityDescriptor = entityDescriptor;
+		}
+
+		public void check(Integer rows, PreparedStatement preparedStatement) {
+			try {
+				expectation.verifyOutcome( rows, preparedStatement, -1 );
+			}
+			catch (StaleStateException e) {
+				if ( isNullableTable ) {
+					if ( factory.getStatistics().isStatisticsEnabled() ) {
+						factory.getStatistics().optimisticFailure( entityDescriptor.getEntityName() );
+					}
+					throw new StaleObjectStateException( entityDescriptor.getEntityName(), id );
+				}
+				isRowToUpdate = false;
+			}
+			catch (TooManyRowsAffectedException e) {
+				throw new HibernateException(
+						"Duplicate identifier in table for: " +
+								MessageHelper.infoString( entityDescriptor, id, factory )
+				);
+			}
+			catch (Throwable t) {
+				isRowToUpdate = false;
+			}
+			isRowToUpdate = true;
+		}
+
+		public boolean isRowToUpdate() {
+			return isRowToUpdate;
+		}
+	}
+
+	private class ValuesNullChecker {
+		private boolean allNull = true;
+
+		private void setNotAllNull(){
+			allNull = false;
+		}
+
+		public boolean areAllNull(){
+			return allNull;
+		}
+	}
+
 }

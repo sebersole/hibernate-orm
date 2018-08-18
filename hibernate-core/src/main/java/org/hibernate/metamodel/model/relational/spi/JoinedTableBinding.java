@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
+
 /**
  * Used to represent both secondary tables and table joins used in joined inheritance.
  *
@@ -19,17 +21,21 @@ public class JoinedTableBinding {
 	private final boolean optional;
 	private final boolean inverse;
 
+	private final ExecuteUpdateResultCheckStyle updateResultCheckStyle;
+
 	public JoinedTableBinding(
 			Table referringTable,
 			Table targetTable,
 			ForeignKey joinForeignKey,
 			boolean optional,
-			boolean inverse) {
+			boolean inverse,
+			ExecuteUpdateResultCheckStyle updateResultCheckStyle) {
 		this.referringTable = referringTable;
 		this.targetTable = targetTable;
 		this.joinForeignKey = joinForeignKey;
 		this.optional = optional;
 		this.inverse = inverse;
+		this.updateResultCheckStyle = updateResultCheckStyle;
 	}
 
 	public Table getReferringTable() {
@@ -50,5 +56,9 @@ public class JoinedTableBinding {
 
 	public boolean isInverse() {
 		return inverse;
+	}
+
+	public ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle() {
+		return updateResultCheckStyle;
 	}
 }

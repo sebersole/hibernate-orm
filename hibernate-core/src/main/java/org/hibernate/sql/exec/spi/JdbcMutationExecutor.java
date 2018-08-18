@@ -6,6 +6,9 @@
  */
 package org.hibernate.sql.exec.spi;
 
+import java.sql.PreparedStatement;
+import java.util.function.BiConsumer;
+
 import org.hibernate.sql.exec.internal.JdbcMutationExecutorImpl;
 
 /**
@@ -25,5 +28,12 @@ public interface JdbcMutationExecutor {
 	int execute(
 			JdbcMutation jdbcMutation,
 			ExecutionContext executionContext,
+			PreparedStatementCreator statementCreator,
+			BiConsumer<Integer, PreparedStatement> expectationCkeck);
+
+	int execute(
+			JdbcMutation jdbcMutation,
+			ExecutionContext executionContext,
 			PreparedStatementCreator statementCreator);
+
 }

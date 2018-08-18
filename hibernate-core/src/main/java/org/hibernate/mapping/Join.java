@@ -267,4 +267,13 @@ public class Join implements AttributeContainer, Serializable, MappedJoin {
 	public void setOptional(boolean nullable) {
 		this.optional = nullable;
 	}
+
+	public ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle() {
+		String sql = getCustomSQLUpdate();
+		boolean callable = sql != null && isCustomUpdateCallable();
+		ExecuteUpdateResultCheckStyle checkStyle = getCustomSQLUpdateCheckStyle() == null
+				? ExecuteUpdateResultCheckStyle.determineDefault( sql, callable )
+				: getCustomSQLUpdateCheckStyle();
+		return checkStyle;
+	}
 }

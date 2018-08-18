@@ -37,6 +37,7 @@ import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.EntityEntryFactory;
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -105,7 +106,6 @@ public abstract class AbstractEntityDescriptor<J>
 
 	private final NavigableRole navigableRole;
 
-
 	private final Table rootTable;
 	private final List<JoinedTableBinding> secondaryTableBindings;
 
@@ -123,6 +123,8 @@ public abstract class AbstractEntityDescriptor<J>
 	private final Class proxyInterface;
 
 	private ProxyFactory proxyFactory;
+
+	protected final ExecuteUpdateResultCheckStyle rootUpdateResultCheckStyle;
 
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
@@ -143,6 +145,7 @@ public abstract class AbstractEntityDescriptor<J>
 		this.hierarchy = resolveEntityHierarchy( bootMapping, superTypeDescriptor, creationContext );
 
 		this.rootTable = resolveRootTable( bootMapping, creationContext );
+		rootUpdateResultCheckStyle = bootMapping.getUpdateResultCheckStyle();
 		this.secondaryTableBindings = resolveSecondaryTableBindings( bootMapping, creationContext );
 
 		final RepresentationMode representation = getRepresentationStrategy().getMode();
@@ -267,7 +270,8 @@ public abstract class AbstractEntityDescriptor<J>
 				getPrimaryTable(),
 				creationContext.getDatabaseObjectResolver().resolveForeignKey( bootJoinTable.getJoinMapping() ),
 				bootJoinTable.isOptional(),
-				bootJoinTable.isInverse()
+				bootJoinTable.isInverse(),
+				bootJoinTable.getUpdateResultCheckStyle()
 		);
 	}
 

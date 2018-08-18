@@ -9,6 +9,7 @@ package org.hibernate.boot.model.domain;
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.boot.model.relational.MappedTable;
+import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.mapping.Filterable;
 
 /**
@@ -33,4 +34,6 @@ public interface EntityMapping extends IdentifiableTypeMapping, Filterable {
 	boolean hasProxy();
 
 	Class getProxyInterface();
+
+	ExecuteUpdateResultCheckStyle getUpdateResultCheckStyle();
 }
