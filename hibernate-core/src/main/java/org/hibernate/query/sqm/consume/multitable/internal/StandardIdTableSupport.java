@@ -13,6 +13,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
+import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableManagementTransactionality;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableSupport;
 import org.hibernate.tool.schema.spi.Exporter;
 
@@ -21,9 +22,15 @@ import org.hibernate.tool.schema.spi.Exporter;
  */
 public class StandardIdTableSupport implements IdTableSupport {
 	private final Exporter<IdTable> idTableExporter;
+	private IdTableManagementTransactionality tableManagementTransactionality;
 
 	public StandardIdTableSupport(Exporter<IdTable> idTableExporter) {
 		this.idTableExporter = idTableExporter;
+	}
+
+	public StandardIdTableSupport(Exporter<IdTable> idTableExporter, IdTableManagementTransactionality tableManagementTransactionality) {
+		this(idTableExporter);
+		this.tableManagementTransactionality = tableManagementTransactionality;
 	}
 
 	@Override
@@ -59,5 +66,10 @@ public class StandardIdTableSupport implements IdTableSupport {
 	@Override
 	public Exporter<IdTable> getIdTableExporter() {
 		return idTableExporter;
+	}
+
+	@Override
+	public IdTableManagementTransactionality geIdTableManagementTransactionality() {
+		return tableManagementTransactionality;
 	}
 }

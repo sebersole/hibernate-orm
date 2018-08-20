@@ -123,7 +123,6 @@ import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -236,7 +235,6 @@ public abstract class BaseSqmToSqlAstConverter
 	//		its "ok" to do it for sub-queries as well - just wondering about the overhead.
 	private Map<QuerySpec,Map<Expression, SqlSelection>> sqlExpressionToSqlSelectionMapByQuerySpec;
 
-
 	public BaseSqmToSqlAstConverter(
 			SqlAstProducerContext producerContext,
 			QueryOptions queryOptions) {
@@ -244,7 +242,6 @@ public abstract class BaseSqmToSqlAstConverter
 		this.producerContext = producerContext;
 		this.queryOptions = queryOptions;
 	}
-
 
 	public SqlAstProducerContext getProducerContext() {
 		return producerContext;

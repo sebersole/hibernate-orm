@@ -10,6 +10,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import java.util.Locale;
 import java.util.Objects;
 
+import org.hibernate.dialect.Dialect;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.SqlExpressableType;
@@ -83,12 +84,12 @@ public class ColumnReference implements Expression {
 		return getColumn();
 	}
 
-	public String renderSqlFragment() {
+	public String renderSqlFragment(Dialect dialect) {
 		if ( qualifier == null ) {
 			return column.getExpression();
 		}
 		final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
-		return column.render( tableReference.getIdentificationVariable() );
+		return column.render( tableReference.getIdentificationVariable(), dialect );
 	}
 
 	@Override

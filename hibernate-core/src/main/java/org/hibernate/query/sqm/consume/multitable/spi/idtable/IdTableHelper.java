@@ -27,7 +27,6 @@ import org.hibernate.jdbc.AbstractWork;
  */
 public class IdTableHelper {
 	private final static CoreMessageLogger log = CoreLogging.messageLogger(IdTableHelper.class );
-//	private static final Logger log = Logger.getLogger( IdTableHelper.class );
 
 	private final IdTable idTableInfo;
 	private final IdTableSupport idTableSupport;
@@ -44,7 +43,12 @@ public class IdTableHelper {
 			JdbcServices jdbcServices) {
 		this.idTableInfo = idTableInfo;
 		this.idTableSupport = idTableSupport;
-		this.transactionality = transactionality;
+		if ( idTableSupport.geIdTableManagementTransactionality() != null ) {
+			this.transactionality = idTableSupport.geIdTableManagementTransactionality();
+		}
+		else {
+			this.transactionality = transactionality;
+		}
 		this.jdbcServices = jdbcServices;
 
 		this.creationCommands = generateIdTableCreationCommands( idTableInfo, idTableSupport, jdbcServices );

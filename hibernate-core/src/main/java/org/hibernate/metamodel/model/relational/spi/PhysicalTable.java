@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.hibernate.boot.model.relational.InitCommand;
+import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.naming.Identifier;
 import org.hibernate.naming.QualifiedTableName;
@@ -86,6 +87,11 @@ public class PhysicalTable extends AbstractTable implements ExportableTable {
 	@Override
 	public String getTableExpression() {
 		return getTableName().getText();
+	}
+
+	@Override
+	public String render(Dialect dialect) {
+		return getQualifiedTableName().getTableName().render( dialect );
 	}
 
 	@Override

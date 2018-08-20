@@ -90,7 +90,7 @@ public class CollectionTableGroup implements TableGroup {
 		// todo (6.0) : need to determine which table (if 2) to render first
 		//		(think many-to-many).  does the order of the joins matter given the serial join?
 
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 
 //		renderTableReference( rootTableReference, sqlAppender, walker );
 //
@@ -144,7 +144,7 @@ public class CollectionTableGroup implements TableGroup {
 
 	@Override
 	public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Override

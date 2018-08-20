@@ -40,7 +40,7 @@ assignment
 	;
 
 deleteStatement
-	: DELETE FROM? mainEntityPersisterReference whereClause
+	: DELETE FROM? mainEntityPersisterReference whereClause?
 	;
 
 insertStatement

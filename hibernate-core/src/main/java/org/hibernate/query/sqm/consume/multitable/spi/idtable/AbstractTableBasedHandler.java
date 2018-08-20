@@ -7,10 +7,12 @@
 package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.consume.multitable.spi.Handler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
@@ -33,6 +35,8 @@ import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.JdbcInsertSelect;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
+import org.hibernate.sql.results.internal.SqlSelectionImpl;
+import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -242,6 +246,16 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		tableSpace.setRootTableGroup( createTableGroupForIdTable( idTableInfo, tableSpace ) );
 
 		// todo (6.0) : still need to add SqlSelections
+		Collection<Column> columns = idTableInfo.getColumns();
+		columns.forEach( column -> {
+			SqlSelection sqlSelection = new SqlSelectionImpl(
+					0,
+					0,
+					new ColumnReference( new TableReference( idTableInfo, null, false ), column ),
+					column.getExpressableType().getJdbcValueExtractor()
+			);
+			idTableSelect.getSelectClause().addSqlSelection( sqlSelection );
+		} );
 
 		// account for session uid column in the id table, if one
 		if ( sessionUidSupport.needsSessionUidColumn() ) {

@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.relational.spi;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import org.hibernate.dialect.Dialect;
 import org.hibernate.naming.Identifier;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -36,9 +37,6 @@ public class PhysicalColumn implements Column {
 	private final boolean isUnique;
 	private final String comment;
 	private final TypeConfiguration typeConfiguration;
-
-	private String customReadExpr;
-	private String customWriteExpr;
 
 	public PhysicalColumn(
 			Table table,
@@ -132,8 +130,16 @@ public class PhysicalColumn implements Column {
 	}
 
 	@Override
-	public String render(String identificationVariable) {
-		return identificationVariable + '.' + name;
+	public String render(String identificationVariable, Dialect dialect) {
+		if ( identificationVariable != null ) {
+			return identificationVariable + '.' + render( dialect );
+		}
+		return render( dialect );
+	}
+
+	@Override
+	public String render(Dialect dialect) {
+		return name.render( dialect );
 	}
 
 	@Override
@@ -180,6 +186,10 @@ public class PhysicalColumn implements Column {
 
 	public String getCheckConstraint() {
 		return checkConstraint;
+	}
+
+	public TypeConfiguration getTypeConfiguration(){
+		return typeConfiguration;
 	}
 
 	@Override

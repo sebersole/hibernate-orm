@@ -410,9 +410,19 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
 		final ExecutionContext executionContext = getExecutionContext( session );
 
+
+		deleteSecondaryTables( session, unresolvedId, executionContext );
+
+		deleteRootTable( session, unresolvedId, executionContext );
+	}
+
+	private void deleteRootTable(
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext) {
 		final TableReference tableReference = new TableReference( getPrimaryTable(), null, false );
 
-		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+		final Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
 		getHierarchy().getIdentifierDescriptor().dehydrate(
 				unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
@@ -434,6 +444,44 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		);
 
 		executeDelete( executionContext, tableReference, identifierJunction );
+	}
+
+	private void deleteSecondaryTables(
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext) {
+		getSecondaryTableBindings().forEach( secondaryTable -> {
+			final TableReference secondaryTableReference = new TableReference(
+					secondaryTable.getReferringTable(),
+					null,
+					secondaryTable.isOptional()
+			);
+			final Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+			getHierarchy().getIdentifierDescriptor().dehydrate(
+					unresolvedId,
+					(jdbcValue, type, boundColumn) -> {
+						final Column referringColumn = secondaryTable.getJoinForeignKey()
+								.getColumnMappings()
+								.findReferringColumn( boundColumn );
+						identifierJunction.add(
+								new RelationalPredicate(
+										RelationalPredicate.Operator.EQUAL,
+										new ColumnReference( referringColumn ),
+										new LiteralParameter(
+												jdbcValue,
+												boundColumn.getExpressableType(),
+												Clause.DELETE,
+												session.getFactory().getTypeConfiguration()
+										)
+								)
+						);
+					},
+					Clause.DELETE,
+					session
+			);
+
+			executeDelete( executionContext, secondaryTableReference, identifierJunction );
+		} );
 	}
 
 	private void executeDelete(

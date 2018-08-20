@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.relational.spi;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.hibernate.dialect.Dialect;
+
 
 /**
  * Represents a table in the mapping in terms of what ANSI SQL calls a
@@ -21,6 +23,8 @@ public interface Table {
 	UUID getUid();
 
 	String getTableExpression();
+
+	String render(Dialect dialect);
 
 	PrimaryKey getPrimaryKey();
 

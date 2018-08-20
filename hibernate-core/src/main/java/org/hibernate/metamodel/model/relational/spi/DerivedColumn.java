@@ -6,6 +6,7 @@
  */
 package org.hibernate.metamodel.model.relational.spi;
 
+import org.hibernate.dialect.Dialect;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -56,7 +57,12 @@ public class DerivedColumn implements Column {
 	}
 
 	@Override
-	public String render(String identificationVariable) {
+	public String render(String identificationVariable, Dialect dialect) {
+		return expression;
+	}
+
+	@Override
+	public String render(Dialect dialect) {
 		return expression;
 	}
 

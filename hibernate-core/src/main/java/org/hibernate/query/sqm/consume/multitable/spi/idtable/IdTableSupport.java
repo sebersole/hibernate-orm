@@ -27,4 +27,8 @@ public interface IdTableSupport {
 	Identifier determineIdTableName(EntityDescriptor entityDescriptor, SessionFactoryOptions sessionFactoryOptions);
 
 	Exporter<IdTable> getIdTableExporter();
+
+	default IdTableManagementTransactionality geIdTableManagementTransactionality(){
+		return null;
+	}
 }
