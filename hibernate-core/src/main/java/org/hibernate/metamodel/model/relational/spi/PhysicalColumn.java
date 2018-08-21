@@ -130,15 +130,11 @@ public class PhysicalColumn implements Column {
 	}
 
 	@Override
-	public String render(String identificationVariable, Dialect dialect) {
+	public String render(String identificationVariable) {
+		final Dialect dialect = typeConfiguration.getSessionFactory().getJdbcServices().getDialect();
 		if ( identificationVariable != null ) {
-			return identificationVariable + '.' + render( dialect );
+			return identificationVariable + '.' + name.render( dialect );
 		}
-		return render( dialect );
-	}
-
-	@Override
-	public String render(Dialect dialect) {
 		return name.render( dialect );
 	}
 
