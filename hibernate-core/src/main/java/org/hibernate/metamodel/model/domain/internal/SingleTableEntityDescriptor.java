@@ -590,7 +590,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	/**
 	 *
-	 * @return if an insert is required
+	 * @return true if an insert operation is required
 	 */
 	private boolean updateInternal(
 			Object[] fields,
@@ -623,7 +623,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 					getFactory(),
 					this
 			);
-			 executeUpdate(
+			executeUpdate(
 					fields,
 					dirtyFields,
 					session,
