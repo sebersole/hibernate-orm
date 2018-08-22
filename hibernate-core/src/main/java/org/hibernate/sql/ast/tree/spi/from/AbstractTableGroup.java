@@ -10,7 +10,6 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.AbstractColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 
 /**
@@ -33,7 +32,13 @@ public abstract class AbstractTableGroup
 	}
 
 	protected void renderTableReference(TableReference tableBinding, SqlAppender sqlAppender, SqlAstWalker walker) {
-		sqlAppender.appendSql( tableBinding.getTable().getTableExpression() + " as " + tableBinding.getIdentificationVariable() );
+		final String identificationVariable = tableBinding.getIdentificationVariable();
+		String aliasString = "";
+		if ( identificationVariable != null ) {
+			aliasString = " as " + identificationVariable;
+		}
+		sqlAppender
+				.appendSql( tableBinding.getTable().render( walker.getSessionFactory().getDialect() ) + aliasString );
 	}
 
 	@Override

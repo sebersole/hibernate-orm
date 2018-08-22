@@ -66,6 +66,11 @@ public class Column implements Selectable, Serializable, Cloneable {
 		this.tableName = tableName;
 	}
 
+	public Column(Identifier tableName, Identifier columnName, boolean isUnique) {
+		this( columnName, isUnique );
+		this.tableName = tableName;
+	}
+
 	public Column(Identifier columnName, boolean isUnique) {
 		setName( columnName );
 		setUnique( isUnique );

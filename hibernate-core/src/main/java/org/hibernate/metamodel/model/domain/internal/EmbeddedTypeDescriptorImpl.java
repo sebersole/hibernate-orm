@@ -259,14 +259,13 @@ public class EmbeddedTypeDescriptorImpl<J>
 
 	@Override
 	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		final Object[] values = getEmbeddedDescriptor().getPropertyValues( value );
-		getEmbeddedDescriptor().visitStateArrayContributors(
+		final Object[] values = getPropertyValues( value );
+		visitStateArrayContributors(
 				contributor -> {
 					final int index = contributor.getStateArrayPosition();
 					values[index] = contributor.unresolve( values[index], session );
 				}
 		);
-
 		return values;
 	}
 }

@@ -57,10 +57,6 @@ public class ManyToOne extends ToOne {
 
 		final MappedForeignKey foreignKey = getForeignKey();
 
-		if ( foreignKey == null ) {
-			return false;
-		}
-
 		final Iterator<MappedColumn> targetColumnItr = foreignKey.getTargetColumns().iterator();
 
 		for ( MappedColumn column : foreignKey.getColumns() ) {
@@ -97,7 +93,7 @@ public class ManyToOne extends ToOne {
 						getForeignKeyDefinition(),
 						null
 				);
-				if ( hasFormula() ) {
+				if ( hasFormula() || "none".equals(getForeignKeyName()) ) {
 					foreignKey.disableCreation();
 				}
 			}

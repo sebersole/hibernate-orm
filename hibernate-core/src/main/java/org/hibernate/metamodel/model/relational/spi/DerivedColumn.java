@@ -61,6 +61,11 @@ public class DerivedColumn implements Column {
 	}
 
 	@Override
+	public String render() {
+		return expression;
+	}
+
+	@Override
 	public SqlTypeDescriptor getSqlTypeDescriptor() {
 		return sqlTypeDescriptor;
 	}

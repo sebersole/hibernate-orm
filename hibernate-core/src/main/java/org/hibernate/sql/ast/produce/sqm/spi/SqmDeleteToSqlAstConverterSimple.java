@@ -64,8 +64,12 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 
 		deleteStatement = new DeleteStatement(
 				new TableReference(
-						sqmStatement.getEntityFromElement().getNavigableReference().getEntityDescriptor().getPrimaryTable(),
-						null
+						sqmStatement.getEntityFromElement()
+								.getNavigableReference()
+								.getEntityDescriptor()
+								.getPrimaryTable(),
+						null,
+						false
 				),
 				restriction
 		);

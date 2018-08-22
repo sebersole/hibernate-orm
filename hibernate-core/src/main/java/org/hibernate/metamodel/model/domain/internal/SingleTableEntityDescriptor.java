@@ -8,46 +8,55 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.persistence.AttributeOverride;
-import javax.persistence.Embeddable;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.SecondaryTable;
-import javax.persistence.Table;
+import java.util.function.BiConsumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.StaleObjectStateException;
+import org.hibernate.StaleStateException;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.CacheEntryStructure;
+import org.hibernate.engine.internal.Versioning;
 import org.hibernate.engine.spi.CascadeStyle;
+import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.internal.FilterAliasGenerator;
+import org.hibernate.jdbc.Expectation;
+import org.hibernate.jdbc.Expectations;
+import org.hibernate.jdbc.TooManyRowsAffectedException;
 import org.hibernate.loader.internal.TemplateParameterBindingContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
+import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.pretty.MessageHelper;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.InsertToJdbcInsertConverter;
 import org.hibernate.sql.ast.consume.spi.SqlDeleteToJdbcDeleteConverter;
@@ -65,7 +74,9 @@ import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
+import org.hibernate.sql.exec.spi.JdbcUpdate;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
 import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
@@ -75,12 +86,18 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> {
+	private Boolean hasCollections;
+	private final boolean isJpaCacheComplianceEnabled;
 
 	public SingleTableEntityDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor<? super T> superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
 		super( bootMapping, superTypeDescriptor, creationContext );
+		isJpaCacheComplianceEnabled = creationContext.getSessionFactory()
+				.getSessionFactoryOptions()
+				.getJpaCompliance()
+				.isJpaCacheComplianceEnabled();
 	}
 
 
@@ -181,110 +198,38 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		// for now - just root table
 		// for now - we also regenerate these SQL AST objects each time - we can cache these
-		executeInsert( fields, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null) );
+		executeInsert( fields, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null, false) );
 
 		getSecondaryTableBindings().forEach(
-				tableBindings -> executeInsert(
+				tableBindings -> executeJoinTableInsert(
 						fields,
 						session,
 						unresolvedId,
 						executionContext,
-						new TableReference( tableBindings.getReferringTable(), null )
+						tableBindings
 				)
 		);
 
 		return id;
 	}
 
-	private ExecutionContext getExecutionContext(SharedSessionContractImplementor session) {
-		return new ExecutionContext() {
-			private final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
-
-			@Override
-			public SharedSessionContractImplementor getSession() {
-				return session;
-			}
-
-			@Override
-			public QueryOptions getQueryOptions() {
-				return new QueryOptionsImpl();
-			}
-
-			@Override
-			public ParameterBindingContext getParameterBindingContext() {
-				return parameterBindingContext;
-			}
-
-			@Override
-			public Callback getCallback() {
-				return afterLoadAction -> {
-				};
-			}
-		};
-	}
-
-	private void executeInsert(
+	private void executeJoinTableInsert(
 			Object[] fields,
 			SharedSessionContractImplementor session,
 			Object unresolvedId,
 			ExecutionContext executionContext,
-			TableReference tableReference) {
+			JoinedTableBinding tableBindings) {
+		if ( tableBindings.isInverse() ) {
+			return;
+		}
+
+		final TableReference tableReference = new TableReference( tableBindings.getReferringTable(), null , tableBindings.isOptional());
+		final ValuesNullChecker jdbcValuesToInsert = new ValuesNullChecker();
 		final InsertStatement insertStatement = new InsertStatement( tableReference );
-
-		// todo (6.0) : account for non-generated identifiers
-
-		getHierarchy().getIdentifierDescriptor().dehydrate(
-				// NOTE : at least according to the argument name (`unresolvedId`), the
-				// 		incoming id value should already be unresolved - so do not
-				// 		unresolve it again
-				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
-				unresolvedId,
-				(jdbcValue, type, boundColumn) -> {
-					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-					insertStatement.addValue(
-							new LiteralParameter(
-									jdbcValue,
-									boundColumn.getExpressableType(),
-									Clause.INSERT,
-									session.getFactory().getTypeConfiguration()
-							)
-					);
-				},
-				Clause.INSERT,
-				session
-		);
-
-		if ( getHierarchy().getDiscriminatorDescriptor() != null ) {
-			insertStatement.addTargetColumnReference(
-					new ColumnReference( getHierarchy().getDiscriminatorDescriptor().getBoundColumn() )
-			);
-			insertStatement.addValue(
-					new LiteralParameter(
-							getHierarchy().getDiscriminatorDescriptor().unresolve( getDiscriminatorValue(), session ),
-							getHierarchy().getDiscriminatorDescriptor().getBoundColumn().getExpressableType(),
-							Clause.INSERT,
-							session.getFactory().getTypeConfiguration()
-					)
-			);
-		}
-
-		if ( getHierarchy().getTenantDiscrimination() != null ) {
-			insertStatement.addTargetColumnReference(
-					new ColumnReference( getHierarchy().getTenantDiscrimination().getBoundColumn() )
-			);
-			insertStatement.addValue(
-					new LiteralParameter(
-							getHierarchy().getTenantDiscrimination().unresolve( session.getTenantIdentifier(), session ),
-							getHierarchy().getTenantDiscrimination().getBoundColumn().getExpressableType(),
-							Clause.INSERT,
-							session.getFactory().getTypeConfiguration()
-					)
-			);
-		}
 
 		visitStateArrayContributors(
 				contributor -> {
-					int position = contributor.getStateArrayPosition();
+					final int position = contributor.getStateArrayPosition();
 					final Object domainValue = fields[position];
 					contributor.dehydrate(
 							// todo (6.0) : fix this - specifically this isInstance check is bad
@@ -296,15 +241,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 									: domainValue,
 							(jdbcValue, type, boundColumn) -> {
 								if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
-									insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
-									insertStatement.addValue(
-											new LiteralParameter(
-													jdbcValue,
-													type,
-													Clause.INSERT,
-													session.getFactory().getTypeConfiguration()
-											)
-									);
+									if ( jdbcValue != null ) {
+										jdbcValuesToInsert.setNotAllNull();
+										addInsertColumn( session, insertStatement, jdbcValue, boundColumn, type );
+									}
 								}
 							},
 							Clause.INSERT,
@@ -313,14 +253,148 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				}
 		);
 
-		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
-				InsertToJdbcInsertConverter.createJdbcInsert(
-						insertStatement,
-						executionContext.getSession().getSessionFactory()
-				),
-				executionContext,
-				Connection::prepareStatement
+		if ( jdbcValuesToInsert.areAllNull() ) {
+			return;
+		}
+
+		getHierarchy().getIdentifierDescriptor().dehydrate(
+				// NOTE : at least according to the argument name (`unresolvedId`), the
+				// 		incoming id value should already be unresolved - so do not
+				// 		unresolve it again
+				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				unresolvedId,
+				(jdbcValue, type, boundColumn) -> {
+					final Column referringColumn = tableBindings.getJoinForeignKey()
+							.getColumnMappings()
+							.findReferringColumn( boundColumn );
+					addInsertColumn(
+							session,
+							insertStatement,
+							jdbcValue,
+							referringColumn,
+							boundColumn.getExpressableType()
+					);
+				},
+				Clause.INSERT,
+				session
 		);
+
+		final TenantDiscrimination tenantDiscrimination = getHierarchy().getTenantDiscrimination();
+		if ( tenantDiscrimination != null ) {
+			addInsertColumn(
+					session,
+					insertStatement,
+					tenantDiscrimination.unresolve( session.getTenantIdentifier(), session ),
+					tenantDiscrimination.getBoundColumn(),
+					tenantDiscrimination.getBoundColumn().getExpressableType()
+			);
+		}
+
+		executeInsert( executionContext, insertStatement );
+	}
+
+	private void executeInsert(
+			Object[] fields,
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext,
+			TableReference tableReference) {
+
+		final InsertStatement insertStatement = new InsertStatement( tableReference );
+		// todo (6.0) : account for non-generated identifiers
+
+		getHierarchy().getIdentifierDescriptor().dehydrate(
+				// NOTE : at least according to the argument name (`unresolvedId`), the
+				// 		incoming id value should already be unresolved - so do not
+				// 		unresolve it again
+				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				unresolvedId,
+				(jdbcValue, type, boundColumn) ->
+						addInsertColumn(
+								session,
+								insertStatement,
+								jdbcValue,
+								boundColumn,
+								boundColumn.getExpressableType()
+						)
+				,
+				Clause.INSERT,
+				session
+		);
+
+		final DiscriminatorDescriptor<Object> discriminatorDescriptor = getHierarchy().getDiscriminatorDescriptor();
+		if ( discriminatorDescriptor != null ) {
+			addInsertColumn(
+					session,
+					insertStatement,
+					discriminatorDescriptor.unresolve( getDiscriminatorValue(), session ),
+					discriminatorDescriptor.getBoundColumn(),
+					discriminatorDescriptor.getBoundColumn().getExpressableType()
+			);
+		}
+
+		final TenantDiscrimination tenantDiscrimination = getHierarchy().getTenantDiscrimination();
+		if ( tenantDiscrimination != null ) {
+			addInsertColumn(
+					session,
+					insertStatement,
+					tenantDiscrimination.unresolve( session.getTenantIdentifier(), session ),
+					tenantDiscrimination.getBoundColumn(),
+					tenantDiscrimination.getBoundColumn().getExpressableType()
+			);
+		}
+
+		visitStateArrayContributors(
+				contributor -> {
+					final int position = contributor.getStateArrayPosition();
+					final Object domainValue = fields[position];
+					contributor.dehydrate(
+							// todo (6.0) : fix this - specifically this isInstance check is bad
+							// 		sometimes the values here are unresolved and sometimes not;
+							//		need a way to ensure they are always one form or the other
+							//		during these calls (ideally unresolved)
+							contributor.getJavaTypeDescriptor().isInstance( domainValue )
+									? contributor.unresolve( domainValue, session )
+									: domainValue,
+							(jdbcValue, type, boundColumn) -> {
+								if ( boundColumn.getSourceTable().equals( tableReference.getTable() ) ) {
+									addInsertColumn( session, insertStatement, jdbcValue, boundColumn, type );
+								}
+							},
+							Clause.INSERT,
+							session
+					);
+				}
+		);
+
+		executeInsert( executionContext, insertStatement );
+	}
+
+	private void executeInsert(ExecutionContext executionContext, InsertStatement insertStatement) {
+		JdbcMutation jdbcInsert = InsertToJdbcInsertConverter.createJdbcInsert(
+				insertStatement,
+				executionContext.getSession().getSessionFactory()
+		);
+		executeOperation( executionContext, jdbcInsert, (rows, prepareStatement) -> {} );
+	}
+
+	private void addInsertColumn(
+			SharedSessionContractImplementor session,
+			InsertStatement insertStatement,
+			Object jdbcValue,
+			Column referringColumn,
+			SqlExpressableType expressableType) {
+		if ( jdbcValue != null ) {
+			insertStatement.addTargetColumnReference( new ColumnReference( referringColumn ) );
+			insertStatement.addValue(
+					new LiteralParameter(
+							jdbcValue,
+							expressableType,
+							Clause.INSERT,
+							session.getFactory().getTypeConfiguration()
+					)
+			);
+		}
 	}
 
 	@Override
@@ -336,9 +410,19 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
 		final ExecutionContext executionContext = getExecutionContext( session );
 
-		final TableReference tableReference = new TableReference( getPrimaryTable(), null );
 
-		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+		deleteSecondaryTables( session, unresolvedId, executionContext );
+
+		deleteRootTable( session, unresolvedId, executionContext );
+	}
+
+	private void deleteRootTable(
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext) {
+		final TableReference tableReference = new TableReference( getPrimaryTable(), null, false );
+
+		final Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
 		getHierarchy().getIdentifierDescriptor().dehydrate(
 				unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
@@ -359,48 +443,71 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				session
 		);
 
+		executeDelete( executionContext, tableReference, identifierJunction );
+	}
+
+	private void deleteSecondaryTables(
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext) {
+		getSecondaryTableBindings().forEach( secondaryTable -> {
+			final TableReference secondaryTableReference = new TableReference(
+					secondaryTable.getReferringTable(),
+					null,
+					secondaryTable.isOptional()
+			);
+			final Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
+			getHierarchy().getIdentifierDescriptor().dehydrate(
+					unresolvedId,
+					(jdbcValue, type, boundColumn) -> {
+						final Column referringColumn = secondaryTable.getJoinForeignKey()
+								.getColumnMappings()
+								.findReferringColumn( boundColumn );
+						identifierJunction.add(
+								new RelationalPredicate(
+										RelationalPredicate.Operator.EQUAL,
+										new ColumnReference( referringColumn ),
+										new LiteralParameter(
+												jdbcValue,
+												boundColumn.getExpressableType(),
+												Clause.DELETE,
+												session.getFactory().getTypeConfiguration()
+										)
+								)
+						);
+					},
+					Clause.DELETE,
+					session
+			);
+
+			executeDelete( executionContext, secondaryTableReference, identifierJunction );
+		} );
+	}
+
+	private void executeDelete(
+			ExecutionContext executionContext,
+			TableReference tableReference,
+			Junction identifierJunction) {
 		final DeleteStatement deleteStatement = new DeleteStatement( tableReference, identifierJunction );
 
-		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
-				SqlDeleteToJdbcDeleteConverter.interpret(
-						new SqlAstDeleteDescriptor() {
-							@Override
-							public DeleteStatement getSqlAstStatement() {
-								return deleteStatement;
-							}
+		JdbcMutation delete = SqlDeleteToJdbcDeleteConverter.interpret(
+				new SqlAstDeleteDescriptor() {
+					@Override
+					public DeleteStatement getSqlAstStatement() {
+						return deleteStatement;
+					}
 
-							@Override
-							public Set<String> getAffectedTableNames() {
-								return Collections.singleton(
-										deleteStatement.getTargetTable().getTable().getTableExpression()
-								);
-							}
-						},
-						executionContext.getSession().getSessionFactory()
-				),
-				executionContext,
-				Connection::prepareStatement
+					@Override
+					public Set<String> getAffectedTableNames() {
+						return Collections.singleton(
+								deleteStatement.getTargetTable().getTable().getTableExpression()
+						);
+					}
+				},
+				executionContext.getSession().getSessionFactory()
 		);
+		executeOperation( executionContext, delete , (rows, prepareStatement) -> {} );
 	}
-
-	@Embeddable
-	class Name {
-		public String fname;
-		public String lname;
-	}
-
-	@Entity
-	@Table( name = "t1" )
-	@SecondaryTable( name = "t2" )
-	class Person {
-		public Integer id;
-
-		@Embedded
-		@AttributeOverride( name = "fname", column = @javax.persistence.Column( table = "t1" ) )
-		@AttributeOverride( name = "lname", column = @javax.persistence.Column( table = "t2" ) )
-		public Name name;
-	}
-
 
 	@Override
 	public void update(
@@ -415,13 +522,131 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			SharedSessionContractImplementor session) throws HibernateException {
 
 		// todo (6.0) - initial basic pass at entity updates
+		// todo (6.0) - apply any pre-update in-memory value generation
+		EntityEntry entry = session.getPersistenceContext().getEntry( object );
 
+		if ( entry == null && !getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
+			throw new IllegalStateException( "Updating immutable entity that is not in session yet!" );
+		}
 		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
 		final ExecutionContext executionContext = getExecutionContext( session );
 
-		final TableReference tableReference = new TableReference( getPrimaryTable(), null );
+		Table primaryTable = getPrimaryTable();
 
+		final TableReference tableReference = new TableReference( primaryTable, null, false );
+		if ( isTableNeedUpdate( tableReference, dirtyFields, hasDirtyCollection, true ) ) {
+			updateInternal(
+					fields,
+					dirtyFields,
+					oldFields,
+					session,
+					unresolvedId,
+					executionContext,
+					tableReference,
+					Expectations.appropriateExpectation( rootUpdateResultCheckStyle )
+			);
+		}
+
+		getSecondaryTableBindings().forEach(
+				secondaryTable -> {
+					final TableReference secondaryTableReference = new TableReference(
+							secondaryTable.getReferringTable(),
+							null,
+							secondaryTable.isOptional()
+					);
+					if (
+							!secondaryTable.isInverse()
+									&& isTableNeedUpdate(
+									secondaryTableReference,
+									dirtyFields,
+									hasDirtyCollection,
+									false
+							)
+					) {
+						final boolean isRowToInsert = updateInternal(
+								fields,
+								dirtyFields,
+								oldFields,
+								session,
+								unresolvedId,
+								executionContext,
+								secondaryTableReference,
+								Expectations.appropriateExpectation( secondaryTable.getUpdateResultCheckStyle() )
+						);
+
+						if ( isRowToInsert ) {
+							executeJoinTableInsert(
+									fields,
+									session,
+									unresolvedId,
+									executionContext,
+									secondaryTable
+							);
+						}
+					}
+				}
+		);
+	}
+
+	/**
+	 *
+	 * @return true if an insert operation is required
+	 */
+	private boolean updateInternal(
+			Object[] fields,
+			int[] dirtyFields,
+			Object[] oldFields,
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext,
+			TableReference tableReference,
+			Expectation expectation) {
+		final boolean isRowToUpdate;
+		final boolean isNullableTable = isNullableTable( tableReference );
+		final boolean isFieldsAllNull = isAllNull( fields, tableReference.getTable() );
+		if ( isNullableTable && oldFields != null && isAllNull( oldFields, tableReference.getTable() ) ) {
+			isRowToUpdate = false;
+		}
+		else if ( isNullableTable && isFieldsAllNull ) {
+			//if all fields are null, we might need to delete existing row
+			isRowToUpdate = true;
+			// TODO (6.0) : delete the existing row
+		}
+		else {
+			//there is probably a row there, so try to update
+			//if no rows were updated, we will find out
+			// TODO (6.0) : update should return a boolean value to be assigned to isRowToUpdate
+			RowToUpdateChecker checker = new RowToUpdateChecker(
+					unresolvedId,
+					isNullableTable,
+					expectation,
+					getFactory(),
+					this
+			);
+			executeUpdate(
+					fields,
+					dirtyFields,
+					session,
+					unresolvedId,
+					executionContext,
+					tableReference,
+					checker
+			);
+			isRowToUpdate = checker.isRowToUpdate();
+		}
+		return !isRowToUpdate && !isFieldsAllNull;
+	}
+
+	private int executeUpdate(
+			Object[] fields,
+			int[] dirtyFields,
+			SharedSessionContractImplementor session,
+			Object unresolvedId,
+			ExecutionContext executionContext,
+			TableReference tableReference,
+			RowToUpdateChecker checker) {
 		List<Assignment> assignments = new ArrayList<>();
+
 		for ( int dirtyField : dirtyFields ) {
 			final StateArrayContributor contributor = getStateArrayContributors().get( dirtyField );
 			final Object domainValue = fields[contributor.getStateArrayPosition()];
@@ -451,19 +676,23 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				}
 			}
 		}
-
 		Junction identifierJunction = new Junction( Junction.Nature.CONJUNCTION );
 		getHierarchy().getIdentifierDescriptor().dehydrate(
 				unresolvedId,
-				(jdbcValue, type, boundColumn) -> {
-					identifierJunction.add(
-							new RelationalPredicate(
-									RelationalPredicate.Operator.EQUAL,
-									new ColumnReference( boundColumn ),
-									new LiteralParameter( jdbcValue, boundColumn.getExpressableType(), Clause.WHERE, session.getFactory().getTypeConfiguration()  )
-							)
-					);
-				},
+				(jdbcValue, type, boundColumn) ->
+						identifierJunction.add(
+								new RelationalPredicate(
+										RelationalPredicate.Operator.EQUAL,
+										new ColumnReference( boundColumn ),
+										new LiteralParameter(
+												jdbcValue,
+												boundColumn.getExpressableType(),
+												Clause.WHERE,
+												session.getFactory().getTypeConfiguration()
+										)
+								)
+						)
+				,
 				Clause.WHERE,
 				session
 		);
@@ -476,14 +705,113 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				identifierJunction
 		);
 
-		JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL.execute(
-				UpdateToJdbcUpdateConverter.createJdbcUpdate(
-						updateStatement,
-						executionContext.getSession().getSessionFactory()
-				),
-				executionContext,
-				Connection::prepareStatement
+
+		return executeUpdate( executionContext, updateStatement, checker  );
+	}
+
+	private int executeUpdate(ExecutionContext executionContext, UpdateStatement updateStatement,  RowToUpdateChecker checker) {
+		JdbcUpdate jdbcUpdate = UpdateToJdbcUpdateConverter.createJdbcUpdate(
+				updateStatement,
+				executionContext.getSession().getSessionFactory()
 		);
+		return executeOperation(
+				executionContext,
+				jdbcUpdate,
+				(rows, prepareStatement) -> checker.check( rows, prepareStatement )
+		);
+	}
+
+	private int executeOperation(
+			ExecutionContext executionContext,
+			JdbcMutation operation,
+			BiConsumer<Integer, PreparedStatement> checker) {
+		final JdbcMutationExecutor executor = JdbcMutationExecutor.WITH_AFTER_STATEMENT_CALL;
+		return executor.execute(
+				operation,
+				executionContext,
+				Connection::prepareStatement,
+				(rows, preparestatement) -> checker.accept( rows, preparestatement )
+		);
+	}
+
+	protected final boolean isAllNull(Object[] fields, Table table) {
+		final List<StateArrayContributor<?>> stateArrayContributors = getStateArrayContributors();
+		for ( int i = 0; i < fields.length; i++ ) {
+			if ( fields[i] != null ) {
+				final List<Column> columns = stateArrayContributors.get( i ).getColumns();
+				for ( Column column : columns ) {
+					if ( column.getSourceTable().equals( table ) ) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean isTableNeedUpdate(
+			TableReference tableReference,
+			int[] dirtyProperties,
+			boolean hasDirtyCollection,
+			boolean isRootTable) {
+		if ( dirtyProperties == null ) {
+			// TODO (6.0) : isTableNeedUpdate() to implement case dirtyProperties == null
+			throw new NotYetImplementedFor6Exception( getClass() );
+		}
+		else {
+			boolean tableNeedUpdate = false;
+			final List<StateArrayContributor<?>> stateArrayContributors = getStateArrayContributors();
+			for ( int property : dirtyProperties ) {
+				final StateArrayContributor<?> contributor = stateArrayContributors.get( property );
+				final List<Column> columns = contributor.getColumns();
+				for ( Column column : columns ) {
+					if ( column.getSourceTable().equals( tableReference.getTable() )
+							&& contributor.isUpdatable() ) {
+						tableNeedUpdate = true;
+					}
+				}
+			}
+			if ( isRootTable && getHierarchy().getVersionDescriptor() != null ) {
+				tableNeedUpdate = tableNeedUpdate ||
+						Versioning.isVersionIncrementRequired(
+								dirtyProperties,
+								hasDirtyCollection,
+								getPropertyVersionability()
+						);
+			}
+			return tableNeedUpdate;
+		}
+	}
+
+	private boolean isNullableTable(TableReference tableReference) {
+		return tableReference.isOptional() || isJpaCacheComplianceEnabled;
+	}
+
+	private ExecutionContext getExecutionContext(SharedSessionContractImplementor session) {
+		return new ExecutionContext() {
+			private final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
+
+			@Override
+			public SharedSessionContractImplementor getSession() {
+				return session;
+			}
+
+			@Override
+			public QueryOptions getQueryOptions() {
+				return new QueryOptionsImpl();
+			}
+
+			@Override
+			public ParameterBindingContext getParameterBindingContext() {
+				return parameterBindingContext;
+			}
+
+			@Override
+			public Callback getCallback() {
+				return afterLoadAction -> {
+				};
+			}
+		};
 	}
 
 	@Override
@@ -593,12 +921,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object[] getDatabaseSnapshot(Object id, SharedSessionContractImplementor session)
-			throws HibernateException {
-		return new Object[0];
-	}
-
-	@Override
 	public Serializable getIdByUniqueKey(
 			Serializable key, String uniquePropertyName, SharedSessionContractImplementor session) {
 		return null;
@@ -681,10 +1003,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			Object object,
 			Map mergeMap,
 			SharedSessionContractImplementor session) throws HibernateException {
-//		final Object[] values = getPropertyValues( object );
-//
-//		assert values.length == getStateArrayContributors().size();
-//
 		final Object[] stateArray = new Object[ getStateArrayContributors().size() ];
 		visitStateArrayContributors(
 				contributor -> {
@@ -757,8 +1075,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	}
 
-	Boolean hasCollections;
-
 	@Override
 	public boolean hasCollections() {
 		// todo (6.0) : do this init up front?
@@ -778,4 +1094,69 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 		return hasCollections;
 	}
+
+	private static class RowToUpdateChecker {
+		private final Object id;
+		private final boolean isNullableTable;
+		private final Expectation expectation;
+		private final SessionFactoryImplementor factory;
+		private final EntityDescriptor entityDescriptor;
+
+		private boolean isRowToUpdate;
+
+		public RowToUpdateChecker(
+				Object id,
+				boolean isNullableTable,
+				Expectation expectation,
+				SessionFactoryImplementor factory,
+				EntityDescriptor entityDescriptor) {
+			this.id = id;
+			this.isNullableTable = isNullableTable;
+			this.expectation = expectation;
+			this.factory = factory;
+			this.entityDescriptor = entityDescriptor;
+		}
+
+		public void check(Integer rows, PreparedStatement preparedStatement) {
+			try {
+				expectation.verifyOutcome( rows, preparedStatement, -1 );
+			}
+			catch (StaleStateException e) {
+				if ( isNullableTable ) {
+					if ( factory.getStatistics().isStatisticsEnabled() ) {
+						factory.getStatistics().optimisticFailure( entityDescriptor.getEntityName() );
+					}
+					throw new StaleObjectStateException( entityDescriptor.getEntityName(), id );
+				}
+				isRowToUpdate = false;
+			}
+			catch (TooManyRowsAffectedException e) {
+				throw new HibernateException(
+						"Duplicate identifier in table for: " +
+								MessageHelper.infoString( entityDescriptor, id, factory )
+				);
+			}
+			catch (Throwable t) {
+				isRowToUpdate = false;
+			}
+			isRowToUpdate = true;
+		}
+
+		public boolean isRowToUpdate() {
+			return isRowToUpdate;
+		}
+	}
+
+	private class ValuesNullChecker {
+		private boolean allNull = true;
+
+		private void setNotAllNull(){
+			allNull = false;
+		}
+
+		public boolean areAllNull(){
+			return allNull;
+		}
+	}
+
 }

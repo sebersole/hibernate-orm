@@ -47,12 +47,12 @@ public class TypeHelper {
 			ManagedTypeDescriptor containerDescriptor,
 			Object[] source,
 			Object[] target,
-			Predicate<StateArrayContributor> skipCondition) {
+			Predicate<StateArrayContributor> copyConditions) {
 		deepCopy(
 				containerDescriptor,
 				source,
 				target,
-				skipCondition,
+				copyConditions,
 				DEEP_COPY_VALUE_PRODUCER
 		);
 	}
@@ -62,15 +62,13 @@ public class TypeHelper {
 			ManagedTypeDescriptor<?> containerDescriptor,
 			Object[] source,
 			Object[] target,
-			Predicate<StateArrayContributor> skipCondition,
-			BiFunction<StateArrayContributor,Object,Object> targetValueProducer) {
+			Predicate<StateArrayContributor> copyConditions,
+			BiFunction<StateArrayContributor, Object, Object> targetValueProducer) {
 		for ( StateArrayContributor<?> contributor : containerDescriptor.getStateArrayContributors() ) {
-			if ( skipCondition.test( contributor ) ) {
-				return;
+			if ( copyConditions.test( contributor ) ) {
+				final int position = contributor.getStateArrayPosition();
+				target[position] = targetValueProducer.apply( contributor, source[position] );
 			}
-
-			final int position = contributor.getStateArrayPosition();
-			target[position] = targetValueProducer.apply( contributor, source[position] );
 		}
 	}
 

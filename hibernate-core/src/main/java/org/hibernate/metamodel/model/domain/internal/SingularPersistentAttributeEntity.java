@@ -668,7 +668,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			ForeignKeys.Nullifier nullifier,
 			NonNullableTransientDependencies nonNullableTransientEntities,
 			SharedSessionContractImplementor session) {
-		if ( isNullable()
+		if ( !isNullable()
 				&& getAttributeTypeClassification() != ONE_TO_ONE
 				&& nullifier.isNullifiable( getEntityDescriptor().getEntityName(), value ) ) {
 			nonNullableTransientEntities.add( getEntityDescriptor().getEntityName(), value );
@@ -738,9 +738,12 @@ public class SingularPersistentAttributeEntity<O,J>
 			BiConsumer<SqlExpressableType, Column> action,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
-		for ( ColumnMappings.ColumnMapping columnMapping : getForeignKey().getColumnMappings().getColumnMappings() ) {
-			final Column column = columnMapping.getReferringColumn();
-			action.accept( column.getExpressableType(), column );
+		if ( foreignKey != null ) {
+			for ( ColumnMappings.ColumnMapping columnMapping : foreignKey.getColumnMappings()
+					.getColumnMappings() ) {
+				final Column column = columnMapping.getReferringColumn();
+				action.accept( column.getExpressableType(), column );
+			}
 		}
 	}
 }

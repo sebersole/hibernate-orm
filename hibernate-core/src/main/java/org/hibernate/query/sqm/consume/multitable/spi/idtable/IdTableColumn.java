@@ -16,8 +16,8 @@ import org.hibernate.type.spi.TypeConfiguration;
  * A column in a IdTable.  As the column exists in the
  * IdTable, we know a few things about it inherently, such as:
  *
- * 	* the column is part of the PK for the IdTable
- * 	* therefore, the column is non-nullable
+ * the column is part of the PK for the IdTable
+ * therefore, the column is non-nullable
  *
  * @author Steve Ebersole
  */
@@ -40,6 +40,20 @@ public class IdTableColumn extends PhysicalColumn {
 				false,
 				false,
 				typeConfiguration
+		);
+	}
+
+	public IdTableColumn(IdTable idTable,PhysicalColumn column) {
+		super(
+				idTable,
+				column.getName(),
+				column.getSqlTypeDescriptorAccess(),
+				column.getJavaTypeDescriptorAccess(),
+				column.getDefaultValue(),
+				column.getSqlTypeName(),
+				false,
+				false,
+				column.getTypeConfiguration()
 		);
 	}
 

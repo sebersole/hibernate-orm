@@ -270,9 +270,9 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 	@Override
 	public void resolveEntityState(RowProcessingState rowProcessingState) {
-		final Object entityIdentifier = entityKey.getIdentifier();
-
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
+
+		final Object entityIdentifier = entityKey.getIdentifier();
 
 		preLoad( rowProcessingState );
 
@@ -379,19 +379,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			);
 		}
 
-		boolean isReallyReadOnly = isReadOnly( rowProcessingState, session );
-		if ( !entityDescriptor.getHierarchy().getMutabilityPlan().isMutable() ) {
-			isReallyReadOnly = true;
-		}
-		else {
-			final Object proxy = session.getPersistenceContext().getProxy( loadingEntityEntry.getEntityKey() );
-			if ( proxy != null ) {
-				// there is already a proxy for this impl
-				// only set the status to read-only if the proxy is read-only
-				isReallyReadOnly = ( (HibernateProxy) proxy ).getHibernateLazyInitializer().isReadOnly();
-			}
-		}
-		if ( isReallyReadOnly ) {
+		if ( isReallyReadOnly( rowProcessingState, session ) ) {
 			//no need to take a snapshot - this is a
 			//performance optimization, but not really
 			//important, except for entities with huge
@@ -422,8 +410,24 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			factory.getStatistics().loadEntity( entityDescriptor.getEntityName() );
 		}
 
-
 		postLoad( rowProcessingState );
+	}
+
+	private boolean isReallyReadOnly(RowProcessingState rowProcessingState, SharedSessionContractImplementor session) {
+		boolean isReallyReadOnly;
+		isReallyReadOnly=isReadOnly( rowProcessingState, session );
+		if ( !entityDescriptor.getHierarchy().getMutabilityPlan().isMutable() ) {
+			isReallyReadOnly = true;
+		}
+		else {
+			final Object proxy = session.getPersistenceContext().getProxy( loadingEntityEntry.getEntityKey() );
+			if ( proxy != null ) {
+				// there is already a proxy for this impl
+				// only set the status to read-only if the proxy is read-only
+				isReallyReadOnly = ( (HibernateProxy) proxy ).getHibernateLazyInitializer().isReadOnly();
+			}
+		}
+		return isReallyReadOnly;
 	}
 
 	private void preLoad(RowProcessingState rowProcessingState) {

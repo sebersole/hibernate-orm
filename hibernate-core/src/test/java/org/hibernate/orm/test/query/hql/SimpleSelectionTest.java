@@ -36,7 +36,7 @@ public class SimpleSelectionTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	@Test
-	public void testSelectEntityAttribute() {
+	public void testSubstrInsideConcat() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					List<Object> results = session.createQuery(

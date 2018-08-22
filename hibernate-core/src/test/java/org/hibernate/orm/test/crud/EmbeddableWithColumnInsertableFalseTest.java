@@ -14,7 +14,6 @@ import javax.persistence.Id;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,8 +68,6 @@ public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBased
 	}
 
 	@Test
-	@FailureExpected("The dirty checking does not work for Embedded , the stored loadedState contains a ref to the Name object, so" +
-			" when the test executes person.getName().setFirstName( \"Fabi\" ) the loadedState Name changes as well making it equals to the current value ")
 	public void testUpdating() {
 		sessionFactoryScope().inTransaction(
 				session -> {

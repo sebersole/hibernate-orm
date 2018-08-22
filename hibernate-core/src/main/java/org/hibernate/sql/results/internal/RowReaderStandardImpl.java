@@ -107,7 +107,6 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 				( (EntityInitializer) initializer ).resolveEntityState( rowProcessingState );
 			}
 		}
-
 	}
 
 	@Override
