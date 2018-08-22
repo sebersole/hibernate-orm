@@ -43,6 +43,8 @@ public interface Column extends QualifiableSqlExpressable {
 	//			2) the DerivedColumn's writer is always null. again illegal to apply transformer, and by definition a DerivedColumn is read-only
 	String render(String identificationVariable);
 
+	String render();
+
 	default String renderReadExpression(String identificationVariable) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}

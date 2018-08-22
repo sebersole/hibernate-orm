@@ -85,7 +85,7 @@ public class ColumnReference implements Expression {
 
 	public String renderSqlFragment() {
 		if ( qualifier == null ) {
-			return column.render( dialect );
+			return column.render();
 		}
 		final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
 		return column.render( tableReference.getIdentificationVariable() );

@@ -257,6 +257,7 @@ public class JoinTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	@Test
+	@Disabled(value = "MappedSuperclass support has not yet been implemented ")
 	public void testMappedSuperclassAndSecondaryTable() {
 		sessionFactoryScope().inTransaction(
 				session -> {
