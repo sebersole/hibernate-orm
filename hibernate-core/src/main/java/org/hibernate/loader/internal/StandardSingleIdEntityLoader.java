@@ -18,7 +18,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
@@ -29,6 +28,7 @@ import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
+import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
@@ -55,9 +55,9 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -98,8 +98,9 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
-				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
-				new Writeable.JdbcValueCollector() {
+//				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+				id,
+				new ExpressableType.JdbcValueCollector() {
 					private int count = 0;
 
 					@Override
@@ -325,14 +326,14 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				}
 		);
 
-		final List<QueryResult> queryResults = new ArrayList<>();
+		final List<DomainResult> domainResults = new ArrayList<>();
 
 		final SqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
 				() -> rootQuerySpec,
 				expression -> expression,
 				(expression, sqlSelection) -> {
-					queryResults.add(
-							new ScalarQueryResultImpl(
+					domainResults.add(
+							new ScalarResultImpl(
 									null,
 									sqlSelection,
 									expression.getType()
@@ -350,6 +351,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			@Override
 			public SqlExpressionResolver getSqlSelectionResolver() {
 				return sqlExpressionResolver;
+			}
+
+			@Override
+			public LoadQueryInfluencers getLoadQueryInfluencers() {
+				return LoadQueryInfluencers.NONE;
 			}
 
 			@Override
@@ -383,7 +389,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 		return new SqlAstSelectDescriptorImpl(
 				selectStatement,
-				queryResults,
+				domainResults,
 				entityDescriptor.getAffectedTableNames()
 		);
 	}

@@ -9,9 +9,7 @@ package org.hibernate.sql.results.spi;
 /**
  * Marker for all object types that can be part of a ResultSetMapping.
  *
- * Both {@link QueryResult} and {@link Fetch} are ResultSetMappingNode sub-types.
- *
- * Additionally ResultSetMappingNode is classified into
+ * Both {@link DomainResult} and {@link Fetch} are ResultSetMappingNode sub-types.
  *
  * @author Steve Ebersole
  */

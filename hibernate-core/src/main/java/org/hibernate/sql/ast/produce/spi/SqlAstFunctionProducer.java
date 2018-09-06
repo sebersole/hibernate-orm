@@ -12,6 +12,7 @@ import org.hibernate.query.sqm.tree.expression.function.SqmFunction;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmToSqlAstConverter;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
  * Contract for functions impls that would like to control the
@@ -29,7 +30,7 @@ public interface SqlAstFunctionProducer extends SqmFunction {
 	 *
 	 * To be able to use this in the select-clause, the returned
 	 * expression must also implement the
-	 * {@link org.hibernate.sql.results.spi.QueryResultProducer}
+	 * {@link DomainResultProducer}
 	 * contract
 	 */
 	Expression convertToSqlAst(SqmToSqlAstConverter walker);

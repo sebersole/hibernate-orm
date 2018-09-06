@@ -8,7 +8,6 @@ package org.hibernate.boot.model.resultset.internal;
 
 import org.hibernate.LockMode;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
-import org.hibernate.query.sql.spi.FetchBuilder;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -44,9 +43,5 @@ public class FetchDefinitionImpl implements ResultSetMappingDefinition.Fetch {
 	@Override
 	public String getFetchedRoleName() {
 		return fetchedRoleName;
-	}
-
-	public FetchBuilder generateFetchBuilder(TypeConfiguration typeConfiguration) {
-		return new FetchBuilder( tableAlias, parentTableAlias, fetchedRoleName, lockMode );
 	}
 }

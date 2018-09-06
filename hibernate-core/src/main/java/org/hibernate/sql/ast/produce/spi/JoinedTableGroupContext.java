@@ -7,7 +7,6 @@
 package org.hibernate.sql.ast.produce.spi;
 
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 
 /**
  * Parameter object passed to {@link TableGroupJoinProducer#createTableGroupJoin}
@@ -19,7 +18,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableGroup;
  * @author Steve Ebersole
  */
 public interface JoinedTableGroupContext extends TableGroupContext {
-	TableGroup getLhs();
+	ColumnReferenceQualifier getLhs();
 
 	ColumnReferenceQualifier getColumnReferenceQualifier();
 

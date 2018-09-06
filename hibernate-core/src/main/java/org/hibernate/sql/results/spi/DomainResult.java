@@ -6,11 +6,13 @@
  */
 package org.hibernate.sql.results.spi;
 
+import java.util.function.Consumer;
+
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Represents a result value in the domain query results.  Acts as the
- * producer for the {@link QueryResultAssembler} for this result as well
+ * producer for the {@link DomainResultAssembler} for this result as well
  * as any {@link Initializer} instances needed
  * <p/>
  * Not the same as a result column in the JDBC ResultSet!  This contract
@@ -20,34 +22,28 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * QueryResult is distinctly different from a {@link Fetch} and so modeled as
  * completely separate hierarchy.
  *
- * @see ScalarQueryResult
- * @see DynamicInstantiationQueryResult
- * @see EntityQueryResult
- * @see PluralAttributeQueryResult
- * @see CompositeQueryResult
+ * @see ScalarResult
+ * @see DynamicInstantiationResult
+ * @see EntityResult
+ * @see PluralAttributeResult
+ * @see CompositeResult
  * @see Fetch
  *
  * @author Steve Ebersole
  */
-public interface QueryResult extends ResultSetMappingNode {
+public interface DomainResult extends ResultSetMappingNode {
 	/**
 	 * The result-variable (alias) associated with this result.
 	 */
 	String getResultVariable();
 
-	default JavaTypeDescriptor getJavaTypeDescriptor() {
-		return getResultAssembler().getJavaTypeDescriptor();
-	}
+	JavaTypeDescriptor getJavaTypeDescriptor();
 
 	/**
-	 * Register any `Initializer`s needed by this result object, potentially
-	 * including `Initializer`s for fetches.
+	 * Create an assembler (and any initializers) for this result.
 	 */
-	void registerInitializers(InitializerCollector collector);
-
-	/**
-	 * The assembler for this result.  See the JavaDocs for QueryResultAssembler
-	 * for details on its purpose,
-	 */
-	QueryResultAssembler getResultAssembler();
+	DomainResultAssembler createResultAssembler(
+			Consumer<Initializer> initializerCollector,
+			AssemblerCreationState creationOptions,
+			AssemblerCreationContext creationContext);
 }

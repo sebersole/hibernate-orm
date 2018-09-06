@@ -7,20 +7,22 @@
 package org.hibernate.sql.ast.tree.spi.from;
 
 
+import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
+import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference;
 
@@ -29,28 +31,39 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference
  *
  * @author Steve Ebersole
  */
-public class CollectionTableGroup implements TableGroup {
-	private final PluralAttributeReference navigableReference;
+public class CollectionTableGroup extends AbstractTableGroup {
+	// todo (6.0) : should implement Selectable as well
+
 	private final PersistentCollectionDescriptor descriptor;
 
-	private final TableSpace tableSpace;
-	private final String uniqueIdentifier;
-	private final TableReference elementTableReference;
-	private final TableReference indexTableReference;
+	private final LockMode lockMode;
+	private final NavigablePath navigablePath;
+	private final TableReference collectionTableReference;
+	private final List<TableReferenceJoin> tableReferenceJoins;
+
+	private final PluralAttributeReference navigableReference;
 
 	public CollectionTableGroup(
-			PluralAttributeReference navigableReference,
-			PersistentCollectionDescriptor descriptor,
+			String uid,
 			TableSpace tableSpace,
-			String uniqueIdentifier,
-			TableReference elementTableReference,
-			TableReference indexTableReference) {
-		this.navigableReference = navigableReference;
-		this.descriptor = navigableReference.getNavigable().getPersistentCollectionDescriptor();
-		this.tableSpace = tableSpace;
-		this.uniqueIdentifier = uniqueIdentifier;
-		this.elementTableReference = elementTableReference;
-		this.indexTableReference = indexTableReference;
+			PersistentCollectionDescriptor descriptor,
+			LockMode lockMode,
+			NavigablePath navigablePath,
+			TableReference collectionTableReference,
+			List<TableReferenceJoin> joins) {
+		super( tableSpace, uid );
+		this.descriptor = descriptor;
+		this.lockMode = lockMode;
+		this.navigablePath = navigablePath;
+		this.collectionTableReference = collectionTableReference;
+		this.tableReferenceJoins = joins;
+
+		this.navigableReference = new PluralAttributeReference(
+				// todo (6.0) : need the container (if one) to pass along
+				null,
+				descriptor.getDescribedAttribute(),
+				navigablePath
+		);
 	}
 
 	public PersistentCollectionDescriptor getDescriptor() {
@@ -58,13 +71,13 @@ public class CollectionTableGroup implements TableGroup {
 	}
 
 	@Override
-	public String getUniqueIdentifier() {
-		return uniqueIdentifier;
+	protected TableReference getPrimaryTableReference() {
+		return null;
 	}
 
 	@Override
-	public TableSpace getTableSpace() {
-		return tableSpace;
+	protected List<TableReferenceJoin> getTableReferenceJoins() {
+		return null;
 	}
 
 	@Override
@@ -74,12 +87,16 @@ public class CollectionTableGroup implements TableGroup {
 
 	@Override
 	public TableReference locateTableReference(Table table) {
-		if ( table == elementTableReference.getTable() ) {
-			return elementTableReference;
+		if ( table == collectionTableReference.getTable() ) {
+			return collectionTableReference;
 		}
 
-		if ( indexTableReference != null && table == indexTableReference.getTable() ) {
-			return indexTableReference;
+		if ( tableReferenceJoins != null && !tableReferenceJoins.isEmpty() ) {
+			for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
+				if ( tableReferenceJoin.getJoinedTableReference().getTable() == table ) {
+					return tableReferenceJoin.getJoinedTableReference();
+				}
+			}
 		}
 
 		return null;
@@ -90,20 +107,29 @@ public class CollectionTableGroup implements TableGroup {
 		// todo (6.0) : need to determine which table (if 2) to render first
 		//		(think many-to-many).  does the order of the joins matter given the serial join?
 
-		throw new NotYetImplementedFor6Exception(  );
+		renderTableReference( collectionTableReference, sqlAppender, walker );
 
-//		renderTableReference( rootTableReference, sqlAppender, walker );
-//
-//		for ( TableReferenceJoin tableJoin : tableReferenceJoins ) {
-//			sqlAppender.appendSql( " " );
-//			sqlAppender.appendSql( tableJoin.getJoinType().getText() );
-//			sqlAppender.appendSql( " join " );
-//			renderTableReference( tableJoin.getJoinedTableBinding(), sqlAppender, walker );
-//			if ( tableJoin.getJoinPredicate() != null && !tableJoin.getJoinPredicate().isEmpty() ) {
-//				sqlAppender.appendSql( " on " );
-//				tableJoin.getJoinPredicate().accept( walker );
-//			}
-//		}
+		if ( tableReferenceJoins != null && !tableReferenceJoins.isEmpty() ) {
+			for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
+				renderTableReferenceJoin( tableReferenceJoin, sqlAppender, walker );
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void renderTableReferenceJoin(
+			TableReferenceJoin tableReferenceJoin,
+			SqlAppender sqlAppender,
+			SqlAstWalker walker) {
+		sqlAppender.appendSql( " " );
+		sqlAppender.appendSql( tableReferenceJoin.getJoinType().getText() );
+		sqlAppender.appendSql( " join " );
+		renderTableReference( tableReferenceJoin.getJoinedTableReference(), sqlAppender, walker );
+		if ( tableReferenceJoin.getJoinPredicate() != null && !tableReferenceJoin.getJoinPredicate().isEmpty() ) {
+			sqlAppender.appendSql( " on " );
+			tableReferenceJoin.getJoinPredicate().accept( walker );
+		}
+
 	}
 
 
@@ -143,24 +169,34 @@ public class CollectionTableGroup implements TableGroup {
 	}
 
 	@Override
-	public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
+	public ColumnReference qualify(QualifiableSqlExpressable sqlSelectable) {
+		// assume its a ColumnReference - we could also define `columnBindingMap` as keyed by QualifiableSqlExpressable
+		assert sqlSelectable instanceof ColumnReference;
+		columnBindingMap.get( sqlSelectable );
 		throw new NotYetImplementedFor6Exception(  );
 	}
 
 	@Override
 	public void applyAffectedTableNames(Consumer<String> nameCollector) {
-		nameCollector.accept( elementTableReference.getTable().getTableExpression() );
-		if ( indexTableReference != null ) {
-			nameCollector.accept( indexTableReference.getTable().getTableExpression() );
+		nameCollector.accept( collectionTableReference.getTable().getTableExpression() );
+		for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
+			nameCollector.accept( tableReferenceJoin.getJoinedTableReference().getTable().getTableExpression() );
 		}
 	}
 
 	@Override
 	public ColumnReference locateColumnReferenceByName(String name) {
-		Column column = elementTableReference.getTable().getColumn( name );
+		Column column = collectionTableReference.getTable().getColumn( name );
 
-		if ( column == null && indexTableReference != null ) {
-			column = indexTableReference.getTable().getColumn( name );
+		if ( column == null ) {
+			if ( tableReferenceJoins != null && !tableReferenceJoins.isEmpty() ) {
+				for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
+					column = tableReferenceJoin.getJoinedTableReference().getTable().getColumn( name );
+					if ( column != null ) {
+						break;
+					}
+				}
+			}
 		}
 
 		if ( column == null ) {

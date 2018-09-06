@@ -14,8 +14,8 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressable;
  * selectable at the SQL/JDBC level.
  *
  * Essentially acts as a template (in the pattern sense) for "selections" -
- * represented by {@link QueryResult}
- * represented by {@link QueryResult}
+ * represented by {@link DomainResult}
+ * represented by {@link DomainResult}
  *
  * @implNote  Generally speaking any query expression is also selectable.  However
  * there are 2 exceptions to this:
@@ -27,7 +27,7 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressable;
  * 	    * "navigable reference" - similar to above.  we have it implement
  * 	    		(Sql)Expression but that should never be part of the AST.
  * 	    		It is (atm) an Expression simply so we can have it available
- * 	    		to `Navigable#createQueryResult` via
+ * 	    		to `Navigable#createDomainResult` via
  * 	    		`QueryResultCreationContext#selectedExpression` which means
  * 	    		it needs to be an Expression.  Another option is to use
  * 	    		some other contract/interface that allows access to the

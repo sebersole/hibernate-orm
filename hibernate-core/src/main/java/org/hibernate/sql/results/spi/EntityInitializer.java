@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
@@ -15,10 +14,28 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  */
 public interface EntityInitializer extends Initializer, FetchParentAccess {
-	EntityDescriptor getEntityInitialized();
 
+	/**
+	 * Get the descriptor for the type of entity being initialized
+	 */
+	EntityDescriptor getEntityDescriptor();
+
+	/**
+	 * Get the entity instance for the currently processing "row".
+	 *
+	 * @apiNote Calling this method is only valid from the time
+	 * {@link #hydrate} has been called until {@link #finishUpRow}
+	 * has been called for the currently processing row
+	 */
 	Object getEntityInstance();
 
+	/**
+	 * For an EntityInitializer, the FetchParent reference would be
+	 * the loading entity instance.
+	 *
+	 * @apiNote This default simply delegates to {@link #getEntityInstance}
+	 * and therefore has the same timing limitations discussed there
+	 */
 	@Override
 	default Object getFetchParentInstance() {
 		final Object entityInstance = getEntityInstance();
@@ -26,24 +43,5 @@ public interface EntityInitializer extends Initializer, FetchParentAccess {
 			throw new IllegalStateException( "Unexpected state condition - entity instance not yet resolved" );
 		}
 		return entityInstance;
-	}
-
-	/**
-	 * @todo (6.0) : should this hydrate all "hierarchy state"?
-	 * 		- identifier
-	 * 		- rowId
-	 * 		- discriminator
-	 * 		- etc
-	 */
-	void hydrateIdentifier(RowProcessingState rowProcessingState);
-
-	void resolveEntityKey(RowProcessingState rowProcessingState);
-
-	void hydrateEntityState(RowProcessingState rowProcessingState);
-
-	default void resolveEntityState(RowProcessingState rowProcessingState) {
-		throw new NotYetImplementedFor6Exception(
-				"is this needed?  whats the diff with #hydrateEntityState and/or Initializer#finishUp?"
-		);
 	}
 }

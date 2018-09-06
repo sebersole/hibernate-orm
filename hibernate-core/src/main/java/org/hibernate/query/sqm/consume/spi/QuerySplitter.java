@@ -8,13 +8,16 @@ package org.hibernate.query.sqm.consume.spi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.ParsingException;
 import org.hibernate.query.sqm.produce.spi.CurrentSqmFromElementSpaceCoordAccess;
 import org.hibernate.query.sqm.produce.spi.ImplicitAliasGenerator;
@@ -86,7 +89,11 @@ import org.hibernate.query.sqm.tree.predicate.OrSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.RelationalSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiation;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationArgument;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationTarget;
 import org.hibernate.query.sqm.tree.select.SqmSelectClause;
+import org.hibernate.query.sqm.tree.select.SqmSelectableNode;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.query.sqm.tree.set.SqmAssignment;
 import org.hibernate.query.sqm.tree.set.SqmSetClause;
@@ -142,6 +149,7 @@ public class QuerySplitter {
 
 		private Map<SqmFrom,SqmFrom> sqmFromSqmCopyMap = new HashMap<>();
 		private Map<SqmNavigableReference, SqmNavigableReference> navigableBindingCopyMap = new HashMap<>();
+		private Map<NavigablePath, Set<SqmNavigableJoin>> fetchJoinsByParentPathCopy;
 
 		private UnmappedPolymorphismReplacer(
 				SqmSelectStatement selectStatement,
@@ -176,7 +184,7 @@ public class QuerySplitter {
 		@Override
 		public SqmSelectStatement visitSelectStatement(SqmSelectStatement statement) {
 			final SqmSelectStatementImpl copy = new SqmSelectStatementImpl();
-			copy.applyQuerySpec( visitQuerySpec( statement.getQuerySpec() ) );
+			copy.applyQuerySpec( visitQuerySpec( statement.getQuerySpec() ), fetchJoinsByParentPathCopy );
 			return copy;
 		}
 
@@ -330,15 +338,21 @@ public class QuerySplitter {
 				throw new ParsingException( "Could not determine attribute join's LHS for copy" );
 			}
 
-			return makeCopy( joinedFromElement );
+			final SqmNavigableJoin copy = makeCopy( joinedFromElement );
+
+			if ( joinedFromElement.isFetched() ) {
+				registerFetch(
+						joinedFromElement.getNavigableReference().getSourceReference(),
+						joinedFromElement
+				);
+			}
+
+			return copy;
 		}
+
 
 		private SqmNavigableJoin makeCopy(SqmNavigableJoin fromElement) {
 			assert fromElement.getAttributeReference().getSourceReference() != null;
-
-			if ( fromElement == null ) {
-				return null;
-			}
 
 			final SqmNavigableContainerReference sourceBindingCopy = (SqmNavigableContainerReference) navigableBindingCopyMap.get(
 					fromElement.getAttributeReference().getSourceReference()
@@ -377,6 +391,37 @@ public class QuerySplitter {
 						)
 				);
 			}
+			return copy;
+		}
+
+		@Override
+		public SqmDynamicInstantiation visitDynamicInstantiation(SqmDynamicInstantiation original) {
+			final SqmDynamicInstantiationTarget instantiationTarget = original.getInstantiationTarget();
+			final SqmDynamicInstantiation copy;
+
+			switch ( instantiationTarget.getNature() ) {
+				case MAP: {
+					copy = SqmDynamicInstantiation.forMapInstantiation( instantiationTarget.getTargetTypeDescriptor() );
+					break;
+				}
+				case LIST: {
+					copy = SqmDynamicInstantiation.forListInstantiation( instantiationTarget.getTargetTypeDescriptor() );
+					break;
+				}
+				default: {
+					copy = SqmDynamicInstantiation.forClassInstantiation( instantiationTarget.getTargetTypeDescriptor() );
+				}
+			}
+
+			for ( SqmDynamicInstantiationArgument originalArgument : original.getArguments() ) {
+				copy.addArgument(
+						new SqmDynamicInstantiationArgument(
+								( SqmSelectableNode) originalArgument.getSelectableNode().accept( this ),
+								originalArgument.getAlias()
+						)
+				);
+			}
+
 			return copy;
 		}
 
@@ -854,6 +899,24 @@ public class QuerySplitter {
 				SqmNavigableContainerReference source, Navigable navigable) {
 			// todo (6.0) : not sure these are needed
 			throw new NotYetImplementedFor6Exception(  );
+		}
+
+		@Override
+		public void registerFetch(SqmNavigableContainerReference sourceReference, SqmNavigableJoin navigableJoin) {
+			Set<SqmNavigableJoin> joins = null;
+			if ( fetchJoinsByParentPathCopy == null ) {
+				fetchJoinsByParentPathCopy = new HashMap<>();
+			}
+			else {
+				joins = fetchJoinsByParentPathCopy.get( sourceReference.getNavigablePath() );
+			}
+
+			if ( joins == null ) {
+				joins = new HashSet<>();
+				fetchJoinsByParentPathCopy.put( sourceReference.getNavigablePath(), joins );
+			}
+
+			joins.add( navigableJoin );
 		}
 	}
 

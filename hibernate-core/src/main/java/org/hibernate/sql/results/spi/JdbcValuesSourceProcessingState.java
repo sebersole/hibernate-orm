@@ -6,9 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.PostLoadEvent;
@@ -23,16 +20,6 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
  * set of rows from a JdbcValuesSource.  Holds in-flight state
  * and provides access to environmental information needed to perform the
  * processing.
- * <p/>
- * todo (6.0) : look at making these hierarchical for nested loads.
- * 		- The reason being that the perf team had once identified TwoPhaseLoad#addUninitializedEntity
- * 			as a hot-spot.  That method is used to add a placeholder into the PC indicating that the
- * 			entity is being loaded (effectively we put the entity twice into a Map).  An alternative
- * 			would be to keep that relative to the ResultSetProcessingState and have load look here
- * 			for entities that are still in the process of being loaded; not sure that is any more efficient
- * 			however.
- * AFAIR, this ^^ is actually handled vis `#registerLoadingEntity` and
- * 		`org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl#loadingEntityMap`.
  *
  * @author Steve Ebersole
  */
@@ -54,18 +41,37 @@ public interface JdbcValuesSourceProcessingState {
 
 	boolean fetching(PersistentAttribute attribute);
 
-	LoadingEntityEntry registerLoadingEntity(
+	/**
+	 * Find a LoadingEntityEntry locally to this context.
+	 *
+	 * @see LoadContexts#findLoadingEntityEntry(EntityKey)
+	 */
+	LoadingEntityEntry findLoadingEntityLocally(EntityKey entityKey);
+
+	/**
+	 * Registers a LoadingEntityEntry locally to this context
+	 */
+	void registerLoadingEntity(
 			EntityKey entityKey,
-			Function<EntityKey,LoadingEntityEntry> entryProducer);
+			LoadingEntityEntry loadingEntry);
 
-	LoadingEntityEntry findLoadingEntryLocally(EntityKey entityKey);
-
-	LoadingCollectionEntry registerLoadingCollection(
+	/**
+	 * Find a LoadingCollectionEntry locally to this context.
+	 *
+	 * @see LoadContexts#findLoadingCollectionEntry(PersistentCollectionDescriptor, Object)
+	 */
+	LoadingCollectionEntry findLoadingCollectionLocally(
 			PersistentCollectionDescriptor collectionDescriptor,
-			Object collectionKey,
-			Supplier<LoadingCollectionEntry> entryProducer);
+			Object key);
 
-	LoadingCollectionEntry findLoadingCollectionLocally(PersistentCollectionDescriptor collectionDescriptor, Object key);
+	/**
+	 * Registers a LoadingCollectionEntry locally to this context
+	 */
+	void registerLoadingCollection(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object key,
+			LoadingCollectionEntry loadingCollectionEntry);
 
 	void finishUp();
+
 }

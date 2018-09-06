@@ -16,7 +16,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public interface QueryResultAssembler {
+public interface DomainResultAssembler {
 	/**
 	 * The main "assembly" contract.  Assemble the result and return it.
 	 */

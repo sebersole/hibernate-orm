@@ -6,53 +6,45 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
-import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeFetch;
-import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.RowProcessingState;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
  */
-public class CompositeFetchImpl extends AbstractFetchParent implements CompositeFetch, Initializer {
+public class CompositeFetchImpl extends AbstractFetchParent implements CompositeFetch {
 	private final FetchParent fetchParent;
-	private final ColumnReferenceQualifier qualifier;
 	private final SingularPersistentAttributeEmbedded fetchedNavigable;
 	private final FetchStrategy fetchStrategy;
 
-	private final CompositeSqlSelectionGroup sqlSelectionMappings;
 
 	public CompositeFetchImpl(
 			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
 			SingularPersistentAttributeEmbedded fetchedNavigable,
 			FetchStrategy fetchStrategy,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationState creationState) {
 		super(
-				fetchedNavigable.getContainer(),
+				fetchedNavigable,
 				fetchParent.getNavigablePath().append( fetchedNavigable.getNavigableName() )
 		);
 		this.fetchParent = fetchParent;
-		this.qualifier = qualifier;
 		this.fetchedNavigable = fetchedNavigable;
 		this.fetchStrategy = fetchStrategy;
 
-		this.sqlSelectionMappings = CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup(
-				fetchedNavigable.getEmbeddedDescriptor(),
-				qualifier,
-				creationContext
-		);
-
-		fetchParent.addFetch( this );
+		afterInitialize( creationState );
 	}
+
 
 	@Override
 	public FetchParent getFetchParent() {
@@ -60,13 +52,8 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 	}
 
 	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
-		return qualifier;
-	}
-
-	@Override
-	public EmbeddedTypeDescriptor getEmbeddedDescriptor() {
-		return getFetchedNavigable().getEmbeddedDescriptor();
+	public EmbeddedValuedNavigable getCompositeNavigableDescriptor() {
+		return getFetchedNavigable();
 	}
 
 	@Override
@@ -84,19 +71,25 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 		return fetchedNavigable.isOptional();
 	}
 
+
 	@Override
-	public void registerInitializers(
+	public DomainResultAssembler createAssembler(
 			FetchParentAccess parentAccess,
-			InitializerCollector collector) {
-		collector.addInitializer( this );
+			Consumer<Initializer> collector,
+			AssemblerCreationContext context,
+			AssemblerCreationState creationState) {
+		final CompositeFetchInitializerImpl initializer = new CompositeFetchInitializerImpl(
+				parentAccess,
+				this,
+				collector,
+				context,
+				creationState
+		);
 
-		// todo (6.0) : wrong parent-access
-		registerFetchInitializers( parentAccess, collector );
-	}
+		registerFetchInitializers( initializer, collector, context, creationState );
 
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		// nothing to do here... yet
-		// todo (6.0) : this is one potential spot to managed resolving the composite's "state array" to the composite instance
+		collector.accept( initializer );
+
+		return new CompositeAssembler( initializer );
 	}
 }

@@ -70,9 +70,9 @@ public class ResultSetMappingDefinitionImpl implements ResultSetMappingDefinitio
 			resultSetMapping.addResultBuilder( result.generateQueryResultBuilder( sessionFactory.getMetamodel() ) );
 		}
 
-		for ( FetchDefinitionImpl fetch : fetches ) {
-			resultSetMapping.addFetchBuilder( fetch.generateFetchBuilder( sessionFactory.getTypeConfiguration() ) );
-		}
+//		for ( FetchDefinitionImpl fetch : fetches ) {
+//			resultSetMapping.addFetchBuilder( fetch.generateFetchBuilder( sessionFactory.getTypeConfiguration() ) );
+//		}
 
 		return resultSetMapping;
 	}

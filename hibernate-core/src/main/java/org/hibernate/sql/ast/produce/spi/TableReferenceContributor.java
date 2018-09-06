@@ -20,6 +20,5 @@ public interface TableReferenceContributor {
 			ColumnReferenceQualifier lhs,
 			JoinType joinType,
 			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector joinCollector,
-			TableGroupContext tableGroupContext);
+			TableReferenceJoinCollector joinCollector);
 }

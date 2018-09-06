@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
@@ -25,9 +26,11 @@ import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -103,15 +106,22 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference expression,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return getEmbeddedDescriptor().createQueryResult(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getEmbeddedDescriptor().createDomainResult(
 				expression,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
 	}
 
 	@Override
@@ -145,5 +155,4 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 				)
 		);
 	}
-
 }

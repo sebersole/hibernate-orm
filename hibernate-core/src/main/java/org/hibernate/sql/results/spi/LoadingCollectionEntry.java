@@ -6,10 +6,10 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.io.Serializable;
-
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * Represents a collection currently being loaded.
@@ -18,12 +18,12 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public class LoadingCollectionEntry {
 	private final PersistentCollectionDescriptor collectionDescriptor;
-	private final Serializable key;
+	private final Object key;
 	private final PersistentCollection collectionInstance;
 
-	LoadingCollectionEntry(
+	public LoadingCollectionEntry(
 			PersistentCollectionDescriptor collectionDescriptor,
-			Serializable key,
+			Object key,
 			PersistentCollection collectionInstance) {
 		this.collectionDescriptor = collectionDescriptor;
 		this.key = key;
@@ -34,7 +34,7 @@ public class LoadingCollectionEntry {
 		return collectionDescriptor;
 	}
 
-	public Serializable getKey() {
+	public Object getKey() {
 		return key;
 	}
 
@@ -45,5 +45,10 @@ public class LoadingCollectionEntry {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "(" + getCollectionDescriptor().getNavigableRole().getFullPath() + "#" + getKey() + ")";
+	}
+
+	public void finishLoading(ExecutionContext executionContext) {
+		collectionInstance.endRead();
+		collectionInstance.afterInitialize();
 	}
 }

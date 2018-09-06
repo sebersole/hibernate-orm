@@ -8,8 +8,14 @@ package org.hibernate.sql.results.internal;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.SqlSelection;
 
@@ -18,13 +24,13 @@ import org.hibernate.sql.results.spi.SqlSelection;
  */
 public class StandardResultSetMapping implements ResultSetMapping {
 	private final Set<SqlSelection> sqlSelections;
-	private final List<QueryResult> queryResults;
+	private final List<DomainResult> domainResults;
 
 	public StandardResultSetMapping(
 			Set<SqlSelection> sqlSelections,
-			List<QueryResult> queryResults) {
+			List<DomainResult> domainResults) {
 		this.sqlSelections = sqlSelections;
-		this.queryResults = queryResults;
+		this.domainResults = domainResults;
 	}
 
 	@Override
@@ -33,7 +39,23 @@ public class StandardResultSetMapping implements ResultSetMapping {
 	}
 
 	@Override
-	public List<QueryResult> getQueryResults() {
-		return queryResults;
+	public List<DomainResult> getDomainResults() {
+		return domainResults;
+	}
+
+	@Override
+	public List<DomainResultAssembler> resolveAssemblers(
+			AssemblerCreationState creationOptions,
+			AssemblerCreationContext creationContext,
+			Consumer<Initializer> initializerConsumer) {
+		final List<DomainResultAssembler> assemblers = CollectionHelper.arrayList( domainResults.size() );
+
+		for ( DomainResult domainResult : domainResults ) {
+			assemblers.add(
+					domainResult.createResultAssembler( initializerConsumer, creationOptions, creationContext )
+			);
+		}
+
+		return assemblers;
 	}
 }

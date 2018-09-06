@@ -12,7 +12,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 /**
  * @author Steve Ebersole
  */
-public interface AllowableParameterType<J> extends ExpressableType<J>, Writeable {
+public interface AllowableParameterType<J> extends ExpressableType<J> {
 	/**
 	 * The number of JDBC parameters needed for this type.
 	 * @deprecated To be removed.

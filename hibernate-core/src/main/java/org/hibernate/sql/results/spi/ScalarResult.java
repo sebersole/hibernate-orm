@@ -15,7 +15,7 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
  * @author Steve Ebersole
  * @author Gail Badner
  */
-public interface ScalarQueryResult extends QueryResult {
+public interface ScalarResult extends DomainResult {
 	@Override
 	BasicJavaDescriptor getJavaTypeDescriptor();
 }

@@ -18,14 +18,14 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.sql.results.spi.RowReader;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.exec.spi.RowTransformer;
 
 /**
  * @author Steve Ebersole
  */
 public class RowReaderStandardImpl<T> implements RowReader<T> {
-	private final List<QueryResultAssembler> resultAssemblers;
+	private final List<DomainResultAssembler> resultAssemblers;
 	private final List<Initializer> initializers;
 	private final RowTransformer<T> rowTransformer;
 
@@ -36,7 +36,7 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 	//		e.g. `List<EntityInitializer>` versus `List<CollectionInitializer>` versus `List<ComponentInitializer>`
 
 	public RowReaderStandardImpl(
-			List<QueryResultAssembler> resultAssemblers,
+			List<DomainResultAssembler> resultAssemblers,
 			List<Initializer> initializers,
 			RowTransformer<T> rowTransformer,
 			Callback callback) {
@@ -80,38 +80,22 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 	private void coordinateInitializers(
 			RowProcessingState rowProcessingState,
 			JdbcValuesSourceProcessingOptions options) {
-		// todo : figure out CompositeReferenceInitializer handling
-		// todo : figure out CollectionReferenceInitializer handling
 
 		for ( Initializer initializer : initializers ) {
-			if ( initializer instanceof EntityInitializer ) {
-				( (EntityInitializer) initializer ).hydrateIdentifier( rowProcessingState );
-			}
+			initializer.hydrate( rowProcessingState );
 		}
 
 		for ( Initializer initializer : initializers ) {
-			if ( initializer instanceof EntityInitializer ) {
-				( (EntityInitializer) initializer ).resolveEntityKey( rowProcessingState );
-			}
+			initializer.resolve( rowProcessingState );
 		}
-
-		for ( Initializer initializer : initializers ) {
-			if ( initializer instanceof EntityInitializer ) {
-				( (EntityInitializer) initializer ).hydrateEntityState( rowProcessingState );
-			}
-		}
-
-		// todo (6.0) : properly account for
-		for ( Initializer initializer : initializers ) {
-			if ( initializer instanceof EntityInitializer ) {
-				( (EntityInitializer) initializer ).resolveEntityState( rowProcessingState );
-			}
-		}
-
 	}
 
 	@Override
-	public void finishUp(JdbcValuesSourceProcessingState context) {
+	public void finishUp(JdbcValuesSourceProcessingState processingState) {
+		for ( Initializer initializer : initializers ) {
+			initializer.endLoading( processingState );
+		}
+
 		// todo : use Callback to execute AfterLoadActions
 		// todo : another option is to use Callback to execute the AfterLoadActions after each row
 	}

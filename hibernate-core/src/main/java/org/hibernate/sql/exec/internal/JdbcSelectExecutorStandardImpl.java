@@ -24,6 +24,7 @@ import org.hibernate.cache.spi.QueryResultsCache;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.FetchingScrollableResultsImpl;
 import org.hibernate.internal.ScrollableResultsImpl;
+import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.query.internal.ScrollableResultsIterator;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -265,14 +266,22 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState =
 				new JdbcValuesSourceProcessingStateStandardImpl( executionContext, processingOptions );
 
-		final RowReader<R> rowReader = Helper.createRowReader( executionContext, rowTransformer, jdbcValues );
+		final List<AfterLoadAction> afterLoadActions = new ArrayList<>();
+
+		final RowReader<R> rowReader = Helper.createRowReader(
+				executionContext.getSession().getSessionFactory(),
+				afterLoadActions::add,
+				rowTransformer,
+				jdbcValues
+		);
+
 		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
 				jdbcValuesSourceProcessingState,
 				executionContext.getQueryOptions(),
 				jdbcValues
 		);
 
-		return resultsConsumer.consume(
+		final T result = resultsConsumer.consume(
 				jdbcValues,
 				executionContext.getSession(),
 				processingOptions,
@@ -280,6 +289,13 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 				rowProcessingState,
 				rowReader
 		);
+
+		for ( AfterLoadAction afterLoadAction : afterLoadActions ) {
+			afterLoadAction.afterLoad( executionContext.getSession() );
+		}
+
+
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")

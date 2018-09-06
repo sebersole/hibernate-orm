@@ -6,56 +6,31 @@
  */
 package org.hibernate.sql.results.internal;
 
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.results.spi.FetchParent;
+import java.util.function.Consumer;
+
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.PluralAttributeInitializer;
-import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
-import org.hibernate.sql.results.spi.RowProcessingState;
+import org.hibernate.sql.results.spi.Initializer;
+import org.hibernate.sql.results.spi.PluralAttributeFetch;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeFetchInitializer implements PluralAttributeInitializer {
-	private final PluralPersistentAttribute fetchedAttribute;
-	private final FetchParent fetchParent;
+public class PluralAttributeFetchInitializer extends AbstractPluralAttributeInitializer {
+	private static final Logger log = Logger.getLogger( PluralAttributeFetchInitializer.class );
+
 	private final FetchParentAccess parentAccess;
 
 	public PluralAttributeFetchInitializer(
-			PluralPersistentAttribute fetchedAttribute,
-			FetchParent fetchParent,
-			FetchParentAccess parentAccess) {
-		this.fetchedAttribute = fetchedAttribute;
-		this.fetchParent = fetchParent;
+			FetchParentAccess parentAccess,
+			PluralAttributeFetch fetchDescriptor,
+			Consumer<Initializer> initializerConsumer,
+			AssemblerCreationState creationState,
+			AssemblerCreationContext creationContext) {
+		super( fetchDescriptor, initializerConsumer, creationState, creationContext );
 		this.parentAccess = parentAccess;
-	}
-
-	@Override
-	public PluralPersistentAttribute getFetchedAttribute() {
-		return fetchedAttribute;
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		final Object parentInstance = parentAccess.getFetchParentInstance();
-	}
-
-	@Override
-	public void endLoading(JdbcValuesSourceProcessingState processingState) {
-		// complete loading for all "loading collection" references
-
-		// todo (6.0) : determine how this should work in 6.0
-		//		One possibility is to keep track of something like
-		// 		CollectionLoadContext/LoadingCollectionEntry as part of
-		//		JdbcValuesSourceProcessingState.
-		//
-		//		Another option (I think) is to keep track of them here.  This
-		// 		is the thing doing the loading of each collection instance, it
-		//		could keep track of them here.  Proper key is the worry.  Each
-		// 		collection instance needs to be tied to a specific owner/container
-		//		instance.
-
-		throw new NotYetImplementedFor6Exception(  );
 	}
 }

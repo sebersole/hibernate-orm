@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -29,14 +29,13 @@ public class StandardResultSetMappingDescriptor implements ResultSetMappingDescr
 	private final ResultSetMapping resolvedMapping;
 
 
-	public StandardResultSetMappingDescriptor(Set<SqlSelection> sqlSelections, List<QueryResult> queryResults) {
-		resolvedMapping = new StandardResultSetMapping( sqlSelections, queryResults );
+	public StandardResultSetMappingDescriptor(Set<SqlSelection> sqlSelections, List<DomainResult> domainResults) {
+		resolvedMapping = new StandardResultSetMapping( sqlSelections, domainResults );
 	}
 
 	@Override
 	public ResultSetMapping resolve(
-			JdbcValuesMetadata jdbcResultsMetadata,
-			SessionFactoryImplementor sessionFactory) {
+			JdbcValuesMetadata jdbcResultsMetadata, SessionFactoryImplementor sessionFactory) {
 		for ( SqlSelection sqlSelection : resolvedMapping.getSqlSelections() ) {
 			sqlSelection.prepare( jdbcResultsMetadata, sessionFactory );
 		}

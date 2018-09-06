@@ -7,21 +7,28 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Models a "piece" of the application's domain model that can be navigated
@@ -90,33 +97,47 @@ public interface Navigable<T> extends DomainType<T> {
 	 */
 	String asLoggableText();
 
-
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	// todo (6.0) : NOTE - this createQueryResult is only used from NavigableReference#createQueryResult
-	//		considering the plan to centralize SQL AST concepts on NavigableReference,
-	// 		we should remove this method and incorporate that into the NavigableReference
-	//		created by each Navigable.  No need to have this exposed as a contract item -
-	//		the Navigable already influences this through the NavigableReference it builds
-
-	default QueryResult createQueryResult(
-			NavigableReference navigableReference,
-			String resultVariable,
-			SqlAstCreationContext creationContext) {
+	/**
+	 * Visit all of the columns to which this Navigable is mapped
+	 */
+	default void visitColumns(
+			BiConsumer<SqlExpressableType,Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
-	// similar to above, these methods should simply go away - they can be incorporated
-	// 		into the NavigableReference
+	/**
+	 * Create a QueryResult for a specific reference to this Navigable.
+	 *
+	 * Ultimately this is called by the `QueryResultProducer#createDomainResult
+	 * for the `NavigableReference` specialization of `QueryResultProducer`
+	 *
+	 * todo (6.0) : a complete NavigableReference is often difficult here.  Determine what exactly we need from NavigableReference and come up with a replacement plan
+	 */
+	default DomainResult createDomainResult(
+			NavigableReference navigableReference,
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 
-	@Remove
+	/**
+	 * todo (6.0) : pass in Clause / Predicate<Column> ?
+	 */
 	default List<ColumnReference> resolveColumnReferences(
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
+	/**
+	 * todo (6.0) : pass in Clause / Predicate<Column> ?
+	 *
+	 * @deprecated this functionality is handled by {@link #createDomainResult}
+	 */
+	@Deprecated
 	@Remove
 	SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,

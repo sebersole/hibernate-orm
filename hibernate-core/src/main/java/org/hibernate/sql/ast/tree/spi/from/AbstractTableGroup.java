@@ -10,7 +10,6 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.metamodel.spi.AbstractColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 
 /**
@@ -41,7 +40,7 @@ public abstract class AbstractTableGroup
 		Column column = getPrimaryTableReference().getTable().getColumn( name );
 		if ( column == null ) {
 			for ( TableReferenceJoin join : getTableReferenceJoins() ) {
-				column = join.getJoinedTableBinding().getTable().getColumn( name );
+				column = join.getJoinedTableReference().getTable().getColumn( name );
 				if ( column != null ) {
 					break;
 				}

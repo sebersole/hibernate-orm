@@ -10,12 +10,12 @@ import javax.persistence.metamodel.Type;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.internal.CompositeQueryResultImpl;
-import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 
 /**
@@ -38,18 +38,16 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	}
 
 	@Override
-	default QueryResult createQueryResult(
+	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new CompositeQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getEmbeddedDescriptor().createDomainResult(
+				navigableReference,
 				resultVariable,
-				getEmbeddedDescriptor(),
-				CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup(
-						getEmbeddedDescriptor(),
-						navigableReference.getSqlExpressionQualifier(),
-						creationContext
-				)
+				creationContext,
+				creationState
 		);
 	}
 

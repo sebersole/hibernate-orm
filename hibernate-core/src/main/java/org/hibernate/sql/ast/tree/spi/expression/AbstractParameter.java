@@ -19,11 +19,12 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.exec.spi.JdbcParameterBinding;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.StandardSqlExpressableTypeImpl;
@@ -34,7 +35,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public abstract class AbstractParameter
-		implements GenericParameter, JdbcParameter, JdbcParameterBinder, QueryResultProducer {
+		implements GenericParameter, JdbcParameter, JdbcParameterBinder, DomainResultProducer {
 
 	// todo (6.0) : should not extend QueryResultProducer
 	//		QueryResultProducer is a domain query level thing, whereas this parameter is part of the SQL AST
@@ -116,10 +117,13 @@ public abstract class AbstractParameter
 
 
 	@Override
-	public QueryResult createQueryResult(String resultVariable, SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new ScalarResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,
 						type.getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()

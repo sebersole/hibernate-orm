@@ -7,9 +7,6 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.sql.JoinType;
-import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 
 /**
  * @author Steve Ebersole
@@ -41,14 +38,5 @@ public abstract class AbstractCollectionIndex<J> implements CollectionIndex<J> {
 	@Override
 	public String asLoggableText() {
 		return "PluralAttributeIndex(" + descriptor.getNavigableRole() + " [" + getJavaType() + "])";
-	}
-
-	@Override
-	public void applyTableReferenceJoins(
-			JoinType leftOuterJoin,
-			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector collector,
-			TableGroupContext tableGroupContext) {
-		// only relevant for ONE-TO-MANY and MANY-TO-MANY - noop in the general case
 	}
 }

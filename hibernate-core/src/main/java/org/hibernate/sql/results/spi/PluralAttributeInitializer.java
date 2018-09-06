@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
@@ -16,5 +17,5 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 public interface PluralAttributeInitializer extends Initializer {
 	PluralPersistentAttribute getFetchedAttribute();
 
-	void endLoading(JdbcValuesSourceProcessingState processingState);
+	PersistentCollection getCollectionInstance();
 }

@@ -6,38 +6,25 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.function.Consumer;
-
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
+ * Inverse of {@link Writeable} for types which can be read back
+ * from the database via a simplified 2-phase process.
  *
- * @param <V> The data's JDBC values array form
- * @param <H> The data's
- * @param <D>
+ * Generally speaking, reading/loading is defined via
+ * {@link DomainResult}
+ * and {@link org.hibernate.sql.results.spi.Initializer}.
+ *
+ * @see Writeable
+ *
+ * @author Steve Ebersole
  */
-public interface Readable<V,H,D> {
-
-	default QueryResult createQueryResult(
-			Consumer<Initializer> collector,
-			SqlAstCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
-
-	// todo (6.0) : "hydrate" relies on SqlSelection and jdbc value processing uses those to build the hydrated values itself.
-	//		seems like this contract should define a `hydrateState` method, but implementing
-	//		such a thing means passing in the SqlSelection(s) need to access the state.
-	//
-	//		however, such a solution is the only real way to account for collections, e.g., which
-	//		are such a contributor but which return a "special" marker value on hydrate
-	//
-	// something like:
+public interface Readable extends DomainResultProducer {
 
 	/**
 	 * An array shaping method.
@@ -52,7 +39,7 @@ public interface Readable<V,H,D> {
 	 * todo (6.0) : this may not be true for ANY mappings - verify
 	 * 		- those may return the (id,discriminator) tuple
 	 */
-	default H hydrate(V jdbcValues, SharedSessionContractImplementor session) {
+	default Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
@@ -66,15 +53,11 @@ public interface Readable<V,H,D> {
 	 *
 	 * @apiNote
 	 */
-	default D resolveHydratedState(
-			H hydratedForm,
+	default Object resolveHydratedState(
+			Object hydratedForm,
 			ExecutionContext executionContext,
 			SharedSessionContractImplementor session,
 			Object containerInstance) {
 		throw new NotYetImplementedFor6Exception( getClass() );
-	}
-
-	interface ResolutionContext {
-		Object resolveEntityInstance(EntityKey entityKey, boolean eager);
 	}
 }

@@ -8,20 +8,15 @@ package org.hibernate.query.sql.internal;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.sql.JdbcValueExtractor;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
-import org.hibernate.sql.results.internal.ScalarQueryResultAssembler;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
-import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
-import org.hibernate.sql.results.spi.ScalarQueryResult;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -43,8 +38,9 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 			JdbcValuesMetadata jdbcResultsMetadata,
 			SessionFactoryImplementor sessionFactory) {
 		final int columnCount = jdbcResultsMetadata.getColumnCount();
+
 		final HashSet<SqlSelection> sqlSelections = new HashSet<>( columnCount );
-		final List<QueryResult> queryResults = CollectionHelper.arrayList( columnCount );
+		final List<DomainResult> domainResults = CollectionHelper.arrayList( columnCount );
 
 		final TypeConfiguration typeConfiguration = sessionFactory.getTypeConfiguration();
 
@@ -64,43 +60,16 @@ public class ResultSetMappingDescriptorUndefined implements ResultSetMappingDesc
 			);
 			sqlSelections.add( sqlSelection );
 
-			queryResults.add(
-					new ScalarQueryResult() {
-						@Override
-						public BasicJavaDescriptor getJavaTypeDescriptor() {
-							return javaTypeDescriptor;
-						}
-
-						@Override
-						public String getResultVariable() {
-							return null;
-						}
-
-						@Override
-						public void registerInitializers(InitializerCollector collector) {
-						}
-
-						@Override
-						public QueryResultAssembler getResultAssembler() {
-							return new ScalarQueryResultAssembler( sqlSelection, null, javaTypeDescriptor );
-						}
-					}
+			domainResults.add(
+					new ResolvedScalarDomainResult(
+							sqlSelection,
+							columnName,
+							javaTypeDescriptor
+					)
 			);
-
-			return new StandardResultSetMapping( sqlSelections, queryResults );
 		}
 
-		return new ResultSetMapping() {
-			@Override
-			public Set<SqlSelection> getSqlSelections() {
-				return sqlSelections;
-			}
-
-			@Override
-			public List<QueryResult> getQueryResults() {
-				return queryResults;
-			}
-		};
+		return new StandardResultSetMapping( sqlSelections, domainResults );
 	}
 
 	@Override

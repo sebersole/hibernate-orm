@@ -11,17 +11,17 @@ import java.util.List;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class QueryResultAssemblerDynamicInstantiation implements QueryResultAssembler {
+public class DynamicInstantiationAssembler implements DomainResultAssembler {
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
-	public QueryResultAssemblerDynamicInstantiation(JavaTypeDescriptor javaTypeDescriptor, List<SqlSelection> sqlSelections) {
+	public DynamicInstantiationAssembler(JavaTypeDescriptor javaTypeDescriptor, List<SqlSelection> sqlSelections) {
 		this.javaTypeDescriptor = javaTypeDescriptor;
 	}
 

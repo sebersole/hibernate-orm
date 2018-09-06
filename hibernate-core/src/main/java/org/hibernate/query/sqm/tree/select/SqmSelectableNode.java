@@ -9,6 +9,8 @@ package org.hibernate.query.sqm.tree.select;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.SqmTypedNode;
 import org.hibernate.query.sqm.tree.SqmVisitableNode;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
  * Defines a SQM AST node that can be used as a selection in the query,
@@ -20,8 +22,8 @@ public interface SqmSelectableNode extends SqmTypedNode, SqmVisitableNode {
 	/**
 	 * The expectation is that the walking method for SqmSelectableNode
 	 * will return some reference to a
-	 * {@link org.hibernate.sql.results.spi.QueryResultProducer} which can be
-	 * used to generate a {@link org.hibernate.sql.results.spi.QueryResult}
+	 * {@link DomainResultProducer} which can be
+	 * used to generate a {@link DomainResult}
 	 * for this selection in the SQM query
 	 */
 	@Override

@@ -7,43 +7,55 @@
 package org.hibernate.sql.ast.produce.sqm.spi;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.hibernate.AssertionFailure;
+import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.graph.spi.AttributeNodeContainer;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
+import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.query.sqm.tree.SqmInsertSelectStatement;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
-import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiation;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationArgument;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationTarget;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
-import org.hibernate.sql.ast.produce.sqm.internal.FetchGraphBuilder;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.ast.tree.spi.from.TableGroup;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
+import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiation;
+import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiationNature;
+import org.hibernate.sql.ast.tree.spi.from.TableSpace;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
+import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -56,20 +68,18 @@ import org.jboss.logging.Logger;
 @SuppressWarnings("unchecked")
 public class SqmSelectToSqlAstConverter
 		extends BaseSqmToSqlAstConverter
-		implements SqlAstCreationContext {
+		implements DomainResultCreationContext, DomainResultCreationState {
 	private static final Logger log = Logger.getLogger( SqmSelectToSqlAstConverter.class );
+
 	private final PerQuerySpecSqlExpressionResolver expressionResolver;
 
-	// todo (6.0) : SqmSelectToSqlAstConverter needs to account for the EntityGraph hint
-	private FetchGraphBuilder fetchGraphBuilder;
+	private final LoadQueryInfluencers loadQueryInfluencers;
 
 	private final Stack<Shallowness> shallownessStack = new StandardStack<>( Shallowness.NONE );
-	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
-	private final Stack<Expression> currentSelectedExpression = new StandardStack<>();
 
-	private final Map<Expression,SqlSelection> sqlSelectionByExpressionMap = new HashMap<>();
+	private final List<DomainResult> domainResults = new ArrayList<>();
 
-	private final List<QueryResult> queryResults = new ArrayList<>();
+	private Map<NavigablePath, Set<SqmNavigableJoin>> fetchJoinsByParentPath;
 
 	private int counter;
 
@@ -81,10 +91,8 @@ public class SqmSelectToSqlAstConverter
 			QueryOptions queryOptions,
 			SqlAstProducerContext producerContext) {
 		super( producerContext, queryOptions );
-		this.fetchDepthLimit = producerContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
-		this.entityGraphQueryHintType = queryOptions.getEntityGraphQueryHint() == null
-				? EntityGraphQueryHint.Type.NONE
-				:  queryOptions.getEntityGraphQueryHint().getType();
+
+		this.loadQueryInfluencers = producerContext.getLoadQueryInfluencers();
 
 		this.expressionResolver = new PerQuerySpecSqlExpressionResolver(
 				producerContext.getSessionFactory(),
@@ -95,11 +103,37 @@ public class SqmSelectToSqlAstConverter
 	}
 
 	public SqlAstSelectDescriptor interpret(SqmSelectStatement statement) {
+		fetchJoinsByParentPath = statement.getFetchJoinsByParentPath();
+		if ( fetchJoinsByParentPath == null ) {
+			fetchJoinsByParentPath = Collections.emptyMap();
+		}
 		return new SqlAstSelectDescriptorImpl(
 				visitSelectStatement( statement ),
-				queryResults,
+				domainResults,
 				affectedTableNames()
 		);
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// DomainResultCreationState
+
+	@Override
+	public boolean fetchAllAttributes() {
+		// todo (6.0) : need to expose this from the SQM
+		return false;
+	}
+
+	private Stack<ColumnReferenceQualifier> resultCreationColumnReferenceQualifierStack = new StandardStack<>();
+
+	@Override
+	public Stack<ColumnReferenceQualifier> getColumnReferenceQualifierStack() {
+		return resultCreationColumnReferenceQualifierStack;
+	}
+
+	@Override
+	public SqlExpressionResolver getSqlExpressionResolver() {
+		return expressionResolver;
 	}
 
 	@Override
@@ -110,6 +144,11 @@ public class SqmSelectToSqlAstConverter
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
 		return getProducerContext().getSessionFactory();
+	}
+
+	@Override
+	public LoadQueryInfluencers getLoadQueryInfluencers() {
+		return loadQueryInfluencers;
 	}
 
 	@Override
@@ -147,23 +186,10 @@ public class SqmSelectToSqlAstConverter
 
 
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Fetches
-
-	private final EntityGraphQueryHint.Type entityGraphQueryHintType;
-
-	private final int fetchDepthLimit;
-
-	private Stack<FetchParent> fetchParentStack = new StandardStack<>();
-	private Stack<NavigablePath> navigablePathStack = new StandardStack<>();
-	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-	private Stack<SqmFrom> sqmFromStack = new StandardStack<>();
-	private Stack<AttributeNodeContainer> entityGraphNodeStack = new StandardStack<>();
-
 	@Override
 	public Void visitSelection(SqmSelection sqmSelection) {
 		// todo (6.0) : this should actually be able to generate multiple SqlSelections
-		final QueryResultProducer resultProducer = (QueryResultProducer) sqmSelection.getSelectableNode().accept( this );
+		final DomainResultProducer resultProducer = (DomainResultProducer) sqmSelection.getSelectableNode().accept( this );
 
 		if ( getQuerySpecStack().depth() > 1 && Expression.class.isInstance( resultProducer ) ) {
 			// we only need the QueryResults if we are in the top-level select-clause.
@@ -176,33 +202,141 @@ public class SqmSelectToSqlAstConverter
 			return null;
 		}
 
-		final QueryResult queryResult = resultProducer.createQueryResult(
+		final DomainResult domainResult = resultProducer.createDomainResult(
 				sqmSelection.getAlias(),
+				this,
 				this
 		);
 
-		queryResults.add( queryResult );
-		applyFetches( queryResult );
+		domainResults.add( domainResult );
 
 		return null;
 	}
 
-	@SuppressWarnings("WeakerAccess")
-	protected void applyFetches(QueryResult queryReturn) {
-		if ( !FetchParent.class.isInstance( queryReturn ) ) {
-			return;
-		}
+	@Override
+	public List<Fetch> visitFetches(FetchParent fetchParent) {
+		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
 
-		applyFetches( (FetchParent) queryReturn );
+		assert fetchParent.getNavigablePath().equals( parentNavigableReference.getNavigablePath() );
+
+		final List<Fetch> fetches = new ArrayList();
+
+		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
+			// todo (6.0) : handle fetch-depth here?  seems like a logical place
+
+			LockMode lockMode = LockMode.READ;
+			FetchStrategy fetchStrategy = null;
+
+			final SqmNavigableJoin fetchedJoin = SqmSelectToSqlAstConverter.this.findFetchedJoin(
+					fetchParent,
+					fetchable
+			);
+			if ( fetchedJoin != null ) {
+				lockMode = SqmSelectToSqlAstConverter.this.getLockOptions().getEffectiveLockMode(
+						fetchedJoin.getIdentificationVariable() );
+				fetchStrategy = FetchStrategy.IMMEDIATE_JOIN;
+			}
+			else {
+				// Note that legacy Hibernate behavior for HQL processing was to stop here
+				// in terms of defining immediate join fetches - they had to be
+				// explicitly defined in the query (although we did add some support for
+				// using JPA EntityGraphs to influence the fetches to be JPA compliant)
+				fetchStrategy = fetchable.getMappedFetchStrategy();
+			}
+
+			// todo (6.0) : we need to stack and expose information needed for
+			fetches.add(
+					fetchable.generateFetch(
+							fetchParent,
+							fetchStrategy,
+							lockMode,
+							null,
+							SqmSelectToSqlAstConverter.this,
+							SqmSelectToSqlAstConverter.this
+					)
+			);
+		};
+
+		( ( NavigableContainer<?>) fetchParent.getFetchContainer() ).visitKeyFetchables( fetchableConsumer );
+		( ( NavigableContainer<?>) fetchParent.getFetchContainer() ).visitFetchables( fetchableConsumer );
+
+		return fetches;
 	}
 
-	@SuppressWarnings("WeakerAccess")
-	protected void applyFetches(FetchParent fetchParent) {
-		new FetchGraphBuilder(
-				getQuerySpecStack().getCurrent(),
-				this,
-				getQueryOptions().getEntityGraphQueryHint()
-		).process( fetchParent );
+	@Override
+	public TableSpace getCurrentTableSpace() {
+		// todo (6.0) : not sure this is a great impl given subqueries
+		return getTableGroupStack().getCurrent().getTableSpace();
+	}
+
+	private SqmNavigableJoin findFetchedJoin(FetchParent fetchParent, Fetchable fetchable) {
+		final Set<SqmNavigableJoin> explicitFetchJoins = fetchJoinsByParentPath.get( fetchParent.getNavigablePath() );
+
+		if ( explicitFetchJoins != null ) {
+			for ( SqmNavigableJoin explicitFetchJoin : explicitFetchJoins ) {
+				final String fetchedAttributeName = explicitFetchJoin.getAttributeReference()
+						.getReferencedNavigable()
+						.getAttributeName();
+				if ( fetchable.getNavigableName().equals( fetchedAttributeName ) ) {
+					if ( explicitFetchJoin.isFetched() ) {
+						return explicitFetchJoin;
+					}
+					else {
+						return null;
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public DynamicInstantiation visitDynamicInstantiation(SqmDynamicInstantiation sqmDynamicInstantiation) {
+		final SqmDynamicInstantiationTarget instantiationTarget = sqmDynamicInstantiation.getInstantiationTarget();
+		final DynamicInstantiationNature instantiationNature = instantiationTarget.getNature();
+		final JavaTypeDescriptor<Object> targetTypeDescriptor = interpretInstantiationTarget(
+				instantiationTarget,
+				getSessionFactory()
+		);
+
+		final DynamicInstantiation dynamicInstantiation = new DynamicInstantiation(
+				instantiationNature,
+				targetTypeDescriptor
+		);
+
+		for ( SqmDynamicInstantiationArgument sqmArgument : sqmDynamicInstantiation.getArguments() ) {
+			final DomainResultProducer argumentResultProducer = (DomainResultProducer) sqmArgument.getSelectableNode().accept( this );
+			dynamicInstantiation.addArgument(
+					sqmArgument.getAlias(),
+					argumentResultProducer
+			);
+		}
+
+		dynamicInstantiation.complete();
+
+		return dynamicInstantiation;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> JavaTypeDescriptor<T> interpretInstantiationTarget(
+			SqmDynamicInstantiationTarget instantiationTarget,
+			SessionFactoryImplementor sessionFactory) {
+		final Class<T> targetJavaType;
+
+		if ( instantiationTarget.getNature() == DynamicInstantiationNature.LIST ) {
+			targetJavaType = (Class<T>) List.class;
+		}
+		else if ( instantiationTarget.getNature() == DynamicInstantiationNature.MAP ) {
+			targetJavaType = (Class<T>) Map.class;
+		}
+		else {
+			targetJavaType = instantiationTarget.getJavaType();
+		}
+
+		return sessionFactory.getTypeConfiguration()
+				.getJavaTypeDescriptorRegistry()
+				.getDescriptor( targetJavaType );
 	}
 
 	@Override

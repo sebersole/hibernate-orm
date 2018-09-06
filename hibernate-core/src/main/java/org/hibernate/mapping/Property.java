@@ -8,7 +8,6 @@ package org.hibernate.mapping;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -21,7 +20,6 @@ import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
-import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -40,7 +38,7 @@ import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadeStyles;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
@@ -529,7 +527,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 				context.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 		);
 		if ( value instanceof BasicValueMapping ) {
-			return new BasicSingularPersistentAttribute(
+			return new SingularPersistentAttributeBasic(
 					runtimeContainer,
 					this,
 					propertyAccess,

@@ -6,11 +6,15 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.sql.results.spi.EntityFetch;
-import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.EntityMappingNode;
 import org.hibernate.sql.results.spi.FetchParentAccess;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
@@ -21,11 +25,12 @@ public class EntityFetchInitializer extends AbstractEntityInitializer {
 
 	public EntityFetchInitializer(
 			FetchParentAccess parentAccess,
-			EntityFetch entityReference,
-			EntitySqlSelectionGroup sqlSelectionMappings,
+			EntityMappingNode resultDescriptor,
 			LockMode lockMode,
-			boolean isShallow) {
-		super( entityReference.getEntityDescriptor(), sqlSelectionMappings, lockMode, isShallow );
+			Consumer<Initializer> collector,
+			AssemblerCreationContext context,
+			AssemblerCreationState creationState) {
+		super( resultDescriptor, lockMode, collector, context, creationState );
 		this.parentAccess = parentAccess;
 	}
 

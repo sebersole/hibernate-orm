@@ -6,12 +6,12 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 
 /**
  * @author Steve Ebersole
  */
 public interface CompositeMappingNode extends ResultSetMappingNode, FetchParent {
-	EmbeddedTypeDescriptor getEmbeddedDescriptor();
+	EmbeddedValuedNavigable getCompositeNavigableDescriptor();
 
 }

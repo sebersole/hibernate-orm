@@ -72,7 +72,8 @@ public class SelectLockingStrategy extends AbstractSelectLockingStrategy {
 
 				final EntityIdentifier<Object, Object> identifierDescriptor = getLockable().getHierarchy().getIdentifierDescriptor();
 				identifierDescriptor.dehydrate(
-						identifierDescriptor.unresolve( id, session ),
+//						identifierDescriptor.unresolve( id, session ),
+						id,
 						(jdbcValue, type, boundColumn) -> {
 							try {
 								type.getJdbcValueBinder().bind( st, count.getAndIncrement(), jdbcValue, executionContext );

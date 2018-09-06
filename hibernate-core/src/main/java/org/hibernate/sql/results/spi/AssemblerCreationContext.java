@@ -6,23 +6,16 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 
 /**
- * The "context" in which creation of SQL AST occurs.
+ * Access to information available within the context for creating
+ * {@link DomainResultAssembler} instances.
+ *
+ * @see DomainResult#createResultAssembler
  *
  * @author Steve Ebersole
  */
-public interface SqlAstCreationContext {
+public interface AssemblerCreationContext {
 	SessionFactoryImplementor getSessionFactory();
-
-	SqlExpressionResolver getSqlSelectionResolver();
-
-	default boolean shouldCreateShallowEntityResult() {
-		return false;
-	}
-
-	LockOptions getLockOptions();
 }

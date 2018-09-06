@@ -9,13 +9,14 @@ package org.hibernate.sql.results.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -24,20 +25,25 @@ public class CompositeSqlSelectionGroupImpl extends AbstractSqlSelectionGroup im
 
 	private final EmbeddedTypeDescriptor<?> embeddedDescriptor;
 
+	@Remove
 	public static CompositeSqlSelectionGroup buildSqlSelectionGroup(
 			EmbeddedTypeDescriptor<?> embeddedDescriptor,
 			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		final Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor = new HashMap<>();
+			AssemblerCreationContext resolutionContext) {
 
-		for ( StateArrayContributor<?> stateArrayContributor : embeddedDescriptor.getStateArrayContributors() ) {
-			selectionNodesByContributor.put(
-					stateArrayContributor,
-					stateArrayContributor.resolveSqlSelections( qualifier, resolutionContext )
-			);
-		}
+		// todo (6.0) : remove - handled differently now
 
-		return new CompositeSqlSelectionGroupImpl( embeddedDescriptor, selectionNodesByContributor );
+//		final Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor = new HashMap<>();
+//
+//		for ( StateArrayContributor<?> stateArrayContributor : embeddedDescriptor.getStateArrayContributors() ) {
+//			selectionNodesByContributor.put(
+//					stateArrayContributor,
+//					stateArrayContributor.resolveSqlSelections( qualifier, resolutionContext )
+//			);
+//		}
+//
+//		return new CompositeSqlSelectionGroupImpl( embeddedDescriptor, selectionNodesByContributor );
+		throw new UnsupportedOperationException(  );
 	}
 
 	public CompositeSqlSelectionGroupImpl(

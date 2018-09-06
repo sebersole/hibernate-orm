@@ -6,14 +6,12 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-
 /**
- * Models the a persistent collection as root {@link QueryResult}.  Pertinent to collection initializers only.
+ * Models the a persistent collection as root {@link DomainResult}.  Pertinent to collection initializers only.
  *
  * @author Steve Ebersole
  */
-public interface PluralAttributeQueryResult extends PluralAttributeMappingNode, QueryResult {
+public interface PluralAttributeResult extends PluralAttributeMappingNode, DomainResult {
 	// todo (6.0) : do we want to define a `org.hibernate.type.descriptor.java.spi.CollectionJavaType`
 	// 		like we do with `org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor`, e.g.
 }

@@ -7,7 +7,6 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 
 /**
@@ -74,11 +73,8 @@ public interface ResultSetMappingDescriptor {
 	 * JPA.
 	 *
 	 * @param jdbcResultsMetadata Access to information about the underlying results
-	 * @param sessionFactory Access to the SessionFactory
-	 *
+	 * @param sessionFactory
 	 * @return The resolved result references
 	 */
-	ResultSetMapping resolve(
-			JdbcValuesMetadata jdbcResultsMetadata,
-			SessionFactoryImplementor sessionFactory);
+	ResultSetMapping resolve(JdbcValuesMetadata jdbcResultsMetadata, SessionFactoryImplementor sessionFactory);
 }

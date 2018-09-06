@@ -6,8 +6,13 @@
  */
 package org.hibernate.sql.results.spi;
 
+
+import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
+
 /**
  * @author Steve Ebersole
  */
-public interface DynamicInstantiationQueryResult extends QueryResult {
+public interface CompositeResult extends CompositeMappingNode, DomainResult {
+	@Override
+	EmbeddableJavaDescriptor getJavaTypeDescriptor();
 }

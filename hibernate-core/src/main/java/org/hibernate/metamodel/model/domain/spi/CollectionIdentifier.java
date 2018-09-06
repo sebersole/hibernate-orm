@@ -8,17 +8,27 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.id.IdentifierGenerator;
+import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.spi.BasicType;
 
 /**
  * @author Steve Ebersole
  */
-public class CollectionIdentifier {
+public class CollectionIdentifier implements DomainResultProducer {
 	private final BasicType type;
+	private final Column column;
+
 	private final IdentifierGenerator generator;
 
-	public CollectionIdentifier(BasicType type, IdentifierGenerator generator) {
+	public CollectionIdentifier(BasicType type, Column column, IdentifierGenerator generator) {
 		this.type = type;
+		this.column = column;
 		this.generator = generator;
 	}
 
@@ -29,5 +39,29 @@ public class CollectionIdentifier {
 
 	public BasicType getBasicType() {
 		return type;
+	}
+
+	// todo (6.0) : where is the identifier column kept track of?  seems like it should be here
+
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		final SqlExpressionResolver sqlExpressionResolver = creationState.getSqlExpressionResolver();
+
+		return new ScalarResultImpl(
+				resultVariable,
+				sqlExpressionResolver.resolveSqlSelection(
+						sqlExpressionResolver.resolveSqlExpression(
+								creationState.getColumnReferenceQualifierStack().getCurrent(),
+								column
+						),
+						getBasicType().getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
+				column.getExpressableType()
+		);
 	}
 }

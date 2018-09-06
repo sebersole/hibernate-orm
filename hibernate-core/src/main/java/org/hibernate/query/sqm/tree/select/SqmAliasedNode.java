@@ -7,7 +7,7 @@
 package org.hibernate.query.sqm.tree.select;
 
 import org.hibernate.query.sqm.tree.SqmTypedNode;
-import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -18,7 +18,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * This will only ever be some kind of selection (dynamic-instantiation,
  * JPA select-object syntax, an expression or a dynamic-instantiation
  * argument).  Each of these can be represented as a
- * {@link QueryResultProducer} which is ultimately
+ * {@link DomainResultProducer} which is ultimately
  *
  * @author Steve Ebersole
  */

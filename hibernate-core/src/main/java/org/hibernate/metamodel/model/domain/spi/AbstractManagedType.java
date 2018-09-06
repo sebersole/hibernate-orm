@@ -24,6 +24,7 @@ import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -367,6 +368,11 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		if ( getSuperclassType() != null ) {
 			getSuperclassType().visitNavigables( visitor );
 		}
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		visitStateArrayContributors( fetchableConsumer::accept );
 	}
 
 	@Override

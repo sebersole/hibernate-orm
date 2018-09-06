@@ -6,63 +6,47 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.EntityFetch;
-import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.Initializer;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 
 /**
  * @author Steve Ebersole
  */
-public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch {
+public class EntityFetchImpl extends AbstractEntityMappingNode implements EntityFetch {
 	private final FetchParent fetchParent;
-	private final ColumnReferenceQualifier qualifier;
 	private final FetchStrategy fetchStrategy;
-	private final LockMode lockMode;
-
-	private final EntitySqlSelectionGroup sqlSelectionMappings;
 
 	public EntityFetchImpl(
 			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
 			EntityValuedNavigable fetchedNavigable,
 			LockMode lockMode,
 			NavigablePath navigablePath,
 			FetchStrategy fetchStrategy,
-			SqlAstCreationContext creationContext) {
-		super( fetchedNavigable, navigablePath );
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		super( fetchedNavigable, lockMode, navigablePath, creationContext, creationState );
 		this.fetchParent = fetchParent;
-		this.qualifier = qualifier;
-		this.lockMode = lockMode;
 
-		// todo (6.0) : need the "fetch graph" / "entity graph" to really be able to perform this correctly
-		//		see org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl.Builder#create
-
-		this.sqlSelectionMappings = EntitySqlSelectionGroupImpl.buildSqlSelectionGroup(
-				getEntityDescriptor(),
-				qualifier,
-				creationContext
-		);
 		this.fetchStrategy = fetchStrategy;
 	}
 
 	@Override
 	public FetchParent getFetchParent() {
 		return fetchParent;
-	}
-
-	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
-		return qualifier;
 	}
 
 	@Override
@@ -81,26 +65,22 @@ public class EntityFetchImpl extends AbstractFetchParent implements EntityFetch 
 	}
 
 	@Override
-	public EntityValuedNavigable getFetchContainer() {
-		return (EntityValuedNavigable) super.getFetchContainer();
-	}
-
-	@Override
-	public EntityDescriptor getEntityDescriptor() {
-		return getFetchContainer().getEntityDescriptor();
-	}
-
-	@Override
-	public void registerInitializers(FetchParentAccess parentAccess, InitializerCollector collector) {
+	public DomainResultAssembler createAssembler(
+			FetchParentAccess parentAccess,
+			Consumer<Initializer> collector,
+			AssemblerCreationContext creationContext,
+			AssemblerCreationState creationState) {
 		final EntityFetchInitializer initializer = new EntityFetchInitializer(
 				parentAccess,
 				this,
-				sqlSelectionMappings,
-				lockMode,
-				false
+				getLockMode(),
+				collector,
+				creationContext,
+				creationState
 		);
 
-		collector.addInitializer( initializer );
-		registerFetchInitializers( initializer, collector );
+		collector.accept( initializer );
+
+		return new EntityAssembler( getEntityDescriptor().getJavaTypeDescriptor(), initializer );
 	}
 }

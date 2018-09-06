@@ -6,9 +6,16 @@
  */
 package org.hibernate.query.sqm.tree;
 
+import java.util.Map;
+import java.util.Set;
+
+import org.hibernate.query.NavigablePath;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
+
 /**
  * @author Steve Ebersole
  */
 public interface SqmSelectStatement extends SqmStatement {
+	Map<NavigablePath, Set<SqmNavigableJoin>> getFetchJoinsByParentPath();
 	SqmQuerySpec getQuerySpec();
 }

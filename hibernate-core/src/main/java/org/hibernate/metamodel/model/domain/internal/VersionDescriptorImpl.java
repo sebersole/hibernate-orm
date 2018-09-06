@@ -9,7 +9,9 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Optional;
 
 import org.hibernate.HibernateException;
+import org.hibernate.LockMode;
 import org.hibernate.boot.model.domain.BasicValueMapping;
+import org.hibernate.engine.FetchStrategy;
 import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -19,9 +21,13 @@ import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.BasicFetch;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 
@@ -119,15 +125,16 @@ public class VersionDescriptorImpl<O,J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new ScalarResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
-						creationContext.getSqlSelectionResolver().resolveSqlExpression(
-								navigableReference.getSqlExpressionQualifier(),
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								navigableReference.getColumnReferenceQualifier(),
 								VersionDescriptorImpl.this.column
 						),
 						getJavaTypeDescriptor(),
@@ -135,5 +142,21 @@ public class VersionDescriptorImpl<O,J>
 				),
 				getBoundColumn().getExpressableType()
 		);
+	}
+
+	@Override
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchStrategy fetchStrategy,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new BasicFetch( fetchParent, this, fetchStrategy, creationContext, creationState );
+	}
+
+	@Override
+	public FetchStrategy getMappedFetchStrategy() {
+		return null;
 	}
 }

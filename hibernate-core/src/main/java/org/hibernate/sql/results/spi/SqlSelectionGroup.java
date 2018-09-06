@@ -6,12 +6,15 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.annotations.Remove;
+
 /**
  * Represents a grouping of SqlSelection references, generally related to a
  * single Navigable
  *
  * @author Steve Ebersole
  */
+@Remove
 public interface SqlSelectionGroup extends SqlSelectionGroupNode {
 //	/**
 //	 * Get the SqlSelections associated with the given StateArrayContributor

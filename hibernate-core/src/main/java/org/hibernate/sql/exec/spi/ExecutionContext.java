@@ -18,6 +18,7 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  *
  * @author Steve Ebersole
  */
+//public interface ExecutionContext extends QueryResultAssemblerCreationContext {
 public interface ExecutionContext {
 	default Object resolveEntityInstance(EntityKey entityKey, boolean eager) {
 		return StandardEntityInstanceResolver.resolveEntityInstance(
@@ -29,7 +30,17 @@ public interface ExecutionContext {
 
 	SharedSessionContractImplementor getSession();
 
+//	@Override
+//	default SessionFactoryImplementor getSessionFactory() {
+//		return getSession().getSessionFactory();
+//	}
+
 	QueryOptions getQueryOptions();
+
+//	@Override
+//	default LoadQueryInfluencers getLoadQueryInfluencers() {
+//		return getSession().getLoadQueryInfluencers();
+//	}
 
 	// todo (6.0) : ParameterBindingContext is not needed here, although should be available via SqlAstCreationContext
 	//		here, should just be JdbcParameterBindings and possibly a list of JdbcParameters

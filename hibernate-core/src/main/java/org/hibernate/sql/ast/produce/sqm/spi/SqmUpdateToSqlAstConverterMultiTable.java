@@ -45,7 +45,7 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.InSubQueryPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 
 import org.jboss.logging.Logger;
 

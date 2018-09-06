@@ -9,14 +9,12 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.List;
 
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.sql.JoinType;
-import org.hibernate.sql.ast.produce.spi.TableGroupContext;
-import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
+import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 
 /**
  * @author Steve Ebersole
  */
-public interface CollectionIndex<J> extends Navigable<J> {
+public interface CollectionIndex<J> extends Navigable<J>, TableReferenceContributor {
 
 	String NAVIGABLE_NAME = "{index}";
 
@@ -29,12 +27,6 @@ public interface CollectionIndex<J> extends Navigable<J> {
 	}
 
 	IndexClassification getClassification();
-
-	void applyTableReferenceJoins(
-			JoinType joinType,
-			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector collector,
-			TableGroupContext tableGroupContext);
 
 	List<Column> getColumns();
 }

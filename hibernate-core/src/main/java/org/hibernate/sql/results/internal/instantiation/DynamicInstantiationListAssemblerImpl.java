@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -25,7 +25,7 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class DynamicInstantiationListAssemblerImpl implements QueryResultAssembler {
+public class DynamicInstantiationListAssemblerImpl implements DomainResultAssembler {
 	private static final Logger log = Logger.getLogger( DynamicInstantiationListAssemblerImpl.class );
 
 	private final BasicJavaDescriptor<List> listJavaDescriptor;

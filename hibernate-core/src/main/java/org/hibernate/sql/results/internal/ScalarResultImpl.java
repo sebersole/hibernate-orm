@@ -6,25 +6,29 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.sql.SqlExpressableType;
-import org.hibernate.sql.results.spi.InitializerCollector;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.ScalarQueryResult;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.Initializer;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.ScalarResult;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class ScalarQueryResultImpl implements ScalarQueryResult {
+public class ScalarResultImpl implements ScalarResult {
 	private final String resultVariable;
 	private final SqlExpressableType expressableType;
 
-	private final QueryResultAssembler assembler;
+	private final DomainResultAssembler assembler;
 
-	public ScalarQueryResultImpl(
+	public ScalarResultImpl(
 			String resultVariable,
 			SqlSelection sqlSelection,
 			SqlExpressableType expressableType) {
@@ -40,7 +44,7 @@ public class ScalarQueryResultImpl implements ScalarQueryResult {
 			valueConverter = ( (ConvertibleNavigable) expressableType ).getValueConverter();
 		}
 
-		this.assembler = new ScalarQueryResultAssembler( sqlSelection, valueConverter, expressableType.getJavaTypeDescriptor() );
+		this.assembler = new ScalarResultAssembler( sqlSelection, valueConverter, expressableType.getJavaTypeDescriptor() );
 	}
 
 	@Override
@@ -54,12 +58,10 @@ public class ScalarQueryResultImpl implements ScalarQueryResult {
 	}
 
 	@Override
-	public void registerInitializers(InitializerCollector collector) {
-		// nothing to do
-	}
-
-	@Override
-	public QueryResultAssembler getResultAssembler() {
+	public DomainResultAssembler createResultAssembler(
+			Consumer<Initializer> initializerCollector,
+			AssemblerCreationState creationOptions,
+			AssemblerCreationContext creationContext) {
 		return assembler;
 	}
 }

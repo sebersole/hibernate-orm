@@ -22,8 +22,8 @@ import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
 /**
