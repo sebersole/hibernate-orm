@@ -6,6 +6,10 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.function.Consumer;
+
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+
 /**
  * @author Steve Ebersole
  */
@@ -23,4 +27,10 @@ public interface NavigableContainer<J> extends Navigable<J> {
 	 * Navigable visitation across all (declared+super) contained Navigables
 	 */
 	void visitNavigables(NavigableVisitationStrategy visitor);
+
+	default void visitKeyFetchables(Consumer<Fetchable> fetchableConsumer) {
+		// by default, nothing to do
+	}
+
+	void visitFetchables(Consumer<Fetchable> fetchableConsumer);
 }

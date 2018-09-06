@@ -53,7 +53,7 @@ public class SqmSubQuery implements SqmExpression {
 	}
 
 //	@Override
-//	public QueryResult createQueryResult(
+//	public QueryResult createDomainResult(
 //			Expression expression, String resultVariable, QueryResultCreationContext creationContext) {
 //		throw new TreeException( "Selecting a SubQuery type is not allowed.");
 //	}

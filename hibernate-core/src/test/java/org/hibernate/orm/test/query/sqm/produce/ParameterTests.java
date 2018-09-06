@@ -16,7 +16,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.SemanticException;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
@@ -69,7 +69,7 @@ public class ParameterTests extends BaseSqmUnitTest {
 	public void testAnticipatedTypeHandling() {
 		final SqmSelectStatement sqm = interpretSelect( "select a.nickName from Person a where a.numberOfToes = ?1" );
 		final SqmParameter parameter = sqm.getQueryParameters().iterator().next();
-		assertThat( parameter.getAnticipatedType(), is( instanceOf( BasicSingularPersistentAttribute.class ) ) );
+		assertThat( parameter.getAnticipatedType(), is( instanceOf( SingularPersistentAttributeBasic.class ) ) );
 		assertThat( parameter.allowMultiValuedBinding(), is( false ) );
 	}
 
@@ -78,7 +78,7 @@ public class ParameterTests extends BaseSqmUnitTest {
 		final SqmSelectStatement sqm = interpretSelect( "select a.nickName from Person a where a.numberOfToes in (?1)" );
 		final SqmParameter parameter = sqm.getQueryParameters().iterator().next();
 
-		assertThat( parameter.getAnticipatedType(), is( instanceOf( BasicSingularPersistentAttribute.class ) ) );
+		assertThat( parameter.getAnticipatedType(), is( instanceOf( SingularPersistentAttributeBasic.class ) ) );
 		assertThat( parameter.allowMultiValuedBinding(), is(true) );
 	}
 

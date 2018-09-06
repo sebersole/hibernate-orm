@@ -164,7 +164,8 @@ public class NamedCallableQueryMementoImpl
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> ProcedureCallImplementor<T> toQuery(SharedSessionContractImplementor session, Class<T> resultType) {
-		return new ProcedureCallImpl<>( session, this, resultType );
+		return ProcedureCallImpl.fromMemento( this, session );
 	}
 }

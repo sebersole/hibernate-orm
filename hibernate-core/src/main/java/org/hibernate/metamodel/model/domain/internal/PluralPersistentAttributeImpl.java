@@ -8,16 +8,20 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.LockMode;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchStyle;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.MarkerObject;
+import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -34,25 +38,43 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.internal.DelayedCollectionFetch;
+import org.hibernate.sql.results.internal.DelayedEntityFetch;
 import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
 /**
+ * todo (6.0) : potentially split this single impl into specific impls for each "collection nature":
+ * 		`collection`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection}
+ * 		`list`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeList}
+ * 		`set`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeSet}
+ * 		`map`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeMap}
+ * 		`bag`:: synonym for `collection`
+ * 		`idbag`:: not sure yet
+ *
  * @author Steve Ebersole
  */
 public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute implements PluralPersistentAttribute {
@@ -214,30 +236,130 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	}
 
 	@Override
-	public Fetch generateFetch(
-			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
-			FetchStrategy fetchStrategy,
+	public DomainResult createDomainResult(
+			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new PluralAttributeFetchImpl(
-				fetchParent,
-				qualifier,
-				this,
-				fetchStrategy,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getPersistentCollectionDescriptor().createDomainResult(
+				navigableReference,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
 	}
 
 	@Override
-	public FetchStrategy getMappedFetchStrategy() {
-		return fetchStrategy;
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchStrategy fetchStrategy,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
+
+		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
+			if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
+				fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
+			}
+		}
+
+		final DomainResult keyResult = getPersistentCollectionDescriptor().getCollectionKeyDescriptor().createDomainResult(
+				null,
+				creationContext,
+				creationState
+		);
+
+		if ( fetchStrategy.getTiming() == FetchTiming.DELAYED ) {
+			// for delayed fetching, use a specialized Fetch impl
+			return new DelayedCollectionFetch(
+					fetchParent,
+					this,
+					resultVariable,
+					fetchStrategy,
+					lockMode,
+					keyResult
+			);
+		}
+
+		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
+
+		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
+
+		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
+		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
+		if ( navigableReference == null ) {
+			// this creates the SQL AST join(s) in the from clause
+			final TableGroupJoin tableGroupJoin = getPersistentCollectionDescriptor().createTableGroupJoin(
+					creationState.getSqlAliasBaseGenerator(),
+					creationState.getColumnReferenceQualifierStack().getCurrent(),
+					navigablePath,
+					isNullable() ? JoinType.LEFT : JoinType.INNER,
+					resultVariable,
+					lockMode,
+					creationState.getCurrentTableSpace()
+			);
+			navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+		}
+
+		assert navigableReference.getNavigable() == this;
+
+		creationState.getNavigableReferenceStack().push( navigableReference );
+		creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
+
+		try {
+			final DomainResult collectionIdResult;
+			if ( getPersistentCollectionDescriptor().getIdDescriptor() != null ) {
+				collectionIdResult = getPersistentCollectionDescriptor().getIdDescriptor()
+						.createDomainResult( null, creationContext, creationState );
+			}
+			else {
+				collectionIdResult = null;
+			}
+
+			final DomainResult collectionIndexResult;
+			if ( getPersistentCollectionDescriptor().getIndexDescriptor() != null ) {
+				collectionIndexResult = getPersistentCollectionDescriptor().getIndexDescriptor().createDomainResult(
+						creationState.getNavigableReferenceStack().getCurrent(),
+						null,
+						creationContext,
+						creationState
+				);
+			}
+			else {
+				collectionIndexResult = null;
+			}
+
+			final DomainResult collectionElementResult = getPersistentCollectionDescriptor().getElementDescriptor().createDomainResult(
+					creationState.getNavigableReferenceStack().getCurrent(),
+					null,
+					creationContext,
+					creationState
+			);
+
+			return new PluralAttributeFetchImpl(
+					fetchParent,
+					this,
+					resultVariable,
+					fetchStrategy,
+					lockMode,
+					keyResult,
+					collectionIdResult,
+					collectionIndexResult,
+					collectionElementResult
+			);
+		}
+		finally {
+			creationState.getColumnReferenceQualifierStack().pop();
+			creationState.getNavigableReferenceStack().pop();
+		}
 	}
 
+
 	@Override
-	public ManagedTypeDescriptor getFetchedManagedType() {
-		throw new NotYetImplementedFor6Exception();
+	public FetchStrategy getMappedFetchStrategy() {
+		return fetchStrategy;
 	}
 
 	@Override
@@ -249,16 +371,15 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext creationContext) {
-		// collection-id (idbag)?
 
-		// todo (6.0) : this depends on whether the collection is fetched...
-		//
-		// for now, return nada
+		// todo (6.0) : this should render either:
+		//		1) the collection id for id-collection
+		//		2) the owner's fk value
 
 		return creationContext.getSqlSelectionResolver().emptySqlSelection();
 	}
 
-//		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
+//		return resolutionContext.getSqlExpressionResolver().emptySqlSelection();
 //		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
 //				.getJoinForeignKey()
 //				.getColumnMappings()
@@ -279,11 +400,11 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 //			ColumnReferenceQualifier qualifier,
 //			SqlSelectionResolutionContext resolutionContext,
 //			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
-//		final Expression expression = resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+//		final Expression expression = resolutionContext.getSqlExpressionResolver().resolveSqlExpression(
 //				qualifier,
 //				columnMapping.getTargetColumn()
 //		);
-//		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+//		return resolutionContext.getSqlExpressionResolver().resolveSqlSelection(
 //				expression,
 //				,
 //		);
@@ -400,5 +521,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@SuppressWarnings("unchecked")
 	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
 		return !getJavaTypeDescriptor().areEqual( originalValue, currentValue );
+	}
+
+	@Override
+	public void visitFetchables(Consumer consumer) {
+		getPersistentCollectionDescriptor().visitFetchables( consumer );
 	}
 }

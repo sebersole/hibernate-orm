@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
@@ -50,6 +51,11 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return session.getFactory();
+					}
+
+					@Override
+					public LoadQueryInfluencers getLoadQueryInfluencers() {
+						return session.getLoadQueryInfluencers();
 					}
 
 					@Override

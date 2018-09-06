@@ -76,6 +76,7 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 					additionalQualifier
 			);
 		}
+
 		this.entityReference = new EntityValuedNavigableReference(
 				// todo (6.0) : need the container (if one) to pass along
 				//		happens for joins
@@ -110,8 +111,8 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 
 		if( tableReferenceJoins != null ) {
 			for ( TableReferenceJoin tableJoin : tableReferenceJoins ) {
-				if ( tableJoin.getJoinedTableBinding().getTable() == table ) {
-					return tableJoin.getJoinedTableBinding();
+				if ( tableJoin.getJoinedTableReference().getTable() == table ) {
+					return tableJoin.getJoinedTableReference();
 				}
 			}
 		}
@@ -121,11 +122,11 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 	}
 
 //	@Override
-//	public QueryResult createQueryResult(
+//	public QueryResult createDomainResult(
 //			Expression entityReference,
 //			String resultVariable,
 //			QueryResultCreationContext creationContext) {
-//		return getEntityDescriptor().createQueryResult(
+//		return getEntityDescriptor().createDomainResult(
 //				entityReference,
 //				resultVariable,
 //				creationContext
@@ -141,7 +142,7 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 				sqlAppender.appendSql( " " );
 				sqlAppender.appendSql( tableJoin.getJoinType().getText() );
 				sqlAppender.appendSql( " join " );
-				renderTableReference( tableJoin.getJoinedTableBinding(), sqlAppender, walker );
+				renderTableReference( tableJoin.getJoinedTableReference(), sqlAppender, walker );
 				if ( tableJoin.getJoinPredicate() != null && !tableJoin.getJoinPredicate().isEmpty() ) {
 					sqlAppender.appendSql( " on " );
 					tableJoin.getJoinPredicate().accept( walker );
@@ -154,7 +155,7 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 	public void applyAffectedTableNames(Consumer<String> nameCollector) {
 		nameCollector.accept( getPrimaryTableReference().getTable().getTableExpression() );
 		for ( TableReferenceJoin tableReferenceJoin : getTableReferenceJoins() ) {
-			nameCollector.accept( tableReferenceJoin.getJoinedTableBinding().getTable().getTableExpression() );
+			nameCollector.accept( tableReferenceJoin.getJoinedTableReference().getTable().getTableExpression() );
 		}
 	}
 

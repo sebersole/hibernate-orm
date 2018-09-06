@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.produce.ordering.internal;
 import java.util.List;
 
 import org.hibernate.LockOptions;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.sqm.produce.internal.hql.HqlParseTreeBuilder;
@@ -71,6 +72,11 @@ public class OrderByFragmentTranslator implements SqlAstProducerContext, SqlQuer
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
 		return translationContext.getSessionFactory();
+	}
+
+	@Override
+	public LoadQueryInfluencers getLoadQueryInfluencers() {
+		return LoadQueryInfluencers.NONE;
 	}
 
 	@Override

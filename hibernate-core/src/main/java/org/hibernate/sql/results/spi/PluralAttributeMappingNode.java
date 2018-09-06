@@ -10,7 +10,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * Represents a reference to a persistent collection either as a
- * {@link QueryResult} ({@link PluralAttributeQueryResult} or as a
+ * {@link DomainResult} ({@link PluralAttributeResult} or as a
  * {@link Fetch} ({@link PluralAttributeFetch}).
  *
  * @author Steve Ebersole
@@ -22,4 +22,12 @@ public interface PluralAttributeMappingNode extends ResultSetMappingNode {
 	 * @return The PersistentCollectionDescriptor.
 	 */
 	PersistentCollectionDescriptor getCollectionDescriptor();
+
+	DomainResult getKeyResult();
+
+	DomainResult getIdentifierResult();
+
+	DomainResult getIndexResult();
+
+	DomainResult getElementResult();
 }

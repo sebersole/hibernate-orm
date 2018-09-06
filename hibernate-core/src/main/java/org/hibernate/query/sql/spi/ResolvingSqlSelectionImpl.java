@@ -50,12 +50,22 @@ public class ResolvingSqlSelectionImpl implements SqlSelection, JdbcValueExtract
 		this.sqlExpressableType = sqlExpressableType;
 	}
 
+	@SuppressWarnings("WeakerAccess")
+	public ResolvingSqlSelectionImpl(int jdbcResultSetPosition, SqlExpressableType sqlExpressableType) {
+		this.columnAlias = null;
+
+		this.jdbcResultSetPosition = jdbcResultSetPosition;
+		this.sqlExpressableType = sqlExpressableType;
+	}
+
 	@Override
 	public void prepare(
 			ResultSetMappingDescriptor.JdbcValuesMetadata jdbcResultsMetadata,
 			SessionFactoryImplementor sessionFactory) {
-		// resolve the column-alias to a position
-		jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
+		if ( jdbcResultSetPosition == null ) {
+			// resolve the column-alias to a position
+			jdbcResultSetPosition = jdbcResultsMetadata.resolveColumnPosition( columnAlias );
+		}
 
 		if ( sqlExpressableType == null ) {
 			// assume we should auto-discover the type

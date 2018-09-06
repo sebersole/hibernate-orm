@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.hibernate.LockOptions;
 import org.hibernate.Session;
@@ -35,7 +36,9 @@ import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.Getter;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.UpdateToJdbcUpdateConverter;
 import org.hibernate.sql.ast.produce.spi.SqlAstUpdateDescriptor;
@@ -650,23 +653,26 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		// In this case we want the REV field which is part of the identifier.
 		// We visit the identifier columns until we locate it and then apply the predicate.
 		auditedEntityDescriptor.getIdentifierDescriptor().visitColumns(
-				(sqlExpressableType, column) -> {
-					if ( column.getExpression().equals( options.getRevisionFieldName() ) ) {
-						builder.addRestriction(
-								new RelationalPredicate(
-										RelationalPredicate.Operator.NOT_EQUAL,
-										new ColumnReference( column ),
-										new LiteralParameter(
-												revisionNumber,
-												column.getExpressableType(),
-												Clause.WHERE,
-												session.getFactory().getTypeConfiguration()
-										)
-								)
-						);
+				new BiConsumer<SqlExpressableType, Column>() {
+					@Override
+					public void accept(SqlExpressableType sqlExpressableType, Column column) {
+						if ( column.getExpression().equals( options.getRevisionFieldName() ) ) {
+							builder.addRestriction(
+									new RelationalPredicate(
+											RelationalPredicate.Operator.NOT_EQUAL,
+											new ColumnReference( column ),
+											new LiteralParameter(
+													revisionNumber,
+													column.getExpressableType(),
+													Clause.WHERE,
+													session.getFactory().getTypeConfiguration()
+											)
+									)
+							);
+						}
 					}
 				},
-				Clause.WHERE,
+				Clause.IRRELEVANT,
 				session.getFactory().getTypeConfiguration()
 		);
 	}

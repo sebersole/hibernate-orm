@@ -6,10 +6,9 @@
  */
 package org.hibernate.type.internal;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.results.spi.SqlSelectionReader;
@@ -96,10 +95,7 @@ public class BasicTypeImpl<T> implements BasicType<T>, SqlSelectionReader<T> {
 	}
 
 	@Override
-	public void visitColumns(
-			BiConsumer<SqlExpressableType, Column> action,
-			Clause clause,
-			TypeConfiguration typeConfiguration) {
-		throw new UnsupportedOperationException( "BasicType does not define columns" );
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return value;
 	}
 }

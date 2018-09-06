@@ -8,7 +8,7 @@ package org.hibernate.sql.results.internal;
 
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -16,12 +16,12 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class ScalarQueryResultAssembler implements QueryResultAssembler {
+public class ScalarResultAssembler implements DomainResultAssembler {
 	private final SqlSelection sqlSelection;
 	private final BasicValueConverter valueConverter;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
-	public ScalarQueryResultAssembler(
+	public ScalarResultAssembler(
 			SqlSelection sqlSelection,
 			BasicValueConverter valueConverter,
 			JavaTypeDescriptor javaTypeDescriptor) {

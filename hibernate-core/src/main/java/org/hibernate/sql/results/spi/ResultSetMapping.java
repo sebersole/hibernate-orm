@@ -8,11 +8,12 @@ package org.hibernate.sql.results.spi;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The "resolved" form of {@link ResultSetMappingDescriptor} providing access
  * to resolved JDBC results ({@link SqlSelection}) descriptors and resolved
- * domain results ({@link QueryResult}) descriptors.
+ * domain results ({@link DomainResult}) descriptors.
  *
  * @see ResultSetMappingDescriptor#resolve
  *
@@ -25,9 +26,10 @@ public interface ResultSetMapping {
 	 */
 	Set<SqlSelection> getSqlSelections();
 
-	/**
-	 * The domain selection descriptors,  Used to construct/shape the domain
-	 * result(s).
-	 */
-	List<QueryResult> getQueryResults();
+	List<DomainResult> getDomainResults();
+
+	List<DomainResultAssembler> resolveAssemblers(
+			AssemblerCreationState creationOptions,
+			AssemblerCreationContext creationContext,
+			Consumer<Initializer> initializerConsumer);
 }

@@ -47,7 +47,7 @@ public abstract class AbstractNavigableReference implements NavigableReference {
 	}
 
 	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
+	public ColumnReferenceQualifier getColumnReferenceQualifier() {
 		return columnReferenceQualifier;
 	}
 }

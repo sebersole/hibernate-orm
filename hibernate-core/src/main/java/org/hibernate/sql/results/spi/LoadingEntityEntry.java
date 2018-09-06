@@ -7,9 +7,7 @@
 package org.hibernate.sql.results.spi;
 
 import java.util.Locale;
-import java.util.concurrent.Callable;
 
-import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
@@ -23,19 +21,16 @@ public class LoadingEntityEntry {
 	private final EntityDescriptor descriptor;
 	private final Object entityInstance;
 	private final Object rowId;
-	private final Object[] hydratedEntityState;
 
 	public LoadingEntityEntry(
 			EntityKey entityKey,
 			EntityDescriptor descriptor,
 			Object entityInstance,
-			Object rowId,
-			Object[] hydratedEntityState) {
+			Object rowId) {
 		this.entityKey = entityKey;
 		this.descriptor = descriptor;
 		this.entityInstance = entityInstance;
 		this.rowId = rowId;
-		this.hydratedEntityState = hydratedEntityState;
 	}
 
 
@@ -53,10 +48,6 @@ public class LoadingEntityEntry {
 
 	public Object getRowId() {
 		return rowId;
-	}
-
-	public Object[] getHydratedEntityState() {
-		return hydratedEntityState;
 	}
 
 	@Override

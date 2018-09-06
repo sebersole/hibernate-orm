@@ -9,9 +9,10 @@ package org.hibernate.query.sqm.tree.expression;
 import org.hibernate.query.sqm.tree.TreeException;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -23,7 +24,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class SqmLiteralEntityType implements SqmExpression, QueryResultProducer {
+public class SqmLiteralEntityType implements SqmExpression, DomainResultProducer {
 	private final EntityValuedExpressableType entityType;
 
 	public SqmLiteralEntityType(EntityValuedExpressableType entityType) {
@@ -51,9 +52,10 @@ public class SqmLiteralEntityType implements SqmExpression, QueryResultProducer 
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
 		throw new TreeException("Selecting an entity type is not allowed. An entity type expression can be used to restrict query polymorphism ");
 		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
 	}

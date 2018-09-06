@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.hibernate.query.sql.spi.FetchBuilder;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
 
 /**
@@ -78,7 +77,6 @@ public class ResultSetMappingDescriptor {
 	private final String name;
 
 	private List<QueryResultBuilder> resultBuilders;
-	private List<FetchBuilder> fetchBuilders;
 
 	/**
 	 * Constructs a ResultSetMappingDefinition with name
@@ -103,22 +101,10 @@ public class ResultSetMappingDescriptor {
 		resultBuilders.add( queryReturn );
 	}
 
-	public void addFetchBuilder(FetchBuilder fetchBuilder) {
-		if ( fetchBuilders == null ) {
-			fetchBuilders = new ArrayList<>();
-		}
-		fetchBuilders.add( fetchBuilder );
-	}
-
 	public List<QueryResultBuilder> getResultBuilders() {
 		return resultBuilders == null
 				? Collections.emptyList()
 				: Collections.unmodifiableList( resultBuilders );
 	}
 
-	public List<FetchBuilder> getFetchBuilders() {
-		return fetchBuilders == null
-				? Collections.emptyList()
-				: Collections.unmodifiableList( fetchBuilders );
-	}
 }

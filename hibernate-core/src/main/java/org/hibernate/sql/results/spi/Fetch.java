@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.results.spi;
 
+import java.util.function.Consumer;
+
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
@@ -13,7 +15,7 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 
 /**
  * Contract for fetches including entity, collection and composite.  Acts as the
- * producer for the {@link QueryResultAssembler} for this result as well
+ * producer for the {@link DomainResultAssembler} for this result as well
  * as any {@link Initializer} instances needed
  *
  * todo (6.0) : we have fetch -> fetch-parent at the initializer level.  Do we also need fetch-parent -> fetch(es)?
@@ -36,8 +38,6 @@ public interface Fetch extends ResultSetMappingNode {
 	 * 			such injection (e.g. {@link org.hibernate.annotations.Parent})
 	 */
 	FetchParent getFetchParent();
-
-	ColumnReferenceQualifier getSqlExpressionQualifier();
 
 	/**
 	 * The Navigable being fetched
@@ -69,5 +69,9 @@ public interface Fetch extends ResultSetMappingNode {
 	 */
 	boolean isNullable();
 
-	void registerInitializers(FetchParentAccess parentAccess, InitializerCollector collector);
+	DomainResultAssembler createAssembler(
+			FetchParentAccess parentAccess,
+			Consumer<Initializer> collector,
+			AssemblerCreationContext creationContext,
+			AssemblerCreationState creationState);
 }

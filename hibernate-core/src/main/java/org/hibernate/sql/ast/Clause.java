@@ -9,7 +9,9 @@ package org.hibernate.sql.ast;
 import java.util.function.Predicate;
 
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
-import org.hibernate.metamodel.model.domain.spi.Writeable;
+
+import static org.hibernate.metamodel.model.domain.spi.Writeable.STANDARD_INSERT_INCLUSION_CHECK;
+import static org.hibernate.metamodel.model.domain.spi.Writeable.STANDARD_UPDATE_INCLUSION_CHECK;
 
 /**
  * Used to indicate which query clause we are currently processing
@@ -17,9 +19,9 @@ import org.hibernate.metamodel.model.domain.spi.Writeable;
  * @author Steve Ebersole
  */
 public enum Clause {
-	INSERT( Writeable.STANDARD_INSERT_INCLUSION_CHECK ),
-	UPDATE( Writeable.STANDARD_UPDATE_INCLUSION_CHECK),
-	DELETE( Writeable.STANDARD_UPDATE_INCLUSION_CHECK),
+	INSERT( STANDARD_INSERT_INCLUSION_CHECK ),
+	UPDATE( STANDARD_UPDATE_INCLUSION_CHECK),
+	DELETE( STANDARD_UPDATE_INCLUSION_CHECK),
 	SELECT( stateArrayContributor -> true ),
 	FROM( stateArrayContributor -> true ),
 	WHERE( stateArrayContributor -> true ),

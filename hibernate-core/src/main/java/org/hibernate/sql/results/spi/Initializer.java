@@ -16,5 +16,13 @@ package org.hibernate.sql.results.spi;
  * @author Steve Ebersole
  */
 public interface Initializer {
+	void hydrate(RowProcessingState rowProcessingState);
+
+	void resolve(RowProcessingState rowProcessingState);
+
 	void finishUpRow(RowProcessingState rowProcessingState);
+
+	default void endLoading(JdbcValuesSourceProcessingState processingState) {
+		// by default - nothing to do
+	}
 }

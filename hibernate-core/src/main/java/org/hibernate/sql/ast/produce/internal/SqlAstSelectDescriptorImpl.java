@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
 
 /**
  * The standard Hibernate implementation of SqlAstSelectDescriptor.
@@ -20,12 +20,12 @@ import org.hibernate.sql.results.spi.QueryResult;
  */
 public class SqlAstSelectDescriptorImpl implements SqlAstSelectDescriptor {
 	private final SelectStatement selectQuery;
-	private final List<QueryResult> queryReturns;
+	private final List<DomainResult> queryReturns;
 	private final Set<String> affectedTables;
 
 	public SqlAstSelectDescriptorImpl(
 			SelectStatement selectQuery,
-			List<QueryResult> queryReturns,
+			List<DomainResult> queryReturns,
 			Set<String> affectedTables) {
 		this.selectQuery = selectQuery;
 		this.queryReturns = queryReturns;
@@ -38,7 +38,7 @@ public class SqlAstSelectDescriptorImpl implements SqlAstSelectDescriptor {
 	}
 
 	@Override
-	public List<QueryResult> getQueryResults() {
+	public List<DomainResult> getQueryResults() {
 		return queryReturns;
 	}
 

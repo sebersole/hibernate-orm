@@ -11,14 +11,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class DynamicInstantiationConstructorAssemblerImpl implements QueryResultAssembler {
+public class DynamicInstantiationConstructorAssemblerImpl implements DomainResultAssembler {
 	private final Constructor targetConstructor;
 	private final JavaTypeDescriptor resultType;
 	private final List<ArgumentReader> argumentReaders;

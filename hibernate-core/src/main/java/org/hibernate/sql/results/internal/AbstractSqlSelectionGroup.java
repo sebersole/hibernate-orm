@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -22,6 +23,7 @@ import static org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer.UNFETCH
 /**
  * @author Steve Ebersole
  */
+@Remove
 public abstract class AbstractSqlSelectionGroup implements SqlSelectionGroup {
 	private final Map<StateArrayContributor<?>, SqlSelectionGroupNode> selectionNodesByContributor;
 

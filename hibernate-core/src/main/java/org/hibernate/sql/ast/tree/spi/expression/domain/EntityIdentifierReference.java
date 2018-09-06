@@ -29,8 +29,8 @@ public class EntityIdentifierReference implements NavigableReference {
 	}
 
 	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
-		return entityReference.getSqlExpressionQualifier();
+	public ColumnReferenceQualifier getColumnReferenceQualifier() {
+		return entityReference.getColumnReferenceQualifier();
 	}
 
 	@Override

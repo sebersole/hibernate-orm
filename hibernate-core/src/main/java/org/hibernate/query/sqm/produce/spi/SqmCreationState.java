@@ -11,6 +11,7 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.from.SqmFromElementSpace;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 
 /**
  * Access to the current state for SQM tree creation
@@ -31,4 +32,6 @@ public interface SqmCreationState {
 	SqmNavigableReference getCachedNavigableReference(SqmNavigableContainerReference source, Navigable navigable);
 
 	void cacheNavigableReference(SqmNavigableReference reference);
+
+	void registerFetch(SqmNavigableContainerReference sourceReference, SqmNavigableJoin navigableJoin);
 }

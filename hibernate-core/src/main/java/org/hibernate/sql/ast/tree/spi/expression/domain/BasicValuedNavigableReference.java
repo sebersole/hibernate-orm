@@ -18,7 +18,7 @@ public class BasicValuedNavigableReference extends AbstractNavigableReference {
 			NavigableContainerReference containerReference,
 			BasicValuedNavigable referencedNavigable,
 			NavigablePath navigablePath) {
-		super( containerReference, referencedNavigable, navigablePath, containerReference.getSqlExpressionQualifier() );
+		super( containerReference, referencedNavigable, navigablePath, containerReference.getColumnReferenceQualifier() );
 	}
 
 	@Override

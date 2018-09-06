@@ -6,22 +6,26 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.LockMode;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.EntityMappingNode;
+import org.hibernate.sql.results.spi.Initializer;
 
 /**
  * InitializerEntity for root
  * @author Steve Ebersole
  */
-public class EntityRootInitializer
-		extends AbstractEntityInitializer {
+public class EntityRootInitializer extends AbstractEntityInitializer {
 	public EntityRootInitializer(
-			EntityDescriptor entityDescriptor,
-			EntitySqlSelectionGroup sqlSelectionMappings,
+			EntityMappingNode resultDescriptor,
 			LockMode lockMode,
-			boolean isShallow) {
-		super( entityDescriptor, sqlSelectionMappings, lockMode, isShallow );
+			Consumer<Initializer> initializerConsumer,
+			AssemblerCreationContext creationContext,
+			AssemblerCreationState creationState) {
+		super( resultDescriptor, lockMode, initializerConsumer, creationContext, creationState );
 	}
 
 	@Override

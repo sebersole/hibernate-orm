@@ -69,7 +69,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
 
 		attribute.dehydrate(
-				attribute.unresolve( uk, session ),
+				attribute.extractFkValue( uk, session ),
 				(jdbcValue, type, boundColumn) -> {
 					jdbcParameterBindings.addBinding(
 							new StandardJdbcParameterImpl(

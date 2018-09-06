@@ -12,16 +12,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -35,12 +37,15 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.NavigablePathStack;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
@@ -62,15 +67,20 @@ import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
 public class MetamodelSelectBuilderProcess
-		implements SqlAstProducerContext, SqlAstCreationContext, SqlQueryOptions {
+		implements SqlAstProducerContext, SqlAstCreationContext, SqlQueryOptions, DomainResultCreationState {
+
+	private static final Logger log = Logger.getLogger( MetamodelSelectBuilderProcess.class );
 
 	@SuppressWarnings("WeakerAccess")
 	public static SqlAstSelectDescriptor createSelect(
@@ -78,7 +88,7 @@ public class MetamodelSelectBuilderProcess
 			NavigableContainer rootNavigableContainer,
 			List<Navigable<?>> navigablesToSelect,
 			Navigable restrictedNavigable,
-			QueryResult queryResult,
+			DomainResult domainResult,
 			int numberOfKeysToLoad,
 			LoadQueryInfluencers loadQueryInfluencers,
 			LockOptions lockOptions) {
@@ -87,7 +97,7 @@ public class MetamodelSelectBuilderProcess
 				rootNavigableContainer,
 				navigablesToSelect,
 				restrictedNavigable,
-				queryResult,
+				domainResult,
 				numberOfKeysToLoad,
 				loadQueryInfluencers,
 				lockOptions
@@ -100,7 +110,7 @@ public class MetamodelSelectBuilderProcess
 	private final NavigableContainer rootNavigableContainer;
 	private final List<Navigable<?>> navigablesToSelect;
 	private final Navigable restrictedNavigable;
-	private final QueryResult queryResult;
+	private final DomainResult domainResult;
 	private final int numberOfKeysToLoad;
 	private final LoadQueryInfluencers loadQueryInfluencers;
 	private final LockOptions lockOptions;
@@ -110,18 +120,22 @@ public class MetamodelSelectBuilderProcess
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
 	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
+	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
+
 	private final Set<String> affectedTables = new HashSet<>();
 
 	private final QuerySpec rootQuerySpec = new QuerySpec( true );
 
 	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
+	private final Stack<ColumnReferenceQualifier> columnReferenceQualifierStack = new StandardStack<>();
+
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigableContainer,
 			List<Navigable<?>> navigablesToSelect,
 			Navigable restrictedNavigable,
-			QueryResult queryResult,
+			DomainResult domainResult,
 			int numberOfKeysToLoad,
 			LoadQueryInfluencers loadQueryInfluencers,
 			LockOptions lockOptions) {
@@ -129,7 +143,7 @@ public class MetamodelSelectBuilderProcess
 		this.rootNavigableContainer = rootNavigableContainer;
 		this.navigablesToSelect = navigablesToSelect;
 		this.restrictedNavigable = restrictedNavigable;
-		this.queryResult = queryResult;
+		this.domainResult = domainResult;
 		this.numberOfKeysToLoad = numberOfKeysToLoad;
 		this.loadQueryInfluencers = loadQueryInfluencers;
 		this.lockOptions = lockOptions != null ? lockOptions : LockOptions.NONE;
@@ -157,16 +171,20 @@ public class MetamodelSelectBuilderProcess
 		rootTableSpace.setRootTableGroup( rootTableGroup );
 		tableGroupStack.push( rootTableGroup );
 
-		final List<QueryResult> queryResults;
+		columnReferenceQualifierStack.push( rootTableGroup );
+		navigableReferenceStack.push( rootTableGroup.getNavigableReference() );
+
+		final List<DomainResult> domainResults;
 
 		if ( navigablesToSelect != null && ! navigablesToSelect.isEmpty() ) {
-			queryResults = new ArrayList<>();
+			domainResults = new ArrayList<>();
 			for ( Navigable navigable : navigablesToSelect ) {
 				final NavigableReference navigableReference = makeNavigableReference( rootTableGroup, navigable );
-				queryResults.add(
-						navigable.createQueryResult(
+				domainResults.add(
+						navigable.createDomainResult(
 								navigableReference,
 								null,
+								this,
 								this
 						)
 				);
@@ -176,25 +194,23 @@ public class MetamodelSelectBuilderProcess
 			// use the one passed to the constructor or create one (maybe always create and pass?)
 			//		allows re-use as they can be re-used to save on memory - they
 			//		do not share state between
-			final QueryResult queryResult;
-			if ( this.queryResult != null ) {
+			final DomainResult domainResult;
+			if ( this.domainResult != null ) {
 				// used the one passed to the constructor
-				queryResult = this.queryResult;
+				domainResult = this.domainResult;
 			}
 			else {
 				// create one
 				final NavigableReference rootNavigableReference = rootTableGroup.getNavigableReference();
-				queryResult = rootNavigableContainer.createQueryResult(
+				domainResult = rootNavigableContainer.createDomainResult(
 						rootNavigableReference,
 						null,
+						this,
 						this
 				);
 			}
 
-			queryResults = Collections.singletonList( queryResult );
-
-			// todo (6.0) : process fetches & entity-graphs
-			fetchParentStack.push( (FetchParent) queryResult );
+			domainResults = Collections.singletonList( domainResult );
 		}
 
 
@@ -203,8 +219,7 @@ public class MetamodelSelectBuilderProcess
 		final List<ColumnReference> keyColumnReferences = new ArrayList<>();
 		final List<StandardJdbcParameterImpl> keyParameterReferences = new ArrayList<>();
 
-		final AllowableParameterType<?> restrictedNavigableType = (AllowableParameterType) restrictedNavigable;
-		restrictedNavigableType.visitColumns(
+		restrictedNavigable.visitColumns(
 				new BiConsumer<SqlExpressableType, Column>() {
 					@Override
 					public void accept(SqlExpressableType type, Column column) {
@@ -256,7 +271,7 @@ public class MetamodelSelectBuilderProcess
 
 		return new SqlAstSelectDescriptorImpl(
 				selectStatement,
-				queryResults,
+				domainResults,
 				affectedTables
 		);
 	}
@@ -271,6 +286,7 @@ public class MetamodelSelectBuilderProcess
 		}
 
 		if ( navigable instanceof EmbeddedValuedNavigable ) {
+			// todo (6.0) : join?
 			return new EmbeddableValuedNavigableReference(
 					(NavigableContainerReference) rootTableGroup.getNavigableReference(),
 					(EmbeddedValuedNavigable) navigable,
@@ -351,6 +367,95 @@ public class MetamodelSelectBuilderProcess
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// DomainResultCreationState
+
+	/**
+	 * todo (6.0) : consider removing - I believe this can be handled using `#navigableReferenceStack` + `NavigableReference#getColumnReferenceQualifier`
+	 * 		save runtime memory.  of course see note below about simply passing NavigableReference
+	 */
+	@Override
+	public Stack<ColumnReferenceQualifier> getColumnReferenceQualifierStack() {
+		return columnReferenceQualifierStack;
+	}
+
+	@Override
+	public Stack<NavigableReference> getNavigableReferenceStack() {
+		return navigableReferenceStack;
+	}
+
+	// todo (6.0) : seems like this entire thing can be centralized and used in all SQL AST generation processes to handle fetches
+	//		variations (arguments) include:
+	//			1) FetchParent
+	//			2) determining the FetchStrategy - functional interface returning the FetchStrategy (Function, BiFunction, etc)?
+	//			3) LockMode - currently not handled very well here; should consult `#getLockOptions`
+	//					 - perhaps a functional interface accepting the FetchParent and Fetchable and returning the LockMode
+	//
+	//		so something like:
+	//			List<Fetch> visitFetches(
+	// 					FetchParent fetchParent,
+	// 					BiFunction<FetchParent,Fetchable,FetchStrategy> fetchStrategyResolver,
+	// 					BiFunction<FetchParent,Fetchable,LockMode> lockModeResolver)
+	//
+	//		and called from here as, e.g. (`fetchState` being that centralized logic):
+	//			fetchState.visitFetches(
+	// 					fetchParent,
+	//					// todo (6.0) : this should account for EntityGraph
+	//					(fetchParent,fetchable) -> fetchable.getMappedFetchStrategy(),
+	//					(fetchParent,fetchable) -> LockMode.READ
+	//			);
+	//
+	// todo (6.0) : also consider passing along NavigableReference rather than using context+stack
+	//		when calling `Fetchable#generateFetch`
+
+	@Override
+	public List<Fetch> visitFetches(FetchParent fetchParent) {
+		log.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
+
+		final List<Fetch> fetches = new ArrayList<>();
+
+		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
+			if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
+				return;
+			}
+
+			LockMode lockMode = LockMode.READ;
+			FetchStrategy fetchStrategy = fetchable.getMappedFetchStrategy();
+
+			final Integer maximumFetchDepth = getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
+			// minus one because the root is not a fetch
+			final int fetchDepth = getNavigableReferenceStack().depth() - 1;
+
+			if ( fetchDepth == maximumFetchDepth ) {
+				if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
+					fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
+				}
+			}
+			else if ( fetchDepth > maximumFetchDepth ) {
+				return;
+			}
+
+			fetches.add( fetchable.generateFetch( fetchParent, fetchStrategy, lockMode, null, this, this ) );
+		};
+
+		fetchParentStack.push( fetchParent );
+		try {
+			fetchParent.getFetchContainer().visitKeyFetchables( fetchableConsumer );
+			fetchParent.getFetchContainer().visitFetchables( fetchableConsumer );
+		}
+		finally {
+			fetchParentStack.pop();
+		}
+
+		return fetches;
+	}
+
+	@Override
+	public TableSpace getCurrentTableSpace() {
+		return tableSpaceStack.getCurrent();
+	}
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// SqlAstBuildingContext
 
 	private List<AfterLoadAction> afterLoadActions;
@@ -373,6 +478,11 @@ public class MetamodelSelectBuilderProcess
 	@Override
 	public SessionFactoryImplementor getSessionFactory() {
 		return sessionFactory;
+	}
+
+	@Override
+	public LoadQueryInfluencers getLoadQueryInfluencers() {
+		return loadQueryInfluencers;
 	}
 
 	@Override
@@ -419,4 +529,13 @@ public class MetamodelSelectBuilderProcess
 		return lockOptions;
 	}
 
+	@Override
+	public SqlExpressionResolver getSqlExpressionResolver() {
+		return sqlExpressionResolver;
+	}
+
+	@Override
+	public boolean fetchAllAttributes() {
+		return false;
+	}
 }

@@ -49,11 +49,6 @@ public interface BasicValuedExpressableType<J>
 	}
 
 	@Override
-	default Object unresolve(Object value, SharedSessionContractImplementor session) {
-		return value;
-	}
-
-	@Override
 	default void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,

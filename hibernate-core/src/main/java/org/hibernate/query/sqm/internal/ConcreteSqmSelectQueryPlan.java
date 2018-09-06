@@ -14,6 +14,7 @@ import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 
 import org.hibernate.ScrollMode;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.collections.streams.StingArrayCollector;
@@ -219,12 +220,18 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 	}
 
 	private SqmSelectToSqlAstConverter getSqmSelectToSqlAstConverter(ExecutionContext executionContext) {
+		// todo (6.0) : for cases where we have no "load query influencers" we could use a cached SQL AST
 		return new SqmSelectToSqlAstConverter(
 					executionContext.getQueryOptions(),
 					new SqlAstProducerContext() {
 						@Override
 						public SessionFactoryImplementor getSessionFactory() {
 							return executionContext.getSession().getFactory();
+						}
+
+						@Override
+						public LoadQueryInfluencers getLoadQueryInfluencers() {
+							return executionContext.getSession().getLoadQueryInfluencers();
 						}
 
 						@Override

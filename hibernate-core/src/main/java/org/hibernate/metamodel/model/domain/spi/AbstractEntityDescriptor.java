@@ -75,6 +75,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -84,11 +85,12 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
-import org.hibernate.sql.results.internal.EntityQueryResultImpl;
+import org.hibernate.sql.results.internal.EntityResultImpl;
 import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
@@ -555,7 +557,7 @@ public abstract class AbstractEntityDescriptor<J>
 		final TableReference primaryTableReference = resolvePrimaryTableReference( sqlAliasBase );
 
 		final List<TableReferenceJoin> joins = new ArrayList<>(  );
-		resolveTableReferenceJoins( primaryTableReference, sqlAliasBase, tableGroupContext, joins::add );
+		resolveTableReferenceJoins( primaryTableReference, sqlAliasBase, tableGroupContext.getTableReferenceJoinType(), joins::add );
 
 		final EntityTableGroup group = new EntityTableGroup(
 				info.getUniqueIdentifier(),
@@ -582,19 +584,19 @@ public abstract class AbstractEntityDescriptor<J>
 	private void resolveTableReferenceJoins(
 			TableReference rootTableReference,
 			SqlAliasBase sqlAliasBase,
-			TableGroupContext context,
+			JoinType joinType,
 			Consumer<TableReferenceJoin> collector) {
 
 		for ( JoinedTableBinding joinedTableBinding : getSecondaryTableBindings() ) {
-			collector.accept( createTableReferenceJoin( joinedTableBinding, rootTableReference, sqlAliasBase, context ) );
+			collector.accept( createTableReferenceJoin( joinedTableBinding, rootTableReference, joinType, sqlAliasBase ) );
 		}
 	}
 
 	protected TableReferenceJoin createTableReferenceJoin(
 			JoinedTableBinding joinedTableBinding,
 			TableReference rootTableReference,
-			SqlAliasBase sqlAliasBase,
-			TableGroupContext context) {
+			JoinType joinType,
+			SqlAliasBase sqlAliasBase) {
 		final TableReference joinedTableReference = new TableReference(
 				joinedTableBinding.getReferringTable(),
 				sqlAliasBase.generateNewAlias()
@@ -603,7 +605,7 @@ public abstract class AbstractEntityDescriptor<J>
 		return new TableReferenceJoin(
 				joinedTableBinding.isOptional()
 						? JoinType.LEFT
-						: context.getTableReferenceJoinType(),
+						: joinType,
 				joinedTableReference,
 				generateJoinPredicate( rootTableReference, joinedTableReference, joinedTableBinding.getJoinForeignKey() )
 		);
@@ -637,28 +639,29 @@ public abstract class AbstractEntityDescriptor<J>
 			ColumnReferenceQualifier lhs,
 			JoinType joinType,
 			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector joinCollector,
-			TableGroupContext tableGroupContext) {
+			TableReferenceJoinCollector joinCollector) {
 		final TableReference root = resolvePrimaryTableReference( sqlAliasBase );
 		joinCollector.addRoot( root );
-		resolveTableReferenceJoins( root, sqlAliasBase, tableGroupContext, joinCollector::collectTableReferenceJoin );
+		resolveTableReferenceJoins( root, sqlAliasBase, joinType, joinCollector::collectTableReferenceJoin );
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
 		final EntityValuedNavigableReference entityValuedReference = (EntityValuedNavigableReference) navigableReference;
 
-		final EntityQueryResultImpl entityQueryResult = new EntityQueryResultImpl(
+		final EntityResultImpl entityQueryResult = new EntityResultImpl(
 				entityValuedReference.getNavigable(),
 				resultVariable,
-				resolveSqlSelections( navigableReference.getSqlExpressionQualifier(), creationContext ),
-				entityValuedReference.getLockMode(),
+				// todo (6.0) : LockMode ?
+				LockMode.READ,
 				navigableReference.getNavigablePath(),
-				creationContext
+				creationContext,
+				creationState
 		);
 
 //		entityValuedReference.getNavigable().getEntityDescriptor().visitStateArrayContributors(
@@ -667,7 +670,7 @@ public abstract class AbstractEntityDescriptor<J>
 //						final Fetchable fetchable = ( (Fetchable) stateArrayContributor );
 //						fetchable.generateFetch(
 //								entityQueryResult,
-//								navigableReference.getSqlExpressionQualifier(),
+//								navigableReference.getColumnReferenceQualifier(),
 //								fetchable.getMappedFetchStrategy(),
 //								null,
 //								creationContext
@@ -679,10 +682,14 @@ public abstract class AbstractEntityDescriptor<J>
 		return entityQueryResult;
 	}
 
+	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
 	// todo (6.0) : we need some way here to limit which attributes are rendered as how "deep" we render them
 	//		* which to render comes down to bytecode enhanced laziness
 	//		* how deep (associations) comes down to fetching
-
 
 
 	@Override

@@ -8,6 +8,7 @@ package org.hibernate.sql.results.spi;
 
 import java.util.List;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.NavigablePath;
 
@@ -30,18 +31,21 @@ public interface FetchParent {
 	NavigablePath getNavigablePath();
 
 	/**
-	 * todo (6.0) : better way to handle this rather than allowing mutation here?
-	 */
-	void addFetch(Fetch fetch);
-
-	/**
 	 * Retrieve the fetches owned by this fetch source.
-	 * <p/>
-	 * This is why generics suck :(  Ideally this would override
-	 * FetchSource#getFetches and give a covariant return of a List of
-	 * org.hibernate.sql.results.spi.Fetch
 	 *
 	 * @return The owned fetches.
 	 */
 	List<Fetch> getFetches();
+
+	/**
+	 * todo (6.0) : this would be needed in order to apply fetching on top of an existing graph
+	 *
+	 * 		- pass in the `Navigable` or `Fetchable` instead?
+	 *
+	 *
+	 * todo (6.0) : to properly support bytecode-based laziness, any state-array-contributor (including basic types) would need to be "fetchable"
+	 */
+	default Fetch findFetch(String fetchableName) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
 }

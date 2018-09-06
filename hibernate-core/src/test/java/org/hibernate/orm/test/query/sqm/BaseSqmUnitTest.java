@@ -8,6 +8,7 @@ package org.hibernate.orm.test.query.sqm;
 
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
@@ -44,6 +45,11 @@ public abstract class BaseSqmUnitTest
 
 	@Override
 	public void registerAfterLoadAction(AfterLoadAction afterLoadAction) {
+	}
+
+	@Override
+	public LoadQueryInfluencers getLoadQueryInfluencers() {
+		return LoadQueryInfluencers.NONE;
 	}
 
 	@Override

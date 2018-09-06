@@ -10,11 +10,12 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -23,7 +24,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public class BinaryArithmeticExpression
-		implements Expression, SqlExpressable, QueryResultProducer {
+		implements Expression, SqlExpressable, DomainResultProducer {
 	private final Operation operation;
 	private final Expression lhsOperand;
 	private final Expression rhsOperand;
@@ -69,12 +70,13 @@ public class BinaryArithmeticExpression
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new ScalarResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,
 						getType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()

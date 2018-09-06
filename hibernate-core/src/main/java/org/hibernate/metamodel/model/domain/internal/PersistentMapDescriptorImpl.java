@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.hibernate.MappingException;
 import org.hibernate.cache.CacheException;
@@ -18,6 +19,7 @@ import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**

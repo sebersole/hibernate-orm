@@ -11,10 +11,7 @@ import java.util.List;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -68,22 +65,6 @@ public class ConcatFunction implements StandardFunction {
 				valuesArrayPosition,
 				this,
 				getType().getJdbcValueExtractor()
-		);
-	}
-
-
-	@Override
-	public QueryResult createQueryResult(
-			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
-				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
-						this,
-						getType().getJavaTypeDescriptor(),
-						creationContext.getSessionFactory().getTypeConfiguration()
-				),
-				getExpressableType()
 		);
 	}
 }

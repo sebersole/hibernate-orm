@@ -6,11 +6,14 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.annotations.Remove;
+
 /**
  * Used in {@link EntityInitializer} implementations
  *
  * @author Steve Ebersole
  */
+@Remove
 public interface EntitySqlSelectionGroup extends SqlSelectionGroup {
 	SqlSelectionGroupNode getIdSqlSelections();
 

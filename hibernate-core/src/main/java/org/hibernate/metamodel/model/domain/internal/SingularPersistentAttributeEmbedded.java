@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
+import org.hibernate.LockMode;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
@@ -22,6 +23,7 @@ import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.mapping.Component;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -36,6 +38,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
@@ -43,14 +46,21 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeRefere
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.CompositeFetchImpl;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddedMutabilityPlanImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -146,18 +156,53 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
-			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		// todo (6.0) : use qualifier to create the SqlSelection mappings
-		return new CompositeFetchImpl(
-				fetchParent,
-				qualifier,
-				this,
-				fetchStrategy,
-				creationContext
-		);
+			LockMode lockMode, String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
+
+		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
+			if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
+				fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
+			}
+		}
+
+		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
+
+		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
+
+		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
+		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
+		if ( navigableReference == null ) {
+			navigableReference = new EmbeddableValuedNavigableReference(
+					parentReference,
+					this,
+					navigablePath,
+					lockMode
+			);
+		}
+
+		creationState.getNavigableReferenceStack().push( navigableReference );
+		creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
+
+		try {
+			return new CompositeFetchImpl(
+					fetchParent,
+					this,
+					fetchStrategy,
+					creationState
+			);
+		}
+		finally {
+			creationState.getColumnReferenceQualifierStack().pop();
+			creationState.getNavigableReferenceStack().pop();
+		}
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
 	}
 
 	private final FetchStrategy mappedFetchStrategy = new FetchStrategy(
@@ -168,11 +213,6 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {
 		return mappedFetchStrategy;
-	}
-
-	@Override
-	public ManagedTypeDescriptor<J> getFetchedManagedType() {
-		return embeddedDescriptor;
 	}
 
 	@Override
@@ -271,6 +311,14 @@ public class SingularPersistentAttributeEmbedded<O,J>
 					}
 				}
 		);
+	}
+
+	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		getEmbeddedDescriptor().visitJdbcTypes( action, clause, typeConfiguration );
 	}
 
 	@Override

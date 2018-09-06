@@ -6,10 +6,12 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
+
 /**
  * @author Steve Ebersole
  */
-public interface CollectionElement<J> extends Navigable<J> {
+public interface CollectionElement<J> extends Navigable<J>, TableReferenceContributor {
 
 	String NAVIGABLE_NAME = "{element}";
 

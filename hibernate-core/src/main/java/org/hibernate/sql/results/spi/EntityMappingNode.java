@@ -20,4 +20,16 @@ public interface EntityMappingNode extends ResultSetMappingNode, FetchParent {
 	 * @return The EntityPersister.
 	 */
 	EntityDescriptor getEntityDescriptor();
+
+	DomainResult getIdentifierResult();
+
+	DomainResult getDiscriminatorResult();
+
+	DomainResult getVersionResult();
+
+	// todo (6.0) : this needs some form of tracking basic attributes to fetch
+	//		internally.  that info does not need to be exposed, it just needs to
+	//		make its way into the created assemblers
+	//
+	// 		for now, we assume all basic attributes should be fetched / loaded
 }

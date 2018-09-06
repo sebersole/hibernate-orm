@@ -6,12 +6,12 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
+import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -19,14 +19,11 @@ import org.hibernate.sql.results.spi.SqlAstCreationContext;
 public interface Fetchable<T> extends Joinable<T> {
 	Fetch generateFetch(
 			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
 			FetchStrategy fetchStrategy,
-			String resultVariable,
-			SqlAstCreationContext creationContext);
+			LockMode lockMode, String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState);
 
 	FetchStrategy getMappedFetchStrategy();
 
-	// todo (6.0) : what is the proper return type here?
-	//		ExpressableType?
-	ManagedTypeDescriptor<T> getFetchedManagedType();
 }

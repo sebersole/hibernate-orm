@@ -6,15 +6,20 @@
  */
 package org.hibernate.sql.results.internal;
 
+import java.util.function.Consumer;
+
+import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.InitializerCollector;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.PluralAttributeFetch;
 import org.hibernate.sql.results.spi.PluralAttributeInitializer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -22,43 +27,46 @@ import org.hibernate.sql.results.spi.SqlAstCreationContext;
 public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode implements PluralAttributeFetch {
 	private final FetchParent fetchParent;
 	private final FetchStrategy fetchStrategy;
-	private final ColumnReferenceQualifier qualifier;
 	private final PluralPersistentAttribute pluralAttribute;
-	private final SqlAstCreationContext creationContext;
+	private final LockMode lockMode;
 
 	public PluralAttributeFetchImpl(
 			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
 			PluralPersistentAttribute pluralAttribute,
-			FetchStrategy fetchStrategy,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		super( pluralAttribute, resultVariable );
+			FetchStrategy fetchStrategy,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResult identifierResult,
+			DomainResult indexResult,
+			DomainResult elementResult) {
+		super( pluralAttribute, resultVariable, keyResult, identifierResult, indexResult, elementResult );
 		this.fetchParent = fetchParent;
-		this.qualifier = qualifier;
-		this.pluralAttribute = pluralAttribute;
 		this.fetchStrategy = fetchStrategy;
-		this.creationContext = creationContext;
-
-		fetchParent.addFetch( this );
+		this.pluralAttribute = pluralAttribute;
+		this.lockMode = lockMode;
 	}
 
 	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
-		return qualifier;
-	}
+	public DomainResultAssembler createAssembler(
+			FetchParentAccess parentAccess,
+			Consumer<Initializer> collector,
+			AssemblerCreationContext context,
+			AssemblerCreationState creationState) {
+		// todo (6.0) : something like:
+		//		this allows creation of an initializer specific to the collection nature.
 
-	@Override
-	public void registerInitializers(FetchParentAccess parentAccess, InitializerCollector collector) {
-		final PluralAttributeInitializer initializer = new PluralAttributeFetchInitializer(
-				pluralAttribute,
-				fetchParent,
-				parentAccess
+		final PluralAttributeInitializer initializer = pluralAttribute.getPersistentCollectionDescriptor().createInitializer(
+				parentAccess,
+				this,
+				collector,
+				context,
+				creationState
 		);
 
-		// todo (6.0) : how to handle index/element?
+		collector.accept( initializer );
 
-		collector.addInitializer( initializer );
+		return new PluralAttributeAssemblerImpl( initializer );
 	}
 
 	@Override

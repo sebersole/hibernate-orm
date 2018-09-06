@@ -15,7 +15,7 @@ import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiation;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiationNature;
-import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;
@@ -117,48 +117,7 @@ public class SqmDynamicInstantiation
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T accept(SemanticQueryWalker<T> walker) {
-		final DynamicInstantiationNature instantiationNature = getInstantiationTarget().getNature();
-		final JavaTypeDescriptor<Object> targetTypeDescriptor = interpretInstantiationTarget(
-				getInstantiationTarget(),
-				walker.getSessionFactory()
-		);
-
-		final DynamicInstantiation dynamicInstantiation = new DynamicInstantiation(
-				instantiationNature,
-				targetTypeDescriptor
-		);
-
-		for ( SqmDynamicInstantiationArgument sqmArgument : getArguments() ) {
-			dynamicInstantiation.addArgument(
-					sqmArgument.getAlias(),
-					(QueryResultProducer) sqmArgument.getSelectableNode().accept( walker )
-			);
-		}
-
-		dynamicInstantiation.complete();
-
-		return (T) dynamicInstantiation;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T> JavaTypeDescriptor<T> interpretInstantiationTarget(
-			SqmDynamicInstantiationTarget instantiationTarget,
-			SessionFactoryImplementor sessionFactory) {
-		final Class<T> targetJavaType;
-
-		if ( instantiationTarget.getNature() == DynamicInstantiationNature.LIST ) {
-			targetJavaType = (Class<T>) List.class;
-		}
-		else if ( instantiationTarget.getNature() == DynamicInstantiationNature.MAP ) {
-			targetJavaType = (Class<T>) Map.class;
-		}
-		else {
-			targetJavaType = instantiationTarget.getJavaType();
-		}
-
-		return sessionFactory.getTypeConfiguration()
-				.getJavaTypeDescriptorRegistry()
-				.getDescriptor( targetJavaType );
+		return walker.visitDynamicInstantiation( this );
 	}
 
 	public SqmDynamicInstantiation makeShallowCopy() {

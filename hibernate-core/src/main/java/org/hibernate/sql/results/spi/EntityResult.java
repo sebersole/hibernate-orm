@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -14,14 +13,9 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
  *
  * @author Steve Ebersole
  */
-public interface EntityQueryResult extends EntityMappingNode, QueryResult {
+public interface EntityResult extends EntityMappingNode, DomainResult {
 	@Override
 	default EntityJavaDescriptor getJavaTypeDescriptor() {
 		return getEntityDescriptor().getJavaTypeDescriptor();
 	}
-
-	default NavigablePath getNavigablePath() {
-		return new NavigablePath( getEntityDescriptor().getEntityName() );
-	}
-
 }

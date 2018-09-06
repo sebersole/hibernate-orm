@@ -6,6 +6,7 @@
  */
 package org.hibernate.orm.test.query.sqm.sql;
 
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
@@ -34,6 +35,11 @@ public class BaseSqmSqlTest extends BaseSqmUnitTest {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return executionContext.getSession().getFactory();
+					}
+
+					@Override
+					public LoadQueryInfluencers getLoadQueryInfluencers() {
+						return executionContext.getSession().getLoadQueryInfluencers();
 					}
 
 					@Override

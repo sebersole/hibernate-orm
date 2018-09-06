@@ -14,7 +14,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class CollectionKey {
+public class CollectionKey implements Readable {
 	private final AbstractPersistentCollectionDescriptor collectionDescriptor;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 

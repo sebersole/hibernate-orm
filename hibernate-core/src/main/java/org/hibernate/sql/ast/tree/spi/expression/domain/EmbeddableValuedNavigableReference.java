@@ -19,7 +19,7 @@ public class EmbeddableValuedNavigableReference extends AbstractNavigableContain
 			EmbeddedValuedNavigable navigable,
 			NavigablePath navigablePath,
 			LockMode lockMode) {
-		super( containerReference, navigable, navigablePath, containerReference.getSqlExpressionQualifier(), lockMode );
+		super( containerReference, navigable, navigablePath, containerReference.getColumnReferenceQualifier(), lockMode );
 	}
 
 	@Override

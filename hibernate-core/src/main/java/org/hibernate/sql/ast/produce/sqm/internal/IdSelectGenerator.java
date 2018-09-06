@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.sqm.internal;
 
 import org.hibernate.LockOptions;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.NavigablePath;
@@ -29,7 +30,7 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
@@ -45,6 +46,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 			EntityDescriptor entityDescriptor,
 			SqmDeleteOrUpdateStatement sourceSqmStatement,
 			QueryOptions queryOptions,
+			LoadQueryInfluencers loadQueryInfluencers,
 			SessionFactoryImplementor sessionFactory) {
 		final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
 		final QuerySpec entityIdSelection = new QuerySpec( true );
@@ -130,6 +132,11 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					@Override
 					public SqlExpressionResolver getSqlSelectionResolver() {
 						return sqlExpressionResolver;
+					}
+
+					@Override
+					public LoadQueryInfluencers getLoadQueryInfluencers() {
+						return loadQueryInfluencers;
 					}
 
 					@Override
@@ -221,6 +228,11 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					@Override
 					public SessionFactoryImplementor getSessionFactory() {
 						return sessionFactory;
+					}
+
+					@Override
+					public LoadQueryInfluencers getLoadQueryInfluencers() {
+						return LoadQueryInfluencers.NONE;
 					}
 
 					@Override

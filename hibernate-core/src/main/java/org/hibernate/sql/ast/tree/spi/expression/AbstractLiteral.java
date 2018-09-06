@@ -14,11 +14,12 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -32,7 +33,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public abstract class AbstractLiteral
-		implements JdbcParameterBinder, Expression, SqlExpressable, QueryResultProducer {
+		implements JdbcParameterBinder, Expression, SqlExpressable, DomainResultProducer {
 	private final Object value;
 	private final SqlExpressableType type;
 	private final Clause clause;
@@ -76,15 +77,16 @@ public abstract class AbstractLiteral
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
 
 		// todo (6.0) : consider just returning the literal value back directly
 
-		return new ScalarQueryResultImpl(
+		return new ScalarResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,
 						getType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()

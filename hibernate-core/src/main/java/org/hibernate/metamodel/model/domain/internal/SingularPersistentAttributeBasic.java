@@ -9,9 +9,14 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
+import org.hibernate.LockMode;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
+import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchStyle;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -30,13 +35,19 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.BasicFetch;
+import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -46,18 +57,19 @@ import org.jboss.logging.Logger;
 /**
  * @author Steve Ebersole
  */
-public class BasicSingularPersistentAttribute<O, J>
+public class SingularPersistentAttributeBasic<O, J>
 		extends AbstractNonIdSingularPersistentAttribute<O, J>
-		implements BasicValuedNavigable<J>, ConvertibleNavigable<J> {
-	private static final Logger log = Logger.getLogger( BasicSingularPersistentAttribute.class );
+		implements BasicValuedNavigable<J>, ConvertibleNavigable<J>, Fetchable<J> {
+	private static final Logger log = Logger.getLogger( SingularPersistentAttributeBasic.class );
 
 	private final Column boundColumn;
 	private final BasicType<J> basicType;
 	private final SqlExpressableType sqlExpressableType;
 	private final BasicValueConverter valueConverter;
+	private final FetchStrategy fetchStrategy;
 
 	@SuppressWarnings("unchecked")
-	public BasicSingularPersistentAttribute(
+	public SingularPersistentAttributeBasic(
 			ManagedTypeDescriptor<O> runtimeContainer,
 			PersistentAttributeMapping bootAttribute,
 			PropertyAccess propertyAccess,
@@ -95,6 +107,10 @@ public class BasicSingularPersistentAttribute<O, J>
 			);
 		}
 
+		this.fetchStrategy = bootAttribute.isLazy()
+				? new FetchStrategy( FetchTiming.DELAYED, FetchStyle.SELECT )
+				: FetchStrategy.IMMEDIATE_JOIN;
+
 		instantiationComplete( bootAttribute, context );
 	}
 
@@ -123,15 +139,16 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new ScalarResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
-						creationContext.getSqlSelectionResolver().resolveSqlExpression(
-								navigableReference.getSqlExpressionQualifier(),
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								navigableReference.getColumnReferenceQualifier(),
 								boundColumn
 						),
 						getJavaTypeDescriptor(),
@@ -219,6 +236,16 @@ public class BasicSingularPersistentAttribute<O, J>
 	}
 
 	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		if ( clause.getInclusionChecker().test( this ) ) {
+			action.accept( sqlExpressableType );
+		}
+	}
+
+	@Override
 	public void visitColumns(
 			BiConsumer<SqlExpressableType, Column> action,
 			Clause clause,
@@ -233,4 +260,19 @@ public class BasicSingularPersistentAttribute<O, J>
 		return 1;
 	}
 
+	@Override
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchStrategy fetchStrategy,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new BasicFetch( fetchParent, this, fetchStrategy, creationContext, creationState );
+	}
+
+	@Override
+	public FetchStrategy getMappedFetchStrategy() {
+		return fetchStrategy;
+	}
 }

@@ -105,6 +105,7 @@ import org.hibernate.query.sqm.tree.predicate.NullnessSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.OrSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.RelationalSqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
+import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiation;
 import org.hibernate.query.sqm.tree.select.SqmSelectClause;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.query.sqm.tree.set.SqmAssignment;
@@ -689,6 +690,11 @@ public class BaseSemanticQueryWalker<T> implements SemanticQueryWalker<T> {
 	@Override
 	public T visitExplicitColumnReference(SqmColumnReference sqmColumnReference) {
 		return (T) sqmColumnReference;
+	}
+
+	@Override
+	public T visitDynamicInstantiation(SqmDynamicInstantiation sqmDynamicInstantiation) {
+		return (T) sqmDynamicInstantiation;
 	}
 
 	@Override

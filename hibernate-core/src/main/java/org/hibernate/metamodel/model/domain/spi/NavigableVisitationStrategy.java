@@ -6,7 +6,7 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 
@@ -75,7 +75,7 @@ public interface NavigableVisitationStrategy {
 	default void visitRowIdDescriptor(RowIdDescriptor rowIdDescriptor) {
 	}
 
-	default void visitSingularAttributeBasic(BasicSingularPersistentAttribute attribute) {
+	default void visitSingularAttributeBasic(SingularPersistentAttributeBasic attribute) {
 	}
 
 	default void visitSingularAttributeEmbedded(SingularPersistentAttributeEmbedded attribute) {

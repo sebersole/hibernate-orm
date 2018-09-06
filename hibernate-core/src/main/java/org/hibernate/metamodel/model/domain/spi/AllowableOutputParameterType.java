@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.sql.results.spi.DomainResultProducer;
+
 /**
  * @apiNote Generally speaking, an allowable output parameter type
  * can only effectively be a basic type.  So generally speaking, the
@@ -17,5 +19,5 @@ package org.hibernate.metamodel.model.domain.spi;
  *
  * @author Steve Ebersole
  */
-public interface AllowableOutputParameterType extends AllowableParameterType, Readable {
+public interface AllowableOutputParameterType<J> extends AllowableParameterType<J>, DomainResultProducer {
 }

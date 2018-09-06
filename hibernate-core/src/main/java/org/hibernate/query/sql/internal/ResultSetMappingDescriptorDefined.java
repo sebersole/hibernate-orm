@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.results.internal.StandardResultSetMapping;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -27,20 +27,23 @@ import org.hibernate.sql.results.spi.SqlSelection;
  * @author Steve Ebersole
  */
 public class ResultSetMappingDescriptorDefined implements ResultSetMappingDescriptor {
-	private final ResultSetMapping resolvedMapping;
+	private final Set<SqlSelection> selections;
+	private final List<DomainResult> domainResults;
 
-	public ResultSetMappingDescriptorDefined(Set<SqlSelection> selections, List<QueryResult> queryResults) {
-		resolvedMapping  = new StandardResultSetMapping( selections, queryResults );
+	public ResultSetMappingDescriptorDefined(Set<SqlSelection> selections, List<DomainResult> domainResults) {
+		this.selections = selections;
+		this.domainResults = domainResults;
 	}
 
 	@Override
 	public ResultSetMapping resolve(
 			JdbcValuesMetadata jdbcResultsMetadata,
 			SessionFactoryImplementor sessionFactory) {
-		for ( SqlSelection sqlSelection : resolvedMapping.getSqlSelections() ) {
+
+		for ( SqlSelection sqlSelection : selections ) {
 			sqlSelection.prepare( jdbcResultsMetadata, sessionFactory );
 		}
 
-		return resolvedMapping;
+		return new StandardResultSetMapping( selections, domainResults );
 	}
 }

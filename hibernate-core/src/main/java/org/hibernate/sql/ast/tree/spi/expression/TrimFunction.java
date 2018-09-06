@@ -9,7 +9,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.spi.TrimSpecification;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 
 /**

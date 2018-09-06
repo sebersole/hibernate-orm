@@ -58,18 +58,20 @@ import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.TableGroupContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -276,17 +278,28 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		// none
+	}
+
+	@Override
 	public void visitNavigable(NavigableVisitationStrategy visitor) {
 		// todo (6.0) : not sure how visitation should work here
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
 		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public boolean isNullable() {
+		return false;
 	}
 
 	@Override
@@ -996,8 +1009,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 			ColumnReferenceQualifier lhs,
 			JoinType joinType,
 			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector joinCollector,
-			TableGroupContext tableGroupContext) {
+			TableReferenceJoinCollector joinCollector) {
 		throw new UnsupportedOperationException(  );
 	}
 

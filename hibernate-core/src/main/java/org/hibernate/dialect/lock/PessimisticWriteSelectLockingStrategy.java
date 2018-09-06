@@ -73,7 +73,8 @@ public class PessimisticWriteSelectLockingStrategy extends AbstractSelectLocking
 
 					final EntityIdentifier identifierDescriptor = getLockable().getHierarchy().getIdentifierDescriptor();
 					identifierDescriptor.dehydrate(
-							identifierDescriptor.unresolve( id, session ),
+//							identifierDescriptor.unresolve( id, session ),
+							id,
 							(jdbcValue, type, boundColumn) -> {
 								try {
 									type.getJdbcValueBinder().bind(

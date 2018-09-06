@@ -6,33 +6,31 @@
  */
 package org.hibernate.sql.results.internal;
 
-import org.hibernate.sql.results.spi.EntityInitializer;
+import org.hibernate.sql.results.spi.CompositeInitializer;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class EntityQueryResultAssembler implements QueryResultAssembler {
-	private final JavaTypeDescriptor javaTypeDescriptor;
-	private final EntityInitializer initializer;
+public class CompositeAssembler implements DomainResultAssembler {
+	private final CompositeInitializer initializer;
 
-	public EntityQueryResultAssembler(
-			JavaTypeDescriptor javaTypeDescriptor,
-			EntityInitializer initializer) {
-		this.javaTypeDescriptor = javaTypeDescriptor;
+
+	public CompositeAssembler(CompositeInitializer initializer) {
 		this.initializer = initializer;
 	}
 
 	@Override
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return javaTypeDescriptor;
+		return initializer.getEmbeddedDescriptor().getJavaTypeDescriptor();
 	}
 
 	@Override
 	public Object assemble(RowProcessingState rowProcessingState, JdbcValuesSourceProcessingOptions options) {
-		return initializer.getEntityInstance();
+		return initializer.getCompositeInstance();
 	}
+
 }
