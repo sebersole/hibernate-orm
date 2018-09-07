@@ -55,8 +55,6 @@ public abstract class AbstractEntityMappingNode extends AbstractFetchParent impl
 		}
 
 		// todo (6.0) : handle other special navigables such as row-id, tenant-id, etc
-
-		afterInitialize( creationState );
 	}
 
 	@Override

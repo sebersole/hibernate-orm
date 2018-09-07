@@ -42,6 +42,8 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 		this.fetchParent = fetchParent;
 
 		this.fetchStrategy = fetchStrategy;
+
+		afterInitialize( creationState );
 	}
 
 	@Override

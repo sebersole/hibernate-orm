@@ -6,21 +6,14 @@
  */
 package org.hibernate.sql.results.internal;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.results.spi.AssemblerCreationContext;
-import org.hibernate.sql.results.spi.AssemblerCreationState;
-import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.Initializer;
 
 /**
  * @author Steve Ebersole
@@ -70,21 +63,5 @@ public abstract class AbstractFetchParent implements FetchParent {
 		}
 
 		return null;
-	}
-
-	protected void registerFetchInitializers(
-			FetchParentAccess parentAccess,
-			Consumer<Initializer> collector,
-			AssemblerCreationContext creationContext,
-			AssemblerCreationState creationState) {
-		if ( fetches == null ) {
-			return;
-		}
-
-		final List<DomainResultAssembler> fetchAssemblers = new ArrayList<>();
-
-		for ( Fetch fetch : fetches ) {
-			fetchAssemblers.add( fetch.createAssembler( parentAccess, collector, creationContext, creationState ) );
-		}
 	}
 }

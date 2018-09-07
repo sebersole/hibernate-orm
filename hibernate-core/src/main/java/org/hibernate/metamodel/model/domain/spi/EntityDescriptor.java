@@ -706,4 +706,9 @@ public interface EntityDescriptor<T>
 
 	@Remove
 	CascadeStyle[] getPropertyCascadeStyles();
+
+	default boolean isSubselectLoadable() {
+		// legacy Hibernate behavior is to not allow subselect fetching for entities
+		return false;
+	}
 }

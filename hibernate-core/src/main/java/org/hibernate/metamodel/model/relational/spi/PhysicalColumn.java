@@ -143,7 +143,7 @@ public class PhysicalColumn implements Column {
 
 	@Override
 	public String toLoggableString() {
-		return "PhysicalColumn(" + name + ");";
+		return toString();
 	}
 
 	public String getDefaultValue() {

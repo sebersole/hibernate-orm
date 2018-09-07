@@ -126,6 +126,8 @@ public class MetamodelSelectBuilderProcess
 
 	private final QuerySpec rootQuerySpec = new QuerySpec( true );
 
+	private final SqlAliasBaseManager sqlAliasBaseManager = new SqlAliasBaseManager();
+
 	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
 	private final Stack<ColumnReferenceQualifier> columnReferenceQualifierStack = new StandardStack<>();
@@ -381,6 +383,11 @@ public class MetamodelSelectBuilderProcess
 	@Override
 	public Stack<NavigableReference> getNavigableReferenceStack() {
 		return navigableReferenceStack;
+	}
+
+	@Override
+	public SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
+		return sqlAliasBaseManager;
 	}
 
 	// todo (6.0) : seems like this entire thing can be centralized and used in all SQL AST generation processes to handle fetches
