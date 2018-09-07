@@ -37,6 +37,8 @@ public class EntityResultImpl extends AbstractEntityMappingNode implements Entit
 			DomainResultCreationState creationState) {
 		super( navigable, lockMode, navigablePath, creationContext, creationState );
 		this.resultVariable = resultVariable;
+
+		afterInitialize( creationState );
 	}
 
 	public EntityValuedNavigable getNavigable() {
@@ -75,7 +77,6 @@ public class EntityResultImpl extends AbstractEntityMappingNode implements Entit
 		);
 
 		collector.accept( initializer );
-		registerFetchInitializers( initializer, collector, creationContext, creationOptions );
 
 		return assembler;
 	}

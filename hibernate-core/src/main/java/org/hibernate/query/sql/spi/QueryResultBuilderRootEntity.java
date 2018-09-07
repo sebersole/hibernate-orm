@@ -169,6 +169,8 @@ public class QueryResultBuilderRootEntity
 
 			this.entityDescriptor = entityDescriptor;
 			this.queryResultVariable = queryResultVariable;
+
+			afterInitialize( creationState );
 		}
 
 		@Override

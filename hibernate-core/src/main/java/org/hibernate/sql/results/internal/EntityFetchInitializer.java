@@ -45,15 +45,4 @@ public class EntityFetchInitializer extends AbstractEntityInitializer {
 		// the fetched entity
 		super.finishUpRow( rowProcessingState );
 	}
-
-	@Override
-	protected boolean shouldBatchFetch() {
-		// todo (6.0) : implement this.
-		// 		e.g. by adding a method to SingularAttributeEntity to see if it is
-		//			a reference to the owner's pk or not
-
-		//return !getEntityReference().getFetchedAttributeDescriptor().isReferenceToNonPk();
-
-		throw new NotYetImplementedFor6Exception(  );
-	}
 }

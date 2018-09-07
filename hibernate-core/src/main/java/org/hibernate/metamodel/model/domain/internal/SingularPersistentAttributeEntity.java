@@ -32,6 +32,7 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.loader.internal.StandardSingleUniqueKeyEntityLoader;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
+import org.hibernate.mapping.ManyToOne;
 import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
@@ -71,9 +72,9 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
@@ -93,8 +94,10 @@ import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
+import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -113,6 +116,7 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	private final SingularAttributeClassification classification;
 	private final PersistentAttributeType persistentAttributeType;
+	private final boolean isLogicalOneToOne;
 	private final boolean constrained;
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
@@ -166,10 +170,14 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 
 		if ( MANY_TO_ONE.equals( classification ) ) {
-			persistentAttributeType = PersistentAttributeType.MANY_TO_ONE;
+			isLogicalOneToOne = ( (ManyToOne) bootModelAttribute.getValueMapping() ).isLogicalOneToOne();
+			persistentAttributeType = isLogicalOneToOne
+					? PersistentAttributeType.ONE_TO_ONE
+					: PersistentAttributeType.MANY_TO_ONE;
 			constrained = true;
 		}
 		else {
+			isLogicalOneToOne = false;
 			persistentAttributeType = PersistentAttributeType.ONE_TO_ONE;
 			constrained = ( (OneToOne) valueMapping ).isConstrained();
 		}
@@ -334,6 +342,33 @@ public class SingularPersistentAttributeEntity<O,J>
 	}
 
 	@Override
+	public ForeignKeyDirection getForeignKeyDirection() {
+		/// todo (6.0) : calculate this and cache as state
+
+		switch ( getAttributeTypeClassification() ) {
+			case MANY_TO_ONE: {
+				return isLogicalOneToOne
+						? ForeignKeyDirection.FROM_PARENT
+						: ForeignKeyDirection.TO_PARENT;
+			}
+			case ONE_TO_ONE: {
+				return constrained
+						? ForeignKeyDirection.TO_PARENT
+						: ForeignKeyDirection.FROM_PARENT;
+
+			}
+			case ANY: {
+				return ForeignKeyDirection.FROM_PARENT;
+			}
+		}
+
+		throw new HibernateException(
+				"Unexpected classification [" + getAttributeTypeClassification() +
+						"] found in entity-valued attribute descriptor"
+		);
+	}
+
+	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchStrategy fetchStrategy,
@@ -341,6 +376,12 @@ public class SingularPersistentAttributeEntity<O,J>
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
+
+		// types of entity fetches:
+		//		1) joined
+		//		2) lazy
+		//		3) selected
+
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
 		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
@@ -349,12 +390,72 @@ public class SingularPersistentAttributeEntity<O,J>
 			}
 		}
 
+		if ( fetchStrategy.getTiming() == FetchTiming.IMMEDIATE && fetchStrategy.getStyle() == FetchStyle.JOIN ) {
+
+		}
+		final boolean isOneToOne = getAttributeTypeClassification() == ONE_TO_ONE
+				|| isLogicalOneToOne;
+
+
+		if ( fetchStrategy.getTiming() == FetchTiming.DELAYED ) {
+			// make sure the entity can be lazily loaded
+
+			// todo (6.0) : need general laziness metadata - currently only done for entity
+			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityDescriptor<?>
+					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
+
+			final boolean cannotBeLazy = ( isOneToOne && isOptional() ) || isContainerEnhancedForLazy;
+
+			if ( cannotBeLazy ) {
+				// it can't
+				FetchStyle fetchStyle = FetchStyle.SELECT;
+				if ( getEntityDescriptor().isSubselectLoadable() ) {
+					fetchStyle = FetchStyle.SUBSELECT;
+				}
+				else if ( getEntityDescriptor().isBatchLoadable() ) {
+					fetchStyle = FetchStyle.BATCH;
+				}
+				fetchStrategy = new FetchStrategy( FetchTiming.IMMEDIATE, fetchStyle );
+			}
+		}
+
 		if ( fetchStrategy.getTiming() == FetchTiming.DELAYED ) {
 			// for delayed fetching, use a specialized Fetch impl
+
+			// need to:
+			//		1) if based on a FK, add FK column selections to SQL AST
+			//		2)
+
+			// make sure columns for the FK, if one, are added to the SQL AST as selections
+			final SqlExpressionResolver sqlExpressionResolver = creationState.getSqlExpressionResolver();
+			final List<SqlSelection> sqlSelections = new ArrayList<>();
+
+			for ( ColumnMappings.ColumnMapping columnMapping : getForeignKey().getColumnMappings().getColumnMappings() ) {
+				final Column column;
+				if ( getForeignKeyDirection() == ForeignKeyDirection.TO_PARENT ) {
+					column = columnMapping.getReferringColumn();
+				}
+				else {
+					column = columnMapping.getTargetColumn();
+				}
+
+				sqlSelections.add(
+						sqlExpressionResolver.resolveSqlSelection(
+								sqlExpressionResolver.resolveSqlExpression(
+										creationState.getColumnReferenceQualifierStack().getCurrent(),
+										column
+								),
+								column.getJavaTypeDescriptor(),
+								creationContext.getSessionFactory().getTypeConfiguration()
+						)
+				);
+			}
+
 			return new DelayedEntityFetch(
 					fetchParent,
 					this,
-					fetchStrategy
+					fetchStrategy,
+					new ForeignKeyDomainResult( null, sqlSelections )
 			);
 		}
 
@@ -398,6 +499,24 @@ public class SingularPersistentAttributeEntity<O,J>
 		finally {
 			creationState.getColumnReferenceQualifierStack().pop();
 			creationState.getNavigableReferenceStack().pop();
+		}
+	}
+
+	@Override
+	public Object extractDelayedFetchKey(
+			FetchParentAccess parentAccess,
+			SharedSessionContractImplementor session) {
+		final Object association = getPropertyAccess().getGetter().get( parentAccess.getFetchParentInstance() );
+		if ( association == null ) {
+			return null;
+		}
+
+		if ( referencedAttributeName == null ) {
+			return entityDescriptor.getHierarchy().getIdentifierDescriptor().extractIdentifier( association, session );
+		}
+		else {
+			final NonIdPersistentAttribute referencedAttribute = entityDescriptor.findPersistentAttribute( referencedAttributeName );
+			return referencedAttribute.getPropertyAccess().getGetter().get( association );
 		}
 	}
 
@@ -638,7 +757,9 @@ public class SingularPersistentAttributeEntity<O,J>
 					tableReferenceJoins,
 					lhs
 			);
-			return new TableGroupJoin( joinType, joinedTableGroup, predicate );
+			final TableGroupJoin tableGroupJoin = new TableGroupJoin( joinType, joinedTableGroup, predicate );
+//			tableSpace.addJoinedTableGroup( tableGroupJoin );
+			return tableGroupJoin;
 		}
 	}
 

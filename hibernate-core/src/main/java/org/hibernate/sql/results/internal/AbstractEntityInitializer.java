@@ -168,13 +168,6 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		return entityInstance;
 	}
 
-	/**
-	 * Should we consider this entity reference batchable?
-	 */
-	protected boolean shouldBatchFetch() {
-		return true;
-	}
-
 	// From CollectionType.
 	//		todo : expose CollectionType#NOT_NULL_COLLECTION as public
 	private static final Object NOT_NULL_COLLECTION = new MarkerObject( "NOT NULL COLLECTION" );
@@ -270,7 +263,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		this.entityKey = new EntityKey( id, concreteDescriptor.getEntityDescriptor() );
 
 		//		3) schedule the EntityKey for batch loading, if possible
-		if ( shouldBatchFetch() && concreteDescriptor.getEntityDescriptor().isBatchLoadable() ) {
+		if ( concreteDescriptor.getEntityDescriptor().isBatchLoadable() ) {
 			if ( !session.getPersistenceContext().containsEntity( entityKey ) ) {
 				session.getPersistenceContext().getBatchFetchQueue().addBatchLoadableEntityKey( entityKey );
 			}

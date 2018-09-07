@@ -6,13 +6,12 @@
  */
 package org.hibernate.sql.results.internal;
 
-import java.util.function.Function;
-
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
-import org.hibernate.sql.results.spi.EntityMappingNode;
 import org.hibernate.sql.results.spi.FetchParentAccess;
+import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
@@ -21,17 +20,17 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 public class DelayedEntityFetchInitializer implements EntityInitializer {
 	private final EntityValuedNavigable fetchedNavigable;
 	private final FetchParentAccess parentAccess;
-	private final Function<Object, Object> fkValueExtractor;
+	private final DomainResultAssembler fkValueAssembler;
 
 	private Object entityInstance;
 
 	protected DelayedEntityFetchInitializer(
 			EntityValuedNavigable fetchedNavigable,
 			FetchParentAccess parentAccess,
-			Function<Object,Object> fkValueExtractor) {
+			DomainResultAssembler fkValueAssembler) {
 		this.fetchedNavigable = fetchedNavigable;
 		this.parentAccess = parentAccess;
-		this.fkValueExtractor = fkValueExtractor;
+		this.fkValueAssembler = fkValueAssembler;
 	}
 
 	@Override
@@ -51,9 +50,11 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 
 	@Override
 	public void resolve(RowProcessingState rowProcessingState) {
+		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
+
 		if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
 			entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
-					fkValueExtractor.apply( parentAccess.getFetchParentInstance() ),
+					fkValueAssembler.assemble( rowProcessingState, processingOptions ),
 					rowProcessingState.getSession()
 			);
 		}

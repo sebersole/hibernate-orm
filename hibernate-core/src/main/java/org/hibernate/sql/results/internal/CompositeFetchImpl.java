@@ -86,8 +86,6 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 				creationState
 		);
 
-		registerFetchInitializers( initializer, collector, context, creationState );
-
 		collector.accept( initializer );
 
 		return new CompositeAssembler( initializer );

@@ -37,6 +37,7 @@ import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
@@ -137,6 +138,11 @@ public class SqmSelectToSqlAstConverter
 	}
 
 	@Override
+	public SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
+		return getSqlAliasBaseManager();
+	}
+
+	@Override
 	public LockOptions getLockOptions() {
 		return getQueryOptions().getLockOptions();
 	}
@@ -185,6 +191,7 @@ public class SqmSelectToSqlAstConverter
 	}
 
 
+	// select o from Order o join fetch o.customer
 
 	@Override
 	public Void visitSelection(SqmSelection sqmSelection) {
@@ -222,8 +229,6 @@ public class SqmSelectToSqlAstConverter
 		final List<Fetch> fetches = new ArrayList();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			// todo (6.0) : handle fetch-depth here?  seems like a logical place
-
 			LockMode lockMode = LockMode.READ;
 			FetchStrategy fetchStrategy = null;
 
@@ -244,7 +249,6 @@ public class SqmSelectToSqlAstConverter
 				fetchStrategy = fetchable.getMappedFetchStrategy();
 			}
 
-			// todo (6.0) : we need to stack and expose information needed for
 			fetches.add(
 					fetchable.generateFetch(
 							fetchParent,

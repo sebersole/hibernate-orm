@@ -29,17 +29,33 @@ import org.hibernate.sql.results.spi.Initializer;
  * @author Steve Ebersole
  */
 public class DelayedEntityFetch implements EntityFetch {
+	// fetch is one-to-one (#other - SimpleEntity)
+	// fetchParent is the root EntityWithOneToOne reference
+
+	// we have access to the parent instance
+	// we need to be able to ask the fetched-navigable to
+	// be able to extract the "key value" from that parent
+	// instance
+
+	// so in terms of EntityWithOneToOne... we need to be able to
+	// ask EntityWithOneToOne#other (the EntityValuedNavigable)
+	// via Fetchable for the key to load Simple later (by UK or PK?)
+	// key given the FetchParentAccess or parent instance
+
 	private final FetchParent fetchParent;
 	private final EntityValuedNavigable fetchedNavigable;
 	private final FetchStrategy fetchStrategy;
+	private final DomainResult fkResult;
 
 	public DelayedEntityFetch(
 			FetchParent fetchParent,
 			EntityValuedNavigable fetchedNavigable,
-			FetchStrategy fetchStrategy) {
+			FetchStrategy fetchStrategy,
+			DomainResult fkResult) {
 		this.fetchParent = fetchParent;
 		this.fetchedNavigable = fetchedNavigable;
 		this.fetchStrategy = fetchStrategy;
+		this.fkResult = fkResult;
 	}
 
 	@Override
@@ -103,10 +119,7 @@ public class DelayedEntityFetch implements EntityFetch {
 		final EntityInitializer initializer = new DelayedEntityFetchInitializer(
 				fetchedNavigable,
 				parentAccess,
-				parent -> fetchedNavigable.getEntityDescriptor()
-						.getHierarchy()
-						.getIdentifierDescriptor()
-						.extractIdentifier( parent, null )
+				fkResult.createResultAssembler( collector, creationState, creationContext )
 		);
 
 		collector.accept( initializer );
