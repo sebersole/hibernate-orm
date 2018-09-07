@@ -8,10 +8,12 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 
 /**
  * Contract for fetches including entity, collection and composite.  Acts as the
