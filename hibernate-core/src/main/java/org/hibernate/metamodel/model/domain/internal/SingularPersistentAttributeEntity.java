@@ -463,19 +463,19 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
 
+		final TableGroupJoin tableGroupJoin = createTableGroupJoin(
+				creationState.getSqlAliasBaseGenerator(),
+				creationState.getColumnReferenceQualifierStack().getCurrent(),
+				navigablePath,
+				isNullable() ? JoinType.LEFT : JoinType.INNER,
+				resultVariable,
+				lockMode,
+				creationState.getCurrentTableSpace()
+		);
 		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
 		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
 		if ( navigableReference == null ) {
 			// this creates the SQL AST join(s) in the from clause
-			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
-					creationState.getSqlAliasBaseGenerator(),
-					creationState.getColumnReferenceQualifierStack().getCurrent(),
-					navigablePath,
-					isNullable() ? JoinType.LEFT : JoinType.INNER,
-					resultVariable,
-					lockMode,
-					creationState.getCurrentTableSpace()
-			);
 			navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
 		}
 
@@ -493,7 +493,8 @@ public class SingularPersistentAttributeEntity<O,J>
 					fetchParent.getNavigablePath().append( getNavigableName() ),
 					fetchStrategy,
 					creationContext,
-					creationState
+					creationState,
+					tableGroupJoin
 			);
 		}
 		finally {

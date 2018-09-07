@@ -67,8 +67,10 @@ import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
+import org.hibernate.sql.results.internal.EntityFetchImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.EntityResult;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 
@@ -178,7 +180,7 @@ public class MetamodelSelectBuilderProcess
 
 		final List<DomainResult> domainResults;
 
-		if ( navigablesToSelect != null && ! navigablesToSelect.isEmpty() ) {
+		if ( navigablesToSelect != null && !navigablesToSelect.isEmpty() ) {
 			domainResults = new ArrayList<>();
 			for ( Navigable navigable : navigablesToSelect ) {
 				final NavigableReference navigableReference = makeNavigableReference( rootTableGroup, navigable );
@@ -215,6 +217,17 @@ public class MetamodelSelectBuilderProcess
 			domainResults = Collections.singletonList( domainResult );
 		}
 
+		domainResults.forEach( result -> {
+			if ( result instanceof EntityResult ) {
+				( (EntityResult) result ).getFetches().forEach( fetch -> {
+					if ( fetch instanceof EntityFetchImpl ) {
+						tableGroupStack.getCurrent()
+								.getTableSpace()
+								.addJoinedTableGroup( ( (EntityFetchImpl) fetch ).getTableGroupJoin() );
+					}
+				} );
+			}
+		} );
 
 		// add the id/uk/fk restriction
 

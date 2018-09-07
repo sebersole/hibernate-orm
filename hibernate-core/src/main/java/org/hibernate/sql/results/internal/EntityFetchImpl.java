@@ -13,6 +13,8 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
@@ -21,7 +23,6 @@ import org.hibernate.sql.results.spi.EntityFetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.AssemblerCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -29,6 +30,7 @@ import org.hibernate.sql.results.spi.AssemblerCreationContext;
 public class EntityFetchImpl extends AbstractEntityMappingNode implements EntityFetch {
 	private final FetchParent fetchParent;
 	private final FetchStrategy fetchStrategy;
+	private final TableGroupJoin tableGroupJoin;
 
 	public EntityFetchImpl(
 			FetchParent fetchParent,
@@ -37,11 +39,13 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 			NavigablePath navigablePath,
 			FetchStrategy fetchStrategy,
 			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState,
+			TableGroupJoin tableGroupJoin) {
 		super( fetchedNavigable, lockMode, navigablePath, creationContext, creationState );
 		this.fetchParent = fetchParent;
 
 		this.fetchStrategy = fetchStrategy;
+		this.tableGroupJoin = tableGroupJoin;
 
 		afterInitialize( creationState );
 	}
@@ -63,7 +67,7 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 
 	@Override
 	public boolean isNullable() {
-		throw new NotYetImplementedFor6Exception(  );
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
@@ -84,5 +88,9 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 		collector.accept( initializer );
 
 		return new EntityAssembler( getEntityDescriptor().getJavaTypeDescriptor(), initializer );
+	}
+
+	public TableGroupJoin getTableGroupJoin() {
+		return tableGroupJoin;
 	}
 }
