@@ -6,10 +6,16 @@
  */
 package org.hibernate.loader.spi;
 
+import org.hibernate.metamodel.model.domain.spi.Navigable;
+
 /**
  * Common contract for all loader subtypes.
  *
  * @author Steve Ebersole
  */
-public interface Loader {
+public interface Loader<T> {
+	/**
+	 * The type of Navigable loaded by this loader
+	 */
+	Navigable<T> getLoadedNavigable();
 }

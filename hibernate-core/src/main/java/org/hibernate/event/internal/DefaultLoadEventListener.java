@@ -508,7 +508,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final LoadEvent event,
 			final EntityDescriptor entityDescriptor) {
 		Object entity = entityDescriptor.getSingleIdLoader()
-				.load( event.getEntityId(), event, event.getSession() );
+				.load( event.getEntityId(), event.getLockOptions(), event.getSession() );
 
 		if ( event.isAssociationFetch() && event.getSession().getFactory().getStatistics().isStatisticsEnabled() ) {
 			event.getSession().getFactory().getStatistics().fetchEntity( event.getEntityClassName() );

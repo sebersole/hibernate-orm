@@ -18,10 +18,7 @@ import org.hibernate.query.NavigablePath;
  * @author Steve Ebersole
  */
 public interface FetchParent {
-	/**
-	 * Access to the NavigableContainer that contains the Navigable being fetched.
-	 */
-	NavigableContainer getFetchContainer();
+	NavigableContainer getNavigableContainer();
 
 	/**
 	 * Get the property path to this parent

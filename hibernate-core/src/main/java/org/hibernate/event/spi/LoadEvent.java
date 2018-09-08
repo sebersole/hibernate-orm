@@ -9,14 +9,13 @@ package org.hibernate.event.spi;
 import org.hibernate.AssertionFailure;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
-import org.hibernate.loader.spi.SingleIdEntityLoader;
 
 /**
  *  Defines an event class for the loading of an entity.
  *
  * @author Steve Ebersole
  */
-public class LoadEvent extends AbstractEvent implements SingleIdEntityLoader.LoadOptions {
+public class LoadEvent extends AbstractEvent {
 
 	public static final LockMode DEFAULT_LOCK_MODE = LockMode.NONE;
 
@@ -121,7 +120,6 @@ public class LoadEvent extends AbstractEvent implements SingleIdEntityLoader.Loa
 		this.entityClassName = entityClassName;
 	}
 
-	@Override
 	public Object getInstanceToLoad() {
 		return instanceToLoad;
 	}
@@ -130,7 +128,6 @@ public class LoadEvent extends AbstractEvent implements SingleIdEntityLoader.Loa
 		this.instanceToLoad = instanceToLoad;
 	}
 
-	@Override
 	public LockOptions getLockOptions() {
 		return lockOptions;
 	}

@@ -28,7 +28,6 @@ import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.id.IdentifierGeneratorHelper;
-import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
@@ -174,24 +173,12 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	public Object get(String entityName, Object id, LockMode lockMode) {
 		checkOpen();
 
-		final SingleIdEntityLoader.LoadOptions loadOptions = new SingleIdEntityLoader.LoadOptions() {
-			final LockOptions lockOptions = new LockOptions( getNullSafeLockMode( lockMode ) );
-
-			@Override
-			public LockOptions getLockOptions() {
-				return lockOptions;
-			}
-
-			@Override
-			public Object getInstanceToLoad() {
-				return null;
-			}
-		};
+		final LockOptions lockOptions = new LockOptions( getNullSafeLockMode( lockMode ) );
 
 		final Object result = getFactory().getMetamodel()
 				.findEntityDescriptor( entityName )
 				.getSingleIdLoader()
-				.load( id, loadOptions, this );
+				.load( id, lockOptions, this );
 
 		if ( temporaryPersistenceContext.isLoadFinished() ) {
 			temporaryPersistenceContext.clear();
@@ -250,18 +237,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 		final Object result ;
 		try {
 			final LockOptions lockOptions = new LockOptions( getNullSafeLockMode( lockMode ) );
-			final SingleIdEntityLoader.LoadOptions loadOptions = new SingleIdEntityLoader.LoadOptions() {
-				@Override
-				public LockOptions getLockOptions() {
-					return lockOptions;
-				}
-
-				@Override
-				public Object getInstanceToLoad() {
-					return entity;
-				}
-			};
-			result = entityDescriptor.getSingleIdLoader().load( id, loadOptions, this );
+			result = entityDescriptor.getSingleIdLoader().load( id, lockOptions, this );
 		}
 		finally {
 			getLoadQueryInfluencers().setEnabledInternalFetchProfileType( previouslyEnabledInternalFetchProfileType );

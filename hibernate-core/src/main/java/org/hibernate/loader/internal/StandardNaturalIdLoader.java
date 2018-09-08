@@ -18,6 +18,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.SqlExpressableType;
@@ -214,6 +215,11 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 	@Override
 	public Object load(Object naturalIdToLoad, LoadOptions options, SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public EntityDescriptor getLoadedNavigable() {
+		return entityDescriptor;
 	}
 
 //		if ( log.isTraceEnabled() ) {

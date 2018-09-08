@@ -10,7 +10,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -51,7 +51,7 @@ public class CollectionIdentifier implements DomainResultProducer {
 			DomainResultCreationState creationState) {
 		final SqlExpressionResolver sqlExpressionResolver = creationState.getSqlExpressionResolver();
 
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				sqlExpressionResolver.resolveSqlSelection(
 						sqlExpressionResolver.resolveSqlExpression(

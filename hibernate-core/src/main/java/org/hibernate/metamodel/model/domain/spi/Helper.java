@@ -19,16 +19,18 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public class Helper {
+	private static final Logger log = Logger.getLogger( Helper.class );
+
 	public static FetchStrategy determineFetchStrategy(
 			PersistentAttributeMapping bootModelAttribute,
 			ManagedTypeDescriptor runtimeModelContainer,
 			EntityDescriptor entityDescriptor) {
+		final FetchTiming fetchTiming = determineTiming( bootModelAttribute, runtimeModelContainer, entityDescriptor );
 
 		// todo (6.0) : implement this
 		// 		for now, always assume LAZY
 		return new FetchStrategy( FetchTiming.DELAYED, FetchStyle.SELECT );
 
-//		final FetchTiming fetchTiming = determineTiming( bootModelAttribute, entityDescriptor );
 //		return new FetchStrategy(
 //				fetchTiming,
 //				determineStyle( bootModelAttribute, entityDescriptor, fetchTiming )
@@ -37,17 +39,22 @@ public class Helper {
 
 	private static FetchTiming determineTiming(
 			PersistentAttributeMapping bootModelAttribute,
+			ManagedTypeDescriptor runtimeModelContainer,
 			EntityDescriptor entityDescriptor) {
+		if ( runtimeModelContainer instanceof EntityDescriptor ) {
+			final EntityDescriptor container = (EntityDescriptor) runtimeModelContainer;
+			if ( ! container.hasProxy() && ! container.getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
+				return FetchTiming.IMMEDIATE;
+			}
+		}
+
 		if ( bootModelAttribute.isLazy() ) {
 			return FetchTiming.DELAYED;
 		}
 
-		// todo (6.0) : account for bytecode lazy loading (from the attribute's container)
-
 		return FetchTiming.IMMEDIATE;
 	}
 
-	private static final Logger log = Logger.getLogger( Helper.class );
 
 	private static FetchStyle determineStyle(
 			PersistentAttributeMapping bootModelAttribute,

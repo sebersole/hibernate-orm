@@ -33,6 +33,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -55,9 +56,8 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
@@ -83,16 +83,20 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 //		selectByLockMode.put( LockMode.READ, base );
 	}
 
+	@Override
+	public EntityDescriptor<T> getLoadedNavigable() {
+		return entityDescriptor;
+	}
 
 	@Override
-	public T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session) {
+	public T load(Object id, LockOptions lockOptions, SharedSessionContractImplementor session) {
 		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
 				session.getFactory(),
 				id
 		);
 
 		final JdbcSelect jdbcSelect = resolveJdbcSelect(
-				loadOptions.getLockOptions(),
+				lockOptions,
 				session
 		);
 
@@ -165,7 +169,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			return null;
 		}
 
-		return list.get( 0 );
+		final T entityInstance = list.get( 0 );
+		return entityInstance;
 	}
 
 	private JdbcSelect resolveJdbcSelect(
@@ -333,7 +338,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				expression -> expression,
 				(expression, sqlSelection) -> {
 					domainResults.add(
-							new ScalarResultImpl(
+							new BasicResultImpl(
 									null,
 									sqlSelection,
 									expression.getType()

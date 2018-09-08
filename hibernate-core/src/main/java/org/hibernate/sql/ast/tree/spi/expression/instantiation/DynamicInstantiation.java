@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.query.sqm.tree.expression.Compatibility;
 import org.hibernate.sql.ast.produce.ConversionException;
-import org.hibernate.sql.results.internal.DynamicInstantiationResultImpl;
+import org.hibernate.sql.results.internal.domain.DynamicInstantiationResultImpl;
 import org.hibernate.sql.results.internal.instantiation.ArgumentReader;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationConstructorAssemblerImpl;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationInjectionAssemblerImpl;

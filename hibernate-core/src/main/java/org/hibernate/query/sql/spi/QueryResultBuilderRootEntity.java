@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.NativeQuery;
@@ -24,16 +25,16 @@ import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
-import org.hibernate.sql.results.internal.AbstractEntityMappingNode;
-import org.hibernate.sql.results.internal.EntityAssembler;
-import org.hibernate.sql.results.internal.EntityRootInitializer;
+import org.hibernate.sql.results.internal.domain.entity.AbstractEntityMappingNode;
+import org.hibernate.sql.results.internal.domain.entity.EntityAssembler;
+import org.hibernate.sql.results.internal.domain.entity.EntityRootInitializer;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.EntityResult;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.DomainResultAssembler;
-import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -174,7 +175,7 @@ public class QueryResultBuilderRootEntity
 		}
 
 		@Override
-		public EntityDescriptor getEntityDescriptor() {
+		public EntityValuedNavigable getEntityValuedNavigable() {
 			return entityDescriptor;
 		}
 
@@ -191,6 +192,9 @@ public class QueryResultBuilderRootEntity
 			final EntityRootInitializer initializer = new EntityRootInitializer(
 					this,
 					LockMode.READ,
+					null,
+					null,
+					null,
 					initializerCollector,
 					creationContext,
 					creationOptions

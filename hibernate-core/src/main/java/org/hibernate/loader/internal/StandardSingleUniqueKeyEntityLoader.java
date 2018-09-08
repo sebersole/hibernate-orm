@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.engine.spi.EntityUniqueKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -53,15 +54,41 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 	}
 
 	@Override
+	public EntityDescriptor getLoadedNavigable() {
+		return entityDescriptor;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public T load(
 			Object uk,
-			SharedSessionContractImplementor session,
-			Options options) {
+			LockOptions lockOptions,
+			SharedSessionContractImplementor session) {
+		if ( uk == null ) {
+			return null;
+		}
 
-		final JdbcSelect jdbcSelect = resolveJdbcSelect(
-				options.getLockOptions(),
-				session
+		final EntityUniqueKey pcKey = new EntityUniqueKey(
+				entityDescriptor.getEntityName(),
+				propertyName,
+				uk,
+				entityDescriptor.getIdentifierDescriptor().getJavaTypeDescriptor(),
+				entityDescriptor.getHierarchy().getRepresentation(),
+				entityDescriptor.getFactory()
 		);
+
+
+		// is there already one associated with the Session?  Use it..
+		final Object existingEntityInstance = session.getPersistenceContext().getEntity( pcKey );
+		if ( existingEntityInstance != null ) {
+			return (T) existingEntityInstance;
+		}
+
+		return loadEntity( uk, lockOptions, session );
+	}
+
+	private T loadEntity(Object uk, LockOptions lockOptions, SharedSessionContractImplementor session) {
+		final JdbcSelect jdbcSelect = resolveJdbcSelect( lockOptions, session );
 
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 
@@ -69,7 +96,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
 
 		attribute.dehydrate(
-				attribute.extractFkValue( uk, session ),
+				uk,
 				(jdbcValue, type, boundColumn) -> {
 					jdbcParameterBindings.addBinding(
 							new StandardJdbcParameterImpl(
