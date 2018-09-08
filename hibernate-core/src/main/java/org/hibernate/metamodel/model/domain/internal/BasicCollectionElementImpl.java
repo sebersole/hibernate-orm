@@ -26,7 +26,7 @@ import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -107,7 +107,7 @@ public class BasicCollectionElementImpl<J>
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
 		assert this.equals( navigableReference.getNavigable() );
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						creationState.getSqlExpressionResolver().resolveSqlExpression(

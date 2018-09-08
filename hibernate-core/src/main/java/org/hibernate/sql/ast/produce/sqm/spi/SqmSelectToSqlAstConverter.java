@@ -255,14 +255,13 @@ public class SqmSelectToSqlAstConverter
 							fetchStrategy,
 							lockMode,
 							null,
-							SqmSelectToSqlAstConverter.this,
-							SqmSelectToSqlAstConverter.this
+							SqmSelectToSqlAstConverter.this, SqmSelectToSqlAstConverter.this
 					)
 			);
 		};
 
-		( ( NavigableContainer<?>) fetchParent.getFetchContainer() ).visitKeyFetchables( fetchableConsumer );
-		( ( NavigableContainer<?>) fetchParent.getFetchContainer() ).visitFetchables( fetchableConsumer );
+		( ( NavigableContainer<?>) fetchParent.getNavigableContainer() ).visitKeyFetchables( fetchableConsumer );
+		( ( NavigableContainer<?>) fetchParent.getNavigableContainer() ).visitFetchables( fetchableConsumer );
 
 		return fetches;
 	}

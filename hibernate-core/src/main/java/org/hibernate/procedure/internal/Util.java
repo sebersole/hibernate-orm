@@ -23,8 +23,8 @@ import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.sql.spi.ResolvingSqlSelectionImpl;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.internal.EntityResultImpl;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.entity.EntityResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -152,7 +152,7 @@ public class Util {
 			);
 
 			resultConsumer.accept(
-					new ScalarResultImpl(
+					new BasicResultImpl(
 							null,
 							new ResolvingSqlSelectionImpl( 1, sqlExpressableType ),
 							sqlExpressableType

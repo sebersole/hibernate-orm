@@ -29,7 +29,6 @@ import org.hibernate.event.spi.RefreshEvent;
 import org.hibernate.event.spi.RefreshEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.loader.internal.StandardLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
@@ -205,9 +204,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 			}
 		}
 
-		final StandardLoadOptions loadOptions = new StandardLoadOptions( lockOptionsToUse, object );
-
-		final Object result = entityDescriptor.getSingleIdLoader().load( id, loadOptions, source );
+		final Object result = entityDescriptor.getSingleIdLoader().load( id, lockOptionsToUse, source );
 
 		if ( result != null ) {
 			// apply `postRefreshLockMode`, if needed

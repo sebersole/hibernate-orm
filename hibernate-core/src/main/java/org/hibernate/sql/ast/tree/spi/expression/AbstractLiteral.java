@@ -14,7 +14,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
@@ -84,7 +84,7 @@ public abstract class AbstractLiteral
 
 		// todo (6.0) : consider just returning the literal value back directly
 
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,

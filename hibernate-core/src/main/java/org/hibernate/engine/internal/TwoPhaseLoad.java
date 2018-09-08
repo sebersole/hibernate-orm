@@ -116,7 +116,7 @@ public final class TwoPhaseLoad {
 //			final SharedSessionContractImplementor session,
 //			final PreLoadEvent preLoadEvent) {
 //
-//		// todo (6.0) : see org.hibernate.sql.results.internal.AbstractEntityInitializer#resolve
+//		// todo (6.0) : see org.hibernate.sql.results.internal.domain.entity.AbstractEntityInitializer#resolve
 //
 //		final PersistenceContext persistenceContext = session.getPersistenceContext();
 //		final EntityEntry entityEntry = persistenceContext.getEntry( entity );

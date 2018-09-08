@@ -631,7 +631,13 @@ public abstract class BaseSqmToSqlAstConverter
 		tableGroupStack.push( tableGroupJoin.getJoinedGroup() );
 		fromClauseIndex.crossReference( joinedFromElement, tableGroupJoin.getJoinedGroup() );
 
-		navigableReferenceStack.push( tableGroupJoin.getJoinedGroup().getNavigableReference() );
+		final NavigableReference navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+		if ( ! navigableReferenceStack.isEmpty() ) {
+			final NavigableReference parent = navigableReferenceStack.getCurrent();
+			assert parent instanceof NavigableContainerReference;
+			( (NavigableContainerReference) parent ).addNavigableReference( navigableReference );
+			navigableReferenceStack.push( navigableReference );
+		}
 
 		return tableGroupJoin;
 	}

@@ -39,7 +39,7 @@ import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
+import org.hibernate.sql.results.internal.domain.embedded.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;

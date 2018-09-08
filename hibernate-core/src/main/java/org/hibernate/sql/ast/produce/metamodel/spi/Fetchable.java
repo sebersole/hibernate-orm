@@ -26,8 +26,7 @@ public interface Fetchable<T> extends Joinable<T> {
 			FetchParent fetchParent,
 			FetchStrategy fetchStrategy,
 			LockMode lockMode, String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState);
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext);
 
 	default Object extractDelayedFetchKey(
 			FetchParentAccess parentAccess,

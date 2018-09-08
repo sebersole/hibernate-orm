@@ -41,8 +41,8 @@ import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.BasicFetch;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicFetch;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -144,7 +144,7 @@ public class SingularPersistentAttributeBasic<O, J>
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						creationState.getSqlExpressionResolver().resolveSqlExpression(
@@ -266,8 +266,7 @@ public class SingularPersistentAttributeBasic<O, J>
 			FetchStrategy fetchStrategy,
 			LockMode lockMode,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return new BasicFetch( fetchParent, this, fetchStrategy, creationContext, creationState );
 	}
 

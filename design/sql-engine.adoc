@@ -526,8 +526,8 @@ When processing a ResultSet, Hibernate will create (or use from cache) a number 
 	and `org.hibernate.sql.results.spi.CompositeInitializer`
 
 FetchInitializer::
-	Specifically `org.hibernate.sql.results.internal.EntityFetchInitializer` and
-	`org.hibernate.sql.results.internal.PluralAttributeFetchInitializer`.  Same responsibilities
+	Specifically `org.hibernate.sql.results.internal.domain.entity.EntityFetchInitializer` and
+	`org.hibernate.sql.results.internal.domain.collection.PluralAttributeFetchInitializer`.  Same responsibilities
 	as a normal `Initializer`, plus the added responsibility of managing fetch-related activities.
 	Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
 	object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they

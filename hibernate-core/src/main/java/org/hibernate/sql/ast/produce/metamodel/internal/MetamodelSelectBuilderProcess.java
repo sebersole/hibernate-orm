@@ -446,8 +446,8 @@ public class MetamodelSelectBuilderProcess
 
 		fetchParentStack.push( fetchParent );
 		try {
-			fetchParent.getFetchContainer().visitKeyFetchables( fetchableConsumer );
-			fetchParent.getFetchContainer().visitFetchables( fetchableConsumer );
+			fetchParent.getNavigableContainer().visitKeyFetchables( fetchableConsumer );
+			fetchParent.getNavigableContainer().visitFetchables( fetchableConsumer );
 		}
 		finally {
 			fetchParentStack.pop();

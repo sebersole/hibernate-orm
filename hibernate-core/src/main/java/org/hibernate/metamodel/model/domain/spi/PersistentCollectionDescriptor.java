@@ -31,7 +31,7 @@ import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
-import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
+import org.hibernate.sql.results.internal.domain.collection.PluralAttributeFetchImpl;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.FetchParentAccess;

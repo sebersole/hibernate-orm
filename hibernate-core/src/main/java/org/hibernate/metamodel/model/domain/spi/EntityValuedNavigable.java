@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.domain.spi;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.EntityUniqueKey;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
@@ -55,5 +57,9 @@ public interface EntityValuedNavigable<J>
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception(  );
+	}
+
+	default EntityUniqueKey createEntityUniqueKey(SharedSessionContractImplementor session) {
+		throw new UnsupportedOperationException( getClass().getName() + "#createEntityUniqueKey" );
 	}
 }

@@ -16,6 +16,6 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 public interface EntityResult extends EntityMappingNode, DomainResult {
 	@Override
 	default EntityJavaDescriptor getJavaTypeDescriptor() {
-		return getEntityDescriptor().getJavaTypeDescriptor();
+		return getEntityValuedNavigable().getJavaTypeDescriptor();
 	}
 }

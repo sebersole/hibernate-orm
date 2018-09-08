@@ -25,7 +25,7 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -137,7 +137,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						creationState.getSqlExpressionResolver().resolveSqlExpression(

@@ -654,8 +654,10 @@ public abstract class CollectionBinder {
 		ManyToMany manyToMany = property.getAnnotation( ManyToMany.class );
 		ElementCollection elementCollection = property.getAnnotation( ElementCollection.class );
 		ManyToAny manyToAny = property.getAnnotation( ManyToAny.class );
+
 		FetchType fetchType;
 		if ( oneToMany != null ) {
+
 			fetchType = oneToMany.fetch();
 		}
 		else if ( manyToMany != null ) {
@@ -672,6 +674,13 @@ public abstract class CollectionBinder {
 					"Define fetch strategy on a property not annotated with @ManyToOne nor @OneToMany nor @CollectionOfElements"
 			);
 		}
+
+		if ( fetchType == null ) {
+			fetchType = buildingContext.getMappingDefaults().areCollectionsImplicitlyLazy()
+					? FetchType.LAZY
+					: FetchType.EAGER;
+		}
+
 		if ( lazy != null ) {
 			collection.setLazy( !( lazy.value() == LazyCollectionOption.FALSE ) );
 			collection.setExtraLazy( lazy.value() == LazyCollectionOption.EXTRA );

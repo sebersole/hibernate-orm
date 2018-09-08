@@ -50,9 +50,8 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerRefere
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.DelayedCollectionFetch;
-import org.hibernate.sql.results.internal.DelayedEntityFetch;
-import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
+import org.hibernate.sql.results.internal.domain.collection.DelayedCollectionFetch;
+import org.hibernate.sql.results.internal.domain.collection.PluralAttributeFetchImpl;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
@@ -255,8 +254,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 			FetchStrategy fetchStrategy,
 			LockMode lockMode,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
 		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {

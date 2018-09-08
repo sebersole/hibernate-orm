@@ -8,7 +8,7 @@ package org.hibernate.sql.ast.tree.spi.expression;
 
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.results.internal.ScalarResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -29,7 +29,7 @@ public interface Function extends Expression, SqlExpressable, DomainResultProduc
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
-		return new ScalarResultImpl(
+		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,

@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+
 /**
  * Marker for all object types that can be part of a ResultSetMapping.
  *
@@ -14,4 +16,5 @@ package org.hibernate.sql.results.spi;
  * @author Steve Ebersole
  */
 public interface ResultSetMappingNode {
+	JavaTypeDescriptor getJavaTypeDescriptor();
 }
