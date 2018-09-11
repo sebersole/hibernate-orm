@@ -20,7 +20,7 @@ import org.hibernate.sql.results.spi.DynamicInstantiationResult;
 import org.hibernate.sql.results.spi.EntityResult;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.PluralAttributeResult;
+import org.hibernate.sql.results.spi.CollectionResult;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
@@ -180,7 +180,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 		}
 
 		@Override
-		PluralAttributeResult makeQueryResult();
+		CollectionResult makeQueryResult();
 	}
 
 

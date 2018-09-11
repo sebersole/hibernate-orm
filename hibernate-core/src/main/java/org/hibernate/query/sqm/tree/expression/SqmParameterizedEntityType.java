@@ -49,8 +49,7 @@ public class SqmParameterizedEntityType implements SqmExpression, DomainResultPr
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new UnsupportedOperationException( "At the moment, selection of an entity's type as a QueryResult is not supported" );
 		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
 	}

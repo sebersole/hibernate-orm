@@ -25,7 +25,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @see ScalarResult
  * @see DynamicInstantiationResult
  * @see EntityResult
- * @see PluralAttributeResult
+ * @see CollectionResult
  * @see CompositeResult
  * @see Fetch
  *

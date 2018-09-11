@@ -8,7 +8,7 @@ package org.hibernate.sql.results.internal.domain.embedded;
 
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.sql.results.internal.domain.AbstractFetchParent;
@@ -28,13 +28,13 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class CompositeFetchImpl extends AbstractFetchParent implements CompositeFetch {
 	private final FetchParent fetchParent;
 	private final SingularPersistentAttributeEmbedded fetchedNavigable;
-	private final FetchStrategy fetchStrategy;
+	private final FetchTiming fetchTiming;
 
 
 	public CompositeFetchImpl(
 			FetchParent fetchParent,
 			SingularPersistentAttributeEmbedded fetchedNavigable,
-			FetchStrategy fetchStrategy,
+			FetchTiming fetchTiming,
 			DomainResultCreationState creationState) {
 		super(
 				fetchedNavigable,
@@ -42,7 +42,7 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 		);
 		this.fetchParent = fetchParent;
 		this.fetchedNavigable = fetchedNavigable;
-		this.fetchStrategy = fetchStrategy;
+		this.fetchTiming = fetchTiming;
 
 		afterInitialize( creationState );
 	}
@@ -61,11 +61,6 @@ public class CompositeFetchImpl extends AbstractFetchParent implements Composite
 	@Override
 	public SingularPersistentAttributeEmbedded getFetchedNavigable() {
 		return fetchedNavigable;
-	}
-
-	@Override
-	public FetchStrategy getFetchStrategy() {
-		return fetchStrategy;
 	}
 
 	@Override

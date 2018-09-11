@@ -11,7 +11,8 @@ package org.hibernate.sql.results.spi;
  *
  * @author Steve Ebersole
  */
-public interface PluralAttributeResult extends PluralAttributeMappingNode, DomainResult {
+public interface CollectionResult extends CollectionMappingNode, DomainResult {
+
 	// todo (6.0) : do we want to define a `org.hibernate.type.descriptor.java.spi.CollectionJavaType`
 	// 		like we do with `org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor`, e.g.
 }

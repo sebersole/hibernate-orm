@@ -54,8 +54,7 @@ public class SqmLiteralEntityType implements SqmExpression, DomainResultProducer
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new TreeException("Selecting an entity type is not allowed. An entity type expression can be used to restrict query polymorphism ");
 		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
 	}

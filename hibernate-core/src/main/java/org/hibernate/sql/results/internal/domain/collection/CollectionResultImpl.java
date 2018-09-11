@@ -8,41 +8,44 @@ package org.hibernate.sql.results.internal.domain.collection;
 
 import java.util.function.Consumer;
 
+import org.hibernate.LockMode;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.PluralAttributeResult;
+import org.hibernate.sql.results.spi.CollectionResult;
 
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeResultImpl
-		extends AbstractPluralAttributeMappingNode
-		implements PluralAttributeResult {
+public class CollectionResultImpl
+		extends AbstractCollectionMappingNode
+		implements CollectionResult {
 
-	public PluralAttributeResultImpl(
+	private final CollectionInitializerProducer initializerProducer;
+	private final LockMode lockMode;
+
+	public CollectionResultImpl(
 			PluralPersistentAttribute attributeDescriptor,
 			String resultVariable,
+			LockMode lockMode,
 			DomainResult keyResult,
-			DomainResult identifierResult,
-			DomainResult indexResult,
-			DomainResult elementResult) {
+			CollectionInitializerProducer initializerProducer) {
 		super(
+				null,
 				attributeDescriptor,
 				resultVariable,
-				keyResult,
-				identifierResult,
-				indexResult,
-				elementResult
+				keyResult
 		);
+		this.lockMode = lockMode;
+		this.initializerProducer = initializerProducer;
 	}
 
-	@Override
-	public String getResultVariable() {
-		return super.getResultVariable();
+	public LockMode getLockMode() {
+		return lockMode;
 	}
 
 	@Override
@@ -50,8 +53,10 @@ public class PluralAttributeResultImpl
 			Consumer<Initializer> initializerCollector,
 			AssemblerCreationState creationOptions,
 			AssemblerCreationContext creationContext) {
-		final PluralAttributeRootInitializer initializer = new PluralAttributeRootInitializer(
-				this,
+		final CollectionInitializer initializer = initializerProducer.produceInitializer(
+				null,
+				getLockMode(),
+				getCollectionKeyResult().createResultAssembler( initializerCollector, creationOptions, creationContext ),
 				initializerCollector,
 				creationOptions,
 				creationContext

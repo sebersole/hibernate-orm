@@ -16,5 +16,8 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface ResultSetMappingNode {
+	// todo (6.0) : NavigablePath?  Can be useful for logging
+	// todo (6.0) : result variable (selection alias)?  - even fetches can have alias
+
 	JavaTypeDescriptor getJavaTypeDescriptor();
 }

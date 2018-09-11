@@ -41,8 +41,7 @@ public abstract class AbstractEntityMappingNode extends AbstractFetchParent impl
 
 		identifierResult = entityDescriptor.getIdentifierDescriptor().createDomainResult(
 				null,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 
 		final VersionDescriptor<Object, Object> versionDescriptor = entityDescriptor.getHierarchy().getVersionDescriptor();
@@ -52,8 +51,7 @@ public abstract class AbstractEntityMappingNode extends AbstractFetchParent impl
 		else {
 			versionResult = versionDescriptor.createDomainResult(
 					null,
-					creationContext,
-					creationState
+					creationState, creationContext
 			);
 		}
 

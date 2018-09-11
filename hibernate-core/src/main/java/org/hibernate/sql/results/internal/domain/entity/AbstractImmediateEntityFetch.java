@@ -9,9 +9,6 @@ package org.hibernate.sql.results.internal.domain.entity;
 import java.util.Collections;
 import java.util.List;
 
-import org.hibernate.engine.FetchStrategy;
-import org.hibernate.engine.FetchStyle;
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.loader.spi.SingleEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
@@ -24,8 +21,6 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
  * @author Steve Ebersole
  */
 public abstract class AbstractImmediateEntityFetch implements EntityFetch {
-	private static final FetchStrategy FETCH_STRATEGY = new FetchStrategy( FetchTiming.IMMEDIATE, FetchStyle.SELECT );
-
 	private final FetchParent fetchParent;
 	private final EntityValuedNavigable fetchedNavigable;
 	protected final SingleEntityLoader loader;
@@ -52,11 +47,6 @@ public abstract class AbstractImmediateEntityFetch implements EntityFetch {
 	@Override
 	public EntityValuedNavigable getFetchedNavigable() {
 		return fetchedNavigable;
-	}
-
-	@Override
-	public FetchStrategy getFetchStrategy() {
-		return FETCH_STRATEGY;
 	}
 
 	@Override

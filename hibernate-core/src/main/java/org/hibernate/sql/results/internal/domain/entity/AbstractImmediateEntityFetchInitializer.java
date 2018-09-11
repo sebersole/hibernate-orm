@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.internal.domain.entity;
 
+import java.util.Locale;
 import javax.persistence.EntityNotFoundException;
 
 import org.hibernate.annotations.NotFoundAction;
@@ -33,6 +34,7 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 	private final DomainResultAssembler keyValueAssembler;
 	private final NotFoundAction notFoundAction;
 
+	private boolean keyHydrated;
 	private Object keyValue;
 
 	private Object entityInstance;
@@ -63,20 +65,32 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		return parentAccess;
 	}
 
-	public DomainResultAssembler getKeyValueAssembler() {
-		return keyValueAssembler;
+	private Object getKeyValue() {
+		return keyValue;
 	}
 
-	public Object getKeyValue() {
-		return keyValue;
+	@Override
+	public Object getEntityInstance() {
+		return entityInstance;
+	}
+
+	protected void setEntityInstance(Object entityInstance) {
+		assert this.entityInstance == null;
+		this.entityInstance = entityInstance;
 	}
 
 	protected abstract boolean isLoadingEntityInstance();
 
 	@Override
 	public void hydrate(RowProcessingState rowProcessingState) {
+		if ( keyHydrated ) {
+			return;
+		}
+
 		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions();
+
 		keyValue = keyValueAssembler.assemble( rowProcessingState, processingOptions );
+		keyHydrated = true;
 
 		log.debugf( "Hydrated fetched entity key : %s#%s", getEntityDescriptor().getEntityName(), keyValue );
 
@@ -130,4 +144,28 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 	}
 
 	protected abstract void afterLoad(Object entityInstance, RowProcessingState rowProcessingState);
+
+	@Override
+	public void finishUpRow(RowProcessingState rowProcessingState) {
+		keyHydrated = false;
+		keyValue = null;
+		entityInstance = null;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				Locale.ROOT,
+				"%s(%s - %s) - current state : keyValue=%s, entityInstance=%s",
+				getClass().getSimpleName(),
+				getFetchedNavigable().getNavigableRole().getFullPath(),
+				keyType().name(),
+				keyValue,
+				entityInstance
+		);
+	}
+
+	protected enum KeyType { PK, UK }
+
+	protected abstract KeyType keyType();
 }

@@ -50,8 +50,7 @@ public interface NavigableReference extends DomainResultProducer {
 	@Override
 	default DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		creationState.getColumnReferenceQualifierStack().push( getColumnReferenceQualifier() );
 		creationState.getNavigableReferenceStack().push( this );
 		try {

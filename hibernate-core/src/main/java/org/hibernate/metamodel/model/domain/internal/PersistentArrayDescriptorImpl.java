@@ -9,15 +9,19 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.lang.reflect.Array;
 import java.util.Map;
 
-import org.hibernate.collection.internal.PersistentArrayHolder;
+import org.hibernate.LockMode;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.StandardArraySemantics;
-import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
@@ -59,24 +63,15 @@ public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollec
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public E[] instantiateRaw(int anticipatedSize) {
-		return (E[]) Array.newInstance(
-				getJavaTypeDescriptor().getJavaType().getComponentType(),
-				anticipatedSize
-		);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection instantiateWrapper(SharedSessionContractImplementor session, Object key) {
-		return new PersistentArrayHolder( session, this, key );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection wrap(SharedSessionContractImplementor session, E[] rawCollection) {
-		return new PersistentArrayHolder( session, this, rawCollection );
+	protected CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override

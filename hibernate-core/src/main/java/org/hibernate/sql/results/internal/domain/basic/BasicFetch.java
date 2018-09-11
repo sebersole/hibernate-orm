@@ -8,7 +8,7 @@ package org.hibernate.sql.results.internal.domain.basic;
 
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
@@ -31,7 +31,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class BasicFetch implements Fetch {
 	private final FetchParent fetchParent;
 	private final BasicValuedNavigable<?> navigable;
-	private final FetchStrategy fetchStrategy;
+	private final FetchTiming fetchTiming;
 
 	private final SqlSelection sqlSelection;
 
@@ -40,12 +40,12 @@ public class BasicFetch implements Fetch {
 	public BasicFetch(
 			FetchParent fetchParent,
 			BasicValuedNavigable<?> navigable,
-			FetchStrategy fetchStrategy,
+			FetchTiming fetchTiming,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
 		this.fetchParent = fetchParent;
 		this.navigable = navigable;
-		this.fetchStrategy = fetchStrategy;
+		this.fetchTiming = fetchTiming;
 
 		sqlSelection = creationState.getSqlExpressionResolver().resolveSqlSelection(
 				creationState.getSqlExpressionResolver().resolveSqlExpression(
@@ -72,11 +72,6 @@ public class BasicFetch implements Fetch {
 	@Override
 	public NavigablePath getNavigablePath() {
 		return path;
-	}
-
-	@Override
-	public FetchStrategy getFetchStrategy() {
-		return fetchStrategy;
 	}
 
 	@Override

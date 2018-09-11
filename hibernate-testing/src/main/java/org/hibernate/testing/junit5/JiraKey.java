@@ -24,4 +24,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Repeatable( JiraKeyGroup.class  )
 public @interface JiraKey {
+	/**
+	 * The key for the referenced Jira issue (e.g., HHH-99999)
+	 */
+	String value();
 }

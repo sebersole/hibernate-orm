@@ -32,11 +32,14 @@ import org.hibernate.cache.spi.entry.UnstructuredCacheEntry;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.dialect.Dialect;
+import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
+import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.loader.spi.CollectionLoader;
 import org.hibernate.mapping.Any;
 import org.hibernate.mapping.Collection;
@@ -72,8 +75,8 @@ import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference;
 import org.hibernate.sql.ast.tree.spi.from.CollectionTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
@@ -83,10 +86,15 @@ import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
-import org.hibernate.sql.results.internal.domain.collection.PluralAttributeResultImpl;
+import org.hibernate.sql.results.internal.domain.collection.CollectionFetchImpl;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.internal.domain.collection.CollectionResultImpl;
+import org.hibernate.sql.results.internal.domain.collection.DelayedCollectionFetch;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
@@ -438,7 +446,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	public void initialize(
 			Object loadedKey,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception(  );
+		getLoader().load( loadedKey, session );
 	}
 
 	@Override
@@ -494,6 +502,9 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		return collector.generateTableGroup();
 	}
+
+
+
 
 	// ultimately, "inclusion" in a collection must defined through a single table whether
 	// that be:
@@ -691,46 +702,162 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
-		final PluralAttributeReference collectionReference = (PluralAttributeReference) navigableReference;
+		// Navigable impl
+		final DomainResult collectionKeyResult = getCollectionKeyDescriptor().createDomainResult(
+				null,
+				creationState,
+				creationContext
+		);
 
-		// todo (6.0) : these should be delegated out to the separate subclasses
-		// 		which can better account for what parts of a collection should be available
+		// todo (6.0) : Another case for something like `DomainResultCreationContext#getNavigableLockMode( navigableReference, resultVariable )`
+		//		Or a way to retrieve it via NavigableReference
 
-		final DomainResult collectionIdResult;
-		final CollectionIdentifier idDescriptor = collectionReference.getNavigable()
-				.getPersistentCollectionDescriptor()
-				.getIdDescriptor();
-		if ( idDescriptor != null ) {
-			collectionIdResult = idDescriptor.createDomainResult( null, creationContext, creationState );
-		}
-		else {
-			collectionIdResult = null;
-		}
+		//
+		// for now - just return READ
+		final LockMode lockMode = creationState.determineLockMode( resultVariable );
 
-		final DomainResult indexResult;
-		if ( getIndexDescriptor() != null ) {
-			indexResult = getIndexDescriptor().createDomainResult(
-					collectionReference,
-					null,
-					creationContext,
-					creationState
+		return new CollectionResultImpl(
+				getDescribedAttribute(),
+				resultVariable,
+				lockMode,
+				collectionKeyResult,
+				createInitializerProducer(
+						null,
+						true,
+						resultVariable,
+						lockMode,
+						collectionKeyResult,
+						creationState,
+						creationContext
+				)
+		);
+	}
+
+	protected abstract CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext);
+
+	@Override
+	public FetchStrategy getMappedFetchStrategy() {
+		return getDescribedAttribute().getMappedFetchStrategy();
+	}
+
+	@Override
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchTiming fetchTiming,
+			boolean joinFetch,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+
+		final DomainResult keyResult = getCollectionKeyDescriptor().createDomainResult(
+				null,
+				creationState,
+				creationContext
+		);
+
+		if ( fetchTiming == FetchTiming.DELAYED ) {
+			// for delayed fetching, use a specialized Fetch impl
+			return generateDelayedFetch(
+					fetchParent,
+					resultVariable,
+					keyResult,
+					creationState,
+					creationContext
 			);
 		}
 		else {
-			indexResult = null;
+			return generateImmediateFetch(
+					fetchParent,
+					resultVariable,
+					joinFetch,
+					lockMode,
+					keyResult,
+					creationState,
+					creationContext
+			);
+		}
+	}
+
+	@SuppressWarnings({"WeakerAccess", "unused"})
+	protected Fetch generateDelayedFetch(
+			FetchParent fetchParent,
+			String resultVariable,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return new DelayedCollectionFetch(
+				fetchParent,
+				getDescribedAttribute(),
+				resultVariable,
+				keyResult
+		);
+	}
+
+	private Fetch generateImmediateFetch(
+			FetchParent fetchParent,
+			String resultVariable,
+			boolean isJoinFetch,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
+		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
+
+		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
+
+		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
+		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
+		if ( navigableReference == null ) {
+			// this creates the SQL AST join(s) in the from clause
+			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
+					creationState.getSqlAliasBaseGenerator(),
+					creationState.getColumnReferenceQualifierStack().getCurrent(),
+					navigablePath,
+					getDescribedAttribute().isNullable() ? JoinType.LEFT : JoinType.INNER,
+					resultVariable,
+					lockMode,
+					creationState.getCurrentTableSpace()
+			);
+			navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
 		}
 
-		// todo (6.0) : (see above comment) again, should be based on the type of collection (Map, List, etc)
-		//		possibly also with for lazy, eager, etc
+		assert navigableReference.getNavigable() == this;
 
-		return new PluralAttributeResultImpl(
-				collectionReference.getNavigable(),
-				resultVariable,
-				getCollectionKeyDescriptor().createDomainResult( null, creationContext, creationState ),
-				collectionIdResult,
-				indexResult,
-				getElementDescriptor().createDomainResult( collectionReference, null, creationContext, creationState )
-		);
+		creationState.getNavigableReferenceStack().push( navigableReference );
+		creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
+
+		try {
+			return new CollectionFetchImpl(
+					fetchParent,
+					getDescribedAttribute(),
+					FetchTiming.IMMEDIATE,
+					resultVariable,
+					lockMode,
+					keyResult,
+					createInitializerProducer(
+							fetchParent,
+							isJoinFetch,
+							resultVariable,
+							lockMode,
+							keyResult,
+							creationState,
+							creationContext
+					)
+			);
+		}
+		finally {
+			creationState.getColumnReferenceQualifierStack().pop();
+			creationState.getNavigableReferenceStack().pop();
+		}
 	}
 
 	@Override

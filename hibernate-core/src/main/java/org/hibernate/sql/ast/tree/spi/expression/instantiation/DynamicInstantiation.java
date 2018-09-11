@@ -121,8 +121,7 @@ public class DynamicInstantiation<T> implements DomainResultProducer {
 	@SuppressWarnings("unchecked")
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return new DynamicInstantiationResultImpl(
 				resultVariable,
 				getNature(),

@@ -13,6 +13,7 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -22,6 +23,9 @@ public interface PluralPersistentAttribute<O,C,E>
 		javax.persistence.metamodel.PluralAttribute<O,C,E>, Fetchable<C> {
 
 	PersistentCollectionDescriptor<O,C,E> getPersistentCollectionDescriptor();
+
+	@Override
+	CollectionJavaDescriptor<C> getJavaTypeDescriptor();
 
 	@Override
 	Class<C> getJavaType();

@@ -33,5 +33,10 @@ import static org.hibernate.testing.junit5.StandardTags.FAILURE_EXPECTED;
 @Retention(RetentionPolicy.RUNTIME)
 @Tag( FAILURE_EXPECTED )
 public @interface FailureExpected {
+	String VALIDATE_FAILURE_EXPECTED = "hibernate.test.validatefailureexpected";
+
+	/**
+	 * A reason why the failure is expected
+	 */
 	String value();
 }

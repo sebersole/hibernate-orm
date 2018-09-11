@@ -9,7 +9,7 @@ package org.hibernate.sql.results.internal.domain.collection;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
@@ -18,33 +18,31 @@ import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.PluralAttributeFetch;
-import org.hibernate.sql.results.spi.PluralAttributeInitializer;
+import org.hibernate.sql.results.spi.CollectionFetch;
+import org.hibernate.sql.results.spi.CollectionInitializer;
 
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode implements PluralAttributeFetch {
-	private final FetchParent fetchParent;
-	private final FetchStrategy fetchStrategy;
-	private final PluralPersistentAttribute pluralAttribute;
+public class CollectionFetchImpl extends AbstractCollectionMappingNode implements CollectionFetch {
+	private final FetchTiming fetchTiming;
+
 	private final LockMode lockMode;
 
-	public PluralAttributeFetchImpl(
+	private final CollectionInitializerProducer initializerProducer;
+
+	public CollectionFetchImpl(
 			FetchParent fetchParent,
-			PluralPersistentAttribute pluralAttribute,
+			PluralPersistentAttribute describedAttribute,
+			FetchTiming fetchTiming,
 			String resultVariable,
-			FetchStrategy fetchStrategy,
 			LockMode lockMode,
 			DomainResult keyResult,
-			DomainResult identifierResult,
-			DomainResult indexResult,
-			DomainResult elementResult) {
-		super( pluralAttribute, resultVariable, keyResult, identifierResult, indexResult, elementResult );
-		this.fetchParent = fetchParent;
-		this.fetchStrategy = fetchStrategy;
-		this.pluralAttribute = pluralAttribute;
+			CollectionInitializerProducer initializerProducer) {
+		super( fetchParent, describedAttribute, resultVariable, keyResult );
+		this.fetchTiming = fetchTiming;
 		this.lockMode = lockMode;
+		this.initializerProducer = initializerProducer;
 	}
 
 	@Override
@@ -53,15 +51,13 @@ public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode
 			Consumer<Initializer> collector,
 			AssemblerCreationContext context,
 			AssemblerCreationState creationState) {
-		// todo (6.0) : something like:
-		//		this allows creation of an initializer specific to the collection nature.
-
-		final PluralAttributeInitializer initializer = pluralAttribute.getPersistentCollectionDescriptor().createInitializer(
+		final CollectionInitializer initializer = initializerProducer.produceInitializer(
 				parentAccess,
-				this,
+				lockMode,
+				getCollectionKeyResult().createResultAssembler( collector, creationState, context ),
 				collector,
-				context,
-				creationState
+				creationState,
+				context
 		);
 
 		collector.accept( initializer );
@@ -70,18 +66,13 @@ public class PluralAttributeFetchImpl extends AbstractPluralAttributeMappingNode
 	}
 
 	@Override
-	public PluralPersistentAttribute getFetchedNavigable() {
-		return getNavigable();
-	}
-
-	@Override
 	public FetchParent getFetchParent() {
-		return fetchParent;
+		return super.getFetchParent();
 	}
 
 	@Override
-	public FetchStrategy getFetchStrategy() {
-		return fetchStrategy;
+	public PluralPersistentAttribute getFetchedNavigable() {
+		return getPluralAttribute();
 	}
 
 	@Override

@@ -8,10 +8,9 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 
 /**
  * Contract for fetches including entity, collection and composite.  Acts as the
@@ -22,7 +21,7 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
  * 		- depends how the parent state gets resolved for injection into the parent instance
  *
  * @see EntityFetch
- * @see PluralAttributeFetch
+ * @see CollectionFetch
  * @see CompositeFetch
  *
  * @author Steve Ebersole
@@ -50,13 +49,6 @@ public interface Fetch extends ResultSetMappingNode {
 	 * @return The property path
 	 */
 	NavigablePath getNavigablePath();
-
-	/**
-	 * Gets the fetch strategy for this fetch.
-	 *
-	 * @return the fetch strategy for this fetch.
-	 */
-	FetchStrategy getFetchStrategy();
 
 	/**
 	 * Is this fetch nullable?

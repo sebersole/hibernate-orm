@@ -22,7 +22,6 @@ import org.hibernate.MappingException;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
-import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
@@ -99,7 +98,6 @@ import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.ForeignKeyDirection;
@@ -393,7 +391,8 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			FetchStrategy fetchStrategy,
+			FetchTiming fetchTiming,
+			boolean isJoinFetch,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,
@@ -406,17 +405,11 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
-		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
-			if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
-				fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
-			}
-		}
-
 		final boolean isOneToOne = getAttributeTypeClassification() == ONE_TO_ONE
 				|| isLogicalOneToOne;
 
 
-		if ( fetchStrategy.getTiming() == FetchTiming.DELAYED ) {
+		if ( fetchTiming == FetchTiming.DELAYED ) {
 			// todo (6.0) : need general laziness metadata - currently only done for entity
 			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityDescriptor<?>
 					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
@@ -431,10 +424,9 @@ public class SingularPersistentAttributeEntity<O,J>
 			}
 		}
 		else {
-			if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
+			if ( isJoinFetch ) {
 				return generateJoinFetch(
 						fetchParent,
-						fetchStrategy,
 						lockMode,
 						resultVariable,
 						creationState,
@@ -455,7 +447,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		return new DelayedEntityFetch(
 				fetchParent,
 				this,
-				fetchStrategy,
 				createKeyDomainResult( creationState, creationContext )
 		);
 	}
@@ -524,7 +515,6 @@ public class SingularPersistentAttributeEntity<O,J>
 
 	private Fetch generateJoinFetch(
 			FetchParent fetchParent,
-			FetchStrategy fetchStrategy,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,
@@ -564,7 +554,6 @@ public class SingularPersistentAttributeEntity<O,J>
 					this,
 					lockMode,
 					fetchParent.getNavigablePath().append( getNavigableName() ),
-					fetchStrategy,
 					creationContext,
 					creationState
 			);
@@ -572,24 +561,6 @@ public class SingularPersistentAttributeEntity<O,J>
 		finally {
 			creationState.getColumnReferenceQualifierStack().pop();
 			creationState.getNavigableReferenceStack().pop();
-		}
-	}
-
-	@Override
-	public Object extractDelayedFetchKey(
-			FetchParentAccess parentAccess,
-			SharedSessionContractImplementor session) {
-		final Object association = getPropertyAccess().getGetter().get( parentAccess.getFetchParentInstance() );
-		if ( association == null ) {
-			return null;
-		}
-
-		if ( referencedAttributeName == null ) {
-			return entityDescriptor.getHierarchy().getIdentifierDescriptor().extractIdentifier( association, session );
-		}
-		else {
-			final NonIdPersistentAttribute referencedAttribute = entityDescriptor.findPersistentAttribute( referencedAttributeName );
-			return referencedAttribute.getPropertyAccess().getGetter().get( association );
 		}
 	}
 

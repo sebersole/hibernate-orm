@@ -214,19 +214,12 @@ public abstract class ResultSetMappingBinder {
 			);
 		}
 
-		return new PersistentCollectionResultDefinitionImpl();
-//		String ownerClassName = context.findEntityBinding( null, rtnSource.getRole().substring( 0, dot ) )
-//				.getClassName();
-//		String ownerPropertyName = rtnSource.getRole().substring( dot + 1 );
-//
-//		return new NativeSQLQueryCollectionReturn(
-//				rtnSource.getAlias(),
-//				ownerClassName,
-//				ownerPropertyName,
-//				// FIXME: get the PersistentClass
-//				extractPropertyResults( rtnSource.getAlias(), rtnSource, null, context ),
-//				rtnSource.getLockMode()
-//		);
+		return new PersistentCollectionResultDefinitionImpl(
+				context.findEntityBinding( null, rtnSource.getRole().substring( 0, dot ) ).getClassName(),
+				rtnSource.getRole().substring( dot + 1 ),
+				rtnSource.getAlias(),
+				rtnSource.getLockMode(), extractPropertyResults( rtnSource.getAlias(), rtnSource, null, context )
+		);
 	}
 
 	/**

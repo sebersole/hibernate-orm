@@ -10,7 +10,7 @@ package org.hibernate.sql.results.spi;
  * Common interface for initializers of entity, collection and composite state
  *
  * @see EntityInitializer
- * @see PluralAttributeInitializer
+ * @see CollectionInitializer
  * @see CompositeInitializer
  *
  * @author Steve Ebersole
