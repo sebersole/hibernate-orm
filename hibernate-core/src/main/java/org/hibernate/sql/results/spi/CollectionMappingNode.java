@@ -7,15 +7,16 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * Represents a reference to a persistent collection either as a
- * {@link DomainResult} ({@link PluralAttributeResult} or as a
- * {@link Fetch} ({@link PluralAttributeFetch}).
+ * {@link DomainResult} ({@link CollectionResult} or as a
+ * {@link Fetch} ({@link CollectionFetch}).
  *
  * @author Steve Ebersole
  */
-public interface PluralAttributeMappingNode extends ResultSetMappingNode {
+public interface CollectionMappingNode extends ResultSetMappingNode {
 	/**
 	 * Retrieves the CollectionPersister describing the collection associated with this CollectionReference.
 	 *
@@ -23,11 +24,8 @@ public interface PluralAttributeMappingNode extends ResultSetMappingNode {
 	 */
 	PersistentCollectionDescriptor getCollectionDescriptor();
 
-	DomainResult getKeyResult();
+	@Override
+	CollectionJavaDescriptor getJavaTypeDescriptor();
 
-	DomainResult getIdentifierResult();
-
-	DomainResult getIndexResult();
-
-	DomainResult getElementResult();
+	DomainResult getCollectionKeyResult();
 }

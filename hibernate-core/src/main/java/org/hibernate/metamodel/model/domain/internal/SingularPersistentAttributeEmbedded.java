@@ -154,15 +154,14 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			FetchStrategy fetchStrategy,
+			FetchTiming fetchTiming,
+			boolean joinFetch,
 			LockMode lockMode, String resultVariable,
 			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
 		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
-			if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
-				fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
-			}
+			joinFetch = false;
 		}
 
 		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
@@ -187,7 +186,7 @@ public class SingularPersistentAttributeEmbedded<O,J>
 			return new CompositeFetchImpl(
 					fetchParent,
 					this,
-					fetchStrategy,
+					fetchTiming,
 					creationState
 			);
 		}

@@ -62,7 +62,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	//		the "scope" of this initializer is a specific EntityReference.
 	//
 	//		The full EntityReference is simply not needed here, and so we just keep
-	//		the EntityDescriptor here to avoid chicken/egg issues in the coe creating
+	//		the EntityDescriptor here to avoid chicken/egg issues in the creation of
 	// 		these
 
 	private final EntityDescriptor<?> entityDescriptor;
@@ -164,6 +164,11 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		return entityInstance;
 	}
 
+	@SuppressWarnings("unused")
+	public Object getKeyValue() {
+		return entityKey.getIdentifier();
+	}
+
 	@Override
 	public Object getFetchParentInstance() {
 		if ( entityInstance == null ) {
@@ -182,9 +187,6 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		// todo (6.0) : atm we do not handle sequential selects
 		// 		- see AbstractEntityPersister#hasSequentialSelect and
 		//			AbstractEntityPersister#getSequentialSelect in 5.2
-
-		// NOTE : The gist of this impl is as follows:
-		//		1) we
 
 		if ( entityInstance != null ) {
 			return;

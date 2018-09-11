@@ -58,8 +58,7 @@ public class SqmCollectionSize implements SqmExpression, DomainResultProducer {
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception(  );
 //		return new ScalarQueryResultImpl(
 //				resultVariable,

@@ -7,14 +7,12 @@
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
 import org.hibernate.LockMode;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.FetchParentAccess;
 
 /**
  * @author Steve Ebersole
@@ -22,17 +20,18 @@ import org.hibernate.sql.results.spi.FetchParentAccess;
 public interface Fetchable<T> extends Joinable<T> {
 	FetchStrategy getMappedFetchStrategy();
 
+	// todo (6.0) : all we need here is (1) FetchTiming and (2) is-this-a-join-fetch
+	//		Having to instantiate new FetchStrategy potentially multiple times
+	// 		per Fetch generation is performance drain.  Would be better to
+	// 		simply pass these 2 pieces of information
+
 	Fetch generateFetch(
 			FetchParent fetchParent,
-			FetchStrategy fetchStrategy,
-			LockMode lockMode, String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext);
+			FetchTiming fetchTiming,
+			boolean joinFetch,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext);
 
-	default Object extractDelayedFetchKey(
-			FetchParentAccess parentAccess,
-			SharedSessionContractImplementor session) {
-		// todo (6.0) : need to figure out how to handle FetchParentAccess for embeddables
-		//		ultimately need the embeddable's container's key
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
 }

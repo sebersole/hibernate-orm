@@ -7,9 +7,12 @@
 package org.hibernate.orm.test.crud;
 
 import java.util.List;
+import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
+import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfSets;
 
 import org.hibernate.testing.junit5.FailureExpected;
@@ -18,7 +21,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Steve Ebersole
  */
-@FailureExpected( "Lots still to implement for collection support" )
+@FailureExpected( "Collection loading/initialization not yet implemented" )
 public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
@@ -41,18 +44,18 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		entity.getSetOfBasics().add( "first string" );
 		entity.getSetOfBasics().add( "second string" );
 
-//		entity.getSetOfComponents().add(
-//				new Component(
-//						5,
-//						10L,
-//						15,
-//						"component string",
-//						new Component.Nested(
-//								"first nested string",
-//								"second nested string"
-//						)
-//				)
-//		);
+		entity.getSetOfComponents().add(
+				new Component(
+						5,
+						10L,
+						15,
+						"component string",
+						new Component.Nested(
+								"first nested string",
+								"second nested string"
+						)
+				)
+		);
 
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 		sessionFactoryScope().inTransaction(
@@ -65,7 +68,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 				session -> {
 					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
 					assert loaded != null;
-//					assert loaded.getSetOfBasics().size() == 2;
+					checkSetOfBasics( loaded.getSetOfBasics(), 2 );
 				}
 		);
 		sessionFactoryScope().inTransaction(
@@ -75,8 +78,16 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 					assert list.size() == 1;
 					final EntityOfSets loaded = list.get( 0 );
 					assert loaded != null;
-//					assert loaded.getSetOfBasics().size() == 2;
+					checkSetOfBasics( loaded.getSetOfBasics(), 2 );
 				}
 		);
+	}
+
+	private void checkSetOfBasics(Set<String> setOfBasics, int expectedSiize) {
+		// todo (6.0) : loading collections not yet implemented
+		//		skip for now
+		Hibernate.initialize( setOfBasics );
+		assert setOfBasics.size() == 2;
+
 	}
 }

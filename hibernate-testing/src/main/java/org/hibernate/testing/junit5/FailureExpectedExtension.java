@@ -32,6 +32,12 @@ public class FailureExpectedExtension
 	private static final String EXPECTED_FAILURE_STORE_KEY = "EXPECTED_FAILURE";
 
 
+	private static final boolean failureExpectedValidation;
+
+	static {
+		failureExpectedValidation = Boolean.getBoolean( FailureExpected.VALIDATE_FAILURE_EXPECTED );
+	}
+
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// ExecutionCondition - used to disable tests that are an `@ExpectedFailure`
@@ -42,8 +48,12 @@ public class FailureExpectedExtension
 			throw new RuntimeException( "Unable to determine how to handle given ExtensionContext : " + context.getDisplayName() );
 		}
 
-		if ( AnnotationSupport.findAnnotation( context.getElement().get(), FailureExpected.class ).isPresent() ) {
-			return ConditionEvaluationResult.disabled( "Disabled : @ExpectedFailure" );
+		if ( ! failureExpectedValidation ) {
+			// we are not validating the expected failures occur, so it does not matter
+			// if a `@FailureExpected` is present because we simply skip the test
+			if ( AnnotationSupport.findAnnotation( context.getElement().get(), FailureExpected.class ).isPresent() ) {
+				return ConditionEvaluationResult.disabled( "Disabled : @ExpectedFailure" );
+			}
 		}
 
 		return ConditionEvaluationResult.enabled( "No @ExpectedFailure" );
@@ -81,10 +91,9 @@ public class FailureExpectedExtension
 		final ExtensionContext.Store store = context.getStore( generateNamespace( context ) );
 
 		if ( store.get( IS_MARKED_STORE_KEY ) == Boolean.TRUE ) {
-			// see if we had an expected failure...
 			final Throwable expectedFailure = (Throwable) store.remove( EXPECTED_FAILURE_STORE_KEY );
 			if ( expectedFailure == null ) {
-				// there was no expected-failure, even though we are expecting one
+				// even though we expected a failure, the test did not fail
 				throw new ExpectedFailureDidNotFail( context );
 			}
 		}

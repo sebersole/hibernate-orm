@@ -31,7 +31,7 @@ public class DynamicInstantiationArgument {
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
 		return new ArgumentDomainResult(
-				argumentResultProducer.createDomainResult( alias, creationContext, creationState )
+				argumentResultProducer.createDomainResult( alias, creationState, creationContext )
 		);
 	}
 }

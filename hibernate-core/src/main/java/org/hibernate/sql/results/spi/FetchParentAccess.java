@@ -17,4 +17,5 @@ public interface FetchParentAccess {
 	 * Access to the fetch's parent instance.
 	 */
 	Object getFetchParentInstance();
+
 }

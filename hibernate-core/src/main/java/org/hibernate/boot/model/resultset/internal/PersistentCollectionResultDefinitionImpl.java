@@ -6,6 +6,9 @@
  */
 package org.hibernate.boot.model.resultset.internal;
 
+import java.util.Map;
+
+import org.hibernate.LockMode;
 import org.hibernate.Metamodel;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
@@ -15,6 +18,15 @@ import org.hibernate.query.sql.spi.QueryResultBuilder;
  * @author Steve Ebersole
  */
 public class PersistentCollectionResultDefinitionImpl implements ResultSetMappingDefinition.PersistentCollectionResult {
+	public PersistentCollectionResultDefinitionImpl(
+			String className,
+			String substring,
+			String alias,
+			LockMode lockMode,
+			Map<String, String[]> extractPropertyResults) {
+
+	}
+
 	@Override
 	public QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel) {
 		throw new NotYetImplementedFor6Exception();

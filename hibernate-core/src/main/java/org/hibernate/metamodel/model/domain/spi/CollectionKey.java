@@ -6,15 +6,27 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.internal.ForeignKeyDomainResult;
+import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+import org.hibernate.query.sql.internal.ResolvedScalarDomainResult;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class CollectionKey implements Readable {
+public class CollectionKey {
 	private final AbstractPersistentCollectionDescriptor collectionDescriptor;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
@@ -37,6 +49,49 @@ public class CollectionKey implements Readable {
 
 	public JavaTypeDescriptor getJavaTypeDescriptor() {
 		return javaTypeDescriptor;
+	}
+
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		// todo (6.0) previous instead or current?
+		final ColumnReferenceQualifier referenceQualifier = creationState.getColumnReferenceQualifierStack().getCurrent();
+		final SqlExpressionResolver expressionResolver = creationState.getSqlExpressionResolver();
+		final List<Column> keyColumns = joinForeignKey.getColumnMappings().getTargetColumns();
+
+		if ( keyColumns.size() == 1 ) {
+			return new ResolvedScalarDomainResult(
+					expressionResolver.resolveSqlSelection(
+							expressionResolver.resolveSqlExpression( referenceQualifier, keyColumns.get( 0 ) ),
+							keyColumns.get( 0 ).getJavaTypeDescriptor(),
+							creationContext.getSessionFactory().getTypeConfiguration()
+					),
+					resultVariable,
+					keyColumns.get( 0 ).getJavaTypeDescriptor()
+			);
+		}
+		else {
+			final List<SqlSelection> sqlSelections = new ArrayList<>();
+
+			for ( Column column : keyColumns ) {
+				sqlSelections.add(
+						expressionResolver.resolveSqlSelection(
+								expressionResolver.resolveSqlExpression(
+										creationState.getColumnReferenceQualifierStack().getCurrent(),
+										column
+								),
+								column.getJavaTypeDescriptor(),
+								creationContext.getSessionFactory().getTypeConfiguration()
+						)
+				);
+			}
+
+			return new ForeignKeyDomainResult(
+					getJavaTypeDescriptor(),
+					sqlSelections
+			);
+		}
 	}
 
 	//	public ForeignKey.ColumnMappings buildJoinColumnMappings(List<Column> joinTargetColumns) {

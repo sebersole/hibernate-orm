@@ -8,29 +8,24 @@ package org.hibernate.sql.results.internal.domain.collection;
 
 import java.util.function.Consumer;
 
+import org.hibernate.LockMode;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.CollectionInitializer;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.PluralAttributeFetch;
-
-import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeFetchInitializer extends AbstractPluralAttributeInitializer {
-	private static final Logger log = Logger.getLogger( PluralAttributeFetchInitializer.class );
-
-	private final FetchParentAccess parentAccess;
-
-	public PluralAttributeFetchInitializer(
+@FunctionalInterface
+public interface CollectionInitializerProducer {
+	CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
-			PluralAttributeFetch fetchDescriptor,
+			LockMode lockMode,
+			DomainResultAssembler collectionKeyAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
-			AssemblerCreationContext creationContext) {
-		super( fetchDescriptor, initializerConsumer, creationState, creationContext );
-		this.parentAccess = parentAccess;
-	}
+			AssemblerCreationContext creationContext);
 }

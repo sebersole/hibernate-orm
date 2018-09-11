@@ -8,6 +8,7 @@ package org.hibernate.sql.results.spi;
 
 import java.util.List;
 
+import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
@@ -37,6 +38,8 @@ public interface DomainResultCreationState {
 	}
 
 	TableSpace getCurrentTableSpace();
+
+	LockMode determineLockMode(String identificationVariable);
 
 	// todo (6.0) : what else do we need to properly allow Fetch creation the ability to create/
 	//		actually, this (^^) is not true

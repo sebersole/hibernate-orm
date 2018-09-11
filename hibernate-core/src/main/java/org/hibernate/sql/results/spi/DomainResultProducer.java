@@ -18,8 +18,8 @@ import org.hibernate.NotYetImplementedFor6Exception;
 public interface DomainResultProducer {
 	default DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
+
 }

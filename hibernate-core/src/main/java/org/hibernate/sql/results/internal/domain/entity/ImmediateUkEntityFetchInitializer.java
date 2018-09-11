@@ -22,8 +22,8 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFetchInitializer {
 	private final BiFunction<Object, SharedSessionContractImplementor, EntityUniqueKey> uniqueKeyGenerator;
+
 	private EntityUniqueKey entityKey;
-	private Object entityInstance;
 
 	private boolean isLoadingEntity;
 
@@ -36,6 +36,11 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 			BiFunction<Object, SharedSessionContractImplementor,EntityUniqueKey> uniqueKeyGenerator) {
 		super( fetchedNavigable, loader, parentAccess, keyValueAssembler, notFoundAction );
 		this.uniqueKeyGenerator = uniqueKeyGenerator;
+	}
+
+	@Override
+	protected KeyType keyType() {
+		return KeyType.UK;
 	}
 
 	@Override
@@ -68,14 +73,14 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 		final Object managed = session.getPersistenceContext().getEntity( entityKey );
 		if ( managed != null ) {
-			entityInstance = managed;
+			setEntityInstance( managed );
 			isLoadingEntity = false;
 			return;
 		}
 
 		// todo (6.0) : second-level cache
 
-		entityInstance = getEntityDescriptor().instantiate( keyValue, session );
+//		setEntityInstance( getEntityDescriptor().instantiate( keyValue, session ) );
 
 //		final LoadingEntityEntry entityEntry = new LoadingEntityEntry(
 //				entityKey,
@@ -88,11 +93,6 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 //		rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity( entityKey, entityEntry );
 		isLoadingEntity = true;
 
-	}
-
-	@Override
-	public Object getEntityInstance() {
-		return entityInstance;
 	}
 
 	@Override
@@ -110,7 +110,6 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		entityKey = null;
-		entityInstance = null;
 		isLoadingEntity = false;
 	}
 }

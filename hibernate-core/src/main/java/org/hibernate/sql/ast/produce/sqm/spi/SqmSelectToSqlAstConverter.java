@@ -16,7 +16,8 @@ import java.util.function.Consumer;
 import org.hibernate.AssertionFailure;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchStyle;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
@@ -211,8 +212,7 @@ public class SqmSelectToSqlAstConverter
 
 		final DomainResult domainResult = resultProducer.createDomainResult(
 				sqmSelection.getAlias(),
-				this,
-				this
+				this, this
 		);
 
 		domainResults.add( domainResult );
@@ -230,29 +230,47 @@ public class SqmSelectToSqlAstConverter
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
 			LockMode lockMode = LockMode.READ;
-			FetchStrategy fetchStrategy = null;
 
-			final SqmNavigableJoin fetchedJoin = SqmSelectToSqlAstConverter.this.findFetchedJoin(
+			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
+			boolean joined = false;
+
+			final Integer maximumFetchDepth = getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
+			// minus one because the root is not a fetch
+			final int fetchDepth = getNavigableReferenceStack().depth() - 1;
+
+			final SqmNavigableJoin fetchedJoin = findFetchedJoin(
 					fetchParent,
 					fetchable
 			);
+
 			if ( fetchedJoin != null ) {
+				fetchTiming = FetchTiming.IMMEDIATE;
+				joined = true;
+
 				lockMode = SqmSelectToSqlAstConverter.this.getLockOptions().getEffectiveLockMode(
-						fetchedJoin.getIdentificationVariable() );
-				fetchStrategy = FetchStrategy.IMMEDIATE_JOIN;
+						fetchedJoin.getIdentificationVariable()
+				);
 			}
 			else {
 				// Note that legacy Hibernate behavior for HQL processing was to stop here
 				// in terms of defining immediate join fetches - they had to be
 				// explicitly defined in the query (although we did add some support for
 				// using JPA EntityGraphs to influence the fetches to be JPA compliant)
-				fetchStrategy = fetchable.getMappedFetchStrategy();
+				joined = fetchTiming == FetchTiming.IMMEDIATE && fetchable.getMappedFetchStrategy().getStyle() == FetchStyle.JOIN;
+			}
+
+			if ( fetchDepth == maximumFetchDepth ) {
+				joined = false;
+			}
+			else if ( fetchDepth > maximumFetchDepth ) {
+				return;
 			}
 
 			fetches.add(
 					fetchable.generateFetch(
 							fetchParent,
-							fetchStrategy,
+							fetchTiming,
+							joined,
 							lockMode,
 							null,
 							SqmSelectToSqlAstConverter.this, SqmSelectToSqlAstConverter.this
@@ -270,6 +288,14 @@ public class SqmSelectToSqlAstConverter
 	public TableSpace getCurrentTableSpace() {
 		// todo (6.0) : not sure this is a great impl given subqueries
 		return getTableGroupStack().getCurrent().getTableSpace();
+	}
+
+	@Override
+	public LockMode determineLockMode(String identificationVariable) {
+		final LockOptions lockOptions = getLockOptions();
+		return lockOptions.getScope() || identificationVariable == null
+				? getLockOptions().getLockMode()
+				: getLockOptions().getEffectiveLockMode( identificationVariable );
 	}
 
 	private SqmNavigableJoin findFetchedJoin(FetchParent fetchParent, Fetchable fetchable) {

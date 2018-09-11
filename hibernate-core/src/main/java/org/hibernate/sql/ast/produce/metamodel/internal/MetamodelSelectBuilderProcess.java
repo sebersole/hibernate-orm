@@ -19,6 +19,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
@@ -426,22 +427,21 @@ public class MetamodelSelectBuilderProcess
 			}
 
 			LockMode lockMode = LockMode.READ;
-			FetchStrategy fetchStrategy = fetchable.getMappedFetchStrategy();
+			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
+			boolean joined = fetchable.getMappedFetchStrategy().getStyle() == FetchStyle.JOIN;
 
 			final Integer maximumFetchDepth = getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
 			// minus one because the root is not a fetch
 			final int fetchDepth = getNavigableReferenceStack().depth() - 1;
 
 			if ( fetchDepth == maximumFetchDepth ) {
-				if ( fetchStrategy.getStyle() == FetchStyle.JOIN ) {
-					fetchStrategy = new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
-				}
+				joined = false;
 			}
 			else if ( fetchDepth > maximumFetchDepth ) {
 				return;
 			}
 
-			fetches.add( fetchable.generateFetch( fetchParent, fetchStrategy, lockMode, null, this, this ) );
+			fetches.add( fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this ) );
 		};
 
 		fetchParentStack.push( fetchParent );
@@ -459,6 +459,13 @@ public class MetamodelSelectBuilderProcess
 	@Override
 	public TableSpace getCurrentTableSpace() {
 		return tableSpaceStack.getCurrent();
+	}
+
+	@Override
+	public LockMode determineLockMode(String identificationVariable) {
+		return identificationVariable == null
+				? getLockOptions().getLockMode()
+				: getLockOptions().getEffectiveLockMode( identificationVariable );
 	}
 
 

@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
@@ -44,17 +44,14 @@ public class DelayedEntityFetch implements EntityFetch {
 
 	private final FetchParent fetchParent;
 	private final EntityValuedNavigable fetchedNavigable;
-	private final FetchStrategy fetchStrategy;
 	private final DomainResult fkResult;
 
 	public DelayedEntityFetch(
 			FetchParent fetchParent,
 			EntityValuedNavigable fetchedNavigable,
-			FetchStrategy fetchStrategy,
 			DomainResult fkResult) {
 		this.fetchParent = fetchParent;
 		this.fetchedNavigable = fetchedNavigable;
-		this.fetchStrategy = fetchStrategy;
 		this.fkResult = fkResult;
 	}
 
@@ -71,11 +68,6 @@ public class DelayedEntityFetch implements EntityFetch {
 	@Override
 	public EntityValuedNavigable getFetchedNavigable() {
 		return fetchedNavigable;
-	}
-
-	@Override
-	public FetchStrategy getFetchStrategy() {
-		return fetchStrategy;
 	}
 
 	@Override

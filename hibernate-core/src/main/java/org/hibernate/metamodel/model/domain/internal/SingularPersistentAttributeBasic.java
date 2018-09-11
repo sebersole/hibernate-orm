@@ -263,11 +263,11 @@ public class SingularPersistentAttributeBasic<O, J>
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			FetchStrategy fetchStrategy,
-			LockMode lockMode,
+			FetchTiming fetchTiming,
+			boolean joinFetch, LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
-		return new BasicFetch( fetchParent, this, fetchStrategy, creationContext, creationState );
+		return new BasicFetch( fetchParent, this, fetchTiming, creationContext, creationState );
 	}
 
 	@Override

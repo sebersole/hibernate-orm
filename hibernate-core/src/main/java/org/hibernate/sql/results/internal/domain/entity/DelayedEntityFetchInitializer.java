@@ -52,6 +52,8 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 	public void resolve(RowProcessingState rowProcessingState) {
 		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
 
+		// todo (6.0) : not sure this works for non-PK-based FKs
+
 		if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
 			entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
 					fkValueAssembler.assemble( rowProcessingState, processingOptions ),
@@ -59,7 +61,10 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 			);
 		}
 		else if ( fetchedNavigable.getEntityDescriptor().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
-			entityInstance = null;
+			entityInstance = fetchedNavigable.getEntityDescriptor().instantiate(
+					fkValueAssembler.assemble( rowProcessingState, processingOptions ),
+					rowProcessingState.getSession()
+			);
 		}
 	}
 

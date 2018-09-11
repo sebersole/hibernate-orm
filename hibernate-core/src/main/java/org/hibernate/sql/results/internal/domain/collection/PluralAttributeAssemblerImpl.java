@@ -7,7 +7,7 @@
 package org.hibernate.sql.results.internal.domain.collection;
 
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
-import org.hibernate.sql.results.spi.PluralAttributeInitializer;
+import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
@@ -16,9 +16,9 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class PluralAttributeAssemblerImpl implements DomainResultAssembler {
-	private final PluralAttributeInitializer initializer;
+	private final CollectionInitializer initializer;
 
-	public PluralAttributeAssemblerImpl(PluralAttributeInitializer initializer) {
+	public PluralAttributeAssemblerImpl(CollectionInitializer initializer) {
 		this.initializer = initializer;
 	}
 

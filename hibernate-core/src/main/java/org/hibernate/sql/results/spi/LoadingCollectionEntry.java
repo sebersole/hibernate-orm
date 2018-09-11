@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
@@ -18,20 +17,30 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
  */
 public class LoadingCollectionEntry {
 	private final PersistentCollectionDescriptor collectionDescriptor;
+	private final CollectionInitializer initializer;
 	private final Object key;
 	private final PersistentCollection collectionInstance;
 
 	public LoadingCollectionEntry(
 			PersistentCollectionDescriptor collectionDescriptor,
+			CollectionInitializer initializer,
 			Object key,
 			PersistentCollection collectionInstance) {
 		this.collectionDescriptor = collectionDescriptor;
+		this.initializer = initializer;
 		this.key = key;
 		this.collectionInstance = collectionInstance;
 	}
 
 	public PersistentCollectionDescriptor getCollectionDescriptor() {
 		return collectionDescriptor;
+	}
+
+	/**
+	 * Access to the initializer that is responsible for initializing this collection
+	 */
+	public CollectionInitializer getInitializer() {
+		return initializer;
 	}
 
 	public Object getKey() {

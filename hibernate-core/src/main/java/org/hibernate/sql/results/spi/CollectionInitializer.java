@@ -14,7 +14,7 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
  *
  * @author Steve Ebersole
  */
-public interface PluralAttributeInitializer extends Initializer {
+public interface CollectionInitializer extends Initializer {
 	PluralPersistentAttribute getFetchedAttribute();
 
 	PersistentCollection getCollectionInstance();

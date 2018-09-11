@@ -21,7 +21,6 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFetchInitializer {
 	private EntityKey entityKey;
-	private Object entityInstance;
 
 	private boolean isLoadingEntity;
 
@@ -34,6 +33,10 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 		super( fetchedNavigable, loader, parentAccess, keyValueAssembler, notFoundAction );
 	}
 
+	@Override
+	protected KeyType keyType() {
+		return KeyType.PK;
+	}
 
 	@Override
 	protected void afterHydrate(Object keyValue, RowProcessingState rowProcessingState) {
@@ -54,14 +57,14 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 				.findLoadingEntityEntry( entityKey );
 
 		if ( existingEntry != null ) {
-			entityInstance = existingEntry.getEntityInstance();
+			setEntityInstance( existingEntry.getEntityInstance() );
 			isLoadingEntity = false;
 			return;
 		}
 
 		final Object managed = session.getPersistenceContext().getEntity( entityKey );
 		if ( managed != null ) {
-			entityInstance = managed;
+			setEntityInstance( managed );
 			isLoadingEntity = false;
 			return;
 		}
@@ -94,12 +97,6 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		entityKey = null;
-		entityInstance = null;
 		isLoadingEntity = false;
-	}
-
-	@Override
-	public Object getEntityInstance() {
-		return entityInstance;
 	}
 }

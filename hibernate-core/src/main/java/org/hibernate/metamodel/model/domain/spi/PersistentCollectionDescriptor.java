@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.cache.spi.access.CollectionDataAccess;
@@ -28,15 +27,11 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
-import org.hibernate.sql.results.internal.domain.collection.PluralAttributeFetchImpl;
-import org.hibernate.sql.results.spi.AssemblerCreationContext;
-import org.hibernate.sql.results.spi.AssemblerCreationState;
-import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.PluralAttributeInitializer;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -70,7 +65,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  */
 public interface PersistentCollectionDescriptor<O,C,E>
 		extends  NavigableContainer<C>, RootTableGroupProducer, TableGroupJoinProducer,
-		TableReferenceContributor, EmbeddedContainer<C>, Filterable {
+		TableReferenceContributor, EmbeddedContainer<C>, Filterable, Fetchable<C> {
 
 	Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
 
@@ -87,6 +82,9 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	}
 
 	CollectionSemantics<C> getSemantics();
+
+	@Override
+	CollectionJavaDescriptor<C> getJavaTypeDescriptor();
 
 	@Override
 	ManagedTypeDescriptor<O> getContainer();
@@ -597,12 +595,4 @@ public interface PersistentCollectionDescriptor<O,C,E>
 		throw new UnsupportedOperationException( "Collection type does not support indexes" );
 	}
 
-	default PluralAttributeInitializer createInitializer(
-			FetchParentAccess parentAccess,
-			PluralAttributeFetchImpl pluralAttributeFetch,
-			Consumer<Initializer> collector,
-			AssemblerCreationContext context,
-			AssemblerCreationState creationState) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
 }
