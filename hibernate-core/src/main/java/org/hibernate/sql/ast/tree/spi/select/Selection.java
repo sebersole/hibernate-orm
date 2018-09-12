@@ -7,15 +7,15 @@
 package org.hibernate.sql.ast.tree.spi.select;
 
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
- * todo (6.0) : remove this in favor of {@link org.hibernate.sql.results.spi.QueryResultProducer} approach
+ * todo (6.0) : remove this in favor of {@link DomainResultProducer} approach
  *
  * @author Steve Ebersole
  */
 public interface Selection {
-	QueryResultProducer getQueryResultProducer();
+	DomainResultProducer getQueryResultProducer();
 
 	/**
 	 * The (optional) "result variable" for the selection.  This is the JPA

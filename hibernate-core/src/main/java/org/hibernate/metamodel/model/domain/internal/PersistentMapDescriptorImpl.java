@@ -9,15 +9,21 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Comparator;
 import java.util.Map;
 
+import org.hibernate.LockMode;
 import org.hibernate.MappingException;
 import org.hibernate.cache.CacheException;
-import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.internal.domain.collection.MapInitializerProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
@@ -54,17 +60,6 @@ public class PersistentMapDescriptorImpl<O,K,E>
 		return comparator;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection<E> instantiateWrapper(SharedSessionContractImplementor session, Object key) {
-		return getSemantics().instantiateWrapper( key, this, session );
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection<E> wrap(SharedSessionContractImplementor session, Map<K, E> rawCollection) {
-		return getSemantics().instantiateWrapper( rawCollection, this, session );
-	}
 
 	@Override
 	public boolean contains(Object collection, Object childObject) {
@@ -72,4 +67,38 @@ public class PersistentMapDescriptorImpl<O,K,E>
 		// todo (6.0) : or perhaps make distinction between #containsValue and #containsKey/Index?
 		return ( (Map) collection ).containsValue( childObject );
 	}
+
+	@Override
+	protected CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
+
+		final DomainResult mapKeyResult = getIndexDescriptor().createDomainResult(
+				navigableReference,
+				null,
+				creationContext,
+				creationState
+		);
+
+		final DomainResult mapValueResult = getElementDescriptor().createDomainResult(
+				navigableReference,
+				resultVariable,
+				creationContext,
+				creationState
+		);
+
+		return new MapInitializerProducer(
+				this,
+				isJoinFetch,
+				mapKeyResult,
+				mapValueResult
+		);
+	}
+
 }

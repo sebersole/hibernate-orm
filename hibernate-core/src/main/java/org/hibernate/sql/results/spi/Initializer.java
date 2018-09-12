@@ -10,11 +10,19 @@ package org.hibernate.sql.results.spi;
  * Common interface for initializers of entity, collection and composite state
  *
  * @see EntityInitializer
- * @see PluralAttributeInitializer
+ * @see CollectionInitializer
  * @see CompositeInitializer
  *
  * @author Steve Ebersole
  */
 public interface Initializer {
+	void hydrate(RowProcessingState rowProcessingState);
+
+	void resolve(RowProcessingState rowProcessingState);
+
 	void finishUpRow(RowProcessingState rowProcessingState);
+
+	default void endLoading(JdbcValuesSourceProcessingState processingState) {
+		// by default - nothing to do
+	}
 }

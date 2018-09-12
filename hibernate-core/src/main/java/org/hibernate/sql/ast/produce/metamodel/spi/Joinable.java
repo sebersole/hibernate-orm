@@ -19,10 +19,10 @@ public interface Joinable<T> extends Navigable<T> {
 	// todo (6.0) : #createSqmJoin ?
 
 	default ForeignKeyDirection getForeignKeyDirection() {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default boolean isCascadeDeleteEnabled() {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 }

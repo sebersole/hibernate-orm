@@ -8,9 +8,12 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
+import org.hibernate.annotations.Remove;
+
 /**
  * @author Steve Ebersole
  */
+@Remove
 public interface SqlSelectionGroupNode {
 	Object hydrateStateArray(RowProcessingState currentRowState);
 	void visitSqlSelections(Consumer<SqlSelection> action);

@@ -67,7 +67,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -176,7 +176,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			}
 		}
 
-		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
+//		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
+		final Object unresolvedId = id;
 		final ExecutionContext executionContext = getExecutionContext( session );
 
 		// for now - just root table
@@ -237,8 +238,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				// NOTE : at least according to the argument name (`unresolvedId`), the
 				// 		incoming id value should already be unresolved - so do not
 				// 		unresolve it again
-				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
-				unresolvedId,
+				 getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				//unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
 					insertStatement.addTargetColumnReference( new ColumnReference( boundColumn ) );
 					insertStatement.addValue(

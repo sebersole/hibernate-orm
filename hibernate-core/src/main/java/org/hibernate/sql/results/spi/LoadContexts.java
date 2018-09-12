@@ -48,7 +48,7 @@ public class LoadContexts {
 
 	public LoadingEntityEntry findLoadingEntityEntry(EntityKey entityKey) {
 		return jdbcValuesSourceProcessingStateStack.findCurrentFirst(
-				state -> state.findLoadingEntryLocally( entityKey )
+				state -> state.findLoadingEntityLocally( entityKey )
 		);
 	}
 

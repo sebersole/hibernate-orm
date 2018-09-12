@@ -17,6 +17,10 @@ import org.hibernate.query.named.spi.RowReaderMemento;
 public interface RowReader<R> {
 	int getNumberOfResults();
 
+	/**
+	 * todo (6.0) : JdbcValuesSourceProcessingOptions is available through RowProcessingState - why pass it in separately
+	 * 		should use one approach or the other
+	 */
 	R readRow(RowProcessingState processingState, JdbcValuesSourceProcessingOptions options) throws SQLException;
 
 	void finishUp(JdbcValuesSourceProcessingState context);

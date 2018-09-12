@@ -81,6 +81,10 @@ public class SqmFromBuilderFromClauseQualifiedJoin extends AbstractSqmFromBuilde
 		getSqmCreationContext().getCurrentFromElementSpace().addJoin( navigableJoin );
 		commonHandling( navigableJoin );
 
+		if ( fetched ) {
+			getSqmCreationContext().registerFetch( navigableReference.getSourceReference(), navigableJoin );
+		}
+
 		return navigableJoin;
 	}
 }

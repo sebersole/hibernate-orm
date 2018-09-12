@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
 /**
@@ -63,6 +64,13 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 //		}
 
 		super.visitStateArrayContributors( consumer );
+	}
+
+	@Override
+	public void visitKeyFetchables(Consumer<Fetchable> fetchableConsumer) {
+		if ( getHierarchy().getIdentifierDescriptor() instanceof NavigableContainer ) {
+			( (NavigableContainer<?>) getHierarchy().getIdentifierDescriptor() ).visitFetchables( fetchableConsumer );
+		}
 	}
 
 	@Override

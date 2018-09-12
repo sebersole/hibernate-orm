@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.query.sql.internal.ResultSetMappingDescriptorUndefined;
 import org.hibernate.result.NoMoreOutputsException;
@@ -29,6 +30,7 @@ import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.values.DirectResultSetAccess;
 import org.hibernate.sql.results.internal.values.JdbcValuesResultSetImpl;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
 import org.hibernate.sql.results.spi.RowReader;
@@ -39,7 +41,7 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public abstract class OutputsImpl
-		implements Outputs, ExecutionContext, ParameterBindingContext, Callback {
+		implements Outputs, ExecutionContext, AssemblerCreationContext, ParameterBindingContext, Callback {
 	private static final Logger log = CoreLogging.logger( OutputsImpl.class );
 
 	private final ResultContext context;
@@ -52,6 +54,11 @@ public abstract class OutputsImpl
 
 	public OutputsImpl(ResultContext context) {
 		this.context = context;
+	}
+
+	@Override
+	public SessionFactoryImplementor getSessionFactory() {
+		return context.getSession().getSessionFactory();
 	}
 
 	protected void prime(PreparedStatement jdbcStatement) {
@@ -137,7 +144,8 @@ public abstract class OutputsImpl
 		);
 
 		final RowReader<Object[]> rowReader = Helper.createRowReader(
-				context,
+				getSessionFactory(),
+				this,
 				row -> row,
 				jdbcValuesSource
 		);

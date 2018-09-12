@@ -74,7 +74,7 @@ public class SqmTuple implements SqmExpression {
 	}
 
 //	@Override
-//	public QueryResult createQueryResult(
+//	public QueryResult createDomainResult(
 //			SemanticQueryWalker walker,
 //			String resultVariable,
 //			QueryResultCreationContext creationContext) {
@@ -82,7 +82,7 @@ public class SqmTuple implements SqmExpression {
 //	}
 //
 //	@Override
-//	public QueryResult createQueryResult(
+//	public QueryResult createDomainResult(
 //			Expression expression,
 //			String resultVariable,
 //			QueryResultCreationContext creationContext) {
@@ -92,7 +92,7 @@ public class SqmTuple implements SqmExpression {
 //		//
 //		// todo (6.0) : ultimately the problem here is expecting the "resolved" SQL AST node to be passed in.
 //		//		really resolving these SQL AST nodes should be done here.
-//		return groupedExpressions.get( 0 ).createQueryResult( expression, resultVariable, creationContext );
+//		return groupedExpressions.get( 0 ).createDomainResult( expression, resultVariable, creationContext );
 //	}
 
 }

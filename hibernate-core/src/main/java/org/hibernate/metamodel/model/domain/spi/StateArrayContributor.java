@@ -20,6 +20,8 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 
@@ -29,7 +31,7 @@ import org.hibernate.type.descriptor.java.MutabilityPlan;
  *
  * @author Steve Ebersole
  */
-public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<J>, Readable, Writeable {
+public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<J>, Fetchable<J>, Readable {
 	/**
 	 * Defines this contributor's position within the state array.
 	 *
@@ -82,6 +84,24 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 		//		For now return a default NONE value for all contributors since this isn't
 		//		to be supported as a part of Alpha1.
 		return CascadeStyles.NONE;
+	}
+
+	/**
+	 * Given a hydrated representation of this Readable, resolve its
+	 * domain representation.
+	 * <p>
+	 * E.g. for a composite, the hydrated form is an Object[] representing the
+	 * "simple state" of the composite's attributes.  Resolution of those values
+	 * returns the instance of the component with its resolved values injected.
+	 *
+	 * @apiNote
+	 */
+	default Object resolveHydratedState(
+			Object hydratedForm,
+			ExecutionContext executionContext,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	MutabilityPlan<J> getMutabilityPlan();

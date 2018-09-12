@@ -11,12 +11,14 @@ import java.util.List;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.engine.spi.EntityUniqueKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
@@ -38,38 +40,65 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
  * @author Andrea Boriero
  */
 public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEntityLoader<T> {
-	private final EntityDescriptor<T> entityDescriptor;
-	private final String propertyName;
+	private final SingularPersistentAttributeEntity attribute;
+	private final Navigable fkTargetAttribute;
 
 	private EnumMap<LockMode, JdbcSelect> selectByLockMode = new EnumMap<>( LockMode.class );
 	private EnumMap<LoadQueryInfluencers.InternalFetchProfileType, JdbcSelect> selectByInternalCascadeProfile;
 
 
-	public StandardSingleUniqueKeyEntityLoader(String propertyName, EntityDescriptor<T> entityDescriptor) {
-		this.entityDescriptor = entityDescriptor;
-		this.propertyName = propertyName;
+	public StandardSingleUniqueKeyEntityLoader(Navigable fkTargetAttribute, SingularPersistentAttributeEntity attribute) {
+		this.attribute = attribute;
+		this.fkTargetAttribute = fkTargetAttribute;
 
 		// todo (6.0) : selectByLockMode and selectByInternalCascadeProfile
 	}
 
 	@Override
+	public EntityDescriptor getLoadedNavigable() {
+		return attribute.getAssociatedEntityDescriptor();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public T load(
 			Object uk,
-			SharedSessionContractImplementor session,
-			Options options) {
+			LockOptions lockOptions,
+			SharedSessionContractImplementor session) {
+		if ( uk == null ) {
+			return null;
+		}
 
-		final JdbcSelect jdbcSelect = resolveJdbcSelect(
-				options.getLockOptions(),
-				session
+		final EntityUniqueKey pcKey = new EntityUniqueKey(
+				getLoadedNavigable().getEntityName(),
+				fkTargetAttribute.getNavigableName(),
+				uk,
+				getLoadedNavigable().getIdentifierDescriptor().getJavaTypeDescriptor(),
+				fkTargetAttribute.getJavaTypeDescriptor(),
+				getLoadedNavigable().getHierarchy().getRepresentation(),
+				getLoadedNavigable().getFactory()
 		);
+
+
+		// is there already one associated with the Session?  Use it..
+		final Object existingEntityInstance = session.getPersistenceContext().getEntity( pcKey );
+		if ( existingEntityInstance != null ) {
+			return (T) existingEntityInstance;
+		}
+
+		return loadEntity( uk, lockOptions, session );
+	}
+
+	private T loadEntity(Object uk, LockOptions lockOptions, SharedSessionContractImplementor session) {
+		final JdbcSelect jdbcSelect = resolveJdbcSelect( lockOptions, session );
 
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 
-		final SingularPersistentAttributeEntity attribute =
-				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
+		// todo (6.0) : this is not always a
+		final SingularPersistentAttributeEntity attribute = (SingularPersistentAttributeEntity) fkTargetAttribute;
 
 		attribute.dehydrate(
-				attribute.unresolve( uk, session ),
+				uk,
 				(jdbcValue, type, boundColumn) -> {
 					jdbcParameterBindings.addBinding(
 							new StandardJdbcParameterImpl(
@@ -112,7 +141,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 			LockOptions lockOptions,
 			SharedSessionContractImplementor session) {
 		final LoadQueryInfluencers loadQueryInfluencers = session.getLoadQueryInfluencers();
-		if ( entityDescriptor.isAffectedByEnabledFilters( session ) ) {
+		if ( getLoadedNavigable().isAffectedByEnabledFilters( session ) ) {
 			// special case of not-cacheable based on enabled filters effecting this load.
 			//
 			// This case is special because the filters need to be applied in order to
@@ -165,12 +194,10 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 			LockOptions lockOptions,
 			LoadQueryInfluencers queryInfluencers,
 			SessionFactoryImplementor sessionFactory) {
-		SingularPersistentAttributeEntity attribute =
-				(SingularPersistentAttributeEntity) entityDescriptor.getSingularAttribute( propertyName );
 
 		final SelectByUniqueKeyBuilder selectBuilder = new SelectByUniqueKeyBuilder(
-				entityDescriptor.getFactory(),
-				entityDescriptor,
+				sessionFactory,
+				getLoadedNavigable(),
 				attribute
 		);
 
@@ -185,7 +212,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 
 	@SuppressWarnings("RedundantIfStatement")
 	private boolean determineIfCacheable(LockOptions lockOptions, LoadQueryInfluencers loadQueryInfluencers) {
-		if ( entityDescriptor.isAffectedByEntityGraph( loadQueryInfluencers ) ) {
+		if ( getLoadedNavigable().isAffectedByEntityGraph( loadQueryInfluencers ) ) {
 			return false;
 		}
 

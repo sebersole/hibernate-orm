@@ -6,10 +6,9 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * Represents a collection currently being loaded.
@@ -18,14 +17,17 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public class LoadingCollectionEntry {
 	private final PersistentCollectionDescriptor collectionDescriptor;
-	private final Serializable key;
+	private final CollectionInitializer initializer;
+	private final Object key;
 	private final PersistentCollection collectionInstance;
 
-	LoadingCollectionEntry(
+	public LoadingCollectionEntry(
 			PersistentCollectionDescriptor collectionDescriptor,
-			Serializable key,
+			CollectionInitializer initializer,
+			Object key,
 			PersistentCollection collectionInstance) {
 		this.collectionDescriptor = collectionDescriptor;
+		this.initializer = initializer;
 		this.key = key;
 		this.collectionInstance = collectionInstance;
 	}
@@ -34,7 +36,14 @@ public class LoadingCollectionEntry {
 		return collectionDescriptor;
 	}
 
-	public Serializable getKey() {
+	/**
+	 * Access to the initializer that is responsible for initializing this collection
+	 */
+	public CollectionInitializer getInitializer() {
+		return initializer;
+	}
+
+	public Object getKey() {
 		return key;
 	}
 
@@ -45,5 +54,10 @@ public class LoadingCollectionEntry {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "(" + getCollectionDescriptor().getNavigableRole().getFullPath() + "#" + getKey() + ")";
+	}
+
+	public void finishLoading(ExecutionContext executionContext) {
+		collectionInstance.endRead();
+		collectionInstance.afterInitialize();
 	}
 }

@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.Collection;
 
 /**
+ * todo (6.0) : rename this PluralAttributeBag?
+ *
  * @author Steve Ebersole
  */
 public interface PluralAttributeCollection<O,E> extends PluralPersistentAttribute<O,Collection<E>,E>,

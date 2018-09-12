@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
@@ -19,11 +20,14 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
-import org.hibernate.sql.results.internal.EntityQueryResultImpl;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.query.sql.spi.ResolvingSqlSelectionImpl;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.domain.entity.EntityResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -75,7 +79,11 @@ public class Util {
 		 *
 		 * @return SessionFactory
 		 */
-		SessionFactoryImplementor getSessionFactory();
+		default SessionFactoryImplementor getSessionFactory() {
+			return getSqlAstCreationContext().getSessionFactory();
+		}
+
+		SqlAstCreationContext getSqlAstCreationContext();
 
 		/**
 		 * Locate a ResultSetMappingDefinition by name
@@ -91,7 +99,7 @@ public class Util {
 		 *
 		 * @param queryReturns The query returns
 		 */
-		void addQueryReturns(QueryResult... queryReturns);
+		void addQueryReturns(DomainResult... queryReturns);
 
 		/**
 		 * Callback to add query spaces indicated by the result set mapping(s)
@@ -101,32 +109,19 @@ public class Util {
 		void addQuerySpaces(String... querySpaces);
 	}
 
-	/**
-	 * Resolve the given result set mapping names
-	 *
-	 * @param context The context for the resolution.  See {@link ResultSetMappingResolutionContext}
-	 * @param resultSetMappingNames The names of the result-set-mappings to resolve
-	 */
-	public static void resolveResultSetMappings(
-			ResultSetMappingResolutionContext context,
-			String... resultSetMappingNames) {
-		final QueryReturnResolver resolver = new QueryReturnResolver( context );
-
-		for ( String resultSetMappingName : resultSetMappingNames ) {
-			resolver.resolve( resultSetMappingName );
-		}
-	}
 
 	public static void resolveResultSetMapping(
-			ResultSetMappingResolutionContext context,
-			String resultSetMappingName) {
-		new QueryReturnResolver( context ).resolve( resultSetMappingName );
+			String resultSetMappingName,
+			Consumer<Collection<String>> querySpacesConsumer,
+			Consumer<DomainResult> resultConsumer,
+			SessionFactoryImplementor sessionFactory) {
+		new QueryReturnResolver( sessionFactory, querySpacesConsumer, resultConsumer ).resolve( resultSetMappingName );
 	}
 
 	/**
 	 * Context for resolving result-class definitions
 	 */
-	public interface ResultClassesResolutionContext {
+	public interface ResultClassesResolutionContext extends AssemblerCreationContext {
 
 		/**
 		 * Access to the SessionFactory
@@ -135,71 +130,48 @@ public class Util {
 		 */
 		SessionFactoryImplementor getSessionFactory();
 
-		/**
-		 * Callback to add query returns indicated by the result set mapping(s)
-		 *
-		 * @param queryReturns The query returns
-		 */
-		void addQueryResult(QueryResult... queryReturns);
-
-		/**
-		 * Callback to add query spaces indicated by the result set mapping(s)
-		 *
-		 * @param querySpaces The query spaces
-		 */
-		void addQuerySpaces(String... querySpaces);
-		void addQuerySpaces(Collection<String> querySpaces);
-
-		SqlAstCreationContext getSqlAstCreationContext();
 	}
 
-	/**
-	 * Resolve the given result classes
-	 *
-	 * @param context The context for the resolution.  See {@link ResultSetMappingResolutionContext}
-	 * @param resultClasses The Classes to which the results should be mapped
-	 */
-	public static void resolveResultClasses(ResultClassesResolutionContext context, Class... resultClasses) {
-		for ( Class resultClass : resultClasses ) {
-			resolveResultClass( context, resultClass );
-		}
-	}
-
-	public static void resolveResultClass(ResultClassesResolutionContext context, Class resultType) {
-		final JavaTypeDescriptor resultTypeDescriptor = context.getSessionFactory()
-				.getTypeConfiguration()
+	@SuppressWarnings("unchecked")
+	public static void resolveResultClass(
+			Class resultType, Consumer<Collection<String>> querySpacesConsumer,
+			Consumer<DomainResult> resultConsumer,
+			SessionFactoryImplementor sessionFactory) {
+		final JavaTypeDescriptor resultTypeDescriptor = sessionFactory.getTypeConfiguration()
 				.getJavaTypeDescriptorRegistry()
 				.getDescriptor( resultType );
 
 		if ( resultTypeDescriptor instanceof BasicJavaDescriptor ) {
-			final BasicType basicType = context.getSessionFactory()
+			final BasicType basicType = sessionFactory
 					.getTypeConfiguration()
 					.getBasicTypeRegistry()
 					.getBasicType( resultType );
 
-			context.addQueryResult(
-					new ScalarQueryResultImpl(
-							// todo (6.0) : resultVariable?
+			final SqlExpressableType sqlExpressableType = basicType.getSqlExpressableType(
+					sessionFactory.getTypeConfiguration()
+			);
+
+			resultConsumer.accept(
+					new BasicResultImpl(
 							null,
-							// todo : SqlSelection
-							null,
-							basicType.getSqlExpressableType( context.getSessionFactory().getTypeConfiguration() )
+							new ResolvingSqlSelectionImpl( 1, sqlExpressableType ),
+							sqlExpressableType
 					)
 			);
 		}
 		else if ( resultTypeDescriptor instanceof EntityJavaDescriptor ) {
-			final EntityDescriptor entityDescriptor = context.getSessionFactory().getMetamodel().getEntityDescriptor( resultType.getName() );
-			context.addQuerySpaces( entityDescriptor.getAffectedTableNames() );
-			context.addQueryResult(
-					new EntityQueryResultImpl(
+			final EntityDescriptor entityDescriptor = sessionFactory.getMetamodel().getEntityDescriptor( resultType.getName() );
+			querySpacesConsumer.accept( entityDescriptor.getAffectedTableNames() );
+			resultConsumer.accept(
+					new EntityResultImpl(
 							entityDescriptor,
 							// todo (6.0) : resultVariable?
 							null,
-							// todo : EntitySqlSelectionMappings
-							null,
 							LockMode.NONE,
 							new NavigablePath( entityDescriptor.getEntityName() ),
-							context.getSqlAstCreationContext()
+							// todo (6.0) : creation state & context
+							null,
+							null
 					)
 			);
 		}
@@ -224,20 +196,30 @@ public class Util {
 	}
 
 	private static class QueryReturnResolver {
-		private final ResultSetMappingResolutionContext context;
+		private final SessionFactoryImplementor sessionFactory;
+		private final Consumer<Collection<String>> querySpacesConsumer;
+		private final Consumer<DomainResult> resultConsumer;
 		private int selectablesCount = 0;
 
 		Map<String,SqlSelection> sqlSelectionMap = new HashMap<>();
 		Map<String, FetchParent> fetchParentMap = null;
 
-		public QueryReturnResolver(ResultSetMappingResolutionContext context) {
-			this.context = context;
+		public QueryReturnResolver(
+				SessionFactoryImplementor sessionFactory,
+				Consumer<Collection<String>> querySpacesConsumer,
+				Consumer<DomainResult> resultConsumer) {
+			this.sessionFactory = sessionFactory;
+			this.querySpacesConsumer = querySpacesConsumer;
+			this.resultConsumer = resultConsumer;
 		}
 
 		public void resolve(String resultSetMappingName) {
 			log.tracef( "Starting attempt to resolve named result-set-mapping : %s", resultSetMappingName );
 
-			final ResultSetMappingDescriptor mapping = context.findResultSetMapping( resultSetMappingName );
+			final ResultSetMappingDescriptor mapping = sessionFactory.getQueryEngine()
+					.getNamedQueryRepository()
+					.getResultSetMappingDescriptor( resultSetMappingName );
+
 			if ( mapping == null ) {
 				throw new UnknownSqlResultSetMappingException( "Unknown SqlResultSetMapping [" + resultSetMappingName + "]" );
 			}
@@ -335,7 +317,7 @@ public class Util {
 //						null,
 //						ormType
 //				);
-//				argumentReaders.add( new ArgumentReader( argumentReturn.getResultAssembler(), null ) );
+//				argumentReaders.add( new ArgumentReader( argumentReturn.createResultAssembler(), null ) );
 //			}
 //
 //			if ( List.class.equals( targetJavaType ) ) {
@@ -379,8 +361,7 @@ public class Util {
 
 		@SuppressWarnings("unchecked")
 		private JavaTypeDescriptor resolveJavaTypeDescriptor(Class javaType) {
-			return context.getSessionFactory()
-					.getTypeConfiguration()
+			return sessionFactory.getTypeConfiguration()
 					.getJavaTypeDescriptorRegistry()
 					.getDescriptor( javaType );
 		}

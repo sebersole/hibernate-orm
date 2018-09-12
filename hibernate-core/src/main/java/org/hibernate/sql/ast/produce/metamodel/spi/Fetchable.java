@@ -6,27 +6,32 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
+import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.engine.FetchTiming;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * @author Steve Ebersole
  */
 public interface Fetchable<T> extends Joinable<T> {
-	Fetch generateFetch(
-			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
-			FetchStrategy fetchStrategy,
-			String resultVariable,
-			SqlAstCreationContext creationContext);
-
 	FetchStrategy getMappedFetchStrategy();
 
-	// todo (6.0) : what is the proper return type here?
-	//		ExpressableType?
-	ManagedTypeDescriptor<T> getFetchedManagedType();
+	// todo (6.0) : all we need here is (1) FetchTiming and (2) is-this-a-join-fetch
+	//		Having to instantiate new FetchStrategy potentially multiple times
+	// 		per Fetch generation is performance drain.  Would be better to
+	// 		simply pass these 2 pieces of information
+
+	Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchTiming fetchTiming,
+			boolean joinFetch,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext);
+
 }

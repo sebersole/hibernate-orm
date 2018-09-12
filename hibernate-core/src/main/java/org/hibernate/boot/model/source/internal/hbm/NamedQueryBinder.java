@@ -24,7 +24,6 @@ import org.hibernate.boot.model.query.internal.NamedHqlQueryDefinitionImpl;
 import org.hibernate.boot.model.query.internal.NamedNativeQueryDefinitionImpl;
 import org.hibernate.boot.model.resultset.internal.EntityResultDefinitionImpl;
 import org.hibernate.boot.model.resultset.internal.FetchDefinitionImpl;
-import org.hibernate.boot.model.resultset.internal.PersistentCollectionResultDefinitionImpl;
 import org.hibernate.boot.model.resultset.internal.ResultSetMappingDefinitionImpl;
 import org.hibernate.boot.model.resultset.internal.ScalarResultDefinitionImpl;
 import org.hibernate.internal.CoreLogging;
@@ -308,7 +307,10 @@ public class NamedQueryBinder {
 					= (JaxbHbmNativeQueryCollectionLoadReturnType) content;
 
 			inLineResultMapping.addResult(
-					new PersistentCollectionResultDefinitionImpl()
+					ResultSetMappingBinder.extractReturnDescription(
+							collectionLoadReturnElement,
+							context
+					)
 			);
 
 			return ContentCategory.RESULT;

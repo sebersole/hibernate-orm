@@ -14,25 +14,12 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  *
  * @author Steve Ebersole
  */
-public interface SingleIdEntityLoader<T> extends Loader {
-	interface LoadOptions {
-		LockOptions getLockOptions();
-		Object getInstanceToLoad();
-	}
-
-	LoadOptions NO_LOAD_OPTIONS = new LoadOptions() {
-		@Override
-		public LockOptions getLockOptions() {
-			return null;
-		}
-
-		@Override
-		public Object getInstanceToLoad() {
-			return null;
-		}
-	};
-
-	T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session);
+public interface SingleIdEntityLoader<T> extends SingleEntityLoader<T> {
+	/**
+	 * Here the key is a primary key value
+	 */
+	@Override
+	T load(Object pkValue, LockOptions lockOptions, SharedSessionContractImplementor session);
 
 	Object[] loadDatabaseSnapshot(Object id, SharedSessionContractImplementor session);
 }

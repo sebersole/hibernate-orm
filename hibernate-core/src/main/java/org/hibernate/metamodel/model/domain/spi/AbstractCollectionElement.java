@@ -25,6 +25,10 @@ public abstract class AbstractCollectionElement<J> implements CollectionElement<
 		return descriptor;
 	}
 
+	public PersistentCollectionDescriptor getCollectionDescriptor() {
+		return descriptor;
+	}
+
 	@Override
 	public NavigableRole getNavigableRole() {
 		return navigableRole;

@@ -9,13 +9,17 @@ package org.hibernate.metamodel.model.domain.spi;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.EntityUniqueKey;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -33,21 +37,29 @@ public interface EntityValuedNavigable<J>
 	EntityJavaDescriptor<J> getJavaTypeDescriptor();
 
 	@Override
-	default QueryResult createQueryResult(
+	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return getEntityDescriptor().createQueryResult(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getEntityDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
 	}
+
+	boolean isNullable();
 
 	@Override
 	default SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception(  );
+	}
+
+	default EntityUniqueKey createEntityUniqueKey(SharedSessionContractImplementor session) {
+		throw new UnsupportedOperationException( getClass().getName() + "#createEntityUniqueKey" );
 	}
 }

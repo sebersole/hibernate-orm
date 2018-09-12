@@ -9,13 +9,18 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Collection;
 import java.util.Set;
 
-import org.hibernate.collection.internal.PersistentBag;
-import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.LockMode;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.results.internal.domain.collection.BagInitializerProducer;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
@@ -39,17 +44,42 @@ public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollecti
 	}
 
 	@Override
-	public PersistentCollection instantiateWrapper(SharedSessionContractImplementor session, Object key) {
-		return new PersistentBag( session, this, key );
+	protected CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
+
+		final DomainResult collectionIdResult;
+		if ( getIdDescriptor() != null ) {
+			collectionIdResult = getIdDescriptor().createDomainResult(
+					null,
+					creationState,
+					creationContext
+			);
+		}
+		else {
+			collectionIdResult = null;
+		}
+
+		final DomainResult elementResult = getElementDescriptor().createDomainResult(
+				navigableReference,
+				null,
+				creationContext,
+				creationState
+		);
+
+		return new BagInitializerProducer(
+				this,
+				isJoinFetch,
+				collectionIdResult,
+				elementResult
+		);
 	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection wrap(SharedSessionContractImplementor session, Collection<E> rawCollection) {
-		return new PersistentBag( session, this, rawCollection );
-	}
-
-
 
 	@Override
 	public boolean contains(Object collection, Object childObject) {

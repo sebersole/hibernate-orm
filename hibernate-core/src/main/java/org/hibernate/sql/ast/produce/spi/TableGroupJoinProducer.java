@@ -6,9 +6,13 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
+import org.hibernate.LockMode;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
+import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 
 /**
  * @author Steve Ebersole
@@ -29,4 +33,13 @@ public interface TableGroupJoinProducer extends TableGroupProducer {
 			TableGroupInfo tableGroupInfoSource,
 			JoinType joinType,
 			JoinedTableGroupContext tableGroupJoinContext);
+
+	TableGroupJoin createTableGroupJoin(
+			SqlAliasBaseGenerator sqlAliasBaseGenerator,
+			ColumnReferenceQualifier columnReferenceQualifier,
+			NavigablePath navigablePath,
+			JoinType joinType,
+			String resultVariable,
+			LockMode lockMode,
+			TableSpace currentTableSpace);
 }

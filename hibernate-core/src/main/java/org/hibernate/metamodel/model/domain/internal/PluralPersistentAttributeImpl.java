@@ -8,10 +8,12 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.LockMode;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.internal.NonNullableTransientDependencies;
 import org.hibernate.engine.spi.CollectionKey;
@@ -40,19 +42,30 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReferenc
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.PluralAttributeFetchImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 import org.jboss.logging.Logger;
 
 /**
+ * todo (6.0) : potentially split this single impl into specific impls for each "collection nature":
+ * 		`collection`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection}
+ * 		`list`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeList}
+ * 		`set`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeSet}
+ * 		`map`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeMap}
+ * 		`bag`:: synonym for `collection`
+ * 		`idbag`:: not sure yet
+ *
  * @author Steve Ebersole
  */
 public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute implements PluralPersistentAttribute {
@@ -192,7 +205,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	}
 
 	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
+	public CollectionJavaDescriptor getJavaTypeDescriptor() {
 		return collectionDescriptor.getJavaTypeDescriptor();
 	}
 
@@ -214,30 +227,43 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	}
 
 	@Override
-	public Fetch generateFetch(
-			FetchParent fetchParent,
-			ColumnReferenceQualifier qualifier,
-			FetchStrategy fetchStrategy,
+	public DomainResult createDomainResult(
+			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new PluralAttributeFetchImpl(
-				fetchParent,
-				qualifier,
-				this,
-				fetchStrategy,
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getPersistentCollectionDescriptor().createDomainResult(
+				navigableReference,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
 	}
 
 	@Override
-	public FetchStrategy getMappedFetchStrategy() {
-		return fetchStrategy;
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchTiming fetchTiming,
+			boolean joinFetch,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return getPersistentCollectionDescriptor().generateFetch(
+				fetchParent,
+				fetchTiming,
+				joinFetch,
+				lockMode,
+				resultVariable,
+				creationState,
+				creationContext
+		);
 	}
 
+
 	@Override
-	public ManagedTypeDescriptor getFetchedManagedType() {
-		throw new NotYetImplementedFor6Exception();
+	public FetchStrategy getMappedFetchStrategy() {
+		return fetchStrategy;
 	}
 
 	@Override
@@ -249,16 +275,15 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	public SqlSelectionGroupNode resolveSqlSelections(
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext creationContext) {
-		// collection-id (idbag)?
 
-		// todo (6.0) : this depends on whether the collection is fetched...
-		//
-		// for now, return nada
+		// todo (6.0) : this should render either:
+		//		1) the collection id for id-collection
+		//		2) the owner's fk value
 
 		return creationContext.getSqlSelectionResolver().emptySqlSelection();
 	}
 
-//		return resolutionContext.getSqlSelectionResolver().emptySqlSelection();
+//		return resolutionContext.getSqlExpressionResolver().emptySqlSelection();
 //		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
 //				.getJoinForeignKey()
 //				.getColumnMappings()
@@ -279,11 +304,11 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 //			ColumnReferenceQualifier qualifier,
 //			SqlSelectionResolutionContext resolutionContext,
 //			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
-//		final Expression expression = resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
+//		final Expression expression = resolutionContext.getSqlExpressionResolver().resolveSqlExpression(
 //				qualifier,
 //				columnMapping.getTargetColumn()
 //		);
-//		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
+//		return resolutionContext.getSqlExpressionResolver().resolveSqlSelection(
 //				expression,
 //				,
 //		);
@@ -400,5 +425,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@SuppressWarnings("unchecked")
 	public boolean isDirty(Object originalValue, Object currentValue, SharedSessionContractImplementor session) {
 		return !getJavaTypeDescriptor().areEqual( originalValue, currentValue );
+	}
+
+	@Override
+	public void visitFetchables(Consumer consumer) {
+		getPersistentCollectionDescriptor().visitFetchables( consumer );
 	}
 }

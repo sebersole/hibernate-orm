@@ -26,7 +26,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;

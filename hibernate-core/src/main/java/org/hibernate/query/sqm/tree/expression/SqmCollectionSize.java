@@ -10,9 +10,10 @@ import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -21,7 +22,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  * @author Gunnar Morling
  */
-public class SqmCollectionSize implements SqmExpression, QueryResultProducer {
+public class SqmCollectionSize implements SqmExpression, DomainResultProducer {
 	private final SqmPluralAttributeReference pluralAttributeBinding;
 	private final BasicValuedExpressableType sizeType;
 
@@ -55,13 +56,13 @@ public class SqmCollectionSize implements SqmExpression, QueryResultProducer {
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception(  );
 //		return new ScalarQueryResultImpl(
 //				resultVariable,
-//				creationContext.getSqlSelectionResolver().resolveSqlSelection( expression ),
+//				creationContext.getSqlExpressionResolver().resolveSqlSelection( expression ),
 //				getExpressableType()
 //		);
 	}

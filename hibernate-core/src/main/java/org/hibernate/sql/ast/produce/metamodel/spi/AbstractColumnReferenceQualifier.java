@@ -55,8 +55,8 @@ public abstract class AbstractColumnReferenceQualifier implements ColumnReferenc
 //		}
 
 		for ( TableReferenceJoin tableJoin : getTableReferenceJoins() ) {
-			if ( tableJoin.getJoinedTableBinding().getTable() == table ) {
-				return tableJoin.getJoinedTableBinding();
+			if ( tableJoin.getJoinedTableReference().getTable() == table ) {
+				return tableJoin.getJoinedTableReference();
 			}
 		}
 

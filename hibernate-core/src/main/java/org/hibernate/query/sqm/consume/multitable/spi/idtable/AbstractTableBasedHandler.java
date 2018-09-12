@@ -217,6 +217,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 				entityDescriptor,
 				sqmUpdateStatement,
 				executionContext.getQueryOptions(),
+				executionContext.getLoadQueryInfluencers(),
 				executionContext.getSession().getFactory()
 		);
 	}

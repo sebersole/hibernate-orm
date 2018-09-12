@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.persistence.TemporalType;
 
@@ -29,10 +30,12 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -42,7 +45,7 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class EntityIdentifierCompositeAggregatedImpl<O,J>
 		extends AbstractSingularPersistentAttribute<O,J>
 		implements EntityIdentifierCompositeAggregated<O,J> {
-	private final EmbeddedTypeDescriptor<J> embeddedMetadata;
+	private final EmbeddedTypeDescriptor<J> embeddedDescriptor;
 	private final IdentifierGenerator identifierGenerator;
 	private final List<Column> columns;
 
@@ -50,21 +53,21 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	public EntityIdentifierCompositeAggregatedImpl(
 			EntityHierarchyImpl runtimeModelHierarchy,
 			RootClass bootModelRootEntity,
-			EmbeddedTypeDescriptor embeddedMetadata,
+			EmbeddedTypeDescriptor embeddedDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		super(
 				runtimeModelHierarchy.getRootEntityType(),
 				bootModelRootEntity.getIdentifierProperty(),
-				embeddedMetadata.getRepresentationStrategy().generatePropertyAccess(
+				embeddedDescriptor.getRepresentationStrategy().generatePropertyAccess(
 						bootModelRootEntity,
 						bootModelRootEntity.getIdentifierProperty(),
-						(ManagedTypeDescriptor<?>) embeddedMetadata.getContainer(),
+						(ManagedTypeDescriptor<?>) embeddedDescriptor.getContainer(),
 						creationContext.getSessionFactory().getSessionFactoryOptions().getBytecodeProvider()
 				),
 				Disposition.ID
 		);
 
-		this.embeddedMetadata = embeddedMetadata;
+		this.embeddedDescriptor = embeddedDescriptor;
 		this.identifierGenerator = creationContext.getSessionFactory().getIdentifierGenerator( bootModelRootEntity.getEntityName() );
 
 		final ValueMapping<?> valueMapping = bootModelRootEntity.getIdentifierAttributeMapping().getValueMapping();
@@ -75,26 +78,31 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 
 	@Override
 	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
-		return embeddedMetadata;
+		return embeddedDescriptor;
 	}
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// NavigableSource (embedded)
+	// NavigableContainer (embedded)
 
 	@Override
 	public NavigableRole getNavigableRole() {
-		return embeddedMetadata.getNavigableRole();
+		return getEmbeddedDescriptor().getNavigableRole();
 	}
 
 	@Override
 	public EmbeddableJavaDescriptor<J> getJavaTypeDescriptor() {
-		return embeddedMetadata.getJavaTypeDescriptor();
+		return getEmbeddedDescriptor().getJavaTypeDescriptor();
 	}
 
 	@Override
 	public int getNumberOfJdbcParametersForRestriction() {
-		return embeddedMetadata.getNumberOfJdbcParametersForRestriction();
+		return getEmbeddedDescriptor().getNumberOfJdbcParametersForRestriction();
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
 	}
 
 
@@ -119,18 +127,20 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 
 	@Override
 	public String asLoggableText() {
-		return "IdentifierCompositeAggregated(" + embeddedMetadata.asLoggableText() + ")";
+		return "IdentifierCompositeAggregated(" + embeddedDescriptor.asLoggableText() + ")";
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference expression,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return embeddedMetadata.createQueryResult(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return getEmbeddedDescriptor().createDomainResult(
 				expression,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
 	}
 

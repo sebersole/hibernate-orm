@@ -44,9 +44,9 @@ import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -706,4 +706,9 @@ public interface EntityDescriptor<T>
 
 	@Remove
 	CascadeStyle[] getPropertyCascadeStyles();
+
+	default boolean isSubselectLoadable() {
+		// legacy Hibernate behavior is to not allow subselect fetching for entities
+		return false;
+	}
 }

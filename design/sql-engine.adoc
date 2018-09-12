@@ -277,7 +277,7 @@ as the basis for the selection
 === SelectClause
 
 `org.hibernate.sql.ast.tree.spi.select.SelectClause` contains one or more
-`org.hibernate.sql.ast.tree.spi.select.Selection` references.  These `Selection`
+`org.hibernate.sql.results.spi.SqlSelection` references.  These `SqlSelection`
 references describe a single result in the domain query.  Here is a visualization
 of the process used to produce `Selection` references:
 
@@ -303,7 +303,7 @@ Producer <-- Selectable: Selection
 @enduml
 ....
 
-As we see above, a `Expression` acts as a factory for an appropriate `Selection`.  Generally speaking an
+As we see above, a `Expression` acts as a factory for an appropriate `SqlSelection`.  Generally speaking an
 `Expression` is its own `Selectable` (most `Expression` impls also implement `Selectable`).  The exception
 is `NavigableReference` which is an `Expression` whose `Selectable` is its referenced `Navigable`.
 
@@ -389,7 +389,7 @@ results is covered later.
 [IMPORTANT]
 ====
 The process used to resolve the `SqlSelection` references given the `SqlSelectable` counterpart is
-handled through the `org.hibernate.sql.results.spi.SqlAstCreationContext` contract
+handled through the `org.hibernate.sql.ast.produce.spi.SqlAstCreationContext` contract
 which `SqlSelectAstToJdbcSelectConverter` implements[1].  `SqlSelection` is the way we implement
 positional access to the JDBC `ReultSet`.  `SqlSelection` maintains the position at which the SQL
 selection was rendered and is the way we implement positional access to the JDBC `ResultSet` values.
@@ -526,8 +526,8 @@ When processing a ResultSet, Hibernate will create (or use from cache) a number 
 	and `org.hibernate.sql.results.spi.CompositeInitializer`
 
 FetchInitializer::
-	Specifically `org.hibernate.sql.results.internal.EntityFetchInitializer` and
-	`org.hibernate.sql.results.internal.PluralAttributeFetchInitializer`.  Same responsibilities
+	Specifically `org.hibernate.sql.results.internal.domain.entity.EntityFetchInitializer` and
+	`org.hibernate.sql.results.internal.domain.collection.PluralAttributeFetchInitializer`.  Same responsibilities
 	as a normal `Initializer`, plus the added responsibility of managing fetch-related activities.
 	Certain Returns (and all Fetches) require some additional work to get the value ready to be a proper
 	object query return.  This is the role of `Initializer` impls.  I wont get too in depth in these as they

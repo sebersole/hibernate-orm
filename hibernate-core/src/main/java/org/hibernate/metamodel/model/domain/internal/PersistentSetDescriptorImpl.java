@@ -8,14 +8,19 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Set;
 
-import org.hibernate.collection.internal.PersistentSet;
-import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.LockMode;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.internal.domain.collection.SetInitializerProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
@@ -40,11 +45,26 @@ public class PersistentSetDescriptorImpl<O,E> extends AbstractPersistentCollecti
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection<E> wrap(SharedSessionContractImplementor session, Set<E> rawCollection) {
-		return new PersistentSet( session, this, rawCollection );
+	protected CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
+		return new SetInitializerProducer(
+				this,
+				isJoinFetch,
+				getElementDescriptor().createDomainResult(
+						navigableReference,
+						null,
+						creationContext,
+						creationState
+				)
+		);
 	}
-
 
 	@Override
 	public boolean contains(Object collection, Object childObject) {

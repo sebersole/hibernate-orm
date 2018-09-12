@@ -8,24 +8,25 @@ package org.hibernate.sql.ast.tree.spi.expression.instantiation;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.query.sqm.tree.expression.Compatibility;
 import org.hibernate.sql.ast.produce.ConversionException;
-import org.hibernate.sql.results.internal.DynamicInstantiationQueryResultImpl;
+import org.hibernate.sql.results.internal.domain.DynamicInstantiationResultImpl;
 import org.hibernate.sql.results.internal.instantiation.ArgumentReader;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationConstructorAssemblerImpl;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationInjectionAssemblerImpl;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationListAssemblerImpl;
 import org.hibernate.sql.results.internal.instantiation.DynamicInstantiationMapAssemblerImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultAssembler;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -36,7 +37,7 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class DynamicInstantiation<T> implements QueryResultProducer {
+public class DynamicInstantiation<T> implements DomainResultProducer {
 	private static final Logger log = Logger.getLogger( DynamicInstantiation.class );
 
 	private final DynamicInstantiationNature nature;
@@ -67,7 +68,7 @@ public class DynamicInstantiation<T> implements QueryResultProducer {
 		return getTargetJavaTypeDescriptor().getJavaType();
 	}
 
-	public void addArgument(String alias, QueryResultProducer argumentResultProducer) {
+	public void addArgument(String alias, DomainResultProducer argumentResultProducer) {
 		if ( argumentAdditionsComplete ) {
 			throw new ConversionException( "Unexpected call to DynamicInstantiation#addAgument after previously complete" );
 		}
@@ -117,52 +118,28 @@ public class DynamicInstantiation<T> implements QueryResultProducer {
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	@SuppressWarnings("unchecked")
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		boolean areAllArgumentsAliased = true;
-		boolean areAnyArgumentsAliased = false;
-		final Set<String> aliases = new HashSet<>();
-		final List<String> duplicatedAliases = new ArrayList<>();
-		final List<ArgumentReader> argumentReaders = new ArrayList<>();
-
-		if ( arguments != null ) {
-			for ( DynamicInstantiationArgument argument : arguments ) {
-				if ( argument.getAlias() == null ) {
-					areAllArgumentsAliased = false;
-				}
-				else {
-					if ( !aliases.add( argument.getAlias() ) ) {
-						duplicatedAliases.add( argument.getAlias() );
-						log.debugf( "Query defined duplicate resultVariable encountered multiple declarations of [%s]", argument.getAlias() );
-					}
-					areAnyArgumentsAliased = true;
-				}
-
-				argumentReaders.add( argument.buildArgumentReader( creationContext ) );
-			}
-		}
-
-		final QueryResultAssembler assembler = resolveAssembler(
-				this,
-				areAllArgumentsAliased,
-				areAnyArgumentsAliased,
-				duplicatedAliases,
-				argumentReaders,
-				creationContext
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+		return new DynamicInstantiationResultImpl(
+				resultVariable,
+				getNature(),
+				(JavaTypeDescriptor) getTargetJavaTypeDescriptor(),
+				getArguments().stream()
+						.map( argument -> argument.buildArgumentDomainResult( creationContext, creationState ) )
+						.collect( Collectors.toList() )
 		);
-
-		return new DynamicInstantiationQueryResultImpl( resultVariable, assembler );
 	}
 
 	@SuppressWarnings("unchecked")
-	private static QueryResultAssembler resolveAssembler(
+	private static DomainResultAssembler resolveAssembler(
 			DynamicInstantiation dynamicInstantiation,
 			boolean areAllArgumentsAliased,
 			boolean areAnyArgumentsAliased,
 			List<String> duplicatedAliases,
 			List<ArgumentReader> argumentReaders,
-			SqlAstCreationContext creationContext) {
+			AssemblerCreationContext creationContext) {
 
 		if ( dynamicInstantiation.getNature() == DynamicInstantiationNature.LIST ) {
 			if ( log.isDebugEnabled() && areAnyArgumentsAliased ) {

@@ -12,7 +12,6 @@ import java.util.Date;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Readable;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
@@ -217,6 +216,17 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 			EntityDescriptor entityDescriptor,
 			Object entityInstance,
 			SharedSessionContractImplementor session) {
+		// just to  make sure it works
+		entityDescriptor.getIdentifier( entityInstance, session );
+
+//		final ArrayList<Object> stateValues = new ArrayList<>();
+//		entityDescriptor.dehydrate(
+//				entityInstance,
+//				(jdbcValue, type, boundColumn) -> stateValues.add( jdbcValue ),
+//				Clause.IRRELEVANT,
+//				session
+//		);
+//		return stateValues.toArray( new Object[0] );
 
 
 		// This could be the implementation of `org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor#getPropertyValues`
@@ -236,8 +246,6 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 //				}
 //		);
 
-		// just to  make sure it works
-		entityDescriptor.getIdentifier( entityInstance, session );
 
 		final Object[] stateArray = entityDescriptor.getPropertyValues( entityInstance );
 
@@ -268,7 +276,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 	private void injectStateArray(
 			EntityDescriptor entityDescriptor,
 			Object entityInstance,
-			Object[] stateArray,
+			final Object[] stateArray,
 			ExecutionContext executionContext,
 			SharedSessionContractImplementor session) {
 		entityDescriptor.visitStateArrayContributors(

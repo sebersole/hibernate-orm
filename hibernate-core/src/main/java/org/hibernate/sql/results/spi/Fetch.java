@@ -6,21 +6,22 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.engine.FetchStrategy;
+import java.util.function.Consumer;
+
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 
 /**
  * Contract for fetches including entity, collection and composite.  Acts as the
- * producer for the {@link QueryResultAssembler} for this result as well
+ * producer for the {@link DomainResultAssembler} for this result as well
  * as any {@link Initializer} instances needed
  *
  * todo (6.0) : we have fetch -> fetch-parent at the initializer level.  Do we also need fetch-parent -> fetch(es)?
  * 		- depends how the parent state gets resolved for injection into the parent instance
  *
  * @see EntityFetch
- * @see PluralAttributeFetch
+ * @see CollectionFetch
  * @see CompositeFetch
  *
  * @author Steve Ebersole
@@ -37,8 +38,6 @@ public interface Fetch extends ResultSetMappingNode {
 	 */
 	FetchParent getFetchParent();
 
-	ColumnReferenceQualifier getSqlExpressionQualifier();
-
 	/**
 	 * The Navigable being fetched
 	 */
@@ -52,13 +51,6 @@ public interface Fetch extends ResultSetMappingNode {
 	NavigablePath getNavigablePath();
 
 	/**
-	 * Gets the fetch strategy for this fetch.
-	 *
-	 * @return the fetch strategy for this fetch.
-	 */
-	FetchStrategy getFetchStrategy();
-
-	/**
 	 * Is this fetch nullable?
 	 *
 	 * @return true, if this fetch is nullable; false, otherwise.
@@ -69,5 +61,9 @@ public interface Fetch extends ResultSetMappingNode {
 	 */
 	boolean isNullable();
 
-	void registerInitializers(FetchParentAccess parentAccess, InitializerCollector collector);
+	DomainResultAssembler createAssembler(
+			FetchParentAccess parentAccess,
+			Consumer<Initializer> collector,
+			AssemblerCreationContext creationContext,
+			AssemblerCreationState creationState);
 }

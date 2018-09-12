@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -284,6 +286,27 @@ public class SemanticQueryBuilder
 		return navigableReferenceByPath.get( path );
 	}
 
+	public Map<NavigablePath, Set<SqmNavigableJoin>> fetchJoinsByParentPath;
+
+	@Override
+	public void registerFetch(SqmNavigableContainerReference sourceReference, SqmNavigableJoin navigableJoin) {
+		Set<SqmNavigableJoin> joins = null;
+
+		if ( fetchJoinsByParentPath == null ) {
+			fetchJoinsByParentPath = new HashMap<>();
+		}
+		else {
+			joins = fetchJoinsByParentPath.get( sourceReference.getNavigablePath() );
+		}
+
+		if ( joins == null ) {
+			joins = new HashSet<>();
+			fetchJoinsByParentPath.put( sourceReference.getNavigablePath(), joins );
+		}
+
+		joins.add( navigableJoin );
+	}
+
 	@Override
 	public SqmFromElementSpace getCurrentFromElementSpace() {
 		return currentFromElementSpace;
@@ -371,7 +394,7 @@ public class SemanticQueryBuilder
 		parameterCollector = selectStatement;
 
 		try {
-			selectStatement.applyQuerySpec( visitQuerySpec( ctx.querySpec() ) );
+			selectStatement.applyQuerySpec( visitQuerySpec( ctx.querySpec() ), fetchJoinsByParentPath );
 		}
 		finally {
 			// todo (6.0) : should this really happen on error?

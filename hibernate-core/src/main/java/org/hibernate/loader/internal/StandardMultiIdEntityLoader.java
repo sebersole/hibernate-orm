@@ -140,4 +140,9 @@ public class StandardMultiIdEntityLoader<J>
 				RowTransformerSingularReturnImpl.instance()
 		);
 	}
+
+	@Override
+	public EntityDescriptor<J> getLoadedNavigable() {
+		return entityDescriptor;
+	}
 }

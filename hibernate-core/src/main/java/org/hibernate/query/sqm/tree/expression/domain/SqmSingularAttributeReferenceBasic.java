@@ -8,7 +8,7 @@ package org.hibernate.query.sqm.tree.expression.domain;
 
 import java.util.Locale;
 
-import org.hibernate.metamodel.model.domain.internal.BasicSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -20,14 +20,14 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 public class SqmSingularAttributeReferenceBasic extends AbstractSqmSingularAttributeReference {
 	public SqmSingularAttributeReferenceBasic(
 			SqmNavigableContainerReference containerReference,
-			BasicSingularPersistentAttribute boundNavigable,
+			SingularPersistentAttributeBasic boundNavigable,
 			SqmCreationContext creationContext) {
 		super( containerReference, boundNavigable );
 	}
 
 	@Override
-	public BasicSingularPersistentAttribute getReferencedNavigable() {
-		return (BasicSingularPersistentAttribute) super.getReferencedNavigable();
+	public SingularPersistentAttributeBasic getReferencedNavigable() {
+		return (SingularPersistentAttributeBasic) super.getReferencedNavigable();
 	}
 
 	@Override

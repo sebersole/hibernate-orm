@@ -16,12 +16,11 @@ import org.hibernate.metamodel.model.domain.spi.DiscriminatorMappings;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.spi.BasicType;
 
 /**
@@ -91,31 +90,22 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new BasicResultImpl(
 				resultVariable,
-				resolveSqlSelection(
-						navigableReference.getSqlExpressionQualifier(),
-						creationContext
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								creationState.getColumnReferenceQualifierStack().getCurrent(),
+								getBoundColumn()
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				getBoundColumn().getExpressableType()
-		);
-	}
-
-	@Override
-	public SqlSelection resolveSqlSelection(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-				resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-						qualifier,
-						getBoundColumn()
-				),
-				getJavaTypeDescriptor(),
-				resolutionContext.getSessionFactory().getTypeConfiguration()
 		);
 	}
 }

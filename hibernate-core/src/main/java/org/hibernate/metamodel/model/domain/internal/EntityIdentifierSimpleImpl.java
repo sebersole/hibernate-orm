@@ -25,9 +25,10 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -131,21 +132,34 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new BasicResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
-						creationContext.getSqlSelectionResolver().resolveSqlExpression(
-								navigableReference.getSqlExpressionQualifier(),
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								navigableReference.getColumnReferenceQualifier(),
 								column
 						),
 						getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()
 				),
 				getBoundColumn().getExpressableType()
+		);
+	}
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+		return createDomainResult(
+				creationState.getNavigableReferenceStack().getCurrent(),
+				resultVariable,
+				creationContext,
+				creationState
 		);
 	}
 

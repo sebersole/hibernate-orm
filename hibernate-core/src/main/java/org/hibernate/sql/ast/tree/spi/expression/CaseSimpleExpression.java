@@ -13,12 +13,13 @@ import java.util.List;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.spi.SqlExpressable;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.Selectable;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -26,7 +27,7 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * @author Steve Ebersole
  */
-public class CaseSimpleExpression implements Expression, Selectable, SqlExpressable, QueryResultProducer {
+public class CaseSimpleExpression implements Expression, Selectable, SqlExpressable, DomainResultProducer {
 	private final SqlExpressableType type;
 	private final Expression fixture;
 
@@ -67,12 +68,12 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+		return new BasicResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
 						this,
 						getType().getJavaTypeDescriptor(),
 						creationContext.getSessionFactory().getTypeConfiguration()

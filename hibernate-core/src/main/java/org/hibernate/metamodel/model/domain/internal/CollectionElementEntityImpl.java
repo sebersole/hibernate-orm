@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.mapping.Collection;
@@ -26,12 +27,14 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.TableGroupContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -117,11 +120,10 @@ public class CollectionElementEntityImpl<J>
 	@Override
 	public void applyTableReferenceJoins(
 			ColumnReferenceQualifier lhs,
-			org.hibernate.sql.ast.JoinType joinType,
+			JoinType joinType,
 			SqlAliasBase sqlAliasBase,
-			TableReferenceJoinCollector joinCollector,
-			TableGroupContext tableGroupContext) {
-		getEntityDescriptor().applyTableReferenceJoins( lhs, joinType, sqlAliasBase, joinCollector, tableGroupContext );
+			TableReferenceJoinCollector joinCollector) {
+		getEntityDescriptor().applyTableReferenceJoins( lhs, joinType, sqlAliasBase, joinCollector );
 	}
 
 	@Override
@@ -133,16 +135,28 @@ public class CollectionElementEntityImpl<J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
 		// delegate to the persister because here we are returning
 		// 		the entities that make up the referenced collection's elements
-		return getEntityDescriptor().createQueryResult(
+		return getEntityDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext
+				creationContext,
+				creationState
 		);
+	}
+
+	@Override
+	public boolean isNullable() {
+		return getCollectionDescriptor().getDescribedAttribute().isNullable();
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		entityDescriptor.visitFetchables( fetchableConsumer );
 	}
 }

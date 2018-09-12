@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 
 /**
  * Represents a reference to an entity either as a return, fetch, or collection element or index.
@@ -14,10 +14,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  */
 public interface EntityMappingNode extends ResultSetMappingNode, FetchParent {
-	/**
-	 * Retrieves the entity persister describing the entity associated with this Return.
-	 *
-	 * @return The EntityPersister.
-	 */
-	EntityDescriptor getEntityDescriptor();
+	EntityValuedNavigable getEntityValuedNavigable();
+
 }

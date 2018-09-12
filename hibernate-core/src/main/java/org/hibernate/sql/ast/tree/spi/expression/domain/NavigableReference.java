@@ -9,9 +9,10 @@ package org.hibernate.sql.ast.tree.spi.expression.domain;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
  * Models the QueryResultProducer generated as part of walking an SQM AST
@@ -21,7 +22,7 @@ import org.hibernate.sql.results.spi.SqlAstCreationContext;
  *
  * @author Steve Ebersole
  */
-public interface NavigableReference extends QueryResultProducer {
+public interface NavigableReference extends DomainResultProducer {
 
 	// todo (6.0) : I think it might be better to distinguish NavigableReference based on "classification".
 	//		E.g.:
@@ -44,17 +45,26 @@ public interface NavigableReference extends QueryResultProducer {
 	 */
 	NavigableContainerReference getNavigableContainerReference();
 
-	ColumnReferenceQualifier getSqlExpressionQualifier();
+	ColumnReferenceQualifier getColumnReferenceQualifier();
 
 	@Override
-	default QueryResult createQueryResult(
+	default DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return getNavigable().createQueryResult(
-				this,
-				resultVariable,
-				creationContext
-		);
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+		creationState.getColumnReferenceQualifierStack().push( getColumnReferenceQualifier() );
+		creationState.getNavigableReferenceStack().push( this );
+		try {
+			return getNavigable().createDomainResult(
+					this,
+					resultVariable,
+					creationContext,
+					creationState
+			);
+		}
+		finally {
+			creationState.getNavigableReferenceStack().pop();
+			creationState.getColumnReferenceQualifierStack().pop();
+		}
 	}
 
 }

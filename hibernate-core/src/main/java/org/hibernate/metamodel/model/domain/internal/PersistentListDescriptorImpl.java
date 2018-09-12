@@ -8,14 +8,19 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
 
-import org.hibernate.collection.internal.PersistentList;
-import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.LockMode;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
+import org.hibernate.sql.results.internal.domain.collection.ListInitializerProducer;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
@@ -39,21 +44,39 @@ public class PersistentListDescriptorImpl<O,E> extends AbstractPersistentCollect
 		return findCollectionJtd( List.class, creationContext );
 	}
 
-	@Override
-	public PersistentCollection instantiateWrapper(SharedSessionContractImplementor session, Object key) {
-		return new PersistentList( session, this, key );
-	}
+
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public PersistentCollection<E> wrap(SharedSessionContractImplementor session, List<E> rawCollection) {
-		return new PersistentList( session, this, rawCollection );
+	protected CollectionInitializerProducer createInitializerProducer(
+			FetchParent fetchParent,
+			boolean isJoinFetch,
+			String resultVariable,
+			LockMode lockMode,
+			DomainResult keyResult,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
+
+		return new ListInitializerProducer(
+				this,
+				isJoinFetch,
+				getIndexDescriptor().createDomainResult(
+						navigableReference,
+						null,
+						creationContext,
+						creationState
+				),
+				getElementDescriptor().createDomainResult(
+						navigableReference,
+						null,
+						creationContext,
+						creationState
+				)
+		);
 	}
 
 	@Override
 	public boolean contains(Object collection, Object childObject) {
 		return ( (List) collection ).contains( childObject );
 	}
-
-
 }

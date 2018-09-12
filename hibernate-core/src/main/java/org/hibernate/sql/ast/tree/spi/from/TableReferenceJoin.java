@@ -38,7 +38,7 @@ public class TableReferenceJoin implements SqlAstNode {
 		return joinType;
 	}
 
-	public TableReference getJoinedTableBinding() {
+	public TableReference getJoinedTableReference() {
 		return joinedTableBinding;
 	}
 

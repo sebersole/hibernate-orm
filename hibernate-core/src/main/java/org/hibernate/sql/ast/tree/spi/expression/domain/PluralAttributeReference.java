@@ -20,7 +20,7 @@ public class PluralAttributeReference extends AbstractNavigableReference {
 			PluralPersistentAttribute referencedAttribute,
 			NavigablePath navigablePath) {
 		// todo (6.0) : need a ColumnReferenceQualifer covering the owner table, the "collection table" and any element/index table
-		super( containerReference, referencedAttribute, navigablePath, containerReference.getSqlExpressionQualifier() );
+		super( containerReference, referencedAttribute, navigablePath, containerReference.getColumnReferenceQualifier() );
 	}
 
 	@Override
@@ -29,7 +29,7 @@ public class PluralAttributeReference extends AbstractNavigableReference {
 	}
 
 	@Override
-	public ColumnReferenceQualifier getSqlExpressionQualifier() {
+	public ColumnReferenceQualifier getColumnReferenceQualifier() {
 		// todo (6.0) : this really needs a composite ColumnReferenceQualifier
 		//		combining collection-table, element table and index table
 		//

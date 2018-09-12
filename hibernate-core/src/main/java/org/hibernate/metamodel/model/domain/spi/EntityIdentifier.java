@@ -9,14 +9,16 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
  * Descriptor for an entity's identifier
@@ -32,7 +34,7 @@ import org.hibernate.sql.results.spi.SqlAstCreationContext;
  *
  * @author Steve Ebersole
  */
-public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterType<J>, Readable, Writeable {
+public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableOutputParameterType<J> {
 	String NAVIGABLE_ID = "{id}";
 	String LEGACY_NAVIGABLE_ID = "id";
 
@@ -72,6 +74,31 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableParameterT
 	<T> SingularPersistentAttribute<O,T> asAttribute(Class<T> javaType);
 
 	IdentifierGenerator getIdentifierValueGenerator();
+
+
+
+	/**
+	 * Given a hydrated representation of this Readable, resolve its
+	 * domain representation.
+	 * <p>
+	 * E.g. for a composite, the hydrated form is an Object[] representing the
+	 * "simple state" of the composite's attributes.  Resolution of those values
+	 * returns the instance of the component with its resolved values injected.
+	 *
+	 * @apiNote
+	 */
+	default Object resolveHydratedState(
+			Object hydratedForm,
+			ExecutionContext executionContext,
+			SharedSessionContractImplementor session,
+			Object containerInstance) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+
+
+
+
 
 	/**
 	 * Retrieve the columns making up the identifier

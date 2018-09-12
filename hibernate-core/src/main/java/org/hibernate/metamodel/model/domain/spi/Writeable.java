@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -18,15 +17,17 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
- * Represents a value that can ultimately be written to the database.  The process of
- * getting a value ready to write to the database involves any number of steps:
+ * Generalized description of a "type" that maps a domain type to one or more
+ * JDBC types.  Defines a 2-phase process for writing values:
  *
- * 		* For basic values, this usually only applies any "value converters" (attribute converters, enum conversions, etc)
- *		* For components, this is (1) splits the composite into the individual sub-values array and then (2)
- *			applies any value conversions on these...
+ * 		* {@link #unresolve} - Transforms the domain representation of value of
+ * 			this type into its "hydrated array" representation.  The exact outcome
+ * 			of this depends on the nature of this type (basic, embedded, etc).
+ * 			Named as a corollary to {@link Readable#resolveHydratedState}.
+ * 		* {@link #dehydrate} - Transforms each value in the "hydrated" array
+ * 			into a call to the supplied {@link JdbcValueCollector}
  *
- * <D> The domain representation of the writable
- * <I> The "intermediate" or hydrated form of the writeable - this is typically `Object` or `Object[]`
+ * @see Readable
  *
  * @author Steve Ebersole
  */
@@ -34,19 +35,32 @@ public interface Writeable {
 	Predicate<StateArrayContributor> STANDARD_INSERT_INCLUSION_CHECK = StateArrayContributor::isInsertable;
 	Predicate<StateArrayContributor> STANDARD_UPDATE_INCLUSION_CHECK = StateArrayContributor::isUpdatable;
 
-	default void visitJdbcTypes(
-			Consumer<SqlExpressableType> action,
-			Clause clause,
-			TypeConfiguration typeConfiguration) {
-		visitColumns(
-				(type, column) -> action.accept( type ),
-				clause,
-				typeConfiguration
-		);
+	// todo (6.0) : the corollary to Writeable is really DomainResult(Assembler) / Initializer
+	//		Readable should just go away
+
+	// todo (6.0) : consider defining these contracts in terms of the inclusion checks rather than Clause
+	// todo (6.0) : remove `#unresolve`
+	// todo (6.0) : consider "recasting" `#visitJdbcTypes` as `#visitColumns` accepting `Consumer<Column>`
+	//		originally went with SqlExpressableType because not every implementor was mapped to columns -
+	//		originally BasicType, e.g., implemented this contract
+
+
+	/**
+	 * Contract used in dehydrating a value into its basic JDBC values.
+	 *
+	 * @see #dehydrate
+	 */
+	@FunctionalInterface
+	interface JdbcValueCollector {
+		void collect(Object jdbcValue, SqlExpressableType type, Column boundColumn);
 	}
 
-	default void visitColumns(
-			BiConsumer<SqlExpressableType,Column> action,
+
+	/**
+	 * Visit all of the included (per Clause) JDBC types defined by this Writeable type.
+	 */
+	default void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
 		throw new NotYetImplementedFor6Exception( getClass() );
@@ -68,10 +82,5 @@ public interface Writeable {
 			Clause clause,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception( getClass() );
-	}
-
-	@FunctionalInterface
-	interface JdbcValueCollector {
-		void collect(Object jdbcValue, SqlExpressableType type, Column boundColumn);
 	}
 }

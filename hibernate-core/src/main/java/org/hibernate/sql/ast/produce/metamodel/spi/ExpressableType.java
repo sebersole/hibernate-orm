@@ -6,24 +6,17 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
-import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Polymorphically represents any  "type" which can occur as an expression
- * in an SQM tree.
- * <p/>
- * Generally will be one of:<ul>
- *     <li>a {@link Navigable}</li>
- *     <li>a {@link org.hibernate.type.spi.BasicType}</li>
- * </ul>
- * <p/>
- * Note: cannot be just Navigable as we need to account for functions
- * and other non-domain expressions.
+ * in a "domain query" (e.g. an SQM tree).
  *
  * @author Steve Ebersole
  */
-public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T> {
+public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T>, Writeable {
+
 	/**
 	 * The "java type" descriptor
 	 */

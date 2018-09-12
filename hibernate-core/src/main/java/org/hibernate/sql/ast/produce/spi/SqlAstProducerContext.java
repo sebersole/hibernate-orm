@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.ast.produce.spi;
 
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 
@@ -16,6 +17,11 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  */
 public interface SqlAstProducerContext {
 	SessionFactoryImplementor getSessionFactory();
+
+	/**
+	 * todo (6.0) Consider instead defining access to the root AttributeNodeContainer
+	 */
+	LoadQueryInfluencers getLoadQueryInfluencers();
 
 	Callback getCallback();
 }

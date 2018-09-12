@@ -6,20 +6,19 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression.instantiation;
 
-import org.hibernate.sql.results.internal.instantiation.ArgumentReader;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 
 /**
  * @author Steve Ebersole
  */
 public class DynamicInstantiationArgument {
-	private final QueryResultProducer argumentResultProducer;
+	private final DomainResultProducer argumentResultProducer;
 	private final String alias;
 
 	@SuppressWarnings("WeakerAccess")
-	public DynamicInstantiationArgument(QueryResultProducer argumentResultProducer, String alias) {
+	public DynamicInstantiationArgument(DomainResultProducer argumentResultProducer, String alias) {
 		this.argumentResultProducer = argumentResultProducer;
 		this.alias = alias;
 	}
@@ -28,10 +27,11 @@ public class DynamicInstantiationArgument {
 		return alias;
 	}
 
-	@SuppressWarnings({"unchecked", "WeakerAccess"})
-	public ArgumentReader buildArgumentReader(SqlAstCreationContext context) {
-		final QueryResult queryResult = argumentResultProducer.createQueryResult( alias, context );
-
-		return new ArgumentReader( queryResult.getResultAssembler(), alias );
+	public ArgumentDomainResult buildArgumentDomainResult(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new ArgumentDomainResult(
+				argumentResultProducer.createDomainResult( alias, creationState, creationContext )
+		);
 	}
 }

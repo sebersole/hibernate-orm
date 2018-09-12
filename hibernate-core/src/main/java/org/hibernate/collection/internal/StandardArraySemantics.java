@@ -6,6 +6,7 @@
  */
 package org.hibernate.collection.internal;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -39,7 +40,10 @@ public class StandardArraySemantics implements CollectionSemantics<Object[]> {
 	public Object[] instantiateRaw(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		throw new UnsupportedOperationException();
+		return (Object[]) Array.newInstance(
+				collectionDescriptor.getJavaTypeDescriptor().getJavaType().getComponentType(),
+				anticipatedSize
+		);
 	}
 
 

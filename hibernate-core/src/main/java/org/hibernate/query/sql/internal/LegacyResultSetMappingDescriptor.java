@@ -16,15 +16,15 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
-import org.hibernate.sql.results.spi.DynamicInstantiationQueryResult;
-import org.hibernate.sql.results.spi.EntityQueryResult;
+import org.hibernate.sql.results.spi.DynamicInstantiationResult;
+import org.hibernate.sql.results.spi.EntityResult;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.PluralAttributeQueryResult;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.CollectionResult;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.ResultSetMapping;
 import org.hibernate.sql.results.spi.ResultSetMappingDescriptor;
-import org.hibernate.sql.results.spi.ScalarQueryResult;
+import org.hibernate.sql.results.spi.ScalarResult;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -79,8 +79,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 
 	@Override
 	public ResultSetMapping resolve(
-			JdbcValuesMetadata jdbcResultsMetadata,
-			SessionFactoryImplementor sessionFactory) {
+			JdbcValuesMetadata jdbcResultsMetadata, SessionFactoryImplementor sessionFactory) {
 		if ( roots == null || roots.isEmpty() ) {
 
 		}
@@ -147,17 +146,17 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 	 * ResultNode which can be a query result
 	 */
 	public interface ResultRootNode extends ResultNode {
-		QueryResult makeQueryResult();
+		DomainResult makeQueryResult();
 	}
 
 	public interface RootNodeScalar extends ResultRootNode, ScalarNode {
 		@Override
-		ScalarQueryResult makeQueryResult();
+		ScalarResult makeQueryResult();
 	}
 
 	public interface RootNodeDynamicInstantiation extends ResultRootNode {
 		@Override
-		DynamicInstantiationQueryResult makeQueryResult();
+		DynamicInstantiationResult makeQueryResult();
 	}
 
 	public interface RootNodeEntity extends ResultRootNode, FetchParentNode, NativeQuery.RootReturn {
@@ -169,7 +168,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 		}
 
 		@Override
-		EntityQueryResult makeQueryResult();
+		EntityResult makeQueryResult();
 	}
 
 	public interface RootNodeCollection extends ResultRootNode, FetchParentNode {
@@ -181,7 +180,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 		}
 
 		@Override
-		PluralAttributeQueryResult makeQueryResult();
+		CollectionResult makeQueryResult();
 	}
 
 

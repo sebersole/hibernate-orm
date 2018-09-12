@@ -6,16 +6,27 @@
  */
 package org.hibernate.query.sqm.tree.internal;
 
+import java.util.Map;
+import java.util.Set;
+
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
+import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
 
 /**
  * @author Steve Ebersole
  */
 public class SqmSelectStatementImpl extends AbstractSqmStatement implements SqmSelectStatement {
+	private Map<NavigablePath, Set<SqmNavigableJoin>> fetchJoinsByParentPath;
 	private SqmQuerySpec querySpec;
 
 	public SqmSelectStatementImpl() {
+	}
+
+	@Override
+	public Map<NavigablePath, Set<SqmNavigableJoin>> getFetchJoinsByParentPath() {
+		return fetchJoinsByParentPath;
 	}
 
 	@Override
@@ -23,10 +34,14 @@ public class SqmSelectStatementImpl extends AbstractSqmStatement implements SqmS
 		return querySpec;
 	}
 
-	public void applyQuerySpec(SqmQuerySpec querySpec) {
+	public void applyQuerySpec(
+			SqmQuerySpec querySpec,
+			Map<NavigablePath, Set<SqmNavigableJoin>> fetchJoinsByParentPath) {
 		if ( this.querySpec != null ) {
 			throw new IllegalStateException( "SqmQuerySpec was already defined for select-statement" );
 		}
+
 		this.querySpec = querySpec;
+		this.fetchJoinsByParentPath = fetchJoinsByParentPath;
 	}
 }

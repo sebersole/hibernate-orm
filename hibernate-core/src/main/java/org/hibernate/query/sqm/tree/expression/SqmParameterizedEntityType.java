@@ -8,9 +8,10 @@ package org.hibernate.query.sqm.tree.expression;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -18,7 +19,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class SqmParameterizedEntityType implements SqmExpression, QueryResultProducer {
+public class SqmParameterizedEntityType implements SqmExpression, DomainResultProducer {
 	private final SqmParameter parameterExpression;
 
 	public SqmParameterizedEntityType(SqmParameter parameterExpression) {
@@ -46,9 +47,9 @@ public class SqmParameterizedEntityType implements SqmExpression, QueryResultPro
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new UnsupportedOperationException( "At the moment, selection of an entity's type as a QueryResult is not supported" );
 		// todo (6.0) : but could be ^^ - consider adding support for this (returning Class)
 	}

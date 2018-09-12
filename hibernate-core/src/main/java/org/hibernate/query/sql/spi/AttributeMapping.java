@@ -44,7 +44,7 @@ public class AttributeMapping implements NativeQuery.ReturnProperty {
 //			return sqlSelectionGroup;
 //		}
 //		else {
-//			return context.getSqlSelectionResolver().resolveSqlSelectionGroup( attribute );
+//			return context.getSqlExpressionResolver().resolveSqlSelectionGroup( attribute );
 //		}
 //	}
 

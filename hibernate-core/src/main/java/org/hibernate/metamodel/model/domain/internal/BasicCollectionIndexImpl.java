@@ -17,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmCollectionIndexReferenceBasic;
@@ -24,10 +25,14 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.spi.BasicType;
 
 import org.jboss.logging.Logger;
@@ -97,15 +102,16 @@ public class BasicCollectionIndexImpl<J>
 	}
 
 	@Override
-	public QueryResult createQueryResult(
+	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			SqlAstCreationContext creationContext) {
-		return new ScalarQueryResultImpl(
+			DomainResultCreationContext creationContext,
+			DomainResultCreationState creationState) {
+		return new BasicResultImpl(
 				resultVariable,
-				creationContext.getSqlSelectionResolver().resolveSqlSelection(
-						creationContext.getSqlSelectionResolver().resolveSqlExpression(
-								navigableReference.getSqlExpressionQualifier(),
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								navigableReference.getColumnReferenceQualifier(),
 								getBoundColumn()
 						),
 						getJavaTypeDescriptor(),
@@ -113,5 +119,14 @@ public class BasicCollectionIndexImpl<J>
 				),
 				getBoundColumn().getExpressableType()
 		);
+	}
+
+	@Override
+	public void applyTableReferenceJoins(
+			ColumnReferenceQualifier lhs,
+			JoinType joinType,
+			SqlAliasBase sqlAliasBase,
+			TableReferenceJoinCollector joinCollector) {
+		// nothing to do
 	}
 }

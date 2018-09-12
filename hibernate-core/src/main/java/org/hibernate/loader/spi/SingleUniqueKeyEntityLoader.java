@@ -6,8 +6,6 @@
  */
 package org.hibernate.loader.spi;
 
-import java.io.Serializable;
-
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -16,15 +14,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  *
  * @author Steve Ebersole
  */
-public interface SingleUniqueKeyEntityLoader<T> extends Loader {
-	// todo (6.0) - any additional Options info?
-
-	interface Options {
-		/**
-		 * The lock options for this load.  May be {@code null}.
-		 */
-		LockOptions getLockOptions();
-	}
-
-	T load(Object uk, SharedSessionContractImplementor session, Options options);
+public interface SingleUniqueKeyEntityLoader<T> extends SingleEntityLoader {
+	/**
+	 * Here, the passed key is expected to be the uk value
+	 */
+	T load(Object ukValue, LockOptions lockOptions, SharedSessionContractImplementor session);
 }

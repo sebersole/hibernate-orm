@@ -21,6 +21,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
@@ -121,9 +122,9 @@ import org.hibernate.sql.ast.produce.spi.FromClauseIndex;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -190,8 +191,7 @@ import org.hibernate.sql.exec.internal.JdbcParametersImpl;
 import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameters;
-import org.hibernate.sql.results.spi.QueryResultProducer;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 
@@ -222,12 +222,13 @@ public abstract class BaseSqmToSqlAstConverter
 
 	private TableSpace tableSpace;
 
-	private final Stack<Clause> currentClauseStack = new StandardStack<>();
 	private final Stack<QuerySpec> querySpecStack = new StandardStack<>();
 	private final Stack<FromClause> fromClauseStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new StandardStack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
+
+	private final Stack<Clause> currentClauseStack = new StandardStack<>();
+	private final Stack<SqmSelectToSqlAstConverter.Shallowness> shallownessStack = new StandardStack<>( SqmSelectToSqlAstConverter.Shallowness.NONE );
 
 	private final Set<String> affectedTableNames = new HashSet<>();
 
@@ -248,6 +249,11 @@ public abstract class BaseSqmToSqlAstConverter
 
 	public SqlAstProducerContext getProducerContext() {
 		return producerContext;
+	}
+
+	@Override
+	public LoadQueryInfluencers getLoadQueryInfluencers() {
+		return getProducerContext().getLoadQueryInfluencers();
 	}
 
 	protected Set<String> affectedTableNames() {
@@ -625,7 +631,13 @@ public abstract class BaseSqmToSqlAstConverter
 		tableGroupStack.push( tableGroupJoin.getJoinedGroup() );
 		fromClauseIndex.crossReference( joinedFromElement, tableGroupJoin.getJoinedGroup() );
 
-		navigableReferenceStack.push( tableGroupJoin.getJoinedGroup().getNavigableReference() );
+		final NavigableReference navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+		if ( ! navigableReferenceStack.isEmpty() ) {
+			final NavigableReference parent = navigableReferenceStack.getCurrent();
+			assert parent instanceof NavigableContainerReference;
+			( (NavigableContainerReference) parent ).addNavigableReference( navigableReference );
+			navigableReferenceStack.push( navigableReference );
+		}
 
 		return tableGroupJoin;
 	}
@@ -715,7 +727,7 @@ public abstract class BaseSqmToSqlAstConverter
 	// Expressions
 
 	@Override
-	public QueryResultProducer visitEntityIdentifierReference(SqmEntityIdentifierReference expression) {
+	public DomainResultProducer visitEntityIdentifierReference(SqmEntityIdentifierReference expression) {
 		final TableGroup resolvedTableGroup = getFromClauseIndex().findResolvedTableGroup( expression.getExportedFromElement() );
 		if ( resolvedTableGroup == null ) {
 			throw new ConversionException( "Could not find matching resolved TableGroup : " + expression.getExportedFromElement() );
@@ -757,7 +769,7 @@ public abstract class BaseSqmToSqlAstConverter
 				sqmAttributeReference.getReferencedNavigable(),
 				sqmAttributeReference.getNavigablePath(),
 				// todo (6.0) : need the qualifier covering both FK tables
-				containerReference.getSqlExpressionQualifier(),
+				containerReference.getColumnReferenceQualifier(),
 				queryOptions.getLockOptions().getEffectiveLockMode( sqmAttributeReference.getIdentificationVariable() )
 		);
 	}
@@ -1253,7 +1265,7 @@ public abstract class BaseSqmToSqlAstConverter
 			if ( BasicValuedNavigableReference.class.isInstance( expression ) ) {
 				final BasicValuedNavigableReference navigableReference = (BasicValuedNavigableReference) expression;
 				results.add( getSqlSelectionResolver().resolveSqlExpression(
-						navigableReference.getSqlExpressionQualifier(),
+						navigableReference.getColumnReferenceQualifier(),
 						navigableReference.getNavigable().getBoundColumn()
 							)
 				);
@@ -1697,7 +1709,7 @@ public abstract class BaseSqmToSqlAstConverter
 		if ( value instanceof NavigableReference ) {
 			final NavigableReference navigableReference = (NavigableReference) value;
 			final List list = navigableReference.getNavigable().resolveColumnReferences(
-					navigableReference.getSqlExpressionQualifier(),
+					navigableReference.getColumnReferenceQualifier(),
 					this
 			);
 			if ( list.size() == 1 ) {

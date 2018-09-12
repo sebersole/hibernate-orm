@@ -119,7 +119,7 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 			assertThat( jdbcSelect.getAffectedTableNames(), hasSize(1) );
 
 			final ResultSetMapping resultSetMapping = jdbcSelect.getResultSetMapping().resolve( null, null );
-			assertThat( resultSetMapping.getQueryResults(), hasSize(1) );
+			assertThat( resultSetMapping.getDomainResults(), hasSize(1) );
 		}
 		finally {
 			session.close();

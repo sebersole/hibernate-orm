@@ -6,13 +6,13 @@
  */
 package org.hibernate.query.sql.spi;
 
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResult;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
- * A builder for {@link QueryResult}
- * instances related to native SQL query results.
+ * A builder for {@link DomainResult} instances related to native SQL query results.
  *
  *
  * todo (6.0) : Perhaps this should be a builder for QueryResultProducer instances instead?
@@ -39,5 +39,7 @@ public interface QueryResultBuilder {
 
 	JavaTypeDescriptor getResultType();
 
-	QueryResult buildReturn(SqlAstCreationContext creationContext);
+	DomainResult buildReturn(
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext);
 }

@@ -27,9 +27,11 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
+import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -63,7 +65,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  */
 public interface PersistentCollectionDescriptor<O,C,E>
 		extends  NavigableContainer<C>, RootTableGroupProducer, TableGroupJoinProducer,
-		TableReferenceContributor, EmbeddedContainer<C>, Filterable {
+		TableReferenceContributor, EmbeddedContainer<C>, Filterable, Fetchable<C> {
 
 	Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
 
@@ -82,11 +84,29 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	CollectionSemantics<C> getSemantics();
 
 	@Override
+	CollectionJavaDescriptor<C> getJavaTypeDescriptor();
+
+	@Override
 	ManagedTypeDescriptor<O> getContainer();
 
 	NavigableRole getNavigableRole();
 
 	PluralPersistentAttribute getDescribedAttribute() ;
+
+	/**
+	 * The Navigable that is the target of the FK in the
+	 * Container.  Generally speaking this returns the
+	 * container's
+	 *
+	 * todo (6.0) : this could really be part of `Fetchable`
+	 * 		- note however that for a managed-type association
+	 * 			(component, entity, etc) the implication is
+	 * 			different.  there it is the target Navigable
+	 * 			in the associated managed type
+	 *		- I think the composite impls should always just
+	 *			delegate this call to their container
+	 */
+	Navigable getForeignKeyTargetNavigable();
 
 	/**
 	 * Access information about the FK mapping to the "owner" of this collection
@@ -589,4 +609,5 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	default Object indexOf(Object collection, Object element) {
 		throw new UnsupportedOperationException( "Collection type does not support indexes" );
 	}
+
 }

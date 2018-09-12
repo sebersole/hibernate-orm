@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
@@ -20,6 +21,7 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -28,6 +30,11 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
+import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -92,5 +99,25 @@ public class CollectionIndexEmbeddedImpl<J>
 	@Override
 	public AllowableParameterType resolveTemporalPrecision(TemporalType temporalType, TypeConfiguration typeConfiguration) {
 		throw new ParameterMisuseException( "Cannot apply temporal precision to embeddable value" );
+	}
+
+	@Override
+	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
+		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
+	}
+
+	@Override
+	public void applyTableReferenceJoins(
+			ColumnReferenceQualifier lhs,
+			JoinType joinType,
+			SqlAliasBase sqlAliasBase,
+			TableReferenceJoinCollector joinCollector) {
+		getEmbeddedDescriptor().visitStateArrayContributors(
+				contributor -> {
+					if ( contributor instanceof TableReferenceContributor ) {
+						( (TableReferenceContributor) contributor ).applyTableReferenceJoins( lhs, joinType, sqlAliasBase, joinCollector );
+					}
+				}
+		);
 	}
 }

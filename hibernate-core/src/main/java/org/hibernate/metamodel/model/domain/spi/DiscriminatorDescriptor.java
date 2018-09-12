@@ -7,8 +7,8 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 
 /**
  * Binding of the discriminator in a entity hierarchy
@@ -19,15 +19,13 @@ import org.hibernate.sql.results.spi.SqlAstCreationContext;
 public interface DiscriminatorDescriptor<J>
 		extends VirtualNavigable<J>, BasicValuedNavigable<J>, DomainTypeExposer<J> {
 
-	public static final String NAVIGABLE_NAME = "{type}";
+	String NAVIGABLE_NAME = "{type}";
 
 	/**
 	 * The mappings for `entity-name` <--> `discriminator-value` for this
 	 * hierarchy's discriminator.
 	 */
 	DiscriminatorMappings getDiscriminatorMappings();
-
-	SqlSelection resolveSqlSelection(ColumnReferenceQualifier qualifier, SqlAstCreationContext resolutionContext);
 
 	@Override
 	default PersistenceType getPersistenceType() {

@@ -131,7 +131,7 @@ public final class CollectionKey implements Serializable {
 			ObjectInputStream ois) throws IOException, ClassNotFoundException {
 		return new CollectionKey(
 				(NavigableRole) ois.readObject(),
-				(Serializable) ois.readObject(),
+				ois.readObject(),
 				(JavaTypeDescriptor) ois.readObject()
 		);
 	}

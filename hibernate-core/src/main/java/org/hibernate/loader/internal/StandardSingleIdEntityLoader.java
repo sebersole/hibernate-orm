@@ -18,7 +18,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
@@ -29,10 +28,12 @@ import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.internal.LoadIdParameter;
 import org.hibernate.sql.ast.produce.metamodel.internal.SelectByEntityIdentifierBuilder;
+import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -55,9 +56,8 @@ import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.results.internal.ScalarQueryResultImpl;
-import org.hibernate.sql.results.spi.QueryResult;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
+import org.hibernate.sql.results.spi.DomainResult;
 
 /**
  * @author Steve Ebersole
@@ -83,23 +83,28 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 //		selectByLockMode.put( LockMode.READ, base );
 	}
 
+	@Override
+	public EntityDescriptor<T> getLoadedNavigable() {
+		return entityDescriptor;
+	}
 
 	@Override
-	public T load(Object id, LoadOptions loadOptions, SharedSessionContractImplementor session) {
+	public T load(Object id, LockOptions lockOptions, SharedSessionContractImplementor session) {
 		final ParameterBindingContext parameterBindingContext = new LoadParameterBindingContext(
 				session.getFactory(),
 				id
 		);
 
 		final JdbcSelect jdbcSelect = resolveJdbcSelect(
-				loadOptions.getLockOptions(),
+				lockOptions,
 				session
 		);
 
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
-				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
-				new Writeable.JdbcValueCollector() {
+//				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+				id,
+				new ExpressableType.JdbcValueCollector() {
 					private int count = 0;
 
 					@Override
@@ -164,7 +169,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			return null;
 		}
 
-		return list.get( 0 );
+		final T entityInstance = list.get( 0 );
+		return entityInstance;
 	}
 
 	private JdbcSelect resolveJdbcSelect(
@@ -325,14 +331,14 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				}
 		);
 
-		final List<QueryResult> queryResults = new ArrayList<>();
+		final List<DomainResult> domainResults = new ArrayList<>();
 
 		final SqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
 				() -> rootQuerySpec,
 				expression -> expression,
 				(expression, sqlSelection) -> {
-					queryResults.add(
-							new ScalarQueryResultImpl(
+					domainResults.add(
+							new BasicResultImpl(
 									null,
 									sqlSelection,
 									expression.getType()
@@ -350,6 +356,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			@Override
 			public SqlExpressionResolver getSqlSelectionResolver() {
 				return sqlExpressionResolver;
+			}
+
+			@Override
+			public LoadQueryInfluencers getLoadQueryInfluencers() {
+				return LoadQueryInfluencers.NONE;
 			}
 
 			@Override
@@ -383,7 +394,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 		return new SqlAstSelectDescriptorImpl(
 				selectStatement,
-				queryResults,
+				domainResults,
 				entityDescriptor.getAffectedTableNames()
 		);
 	}

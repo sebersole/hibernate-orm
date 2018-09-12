@@ -8,8 +8,6 @@ package org.hibernate.sql.results.internal;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -172,78 +170,19 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
-	public LoadingEntityEntry registerLoadingEntity(
+	public void registerLoadingEntity(
 			EntityKey entityKey,
-			Function<EntityKey,LoadingEntityEntry> entryProducer) {
+			LoadingEntityEntry loadingEntry) {
 		if ( loadingEntityMap == null ) {
 			loadingEntityMap = new HashMap<>();
 		}
 
-		final LoadingEntityEntry loadingEntity = loadingEntityMap.compute(
-				entityKey,
-				(key, existingValue) -> {
-					if ( existingValue == null ) {
-						log.debugf(
-								"Generating LoadingEntityEntry registration : %s[id=%s]",
-								entityKey.getEntityName(),
-								entityKey.getIdentifier()
-						);
-						return entryProducer.apply( key );
-					}
-					else {
-						log.debugf(
-								"Attempt to add duplicate LoadingEntityEntry registration for same EntityKey [%s]",
-								entityKey
-						);
-						return existingValue;
-					}
-				}
-		);
-
-		return loadingEntity;
+		loadingEntityMap.put( entityKey, loadingEntry );
 	}
 
 	@Override
-	public LoadingEntityEntry findLoadingEntryLocally(EntityKey entityKey) {
+	public LoadingEntityEntry findLoadingEntityLocally(EntityKey entityKey) {
 		return loadingEntityMap == null ? null : loadingEntityMap.get( entityKey );
-	}
-
-	@Override
-	public LoadingCollectionEntry registerLoadingCollection(
-			PersistentCollectionDescriptor collectionDescriptor,
-			Object collectionKey,
-			Supplier<LoadingCollectionEntry> entryProducer) {
-		Map<Object, LoadingCollectionEntry> entryByKeyMap;
-		final LoadingCollectionEntry existing;
-		if ( loadingCollectionMap == null ) {
-			loadingCollectionMap = new HashMap<>();
-			entryByKeyMap = null;
-			existing = null;
-		}
-		else {
-			entryByKeyMap = loadingCollectionMap.get( collectionDescriptor );
-			existing = entryByKeyMap.get( collectionKey );
-		}
-
-		if ( entryByKeyMap == null ) {
-			entryByKeyMap = new HashMap<>();
-			loadingCollectionMap.put( collectionDescriptor, entryByKeyMap );
-		}
-
-		if ( existing != null ) {
-			log.debugf(
-					"Attempt to add duplicate LoadingCollectionEntry registration for same key [%s#%s]",
-					collectionDescriptor.getNavigableRole().getFullPath(),
-					collectionKey
-			);
-
-			return existing;
-		}
-		else {
-			final LoadingCollectionEntry produced = entryProducer.get();
-			entryByKeyMap.put( collectionKey, produced );
-			return produced;
-		}
 	}
 
 	@Override
@@ -260,6 +199,28 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 		}
 
 		return entryMap.get( key );
+	}
+
+	@Override
+	public void registerLoadingCollection(
+			PersistentCollectionDescriptor collectionDescriptor,
+			Object key,
+			LoadingCollectionEntry loadingCollectionEntry) {
+		Map<Object, LoadingCollectionEntry> collectionEntryMap = null;
+
+		if ( loadingCollectionMap == null ) {
+			loadingCollectionMap = new HashMap<>();
+		}
+		else {
+			collectionEntryMap = loadingCollectionMap.get( collectionDescriptor );
+		}
+
+		if ( collectionEntryMap == null ) {
+			collectionEntryMap = new HashMap<>();
+			loadingCollectionMap.put( collectionDescriptor, collectionEntryMap );
+		}
+
+		collectionEntryMap.put( key, loadingCollectionEntry );
 	}
 
 	@Override
@@ -317,14 +278,13 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 
 	private void finishLoadingCollections() {
-//		for ( InitializerCollection initializer : initializers ) {
-//			initializer.endLoading( context );
-//		}
-
-		// todo (6.0) : need something like org.hibernate.sql.results.spi.LoadingCollectionEntry
-		//		^^ see new `org.hibernate.sql.results.spi.LoadContexts` &&
-
-//		throw new NotYetImplementedFor6Exception(  );
+		if ( loadingCollectionMap != null ) {
+			loadingCollectionMap.values().forEach(
+					loadingEntryMap -> loadingEntryMap.values().forEach(
+							loadingCollectionEntry -> loadingCollectionEntry.finishLoading( getExecutionContext() )
+					)
+			);
+		}
 	}
 
 }

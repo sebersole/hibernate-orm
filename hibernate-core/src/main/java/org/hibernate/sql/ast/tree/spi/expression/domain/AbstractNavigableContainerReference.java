@@ -38,7 +38,6 @@ public abstract class AbstractNavigableContainerReference extends AbstractNaviga
 		return (NavigableContainer) super.getNavigable();
 	}
 
-	@Override
 	public LockMode getLockMode() {
 		return lockMode;
 	}

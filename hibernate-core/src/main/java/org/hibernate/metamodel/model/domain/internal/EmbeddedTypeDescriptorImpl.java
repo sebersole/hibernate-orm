@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.persistence.TemporalType;
 
 import org.hibernate.HibernateException;
@@ -33,11 +35,12 @@ import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.results.internal.CompositeSqlSelectionGroupImpl;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.internal.domain.embedded.CompositeSqlSelectionGroupImpl;
 import org.hibernate.sql.results.spi.CompositeSqlSelectionGroup;
-import org.hibernate.sql.results.spi.SqlAstCreationContext;
 import org.hibernate.type.descriptor.java.internal.EmbeddableJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
@@ -184,6 +187,26 @@ public class EmbeddedTypeDescriptorImpl<J>
 	@Override
 	public int getNumberOfJdbcParametersNeeded() {
 		return collectColumns().size();
+	}
+
+	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		visitStateArrayContributors(
+				contributor -> contributor.visitJdbcTypes( action, clause, typeConfiguration )
+		);
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer<SqlExpressableType, Column> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		visitStateArrayContributors(
+				contributor -> contributor.visitColumns( action, clause, typeConfiguration )
+		);
 	}
 
 	private Object[] breakDownValue(Object value) {

@@ -9,7 +9,7 @@ package org.hibernate.sql.ast.produce.spi;
 import java.util.List;
 
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
-import org.hibernate.sql.results.spi.QueryResult;
+import org.hibernate.sql.results.spi.DomainResult;
 
 /**
  * SqlAstDescriptor specialization for select queries
@@ -25,5 +25,5 @@ public interface SqlAstSelectDescriptor extends SqlAstDescriptor {
 	/**
 	 * The descriptors for how to process results
 	 */
-	List<QueryResult> getQueryResults();
+	List<DomainResult> getQueryResults();
 }
