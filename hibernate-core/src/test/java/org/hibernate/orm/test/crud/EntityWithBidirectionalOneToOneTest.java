@@ -170,6 +170,12 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 			session.save( child );
 		} );
 
+		sessionFactoryScope().inTransaction( session -> {
+			final Parent parent = session.get( Parent.class, 1 );
+			assertThat( parent.getChild(), CoreMatchers.notNullValue() );
+			assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
+		} );
+
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final String queryString = "SELECT c FROM Child c JOIN c.parent d WHERE d.id = :id";
@@ -202,10 +208,5 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 
 		);
 
-		sessionFactoryScope().inTransaction( session -> {
-			final Parent parent = session.get( Parent.class, 1 );
-			assertThat( parent.getChild(), CoreMatchers.notNullValue() );
-			assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
-		} );
 	}
 }
