@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.results.internal.NullValueAssembler;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
@@ -19,6 +21,7 @@ import org.hibernate.sql.results.spi.CompositeInitializer;
 import org.hibernate.sql.results.spi.CompositeMappingNode;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
@@ -27,18 +30,23 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public abstract class AbstractCompositeInitializer implements CompositeInitializer {
 	private final EmbeddedTypeDescriptor embeddedTypeDescriptor;
+	private final FetchParentAccess fetchParentAccess;
 
 	private final Map<StateArrayContributor, DomainResultAssembler> assemblerMap = new HashMap<>();
 
+	// per-row state
 	private Object compositeInstance;
+	private Object[] resolvedValues;
 
 
 	public AbstractCompositeInitializer(
 			CompositeMappingNode resultDescriptor,
+			FetchParentAccess fetchParentAccess,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationContext context,
 			AssemblerCreationState creationState) {
 		this.embeddedTypeDescriptor = resultDescriptor.getCompositeNavigableDescriptor().getEmbeddedDescriptor();
+		this.fetchParentAccess = fetchParentAccess;
 
 		embeddedTypeDescriptor.visitStateArrayContributors(
 				stateArrayContributor -> {
@@ -58,6 +66,10 @@ public abstract class AbstractCompositeInitializer implements CompositeInitializ
 		return embeddedTypeDescriptor;
 	}
 
+	public FetchParentAccess getFetchParentAccess() {
+		return fetchParentAccess;
+	}
+
 	@Override
 	public Object getCompositeInstance() {
 		return compositeInstance;
@@ -70,20 +82,46 @@ public abstract class AbstractCompositeInitializer implements CompositeInitializ
 
 	@Override
 	public void resolve(RowProcessingState rowProcessingState) {
+		resolvedValues = new Object[ assemblerMap.size() ];
+
 		for ( Map.Entry<StateArrayContributor, DomainResultAssembler> entry : assemblerMap.entrySet() ) {
 			final Object contributorValue = entry.getValue().assemble(
 					rowProcessingState,
 					rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
 			);
 
-			entry.getKey().getPropertyAccess().getSetter().set(
-					compositeInstance,
-					contributorValue,
-					rowProcessingState.getSession().getSessionFactory()
-			);
+			resolvedValues[ entry.getKey().getStateArrayPosition() ] = contributorValue;
 
-			// todo (6.0) : handle `org.hibernate.annotations.Parent` injection as well
-			// todo (6.0) : ? - add FetchParentAccess#findFirstEntity` for backwards-compatibility in regards to ^^ ?
 		}
+
+		getEmbeddedDescriptor().setPropertyValues( compositeInstance, resolvedValues );
+
+		// todo (6.0) : handle `org.hibernate.annotations.Parent` injection as well
+		// todo (6.0) : ? - add FetchParentAccess#findFirstEntity` for backwards-compatibility in regards to ^^ ?
+	}
+
+	@Override
+	public Object getResolvedState(
+			Navigable navigable,
+			RowProcessingState processingState) {
+		if ( navigable.getContainer() == getEmbeddedDescriptor() ) {
+			return resolvedValues[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
+		}
+
+		if ( fetchParentAccess != null ) {
+			return fetchParentAccess.getResolvedState( navigable, processingState );
+		}
+
+		throw new HibernateException(
+				"Could not determine how to determine resolved state for [" + navigable
+						+ "] relative to CompositeInitializer for ["
+						+ getEmbeddedDescriptor() + "]"
+		);
+	}
+
+	@Override
+	public void finishUpRow(RowProcessingState rowProcessingState) {
+		compositeInstance = null;
+		resolvedValues = null;
 	}
 }

@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -16,13 +15,9 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 /**
  * @author Steve Ebersole
  */
-public class BagInitializer extends AbstractCollectionInitializer {
-	private final FetchParentAccess parentAccess;
+public class BagInitializer extends AbstractImmediateCollectionInitializer {
 	private final DomainResultAssembler elementAssembler;
 	private final DomainResultAssembler collectionIdAssembler;
-
-	// per-row state
-	private PersistentBag collectionInstance;
 
 	public BagInitializer(
 			PersistentBagDescriptorImpl bagDescriptor,
@@ -31,25 +26,19 @@ public class BagInitializer extends AbstractCollectionInitializer {
 			DomainResultAssembler collectionKeyAssembler,
 			DomainResultAssembler elementAssembler,
 			DomainResultAssembler collectionIdAssembler) {
-		super( bagDescriptor, isJoinFetch, collectionKeyAssembler );
-		this.parentAccess = parentAccess;
+		super( bagDescriptor, parentAccess, isJoinFetch, collectionKeyAssembler );
 		this.elementAssembler = elementAssembler;
 		this.collectionIdAssembler = collectionIdAssembler;
 	}
 
 	@Override
 	public PersistentBag getCollectionInstance() {
-		return collectionInstance;
+		return (PersistentBag) super.getCollectionInstance();
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		throw new NotYetImplementedFor6Exception();
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		super.finishUpRow( rowProcessingState );
-		collectionInstance = null;
+	@SuppressWarnings("unchecked")
+	protected void readCollectionRow(RowProcessingState rowProcessingState) {
+		getCollectionInstance().load( elementAssembler.assemble( rowProcessingState ) );
 	}
 }

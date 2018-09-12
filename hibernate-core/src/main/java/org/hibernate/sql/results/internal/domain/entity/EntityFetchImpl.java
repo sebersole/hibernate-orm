@@ -75,8 +75,6 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 				creationState
 		);
 
-		collector.accept( initializer );
-
 		return new EntityAssembler( getFetchedNavigable().getJavaTypeDescriptor(), initializer );
 	}
 }

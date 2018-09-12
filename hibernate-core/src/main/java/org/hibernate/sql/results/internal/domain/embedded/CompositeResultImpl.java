@@ -49,6 +49,7 @@ public class CompositeResultImpl extends AbstractFetchParent implements Composit
 			AssemblerCreationState creationOptions,
 			AssemblerCreationContext creationContext) {
 		final CompositeRootInitializerImpl initializer = new CompositeRootInitializerImpl(
+				null,
 				this,
 				initializerCollector,
 				creationOptions,

@@ -23,6 +23,13 @@ public interface DomainResultAssembler {
 	Object assemble(RowProcessingState rowProcessingState, JdbcValuesSourceProcessingOptions options);
 
 	/**
+	 * Convenience form of {@link #assemble(RowProcessingState, JdbcValuesSourceProcessingOptions)}
+	 */
+	default Object assemble(RowProcessingState rowProcessingState) {
+		return assemble( rowProcessingState, rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions() );
+	}
+
+	/**
 	 * The JavaTypeDescriptor describing the Java type that this assembler
 	 * assembles.
 	 */

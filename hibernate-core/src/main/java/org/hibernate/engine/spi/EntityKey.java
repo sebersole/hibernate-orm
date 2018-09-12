@@ -15,6 +15,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.internal.util.compare.EqualsHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.pretty.MessageHelper;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Uniquely identifies of an entity instance in a particular Session by identifier.
@@ -29,7 +30,7 @@ import org.hibernate.pretty.MessageHelper;
  * @author Gavin King
  * @author Sanne Grinovero
  */
-public final class EntityKey implements Serializable {
+public final class EntityKey implements EntityKeyCommon, Serializable {
 
 	private final Object identifier;
 	private final int hashCode;
@@ -74,6 +75,16 @@ public final class EntityKey implements Serializable {
 
 	public String getEntityName() {
 		return entityDescriptor.getEntityName();
+	}
+
+	@Override
+	public Object getKeyValue() {
+		return getIdentifier();
+	}
+
+	@Override
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return entityDescriptor.getJavaTypeDescriptor();
 	}
 
 	@Override

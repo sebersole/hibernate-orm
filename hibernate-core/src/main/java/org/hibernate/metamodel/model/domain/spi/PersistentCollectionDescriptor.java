@@ -94,6 +94,21 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	PluralPersistentAttribute getDescribedAttribute() ;
 
 	/**
+	 * The Navigable that is the target of the FK in the
+	 * Container.  Generally speaking this returns the
+	 * container's
+	 *
+	 * todo (6.0) : this could really be part of `Fetchable`
+	 * 		- note however that for a managed-type association
+	 * 			(component, entity, etc) the implication is
+	 * 			different.  there it is the target Navigable
+	 * 			in the associated managed type
+	 *		- I think the composite impls should always just
+	 *			delegate this call to their container
+	 */
+	Navigable getForeignKeyTargetNavigable();
+
+	/**
 	 * Access information about the FK mapping to the "owner" of this collection
 	 */
 	CollectionKey getCollectionKeyDescriptor();

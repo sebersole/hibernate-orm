@@ -200,8 +200,6 @@ public class QueryResultBuilderRootEntity
 					creationOptions
 			);
 
-			initializerCollector.accept( initializer );
-
 			return new EntityAssembler( getJavaTypeDescriptor(), initializer );
 		}
 

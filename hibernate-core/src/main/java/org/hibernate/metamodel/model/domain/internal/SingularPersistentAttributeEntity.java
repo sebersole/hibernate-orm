@@ -49,6 +49,7 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;
@@ -123,11 +124,12 @@ public class SingularPersistentAttributeEntity<O,J>
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
 	private final EntityDescriptor<J> entityDescriptor;
-	private final String referencedAttributeName;
+	private final String referencedUkAttributeName;
 	private final FetchStrategy fetchStrategy;
 
 	private final NotFoundAction notFoundAction;
 
+	private StateArrayContributor referencedUkAttribute;
 	private SingleEntityLoader singleEntityLoader;
 	private ForeignKey foreignKey;
 
@@ -144,7 +146,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
 
 		final ToOne valueMapping = (ToOne) bootModelAttribute.getValueMapping();
-		referencedAttributeName = valueMapping.getReferencedPropertyName();
+		referencedUkAttributeName = valueMapping.getReferencedPropertyName();
 
 		if ( valueMapping.getReferencedEntityName() == null ) {
 			throw new MappingException(
@@ -203,19 +205,19 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean finishInitialization(RuntimeModelCreationContext creationContext) {
-		if ( referencedAttributeName == null ) {
+		if ( referencedUkAttributeName == null ) {
 			singleEntityLoader = getAssociatedEntityDescriptor().getSingleIdLoader();
 		}
 		else {
 			singleEntityLoader = new StandardSingleUniqueKeyEntityLoader(
-					referencedAttributeName,
-					getAssociatedEntityDescriptor()
+					getContainer().findPersistentAttribute( referencedUkAttributeName ),
+					this
 			);
 		}
 
 		if ( this.foreignKey == null ) {
 			SingularPersistentAttributeEntity foreignKeyOwningAttribute = (SingularPersistentAttributeEntity)
-					entityDescriptor.findNavigable( referencedAttributeName );
+					entityDescriptor.findNavigable( referencedUkAttributeName );
 
 			if ( foreignKeyOwningAttribute != null && foreignKeyOwningAttribute.getForeignKey() != null ) {
 				final ForeignKey foreignKeyOwning = foreignKeyOwningAttribute.getForeignKey();
@@ -479,9 +481,9 @@ public class SingularPersistentAttributeEntity<O,J>
 			FetchParent fetchParent,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
-		if ( referencedAttributeName == null
-				|| referencedAttributeName.equals( EntityIdentifier.NAVIGABLE_ID )
-				|| referencedAttributeName.equals( EntityIdentifier.LEGACY_NAVIGABLE_ID ) ) {
+		if ( referencedUkAttributeName == null
+				|| referencedUkAttributeName.equals( EntityIdentifier.NAVIGABLE_ID )
+				|| referencedUkAttributeName.equals( EntityIdentifier.LEGACY_NAVIGABLE_ID ) ) {
 			return new ImmediatePkEntityFetch(
 					fetchParent,
 					this,
@@ -491,6 +493,13 @@ public class SingularPersistentAttributeEntity<O,J>
 			);
 		}
 		else {
+			final Navigable ukTargetNavigable;
+			if ( referencedUkAttribute == null ) {
+				ukTargetNavigable = getAssociatedEntityDescriptor().getIdentifierDescriptor();
+			}
+			else {
+				ukTargetNavigable = referencedUkAttribute;
+			}
 			return new ImmediateUkEntityFetch(
 					fetchParent,
 					this,
@@ -498,9 +507,10 @@ public class SingularPersistentAttributeEntity<O,J>
 					createKeyDomainResult( creationState, creationContext ),
 					(key, sessionContractImplementor) -> new EntityUniqueKey(
 							getAssociatedEntityDescriptor().getEntityName(),
-							referencedAttributeName,
+							referencedUkAttributeName,
 							key,
 							getAssociatedEntityDescriptor().getIdentifierDescriptor().getJavaTypeDescriptor(),
+							ukTargetNavigable.getJavaTypeDescriptor(),
 							getAssociatedEntityDescriptor().getHierarchy().getRepresentation(),
 							creationContext.getSessionFactory()
 					),
@@ -640,7 +650,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
-		if ( referencedAttributeName == null || classification.equals( SingularAttributeClassification.ONE_TO_ONE ) ) {
+		if ( referencedUkAttributeName == null || classification.equals( SingularAttributeClassification.ONE_TO_ONE ) ) {
 			return getAssociatedEntityDescriptor().getIdentifierDescriptor().unresolve(
 					getAssociatedEntityDescriptor().getIdentifier( value, session ),
 					session
@@ -648,7 +658,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 		else {
 			final NonIdPersistentAttribute referencedAttribute = getAssociatedEntityDescriptor()
-					.findPersistentAttribute( referencedAttributeName );
+					.findPersistentAttribute( referencedUkAttributeName );
 			return referencedAttribute.unresolve(
 					referencedAttribute.getPropertyAccess().getGetter().get( value ),
 					session
@@ -673,11 +683,11 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		final ExpressableType writeable;
 
-		if ( referencedAttributeName == null ) {
+		if ( referencedUkAttributeName == null ) {
 			writeable = getAssociatedEntityDescriptor().getIdentifierDescriptor();
 		}
 		else {
-			writeable = getAssociatedEntityDescriptor().findPersistentAttribute( referencedAttributeName );
+			writeable = getAssociatedEntityDescriptor().findPersistentAttribute( referencedUkAttributeName );
 		}
 
 		if ( writeable != null ) {
@@ -903,21 +913,22 @@ public class SingularPersistentAttributeEntity<O,J>
 					)
 			);
 		}
-		else if ( referencedAttributeName != null ) {
+		else if ( referencedUkAttributeName != null ) {
 			SingleUniqueKeyEntityLoader<J> loader = new StandardSingleUniqueKeyEntityLoader(
-					referencedAttributeName,
-					getEntityDescriptor()
+					referencedUkAttribute,
+					this
 			);
 			EntityUniqueKey euk = new EntityUniqueKey(
 					getEntityDescriptor().getEntityName(),
-					referencedAttributeName,
+					referencedUkAttributeName,
 					hydratedForm,
-					getJavaTypeDescriptor(),
+					getAssociatedEntityDescriptor().getIdentifierDescriptor().getJavaTypeDescriptor(),
+					referencedUkAttribute.getJavaTypeDescriptor(),
 					getEntityDescriptor().getHierarchy().getRepresentation(),
 					session.getFactory()
 			);
 			// todo (6.0) : look into resolutionContext
-			J loaded = loader.load( containerInstance, LockOptions.READ, session );
+			J loaded = loader.load( hydratedForm, LockOptions.READ, session );
 			// todo (6.0) : if loaded != null add it to the resolutionContext
 			return loaded;
 		}
@@ -973,12 +984,12 @@ public class SingularPersistentAttributeEntity<O,J>
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
-		if ( referencedAttributeName == null || classification.equals( SingularAttributeClassification.ONE_TO_ONE ) ) {
+		if ( referencedUkAttributeName == null || classification.equals( SingularAttributeClassification.ONE_TO_ONE ) ) {
 			return getAssociatedEntityDescriptor().getIdentifier( value, session );
 		}
 		else {
 			return getAssociatedEntityDescriptor()
-					.findPersistentAttribute( referencedAttributeName )
+					.findPersistentAttribute( referencedUkAttributeName )
 					.getPropertyAccess()
 					.getGetter()
 					.get( value );

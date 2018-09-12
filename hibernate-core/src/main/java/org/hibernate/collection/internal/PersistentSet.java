@@ -460,6 +460,11 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 		return set==collection;
 	}
 
+	public void load(E element) {
+		assert isInitializing();
+		set.add( element );
+	}
+
 	final class Clear implements DelayedOperation {
 		@Override
 		public void operate() {

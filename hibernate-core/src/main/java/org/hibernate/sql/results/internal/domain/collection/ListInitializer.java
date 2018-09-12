@@ -6,9 +6,7 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentList;
-import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.internal.PersistentListDescriptorImpl;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -17,13 +15,9 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 /**
  * @author Steve Ebersole
  */
-public class ListInitializer extends AbstractCollectionInitializer {
-	private final FetchParentAccess parentAccess;
+public class ListInitializer extends AbstractImmediateCollectionInitializer {
 	private final DomainResultAssembler listIndexAssembler;
 	private final DomainResultAssembler elementAssembler;
-
-	// per-row state
-	private PersistentList collectionInstance;
 
 	public ListInitializer(
 			PersistentListDescriptorImpl listDescriptor,
@@ -32,25 +26,22 @@ public class ListInitializer extends AbstractCollectionInitializer {
 			DomainResultAssembler collectionKeyAssembler,
 			DomainResultAssembler listIndexAssembler,
 			DomainResultAssembler elementAssembler) {
-		super( listDescriptor, joined, collectionKeyAssembler );
-		this.parentAccess = parentAccess;
+		super( listDescriptor, parentAccess, joined, collectionKeyAssembler );
 		this.listIndexAssembler = listIndexAssembler;
 		this.elementAssembler = elementAssembler;
 	}
 
 	@Override
-	public PersistentCollection getCollectionInstance() {
-		return collectionInstance;
+	public PersistentList getCollectionInstance() {
+		return (PersistentList) super.getCollectionInstance();
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		throw new NotYetImplementedFor6Exception();
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		super.finishUpRow( rowProcessingState );
-		collectionInstance = null;
+	@SuppressWarnings("unchecked")
+	protected void readCollectionRow(RowProcessingState rowProcessingState) {
+		getCollectionInstance().load(
+				(int) listIndexAssembler.assemble( rowProcessingState ),
+				elementAssembler.assemble( rowProcessingState )
+		);
 	}
 }

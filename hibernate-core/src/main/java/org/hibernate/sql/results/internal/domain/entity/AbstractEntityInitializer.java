@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.WrongClassException;
 import org.hibernate.cache.spi.access.EntityDataAccess;
@@ -31,6 +32,8 @@ import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
@@ -76,16 +79,14 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 	private final Map<StateArrayContributor, DomainResultAssembler> assemblerMap = new HashMap<>();
 
-	// in-flight processing state.  reset after each row
+	// per-row state
 	private EntityDescriptor <?> concreteDescriptor;
 	private EntityKey entityKey;
-
+	private Object[] resolvedEntityState;
 	private Object entityInstance;
-
-	private LoadingEntityEntry loadingEntityEntry;
-
 	private boolean injectEntityState = true;
 
+	// todo (6.0) : ^^ need a better way to track whether we are loading the entity state or if something else is/has
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractEntityInitializer(
@@ -131,6 +132,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			this.versionAssembler = null;
 		}
 
+		final ManagedTypeSubInitializerConsumer subInitializerConsumer = new ManagedTypeSubInitializerConsumer( initializerConsumer );
+
 		entityDescriptor.visitStateArrayContributors(
 				stateArrayContributor -> {
 					// todo (6.0) : somehow we need to track whether all state is loaded/resolved
@@ -144,12 +147,21 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 						stateAssembler = new NullValueAssembler( stateArrayContributor.getJavaTypeDescriptor() );
 					}
 					else {
-						stateAssembler = fetch.createAssembler( this, initializerConsumer, context, creationState );
+						stateAssembler = fetch.createAssembler(
+								this,
+								subInitializerConsumer,
+								context,
+								creationState
+						);
 					}
 
 					assemblerMap.put( stateArrayContributor, stateAssembler );
 				}
 		);
+
+		initializerConsumer.accept( this );
+
+		subInitializerConsumer.finishUp();
 	}
 
 	protected abstract boolean isEntityReturn();
@@ -193,62 +205,42 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		}
 
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
-		concreteDescriptor = resolveConcreteEntityDescriptor( rowProcessingState, session );
+		concreteDescriptor = determineConcreteEntityDescriptor( rowProcessingState, session );
 
 		hydrateIdentifier( rowProcessingState );
 		resolveEntityKey( rowProcessingState );
 
+		// todo (6.0) : should this really be true?  what about fetches that resolve to null?
 		assert entityKey != null;
+	}
 
-		this.loadingEntityEntry = session.getPersistenceContext()
-				.getLoadContexts()
-				.findLoadingEntityEntry( entityKey );
-
-		if ( loadingEntityEntry != null ) {
-			// the entity is already being loaded elsewhere
-			setRowStateFromLoadingEntry( loadingEntityEntry );
-			return;
+	private EntityDescriptor determineConcreteEntityDescriptor(
+			RowProcessingState rowProcessingState,
+			SharedSessionContractImplementor persistenceContext) throws WrongClassException {
+		if ( discriminatorAssembler == null ) {
+			return entityDescriptor;
 		}
 
-//		final Object rowId;
-//		if ( concreteDescriptor.getHierarchy().getRowIdDescriptor() != null ) {
-//			rowId = ro sqlSelectionMappings.getRowIdSqlSelection().hydrateStateArray( rowProcessingState );
-//
-//			if ( rowId == null ) {
-//				throw new HibernateException(
-//						"Could not read entity row-id from JDBC : " + entityKey
-//				);
-//			}
-//		}
-//		else {
-//			rowId = null;
-//		}
+		final Object discriminatorValue = discriminatorAssembler.assemble(
+				rowProcessingState,
+				rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
+		);
 
-		// this isEntityReturn bit is just for entity loaders, not hql/criteria
-		if ( isEntityReturn() ) {
-			final Object requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
-			if ( requestedEntityId != null && requestedEntityId.equals( entityKey.getIdentifier() ) ) {
-				entityInstance = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalObject();
-			}
-		}
+		final String result = entityDescriptor.getHierarchy()
+				.getDiscriminatorDescriptor()
+				.getDiscriminatorMappings()
+				.discriminatorValueToEntityName( discriminatorValue );
 
-		if ( entityInstance == null ) {
-			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
-
-			this.loadingEntityEntry = new LoadingEntityEntry(
-					entityKey,
-					concreteDescriptor,
-					entityInstance,
-					// todo (6.0) : rowId
-					// rowId,
-					null
-			);
-
-			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
-					entityKey,
-					loadingEntityEntry
+		if ( result == null ) {
+			// oops - we got an instance of another class hierarchy branch
+			throw new WrongClassException(
+					"Discriminator: " + discriminatorValue,
+					entityKey.getIdentifier(),
+					entityDescriptor.getEntityName()
 			);
 		}
+
+		return persistenceContext.getFactory().getMetamodel().findEntityDescriptor( result );
 	}
 
 	public void hydrateIdentifier(RowProcessingState rowProcessingState) {
@@ -279,42 +271,21 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		// todo (6.0) : subselect fetches similar to batch fetch handling above
 	}
 
-	private void setRowStateFromLoadingEntry(LoadingEntityEntry loadingEntityEntry) {
-		this.entityKey = loadingEntityEntry.getEntityKey();
-		this.entityInstance = loadingEntityEntry.getEntityInstance();
-		this.concreteDescriptor = loadingEntityEntry.getDescriptor();
-
-		// we are not the ones controlling the Initialization of the entity instance
-		this.injectEntityState = false;
-	}
-
-	private EntityDescriptor resolveConcreteEntityDescriptor(
-			RowProcessingState rowProcessingState,
-			SharedSessionContractImplementor persistenceContext) throws WrongClassException {
-		if ( discriminatorAssembler == null ) {
-			return entityDescriptor;
+	@Override
+	public Object getResolvedState(
+			Navigable navigable,
+			RowProcessingState processingState) {
+		if ( navigable instanceof EntityIdentifier ) {
+			return entityKey.getIdentifier();
 		}
 
-		final Object discriminatorValue = discriminatorAssembler.assemble(
-				rowProcessingState,
-				rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
-		);
-
-		final String result = entityDescriptor.getHierarchy()
-				.getDiscriminatorDescriptor()
-				.getDiscriminatorMappings()
-				.discriminatorValueToEntityName( discriminatorValue );
-
-		if ( result == null ) {
-			// oops - we got an instance of another class hierarchy branch
-			throw new WrongClassException(
-					"Discriminator: " + discriminatorValue,
-					entityKey.getIdentifier(),
-					entityDescriptor.getEntityName()
+		if ( ! ( navigable instanceof StateArrayContributor ) ) {
+			throw new HibernateException(
+					"Fetch kay must be based on PK or a UK - unexpected Navigable type : " + navigable.getClass().getName()
 			);
 		}
 
-		return persistenceContext.getFactory().getMetamodel().findEntityDescriptor( result );
+		return resolvedEntityState[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
 	}
 
 	@Override
@@ -330,23 +301,79 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
 
+
+		// look to see if another initializer from a parent load context or an earlier
+		// initializer is already loading the entity
+
+		LoadingEntityEntry loadingEntityEntry = session.getPersistenceContext()
+				.getLoadContexts()
+				.findLoadingEntityEntry( entityKey );
+
+		if ( loadingEntityEntry != null ) {
+			// the entity is already being loaded elsewhere
+			this.entityKey = loadingEntityEntry.getEntityKey();
+			this.entityInstance = loadingEntityEntry.getEntityInstance();
+			this.concreteDescriptor = loadingEntityEntry.getDescriptor();
+			return;
+		}
+
+
+		// we are responsible for loading it
+
+		final Object rowId = null;
+// todo (6.0) : rowId
+//		final Object rowId;
+//		if ( concreteDescriptor.getHierarchy().getRowIdDescriptor() != null ) {
+//			rowId = ro sqlSelectionMappings.getRowIdSqlSelection().hydrateStateArray( rowProcessingState );
+//
+//			if ( rowId == null ) {
+//				throw new HibernateException(
+//						"Could not read entity row-id from JDBC : " + entityKey
+//				);
+//			}
+//		}
+//		else {
+//			rowId = null;
+//		}
+
+		// this isEntityReturn bit is just for entity loaders, not hql/criteria
+		if ( isEntityReturn() ) {
+			final Object requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
+			if ( requestedEntityId != null && requestedEntityId.equals( entityKey.getIdentifier() ) ) {
+				entityInstance = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalObject();
+			}
+		}
+
+		if ( entityInstance == null ) {
+			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
+
+			loadingEntityEntry = new LoadingEntityEntry(
+					entityKey,
+					concreteDescriptor,
+					entityInstance,
+					rowId
+			);
+
+			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
+					entityKey,
+					loadingEntityEntry
+			);
+		}
+
 		preLoad( rowProcessingState );
 
-		// apply wrapping and conversions
 
+		entityDescriptor.setIdentifier( entityInstance, entityIdentifier, session );
 
-		final Object[] entityState = new Object[ assemblerMap.size() ];
+		resolvedEntityState = new Object[ assemblerMap.size() ];
 		assemblerMap.forEach(
-				(key, value) -> entityState[ key.getStateArrayPosition() ] = value.assemble(
+				(key, value) -> resolvedEntityState[ key.getStateArrayPosition() ] = value.assemble(
 						rowProcessingState,
 						processingOptions
 				)
 		);
 
-		entityDescriptor.setIdentifier( entityInstance, entityIdentifier, session );
-
-		entityDescriptor.setPropertyValues( entityInstance, entityState );
-
+		entityDescriptor.setPropertyValues( entityInstance, resolvedEntityState );
 
 		session.getPersistenceContext().addEntity(
 				entityKey,
@@ -364,8 +391,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		final EntityEntry entityEntry = session.getPersistenceContext().addEntry(
 				entityInstance,
 				Status.LOADING,
-				entityState,
-				loadingEntityEntry.getRowId(),
+				resolvedEntityState,
+				rowId,
 				entityKey.getIdentifier(),
 				version,
 				lockMode,
@@ -385,7 +412,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 				);
 			}
 
-			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, entityState, version, session );
+			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, resolvedEntityState, version, session );
 			final Object cacheKey = cacheAccess.generateCacheKey(
 					entityIdentifier,
 					entityDescriptor.getHierarchy(),
@@ -435,7 +462,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			session.getPersistenceContext().getNaturalIdHelper().cacheNaturalIdCrossReferenceFromLoad(
 					entityDescriptor,
 					entityIdentifier,
-					session.getPersistenceContext().getNaturalIdHelper().extractNaturalIdValues( entityState, entityDescriptor )
+					session.getPersistenceContext().getNaturalIdHelper().extractNaturalIdValues( resolvedEntityState, entityDescriptor )
 			);
 		}
 
@@ -444,7 +471,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			isReallyReadOnly = true;
 		}
 		else {
-			final Object proxy = session.getPersistenceContext().getProxy( loadingEntityEntry.getEntityKey() );
+			final Object proxy = session.getPersistenceContext().getProxy( entityKey );
 			if ( proxy != null ) {
 				// there is already a proxy for this impl
 				// only set the status to read-only if the proxy is read-only
@@ -462,8 +489,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			//take a snapshot
 			TypeHelper.deepCopy(
 					entityDescriptor,
-					entityState,
-					entityState,
+					resolvedEntityState,
+					resolvedEntityState,
 					StateArrayContributor::isUpdatable
 			);
 			session.getPersistenceContext().setEntryStatus( entityEntry, Status.MANAGED );
@@ -525,9 +552,9 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		final PostLoadEvent postLoadEvent = rowProcessingState.getJdbcValuesSourceProcessingState().getPostLoadEvent();
 		postLoadEvent.reset();
 
-		postLoadEvent.setEntity( loadingEntityEntry.getEntityInstance() )
-				.setId( loadingEntityEntry.getEntityKey().getIdentifier() )
-				.setDescriptor( loadingEntityEntry.getDescriptor() );
+		postLoadEvent.setEntity( entityInstance )
+				.setId( entityKey.getIdentifier() )
+				.setDescriptor( concreteDescriptor );
 
 		final EventListenerGroup<PostLoadEventListener> listenerGroup = entityDescriptor.getFactory()
 				.getServiceRegistry()
@@ -544,7 +571,6 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		concreteDescriptor = null;
 		entityKey = null;
 		entityInstance = null;
-		loadingEntityEntry = null;
 		injectEntityState = true;
 	}
 }

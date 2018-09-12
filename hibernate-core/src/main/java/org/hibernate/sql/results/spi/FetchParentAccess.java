@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.metamodel.model.domain.spi.Navigable;
+
 /**
  * Serves as a link to a fetch's parent providing access to the parent
  * instance in relation to the current "row" being processed.
@@ -18,4 +20,5 @@ public interface FetchParentAccess {
 	 */
 	Object getFetchParentInstance();
 
+	Object getResolvedState(Navigable navigable, RowProcessingState processingState);
 }

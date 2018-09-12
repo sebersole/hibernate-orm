@@ -6,13 +6,12 @@
  */
 package org.hibernate.loader.spi;
 
-import java.util.List;
-
+import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
  * @author Steve Ebersole
  */
 public interface CollectionLoader extends Loader {
-	List load(Object key, SharedSessionContractImplementor session);
+	PersistentCollection load(Object key, SharedSessionContractImplementor session);
 }

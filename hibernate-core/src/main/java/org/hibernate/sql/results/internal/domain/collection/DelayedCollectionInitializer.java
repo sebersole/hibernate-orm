@@ -28,7 +28,7 @@ public class DelayedCollectionInitializer extends AbstractCollectionInitializer 
 			FetchParentAccess parentAccess,
 			PersistentCollectionDescriptor fetchCollectionDescriptor,
 			DomainResultAssembler keyAssembler) {
-		super( fetchCollectionDescriptor, false, keyAssembler );
+		super( fetchCollectionDescriptor, parentAccess, false, keyAssembler );
 		this.parentAccess = parentAccess;
 	}
 
@@ -38,12 +38,13 @@ public class DelayedCollectionInitializer extends AbstractCollectionInitializer 
 	}
 
 	@Override
-	protected void afterKeyHydrated(CollectionKey collectionKey, RowProcessingState rowProcessingState) {
+	protected void afterKeyHydrated(RowProcessingState rowProcessingState) {
 		final SharedSessionContractImplementor session = rowProcessingState.getSession();
 		final PersistenceContext persistenceContext = session.getPersistenceContext();
 
 		final PersistentCollectionDescriptor collectionDescriptor = getFetchedAttribute().getPersistentCollectionDescriptor();
 
+		final CollectionKey collectionKey = getCollectionKey();
 		final PersistentCollection existing = persistenceContext.getCollection( collectionKey );
 		if ( existing != null ) {
 			collectionInstance = existing;

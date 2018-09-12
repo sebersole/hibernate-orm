@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeMappingNode;
+import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
@@ -19,11 +20,11 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public class CompositeRootInitializerImpl extends AbstractCompositeInitializer {
 	public CompositeRootInitializerImpl(
-			CompositeMappingNode resultDescriptor,
+			FetchParentAccess fetchParentAccess, CompositeMappingNode resultDescriptor,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationOptions,
 			AssemblerCreationContext creationContext) {
-		super( resultDescriptor, initializerConsumer, creationContext, creationOptions );
+		super( resultDescriptor, fetchParentAccess, initializerConsumer, creationContext, creationOptions );
 	}
 
 	@Override

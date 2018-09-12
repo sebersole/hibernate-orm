@@ -6,9 +6,7 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentMap;
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -22,40 +20,33 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  *
  * @author Steve Ebersole
  */
-public class MapInitializer extends AbstractCollectionInitializer {
-	private final FetchParentAccess fetchParentAccess;
+public class MapInitializer extends AbstractImmediateCollectionInitializer {
 	private final DomainResultAssembler mapKeyAssembler;
 	private final DomainResultAssembler mapValueAssembler;
 
-	// per-row state
-	private PersistentMap collectionInstance;
-
 	public MapInitializer(
 			PersistentCollectionDescriptor collectionDescriptor,
-			FetchParentAccess fetchParentAccess,
+			FetchParentAccess parentAccess,
 			boolean joined,
 			DomainResultAssembler keyAssembler,
 			DomainResultAssembler mapKeyAssembler,
 			DomainResultAssembler mapValueAssembler) {
-		super( collectionDescriptor, joined, keyAssembler );
-		this.fetchParentAccess = fetchParentAccess;
+		super( collectionDescriptor, parentAccess, joined, keyAssembler );
 		this.mapKeyAssembler = mapKeyAssembler;
 		this.mapValueAssembler = mapValueAssembler;
 	}
 
 	@Override
 	public PersistentMap getCollectionInstance() {
-		return collectionInstance;
+		return (PersistentMap) super.getCollectionInstance();
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		throw new NotYetImplementedFor6Exception();
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		super.finishUpRow( rowProcessingState );
-		collectionInstance = null;
+	@SuppressWarnings("unchecked")
+	protected void readCollectionRow(RowProcessingState rowProcessingState) {
+		getCollectionInstance().load(
+				mapKeyAssembler.assemble( rowProcessingState ),
+				mapValueAssembler.assemble( rowProcessingState )
+		);
 	}
 }

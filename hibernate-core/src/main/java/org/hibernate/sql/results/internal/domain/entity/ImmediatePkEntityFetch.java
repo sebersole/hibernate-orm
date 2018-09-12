@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.loader.spi.SingleEntityLoader;
-import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.internal.ForeignKeyDomainResult;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
@@ -42,18 +41,20 @@ public class ImmediatePkEntityFetch extends AbstractImmediateEntityFetch {
 	@Override
 	public DomainResultAssembler createAssembler(
 			FetchParentAccess parentAccess,
-			Consumer<Initializer> collector,
+			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationContext creationContext,
 			AssemblerCreationState creationState) {
+		final ManagedTypeSubInitializerConsumer subInitializerConsumer = new ManagedTypeSubInitializerConsumer( initializerConsumer );
+
 		final EntityInitializer initializer = new ImmediatePkEntityFetchInitializer(
 				getFetchedNavigable(),
 				loader,
 				parentAccess,
-				keyResult.createResultAssembler( collector, creationState, creationContext ),
+				keyResult.createResultAssembler( subInitializerConsumer, creationState, creationContext ),
 				notFoundAction
 		);
 
-		collector.accept( initializer );
+		subInitializerConsumer.finishUp();
 
 		return new EntityAssembler( getJavaTypeDescriptor(), initializer );
 	}
