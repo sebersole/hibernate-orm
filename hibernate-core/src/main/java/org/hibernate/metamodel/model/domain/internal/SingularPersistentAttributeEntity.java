@@ -405,16 +405,12 @@ public class SingularPersistentAttributeEntity<O,J>
 
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
-		final boolean isOneToOne = getAttributeTypeClassification() == ONE_TO_ONE
-				|| isLogicalOneToOne;
-
-
 		if ( fetchTiming == FetchTiming.DELAYED ) {
 			// todo (6.0) : need general laziness metadata - currently only done for entity
 			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityDescriptor<?>
 					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
 
-			final boolean cannotBeLazy = ( isOneToOne && isOptional() ) || isContainerEnhancedForLazy;
+			final boolean cannotBeLazy = ( getAttributeTypeClassification() == ONE_TO_ONE && isOptional() ) || isContainerEnhancedForLazy;
 
 			if ( cannotBeLazy ) {
 				return generateImmediateFetch( fetchParent, creationState, creationContext );

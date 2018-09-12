@@ -25,41 +25,58 @@ public class Helper {
 			PersistentAttributeMapping bootModelAttribute,
 			ManagedTypeDescriptor runtimeModelContainer,
 			EntityDescriptor entityDescriptor) {
-		final FetchTiming fetchTiming = determineTiming( bootModelAttribute, runtimeModelContainer, entityDescriptor );
 
-		// todo (6.0) : implement this
-		// 		for now, always assume LAZY
-		return new FetchStrategy( FetchTiming.DELAYED, FetchStyle.SELECT );
+		FetchStyle style = determineStyle(
+				bootModelAttribute,
+				entityDescriptor
+		);
 
-//		return new FetchStrategy(
-//				fetchTiming,
-//				determineStyle( bootModelAttribute, entityDescriptor, fetchTiming )
-//		);
+		return new FetchStrategy(
+				determineTiming(
+						style,
+						bootModelAttribute,
+						runtimeModelContainer,
+						entityDescriptor
+				),
+				style
+		);
 	}
 
 	private static FetchTiming determineTiming(
+			FetchStyle style,
 			PersistentAttributeMapping bootModelAttribute,
 			ManagedTypeDescriptor runtimeModelContainer,
 			EntityDescriptor entityDescriptor) {
-		if ( runtimeModelContainer instanceof EntityDescriptor ) {
-			final EntityDescriptor container = (EntityDescriptor) runtimeModelContainer;
-			if ( ! container.hasProxy() && ! container.getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
+		switch ( style ) {
+			case JOIN: {
 				return FetchTiming.IMMEDIATE;
 			}
+			case BATCH:
+			case SUBSELECT: {
+				return FetchTiming.DELAYED;
+			}
+			default: {
+				// SELECT case, can be either
+				if ( runtimeModelContainer instanceof EntityDescriptor ) {
+					final EntityDescriptor container = (EntityDescriptor) runtimeModelContainer;
+					if ( !container.hasProxy() && !container.getBytecodeEnhancementMetadata()
+							.isEnhancedForLazyLoading() ) {
+						return FetchTiming.IMMEDIATE;
+					}
+					else {
+						return FetchTiming.DELAYED;
+					}
+				}
+				else {
+					return FetchTiming.DELAYED;
+				}
+			}
 		}
-
-		if ( bootModelAttribute.isLazy() ) {
-			return FetchTiming.DELAYED;
-		}
-
-		return FetchTiming.IMMEDIATE;
 	}
-
 
 	private static FetchStyle determineStyle(
 			PersistentAttributeMapping bootModelAttribute,
-			EntityDescriptor entityDescriptor,
-			FetchTiming fetchTiming) {
+			EntityDescriptor entityDescriptor) {
 		// todo (6.0) : allow subselect fetching for entity refs
 
 		final FetchMode fetchMode = bootModelAttribute.getValueMapping().getFetchMode();
@@ -83,9 +100,9 @@ public class Helper {
 
 	public static FetchStrategy determineFetchStrategy(Collection bootCollectionDescriptor) {
 		return new FetchStrategy(
-					determineTiming( bootCollectionDescriptor ),
-					determineStyle( bootCollectionDescriptor )
-			);
+				determineTiming( bootCollectionDescriptor ),
+				determineStyle( bootCollectionDescriptor )
+		);
 	}
 
 	private static FetchTiming determineTiming(Collection bootCollectionDescriptor) {
