@@ -48,19 +48,21 @@ public class ImmediateUkEntityFetch extends AbstractImmediateEntityFetch {
 	@Override
 	public DomainResultAssembler createAssembler(
 			FetchParentAccess parentAccess,
-			Consumer<Initializer> collector,
+			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationContext creationContext,
 			AssemblerCreationState creationState) {
+		final ManagedTypeSubInitializerConsumer subInitializerConsumer = new ManagedTypeSubInitializerConsumer( initializerConsumer );
+
 		final EntityInitializer initializer = new ImmediateUkEntityFetchInitializer(
 				getFetchedNavigable(),
 				loader,
 				parentAccess,
-				keyResult.createResultAssembler( collector, creationState, creationContext ),
+				keyResult.createResultAssembler( subInitializerConsumer, creationState, creationContext ),
 				notFoundAction,
 				uniqueKeyGenerator
 		);
 
-		collector.accept( initializer );
+		subInitializerConsumer.finishUp();
 
 		return new EntityAssembler( getJavaTypeDescriptor(), initializer );
 	}

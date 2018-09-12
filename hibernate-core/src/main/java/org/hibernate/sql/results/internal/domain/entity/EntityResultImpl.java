@@ -68,13 +68,9 @@ public class EntityResultImpl extends AbstractEntityMappingNode implements Entit
 				creationOptions
 		);
 
-		final EntityAssembler assembler = new EntityAssembler(
+		return new EntityAssembler(
 				getNavigable().getJavaTypeDescriptor(),
 				initializer
 		);
-
-		collector.accept( initializer );
-
-		return assembler;
 	}
 }

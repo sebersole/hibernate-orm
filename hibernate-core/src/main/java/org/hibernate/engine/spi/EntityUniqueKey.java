@@ -25,11 +25,12 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Gavin King
  * @see EntityKey
  */
-public class EntityUniqueKey implements Serializable {
+public class EntityUniqueKey implements EntityKeyCommon, Serializable {
 	private final String uniqueKeyName;
 	private final String entityName;
 	private final Object key;
 	private final JavaTypeDescriptor identifierJavaTypeDescriptor;
+	private final JavaTypeDescriptor ukJavaTypeDescriptor;
 	private final RepresentationMode representationMode;
 	private final int hashCode;
 
@@ -38,18 +39,30 @@ public class EntityUniqueKey implements Serializable {
 			final String uniqueKeyName,
 			final Object semiResolvedKey,
 			final JavaTypeDescriptor identifierJavaTypeDescriptor,
+			final JavaTypeDescriptor ukJavaTypeDescriptor,
 			final RepresentationMode representationMode,
 			final SessionFactoryImplementor factory) {
 		this.uniqueKeyName = uniqueKeyName;
 		this.entityName = entityName;
 		this.key = semiResolvedKey;
 		this.identifierJavaTypeDescriptor = identifierJavaTypeDescriptor;
+		this.ukJavaTypeDescriptor = ukJavaTypeDescriptor;
 		this.representationMode = representationMode;
 		this.hashCode = generateHashCode( factory );
 	}
 
 	public String getEntityName() {
 		return entityName;
+	}
+
+	@Override
+	public Object getKeyValue() {
+		return getKey();
+	}
+
+	@Override
+	public JavaTypeDescriptor getJavaTypeDescriptor() {
+		return ukJavaTypeDescriptor;
 	}
 
 	public Object getKey() {
@@ -119,6 +132,7 @@ public class EntityUniqueKey implements Serializable {
 		oos.writeObject( entityName );
 		oos.writeObject( key );
 		oos.writeObject( identifierJavaTypeDescriptor );
+		oos.writeObject( ukJavaTypeDescriptor );
 		oos.writeObject( representationMode );
 	}
 
@@ -141,6 +155,7 @@ public class EntityUniqueKey implements Serializable {
 				(String) ois.readObject(),
 				(String) ois.readObject(),
 				ois.readObject(),
+				(JavaTypeDescriptor) ois.readObject(),
 				(JavaTypeDescriptor) ois.readObject(),
 				(RepresentationMode) ois.readObject(),
 				session.getFactory()

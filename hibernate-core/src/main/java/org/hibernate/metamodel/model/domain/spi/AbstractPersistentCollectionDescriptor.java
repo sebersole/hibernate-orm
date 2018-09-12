@@ -111,6 +111,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private final NavigableRole navigableRole;
 	private final CollectionKey foreignKeyDescriptor;
 
+	private Navigable foreignKeyTargetNavigable;
+
 	private CollectionJavaDescriptor<C> javaTypeDescriptor;
 	private CollectionIdentifier idDescriptor;
 	private CollectionElement elementDescriptor;
@@ -258,6 +260,14 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		if ( fullyInitialized ) {
 			return;
+		}
+
+		final String referencedPropertyName = collectionBinding.getReferencedPropertyName();
+		if ( referencedPropertyName == null ) {
+			foreignKeyTargetNavigable = getContainer().findNavigable( EntityIdentifier.NAVIGABLE_ID );
+		}
+		else {
+			foreignKeyTargetNavigable = getContainer().findPersistentAttribute( referencedPropertyName );
 		}
 
 		// todo (6.0) : this is technically not the `separateCollectionTable` as for one-to-many it returns the element entity's table.
@@ -702,18 +712,14 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			String resultVariable,
 			DomainResultCreationContext creationContext,
 			DomainResultCreationState creationState) {
-		// Navigable impl
+
 		final DomainResult collectionKeyResult = getCollectionKeyDescriptor().createDomainResult(
-				null,
+				FetchTiming.IMMEDIATE,
+				true,
 				creationState,
 				creationContext
 		);
 
-		// todo (6.0) : Another case for something like `DomainResultCreationContext#getNavigableLockMode( navigableReference, resultVariable )`
-		//		Or a way to retrieve it via NavigableReference
-
-		//
-		// for now - just return READ
 		final LockMode lockMode = creationState.determineLockMode( resultVariable );
 
 		return new CollectionResultImpl(
@@ -756,9 +762,9 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			String resultVariable,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
-
 		final DomainResult keyResult = getCollectionKeyDescriptor().createDomainResult(
-				null,
+				fetchTiming,
+				joinFetch,
 				creationState,
 				creationContext
 		);
@@ -920,6 +926,16 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	@Override
 	public CollectionKey getCollectionKeyDescriptor() {
 		return foreignKeyDescriptor;
+	}
+
+	@Override
+	public Navigable getForeignKeyTargetNavigable() {
+		return foreignKeyTargetNavigable;
+	}
+
+	@Override
+	public boolean contains(Object collection, Object childObject) {
+		return false;
 	}
 
 	@Override

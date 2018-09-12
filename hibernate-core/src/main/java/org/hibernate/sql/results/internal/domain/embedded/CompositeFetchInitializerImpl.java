@@ -8,6 +8,7 @@ package org.hibernate.sql.results.internal.domain.embedded;
 
 import java.util.function.Consumer;
 
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeInitializer;
@@ -22,16 +23,13 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 public class CompositeFetchInitializerImpl
 		extends AbstractCompositeInitializer
 		implements CompositeInitializer {
-	private final FetchParentAccess fetchParentAccess;
-
 	public CompositeFetchInitializerImpl(
 			FetchParentAccess fetchParentAccess,
 			CompositeMappingNode resultDescriptor,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationContext creationContext,
 			AssemblerCreationState creationState) {
-		super( resultDescriptor, initializerConsumer, creationContext, creationState );
-		this.fetchParentAccess = fetchParentAccess;
+		super( resultDescriptor, fetchParentAccess, initializerConsumer, creationContext, creationState );
 	}
 
 	@Override

@@ -505,6 +505,12 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 		return entry!=null;
 	}
 
+	public void load(int index, E element) {
+		assert isInitializing();
+		// todo (6.0) : we need to account for base - but it is not exposed from collection descriptor nor attribute
+		list.add( index, element );
+	}
+
 	final class Clear implements DelayedOperation {
 		@Override
 		public void operate() {

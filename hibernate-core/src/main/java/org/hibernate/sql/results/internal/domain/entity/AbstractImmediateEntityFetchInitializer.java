@@ -9,11 +9,17 @@ package org.hibernate.sql.results.internal.domain.entity;
 import java.util.Locale;
 import javax.persistence.EntityNotFoundException;
 
+import org.hibernate.HibernateException;
 import org.hibernate.annotations.NotFoundAction;
+import org.hibernate.engine.spi.EntityEntry;
+import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -26,7 +32,7 @@ import org.jboss.logging.Logger;
  * @author Steve Ebersole
  */
 public abstract class AbstractImmediateEntityFetchInitializer implements EntityInitializer {
-	private static final Logger log = Logger.getLogger( ImmediatePkEntityFetchInitializer.class );
+	private static final Logger log = Logger.getLogger( AbstractImmediateEntityFetchInitializer.class );
 
 	private final EntityValuedNavigable fetchedNavigable;
 	private final SingleEntityLoader loader;
@@ -163,6 +169,33 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 				keyValue,
 				entityInstance
 		);
+	}
+
+	@Override
+	public Object getResolvedState(
+			Navigable navigable,
+			RowProcessingState processingState) {
+		if ( entityInstance == null ) {
+			return null;
+		}
+
+		if ( navigable instanceof EntityIdentifier ) {
+			return keyValue;
+		}
+
+		if ( ! ( navigable instanceof StateArrayContributor ) ) {
+			throw new HibernateException(
+					"Fetch kay must be based on PK or a UK - unexpected Navigable type : " + navigable.getClass().getName()
+			);
+		}
+
+		final SharedSessionContractImplementor session = processingState.getSession();
+		final PersistenceContext pc = session.getPersistenceContext();
+		final EntityEntry managedEntry = pc.getEntry( entityInstance );
+		// todo (6.0) : `managedEntry` non-null validation
+		final Object[] loadedState = managedEntry.getLoadedState();
+
+		return loadedState[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
 	}
 
 	protected enum KeyType { PK, UK }

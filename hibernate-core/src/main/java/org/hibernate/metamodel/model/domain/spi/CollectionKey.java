@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.internal.ForeignKeyDomainResult;
@@ -30,6 +31,7 @@ public class CollectionKey {
 	private final AbstractPersistentCollectionDescriptor collectionDescriptor;
 	private final JavaTypeDescriptor javaTypeDescriptor;
 
+	private Navigable foreignKeyTargetNavigable;
 	private ForeignKey joinForeignKey;
 
 	public CollectionKey(
@@ -51,11 +53,23 @@ public class CollectionKey {
 		return javaTypeDescriptor;
 	}
 
+	public Navigable getForeignKeyTargetNavigable() {
+		return foreignKeyTargetNavigable;
+	}
+
 	public DomainResult createDomainResult(
-			String resultVariable,
+			FetchTiming fetchTiming,
+			boolean joinFetch,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
+		// todo (6.0) : the collection is immediate fetch - which side of the FK to use depends on whether it is a joined fetch or a subsequent-select fetch:
+		//		1) joined fetch : use the columns from the joined collection table - we need to be able to check for null (no collection elements)
+		//		2) subsequent-select : use the columns from the container/owner table - the collection table is not part of the query
+
 		// todo (6.0) previous instead or current?
+		//		in conjunction with comment above about which columns...  which qualifier to use
+		//		may be as simple as this.
+
 		final ColumnReferenceQualifier referenceQualifier = creationState.getColumnReferenceQualifierStack().getCurrent();
 		final SqlExpressionResolver expressionResolver = creationState.getSqlExpressionResolver();
 		final List<Column> keyColumns = joinForeignKey.getColumnMappings().getTargetColumns();
@@ -67,7 +81,7 @@ public class CollectionKey {
 							keyColumns.get( 0 ).getJavaTypeDescriptor(),
 							creationContext.getSessionFactory().getTypeConfiguration()
 					),
-					resultVariable,
+					null,
 					keyColumns.get( 0 ).getJavaTypeDescriptor()
 			);
 		}

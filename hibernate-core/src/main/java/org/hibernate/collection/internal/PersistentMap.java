@@ -299,6 +299,11 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 		return map.entrySet().iterator();
 	}
 
+	public void load(K key, V value) {
+		assert isInitializing();
+		map.put( key, value );
+	}
+
 	/**
 	 * a wrapper for Map.Entry sets
 	 */

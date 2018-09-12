@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -16,12 +15,8 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 /**
  * @author Steve Ebersole
  */
-public class SetInitializer extends AbstractCollectionInitializer {
-	private final FetchParentAccess parentAccess;
+public class SetInitializer extends AbstractImmediateCollectionInitializer {
 	private final DomainResultAssembler elementAssembler;
-
-	// per-row state
-	private PersistentSet collectionInstance;
 
 	public SetInitializer(
 			PersistentCollectionDescriptor setDescriptor,
@@ -29,24 +24,23 @@ public class SetInitializer extends AbstractCollectionInitializer {
 			boolean joined,
 			DomainResultAssembler collectionKeyAssembler,
 			DomainResultAssembler elementAssembler) {
-		super( setDescriptor, joined, collectionKeyAssembler );
-		this.parentAccess = parentAccess;
+		super( setDescriptor, parentAccess, joined, collectionKeyAssembler );
 		this.elementAssembler = elementAssembler;
 	}
 
 	@Override
 	public PersistentSet getCollectionInstance() {
-		return collectionInstance;
+		return (PersistentSet) super.getCollectionInstance();
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		throw new NotYetImplementedFor6Exception();
+	@SuppressWarnings("unchecked")
+	protected void readCollectionRow(RowProcessingState rowProcessingState) {
+		getCollectionInstance().load( elementAssembler.assemble( rowProcessingState ) );
 	}
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		super.finishUpRow( rowProcessingState );
-		collectionInstance = null;
 	}
 }

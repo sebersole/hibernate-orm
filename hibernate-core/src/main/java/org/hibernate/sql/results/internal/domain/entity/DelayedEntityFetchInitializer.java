@@ -6,8 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.entity;
 
+import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -22,7 +24,9 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 	private final FetchParentAccess parentAccess;
 	private final DomainResultAssembler fkValueAssembler;
 
+	// per-row state
 	private Object entityInstance;
+	private Object fkValue;
 
 	protected DelayedEntityFetchInitializer(
 			EntityValuedNavigable fetchedNavigable,
@@ -53,23 +57,35 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
 
 		// todo (6.0) : not sure this works for non-PK-based FKs
+		fkValue = fkValueAssembler.assemble( rowProcessingState, processingOptions );
 
 		if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
 			entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
-					fkValueAssembler.assemble( rowProcessingState, processingOptions ),
+					fkValue,
 					rowProcessingState.getSession()
 			);
 		}
 		else if ( fetchedNavigable.getEntityDescriptor().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
 			entityInstance = fetchedNavigable.getEntityDescriptor().instantiate(
-					fkValueAssembler.assemble( rowProcessingState, processingOptions ),
+					fkValue,
 					rowProcessingState.getSession()
 			);
 		}
 	}
 
 	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-
+	public Object getResolvedState(
+			Navigable navigable,
+			RowProcessingState processingState) {
+		throw new HibernateException(
+				"Entity fetching delayed - unexpected call to access resolved state as FetchParentAccess"
+		);
 	}
+
+	@Override
+	public void finishUpRow(RowProcessingState rowProcessingState) {
+		fkValue = null;
+		entityInstance = null;
+	}
+
 }

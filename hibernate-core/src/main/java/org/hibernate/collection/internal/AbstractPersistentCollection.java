@@ -408,6 +408,10 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 		return initialized;
 	}
 
+	protected boolean isInitializing() {
+		return initializing;
+	}
+
 	/**
 	 * Called by any writer method of the collection interface
 	 */
