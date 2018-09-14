@@ -224,7 +224,7 @@ public class SqmSelectToSqlAstConverter
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
 
-		assert fetchParent.getNavigablePath().equals( parentNavigableReference.getNavigablePath() );
+//		assert fetchParent.getNavigablePath().equals( parentNavigableReference.getNavigablePath() );
 
 		final List<Fetch> fetches = new ArrayList();
 

@@ -6,9 +6,10 @@
  */
 package org.hibernate.sql.ast.produce.metamodel.spi;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.hibernate.internal.util.StringHelper;
+import org.hibernate.metamodel.model.relational.spi.Column;
 
 /**
  * Used to uniquely identify a foreign key, so that we don't join it more than once creating circularities.  Note
@@ -33,7 +34,7 @@ public class AssociationKey {
 	//			for the keys)
 
 	private final String table;
-	private final String[] columns;
+	private final List<Column> columns;
 
 	/**
 	 * Create the AssociationKey.
@@ -41,7 +42,7 @@ public class AssociationKey {
 	 * @param table The table part of the association key
 	 * @param columns The columns that define the association key
 	 */
-	public AssociationKey(String table, String[] columns) {
+	public AssociationKey(String table, List<Column> columns) {
 		this.table = table;
 		this.columns = columns;
 	}
@@ -56,7 +57,7 @@ public class AssociationKey {
 		}
 
 		final AssociationKey that = (AssociationKey) o;
-		return table.equals( that.table ) && Arrays.equals( columns, that.columns );
+		return table.equals( that.table ) && columns.equals( that.columns );
 
 	}
 

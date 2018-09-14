@@ -14,6 +14,8 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithLazyOneToOne;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.hamcrest.CoreMatchers;
@@ -40,8 +42,8 @@ public class EntityWithLazyOneToOneTest extends SessionFactoryBasedFunctionalTes
 		return true;
 	}
 
-	@Test
-	public void testOperations() {
+	@BeforeEach
+	public void setUp() {
 		EntityWithLazyOneToOne entity = new EntityWithLazyOneToOne( 1, "first", Integer.MAX_VALUE );
 
 		SimpleEntity other = new SimpleEntity(
@@ -55,70 +57,96 @@ public class EntityWithLazyOneToOneTest extends SessionFactoryBasedFunctionalTes
 
 		entity.setOther( other );
 
-		sessionFactoryScope().inTransaction( session -> session.save( other ) );
-		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+		sessionFactoryScope().inTransaction( session -> {
+			session.save( other );
+			session.save( entity );
+		} );
+	}
 
+	@AfterEach
+	public void tearDown() {
+		sessionFactoryScope().inTransaction( session -> {
+			deleteAll();
+		} );
+	}
+
+	@Test
+	public void testGet() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithLazyOneToOne loaded = session.get( EntityWithLazyOneToOne.class, 1 );
 					assert loaded != null;
 					assertThat( loaded.getName(), equalTo( "first" ) );
-					assertFalse( "The lazy association should not be initialized",
-								 Hibernate.isInitialized( loaded.getOther() ) );
+					assertFalse(
+							"The lazy association should not be initialized",
+							Hibernate.isInitialized( loaded.getOther() )
+					);
 
 					SimpleEntity loadedOther = loaded.getOther();
 					assert loadedOther != null;
 					assertThat( loaded.getOther().getId(), equalTo( 2 ) );
-					assertFalse( "getId() should not trigger the lazy association initialization",
-								 Hibernate.isInitialized( loaded.getOther() ) );
+					assertFalse(
+							"getId() should not trigger the lazy association initialization",
+							Hibernate.isInitialized( loaded.getOther() )
+					);
 
 					loadedOther.getSomeDate();
-					assertTrue( "The lazy association should be initialized",
-								Hibernate.isInitialized( loaded.getOther() ) );
+					assertTrue(
+							"The lazy association should be initialized",
+							Hibernate.isInitialized( loaded.getOther() )
+					);
 
 				}
 		);
 
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final SimpleEntity loaded = session.get( SimpleEntity.class, 2 );
-//					assert loaded != null;
-//					assertThat( loaded.getSomeInteger(), equalTo( Integer.MAX_VALUE ) );
-//				}
-//		);
-//
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final String value = session.createQuery(
-//							"select e.name from EntityWithLazyOneToOne e where e.other.id = 2",
-//							String.class
-//					).uniqueResult();
-//					assertThat( value, equalTo( "first" ) );
-//				}
-//		);
-//
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final EntityWithLazyOneToOne loaded = session.get( EntityWithLazyOneToOne.class, 1 );
-//					assert loaded != null;
-//					assert loaded.getOther() != null;
-//					session.remove( loaded );
-//				}
-//		);
-//
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final EntityWithLazyOneToOne notfound = session.find( EntityWithLazyOneToOne.class, 1 );
-//					assertThat( notfound, CoreMatchers.nullValue() );
-//				}
-//		);
-//
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final SimpleEntity simpleEntity = session.find( SimpleEntity.class, 2 );
-//					assertThat( simpleEntity, notNullValue() );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity loaded = session.get( SimpleEntity.class, 2 );
+					assert loaded != null;
+					assertThat( loaded.getSomeInteger(), equalTo( Integer.MAX_VALUE ) );
+				}
+		);
+	}
+
+	@Test
+	public void testHqlSelect() {
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final String value = session.createQuery(
+							"select e.name from EntityWithLazyOneToOne e where e.other.id = 2",
+							String.class
+					).uniqueResult();
+					assertThat( value, equalTo( "first" ) );
+				}
+		);
+	}
+
+	private void deleteAll() {
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithLazyOneToOne loaded = session.get( EntityWithLazyOneToOne.class, 1 );
+					assert loaded != null;
+					assert loaded.getOther() != null;
+					session.remove( loaded );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithLazyOneToOne notfound = session.find( EntityWithLazyOneToOne.class, 1 );
+					assertThat( notfound, CoreMatchers.nullValue() );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final SimpleEntity simpleEntity = session.find( SimpleEntity.class, 2 );
+					assertThat( simpleEntity, notNullValue() );
+					session.remove( simpleEntity );
+				}
+		);
 	}
 }
 
