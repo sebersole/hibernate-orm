@@ -7,6 +7,7 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +67,8 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
+import org.hibernate.sql.ast.produce.metamodel.internal.MetamodelSelectBuilderProcess;
+import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -113,9 +116,13 @@ import static org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribu
 /**
  * @author Steve Ebersole
  */
-public class SingularPersistentAttributeEntity<O,J>
-		extends AbstractNonIdSingularPersistentAttribute<O,J>
-		implements JoinablePersistentAttribute<O,J>, EntityValuedNavigable<J>, Fetchable<J>, AllowableParameterType<J>, TableGroupJoinProducer {
+public class SingularPersistentAttributeEntity<O, J>
+		extends AbstractNonIdSingularPersistentAttribute<O, J>
+		implements JoinablePersistentAttribute<O, J>,
+		EntityValuedNavigable<J>,
+		Fetchable<J>,
+		AllowableParameterType<J>,
+		TableGroupJoinProducer {
 
 	private final SingularAttributeClassification classification;
 	private final PersistentAttributeType persistentAttributeType;
@@ -141,7 +148,6 @@ public class SingularPersistentAttributeEntity<O,J>
 			SingularAttributeClassification classification,
 			RuntimeModelCreationContext context) {
 		super( runtimeModelContainer, bootModelAttribute, propertyAccess, disposition );
-
 		this.classification = classification;
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
 
@@ -154,7 +160,8 @@ public class SingularPersistentAttributeEntity<O,J>
 			);
 		}
 
-		this.entityDescriptor = context.getInFlightRuntimeModel().findEntityDescriptor( valueMapping.getReferencedEntityName() );
+		this.entityDescriptor = context.getInFlightRuntimeModel()
+				.findEntityDescriptor( valueMapping.getReferencedEntityName() );
 		if ( entityDescriptor == null ) {
 			throw new MappingException(
 					String.format(
@@ -194,12 +201,16 @@ public class SingularPersistentAttributeEntity<O,J>
 			notFoundAction = NotFoundAction.EXCEPTION;
 		}
 
-		this.sqlAliasStem =  SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( bootModelAttribute.getName() );
+		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( bootModelAttribute.getName() );
 
 		context.registerNavigable( this );
 		instantiationComplete( bootModelAttribute, context );
 
-		this.fetchStrategy = Helper.determineFetchStrategy( bootModelAttribute, runtimeModelContainer, entityDescriptor );
+		this.fetchStrategy = Helper.determineFetchStrategy(
+				bootModelAttribute,
+				runtimeModelContainer,
+				entityDescriptor
+		);
 	}
 
 	@Override
@@ -209,8 +220,10 @@ public class SingularPersistentAttributeEntity<O,J>
 			singleEntityLoader = getAssociatedEntityDescriptor().getSingleIdLoader();
 		}
 		else {
+			this.referencedUkAttribute = ( (SingularPersistentAttributeEntity) getContainer().findDeclaredPersistentAttribute(
+					getName() ) ).getEntityDescriptor().findPersistentAttribute( referencedUkAttributeName );
 			singleEntityLoader = new StandardSingleUniqueKeyEntityLoader(
-					getContainer().findPersistentAttribute( referencedUkAttributeName ),
+					this.referencedUkAttribute,
 					this
 			);
 		}
@@ -223,8 +236,12 @@ public class SingularPersistentAttributeEntity<O,J>
 				final ForeignKey foreignKeyOwning = foreignKeyOwningAttribute.getForeignKey();
 
 				List<ColumnMappings.ColumnMapping> columns = new ArrayList<>();
-				for ( ColumnMappings.ColumnMapping columnMapping : foreignKeyOwning.getColumnMappings().getColumnMappings() ) {
-					columns.add( new ColumnMappingImpl( columnMapping.getTargetColumn(), columnMapping.getReferringColumn() ) );
+				for ( ColumnMappings.ColumnMapping columnMapping : foreignKeyOwning.getColumnMappings()
+						.getColumnMappings() ) {
+					columns.add( new ColumnMappingImpl(
+							columnMapping.getTargetColumn(),
+							columnMapping.getReferringColumn()
+					) );
 				}
 
 				this.foreignKey = new ForeignKey(
@@ -264,6 +281,20 @@ public class SingularPersistentAttributeEntity<O,J>
 	@Override
 	public EntityValuedExpressableType<J> getType() {
 		return (EntityValuedExpressableType<J>) super.getType();
+	}
+
+	@Override
+	public AssociationKey getAssociationKey() {
+		if ( referencedUkAttribute != null ) {
+			return new AssociationKey(
+					foreignKey.getReferringTable().getTableExpression(),
+					foreignKey.getColumnMappings().getReferringColumns()
+			);
+		}
+		return new AssociationKey(
+				foreignKey.getTargetTable().getTableExpression(),
+				foreignKey.getColumnMappings().getTargetColumns()
+		);
 	}
 
 	@Override
@@ -410,7 +441,8 @@ public class SingularPersistentAttributeEntity<O,J>
 		if ( fetchTiming == FetchTiming.DELAYED ) {
 			// todo (6.0) : need general laziness metadata - currently only done for entity
 			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityDescriptor<?>
-					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
+					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata()
+					.isEnhancedForLazyLoading();
 
 			final boolean cannotBeLazy = ( getAttributeTypeClassification() == ONE_TO_ONE && isOptional() ) || isContainerEnhancedForLazy;
 
@@ -600,7 +632,8 @@ public class SingularPersistentAttributeEntity<O,J>
 				tableGroupJoinContext.getNavigablePath(),
 				joinType,
 				tableGroupInfoSource.getIdentificationVariable(),
-				tableGroupJoinContext.getLockOptions().getEffectiveLockMode( tableGroupInfoSource.getIdentificationVariable() ),
+				tableGroupJoinContext.getLockOptions()
+						.getEffectiveLockMode( tableGroupInfoSource.getIdentificationVariable() ),
 				tableGroupJoinContext.getTableSpace()
 		);
 	}
@@ -646,7 +679,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			return null;
 		}
 
-		if ( ! getEntityDescriptor().isInstance( value ) ) {
+		if ( !getEntityDescriptor().isInstance( value ) ) {
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
@@ -713,7 +746,7 @@ public class SingularPersistentAttributeEntity<O,J>
 	public List<Column> getColumns() {
 		// todo (6.0) - is this really necessary to use export-enabled
 //		if ( foreignKey.isExportationEnabled() ) {
-			return foreignKey.getColumnMappings().getReferringColumns();
+		return foreignKey.getColumnMappings().getReferringColumns();
 //		}
 //		return new ArrayList<>();
 	}
@@ -766,7 +799,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		private Predicate makePredicate(ColumnReferenceQualifier lhs, TableReference rhs) {
 			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
 
-			for ( ColumnMappings.ColumnMapping columnMapping: foreignKey.getColumnMappings().getColumnMappings() ) {
+			for ( ColumnMappings.ColumnMapping columnMapping : foreignKey.getColumnMappings().getColumnMappings() ) {
 				final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
 				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
 
@@ -835,7 +868,7 @@ public class SingularPersistentAttributeEntity<O,J>
 		}
 
 		final List<SqlSelection> selections = new ArrayList<>();
-		for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
+		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
 			selections.add(
 					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
 							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
@@ -980,7 +1013,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			return null;
 		}
 
-		if ( ! getEntityDescriptor().isInstance( value ) ) {
+		if ( !getEntityDescriptor().isInstance( value ) ) {
 			throw new HibernateException( "Unexpected value for unresolve [" + value + "], expecting entity instance" );
 		}
 
@@ -1001,7 +1034,7 @@ public class SingularPersistentAttributeEntity<O,J>
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
 		List<ColumnReference> columnReferences = new ArrayList<>();
-		for ( Column column: foreignKey.getColumnMappings().getReferringColumns() ) {
+		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
 			columnReferences.add( new ColumnReference( qualifier, column ) );
 		}
 		return columnReferences;

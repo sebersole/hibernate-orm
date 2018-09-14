@@ -16,6 +16,8 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithOneToOne;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -38,8 +40,8 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 		return true;
 	}
 
-	@Test
-	public void testOperations() {
+	@BeforeEach
+	public void setUp() {
 		EntityWithOneToOne entity = new EntityWithOneToOne( 1, "first", Integer.MAX_VALUE );
 
 		SimpleEntity other = new SimpleEntity(
@@ -53,9 +55,21 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 
 		entity.setOther( other );
 
-		sessionFactoryScope().inTransaction( session -> session.save( other ) );
-		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+		sessionFactoryScope().inTransaction( session -> {
+			session.save( other );
+			session.save( entity );
+		} );
+	}
 
+	@AfterEach
+	public void tearDown() {
+		sessionFactoryScope().inTransaction( session -> {
+			deleteAll();
+		} );
+	}
+
+	@Test
+	public void testGet() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithOneToOne loaded = session.get( EntityWithOneToOne.class, 1 );
@@ -73,7 +87,36 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 					assertThat( loaded.getSomeInteger(), equalTo( Integer.MAX_VALUE ) );
 				}
 		);
+	}
 
+	@Test
+	public void testQueryParentAttribute2() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final String value = session.createQuery(
+							"select e.name from EntityWithOneToOne e where e.id = 1",
+							String.class
+					).uniqueResult();
+					assertThat( value, equalTo( "first" ) );
+				}
+		);
+	}
+
+	@Test
+	public void testQueryParentAttribute3() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithOneToOne value = session.createQuery(
+							"select e from EntityWithOneToOne e where e.id = 1",
+							EntityWithOneToOne.class
+					).uniqueResult();
+					assertThat( value.getName(), equalTo( "first" ) );
+				}
+		);
+	}
+
+	@Test
+	public void testQueryParentAttribute() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final String value = session.createQuery(
@@ -83,7 +126,22 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 					assertThat( value, equalTo( "first" ) );
 				}
 		);
+	}
 
+	@Test
+	public void testQueryParent() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithOneToOne value = session.createQuery(
+							"select e from EntityWithOneToOne e where e.other.id = 2",
+							EntityWithOneToOne.class
+					).uniqueResult();
+					assertThat( value.getName(), equalTo( "first" ) );
+				}
+		);
+	}
+
+	private void deleteAll() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithOneToOne loaded = session.get( EntityWithOneToOne.class, 1 );
@@ -104,6 +162,7 @@ public class EntityWithOneToOneTest extends SessionFactoryBasedFunctionalTest {
 				session -> {
 					final SimpleEntity simpleEntity = session.find( SimpleEntity.class, 2 );
 					assertThat( simpleEntity, notNullValue() );
+					session.remove( simpleEntity );
 				}
 		);
 	}

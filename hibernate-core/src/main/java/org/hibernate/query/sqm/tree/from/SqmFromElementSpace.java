@@ -27,6 +27,7 @@ public class SqmFromElementSpace {
 	private final SqmFromClause fromClause;
 
 	private SqmRoot root;
+
 	private List<SqmJoin> joins;
 
 	public SqmFromElementSpace(SqmFromClause fromClause) {

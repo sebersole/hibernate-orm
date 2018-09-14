@@ -17,7 +17,6 @@ import java.util.function.Consumer;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
@@ -38,6 +37,7 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
+import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -132,6 +132,8 @@ public class MetamodelSelectBuilderProcess
 	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
 	private final Stack<ColumnReferenceQualifier> columnReferenceQualifierStack = new StandardStack<>();
+
+	private List<AssociationKey> fetchedAssociationKey = new ArrayList<>(  );
 
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -426,6 +428,13 @@ public class MetamodelSelectBuilderProcess
 				return;
 			}
 
+			final AssociationKey associationKey = fetchable.getAssociationKey();
+			if ( associationKey != null ) {
+				if ( fetchedAssociationKey.contains( associationKey ) ) {
+					return;
+				}
+				fetchedAssociationKey.add( associationKey );
+			}
 			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
 			boolean joined = fetchable.getMappedFetchStrategy().getStyle() == FetchStyle.JOIN;
