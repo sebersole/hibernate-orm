@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression.domain;
 
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -15,12 +14,26 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
  * @author Steve Ebersole
  */
 public class PluralAttributeReference extends AbstractNavigableReference {
+	/**
+	 * Ctor for a collection domain result
+	 */
+	public PluralAttributeReference(
+			PluralPersistentAttribute referencedAttribute,
+			ColumnReferenceQualifier columnReferenceQualifier,
+			NavigablePath navigablePath) {
+		super( null, referencedAttribute, navigablePath, columnReferenceQualifier );
+	}
+
+	/**
+	 * Ctor for fetch reference.  Not that either (but not both)
+	 * `containerReference` or `valuesQualifier` may be null
+	 */
 	public PluralAttributeReference(
 			NavigableContainerReference containerReference,
 			PluralPersistentAttribute referencedAttribute,
+			ColumnReferenceQualifier valuesQualifier,
 			NavigablePath navigablePath) {
-		// todo (6.0) : need a ColumnReferenceQualifer covering the owner table, the "collection table" and any element/index table
-		super( containerReference, referencedAttribute, navigablePath, containerReference.getColumnReferenceQualifier() );
+		super( containerReference, referencedAttribute, navigablePath, valuesQualifier );
 	}
 
 	@Override
@@ -28,11 +41,11 @@ public class PluralAttributeReference extends AbstractNavigableReference {
 		return (PluralPersistentAttribute) super.getNavigable();
 	}
 
-	@Override
-	public ColumnReferenceQualifier getColumnReferenceQualifier() {
-		// todo (6.0) : this really needs a composite ColumnReferenceQualifier
-		//		combining collection-table, element table and index table
-		//
-		throw new NotYetImplementedFor6Exception();
+	public ColumnReferenceQualifier getContainerQualifier() {
+		if ( getNavigableContainerReference() == null ) {
+			return getColumnReferenceQualifier();
+		}
+
+		return super.getColumnReferenceQualifier();
 	}
 }

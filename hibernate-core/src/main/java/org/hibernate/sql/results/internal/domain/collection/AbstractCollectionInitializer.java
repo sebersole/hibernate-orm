@@ -6,10 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
-import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -23,61 +23,74 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 public abstract class AbstractCollectionInitializer implements CollectionInitializer {
 	private final PersistentCollectionDescriptor collectionDescriptor;
 	private final FetchParentAccess parentAccess;
-	private final boolean isJoinFetch;
+	private final NavigablePath navigablePath;
+	private final boolean selected;
 
-	// todo (6.0) : we may need an assembler for both the key on the owner side and the key on the collection side.
-	//		* owner side : mainly needed in case the key for the collection side is
-	// 			null (no collection elements for that row).  We still need to create
-	//			the appropriate collection instance and register its entry in the PC
-	//		* collection side : to determine the collection key
-	//
-	// 		- possible solution wrt "owner side" would be to expose a method from FetchParentAccess like:
-	//			````
-	//			Object getResolvedState(Navigable navigable)
-	//			````
-
-	// todo (6.0) : need to make sure that the fetch parent's initializer is registered before the collection initializer
-
-	private final DomainResultAssembler keyAssembler;
+	private final DomainResultAssembler keyTargetAssembler;
+	private final DomainResultAssembler keyCollectionAssembler;
 
 	// per-row state
-	private Object collectionFkValue;
-	private CollectionKey collectionKey;
-
+	private Object keyContainerValue;
+	private Object keyCollectionValue;
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractCollectionInitializer(
 			PersistentCollectionDescriptor collectionDescriptor,
 			FetchParentAccess parentAccess,
-			boolean isJoinFetch,
-			DomainResultAssembler keyAssembler) {
+			NavigablePath navigablePath,
+			boolean selected,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler) {
 		this.collectionDescriptor = collectionDescriptor;
 		this.parentAccess = parentAccess;
-		this.isJoinFetch = isJoinFetch;
-		this.keyAssembler = keyAssembler;
+		this.navigablePath = navigablePath;
+		this.selected = selected;
+		this.keyTargetAssembler = keyContainerAssembler;
+		this.keyCollectionAssembler = keyCollectionAssembler;
 	}
 
 	protected PersistentCollectionDescriptor getCollectionDescriptor() {
 		return collectionDescriptor;
 	}
 
-	// todo (6.0) : poorly named - just means whether the collection data is available
-	//		from the JdbcValuesSource (joined or collection-loader) or whether
-	//		we need a subsequent select load
-	protected boolean isJoinFetch() {
-		return isJoinFetch;
+	@Override
+	public NavigablePath getNavigablePath() {
+		return navigablePath;
 	}
 
-	protected CollectionKey getCollectionKey() {
-		return collectionKey;
+	/**
+	 * Are the values for performing this initialization present in the current
+	 * {@link org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState}?
+	 * Or should a separate/subsequent select be performed
+	 *
+	 * todo (6.0) : opportunity for performance gain by batching these selects triggered at the end of processing the JdbcValuesSource
+	 */
+	protected boolean isSelected() {
+		return selected;
 	}
 
 	protected FetchParentAccess getParentAccess() {
 		return parentAccess;
 	}
 
-	public Object getCollectionFkValue() {
-		return collectionFkValue;
+	/**
+	 * The value of the container/owner side of the collection key (FK).  Identifies the
+	 * owner of the collection and used to create the {@link CollectionKey} in
+	 * {@link #resolveCollectionKey}
+	 */
+	@SuppressWarnings("WeakerAccess")
+	protected Object getKeyContainerValue() {
+		return keyContainerValue;
+	}
+
+	/**
+	 * The value of the collection side of the collection key (FK).  Identifies
+	 * inclusion in the collection.  Can be null to indicate that the current row
+	 * does not contain any collection values
+	 */
+	@SuppressWarnings("WeakerAccess")
+	protected Object getKeyCollectionValue() {
+		return keyCollectionValue;
 	}
 
 	@Override
@@ -87,40 +100,30 @@ public abstract class AbstractCollectionInitializer implements CollectionInitial
 
 	@Override
 	public void hydrate(RowProcessingState rowProcessingState) {
-		collectionFkValue = keyAssembler.assemble(
+		keyContainerValue = keyTargetAssembler.assemble(
 				rowProcessingState,
 				rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
 		);
 
-		final Object parentFkValue;
-
-		if ( getParentAccess() == null ) {
-			// a collection root (CollectionLoader)..
-			// 		- just use the collectionFkValue as the parentFkValue.
-			//
-			// todo (6.0) : is it legal for `collectionFkValue` to be null here?
-			// 		I think not because we are loading a collection by a provided key value
-			parentFkValue = collectionFkValue;
+		if ( keyCollectionAssembler == null ) {
+			keyCollectionValue = keyContainerValue;
 		}
 		else {
-			parentFkValue = parentAccess.getResolvedState( getFetchedAttribute(), rowProcessingState );
+			keyCollectionValue = keyCollectionAssembler.assemble(
+					rowProcessingState,
+					rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
+			);
 		}
-
-		if ( parentFkValue == null ) {
-			throw new HibernateException( "Collection parentFkValue cannot be null : " + getFetchedAttribute().getNavigableRole().getFullPath() );
-		}
-
-		collectionKey = new CollectionKey( getFetchedAttribute().getPersistentCollectionDescriptor(), parentFkValue );
-
-		afterKeyHydrated( rowProcessingState );
 	}
 
-	protected void afterKeyHydrated(RowProcessingState rowProcessingState) {
+	@SuppressWarnings("WeakerAccess")
+	protected CollectionKey resolveCollectionKey(@SuppressWarnings("unused") RowProcessingState rowProcessingState) {
+		return new CollectionKey( getFetchedAttribute().getPersistentCollectionDescriptor(), getKeyContainerValue() );
 	}
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
-		collectionKey = null;
-		collectionFkValue = null;
+		keyContainerValue = null;
+		keyCollectionValue = null;
 	}
 }

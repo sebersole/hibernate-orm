@@ -53,4 +53,29 @@ public abstract class AbstractTableGroup
 
 		return resolveColumnReference( column );
 	}
+
+
+	@Override
+	public String toLoggableFragment() {
+		final StringBuilder buffer = new StringBuilder( "(" );
+
+		buffer.append( "path=(" ).append( getNavigableReference().getNavigablePath().toLoggableFragment() ).append( "), " );
+		buffer.append( "root=(" ).append( getPrimaryTableReference().toLoggableFragment() ).append( "), " );
+		buffer.append( "joins=[" );
+		if ( getTableReferenceJoins() != null ) {
+			boolean firstPass = true;
+			for ( TableReferenceJoin tableReferenceJoin : getTableReferenceJoins() ) {
+				if ( firstPass ) {
+					firstPass = false;
+				}
+				else {
+					buffer.append( ',' );
+				}
+
+				buffer.append( tableReferenceJoin.toLoggableFragment() );
+			}
+		}
+
+		return buffer.append( "])" ).toString();
+	}
 }

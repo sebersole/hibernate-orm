@@ -35,7 +35,7 @@ public class StandardOrderedSetSemantics extends AbstractSetSemantics<LinkedHash
 	public LinkedHashSet<?> instantiateRaw(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		return new LinkedHashSet<>( anticipatedSize );
+		return anticipatedSize < 1 ? new LinkedHashSet() : new LinkedHashSet<>( anticipatedSize );
 	}
 
 	@Override

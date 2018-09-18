@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.tree.spi.from;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.internal.util.Loggable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
@@ -23,7 +24,7 @@ import org.hibernate.sql.ast.tree.spi.expression.Expression;
  *
  * @author Steve Ebersole
  */
-public class TableReference implements SqlAstNode, ColumnReferenceQualifier {
+public class TableReference implements SqlAstNode, ColumnReferenceQualifier, Loggable {
 	private final Table table;
 	private final String identificationVariable;
 
@@ -77,5 +78,10 @@ public class TableReference implements SqlAstNode, ColumnReferenceQualifier {
 	public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
 		assert sqlSelectable instanceof Column;
 		return resolveColumnReference( (Column) sqlSelectable );
+	}
+
+	@Override
+	public String toLoggableFragment() {
+		return getTable().toLoggableFragment() + "(" + getIdentificationVariable() + ')';
 	}
 }

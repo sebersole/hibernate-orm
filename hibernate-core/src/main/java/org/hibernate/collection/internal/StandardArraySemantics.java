@@ -40,10 +40,11 @@ public class StandardArraySemantics implements CollectionSemantics<Object[]> {
 	public Object[] instantiateRaw(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		return (Object[]) Array.newInstance(
-				collectionDescriptor.getJavaTypeDescriptor().getJavaType().getComponentType(),
-				anticipatedSize
-		);
+//		return (Object[]) Array.newInstance(
+//				collectionDescriptor.getJavaTypeDescriptor().getJavaType().getComponentType(),
+//				anticipatedSize
+//		);
+		throw new UnsupportedOperationException();
 	}
 
 

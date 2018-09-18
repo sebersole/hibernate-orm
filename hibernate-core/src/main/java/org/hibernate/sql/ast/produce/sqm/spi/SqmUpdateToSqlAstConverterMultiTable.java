@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.hibernate.LockOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
@@ -109,6 +110,8 @@ public class SqmUpdateToSqlAstConverterMultiTable
 		//		statements which keeps track of the table of the attribute being assigned
 		//		in the query so that we know some context for these assigned values.
 
+		final NavigablePath path = new NavigablePath( entityDescriptor.getEntityName() );
+
 		this.entityTableGroup = entityDescriptor.createRootTableGroup(
 				new TableGroupInfo() {
 					@Override
@@ -124,6 +127,11 @@ public class SqmUpdateToSqlAstConverterMultiTable
 					@Override
 					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 						return sqmStatement.getEntityFromElement().getIntrinsicSubclassEntityMetadata();
+					}
+
+					@Override
+					public NavigablePath getNavigablePath() {
+						return path;
 					}
 				},
 				new RootTableGroupContext() {
@@ -243,6 +251,11 @@ public class SqmUpdateToSqlAstConverterMultiTable
 	public LockOptions getLockOptions() {
 		// todo (6.) : is this correct?
 		return LockOptions.NONE;
+	}
+
+	@Override
+	protected SqlExpressionResolver getSqlExpressionResolver() {
+		return expressionResolver;
 	}
 
 	private class TableGroupMock extends AbstractTableGroup implements TableGroup {

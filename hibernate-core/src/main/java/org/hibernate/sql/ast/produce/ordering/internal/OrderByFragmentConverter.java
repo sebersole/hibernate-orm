@@ -71,4 +71,9 @@ public class OrderByFragmentConverter extends BaseSqmToSqlAstConverter implement
 	public SqlExpressionResolver getSqlSelectionResolver() {
 		return sqlExpressionResolver;
 	}
+
+	@Override
+	protected SqlExpressionResolver getSqlExpressionResolver() {
+		return sqlExpressionResolver;
+	}
 }

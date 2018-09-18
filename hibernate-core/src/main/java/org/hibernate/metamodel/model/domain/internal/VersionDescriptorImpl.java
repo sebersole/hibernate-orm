@@ -129,8 +129,7 @@ public class VersionDescriptorImpl<O,J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(
@@ -149,7 +148,7 @@ public class VersionDescriptorImpl<O,J>
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean joinFetch, LockMode lockMode,
+			boolean selected, LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return new BasicFetch( fetchParent, this, fetchTiming, creationContext, creationState );

@@ -89,8 +89,7 @@ public class RowIdDescriptorImpl<J> implements RowIdDescriptor<J> {
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		// todo (6.0) : but like with discriminator, etc we *could* if we wanted to
 		//		exposed as a "virtual attribute" such as `select p.{type} from Person p`
 		throw new HibernateException( "Selection of ROW_ID from domain query is not supported" );

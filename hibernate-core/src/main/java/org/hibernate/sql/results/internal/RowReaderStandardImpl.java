@@ -12,14 +12,13 @@ import java.util.List;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.named.spi.RowReaderMemento;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
+import org.hibernate.sql.exec.spi.RowTransformer;
+import org.hibernate.sql.results.spi.DomainResultAssembler;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.sql.results.spi.RowReader;
-import org.hibernate.sql.results.spi.EntityInitializer;
-import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.DomainResultAssembler;
-import org.hibernate.sql.exec.spi.RowTransformer;
 
 /**
  * @author Steve Ebersole
@@ -46,6 +45,16 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 
 		this.assemblerCount = resultAssemblers.size();
 		this.callback = callback;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Class<T> getResultJavaType() {
+		if ( resultAssemblers.size() == 1 ) {
+			return resultAssemblers.get( 0 ).getJavaTypeDescriptor().getJavaType();
+		}
+
+		return (Class<T>) Object[].class;
 	}
 
 	@Override

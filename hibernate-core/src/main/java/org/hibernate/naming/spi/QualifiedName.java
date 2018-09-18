@@ -6,6 +6,7 @@
  */
 package org.hibernate.naming.spi;
 
+import org.hibernate.internal.util.Loggable;
 import org.hibernate.naming.Identifier;
 
 /**
@@ -22,9 +23,11 @@ import org.hibernate.naming.Identifier;
  *
  * @author Steve Ebersole
  */
-public interface QualifiedName {
+public interface QualifiedName extends Loggable {
 	Identifier getCatalogName();
+
 	Identifier getSchemaName();
+
 	Identifier getObjectName();
 
 	/**
@@ -35,6 +38,29 @@ public interface QualifiedName {
 	 * instead.  See {@link org.hibernate.engine.jdbc.env.spi.JdbcEnvironment#getQualifiedObjectNameFormatter}
 	 *
 	 * @return The string form
+	 *
+	 * @apiNote Use {@link #toLoggableFragment()} instead
+	 *
+	 * @deprecated (since 6.0) Use/implement {@link #toLoggableFragment()} instead
 	 */
+	@Deprecated
 	String render();
+
+	@Override
+	default String toLoggableFragment() {
+		final StringBuilder buffer = new StringBuilder();
+
+		final Identifier catalogName = getCatalogName();
+		if ( catalogName != null ) {
+			buffer.append( catalogName ).append( '.' );
+		}
+
+
+		final Identifier schemaName = getSchemaName();
+		if ( schemaName != null ) {
+			buffer.append( schemaName ).append( '.' );
+		}
+
+		return buffer.append( getObjectName() ).toString();
+	}
 }

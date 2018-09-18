@@ -6,8 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
+import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentList;
 import org.hibernate.metamodel.model.domain.internal.PersistentListDescriptorImpl;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -22,11 +24,14 @@ public class ListInitializer extends AbstractImmediateCollectionInitializer {
 	public ListInitializer(
 			PersistentListDescriptorImpl listDescriptor,
 			FetchParentAccess parentAccess,
-			boolean joined,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath,
+			boolean selected,
+			LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			DomainResultAssembler listIndexAssembler,
 			DomainResultAssembler elementAssembler) {
-		super( listDescriptor, parentAccess, joined, collectionKeyAssembler );
+		super( listDescriptor, parentAccess, navigablePath, selected, lockMode, keyContainerAssembler, keyCollectionAssembler );
 		this.listIndexAssembler = listIndexAssembler;
 		this.elementAssembler = elementAssembler;
 	}

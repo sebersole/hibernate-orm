@@ -66,6 +66,7 @@ public class EntityFetchImpl extends AbstractEntityMappingNode implements Entity
 		final EntityFetchInitializer initializer = new EntityFetchInitializer(
 				parentAccess,
 				this,
+				getNavigablePath(),
 				getLockMode(),
 				getIdentifierResult(),
 				getDiscriminatorResult(),

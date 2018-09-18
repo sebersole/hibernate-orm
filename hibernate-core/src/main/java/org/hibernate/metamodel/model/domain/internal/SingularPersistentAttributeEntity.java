@@ -92,7 +92,6 @@ import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.results.internal.domain.entity.DelayedEntityFetch;
 import org.hibernate.sql.results.internal.domain.entity.EntityFetchImpl;
 import org.hibernate.sql.results.internal.domain.entity.ImmediatePkEntityFetch;
@@ -103,7 +102,6 @@ import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.ForeignKeyDirection;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.ImmutableMutabilityPlan;
@@ -379,13 +377,11 @@ public class SingularPersistentAttributeEntity<O, J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return entityDescriptor.createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 	}
 
@@ -425,7 +421,7 @@ public class SingularPersistentAttributeEntity<O, J>
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean isJoinFetch,
+			boolean selected,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,
@@ -454,7 +450,7 @@ public class SingularPersistentAttributeEntity<O, J>
 			}
 		}
 		else {
-			if ( isJoinFetch ) {
+			if ( selected ) {
 				return generateJoinFetch(
 						fetchParent,
 						lockMode,
@@ -568,7 +564,8 @@ public class SingularPersistentAttributeEntity<O, J>
 			// this creates the SQL AST join(s) in the from clause
 			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
 					creationState.getSqlAliasBaseGenerator(),
-					creationState.getColumnReferenceQualifierStack().getCurrent(),
+					parentReference,
+					creationState.getSqlExpressionResolver(),
 					navigablePath,
 					isNullable() ? JoinType.LEFT : JoinType.INNER,
 					resultVariable,
@@ -629,6 +626,7 @@ public class SingularPersistentAttributeEntity<O, J>
 		return createTableGroupJoin(
 				tableGroupJoinContext.getSqlAliasBaseGenerator(),
 				tableGroupJoinContext.getLhs(),
+				tableGroupJoinContext.getSqlExpressionResolver(),
 				tableGroupJoinContext.getNavigablePath(),
 				joinType,
 				tableGroupInfoSource.getIdentificationVariable(),
@@ -641,7 +639,8 @@ public class SingularPersistentAttributeEntity<O, J>
 	@Override
 	public TableGroupJoin createTableGroupJoin(
 			SqlAliasBaseGenerator sqlAliasBaseGenerator,
-			ColumnReferenceQualifier lhs,
+			NavigableContainerReference lhs,
+			SqlExpressionResolver sqlExpressionResolver,
 			NavigablePath navigablePath,
 			JoinType joinType,
 			String identificationVariable,
@@ -658,7 +657,7 @@ public class SingularPersistentAttributeEntity<O, J>
 		);
 
 		getEntityDescriptor().applyTableReferenceJoins(
-				lhs,
+				lhs.getColumnReferenceQualifier(),
 				joinType,
 				sqlAliasBase,
 				joinCollector
@@ -753,7 +752,7 @@ public class SingularPersistentAttributeEntity<O, J>
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
 		private final TableSpace tableSpace;
-		private final ColumnReferenceQualifier lhs;
+		private final NavigableContainerReference lhs;
 		private final NavigablePath navigablePath;
 		private final String identificationVariable;
 		private final LockMode lockMode;
@@ -765,7 +764,7 @@ public class SingularPersistentAttributeEntity<O, J>
 		@SuppressWarnings("WeakerAccess")
 		public TableReferenceJoinCollectorImpl(
 				TableSpace tableSpace,
-				ColumnReferenceQualifier lhs,
+				NavigableContainerReference lhs,
 				NavigablePath navigablePath,
 				String identificationVariable,
 				LockMode lockMode) {
@@ -782,10 +781,14 @@ public class SingularPersistentAttributeEntity<O, J>
 				rootTableReference = root;
 			}
 			else {
-				collectTableReferenceJoin( makeJoin( lhs, rootTableReference ) );
+				if ( lhs != null ) {
+					collectTableReferenceJoin( makeJoin( lhs.getColumnReferenceQualifier(), rootTableReference ) );
+				}
 			}
 
-			predicate = makePredicate( lhs, rootTableReference );
+			if ( lhs != null ) {
+				predicate = makePredicate( lhs.getColumnReferenceQualifier(), rootTableReference );
+			}
 		}
 
 		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
@@ -833,55 +836,16 @@ public class SingularPersistentAttributeEntity<O, J>
 			final EntityTableGroup joinedTableGroup = new EntityTableGroup(
 					uid,
 					tableSpace,
+					lhs,
 					SingularPersistentAttributeEntity.this,
 					lockMode,
 					navigablePath,
 					rootTableReference,
 					tableReferenceJoins,
-					lhs
+					lhs.getColumnReferenceQualifier()
 			);
 			return new TableGroupJoin( joinType, joinedTableGroup, predicate );
 		}
-	}
-
-	@Override
-	public SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		// todo (6.0) : handle fetching here?  or at a "higher level"?
-		//
-		// 		for now we just load the FK
-		//
-		// todo (6.0) : we need to know the corresponding BasicJavaDescriptor per Column
-		//		how to implement that?
-
-		if ( foreignKey.getColumnMappings().getReferringColumns().size() == 1 ) {
-			final Column column = foreignKey.getColumnMappings().getReferringColumns().get( 0 );
-			return resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-					resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-							qualifier,
-							column
-					),
-					column.getJavaTypeDescriptor(),
-					resolutionContext.getSessionFactory().getTypeConfiguration()
-			);
-		}
-
-		final List<SqlSelection> selections = new ArrayList<>();
-		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
-			selections.add(
-					resolutionContext.getSqlSelectionResolver().resolveSqlSelection(
-							resolutionContext.getSqlSelectionResolver().resolveSqlExpression(
-									qualifier,
-									column
-							),
-							column.getJavaTypeDescriptor(),
-							resolutionContext.getSessionFactory().getTypeConfiguration()
-					)
-			);
-		}
-
-		return new AggregateSqlSelectionGroupNode( selections );
 	}
 
 	@Override

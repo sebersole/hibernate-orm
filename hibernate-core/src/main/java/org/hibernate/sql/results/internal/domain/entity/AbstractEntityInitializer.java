@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.WrongClassException;
 import org.hibernate.cache.spi.access.EntityDataAccess;
@@ -32,11 +31,11 @@ import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.SqlResultsLogger;
 import org.hibernate.sql.results.internal.NullValueAssembler;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
@@ -51,15 +50,10 @@ import org.hibernate.sql.results.spi.LoadingEntityEntry;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.internal.TypeHelper;
 
-import org.jboss.logging.Logger;
-
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractEntityInitializer implements EntityInitializer {
-	private static final Logger log = Logger.getLogger( AbstractEntityInitializer.class );
-	private static final boolean debugEnabled = log.isDebugEnabled();
-
 
 	// NOTE : even though we only keep the EntityDescriptor here, rather than EntityReference
 	//		the "scope" of this initializer is a specific EntityReference.
@@ -69,6 +63,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	// 		these
 
 	private final EntityDescriptor<?> entityDescriptor;
+	private final NavigablePath navigablePath;
 	private final LockMode lockMode;
 
 	private final List<Initializer> identifierInitializers = new ArrayList<>();
@@ -84,13 +79,13 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	private EntityKey entityKey;
 	private Object[] resolvedEntityState;
 	private Object entityInstance;
-	private boolean injectEntityState = true;
 
 	// todo (6.0) : ^^ need a better way to track whether we are loading the entity state or if something else is/has
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractEntityInitializer(
 			EntityMappingNode resultDescriptor,
+			NavigablePath navigablePath,
 			LockMode lockMode,
 			DomainResult identifierResult,
 			DomainResult discriminatorResult,
@@ -100,6 +95,7 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			AssemblerCreationState creationState) {
 		super( );
 		this.entityDescriptor = resultDescriptor.getEntityValuedNavigable().getEntityDescriptor();
+		this.navigablePath = navigablePath;
 		this.lockMode = lockMode;
 
 		this.identifierAssembler = identifierResult.createResultAssembler(
@@ -164,6 +160,10 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		subInitializerConsumer.finishUp();
 	}
 
+	public NavigablePath getNavigablePath() {
+		return navigablePath;
+	}
+
 	protected abstract boolean isEntityReturn();
 
 	@Override
@@ -204,6 +204,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 			return;
 		}
 
+		SqlResultsLogger.INSTANCE.tracef( "Beginning Initializer#hydrate process for entity : %s", getNavigablePath().getFullPath() );
+
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 		concreteDescriptor = determineConcreteEntityDescriptor( rowProcessingState, session );
 
@@ -212,6 +214,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 		// todo (6.0) : should this really be true?  what about fetches that resolve to null?
 		assert entityKey != null;
+
+		SqlResultsLogger.INSTANCE.debugf( "Hydrated EntityKey (%s): %s", getNavigablePath(), entityKey.getIdentifier() );
 	}
 
 	private EntityDescriptor determineConcreteEntityDescriptor(
@@ -272,53 +276,88 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 	}
 
 	@Override
-	public Object getResolvedState(
-			Navigable navigable,
-			RowProcessingState processingState) {
-		if ( navigable instanceof EntityIdentifier ) {
-			return entityKey.getIdentifier();
-		}
-
-		if ( ! ( navigable instanceof StateArrayContributor ) ) {
-			throw new HibernateException(
-					"Fetch kay must be based on PK or a UK - unexpected Navigable type : " + navigable.getClass().getName()
-			);
-		}
-
-		return resolvedEntityState[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
-	}
-
-	@Override
 	public void resolve(RowProcessingState rowProcessingState) {
-		if ( ! injectEntityState ) {
-			// we are not the Initializer responsible for initializing
-			// the given entity instance.  Skip all of this method
-			return;
-		}
-
 		final Object entityIdentifier = entityKey.getIdentifier();
+
+		SqlResultsLogger.INSTANCE.tracef( "Beginning Initializer#resolve process for entity (%s) : %s", getNavigablePath().getFullPath(), entityIdentifier );
 
 		final SharedSessionContractImplementor session = rowProcessingState.getJdbcValuesSourceProcessingState().getSession();
 		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
 
-
 		// look to see if another initializer from a parent load context or an earlier
 		// initializer is already loading the entity
 
-		LoadingEntityEntry loadingEntityEntry = session.getPersistenceContext()
+		final LoadingEntityEntry existingLoadingEntry = session.getPersistenceContext()
 				.getLoadContexts()
 				.findLoadingEntityEntry( entityKey );
 
-		if ( loadingEntityEntry != null ) {
-			// the entity is already being loaded elsewhere
-			this.entityKey = loadingEntityEntry.getEntityKey();
-			this.entityInstance = loadingEntityEntry.getEntityInstance();
-			this.concreteDescriptor = loadingEntityEntry.getDescriptor();
-			return;
+		if ( existingLoadingEntry != null ) {
+			SqlResultsLogger.INSTANCE.debugf(
+					"Found existing loading entry [%s - %s] - using loading instance",
+					getNavigablePath().getFullPath(),
+					entityIdentifier
+			);
+
+			this.entityInstance = existingLoadingEntry.getEntityInstance();
+
+			if ( existingLoadingEntry.getEntityInitializer() != this ) {
+				// the entity is already being loaded elsewhere
+				SqlResultsLogger.INSTANCE.debugf(
+						"Entity (%s, %s) being loaded by another initializer [%s] - skipping processing",
+						getNavigablePath().getFullPath(),
+						entityIdentifier,
+						existingLoadingEntry.getEntityInitializer()
+				);
+
+				// EARLY EXIT!!!
+				return;
+			}
 		}
 
+		if ( entityInstance == null ) {
+			// this isEntityReturn bit is just for entity loaders, not hql/criteria
+			if ( isEntityReturn() ) {
+				final Object requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
+				if ( requestedEntityId != null && requestedEntityId.equals( entityKey.getIdentifier() ) ) {
+					entityInstance = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalObject();
+				}
+			}
+		}
 
-		// we are responsible for loading it
+		if ( entityInstance == null ) {
+			// see if it is managed in the Session already
+			final Object entity = session.getPersistenceContext().getEntity( entityKey );
+			if ( entity != null ) {
+				this.entityInstance = entity;
+			}
+		}
+
+		if ( entityInstance == null ) {
+			// we are responsible for loading it
+
+			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
+
+			SqlResultsLogger.INSTANCE.debugf(
+					"Created new entity instance (%s - %s) : %s",
+					getNavigablePath().getFullPath(),
+					entityIdentifier,
+					entityInstance
+			);
+
+			final LoadingEntityEntry loadingEntry = new LoadingEntityEntry(
+					this,
+					entityKey,
+					concreteDescriptor,
+					entityInstance
+			);
+
+			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
+					entityKey,
+					loadingEntry
+			);
+		}
+
+		preLoad( rowProcessingState );
 
 		final Object rowId = null;
 // todo (6.0) : rowId
@@ -336,31 +375,6 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 //			rowId = null;
 //		}
 
-		// this isEntityReturn bit is just for entity loaders, not hql/criteria
-		if ( isEntityReturn() ) {
-			final Object requestedEntityId = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalId();
-			if ( requestedEntityId != null && requestedEntityId.equals( entityKey.getIdentifier() ) ) {
-				entityInstance = rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions().getEffectiveOptionalObject();
-			}
-		}
-
-		if ( entityInstance == null ) {
-			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
-
-			loadingEntityEntry = new LoadingEntityEntry(
-					entityKey,
-					concreteDescriptor,
-					entityInstance,
-					rowId
-			);
-
-			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity(
-					entityKey,
-					loadingEntityEntry
-			);
-		}
-
-		preLoad( rowProcessingState );
 
 
 		entityDescriptor.setIdentifier( entityInstance, entityIdentifier, session );
@@ -405,8 +419,8 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		if ( cacheAccess != null && session.getCacheMode().isPutEnabled() ) {
 
-			if ( debugEnabled ) {
-				log.debugf(
+			if ( SqlResultsLogger.DEBUG_ENABLED ) {
+				SqlResultsLogger.INSTANCE.debugf(
 						"Adding entityInstance to second-level cache: %s",
 						MessageHelper.infoString( entityDescriptor, entityIdentifier, session.getFactory() )
 				);
@@ -498,9 +512,10 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 		entityDescriptor.afterInitialize( entityInstance, session );
 
-		if ( debugEnabled ) {
-			log.debugf(
-					"Done materializing entityInstance %s",
+		if ( SqlResultsLogger.DEBUG_ENABLED ) {
+			SqlResultsLogger.INSTANCE.debugf(
+					"Done materializing entityInstance (%s) : %s",
+					getNavigablePath().getFullPath(),
 					MessageHelper.infoString( entityDescriptor, entityIdentifier, session.getFactory() )
 			);
 		}
@@ -571,6 +586,5 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		concreteDescriptor = null;
 		entityKey = null;
 		entityInstance = null;
-		injectEntityState = true;
 	}
 }

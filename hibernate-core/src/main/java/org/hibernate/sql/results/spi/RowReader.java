@@ -15,6 +15,8 @@ import org.hibernate.query.named.spi.RowReaderMemento;
  * @author Steve Ebersole
  */
 public interface RowReader<R> {
+	Class<R> getResultJavaType();
+
 	int getNumberOfResults();
 
 	/**

@@ -9,6 +9,8 @@ package org.hibernate.metamodel.model.relational.spi;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.hibernate.internal.util.Loggable;
+
 
 /**
  * Represents a table in the mapping in terms of what ANSI SQL calls a
@@ -17,7 +19,7 @@ import java.util.UUID;
  *
  * @author Steve Ebersole
  */
-public interface Table {
+public interface Table extends Loggable {
 	UUID getUid();
 
 	String getTableExpression();

@@ -21,7 +21,7 @@ import org.hibernate.sql.results.spi.FetchParent;
 public interface Fetchable<T> extends Joinable<T> {
 	FetchStrategy getMappedFetchStrategy();
 
-	// todo (6.0) : all we need here is (1) FetchTiming and (2) is-this-a-join-fetch
+	// todo (6.0) : all we need here is (1) FetchTiming and (2) whether the values are available in the current JdbcValuesSource
 	//		Having to instantiate new FetchStrategy potentially multiple times
 	// 		per Fetch generation is performance drain.  Would be better to
 	// 		simply pass these 2 pieces of information
@@ -29,7 +29,7 @@ public interface Fetchable<T> extends Joinable<T> {
 	Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean joinFetch,
+			boolean selected,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,

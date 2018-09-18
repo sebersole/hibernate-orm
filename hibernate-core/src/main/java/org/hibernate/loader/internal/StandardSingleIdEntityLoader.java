@@ -19,6 +19,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
@@ -281,6 +282,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 		final SqlAliasBaseGenerator aliasBaseGenerator = new SqlAliasBaseManager();
 
+		final NavigablePath path = new NavigablePath( entityDescriptor.getEntityName() );
 		final EntityTableGroup rootTableGroup = entityDescriptor.createRootTableGroup(
 				new TableGroupInfo() {
 					@Override
@@ -296,6 +298,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 					@Override
 					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 						return entityDescriptor;
+					}
+
+					@Override
+					public NavigablePath getNavigablePath() {
+						return path;
 					}
 				},
 				new RootTableGroupContext() {

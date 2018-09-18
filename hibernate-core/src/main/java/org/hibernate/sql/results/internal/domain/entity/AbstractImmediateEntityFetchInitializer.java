@@ -171,33 +171,6 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		);
 	}
 
-	@Override
-	public Object getResolvedState(
-			Navigable navigable,
-			RowProcessingState processingState) {
-		if ( entityInstance == null ) {
-			return null;
-		}
-
-		if ( navigable instanceof EntityIdentifier ) {
-			return keyValue;
-		}
-
-		if ( ! ( navigable instanceof StateArrayContributor ) ) {
-			throw new HibernateException(
-					"Fetch kay must be based on PK or a UK - unexpected Navigable type : " + navigable.getClass().getName()
-			);
-		}
-
-		final SharedSessionContractImplementor session = processingState.getSession();
-		final PersistenceContext pc = session.getPersistenceContext();
-		final EntityEntry managedEntry = pc.getEntry( entityInstance );
-		// todo (6.0) : `managedEntry` non-null validation
-		final Object[] loadedState = managedEntry.getLoadedState();
-
-		return loadedState[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
-	}
-
 	protected enum KeyType { PK, UK }
 
 	protected abstract KeyType keyType();

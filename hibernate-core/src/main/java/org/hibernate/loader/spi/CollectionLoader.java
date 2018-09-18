@@ -6,6 +6,7 @@
  */
 package org.hibernate.loader.spi;
 
+import org.hibernate.LockOptions;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
@@ -13,5 +14,5 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
  * @author Steve Ebersole
  */
 public interface CollectionLoader extends Loader {
-	PersistentCollection load(Object key, SharedSessionContractImplementor session);
+	PersistentCollection load(Object key, LockOptions lockOptions, SharedSessionContractImplementor session);
 }

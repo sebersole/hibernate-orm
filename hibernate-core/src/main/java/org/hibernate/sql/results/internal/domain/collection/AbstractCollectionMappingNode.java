@@ -21,18 +21,21 @@ public abstract class AbstractCollectionMappingNode implements CollectionMapping
 	private final PluralPersistentAttribute pluralAttribute;
 	private final String resultVariable;
 
-	private final DomainResult keyResult;
+	private final DomainResult keyContainerResult;
+	private final DomainResult keyCollectionResult;
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractCollectionMappingNode(
 			FetchParent fetchParent,
 			PluralPersistentAttribute pluralAttribute,
 			String resultVariable,
-			DomainResult keyResult) {
+			DomainResult keyContainerResult,
+			DomainResult keyCollectionResult) {
 		this.fetchParent = fetchParent;
 		this.pluralAttribute = pluralAttribute;
 		this.resultVariable = resultVariable;
-		this.keyResult = keyResult;
+		this.keyContainerResult = keyContainerResult;
+		this.keyCollectionResult = keyCollectionResult;
 	}
 
 	protected FetchParent getFetchParent() {
@@ -45,8 +48,13 @@ public abstract class AbstractCollectionMappingNode implements CollectionMapping
 	}
 
 	@Override
-	public DomainResult getCollectionKeyResult() {
-		return keyResult;
+	public DomainResult getKeyContainerResult() {
+		return keyContainerResult;
+	}
+
+	@Override
+	public DomainResult getKeyCollectionResult() {
+		return keyCollectionResult;
 	}
 
 	public String getResultVariable() {

@@ -11,6 +11,7 @@ import java.util.List;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
@@ -73,7 +74,7 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 				.getExpressableType()
 				.getEntityDescriptor();
 
-
+		final NavigablePath path = new NavigablePath( entityDescriptor.getEntityName() );
 		this.entityTableGroup = entityDescriptor.createRootTableGroup(
 				new TableGroupInfo() {
 					@Override
@@ -89,6 +90,11 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 					@Override
 					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 						return sqmStatement.getEntityFromElement().getIntrinsicSubclassEntityMetadata();
+					}
+
+					@Override
+					public NavigablePath getNavigablePath() {
+						return path;
 					}
 				},
 				new RootTableGroupContext() {
@@ -135,6 +141,11 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 
 	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
+		return expressionResolver;
+	}
+
+	@Override
+	protected SqlExpressionResolver getSqlExpressionResolver() {
 		return expressionResolver;
 	}
 }

@@ -162,13 +162,6 @@ public class EmbeddedTypeDescriptorImpl<J>
 		throw new UnsupportedOperationException(  );
 	}
 
-	@Override
-	public CompositeSqlSelectionGroup resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		return CompositeSqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
-	}
-
 	private List<Column> collectedColumns;
 
 	@Override

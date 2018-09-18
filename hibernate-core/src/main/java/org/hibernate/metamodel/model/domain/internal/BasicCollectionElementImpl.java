@@ -104,9 +104,9 @@ public class BasicCollectionElementImpl<J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
-		assert this.equals( navigableReference.getNavigable() );
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+		assert getCollectionDescriptor().equals( navigableReference.getNavigable() )
+				|| getCollectionDescriptor().getDescribedAttribute().equals( navigableReference.getNavigable() );
 		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(

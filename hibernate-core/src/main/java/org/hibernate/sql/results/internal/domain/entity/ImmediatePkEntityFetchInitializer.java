@@ -73,11 +73,10 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 		final Object entityInstance = getEntityDescriptor().instantiate( keyValue, session );
 		final LoadingEntityEntry entityEntry = new LoadingEntityEntry(
+				this,
 				entityKey,
 				getEntityDescriptor(),
-				entityInstance,
-				// todo (6.0) : rowId
-				null
+				entityInstance
 		);
 
 		rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingEntity( entityKey, entityEntry );

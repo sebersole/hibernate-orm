@@ -24,10 +24,8 @@ import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.results.internal.AggregateSqlSelectionGroupNode;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
+import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -122,15 +120,6 @@ public class NaturalIdDescriptorImpl<J> implements NaturalIdDescriptor<J>, Allow
 				attributeInfo -> attributeInfo.getUnderlyingAttributeDescriptor()
 						.visitNavigable( visitor )
 		);
-	}
-
-	@Override
-	public SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext creationContext) {
-		final List<SqlSelectionGroupNode> selections = new ArrayList<>();
-		attributes.forEach( attributeInfo -> selections.add( attributeInfo.getUnderlyingAttributeDescriptor().resolveSqlSelections( qualifier, creationContext ) ) );
-		return new AggregateSqlSelectionGroupNode( selections );
 	}
 
 	@Override

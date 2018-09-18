@@ -6,6 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.from;
 
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.SqmTypedNode;
 import org.hibernate.query.sqm.tree.SqmVisitableNode;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
@@ -32,6 +33,11 @@ public interface SqmFrom extends TableGroupInfo, SqmVisitableNode, SqmTypedNode 
 	 * would represent the `p` reference in the SELECT clause.
 	 */
 	SqmNavigableReference getNavigableReference();
+
+	@Override
+	default NavigablePath getNavigablePath() {
+		return getNavigableReference().getNavigablePath();
+	}
 
 	/**
 	 * Details about how this SqmFrom is used in the query.

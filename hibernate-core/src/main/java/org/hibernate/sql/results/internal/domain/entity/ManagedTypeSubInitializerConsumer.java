@@ -18,7 +18,7 @@ import org.hibernate.sql.results.spi.Initializer;
  */
 public class ManagedTypeSubInitializerConsumer implements Consumer<Initializer> {
 	private final Consumer<Initializer> fallbackConsumer;
-	private List<Initializer> postRegistrationInitializers;
+//	private List<Initializer> postRegistrationInitializers;
 
 	public ManagedTypeSubInitializerConsumer(Consumer<Initializer> fallbackConsumer) {
 		this.fallbackConsumer = fallbackConsumer;
@@ -26,22 +26,22 @@ public class ManagedTypeSubInitializerConsumer implements Consumer<Initializer> 
 
 	@Override
 	public void accept(Initializer initializer) {
-		if ( initializer instanceof CollectionInitializer ) {
-			if ( postRegistrationInitializers == null ) {
-				postRegistrationInitializers = new ArrayList<>();
-			}
-			postRegistrationInitializers.add( initializer );
-		}
-		else {
+//		if ( initializer instanceof CollectionInitializer ) {
+//			if ( postRegistrationInitializers == null ) {
+//				postRegistrationInitializers = new ArrayList<>();
+//			}
+//			postRegistrationInitializers.add( initializer );
+//		}
+//		else {
 			fallbackConsumer.accept( initializer );
-		}
+//		}
 	}
 
 	public void finishUp() {
-		if ( postRegistrationInitializers == null ) {
-			return;
-		}
-
-		postRegistrationInitializers.forEach( fallbackConsumer );
+//		if ( postRegistrationInitializers == null ) {
+//			return;
+//		}
+//
+//		postRegistrationInitializers.forEach( fallbackConsumer );
 	}
 }

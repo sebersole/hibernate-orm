@@ -17,7 +17,6 @@ import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
 import org.hibernate.sql.results.internal.domain.collection.SetInitializerProducer;
-import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -47,21 +46,19 @@ public class PersistentSetDescriptorImpl<O,E> extends AbstractPersistentCollecti
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(
 			FetchParent fetchParent,
-			boolean isJoinFetch,
+			boolean selected,
 			String resultVariable,
 			LockMode lockMode,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
 		return new SetInitializerProducer(
 				this,
-				isJoinFetch,
+				selected,
 				getElementDescriptor().createDomainResult(
 						navigableReference,
 						null,
-						creationContext,
-						creationState
+						creationState, creationContext
 				)
 		);
 	}

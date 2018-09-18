@@ -16,6 +16,13 @@ import org.hibernate.query.sqm.tree.from.SqmNavigableJoin;
  * @author Steve Ebersole
  */
 public interface SqmSelectStatement extends SqmStatement {
-	Map<NavigablePath, Set<SqmNavigableJoin>> getFetchJoinsByParentPath();
+	/**
+	 * The SQM AST
+	 */
 	SqmQuerySpec getQuerySpec();
+
+	/**
+	 * Any explicit fetch joins defined in the query
+	 */
+	Map<NavigablePath, Set<SqmNavigableJoin>> getFetchJoinsByParentPath();
 }

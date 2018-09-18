@@ -29,7 +29,7 @@ public interface ResultSetMapping {
 	List<DomainResult> getDomainResults();
 
 	List<DomainResultAssembler> resolveAssemblers(
-			AssemblerCreationState creationOptions,
-			AssemblerCreationContext creationContext,
-			Consumer<Initializer> initializerConsumer);
+			Consumer<Initializer> initializerConsumer,
+			AssemblerCreationState creationState,
+			AssemblerCreationContext creationContext);
 }

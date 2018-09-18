@@ -8,6 +8,7 @@ package org.hibernate.sql.results.spi;
 
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 
 /**
  * Initializer implementation for initializing collections (plural attributes)
@@ -18,4 +19,6 @@ public interface CollectionInitializer extends Initializer {
 	PluralPersistentAttribute getFetchedAttribute();
 
 	PersistentCollection getCollectionInstance();
+
+	NavigablePath getNavigablePath();
 }

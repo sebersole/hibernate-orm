@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression.domain;
 
+import org.hibernate.internal.util.Loggable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -22,7 +23,7 @@ import org.hibernate.sql.results.spi.DomainResultProducer;
  *
  * @author Steve Ebersole
  */
-public interface NavigableReference extends DomainResultProducer {
+public interface NavigableReference extends DomainResultProducer, Loggable {
 
 	// todo (6.0) : I think it might be better to distinguish NavigableReference based on "classification".
 	//		E.g.:
@@ -30,6 +31,14 @@ public interface NavigableReference extends DomainResultProducer {
 	//			* EntityValuedNavigableReference (root reference, many-to-one, one-to-one, elements of one-to-many, etc)
 	//			* CompositeValuedNavigableReference (embedded, composite ids, etc)
 	//			* AnyValuedNavigableReference (any, many-to-any, etc)
+
+
+
+	@Override
+	default String toLoggableFragment() {
+		return getNavigablePath().toLoggableFragment() + "(" + getColumnReferenceQualifier() + ")";
+
+	}
 
 	/**
 	 * Get the Navigable referenced by this expression
@@ -57,8 +66,7 @@ public interface NavigableReference extends DomainResultProducer {
 			return getNavigable().createDomainResult(
 					this,
 					resultVariable,
-					creationContext,
-					creationState
+					creationState, creationContext
 			);
 		}
 		finally {
@@ -66,5 +74,4 @@ public interface NavigableReference extends DomainResultProducer {
 			creationState.getColumnReferenceQualifierStack().pop();
 		}
 	}
-
 }

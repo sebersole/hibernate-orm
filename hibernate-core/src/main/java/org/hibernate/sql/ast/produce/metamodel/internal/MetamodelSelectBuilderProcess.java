@@ -31,6 +31,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.produce.internal.UniqueIdGenerator;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
@@ -189,8 +190,7 @@ public class MetamodelSelectBuilderProcess
 						navigable.createDomainResult(
 								navigableReference,
 								null,
-								this,
-								this
+								this, this
 						)
 				);
 			}
@@ -228,7 +228,10 @@ public class MetamodelSelectBuilderProcess
 				new BiConsumer<SqlExpressableType, Column>() {
 					@Override
 					public void accept(SqlExpressableType type, Column column) {
-						keyColumnReferences.add( (ColumnReference) rootTableGroup.qualify( column ) );
+						keyColumnReferences.add(
+								(ColumnReference) sqlExpressionResolver.resolveSqlExpression( rootTableGroup, column )
+						);
+
 						keyParameterReferences.add(
 								new StandardJdbcParameterImpl(
 										keyParameterReferences.size(),
@@ -319,6 +322,8 @@ public class MetamodelSelectBuilderProcess
 			QuerySpec querySpec,
 			TableSpace rootTableSpace,
 			SqlAliasBaseManager aliasBaseManager) {
+		// todo (6.0) : alias?
+		final NavigablePath path = new NavigablePath( rootNavigableContainer.getNavigableName() );
 		return ( (RootTableGroupProducer) rootNavigableContainer ).createRootTableGroup(
 				new TableGroupInfo() {
 					@Override
@@ -334,6 +339,11 @@ public class MetamodelSelectBuilderProcess
 					@Override
 					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 						return null;
+					}
+
+					@Override
+					public NavigablePath getNavigablePath() {
+						return path;
 					}
 				},
 				new RootTableGroupContext() {

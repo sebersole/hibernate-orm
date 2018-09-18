@@ -41,8 +41,6 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerRefer
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.spi.DomainResult;
@@ -51,7 +49,6 @@ import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
@@ -230,13 +227,11 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return getPersistentCollectionDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 	}
 
@@ -244,7 +239,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean joinFetch,
+			boolean selected,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,
@@ -252,7 +247,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 		return getPersistentCollectionDescriptor().generateFetch(
 				fetchParent,
 				fetchTiming,
-				joinFetch,
+				selected,
 				lockMode,
 				resultVariable,
 				creationState,
@@ -270,49 +265,6 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	public List<Column> getColumns() {
 		return Collections.emptyList();
 	}
-
-	@Override
-	public SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext creationContext) {
-
-		// todo (6.0) : this should render either:
-		//		1) the collection id for id-collection
-		//		2) the owner's fk value
-
-		return creationContext.getSqlSelectionResolver().emptySqlSelection();
-	}
-
-//		return resolutionContext.getSqlExpressionResolver().emptySqlSelection();
-//		final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = getPersistentCollectionDescriptor().getCollectionKeyDescriptor()
-//				.getJoinForeignKey()
-//				.getColumnMappings()
-//				.getColumnMappings();
-//
-//		if ( columnMappings.size() == 1 ) {
-//			return resolveSqlSelection( qualifier, resolutionContext, columnMappings.get( 0 ) );
-//		}
-//
-//		final List<SqlSelection> sqlSelections = new ArrayList<>();
-//		for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping : columnMappings ) {
-//			sqlSelections.add( resolveSqlSelection( qualifier, resolutionContext, columnMapping ) );
-//		}
-//		return new AggregateSqlSelectionGroupNode( sqlSelections );
-//	}
-//
-//	private SqlSelection resolveSqlSelection(
-//			ColumnReferenceQualifier qualifier,
-//			SqlSelectionResolutionContext resolutionContext,
-//			ForeignKey.ColumnMappings.ColumnMapping columnMapping) {
-//		final Expression expression = resolutionContext.getSqlExpressionResolver().resolveSqlExpression(
-//				qualifier,
-//				columnMapping.getTargetColumn()
-//		);
-//		return resolutionContext.getSqlExpressionResolver().resolveSqlSelection(
-//				expression,
-//				,
-//		);
-//	}
 
 	@Override
 	public Object hydrate(Object jdbcValues, SharedSessionContractImplementor session) {
@@ -430,5 +382,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public void visitFetchables(Consumer consumer) {
 		getPersistentCollectionDescriptor().visitFetchables( consumer );
+	}
+
+	@Override
+	public String toString() {
+		return "PluralPersistentAttribute(" + getNavigableRole() + ")";
 	}
 }

@@ -35,7 +35,7 @@ public class StandardSetSemantics extends AbstractSetSemantics<Set<?>> {
 	public Set<?> instantiateRaw(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		return new HashSet<>( anticipatedSize );
+		return anticipatedSize < 1 ? new HashSet<>() : new HashSet<>( anticipatedSize );
 	}
 
 	@Override

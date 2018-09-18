@@ -9,12 +9,10 @@ package org.hibernate.sql.exec.internal;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -22,9 +20,6 @@ import org.hibernate.CacheMode;
 import org.hibernate.ScrollMode;
 import org.hibernate.cache.spi.QueryKey;
 import org.hibernate.cache.spi.QueryResultsCache;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.internal.FetchingScrollableResultsImpl;
-import org.hibernate.internal.ScrollableResultsImpl;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.query.internal.ScrollableResultsIterator;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
@@ -68,7 +63,6 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 	public <R> List<R> list(
 			JdbcSelect jdbcSelect,
 			ExecutionContext executionContext,
-
 			RowTransformer<R> rowTransformer) {
 		return executeQuery(
 				jdbcSelect,
@@ -117,106 +111,6 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		return stream.onClose( scrollableResults::close );
 	}
 
-
-
-	private interface ResultsConsumer<T,R> {
-		T consume(
-				JdbcValues jdbcValues,
-				SharedSessionContractImplementor persistenceContext,
-				JdbcValuesSourceProcessingOptions processingOptions,
-				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
-				RowProcessingStateStandardImpl rowProcessingState,
-				RowReader<R> rowReader);
-	}
-
-	private static class ScrollableResultsConsumer<R> implements ResultsConsumer<ScrollableResultsImplementor<R>,R> {
-		/**
-		 * Singleton access to the standard scrollable-results consumer instance
-		 */
-		public static final ScrollableResultsConsumer INSTANCE = new ScrollableResultsConsumer();
-
-		@SuppressWarnings("unchecked")
-		public static <R> ScrollableResultsConsumer<R> instance() {
-			return INSTANCE;
-		}
-
-		@Override
-		public ScrollableResultsImplementor<R> consume(
-				JdbcValues jdbcValues,
-				SharedSessionContractImplementor persistenceContext,
-				JdbcValuesSourceProcessingOptions processingOptions,
-				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
-				RowProcessingStateStandardImpl rowProcessingState,
-				RowReader<R> rowReader) {
-			if ( containsCollectionFetches( jdbcValues.getResultSetMapping() ) ) {
-				return new FetchingScrollableResultsImpl<>(
-						jdbcValues,
-						processingOptions,
-						jdbcValuesSourceProcessingState,
-						rowProcessingState,
-						rowReader,
-						persistenceContext
-				);
-			}
-			else {
-				return new ScrollableResultsImpl<>(
-						jdbcValues,
-						processingOptions,
-						jdbcValuesSourceProcessingState,
-						rowProcessingState,
-						rowReader,
-						persistenceContext
-				);
-			}
-		}
-
-		private boolean containsCollectionFetches(ResultSetMapping resultSetMapping) {
-			return false;
-		}
-	}
-
-	private static class ListResultsConsumer<R> implements ResultsConsumer<List<R>,R> {
-		/**
-		 * Singleton access
-		 */
-		public static final ListResultsConsumer INSTANCE = new ListResultsConsumer();
-
-		@SuppressWarnings("unchecked")
-		public static <R> ListResultsConsumer<R> instance() {
-			return INSTANCE;
-		}
-
-		@Override
-		public List<R> consume(
-				JdbcValues jdbcValues,
-				SharedSessionContractImplementor persistenceContext,
-				JdbcValuesSourceProcessingOptions processingOptions,
-				JdbcValuesSourceProcessingStateStandardImpl jdbcValuesSourceProcessingState,
-				RowProcessingStateStandardImpl rowProcessingState,
-				RowReader<R> rowReader) {
-			try {
-				final List<R> results = new ArrayList<>();
-				while ( rowProcessingState.next() ) {
-					results.add(
-							rowReader.readRow( rowProcessingState, processingOptions )
-					);
-					rowProcessingState.finishRowProcessing();
-				}
-				return results;
-			}
-			catch (SQLException e) {
-				throw persistenceContext.getJdbcServices().getSqlExceptionHelper().convert(
-						e,
-						"Error processing return rows"
-				);
-			}
-			finally {
-				rowReader.finishUp( jdbcValuesSourceProcessingState );
-				jdbcValuesSourceProcessingState.finishUp();
-				jdbcValues.finishUp();
-			}
-		}
-	}
 
 	private enum ExecuteAction {
 		EXECUTE_QUERY,

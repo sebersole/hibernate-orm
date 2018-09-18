@@ -164,6 +164,8 @@ public interface EntityDescriptor<T>
 	 */
 	List<JoinedTableBinding> getSecondaryTableBindings();
 
+	// todo (6.0) : clean these up
+
 	@Override
 	default boolean isAffectedByEnabledFilters(SharedSessionContractImplementor session) {
 		return isAffectedByEnabledFilters( session.getLoadQueryInfluencers() );
@@ -175,10 +177,6 @@ public interface EntityDescriptor<T>
 
 	boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers);
 
-	@Override
-	EntitySqlSelectionGroup resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

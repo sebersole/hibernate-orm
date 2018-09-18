@@ -523,4 +523,10 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 			int i) throws HibernateException {
 		//TODO: if we are using identity columns, fetch the identifier
 	}
+
+	public void load(Integer idValue, E element) {
+		assert isInitializing();
+		add( element );
+		identifiers.put( idValue, element );
+	}
 }

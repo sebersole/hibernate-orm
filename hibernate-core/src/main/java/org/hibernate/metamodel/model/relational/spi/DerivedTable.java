@@ -35,4 +35,9 @@ public class DerivedTable extends AbstractTable {
 	public String toString() {
 		return "DerivedTable(" + expression + ")";
 	}
+
+	@Override
+	public String toLoggableFragment() {
+		return "<subselect ...>";
+	}
 }

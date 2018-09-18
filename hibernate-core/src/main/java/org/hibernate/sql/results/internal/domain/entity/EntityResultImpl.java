@@ -59,6 +59,7 @@ public class EntityResultImpl extends AbstractEntityMappingNode implements Entit
 
 		final EntityRootInitializer initializer = new EntityRootInitializer(
 				this,
+				getNavigablePath(),
 				getLockMode(),
 				getIdentifierResult(),
 				getDiscriminatorResult(),

@@ -109,13 +109,11 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	public DomainResult createDomainResult(
 			NavigableReference expression,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return getEmbeddedDescriptor().createDomainResult(
 				expression,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 	}
 

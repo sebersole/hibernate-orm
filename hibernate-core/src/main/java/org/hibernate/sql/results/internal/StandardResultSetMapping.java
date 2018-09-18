@@ -45,14 +45,13 @@ public class StandardResultSetMapping implements ResultSetMapping {
 
 	@Override
 	public List<DomainResultAssembler> resolveAssemblers(
-			AssemblerCreationState creationOptions,
-			AssemblerCreationContext creationContext,
-			Consumer<Initializer> initializerConsumer) {
+			Consumer<Initializer> initializerConsumer, AssemblerCreationState creationState,
+			AssemblerCreationContext creationContext) {
 		final List<DomainResultAssembler> assemblers = CollectionHelper.arrayList( domainResults.size() );
 
 		for ( DomainResult domainResult : domainResults ) {
 			assemblers.add(
-					domainResult.createResultAssembler( initializerConsumer, creationOptions, creationContext )
+					domainResult.createResultAssembler( initializerConsumer, creationState, creationContext )
 			);
 		}
 

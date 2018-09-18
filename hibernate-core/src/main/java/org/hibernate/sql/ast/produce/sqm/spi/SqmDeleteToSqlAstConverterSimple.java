@@ -48,6 +48,11 @@ public class SqmDeleteToSqlAstConverterSimple extends BaseSqmToSqlAstConverter {
 	}
 
 	@Override
+	protected SqlExpressionResolver getSqlExpressionResolver() {
+		return expressionResolver;
+	}
+
+	@Override
 	public SqlExpressionResolver getSqlSelectionResolver() {
 		return expressionResolver;
 	}

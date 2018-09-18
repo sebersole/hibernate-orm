@@ -7,6 +7,7 @@
 package org.hibernate.sql.ast.produce.spi;
 
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 
 /**
  * Parameter object passed to {@link TableGroupJoinProducer#createTableGroupJoin}
@@ -18,9 +19,11 @@ import org.hibernate.query.NavigablePath;
  * @author Steve Ebersole
  */
 public interface JoinedTableGroupContext extends TableGroupContext {
-	ColumnReferenceQualifier getLhs();
+	NavigableContainerReference getLhs();
 
 	ColumnReferenceQualifier getColumnReferenceQualifier();
+
+	SqlExpressionResolver getSqlExpressionResolver();
 
 	NavigablePath getNavigablePath();
 

@@ -55,7 +55,7 @@ public final class CollectionHelper {
 	 * @return The sized map.
 	 */
 	public static <K, V> Map<K, V> mapOfSize(int size) {
-		return new HashMap<K, V>( determineProperSizing( size ), LOAD_FACTOR );
+		return size < 1 ? new HashMap<>() : new HashMap<>( determineProperSizing( size ), LOAD_FACTOR );
 	}
 
 	/**
@@ -125,7 +125,7 @@ public final class CollectionHelper {
 	}
 
 	public static <T> ArrayList<T> arrayList(int anticipatedSize) {
-		return new ArrayList<T>( anticipatedSize );
+		return anticipatedSize < 1 ? new ArrayList<>() : new ArrayList<>( anticipatedSize );
 	}
 
 	public static <T> Set<T> makeCopy(Set<T> source) {

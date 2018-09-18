@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.BasicValueMapping;
@@ -39,7 +40,9 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.loader.internal.CollectionLoaderImpl;
 import org.hibernate.loader.spi.CollectionLoader;
 import org.hibernate.mapping.Any;
 import org.hibernate.mapping.Collection;
@@ -73,7 +76,7 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -95,7 +98,6 @@ import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
@@ -119,6 +121,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private CollectionIndex indexDescriptor;
 
 	private CollectionDataAccess cacheAccess;
+	private CollectionLoader collectionLoader;
 
 	// todo (6.0) - rework this (and friends) per todo item...
 	//		* Redesign `org.hibernate.cache.spi.entry.CacheEntryStructure` and friends (with better names)
@@ -254,15 +257,12 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private boolean fullyInitialized;
 
 	@Override
-	public void finishInitialization(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-
+	public void finishInitialization(Collection bootCollectionDescriptor, RuntimeModelCreationContext creationContext) {
 		if ( fullyInitialized ) {
 			return;
 		}
 
-		final String referencedPropertyName = collectionBinding.getReferencedPropertyName();
+		final String referencedPropertyName = bootCollectionDescriptor.getReferencedPropertyName();
 		if ( referencedPropertyName == null ) {
 			foreignKeyTargetNavigable = getContainer().findNavigable( EntityIdentifier.NAVIGABLE_ID );
 		}
@@ -275,7 +275,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		//
 		//	^^ the better option seems to be exposing through `#createRootTableGroup` and `#createTableGroupJoin`
 
-//		separateCollectionTable = resolveCollectionTable( collectionBinding, creationContext );
+//		separateCollectionTable = resolveCollectionTable( bootCollectionDescriptor, creationContext );
 
 		final Database database = creationContext.getMetadata().getDatabase();
 		final JdbcEnvironment jdbcEnvironment = database.getJdbcEnvironment();
@@ -289,8 +289,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		final Identifier defaultSchemaName = defaultNamespace.getName().getSchema();
 		final String defaultSchemaNameString = defaultSchemaName == null ? null : defaultNamespace.getName().getSchema().render( dialect );
 
-		if ( collectionBinding instanceof IdentifierCollection ) {
-			final IdentifierCollection identifierCollection = (IdentifierCollection) collectionBinding;
+		if ( bootCollectionDescriptor instanceof IdentifierCollection ) {
+			final IdentifierCollection identifierCollection = (IdentifierCollection) bootCollectionDescriptor;
 
 			assert identifierCollection.getIdentifier().getColumnSpan() == 1;
 			final Column idColumn = creationContext.getDatabaseObjectResolver().resolveColumn(
@@ -315,12 +315,24 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			idDescriptor = null;
 		}
 
-		this.indexDescriptor = resolveIndexDescriptor( this, collectionBinding, creationContext );
-		this.elementDescriptor = resolveElementDescriptor( this, collectionBinding, separateCollectionTable, creationContext );
+		this.indexDescriptor = resolveIndexDescriptor( this, bootCollectionDescriptor, creationContext );
+		this.elementDescriptor = resolveElementDescriptor( this, bootCollectionDescriptor, separateCollectionTable, creationContext );
 
-		this.javaTypeDescriptor = (CollectionJavaDescriptor<C>) collectionBinding.getJavaTypeMapping().getJavaTypeDescriptor();
+		this.javaTypeDescriptor = (CollectionJavaDescriptor<C>) bootCollectionDescriptor.getJavaTypeMapping().getJavaTypeDescriptor();
 
+		this.collectionLoader = resolveCollectionLoader( bootCollectionDescriptor, creationContext );
 		this.fullyInitialized = true;
+	}
+
+	private CollectionLoader resolveCollectionLoader(
+			Collection bootCollectionDescriptor,
+			RuntimeModelCreationContext creationContext) {
+		if ( StringHelper.isNotEmpty( bootCollectionDescriptor.getLoaderName() ) ) {
+			// need a NamedQuery based CollectionLoader impl
+			throw new NotYetImplementedFor6Exception();
+		}
+
+		return new CollectionLoaderImpl( getDescribedAttribute(), getSessionFactory() );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -456,7 +468,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	public void initialize(
 			Object loadedKey,
 			SharedSessionContractImplementor session) {
-		getLoader().load( loadedKey, session );
+		getLoader().load( loadedKey, LockOptions.READ, session );
 	}
 
 	@Override
@@ -470,21 +482,6 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		return getJavaTypeDescriptor().getSemantics();
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	@Override
 	public TableGroup createRootTableGroup(
 			TableGroupInfo tableGroupInfo,
@@ -495,8 +492,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		RootTableGroupTableReferenceCollector collector = new RootTableGroupTableReferenceCollector(
 				tableGroupContext.getTableSpace(),
-				null,
 				this,
+				tableGroupInfo.getNavigablePath(),
 				tableGroupContext.getTableReferenceJoinType(),
 				sqlAliasBase,
 				tableGroupInfo.getUniqueIdentifier(),
@@ -513,7 +510,10 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		return collector.generateTableGroup();
 	}
 
-
+	@Override
+	public PersistentCollectionDescriptor getCollectionDescriptor() {
+		return this;
+	}
 
 
 	// ultimately, "inclusion" in a collection must defined through a single table whether
@@ -536,13 +536,12 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private static class RootTableGroupTableReferenceCollector implements TableReferenceJoinCollector {
 		private final TableSpace tableSpace;
-		private final ColumnReferenceQualifier lhs;
 		private final AbstractPersistentCollectionDescriptor collectionDescriptor;
+		private final NavigablePath navigablePath;
 		private final JoinType joinType;
 		private final SqlAliasBase sqlAliasBase;
 		private final String uniqueIdentifier;
 		private final LockMode effectiveLockMode;
-		private NavigablePath navigablePath;
 
 		private TableReference primaryTableReference;
 		private List<TableReferenceJoin> tableReferenceJoins;
@@ -550,15 +549,15 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		public RootTableGroupTableReferenceCollector(
 				TableSpace tableSpace,
-				ColumnReferenceQualifier lhs,
 				AbstractPersistentCollectionDescriptor collectionDescriptor,
+				NavigablePath navigablePath,
 				JoinType joinType,
 				SqlAliasBase sqlAliasBase,
 				String uniqueIdentifier,
 				LockMode effectiveLockMode) {
 			this.tableSpace = tableSpace;
-			this.lhs = lhs;
 			this.collectionDescriptor = collectionDescriptor;
+			this.navigablePath = navigablePath;
 			this.joinType = joinType;
 			this.sqlAliasBase = sqlAliasBase;
 			this.uniqueIdentifier = uniqueIdentifier;
@@ -567,14 +566,13 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		@Override
 		public void addRoot(TableReference root) {
-			if ( primaryTableReference == null ) {
-				primaryTableReference = root;
-			}
-			else {
-				collectTableReferenceJoin( makeJoin( lhs, primaryTableReference ) );
+			if ( primaryTableReference != null ) {
+				throw new IllegalStateException( "adding root, but root already defined" );
 			}
 
-			predicate = makePredicate( lhs, primaryTableReference );
+			primaryTableReference = root;
+
+//			predicate = makePredicate( primaryTableReference, primaryTableReference );
 		}
 
 		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
@@ -646,13 +644,23 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			TableGroupInfo tableGroupInfoSource,
 			JoinType joinType,
 			JoinedTableGroupContext tableGroupJoinContext) {
-		throw new NotYetImplementedFor6Exception(  );
+		return createTableGroupJoin(
+				tableGroupJoinContext.getSqlAliasBaseGenerator(),
+				tableGroupJoinContext.getLhs(),
+				tableGroupJoinContext.getSqlExpressionResolver(),
+				tableGroupJoinContext.getNavigablePath(),
+				joinType,
+				tableGroupInfoSource.getIdentificationVariable(),
+				tableGroupJoinContext.getLockOptions().getEffectiveLockMode( tableGroupInfoSource.getIdentificationVariable() ),
+				tableGroupJoinContext.getTableSpace()
+		);
 	}
 
 	@Override
 	public TableGroupJoin createTableGroupJoin(
 			SqlAliasBaseGenerator sqlAliasBaseGenerator,
-			ColumnReferenceQualifier lhsQualifier,
+			NavigableContainerReference lhs,
+			SqlExpressionResolver sqlExpressionResolver,
 			NavigablePath navigablePath,
 			JoinType joinType,
 			String identificationVariable,
@@ -662,14 +670,15 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		final TableReferenceJoinCollectorImpl joinCollector = new TableReferenceJoinCollectorImpl(
 				tableSpace,
-				lhsQualifier,
+				lhs,
+				sqlExpressionResolver,
 				navigablePath,
 				lockMode
 		);
 
 
 		applyTableReferenceJoins(
-				lhsQualifier,
+				lhs.getColumnReferenceQualifier(),
 				joinType,
 				sqlAliasBase,
 				joinCollector
@@ -710,12 +719,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 
-		final DomainResult collectionKeyResult = getCollectionKeyDescriptor().createDomainResult(
-				FetchTiming.IMMEDIATE,
-				true,
+		final DomainResult keyCollectionResult = getCollectionKeyDescriptor().createCollectionResult(
+				navigableReference.getColumnReferenceQualifier(),
 				creationState,
 				creationContext
 		);
@@ -724,15 +732,15 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		return new CollectionResultImpl(
 				getDescribedAttribute(),
+				navigableReference.getNavigablePath(),
 				resultVariable,
 				lockMode,
-				collectionKeyResult,
+				keyCollectionResult,
 				createInitializerProducer(
 						null,
 						true,
 						resultVariable,
 						lockMode,
-						collectionKeyResult,
 						creationState,
 						creationContext
 				)
@@ -741,10 +749,9 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	protected abstract CollectionInitializerProducer createInitializerProducer(
 			FetchParent fetchParent,
-			boolean isJoinFetch,
+			boolean selected,
 			String resultVariable,
 			LockMode lockMode,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext);
 
@@ -757,24 +764,16 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean joinFetch,
+			boolean selected,
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
-		final DomainResult keyResult = getCollectionKeyDescriptor().createDomainResult(
-				fetchTiming,
-				joinFetch,
-				creationState,
-				creationContext
-		);
-
 		if ( fetchTiming == FetchTiming.DELAYED ) {
 			// for delayed fetching, use a specialized Fetch impl
 			return generateDelayedFetch(
 					fetchParent,
 					resultVariable,
-					keyResult,
 					creationState,
 					creationContext
 			);
@@ -783,9 +782,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			return generateImmediateFetch(
 					fetchParent,
 					resultVariable,
-					joinFetch,
+					selected,
 					lockMode,
-					keyResult,
 					creationState,
 					creationContext
 			);
@@ -796,73 +794,79 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	protected Fetch generateDelayedFetch(
 			FetchParent fetchParent,
 			String resultVariable,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		return new DelayedCollectionFetch(
 				fetchParent,
 				getDescribedAttribute(),
 				resultVariable,
-				keyResult
+				getCollectionKeyDescriptor().createContainerResult(
+						creationState.getColumnReferenceQualifierStack().getCurrent(),
+						creationState,
+						creationContext
+				)
 		);
 	}
 
 	private Fetch generateImmediateFetch(
 			FetchParent fetchParent,
 			String resultVariable,
-			boolean isJoinFetch,
+			boolean selected,
 			LockMode lockMode,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
 
-		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
-
 		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
 		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
 		if ( navigableReference == null ) {
-			// this creates the SQL AST join(s) in the from clause
-			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
-					creationState.getSqlAliasBaseGenerator(),
-					creationState.getColumnReferenceQualifierStack().getCurrent(),
-					navigablePath,
-					getDescribedAttribute().isNullable() ? JoinType.LEFT : JoinType.INNER,
-					resultVariable,
-					lockMode,
-					creationState.getCurrentTableSpace()
-			);
-			navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+			if ( selected ) {
+				// this creates the SQL AST join(s) in the from clause
+				final TableGroupJoin tableGroupJoin = createTableGroupJoin(
+						creationState.getSqlAliasBaseGenerator(),
+						parentReference,
+						creationState.getSqlExpressionResolver(),
+						fetchParent.getNavigablePath().append( getNavigableName() ),
+						getDescribedAttribute().isNullable() ? JoinType.LEFT : JoinType.INNER,
+						resultVariable,
+						lockMode,
+						creationState.getCurrentTableSpace()
+				);
+				navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+			}
 		}
 
-		assert navigableReference.getNavigable() == this;
-
-		creationState.getNavigableReferenceStack().push( navigableReference );
-		creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
+		if ( navigableReference != null ) {
+			assert navigableReference.getNavigable() instanceof CollectionValuedNavigable;
+			creationState.getNavigableReferenceStack().push( navigableReference );
+			creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
+		}
 
 		try {
-			return new CollectionFetchImpl(
+			return CollectionFetchImpl.create(
 					fetchParent,
 					getDescribedAttribute(),
-					FetchTiming.IMMEDIATE,
+					selected,
 					resultVariable,
 					lockMode,
-					keyResult,
 					createInitializerProducer(
 							fetchParent,
-							isJoinFetch,
+							selected,
 							resultVariable,
 							lockMode,
-							keyResult,
 							creationState,
 							creationContext
-					)
+					),
+					creationState,
+					creationContext
 			);
 		}
 		finally {
-			creationState.getColumnReferenceQualifierStack().pop();
-			creationState.getNavigableReferenceStack().pop();
+			if ( navigableReference != null ) {
+				creationState.getColumnReferenceQualifierStack().pop();
+				creationState.getNavigableReferenceStack().pop();
+			}
 		}
 	}
 
@@ -899,13 +903,6 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	@Override
 	public NavigableRole getNavigableRole() {
 		return navigableRole;
-	}
-
-	@Override
-	public SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
@@ -955,7 +952,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@Override
 	public CollectionLoader getLoader() {
-		throw new NotYetImplementedFor6Exception();
+		return collectionLoader;
 	}
 
 	@Override
@@ -1033,7 +1030,9 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	@Override
 	public boolean isAffectedByEnabledFilters(SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		// todo (6.0) : implement this
+		// for now, return false
+		return false;
 	}
 
 	@Override
@@ -1057,7 +1056,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
 		private final TableSpace tableSpace;
-		private final ColumnReferenceQualifier lhs;
+		private final NavigableContainerReference lhs;
+		private final SqlExpressionResolver sqlExpressionResolver;
 		private final NavigablePath navigablePath;
 		private final LockMode lockMode;
 
@@ -1068,11 +1068,13 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		@SuppressWarnings("WeakerAccess")
 		public TableReferenceJoinCollectorImpl(
 				TableSpace tableSpace,
-				ColumnReferenceQualifier lhs,
+				NavigableContainerReference lhs,
+				SqlExpressionResolver sqlExpressionResolver,
 				NavigablePath navigablePath,
 				LockMode lockMode) {
 			this.tableSpace = tableSpace;
 			this.lhs = lhs;
+			this.sqlExpressionResolver = sqlExpressionResolver;
 			this.navigablePath = navigablePath;
 			this.lockMode = lockMode;
 		}
@@ -1083,10 +1085,14 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 				rootTableReference = root;
 			}
 			else {
-				collectTableReferenceJoin( makeJoin( lhs, rootTableReference ) );
+				if ( lhs != null ) {
+					collectTableReferenceJoin( makeJoin( lhs.getColumnReferenceQualifier(), rootTableReference ) );
+				}
 			}
 
-			predicate = makePredicate( lhs, rootTableReference );
+			if ( lhs != null ) {
+				predicate = makePredicate( lhs.getColumnReferenceQualifier(), rootTableReference );
+			}
 		}
 
 		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
@@ -1104,8 +1110,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = joinForeignKey.getColumnMappings().getColumnMappings();
 
 			for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping: columnMappings ) {
-				final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
-				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
+				final ColumnReference keyContainerColumnReference = lhs.resolveColumnReference( columnMapping.getTargetColumn() );;
+				final ColumnReference keyCollectionColumnReference = rhs.resolveColumnReference( columnMapping.getReferringColumn() );
 
 				// todo (6.0) : we need some kind of validation here that the column references are properly defined
 
@@ -1117,8 +1123,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 				conjunction.add(
 						new RelationalPredicate(
 								RelationalPredicate.Operator.EQUAL,
-								referringColumnReference,
-								targetColumnReference
+								keyContainerColumnReference,
+								keyCollectionColumnReference
 						)
 				);
 			}
@@ -1139,6 +1145,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			final CollectionTableGroup joinedTableGroup = new CollectionTableGroup(
 					uid,
 					tableSpace,
+					lhs,
 					AbstractPersistentCollectionDescriptor.this,
 					lockMode,
 					navigablePath,

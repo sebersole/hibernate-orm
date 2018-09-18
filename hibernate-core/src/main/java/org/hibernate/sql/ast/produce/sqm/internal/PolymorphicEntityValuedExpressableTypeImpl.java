@@ -64,14 +64,11 @@ import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
-import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.EntityJavaDescriptorImpl;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
@@ -292,21 +289,13 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public boolean isNullable() {
 		return false;
-	}
-
-	@Override
-	public EntitySqlSelectionGroup resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext creationContext) {
-		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, creationContext );
 	}
 
 
