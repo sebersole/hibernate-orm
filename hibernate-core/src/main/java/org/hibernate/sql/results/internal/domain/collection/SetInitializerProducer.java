@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -38,8 +39,9 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 	@Override
 	public CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
-			LockMode lockMode,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath, LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
@@ -49,12 +51,19 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 				creationContext
 		);
 
-		return new SetInitializer(
+		final SetInitializer setInitializer = new SetInitializer(
 				setDescriptor,
 				parentAccess,
+				navigablePath,
 				isJoined,
-				collectionKeyAssembler,
+				lockMode,
+				keyContainerAssembler,
+				keyCollectionAssembler,
 				elementAssembler
 		);
+
+		initializerConsumer.accept( setInitializer );
+
+		return setInitializer;
 	}
 }

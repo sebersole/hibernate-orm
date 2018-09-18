@@ -116,8 +116,7 @@ public class CollectionIndexEntityImpl<J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
 		final EntityValuedNavigableReference entityReference = (EntityValuedNavigableReference) navigableReference;
 

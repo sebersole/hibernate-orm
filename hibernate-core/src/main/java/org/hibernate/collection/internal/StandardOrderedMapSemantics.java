@@ -35,7 +35,7 @@ public class StandardOrderedMapSemantics extends AbstractMapSemantics<LinkedHash
 	public LinkedHashMap<?, ?> instantiateRaw(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		return new LinkedHashMap<>( anticipatedSize );
+		return anticipatedSize < 1 ? new LinkedHashMap<>() : new LinkedHashMap<>( anticipatedSize );
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 
@@ -36,10 +37,10 @@ public interface TableGroupJoinProducer extends TableGroupProducer {
 
 	TableGroupJoin createTableGroupJoin(
 			SqlAliasBaseGenerator sqlAliasBaseGenerator,
-			ColumnReferenceQualifier columnReferenceQualifier,
-			NavigablePath navigablePath,
+			NavigableContainerReference lhs,
+			SqlExpressionResolver sqlExpressionResolver, NavigablePath navigablePath,
 			JoinType joinType,
-			String resultVariable,
+			String identificationVariable,
 			LockMode lockMode,
-			TableSpace currentTableSpace);
+			TableSpace tableSpace);
 }

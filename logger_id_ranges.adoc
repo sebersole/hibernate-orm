@@ -54,4 +54,24 @@
 |90001000
 |org.hibernate.internal.log.DeprecationLogger
 
+|90001001
+|90002000
+|org.hibernate.cache.spi.SecondLevelCacheLogger
+
+|90002001
+|90003000
+|org.hibernate.internal.log.UnsupportedLogger
+
+|90003001
+|90004000
+|org.hibernate.query.spi.QueryMessageLogger
+
+|90004001
+|90005000
+|org.hibernate.sql.exec.SqlExecLogger
+
+|90005001
+|90006000
+|org.hibernate.sql.results.SqlResultsLogger
+
 |===

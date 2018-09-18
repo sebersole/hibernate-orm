@@ -64,7 +64,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface PersistentCollectionDescriptor<O,C,E>
-		extends  NavigableContainer<C>, RootTableGroupProducer, TableGroupJoinProducer,
+		extends  CollectionValuedNavigable<C>, RootTableGroupProducer, TableGroupJoinProducer,
 		TableReferenceContributor, EmbeddedContainer<C>, Filterable, Fetchable<C> {
 
 	Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
@@ -238,6 +238,9 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	//				* PersistentCollectionMetadata#getIndexDescriptor#getIndexExistsExecutor()...
 	//				* PersistentCollectionMetadata#getElementDescriptor#getElementExistsExecutor()...
 	//				* etc
+	//
+	// better to maybe do this, but just internally.  IOW, leave these methods but
+	// have the impls be like, e.g.: `getSizeExecutor.
 
 	int getSize(Object loadedKey, SharedSessionContractImplementor session);
 

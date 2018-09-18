@@ -6,8 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
+import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentMap;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -27,11 +29,14 @@ public class MapInitializer extends AbstractImmediateCollectionInitializer {
 	public MapInitializer(
 			PersistentCollectionDescriptor collectionDescriptor,
 			FetchParentAccess parentAccess,
-			boolean joined,
-			DomainResultAssembler keyAssembler,
+			NavigablePath navigablePath,
+			boolean selected,
+			LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			DomainResultAssembler mapKeyAssembler,
 			DomainResultAssembler mapValueAssembler) {
-		super( collectionDescriptor, parentAccess, joined, keyAssembler );
+		super( collectionDescriptor, parentAccess, navigablePath, selected, lockMode, keyContainerAssembler, keyCollectionAssembler );
 		this.mapKeyAssembler = mapKeyAssembler;
 		this.mapValueAssembler = mapValueAssembler;
 	}

@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
@@ -75,7 +74,6 @@ import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
@@ -85,11 +83,9 @@ import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.results.internal.domain.entity.EntityResultImpl;
-import org.hibernate.sql.results.internal.EntitySqlSelectionGroupImpl;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
-import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
@@ -563,7 +559,7 @@ public abstract class AbstractEntityDescriptor<J>
 				tableGroupContext.getTableSpace(),
 				this,
 				tableGroupContext.getLockOptions().getEffectiveLockMode( info.getIdentificationVariable() ),
-				new NavigablePath( getEntityName() ),
+				info.getNavigablePath(),
 				primaryTableReference,
 				joins
 		);
@@ -648,8 +644,7 @@ public abstract class AbstractEntityDescriptor<J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		assert navigableReference instanceof EntityValuedNavigableReference;
 		final EntityValuedNavigableReference entityValuedReference = (EntityValuedNavigableReference) navigableReference;
 
@@ -689,14 +684,6 @@ public abstract class AbstractEntityDescriptor<J>
 	// todo (6.0) : we need some way here to limit which attributes are rendered as how "deep" we render them
 	//		* which to render comes down to bytecode enhanced laziness
 	//		* how deep (associations) comes down to fetching
-
-
-	@Override
-	public EntitySqlSelectionGroup resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		return EntitySqlSelectionGroupImpl.buildSqlSelectionGroup( this, qualifier, resolutionContext );
-	}
 
 	@Override
 	public String getRootTableName() {

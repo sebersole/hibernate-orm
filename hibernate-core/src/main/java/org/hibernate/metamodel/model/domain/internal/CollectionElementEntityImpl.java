@@ -138,15 +138,13 @@ public class CollectionElementEntityImpl<J>
 	public DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		// delegate to the persister because here we are returning
 		// 		the entities that make up the referenced collection's elements
 		return getEntityDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 	}
 

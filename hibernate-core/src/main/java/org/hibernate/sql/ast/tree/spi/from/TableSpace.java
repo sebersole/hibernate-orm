@@ -51,7 +51,7 @@ public class TableSpace implements SqlAstNode {
 
 	public void setRootTableGroup(TableGroup rootTableGroup) {
 		log.tracef(
-				"Setting root TableSpecificationGroup [%s] for space [%s] - was %s",
+				"Setting root TableGroup [%s] for space [%s] - was %s",
 				rootTableGroup,
 				this,
 				this.rootTableGroup == null ? "<null>" : this.rootTableGroup
@@ -69,7 +69,7 @@ public class TableSpace implements SqlAstNode {
 	}
 
 	public void addJoinedTableGroup(TableGroupJoin join) {
-		log.tracef( "Adding TableSpecificationGroup join [%s] to space [%s]", join, this );
+		log.tracef( "Adding TableGroupJoin [%s] to space [%s]", join, this );
 		if ( joinedTableGroups == null ) {
 			joinedTableGroups = new ArrayList<>();
 		}

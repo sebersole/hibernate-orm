@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -27,7 +26,6 @@ import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -118,8 +116,7 @@ public interface Navigable<T> extends DomainType<T> {
 	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
@@ -131,15 +128,4 @@ public interface Navigable<T> extends DomainType<T> {
 			SqlAstCreationContext resolutionContext) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
-
-	/**
-	 * todo (6.0) : pass in Clause / Predicate<Column> ?
-	 *
-	 * @deprecated this functionality is handled by {@link #createDomainResult}
-	 */
-	@Deprecated
-	@Remove
-	SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext);
 }

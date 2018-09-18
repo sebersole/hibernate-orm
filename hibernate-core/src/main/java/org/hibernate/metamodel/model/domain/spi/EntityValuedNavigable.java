@@ -8,18 +8,12 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import javax.persistence.metamodel.Type;
 
-import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.engine.spi.EntityUniqueKey;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 
 /**
@@ -40,26 +34,13 @@ public interface EntityValuedNavigable<J>
 	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return getEntityDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 	}
 
 	boolean isNullable();
-
-	@Override
-	default SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		throw new NotYetImplementedFor6Exception(  );
-	}
-
-	default EntityUniqueKey createEntityUniqueKey(SharedSessionContractImplementor session) {
-		throw new UnsupportedOperationException( getClass().getName() + "#createEntityUniqueKey" );
-	}
 }

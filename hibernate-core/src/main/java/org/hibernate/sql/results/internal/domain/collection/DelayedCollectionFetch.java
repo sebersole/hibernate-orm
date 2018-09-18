@@ -27,12 +27,13 @@ public class DelayedCollectionFetch extends AbstractCollectionMappingNode implem
 			FetchParent fetchParent,
 			PluralPersistentAttribute pluralAttribute,
 			String resultVariable,
-			DomainResult keyResult) {
+			DomainResult collectionKeyResult) {
 		super(
 				fetchParent,
 				pluralAttribute,
 				resultVariable,
-				keyResult
+				collectionKeyResult,
+				null
 		);
 	}
 
@@ -58,10 +59,17 @@ public class DelayedCollectionFetch extends AbstractCollectionMappingNode implem
 			Consumer<Initializer> collector,
 			AssemblerCreationContext creationContext,
 			AssemblerCreationState creationState) {
+		final DomainResultAssembler keyAssembler = getKeyContainerResult().createResultAssembler(
+				collector,
+				creationState,
+				creationContext
+		);
 		final CollectionInitializer collectionInitializer = new DelayedCollectionInitializer(
 				parentAccess,
+				getNavigablePath(),
 				getCollectionDescriptor(),
-				getCollectionKeyResult().createResultAssembler( collector, creationState, creationContext )
+				keyAssembler,
+				keyAssembler
 		);
 
 		collector.accept( collectionInitializer );

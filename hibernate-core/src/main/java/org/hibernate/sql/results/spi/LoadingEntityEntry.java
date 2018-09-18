@@ -17,22 +17,25 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  */
 public class LoadingEntityEntry {
+	private final EntityInitializer entityInitializer;
 	private final EntityKey entityKey;
 	private final EntityDescriptor descriptor;
 	private final Object entityInstance;
-	private final Object rowId;
 
 	public LoadingEntityEntry(
+			EntityInitializer entityInitializer,
 			EntityKey entityKey,
 			EntityDescriptor descriptor,
-			Object entityInstance,
-			Object rowId) {
+			Object entityInstance) {
+		this.entityInitializer = entityInitializer;
 		this.entityKey = entityKey;
 		this.descriptor = descriptor;
 		this.entityInstance = entityInstance;
-		this.rowId = rowId;
 	}
 
+	public EntityInitializer getEntityInitializer() {
+		return entityInitializer;
+	}
 
 	public EntityKey getEntityKey() {
 		return entityKey;
@@ -44,10 +47,6 @@ public class LoadingEntityEntry {
 
 	public Object getEntityInstance() {
 		return entityInstance;
-	}
-
-	public Object getRowId() {
-		return rowId;
 	}
 
 	@Override

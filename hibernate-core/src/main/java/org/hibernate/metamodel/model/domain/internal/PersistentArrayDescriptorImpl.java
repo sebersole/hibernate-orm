@@ -18,7 +18,6 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
-import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -65,10 +64,9 @@ public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollec
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(
 			FetchParent fetchParent,
-			boolean isJoinFetch,
+			boolean selected,
 			String resultVariable,
 			LockMode lockMode,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception();

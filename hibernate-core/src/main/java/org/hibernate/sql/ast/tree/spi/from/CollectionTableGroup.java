@@ -14,15 +14,16 @@ import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.consume.spi.SqlAppender;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference;
 
@@ -41,11 +42,33 @@ public class CollectionTableGroup extends AbstractTableGroup {
 	private final TableReference collectionTableReference;
 	private final List<TableReferenceJoin> tableReferenceJoins;
 
+	private final ColumnReferenceQualifier containerQualifier;
 	private final PluralAttributeReference navigableReference;
 
 	public CollectionTableGroup(
 			String uid,
 			TableSpace tableSpace,
+			PersistentCollectionDescriptor descriptor,
+			LockMode lockMode,
+			NavigablePath navigablePath,
+			TableReference collectionTableReference,
+			List<TableReferenceJoin> joins) {
+		this(
+				uid,
+				tableSpace,
+				null,
+				descriptor,
+				lockMode,
+				navigablePath,
+				collectionTableReference,
+				joins
+		);
+	}
+
+	public CollectionTableGroup(
+			String uid,
+			TableSpace tableSpace,
+			NavigableContainerReference lhs,
 			PersistentCollectionDescriptor descriptor,
 			LockMode lockMode,
 			NavigablePath navigablePath,
@@ -59,11 +82,27 @@ public class CollectionTableGroup extends AbstractTableGroup {
 		this.tableReferenceJoins = joins;
 
 		this.navigableReference = new PluralAttributeReference(
-				// todo (6.0) : need the container (if one) to pass along
-				null,
+				lhs,
 				descriptor.getDescribedAttribute(),
+				this,
 				navigablePath
 		);
+
+		if ( lhs == null ) {
+			containerQualifier = null;
+		}
+		else {
+			containerQualifier = lhs.getColumnReferenceQualifier();
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "CollectionTableGroup{" +
+				"navigablePath=" + navigablePath +
+				", collectionTableReference=" + collectionTableReference.toLoggableFragment() +
+				", tableReferenceJoins=" + tableReferenceJoins +
+				'}';
 	}
 
 	public PersistentCollectionDescriptor getDescriptor() {
@@ -72,34 +111,17 @@ public class CollectionTableGroup extends AbstractTableGroup {
 
 	@Override
 	protected TableReference getPrimaryTableReference() {
-		return null;
+		return collectionTableReference;
 	}
 
 	@Override
 	protected List<TableReferenceJoin> getTableReferenceJoins() {
-		return null;
+		return tableReferenceJoins;
 	}
 
 	@Override
 	public NavigableReference getNavigableReference() {
 		return navigableReference;
-	}
-
-	@Override
-	public TableReference locateTableReference(Table table) {
-		if ( table == collectionTableReference.getTable() ) {
-			return collectionTableReference;
-		}
-
-		if ( tableReferenceJoins != null && !tableReferenceJoins.isEmpty() ) {
-			for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
-				if ( tableReferenceJoin.getJoinedTableReference().getTable() == table ) {
-					return tableReferenceJoin.getJoinedTableReference();
-				}
-			}
-		}
-
-		return null;
 	}
 
 	@Override
@@ -134,7 +156,7 @@ public class CollectionTableGroup extends AbstractTableGroup {
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// ColumnReference handling
+	// ColumnReferenceQualifier
 
 	private final SortedMap<Column,ColumnReference> columnBindingMap = new TreeMap<>(
 			(column1, column2) -> {
@@ -150,6 +172,27 @@ public class CollectionTableGroup extends AbstractTableGroup {
 	);
 
 	@Override
+	public TableReference locateTableReference(Table table) {
+		if ( table == collectionTableReference.getTable() ) {
+			return collectionTableReference;
+		}
+
+		if ( tableReferenceJoins != null && !tableReferenceJoins.isEmpty() ) {
+			for ( TableReferenceJoin tableReferenceJoin : tableReferenceJoins ) {
+				if ( tableReferenceJoin.getJoinedTableReference().getTable() == table ) {
+					return tableReferenceJoin.getJoinedTableReference();
+				}
+			}
+		}
+
+		if ( containerQualifier != null ) {
+			return containerQualifier.locateTableReference( table );
+		}
+
+		return null;
+	}
+
+	@Override
 	public ColumnReference resolveColumnReference(Column column) {
 		final ColumnReference existing = columnBindingMap.get( column );
 		if ( existing != null ) {
@@ -160,7 +203,7 @@ public class CollectionTableGroup extends AbstractTableGroup {
 		if ( tableBinding == null ) {
 			throw new HibernateException(
 					"Problem resolving Column(" + column.toLoggableString() +
-							") to ColumnBinding via TableGroup [" + this + "]"
+							") to ColumnReference via TableGroup [" + toLoggableFragment() + "]"
 			);
 		}
 		final ColumnReference columnBinding = new ColumnReference( this, column );
@@ -170,10 +213,8 @@ public class CollectionTableGroup extends AbstractTableGroup {
 
 	@Override
 	public ColumnReference qualify(QualifiableSqlExpressable sqlSelectable) {
-		// assume its a ColumnReference - we could also define `columnBindingMap` as keyed by QualifiableSqlExpressable
-		assert sqlSelectable instanceof ColumnReference;
-		columnBindingMap.get( sqlSelectable );
-		throw new NotYetImplementedFor6Exception(  );
+		assert sqlSelectable instanceof Column;
+		return resolveColumnReference( (Column) sqlSelectable );
 	}
 
 	@Override
@@ -199,10 +240,15 @@ public class CollectionTableGroup extends AbstractTableGroup {
 			}
 		}
 
+		if ( containerQualifier instanceof TableGroup ) {
+			return ( (TableGroup) containerQualifier ).locateColumnReferenceByName( name );
+		}
+
 		if ( column == null ) {
 			return null;
 		}
 
 		return resolveColumnReference( column );
 	}
+
 }

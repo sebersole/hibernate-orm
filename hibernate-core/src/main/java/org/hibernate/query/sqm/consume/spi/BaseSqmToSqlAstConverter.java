@@ -125,6 +125,7 @@ import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.produce.spi.SqlAstFunctionProducer;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
+import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.spi.SqlSelectionExpression;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
@@ -575,13 +576,18 @@ public abstract class BaseSqmToSqlAstConverter
 				joinedFromElement.getJoinType().getCorrespondingSqlJoinType(),
 				new JoinedTableGroupContext() {
 					@Override
-					public TableGroup getLhs() {
-						return lhsTableGroup;
+					public NavigableContainerReference getLhs() {
+						return (NavigableContainerReference) lhsTableGroup.getNavigableReference();
 					}
 
 					@Override
 					public ColumnReferenceQualifier getColumnReferenceQualifier() {
-						return getLhs();
+						return lhsTableGroup;
+					}
+
+					@Override
+					public SqlExpressionResolver getSqlExpressionResolver() {
+						return BaseSqmToSqlAstConverter.this.getSqlExpressionResolver();
 					}
 
 					@Override
@@ -641,6 +647,8 @@ public abstract class BaseSqmToSqlAstConverter
 
 		return tableGroupJoin;
 	}
+
+	protected abstract SqlExpressionResolver getSqlExpressionResolver();
 
 	@Override
 	public TableGroupJoin visitCrossJoinedFromElement(SqmCrossJoin joinedFromElement) {
@@ -808,16 +816,33 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public PluralAttributeReference visitPluralAttribute(SqmPluralAttributeReference reference) {
+
+		// todo (6.0) : most likely how we execute this depends on the context - where is it used?
+
 		final NavigableContainerReference containerReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
-		final PluralAttributeReference attributeReference = new PluralAttributeReference(
-				containerReference,
-				reference.getReferencedNavigable(),
-				containerReference.getNavigablePath().append( reference.getReferencedNavigable().getNavigableName() )
+		final NavigablePath navigablePath = containerReference.getNavigablePath().append(
+				reference.getReferencedNavigable().getNavigableName()
 		);
 
-		navigableReferenceStack.push( attributeReference );
+		final PluralAttributeReference result;
 
-		return attributeReference;
+		final NavigableReference resolvedNavigableReference = fromClauseIndex.findResolvedNavigableReference( navigablePath );
+		if ( resolvedNavigableReference != null ) {
+			assert resolvedNavigableReference instanceof PluralAttributeReference;
+			result = ( PluralAttributeReference ) resolvedNavigableReference;
+		}
+		else {
+			result = new PluralAttributeReference(
+					containerReference,
+					reference.getReferencedNavigable(),
+					null,
+					navigablePath
+			);
+		}
+
+		navigableReferenceStack.push( result );
+
+		return result;
 	}
 
 	@Override

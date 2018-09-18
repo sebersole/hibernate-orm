@@ -77,49 +77,50 @@ public class Helper {
 			}
 		};
 
-		final ColumnReferenceQualifier columnReferenceQualifier = new ColumnReferenceQualifier() {
-			private Map<Column,ColumnReference> columnReferenceMap;
-
-			@Override
-			public String getUniqueIdentifier() {
-				return null;
-			}
-
-			@Override
-			public TableReference locateTableReference(Table table) {
-				return null;
-			}
-
-			@Override
-			public ColumnReference resolveColumnReference(Column column) {
-				if ( columnReferenceMap != null ) {
-					return columnReferenceMap.get( column );
-				}
-				return null;
-			}
-
-			@Override
-			public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
-				Column column = (Column) sqlSelectable;
-
-				ColumnReference expression = null;
-				if ( columnReferenceMap == null ) {
-					columnReferenceMap = new HashMap<>();
-				}
-				else {
-					expression = columnReferenceMap.get( column );
-				}
-
-				if ( expression == null ) {
-					expression = (ColumnReference) sqlSelectable.createSqlExpression( this, sqlAstProducerContext );
-					columnReferenceMap.put( column, expression );
-				}
-
-				return expression;
-			}
-		};
+//		final ColumnReferenceQualifier columnReferenceQualifier = new ColumnReferenceQualifier() {
+//			private Map<Column,ColumnReference> columnReferenceMap;
+//
+//			@Override
+//			public String getUniqueIdentifier() {
+//				return null;
+//			}
+//
+//			@Override
+//			public TableReference locateTableReference(Table table) {
+//				return null;
+//			}
+//
+//			@Override
+//			public ColumnReference resolveColumnReference(Column column) {
+//				if ( columnReferenceMap != null ) {
+//					return columnReferenceMap.get( column );
+//				}
+//				return null;
+//			}
+//
+//			@Override
+//			public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
+//				Column column = (Column) sqlSelectable;
+//
+//				ColumnReference expression = null;
+//				if ( columnReferenceMap == null ) {
+//					columnReferenceMap = new HashMap<>();
+//				}
+//				else {
+//					expression = columnReferenceMap.get( column );
+//				}
+//
+//				if ( expression == null ) {
+//					expression = (ColumnReference) sqlSelectable.createSqlExpression( this, sqlAstProducerContext );
+//					columnReferenceMap.put( column, expression );
+//				}
+//
+//				return expression;
+//			}
+//		};
 
 		final List<DomainResultAssembler> assemblers = jdbcValues.getResultSetMapping().resolveAssemblers(
+				initializers::add,
 				new AssemblerCreationState() {
 					@Override
 					public LoadQueryInfluencers getLoadQueryInfluencers() {
@@ -146,8 +147,7 @@ public class Helper {
 						return false;
 					}
 				},
-				() -> sessionFactory,
-				initializers::add
+				() -> sessionFactory
 		);
 
 		return new RowReaderStandardImpl<>(

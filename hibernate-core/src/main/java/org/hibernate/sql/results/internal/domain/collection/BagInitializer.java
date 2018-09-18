@@ -6,13 +6,19 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
+import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentBag;
+import org.hibernate.collection.internal.PersistentIdentifierBag;
 import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
+ * Initializer for both {@link PersistentBag} and {@link PersistentIdentifierBag}
+ * collections
+ *
  * @author Steve Ebersole
  */
 public class BagInitializer extends AbstractImmediateCollectionInitializer {
@@ -22,23 +28,29 @@ public class BagInitializer extends AbstractImmediateCollectionInitializer {
 	public BagInitializer(
 			PersistentBagDescriptorImpl bagDescriptor,
 			FetchParentAccess parentAccess,
-			boolean isJoinFetch,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath,
+			boolean selected,
+			LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			DomainResultAssembler elementAssembler,
 			DomainResultAssembler collectionIdAssembler) {
-		super( bagDescriptor, parentAccess, isJoinFetch, collectionKeyAssembler );
+		super( bagDescriptor, parentAccess, navigablePath, selected, lockMode, keyContainerAssembler, keyCollectionAssembler );
 		this.elementAssembler = elementAssembler;
 		this.collectionIdAssembler = collectionIdAssembler;
 	}
 
 	@Override
-	public PersistentBag getCollectionInstance() {
-		return (PersistentBag) super.getCollectionInstance();
-	}
-
-	@Override
 	@SuppressWarnings("unchecked")
 	protected void readCollectionRow(RowProcessingState rowProcessingState) {
-		getCollectionInstance().load( elementAssembler.assemble( rowProcessingState ) );
+		if ( collectionIdAssembler != null ) {
+			( ( PersistentIdentifierBag ) getCollectionInstance() ).load(
+					(Integer) collectionIdAssembler.assemble( rowProcessingState ),
+					elementAssembler.assemble( rowProcessingState )
+			);
+		}
+		else {
+			( (PersistentBag) getCollectionInstance() ).load( elementAssembler.assemble( rowProcessingState ) );
+		}
 	}
 }

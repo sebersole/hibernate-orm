@@ -1347,6 +1347,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 			return null;
 		}
 		R first = list.get( 0 );
+		// todo (6.0) : add a setting here to control whether to perform this validation or not
 		for ( int i = 1; i < size; i++ ) {
 			if ( list.get( i ) != first ) {
 				throw new NonUniqueResultException( list.size() );

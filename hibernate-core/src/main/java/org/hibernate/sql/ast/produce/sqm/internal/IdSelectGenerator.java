@@ -6,9 +6,12 @@
  */
 package org.hibernate.sql.ast.produce.sqm.internal;
 
+import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.internal.util.collections.SingletonStack;
+import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
@@ -19,6 +22,7 @@ import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
+import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBaseManager;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
@@ -26,11 +30,13 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.ast.produce.sqm.spi.SqmSelectToSqlAstConverter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
+import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
@@ -55,6 +61,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 		// Ask the entity descriptor to create a TableGroup.  This TableGroup
 		//		will contain all the individual TableReferences we need..
+		final NavigablePath path = new NavigablePath( entityDescriptor.getEntityName() );
 		final EntityTableGroup rootTableGroup = entityDescriptor.createRootTableGroup(
 				new TableGroupInfo() {
 					@Override
@@ -70,6 +77,11 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					@Override
 					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
 						return entityDescriptor;
+					}
+
+					@Override
+					public NavigablePath getNavigablePath() {
+						return path;
 					}
 				},
 				new RootTableGroupContext() {
@@ -113,41 +125,49 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 				expression -> expression,
 				(expression, selection) -> {}
 		);
-		final SqlSelectionGroupNode sqlSelectionGroup = entityDescriptor.getIdentifierDescriptor().resolveSqlSelections(
-				rootTableGroup,
-				new SqlAstCreationContext() {
-					@Override
-					public LockOptions getLockOptions() {
-						return queryOptions.getLockOptions();
-					}
 
-					final NavigablePath path = new NavigablePath();
+		final Stack<ColumnReferenceQualifier> tableGroupStack = new SingletonStack<>( rootTableGroup );
+		final Stack<NavigableReference> navRefStack = new SingletonStack<>( rootTableGroup.getNavigableReference() );
 
-					@Override
-					public SessionFactoryImplementor getSessionFactory() {
-						return sessionFactory;
-					}
+		final DomainResultCreationState domainResultCreationState = new DomainResultCreationState() {
+			@Override
+			public SqlExpressionResolver getSqlExpressionResolver() {
+				return sqlExpressionResolver;
+			}
 
+			@Override
+			public Stack<ColumnReferenceQualifier> getColumnReferenceQualifierStack() {
+				return tableGroupStack;
+			}
 
-					@Override
-					public SqlExpressionResolver getSqlSelectionResolver() {
-						return sqlExpressionResolver;
-					}
+			@Override
+			public Stack<NavigableReference> getNavigableReferenceStack() {
+				return navRefStack;
+			}
 
-					@Override
-					public LoadQueryInfluencers getLoadQueryInfluencers() {
-						return loadQueryInfluencers;
-					}
+			@Override
+			public boolean fetchAllAttributes() {
+				return false;
+			}
 
-					@Override
-					public boolean shouldCreateShallowEntityResult() {
-						return true;
-					}
-				}
-		);
+			@Override
+			public TableSpace getCurrentTableSpace() {
+				return entityIdSelectionTableSpace;
+			}
 
-		sqlSelectionGroup.visitSqlSelections(
-				sqlSelection -> entityIdSelection.getSelectClause().addSqlSelection( sqlSelection )
+			@Override
+			public LockMode determineLockMode(String identificationVariable) {
+				return null;
+			}
+		};
+
+		// NOTE : we ignore the created DomainResult - we only care about the generated/resolved SqlSelections
+		entityDescriptor.getIdentifierDescriptor().createDomainResult(
+				rootTableGroup.getNavigableReference(),
+				// no domain alias
+				null,
+				domainResultCreationState,
+				() -> sessionFactory
 		);
 
 		applyQueryRestrictions(

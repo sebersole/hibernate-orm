@@ -6,10 +6,6 @@
  */
 package org.hibernate.naming;
 
-import org.hibernate.naming.Identifier;
-import org.hibernate.naming.NamespaceName;
-import org.hibernate.naming.QualifiedNameImpl;
-
 /**
  * @author Steve Ebersole
  */

@@ -30,6 +30,9 @@ public class LoadingCollectionEntry {
 		this.initializer = initializer;
 		this.key = key;
 		this.collectionInstance = collectionInstance;
+
+		collectionInstance.beforeInitialize( -1, getCollectionDescriptor() );
+		collectionInstance.beginRead();
 	}
 
 	public PersistentCollectionDescriptor getCollectionDescriptor() {

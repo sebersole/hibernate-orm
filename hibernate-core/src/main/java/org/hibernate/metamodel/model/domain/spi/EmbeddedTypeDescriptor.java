@@ -86,12 +86,6 @@ public interface EmbeddedTypeDescriptor<T>
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
-	@Override
-	CompositeSqlSelectionGroup resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext);
-
-
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// todo (6.0) : everything below relates to the "attribute position" discussion

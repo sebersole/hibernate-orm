@@ -9,8 +9,8 @@ package org.hibernate.sql.results.internal.domain.collection;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -24,13 +24,13 @@ import org.hibernate.sql.results.spi.Initializer;
  */
 public class BagInitializerProducer implements CollectionInitializerProducer {
 	private final PersistentBagDescriptorImpl bagDescriptor;
-	private final boolean isJoinFetch;
+	private final boolean selected;
 	private final DomainResult collectionIdResult;
 	private final DomainResult elementResult;
 
 	public BagInitializerProducer(
 			PersistentBagDescriptorImpl bagDescriptor,
-			boolean isJoinFetch,
+			boolean selected,
 			DomainResult collectionIdResult,
 			DomainResult elementResult) {
 		if ( bagDescriptor.getIdDescriptor() != null ) {
@@ -41,7 +41,7 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 		}
 
 		this.bagDescriptor = bagDescriptor;
-		this.isJoinFetch = isJoinFetch;
+		this.selected = selected;
 		this.collectionIdResult = collectionIdResult;
 		this.elementResult = elementResult;
 	}
@@ -49,8 +49,10 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 	@Override
 	public CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
+			NavigablePath navigablePath,
 			LockMode lockMode,
-			DomainResultAssembler collectionKeyAssembler,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
@@ -72,13 +74,20 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 			);
 		}
 
-		return new BagInitializer(
+		final BagInitializer bagInitializer = new BagInitializer(
 				bagDescriptor,
 				parentAccess,
-				isJoinFetch,
-				collectionKeyAssembler,
+				navigablePath,
+				selected,
+				lockMode,
+				keyContainerAssembler,
+				keyCollectionAssembler,
 				elementAssembler,
 				collectionIdAssembler
 		);
+
+		initializerConsumer.accept( bagInitializer );
+
+		return bagInitializer;
 	}
 }

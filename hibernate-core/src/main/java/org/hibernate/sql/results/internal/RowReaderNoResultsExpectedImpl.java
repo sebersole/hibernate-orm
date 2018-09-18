@@ -46,6 +46,11 @@ public class RowReaderNoResultsExpectedImpl implements RowReader {
 	}
 
 	@Override
+	public Class getResultJavaType() {
+		return Void.TYPE;
+	}
+
+	@Override
 	public int getNumberOfResults() {
 		return 0;
 	}

@@ -9,8 +9,8 @@ package org.hibernate.sql.results.internal.domain.collection;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.internal.PersistentListDescriptorImpl;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -42,16 +42,20 @@ public class ListInitializerProducer implements CollectionInitializerProducer {
 	@Override
 	public CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
-			LockMode lockMode,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath, LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
-		return new ListInitializer(
+		final ListInitializer listInitializer = new ListInitializer(
 				listDescriptor,
 				parentAccess,
+				navigablePath,
 				joined,
-				collectionKeyAssembler,
+				lockMode,
+				keyContainerAssembler,
+				keyCollectionAssembler,
 				listIndexResult.createResultAssembler(
 						initializerConsumer,
 						creationState,
@@ -63,5 +67,9 @@ public class ListInitializerProducer implements CollectionInitializerProducer {
 						creationContext
 				)
 		);
+
+		initializerConsumer.accept( listInitializer );
+
+		return listInitializer;
 	}
 }

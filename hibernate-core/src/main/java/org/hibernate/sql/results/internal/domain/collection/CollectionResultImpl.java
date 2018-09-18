@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -26,10 +27,12 @@ public class CollectionResultImpl
 		implements CollectionResult {
 
 	private final CollectionInitializerProducer initializerProducer;
+	private final NavigablePath navigablePath;
 	private final LockMode lockMode;
 
 	public CollectionResultImpl(
 			PluralPersistentAttribute attributeDescriptor,
+			NavigablePath navigablePath,
 			String resultVariable,
 			LockMode lockMode,
 			DomainResult keyResult,
@@ -38,8 +41,10 @@ public class CollectionResultImpl
 				null,
 				attributeDescriptor,
 				resultVariable,
-				keyResult
+				keyResult,
+				null
 		);
+		this.navigablePath = navigablePath;
 		this.lockMode = lockMode;
 		this.initializerProducer = initializerProducer;
 	}
@@ -55,8 +60,10 @@ public class CollectionResultImpl
 			AssemblerCreationContext creationContext) {
 		final CollectionInitializer initializer = initializerProducer.produceInitializer(
 				null,
+				navigablePath,
 				getLockMode(),
-				getCollectionKeyResult().createResultAssembler( initializerCollector, creationOptions, creationContext ),
+				getKeyContainerResult().createResultAssembler( initializerCollector, creationOptions, creationContext ),
+				null,
 				initializerCollector,
 				creationOptions,
 				creationContext

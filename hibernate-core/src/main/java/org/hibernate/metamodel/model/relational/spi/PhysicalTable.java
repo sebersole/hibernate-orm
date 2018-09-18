@@ -193,4 +193,9 @@ public class PhysicalTable extends AbstractTable implements ExportableTable {
 
 		return Objects.hash( qualifiedTableName );
 	}
+
+	@Override
+	public String toLoggableFragment() {
+		return getQualifiedTableName().toLoggableFragment();
+	}
 }

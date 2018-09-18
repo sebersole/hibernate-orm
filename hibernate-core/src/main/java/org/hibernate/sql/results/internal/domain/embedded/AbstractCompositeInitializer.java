@@ -101,25 +101,6 @@ public abstract class AbstractCompositeInitializer implements CompositeInitializ
 	}
 
 	@Override
-	public Object getResolvedState(
-			Navigable navigable,
-			RowProcessingState processingState) {
-		if ( navigable.getContainer() == getEmbeddedDescriptor() ) {
-			return resolvedValues[ ( (StateArrayContributor) navigable ).getStateArrayPosition() ];
-		}
-
-		if ( fetchParentAccess != null ) {
-			return fetchParentAccess.getResolvedState( navigable, processingState );
-		}
-
-		throw new HibernateException(
-				"Could not determine how to determine resolved state for [" + navigable
-						+ "] relative to CompositeInitializer for ["
-						+ getEmbeddedDescriptor() + "]"
-		);
-	}
-
-	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		compositeInstance = null;
 		resolvedValues = null;

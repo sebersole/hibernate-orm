@@ -11,11 +11,13 @@ import java.util.List;
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
+import org.hibernate.sql.results.internal.values.JdbcValues;
 
 /**
  * @author Steve Ebersole
@@ -33,6 +35,27 @@ public interface DomainResultCreationState {
 
 	boolean fetchAllAttributes();
 
+	/**
+	 * todo (6.0) : centralize the implementation of this
+	 * 		most of the logic in the impls of this is identical.  variations (arguments) include:
+	 * 				1) given a Fetchable, determine the FetchTiming and `selected`[1].  Tricky as functional
+	 * 					interface because of the "composite return".
+	 * 				2) given a Fetchable, determine the LockMode - currently not handled very well here; should consult `#getLockOptions`
+	 * 						 - perhaps a functional interface accepting the FetchParent and Fetchable and returning the LockMode
+	 *
+	 * 			so something like:
+	 * 				List<Fetch> visitFetches(
+	 * 	 					FetchParent fetchParent,
+	 * 	 					BiFunction<FetchParent,Fetchable,(FetchTiming,`selected`)> fetchStrategyResolver,
+	 * 	 					BiFunction<FetchParent,Fetchable,LockMode> lockModeResolver)
+	 *
+	 * [1] `selected` refers to the named parameter in
+	 * {@link Fetchable#generateFetch(org.hibernate.sql.results.spi.FetchParent, org.hibernate.engine.FetchTiming, boolean, org.hibernate.LockMode, java.lang.String, org.hibernate.sql.results.spi.DomainResultCreationState, org.hibernate.sql.results.spi.DomainResultCreationContext)}.
+	 * For {@link org.hibernate.engine.FetchTiming#IMMEDIATE}, this boolean value indicates
+	 * whether the values for the generated assembler/initializers are or should be available in
+	 * the {@link JdbcValues} being processed.  For {@link org.hibernate.engine.FetchTiming#DELAYED} this
+	 * parameter has no effect
+	 */
 	default List<Fetch> visitFetches(FetchParent fetchParent) {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}

@@ -9,13 +9,10 @@ package org.hibernate.metamodel.model.domain.spi;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.sql.ast.produce.metamodel.spi.EmbeddedValueExpressableType;
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 
 /**
@@ -41,21 +38,12 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,
-			DomainResultCreationContext creationContext,
-			DomainResultCreationState creationState) {
+			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		return getEmbeddedDescriptor().createDomainResult(
 				navigableReference,
 				resultVariable,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
-	}
-
-	@Override
-	default SqlSelectionGroupNode resolveSqlSelections(
-			ColumnReferenceQualifier qualifier,
-			SqlAstCreationContext resolutionContext) {
-		return getEmbeddedDescriptor().resolveSqlSelections( qualifier, resolutionContext );
 	}
 
 	@Override

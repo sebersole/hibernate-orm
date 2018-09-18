@@ -8,14 +8,19 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchTiming;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.internal.ForeignKeyDomainResult;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.query.sql.internal.ResolvedScalarDomainResult;
+import org.hibernate.sql.SqlExpressableType;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.results.spi.DomainResult;
@@ -23,13 +28,15 @@ import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
-public class CollectionKey {
+public class CollectionKey implements Navigable {
 	private final AbstractPersistentCollectionDescriptor collectionDescriptor;
 	private final JavaTypeDescriptor javaTypeDescriptor;
+	private final NavigableRole navigableRole;
 
 	private Navigable foreignKeyTargetNavigable;
 	private ForeignKey joinForeignKey;
@@ -40,6 +47,7 @@ public class CollectionKey {
 			RuntimeModelCreationContext creationContext) {
 		this.collectionDescriptor = collectionDescriptor;
 		this.javaTypeDescriptor = resolveJavaTypeDescriptor( bootCollectionValue );
+		this.navigableRole = collectionDescriptor.getNavigableRole().append( "{collection-key}" );
 		this.joinForeignKey = creationContext.getDatabaseObjectResolver().resolveForeignKey(
 				bootCollectionValue.getForeignKey()
 		);
@@ -57,23 +65,85 @@ public class CollectionKey {
 		return foreignKeyTargetNavigable;
 	}
 
-	public DomainResult createDomainResult(
-			FetchTiming fetchTiming,
-			boolean joinFetch,
+	/**
+	 * Create a DomainResult for reading the owner/container side of the collection's FK
+	 */
+	public DomainResult createContainerResult(
+			ColumnReferenceQualifier containerReferenceQualifier,
+			SqlExpressionResolver sqlExpressionResolver) {
+		return createDomainResult(
+				joinForeignKey.getColumnMappings().getTargetColumns(),
+				containerReferenceQualifier,
+				sqlExpressionResolver
+		);
+	}
+
+	/**
+	 * Create a DomainResult for reading the owner/container side of the collection's FK
+	 */
+	public DomainResult createContainerResult(
+			ColumnReferenceQualifier containerReferenceQualifier,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
-		// todo (6.0) : the collection is immediate fetch - which side of the FK to use depends on whether it is a joined fetch or a subsequent-select fetch:
-		//		1) joined fetch : use the columns from the joined collection table - we need to be able to check for null (no collection elements)
-		//		2) subsequent-select : use the columns from the container/owner table - the collection table is not part of the query
 
-		// todo (6.0) previous instead or current?
+		// todo (6.0) previous instead of current?
 		//		in conjunction with comment above about which columns...  which qualifier to use
 		//		may be as simple as this.
 
-		final ColumnReferenceQualifier referenceQualifier = creationState.getColumnReferenceQualifierStack().getCurrent();
-		final SqlExpressionResolver expressionResolver = creationState.getSqlExpressionResolver();
-		final List<Column> keyColumns = joinForeignKey.getColumnMappings().getTargetColumns();
+		return createDomainResult(
+				joinForeignKey.getColumnMappings().getTargetColumns(),
+				containerReferenceQualifier,
+				creationState.getSqlExpressionResolver(),
+				creationState,
+				creationContext
+		);
 
+	}
+
+	private DomainResult createDomainResult(
+			List<Column> columns,
+			ColumnReferenceQualifier referenceQualifier,
+			SqlExpressionResolver sqlExpressionResolver) {
+		if ( columns.size() == 1 ) {
+			return new ResolvedScalarDomainResult(
+					sqlExpressionResolver.resolveSqlSelection(
+							sqlExpressionResolver.resolveSqlExpression( referenceQualifier, columns.get( 0 ) ),
+							columns.get( 0 ).getJavaTypeDescriptor(),
+							collectionDescriptor.getSessionFactory().getTypeConfiguration()
+					),
+					null,
+					columns.get( 0 ).getJavaTypeDescriptor()
+			);
+		}
+		else {
+			final List<SqlSelection> sqlSelections = new ArrayList<>();
+
+			for ( Column column : columns ) {
+				sqlSelections.add(
+						sqlExpressionResolver.resolveSqlSelection(
+								sqlExpressionResolver.resolveSqlExpression(
+										referenceQualifier,
+										column
+								),
+								column.getJavaTypeDescriptor(),
+								collectionDescriptor.getSessionFactory().getTypeConfiguration()
+						)
+				);
+			}
+
+			return new ForeignKeyDomainResult(
+					getJavaTypeDescriptor(),
+					sqlSelections
+			);
+		}
+	}
+
+	private DomainResult createDomainResult(
+			List<Column> keyColumns,
+			ColumnReferenceQualifier referenceQualifier,
+			SqlExpressionResolver expressionResolver,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		if ( keyColumns.size() == 1 ) {
 			return new ResolvedScalarDomainResult(
 					expressionResolver.resolveSqlSelection(
@@ -106,84 +176,91 @@ public class CollectionKey {
 					sqlSelections
 			);
 		}
+
 	}
 
-	//	public ForeignKey.ColumnMappings buildJoinColumnMappings(List<Column> joinTargetColumns) {
-//		// NOTE : called from JoinableAttributeContainer#resolveColumnMappings do not "refactor" into #getJoinColumnMappings()
-//
-//		// NOTE : joinTargetColumns are the owner's columns we join to (target) whereas #resolveJoinSourceColumns()
-//		//		returns the collection's key columns (join/fk source).
-//		// todo : would much rather carry forward the ForeignKey (in some "resolved" form from the mapping model
-//		//		Same for entity-typed attributes (all JoinableAttributes)
-//
-//		final List<Column> joinSourceColumns = resolveJoinSourceColumns( joinTargetColumns );
-//
-//		if ( joinSourceColumns.size() != joinTargetColumns.size() ) {
-//			throw new HibernateException( "Bad resolution of right-hand and left-hand columns for attribute join : " + collectionDescriptor );
-//		}
-//
-//		final ForeignKey.ColumnMappings joinColumnMappings = CollectionHelper.arrayList( joinSourceColumns.size() );
-//		for ( int i = 0; i < joinSourceColumns.size(); i++ ) {
-//			joinColumnMappings.add(
-//					new ForeignKey.ColumnMapping(
-//							joinSourceColumns.get( i ),
-//							joinTargetColumns.get( i )
-//					)
-//			);
-//		}
-//
-//		return joinColumnMappings;
-//	}
-//
-//	private List<Column> resolveJoinSourceColumns(List<Column> joinTargetColumns) {
-//		// 	NOTE : If the elements are one-to-many (no collection table) we'd really need to understand
-//		//		columns (or formulas) across the entity hierarchy.  For now we assume the persister's
-//		// 		root table.  columns are conceivably doable already since @Column names a specific table.
-//		//		Maybe we should add same to @Formula
-//		//
-//		//		on the bright side, atm CollectionPersister does not currently support
-//		//		formulas in its key definition
-//		final String[] columnNames = ( (Joinable) collectionDescriptor ).getKeyColumnNames();
-//		final List<Column> columns = CollectionHelper.arrayList( columnNames.length );
-//
-//		assert joinTargetColumns.size() == columnNames.length;
-//
-//		final Table separateCollectionTable = collectionDescriptor.getSeparateCollectionTable();
-//		if ( separateCollectionTable != null ) {
-//			for ( int i = 0; i < columnNames.length; i++ ) {
-//				columns.add(
-//						separateCollectionTable.makeColumn(
-//								columnNames[i],
-//								joinTargetColumns.get( i ).getSqlTypeDescriptor().getJdbcTypeCode()
-//						)
-//				);
-//			}
-//		}
-//		else {
-//			// otherwise we just need to resolve the column names in the element table(s) (as the "collection table")
-//			final EntityDescriptor elementPersister = ( (CollectionElementEntity) collectionDescriptor.getElementDescriptor() ).getEntityDescriptor();
-//
-//			for ( int i = 0; i < columnNames.length; i++ ) {
-//				// it is conceivable that the column already exists
-//				//		todo : is the same ^^ true for separateCollectionTable?
-//				Column column = elementPersister.getPrimaryTable().locateColumn( columnNames[i] );
-//				if ( column == null ) {
-//					column = elementPersister.getPrimaryTable().makeColumn(
-//							columnNames[i],
-//							joinTargetColumns.get( i ).getSqlTypeDescriptor().getJdbcTypeCode()
-//					);
-//				}
-//				columns.add( column );
-//			}
-//		}
-//
-//		return columns;
-//	}
+	/**
+	 * Create a DomainResult for reading the collection (elements) side of the collection's FK
+	 */
+	public DomainResult createCollectionResult(
+			ColumnReferenceQualifier referenceQualifier,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return createDomainResult(
+				joinForeignKey.getColumnMappings().getReferringColumns(),
+				referenceQualifier,
+				creationState.getSqlExpressionResolver(),
+				creationState,
+				creationContext
+		);
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		// because of the anticipated use cases, the expectation is that we
+		// should walk the columns on the collection-side of the FK
+		for ( Column column : getJoinForeignKey().getColumnMappings().getReferringColumns() ) {
+			action.accept( column.getExpressableType(), column );
+		}
+	}
+
+	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		for ( Column column : getJoinForeignKey().getColumnMappings().getReferringColumns() ) {
+			action.accept( column.getExpressableType() );
+		}
+	}
+
+	@Override
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
+			SharedSessionContractImplementor session) {
+		// hack - only works with non-composite keys
+		// todo (6.0) : fix
+		final List<Column> columns = getJoinForeignKey().getColumnMappings().getReferringColumns();
+		assert columns.size() == 1;
+
+		final Column column = columns.get( 0 );
+		jdbcValueCollector.collect( value, column.getExpressableType(), column );
+	}
 
 	private static JavaTypeDescriptor resolveJavaTypeDescriptor(Collection collectionValue) {
 		if ( collectionValue.getJavaTypeMapping() != null ) {
 			return collectionValue.getJavaTypeMapping().getJavaTypeDescriptor();
 		}
+		return null;
+	}
+
+	@Override
+	public NavigableContainer<?> getContainer() {
+		return collectionDescriptor;
+	}
+
+	@Override
+	public NavigableRole getNavigableRole() {
+		return navigableRole;
+	}
+
+	@Override
+	public void visitNavigable(NavigableVisitationStrategy visitor) {
+		visitor.visitCollectionForeignKey( this );
+	}
+
+	@Override
+	public String asLoggableText() {
+		return "CollectionKey(" + collectionDescriptor.getNavigableRole().getFullPath() + ")";
+	}
+
+	@Override
+	public PersistenceType getPersistenceType() {
 		return null;
 	}
 }

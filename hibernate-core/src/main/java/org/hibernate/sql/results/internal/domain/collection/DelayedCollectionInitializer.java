@@ -11,6 +11,7 @@ import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -19,17 +20,17 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  * @author Steve Ebersole
  */
 public class DelayedCollectionInitializer extends AbstractCollectionInitializer {
-	private final FetchParentAccess parentAccess;
 
 	// per-row state
 	private PersistentCollection collectionInstance;
 
 	public DelayedCollectionInitializer(
 			FetchParentAccess parentAccess,
+			NavigablePath navigablePath,
 			PersistentCollectionDescriptor fetchCollectionDescriptor,
-			DomainResultAssembler keyAssembler) {
-		super( fetchCollectionDescriptor, parentAccess, false, keyAssembler );
-		this.parentAccess = parentAccess;
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler) {
+		super( fetchCollectionDescriptor, parentAccess, navigablePath, false, keyContainerAssembler, keyCollectionAssembler );
 	}
 
 	@Override
@@ -38,13 +39,16 @@ public class DelayedCollectionInitializer extends AbstractCollectionInitializer 
 	}
 
 	@Override
-	protected void afterKeyHydrated(RowProcessingState rowProcessingState) {
+	public void resolve(RowProcessingState rowProcessingState) {
+		// nothing to do - the collection is lazy or found already managed in Session
+
+		final CollectionKey collectionKey = resolveCollectionKey( rowProcessingState );
+
 		final SharedSessionContractImplementor session = rowProcessingState.getSession();
 		final PersistenceContext persistenceContext = session.getPersistenceContext();
 
 		final PersistentCollectionDescriptor collectionDescriptor = getFetchedAttribute().getPersistentCollectionDescriptor();
 
-		final CollectionKey collectionKey = getCollectionKey();
 		final PersistentCollection existing = persistenceContext.getCollection( collectionKey );
 		if ( existing != null ) {
 			collectionInstance = existing;
@@ -57,11 +61,6 @@ public class DelayedCollectionInitializer extends AbstractCollectionInitializer 
 
 			persistenceContext.addUninitializedCollection( collectionDescriptor, collectionInstance, collectionKey.getKey() );
 		}
-	}
-
-	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		// nothing to do - the collection is lazy or found already managed in Session
 	}
 
 	@Override

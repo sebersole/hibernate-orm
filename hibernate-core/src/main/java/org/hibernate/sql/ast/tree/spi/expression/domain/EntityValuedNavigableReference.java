@@ -28,4 +28,9 @@ public class EntityValuedNavigableReference extends AbstractNavigableContainerRe
 	public EntityValuedNavigable getNavigable() {
 		return (EntityValuedNavigable) super.getNavigable();
 	}
+
+	@Override
+	public String toString() {
+		return "EntityValuedNavigableReference(" + getNavigable().getEntityName() + ")";
+	}
 }

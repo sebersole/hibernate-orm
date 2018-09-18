@@ -46,10 +46,9 @@ public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollecti
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(
 			FetchParent fetchParent,
-			boolean isJoinFetch,
+			boolean selected,
 			String resultVariable,
 			LockMode lockMode,
-			DomainResult keyResult,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
@@ -69,13 +68,12 @@ public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollecti
 		final DomainResult elementResult = getElementDescriptor().createDomainResult(
 				navigableReference,
 				null,
-				creationContext,
-				creationState
+				creationState, creationContext
 		);
 
 		return new BagInitializerProducer(
 				this,
-				isJoinFetch,
+				selected,
 				collectionIdResult,
 				elementResult
 		);

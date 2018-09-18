@@ -191,6 +191,7 @@ public class QueryResultBuilderRootEntity
 				AssemblerCreationContext creationContext) {
 			final EntityRootInitializer initializer = new EntityRootInitializer(
 					this,
+					getNavigablePath(),
 					LockMode.READ,
 					null,
 					null,

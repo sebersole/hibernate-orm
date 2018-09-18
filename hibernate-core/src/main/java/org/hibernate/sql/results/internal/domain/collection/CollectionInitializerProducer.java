@@ -9,6 +9,7 @@ package org.hibernate.sql.results.internal.domain.collection;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -23,8 +24,9 @@ import org.hibernate.sql.results.spi.Initializer;
 public interface CollectionInitializerProducer {
 	CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
-			LockMode lockMode,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath, LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext);

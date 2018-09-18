@@ -243,6 +243,7 @@ public class SqmSelectToSqlAstConverter
 					fetchable
 			);
 
+			final String alias;
 			if ( fetchedJoin != null ) {
 				fetchTiming = FetchTiming.IMMEDIATE;
 				joined = true;
@@ -250,6 +251,8 @@ public class SqmSelectToSqlAstConverter
 				lockMode = SqmSelectToSqlAstConverter.this.getLockOptions().getEffectiveLockMode(
 						fetchedJoin.getIdentificationVariable()
 				);
+
+				alias = fetchedJoin.getIdentificationVariable();
 			}
 			else {
 				// Note that legacy Hibernate behavior for HQL processing was to stop here
@@ -257,6 +260,7 @@ public class SqmSelectToSqlAstConverter
 				// explicitly defined in the query (although we did add some support for
 				// using JPA EntityGraphs to influence the fetches to be JPA compliant)
 				joined = fetchTiming == FetchTiming.IMMEDIATE && fetchable.getMappedFetchStrategy().getStyle() == FetchStyle.JOIN;
+				alias = null;
 			}
 
 			if ( fetchDepth == maximumFetchDepth ) {
@@ -272,8 +276,9 @@ public class SqmSelectToSqlAstConverter
 							fetchTiming,
 							joined,
 							lockMode,
-							null,
-							SqmSelectToSqlAstConverter.this, SqmSelectToSqlAstConverter.this
+							alias,
+							SqmSelectToSqlAstConverter.this,
+							SqmSelectToSqlAstConverter.this
 					)
 			);
 		};

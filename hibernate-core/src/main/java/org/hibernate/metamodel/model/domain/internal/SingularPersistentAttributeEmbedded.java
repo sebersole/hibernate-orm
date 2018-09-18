@@ -155,13 +155,13 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	public Fetch generateFetch(
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,
-			boolean joinFetch,
+			boolean selected,
 			LockMode lockMode, String resultVariable,
 			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
 		final Stack<NavigableReference> navigableReferenceStack = creationState.getNavigableReferenceStack();
 
 		if ( navigableReferenceStack.depth() > creationContext.getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth() ) {
-			joinFetch = false;
+			selected = false;
 		}
 
 		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();

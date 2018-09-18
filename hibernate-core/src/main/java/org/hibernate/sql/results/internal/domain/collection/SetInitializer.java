@@ -6,8 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.collection;
 
+import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -21,10 +23,13 @@ public class SetInitializer extends AbstractImmediateCollectionInitializer {
 	public SetInitializer(
 			PersistentCollectionDescriptor setDescriptor,
 			FetchParentAccess parentAccess,
-			boolean joined,
-			DomainResultAssembler collectionKeyAssembler,
+			NavigablePath navigablePath,
+			boolean selected,
+			LockMode lockMode,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			DomainResultAssembler elementAssembler) {
-		super( setDescriptor, parentAccess, joined, collectionKeyAssembler );
+		super( setDescriptor, parentAccess, navigablePath, selected, lockMode, keyContainerAssembler, keyCollectionAssembler );
 		this.elementAssembler = elementAssembler;
 	}
 

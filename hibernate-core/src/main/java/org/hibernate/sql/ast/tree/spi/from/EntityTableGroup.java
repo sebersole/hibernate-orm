@@ -18,6 +18,7 @@ import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.internal.CompositeColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.results.spi.Selectable;
 
 /**
@@ -44,7 +45,18 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 			NavigablePath navigablePath,
 			TableReference primaryTableReference,
 			List<TableReferenceJoin> joins) {
-		this( uid, tableSpace, navigable, lockMode, navigablePath, primaryTableReference, joins, null );
+		this(
+				uid,
+				tableSpace,
+				/// root has no left-hand side
+				null,
+				navigable,
+				lockMode,
+				navigablePath,
+				primaryTableReference,
+				joins,
+				null
+		);
 	}
 
 	/**
@@ -53,6 +65,7 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 	public EntityTableGroup(
 			String uid,
 			TableSpace tableSpace,
+			NavigableContainerReference lhs,
 			EntityValuedNavigable navigable,
 			LockMode lockMode,
 			NavigablePath navigablePath,
@@ -80,7 +93,7 @@ public class EntityTableGroup extends AbstractTableGroup implements Selectable {
 		this.entityReference = new EntityValuedNavigableReference(
 				// todo (6.0) : need the container (if one) to pass along
 				//		happens for joins
-				null,
+				lhs,
 				navigable,
 				navigablePath,
 				qualifier,

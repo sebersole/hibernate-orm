@@ -74,15 +74,6 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 	}
 
 	@Override
-	public Object getResolvedState(
-			Navigable navigable,
-			RowProcessingState processingState) {
-		throw new HibernateException(
-				"Entity fetching delayed - unexpected call to access resolved state as FetchParentAccess"
-		);
-	}
-
-	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		fkValue = null;
 		entityInstance = null;

@@ -27,5 +27,7 @@ public interface CollectionMappingNode extends ResultSetMappingNode {
 	@Override
 	CollectionJavaDescriptor getJavaTypeDescriptor();
 
-	DomainResult getCollectionKeyResult();
+	DomainResult getKeyContainerResult();
+
+	DomainResult getKeyCollectionResult();
 }

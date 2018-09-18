@@ -9,8 +9,8 @@ package org.hibernate.sql.results.internal.domain.collection;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.internal.PersistentMapDescriptorImpl;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CollectionInitializer;
@@ -42,8 +42,10 @@ public class MapInitializerProducer implements CollectionInitializerProducer {
 	@Override
 	public CollectionInitializer produceInitializer(
 			FetchParentAccess parentAccess,
+			NavigablePath navigablePath,
 			LockMode lockMode,
-			DomainResultAssembler collectionKeyAssembler,
+			DomainResultAssembler keyContainerAssembler,
+			DomainResultAssembler keyCollectionAssembler,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
@@ -59,13 +61,20 @@ public class MapInitializerProducer implements CollectionInitializerProducer {
 				creationContext
 		);
 
-		return new MapInitializer(
+		final MapInitializer mapInitializer = new MapInitializer(
 				mapDescriptor,
 				parentAccess,
+				navigablePath,
 				isJoined,
-				collectionKeyAssembler,
+				lockMode,
+				keyContainerAssembler,
+				keyCollectionAssembler,
 				mapKeyAssembler,
 				mapValueAssembler
 		);
+
+		initializerConsumer.accept( mapInitializer );
+
+		return mapInitializer;
 	}
 }

@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.ast.tree.spi.from;
 
+import org.hibernate.internal.util.Loggable;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.IllegalJoinSpecificationException;
@@ -17,7 +18,7 @@ import org.hibernate.sql.ast.tree.spi.SqlAstNode;
  *
  * @author Steve Ebersole
  */
-public class TableReferenceJoin implements SqlAstNode {
+public class TableReferenceJoin implements SqlAstNode, Loggable {
 	private final JoinType joinType;
 	private final TableReference joinedTableBinding;
 	private final Predicate predicate;
@@ -49,5 +50,10 @@ public class TableReferenceJoin implements SqlAstNode {
 	@Override
 	public void accept(SqlAstWalker  sqlTreeWalker) {
 		sqlTreeWalker.visitTableReferenceJoin( this );
+	}
+
+	@Override
+	public String toLoggableFragment() {
+		return getJoinType().getText() + " join " + getJoinedTableReference().toLoggableFragment();
 	}
 }
