@@ -109,7 +109,10 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		if ( entityDescriptor.getHierarchy().getDiscriminatorDescriptor() != null ) {
 			assert discriminatorResult != null;
 			discriminatorAssembler = discriminatorResult.createResultAssembler(
-					initializer -> { throw new UnsupportedOperationException( "Registering an Initializer as part of Entity discriminator is illegal" ); },
+					initializer -> {
+						throw new UnsupportedOperationException(
+								"Registering an Initializer as part of Entity discriminator is illegal" );
+					},
 					creationState,
 					context
 			);
@@ -121,7 +124,10 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		if ( entityDescriptor.getHierarchy().getVersionDescriptor() != null ) {
 			assert versionResult != null;
 			this.versionAssembler = versionResult.createResultAssembler(
-					initializer -> { throw new UnsupportedOperationException( "Registering an Initializer as part of Entity version is illegal" ); },
+					initializer -> {
+						throw new UnsupportedOperationException(
+								"Registering an Initializer as part of Entity version is illegal" );
+					},
 					creationState,
 					context
 			);

@@ -9,7 +9,6 @@ package org.hibernate.sql.results.spi;
 import java.util.List;
 
 import org.hibernate.LockMode;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
@@ -29,9 +28,7 @@ public interface DomainResultCreationState {
 
 	Stack<NavigableReference> getNavigableReferenceStack();
 
-	default SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
+	SqlAliasBaseGenerator getSqlAliasBaseGenerator();
 
 	boolean fetchAllAttributes();
 
@@ -56,9 +53,7 @@ public interface DomainResultCreationState {
 	 * the {@link JdbcValues} being processed.  For {@link org.hibernate.engine.FetchTiming#DELAYED} this
 	 * parameter has no effect
 	 */
-	default List<Fetch> visitFetches(FetchParent fetchParent) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
+	List<Fetch> visitFetches(FetchParent fetchParent);
 
 	TableSpace getCurrentTableSpace();
 
