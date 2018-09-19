@@ -6,8 +6,11 @@
  */
 package org.hibernate.sql.ast.produce.sqm.internal;
 
+import java.util.List;
+
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.SingletonStack;
@@ -37,6 +40,8 @@ import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
@@ -146,8 +151,18 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 			}
 
 			@Override
+			public SqlAliasBaseGenerator getSqlAliasBaseGenerator() {
+				throw new NotYetImplementedFor6Exception( getClass() );
+			}
+
+			@Override
 			public boolean fetchAllAttributes() {
 				return false;
+			}
+
+			@Override
+			public List<Fetch> visitFetches(FetchParent fetchParent) {
+				throw new NotYetImplementedFor6Exception( getClass() );
 			}
 
 			@Override

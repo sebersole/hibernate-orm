@@ -465,8 +465,9 @@ public class MetamodelSelectBuilderProcess
 
 		fetchParentStack.push( fetchParent );
 		try {
-			fetchParent.getNavigableContainer().visitKeyFetchables( fetchableConsumer );
-			fetchParent.getNavigableContainer().visitFetchables( fetchableConsumer );
+			NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
+			navigableContainer.visitKeyFetchables( fetchableConsumer );
+			navigableContainer.visitFetchables( fetchableConsumer );
 		}
 		finally {
 			fetchParentStack.pop();

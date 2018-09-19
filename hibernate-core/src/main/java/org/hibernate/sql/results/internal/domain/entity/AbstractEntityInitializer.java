@@ -213,9 +213,14 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		resolveEntityKey( rowProcessingState );
 
 		// todo (6.0) : should this really be true?  what about fetches that resolve to null?
-		assert entityKey != null;
-
-		SqlResultsLogger.INSTANCE.debugf( "Hydrated EntityKey (%s): %s", getNavigablePath(), entityKey.getIdentifier() );
+//		assert entityKey != null;
+		if ( entityKey != null ) {
+			SqlResultsLogger.INSTANCE.debugf(
+					"Hydrated EntityKey (%s): %s",
+					getNavigablePath(),
+					entityKey.getIdentifier()
+			);
+		}
 	}
 
 	private EntityDescriptor determineConcreteEntityDescriptor(
@@ -262,6 +267,9 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 		//		1) resolve the hydrated identifier value(s) into its identifier representation
 		final Object id  = identifierAssembler.assemble( rowProcessingState, rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions() );
 
+		if ( id == null ) {
+			return;
+		}
 		//		2) build the EntityKey
 		this.entityKey = new EntityKey( id, concreteDescriptor.getEntityDescriptor() );
 
@@ -277,6 +285,9 @@ public abstract class AbstractEntityInitializer implements EntityInitializer {
 
 	@Override
 	public void resolve(RowProcessingState rowProcessingState) {
+		if ( entityKey == null ) {
+			return;
+		}
 		final Object entityIdentifier = entityKey.getIdentifier();
 
 		SqlResultsLogger.INSTANCE.tracef( "Beginning Initializer#resolve process for entity (%s) : %s", getNavigablePath().getFullPath(), entityIdentifier );

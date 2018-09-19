@@ -37,6 +37,7 @@ import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationTarget;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
+import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -220,6 +221,8 @@ public class SqmSelectToSqlAstConverter
 		return null;
 	}
 
+	private List<AssociationKey> fetchedAssociationKey = new ArrayList<>(  );
+
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
@@ -230,7 +233,13 @@ public class SqmSelectToSqlAstConverter
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
 			LockMode lockMode = LockMode.READ;
-
+			final AssociationKey associationKey = fetchable.getAssociationKey();
+			if ( associationKey != null ) {
+				if ( fetchedAssociationKey.contains( associationKey ) ) {
+					return;
+				}
+				fetchedAssociationKey.add( associationKey );
+			}
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
 			boolean joined = false;
 

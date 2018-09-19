@@ -32,7 +32,9 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 	private final Function<Expression, Expression> normalizer;
 	private final BiConsumer<Expression,SqlSelection> selectionConsumer;
 
-	private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
+	private int position = 0;
+
+//	private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
 	private int nonEmptySelections = 0;
 
 	public StandardSqlExpressionResolver(
@@ -61,28 +63,30 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 			Expression expression,
 			BasicJavaDescriptor javaTypeDescriptor,
 			TypeConfiguration typeConfiguration) {
-		final SqlSelection existing;
-		if ( sqlSelectionMap == null ) {
-			sqlSelectionMap = new HashMap<>();
-			existing = null;
-		}
-		else {
-			existing = sqlSelectionMap.get( expression.getExpressable() );
-		}
+//		final SqlSelection existing;
+//		if ( sqlSelectionMap == null ) {
+//			sqlSelectionMap = new HashMap<>();
+//			existing = null;
+//		}
+//		else {
+//			existing = sqlSelectionMap.get( expression.getExpressable() );
+//		}
+//
+//		if ( existing != null ) {
+//			return existing;
+//		}
 
-		if ( existing != null ) {
-			return existing;
-		}
 
 
 		final SqlSelection sqlSelection = expression.createSqlSelection(
 				nonEmptySelections + 1,
-				sqlSelectionMap.size(),
+				position,
 				javaTypeDescriptor,
 				typeConfiguration
 		);
+		position++;
 
-		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
+//		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
 		selectionConsumer.accept( expression, sqlSelection );
 
 		if ( ! ( sqlSelection instanceof EmptySqlSelection ) ) {
@@ -97,12 +101,13 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 
 	@Override
 	public SqlSelection emptySqlSelection() {
-		final EmptySqlSelection selection = new EmptySqlSelection( sqlSelectionMap.size() );
-		sqlSelectionMap.put(
-				() -> null,
-				selection
-		);
+		final EmptySqlSelection selection = new EmptySqlSelection( position );
+//		sqlSelectionMap.put(
+//				() -> null,
+//				selection
+//		);
 
+		position++;
 		final QuerySpec querySpec = querySpecSupplier.get();
 		querySpec.getSelectClause().addSqlSelection( selection );
 
