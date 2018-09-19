@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -44,6 +45,7 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 				"first",
 				Integer.MAX_VALUE
 		);
+
 		final EntityWithManyToOneSelfReference entity2 = new EntityWithManyToOneSelfReference(
 				2,
 				"second",
@@ -60,10 +62,12 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 				session -> {
 					final EntityWithManyToOneSelfReference loaded = session.get(
 							EntityWithManyToOneSelfReference.class,
-							1
+							2
 					);
 					assert loaded != null;
-					assertThat( loaded.getName(), equalTo( "first" ) );
+					assertThat( loaded.getName(), equalTo( "second" ) );
+					assert loaded.getOther() != null;
+					assertThat( loaded.getOther().getName(), equalTo( "first" ) );
 				}
 		);
 
@@ -71,12 +75,11 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 				session -> {
 					final EntityWithManyToOneSelfReference loaded = session.get(
 							EntityWithManyToOneSelfReference.class,
-							2
+							1
 					);
 					assert loaded != null;
-					assertThat( loaded.getName(), equalTo( "second" ) );
-					assert loaded.getOther() != null;
-					assertThat( loaded.getOther().getName(), equalTo( "first" ) );
+					assertThat( loaded.getName(), equalTo( "first" ) );
+					assertThat( loaded.getOther(), nullValue() );
 				}
 		);
 
@@ -114,6 +117,16 @@ public class EntityWithManyToOneSelfReferenceCrudTest extends SessionFactoryBase
 							String.class
 					).uniqueResult();
 					assertThat( value, equalTo( "second" ) );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityWithManyToOneSelfReference queryResult = session.createQuery(
+							"select e from EntityWithManyToOneSelfReference e where e.other.name = 'first'",
+							EntityWithManyToOneSelfReference.class
+					).uniqueResult();
+					assertThat( queryResult.getName(), equalTo( "second" ) );
 				}
 		);
 	}
