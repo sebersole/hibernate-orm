@@ -53,7 +53,6 @@ public class EntityWithManyToOneJoinTableCrudTest extends SessionFactoryBasedFun
 		sessionFactoryScope().inTransaction( session -> session.save( other ) );
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 
-
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithManyToOneJoinTable loaded = session.get( EntityWithManyToOneJoinTable.class, 1 );
