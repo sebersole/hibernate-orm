@@ -7,7 +7,6 @@
 package org.hibernate.testing;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.query.internal.QueryOptionsImpl;
 
 /**
  * Container class for different implementation of the {@link DialectCheck} interface.

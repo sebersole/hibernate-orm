@@ -11,11 +11,6 @@ import java.util.HashMap;
 
 import org.hibernate.proxy.ProxyConfiguration;
 
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.This;
-
 public class PassThroughInterceptor implements ProxyConfiguration.Interceptor {
 
 	private HashMap data = new HashMap();

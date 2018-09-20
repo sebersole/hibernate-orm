@@ -26,7 +26,6 @@ import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
-import org.hibernate.mapping.Selectable;
 import org.hibernate.metamodel.model.creation.spi.DatabaseObjectResolver;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingsImpl;

@@ -10,12 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
-import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiation;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiationNature;
-import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import org.jboss.logging.Logger;

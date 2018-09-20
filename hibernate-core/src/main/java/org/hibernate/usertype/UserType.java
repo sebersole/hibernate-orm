@@ -12,9 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.hibernate.HibernateException;
-import org.hibernate.boot.model.JavaTypeDescriptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.Type;
 
 /**

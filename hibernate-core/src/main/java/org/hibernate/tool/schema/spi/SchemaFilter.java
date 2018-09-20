@@ -10,7 +10,6 @@ import org.hibernate.Incubating;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.Sequence;
-import org.hibernate.metamodel.model.relational.spi.Table;
 
 /**
  * Defines a filter for Hibernate's schema tooling.

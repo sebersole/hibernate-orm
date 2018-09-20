@@ -7,7 +7,6 @@
 package org.hibernate.sql.exec.internal;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.spi.QueryParameterBinding;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.query.spi.QueryParameterImplementor;
@@ -25,13 +23,9 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
-import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
-import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;

@@ -7,8 +7,6 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.model.domain.JavaTypeMapping;
-import org.hibernate.boot.model.domain.ResolutionContext;
-import org.hibernate.boot.model.domain.ValueMappingContainer;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.collection.internal.StandardBagSemantics;
 import org.hibernate.collection.spi.CollectionSemantics;

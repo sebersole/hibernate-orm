@@ -8,7 +8,6 @@ package org.hibernate.internal;
 
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 
 /**
  * @author Rob Worsnop

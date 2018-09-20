@@ -21,7 +21,6 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributorContainer;
 import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
-import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.EntitySqlSelectionGroup;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.SqlSelection;

@@ -6,10 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.results.spi.AssemblerCreationContext;
-import org.hibernate.sql.results.spi.SqlSelection;
-
 /**
  * Binding of the discriminator in a entity hierarchy
  *

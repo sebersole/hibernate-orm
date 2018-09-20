@@ -13,7 +13,6 @@ import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * A session action that may be cascaded from parent entity to its children

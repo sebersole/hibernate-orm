@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.hibernate.JDBCException;
 import org.hibernate.LockOptions;
-import org.hibernate.dialect.function.SQLFunctionTemplate;
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockTimeoutException;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;

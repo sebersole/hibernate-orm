@@ -13,7 +13,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
-import org.hibernate.annotations.Generated;
 import org.hibernate.envers.Audited;
 
 /**

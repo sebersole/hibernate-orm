@@ -9,7 +9,6 @@ package org.hibernate.event.service.spi;
 import java.io.Serializable;
 
 import org.hibernate.Metamodel;
-import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.service.Service;
 

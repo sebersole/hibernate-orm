@@ -11,7 +11,6 @@ import java.sql.Statement;
 import java.util.List;
 
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.internal.util.StringHelper;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfBasics;
 
@@ -25,7 +24,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hibernate.orm.test.support.domains.retail.ModelClasses.applyRetailModel;
-import static org.hibernate.orm.test.support.util.LobHelper.createClob;
 import static org.hibernate.testing.hamcrest.CollectionMatchers.hasSize;
 
 /**

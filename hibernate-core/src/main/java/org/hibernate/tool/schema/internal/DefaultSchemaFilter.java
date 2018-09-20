@@ -9,7 +9,6 @@ package org.hibernate.tool.schema.internal;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
 import org.hibernate.metamodel.model.relational.spi.Namespace;
 import org.hibernate.metamodel.model.relational.spi.Sequence;
-import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.tool.schema.spi.SchemaFilter;
 
 /**

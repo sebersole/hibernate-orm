@@ -25,7 +25,6 @@ import org.hibernate.envers.internal.synchronization.work.CollectionChangeWorkUn
 import org.hibernate.envers.internal.synchronization.work.FakeBidirectionalRelationWorkUnit;
 import org.hibernate.envers.internal.synchronization.work.PersistentCollectionChangeWorkUnit;
 import org.hibernate.event.spi.AbstractCollectionEvent;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 
 /**
  * Base class for Envers' collection event related listeners

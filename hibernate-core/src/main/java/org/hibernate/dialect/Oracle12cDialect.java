@@ -6,7 +6,6 @@
  */
 package org.hibernate.dialect;
 
-import org.hibernate.LobHelper;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.identity.IdentityColumnSupport;

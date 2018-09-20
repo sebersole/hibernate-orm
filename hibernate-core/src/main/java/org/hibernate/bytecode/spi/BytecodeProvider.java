@@ -8,7 +8,6 @@ package org.hibernate.bytecode.spi;
 
 import org.hibernate.bytecode.enhance.spi.EnhancementContext;
 import org.hibernate.bytecode.enhance.spi.Enhancer;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**

@@ -12,7 +12,6 @@ import org.hibernate.query.sqm.consume.multitable.spi.IdTableStrategy;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTempTableExporter;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.GlobalTemporaryTableStrategy;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
-import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableExporterImpl;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTableSupport;
 import org.hibernate.query.sqm.produce.function.SqmFunctionRegistry;
 import org.hibernate.tool.schema.spi.Exporter;

@@ -9,10 +9,8 @@ package org.hibernate.tool.schema.extract.spi;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.engine.jdbc.env.spi.IdentifierHelper;
 import org.hibernate.metamodel.model.relational.spi.ExportableTable;
-import org.hibernate.metamodel.model.relational.spi.Table;
 
 /**
  * @author Andrea Boriero

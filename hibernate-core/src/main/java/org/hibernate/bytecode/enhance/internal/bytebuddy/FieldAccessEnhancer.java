@@ -8,7 +8,6 @@ package org.hibernate.bytecode.enhance.internal.bytebuddy;
 
 import javax.persistence.Id;
 
-import net.bytebuddy.description.method.MethodList;
 import org.hibernate.bytecode.enhance.spi.EnhancementException;
 import org.hibernate.bytecode.enhance.spi.EnhancerConstants;
 import org.hibernate.internal.CoreLogging;

@@ -21,7 +21,6 @@ import org.hibernate.MappingException;
 import org.hibernate.annotations.JoinColumnOrFormula;
 import org.hibernate.annotations.JoinFormula;
 import org.hibernate.annotations.common.reflection.XClass;
-import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.boot.model.naming.EntityNaming;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.relational.MappedTable;

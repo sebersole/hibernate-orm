@@ -7,8 +7,6 @@
 package org.hibernate.orm.test.query.sqm.produce;
 
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.metamodel.model.domain.spi.CollectionIndex;
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.orm.test.query.sqm.BaseSqmUnitTest;
 import org.hibernate.orm.test.query.sqm.produce.domain.Person;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfLists;
@@ -28,7 +26,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**

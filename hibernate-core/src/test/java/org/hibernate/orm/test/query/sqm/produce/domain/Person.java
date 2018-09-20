@@ -15,8 +15,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.hibernate.orm.test.query.sqm.produce.AttributePathTests;
-
 /**
  * @author Steve Ebersole
  */

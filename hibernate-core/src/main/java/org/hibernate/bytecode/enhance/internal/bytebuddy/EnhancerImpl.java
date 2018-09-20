@@ -40,7 +40,6 @@ import org.hibernate.engine.spi.SelfDirtinessTracker;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
@@ -53,7 +52,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;

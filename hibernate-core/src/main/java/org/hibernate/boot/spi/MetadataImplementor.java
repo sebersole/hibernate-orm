@@ -6,18 +6,14 @@
  */
 package org.hibernate.boot.spi;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.Metadata;
-import org.hibernate.cache.cfg.internal.DomainDataRegionConfigImpl;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.envers.boot.spi.AuditMetadataBuilderImplementor;
 import org.hibernate.mapping.MappedSuperclass;
 import org.hibernate.query.spi.NamedQueryRepository;
-import org.hibernate.type.Type;
-import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**

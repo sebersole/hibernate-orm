@@ -68,7 +68,6 @@ import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.proxy.ProxyFactory;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;

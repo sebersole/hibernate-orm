@@ -8,7 +8,6 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 

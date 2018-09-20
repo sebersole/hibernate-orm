@@ -22,7 +22,6 @@ import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit5.RequiresDialect;
 import org.hibernate.testing.junit5.schema.SchemaScope;
 import org.hibernate.testing.junit5.schema.SchemaTest;
-import org.junit.jupiter.api.BeforeEach;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;

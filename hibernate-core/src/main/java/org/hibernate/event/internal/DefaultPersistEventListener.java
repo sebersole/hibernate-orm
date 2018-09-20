@@ -6,7 +6,6 @@
  */
 package org.hibernate.event.internal;
 
-import java.io.Serializable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -24,8 +23,6 @@ import org.hibernate.event.spi.PersistEventListener;
 import org.hibernate.id.ForeignGenerator;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.jpa.event.spi.CallbackRegistry;
-import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.pretty.MessageHelper;

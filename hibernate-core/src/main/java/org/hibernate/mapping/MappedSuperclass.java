@@ -19,7 +19,6 @@ import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.MappedJoin;
 import org.hibernate.boot.model.domain.MappedSuperclassJavaTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
-import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.domain.internal.AbstractMappedSuperclassMapping;
 import org.hibernate.boot.model.relational.MappedTable;
 import org.hibernate.cfg.NotYetImplementedException;

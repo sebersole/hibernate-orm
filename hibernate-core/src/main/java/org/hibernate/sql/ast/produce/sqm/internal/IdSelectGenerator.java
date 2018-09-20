@@ -38,11 +38,9 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 
 /**
  * Specialized SqmSelectToSqlAstConverter extension to help in generating the

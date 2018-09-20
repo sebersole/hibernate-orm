@@ -6,10 +6,8 @@
  */
 package org.hibernate.boot.model.domain;
 
-import org.hibernate.boot.model.relational.ForeignKeyExporter;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.mapping.ForeignKey;
 
 /**
  * @author Steve Ebersole

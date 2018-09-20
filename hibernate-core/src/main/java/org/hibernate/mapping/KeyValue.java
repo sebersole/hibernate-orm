@@ -7,7 +7,6 @@
 package org.hibernate.mapping;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.domain.ValueMapping;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;

@@ -24,7 +24,6 @@ import org.hibernate.annotations.common.reflection.MetadataProvider;
 import org.hibernate.annotations.common.reflection.java.JavaMetadataProvider;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.BootstrapContext;
-import org.hibernate.boot.spi.BootstrapContext;
 
 import org.dom4j.Element;
 

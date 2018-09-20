@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -68,7 +67,6 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
-import org.hibernate.sql.ast.produce.metamodel.internal.MetamodelSelectBuilderProcess;
 import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;

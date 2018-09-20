@@ -6,11 +6,8 @@
  */
 package org.hibernate.sql.results.internal.domain.entity;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
-import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.Initializer;
 
 /**

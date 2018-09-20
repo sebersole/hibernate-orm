@@ -8,7 +8,6 @@ package org.hibernate.boot.model.resultset.internal;
 
 import org.hibernate.LockMode;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
-import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Models a defined Fetch (Hibernate only)

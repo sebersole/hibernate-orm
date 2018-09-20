@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression;
 
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.consume.spi.SqlAstWalker;

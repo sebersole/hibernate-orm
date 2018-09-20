@@ -16,7 +16,6 @@ import javax.persistence.TemporalType;
 import org.hibernate.Internal;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.AllowableTemporalParameterType;
-import org.hibernate.type.descriptor.java.spi.TemporalJavaDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
 import org.hibernate.type.spi.TypeConfiguration;
