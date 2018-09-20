@@ -12,10 +12,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.hibernate.sql.ast.consume.spi.SqlAstWalker;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.NonQualifiableSqlExpressable;
 import org.hibernate.sql.ast.produce.spi.QualifiableSqlExpressable;
-import org.hibernate.sql.ast.produce.spi.SqlExpressable;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
@@ -30,9 +30,9 @@ import org.hibernate.type.spi.TypeConfiguration;
 public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 	private final Supplier<QuerySpec> querySpecSupplier;
 	private final Function<Expression, Expression> normalizer;
-	private final BiConsumer<Expression,SqlSelection> selectionConsumer;
+	private final BiConsumer<Expression, SqlSelection> selectionConsumer;
 
-	private Map<SqlExpressable,SqlSelection> sqlSelectionMap;
+	private Map<Expression, SqlSelection> sqlSelectionMap;
 	private int nonEmptySelections = 0;
 
 	public StandardSqlExpressionResolver(
@@ -67,13 +67,12 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 			existing = null;
 		}
 		else {
-			existing = sqlSelectionMap.get( expression.getExpressable() );
+			existing = sqlSelectionMap.get( expression );
 		}
 
 		if ( existing != null ) {
 			return existing;
 		}
-
 
 		final SqlSelection sqlSelection = expression.createSqlSelection(
 				nonEmptySelections + 1,
@@ -82,10 +81,10 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 				typeConfiguration
 		);
 
-		sqlSelectionMap.put( expression.getExpressable(), sqlSelection );
+		sqlSelectionMap.put( expression, sqlSelection );
 		selectionConsumer.accept( expression, sqlSelection );
 
-		if ( ! ( sqlSelection instanceof EmptySqlSelection ) ) {
+		if ( !( sqlSelection instanceof EmptySqlSelection ) ) {
 			nonEmptySelections++;
 		}
 
@@ -99,7 +98,7 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 	public SqlSelection emptySqlSelection() {
 		final EmptySqlSelection selection = new EmptySqlSelection( sqlSelectionMap.size() );
 		sqlSelectionMap.put(
-				() -> null,
+				EmptyExpression.EMPTY_EXPRESSION,
 				selection
 		);
 
@@ -107,5 +106,26 @@ public class StandardSqlExpressionResolver implements SqlExpressionResolver {
 		querySpec.getSelectClause().addSqlSelection( selection );
 
 		return selection;
+	}
+
+	public static class EmptyExpression implements Expression {
+		public static final EmptyExpression EMPTY_EXPRESSION = new EmptyExpression();
+
+		private EmptyExpression() {
+		}
+
+		@Override
+		public SqlSelection createSqlSelection(
+				int jdbcPosition,
+				int valuesArrayPosition,
+				BasicJavaDescriptor javaTypeDescriptor,
+				TypeConfiguration typeConfiguration) {
+			return null;
+		}
+
+		@Override
+		public void accept(SqlAstWalker sqlTreeWalker) {
+
+		}
 	}
 }

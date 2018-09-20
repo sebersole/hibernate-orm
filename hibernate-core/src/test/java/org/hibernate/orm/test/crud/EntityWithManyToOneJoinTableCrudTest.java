@@ -71,7 +71,6 @@ public class EntityWithManyToOneJoinTableCrudTest extends SessionFactoryBasedFun
 				}
 		);
 
-
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final String value = session.createQuery(
