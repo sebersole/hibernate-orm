@@ -20,7 +20,6 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.jpa.QueryHints;
 import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
-import org.hibernate.procedure.internal.Util;
 
 /**
  * @author Steve Ebersole

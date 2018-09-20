@@ -7,7 +7,6 @@
 package org.hibernate.tool.schema.spi;
 
 import org.hibernate.Incubating;
-import org.hibernate.boot.Metadata;
 
 /**
  * Service delegate for handling schema validations

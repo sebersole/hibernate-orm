@@ -13,7 +13,6 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithOneToOneSharingPrimaryKey;
 import org.hibernate.orm.test.support.domains.gambit.SimpleEntity;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;

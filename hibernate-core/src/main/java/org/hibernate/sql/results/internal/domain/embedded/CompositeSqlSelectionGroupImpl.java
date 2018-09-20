@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.internal.domain.embedded;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.hibernate.annotations.Remove;

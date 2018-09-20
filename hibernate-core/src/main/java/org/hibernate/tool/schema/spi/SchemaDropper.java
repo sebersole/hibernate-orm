@@ -7,7 +7,6 @@
 package org.hibernate.tool.schema.spi;
 
 import org.hibernate.Incubating;
-import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 
 /**
  * Service delegate for handling schema dropping.

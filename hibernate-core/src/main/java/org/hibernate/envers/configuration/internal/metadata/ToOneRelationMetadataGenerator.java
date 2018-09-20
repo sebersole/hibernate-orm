@@ -21,7 +21,6 @@ import org.hibernate.envers.internal.entities.mapper.relation.ToOneIdMapper;
 import org.hibernate.envers.internal.tools.MappingTools;
 import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.ToOne;
-import org.hibernate.mapping.Value;
 
 import org.dom4j.Element;
 

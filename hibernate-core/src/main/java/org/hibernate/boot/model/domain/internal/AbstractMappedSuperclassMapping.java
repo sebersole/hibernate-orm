@@ -9,7 +9,6 @@ package org.hibernate.boot.model.domain.internal;
 import javax.persistence.metamodel.Type.PersistenceType;
 
 import org.hibernate.boot.model.domain.EntityMappingHierarchy;
-import org.hibernate.boot.model.domain.MappedSuperclassJavaTypeMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.spi.MappedSuperclassImplementor;

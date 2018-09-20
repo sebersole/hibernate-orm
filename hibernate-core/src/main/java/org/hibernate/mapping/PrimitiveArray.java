@@ -7,7 +7,6 @@
 package org.hibernate.mapping;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
-import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * A primitive array has a primary key consisting of the key columns + index column.

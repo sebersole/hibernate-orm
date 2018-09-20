@@ -10,7 +10,6 @@ import java.util.Calendar;
 
 import org.hamcrest.CoreMatchers;
 
-import org.hibernate.Session;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EntityWithOneToOne;

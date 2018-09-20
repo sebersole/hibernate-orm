@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.hibernate.engine.spi.CacheInitiator;
 import org.hibernate.event.service.internal.EventListenerServiceInitiator;
-import org.hibernate.query.spi.NativeQueryInterpreter;
 import org.hibernate.query.spi.NativeQueryInterpreterInitiator;
 import org.hibernate.service.spi.SessionFactoryServiceInitiator;
 import org.hibernate.stat.internal.StatisticsInitiator;

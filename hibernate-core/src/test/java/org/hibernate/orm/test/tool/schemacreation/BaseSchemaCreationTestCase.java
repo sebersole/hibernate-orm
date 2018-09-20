@@ -18,8 +18,6 @@ import org.hibernate.tool.schema.internal.exec.GenerationTargetToStdout;
 import org.hibernate.testing.junit5.RequiresDialect;
 import org.hibernate.testing.junit5.schema.SchemaScope;
 
-import org.junit.jupiter.api.BeforeEach;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

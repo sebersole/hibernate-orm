@@ -6,11 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.Collection;
-
-import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
-import org.hibernate.naming.Identifier;
-
 /**
  * Contract for things that can be locked via a {@link org.hibernate.dialect.lock.LockingStrategy}.
  * <p/>

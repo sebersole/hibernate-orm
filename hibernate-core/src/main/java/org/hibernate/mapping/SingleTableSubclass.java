@@ -10,9 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.hibernate.MappingException;
-import org.hibernate.boot.model.domain.EntityJavaTypeMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
-import org.hibernate.boot.model.domain.internal.EntityJavaTypeMappingImpl;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.internal.util.collections.JoinedIterator;

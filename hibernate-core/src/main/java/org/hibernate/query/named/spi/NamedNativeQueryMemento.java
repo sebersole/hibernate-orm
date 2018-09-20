@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.named.spi;
 
-import java.util.Collection;
 import java.util.Set;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;

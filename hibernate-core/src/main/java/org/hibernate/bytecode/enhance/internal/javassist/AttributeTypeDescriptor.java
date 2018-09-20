@@ -15,7 +15,6 @@ import javassist.CtClass;
 import javassist.CtField;
 import javassist.NotFoundException;
 
-import org.hibernate.bytecode.enhance.spi.EnhancementContext;
 import org.hibernate.bytecode.enhance.spi.EnhancerConstants;
 import org.hibernate.internal.util.compare.EqualsHelper;
 

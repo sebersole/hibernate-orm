@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.sqm.internal;
 
-import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
@@ -14,7 +13,6 @@ import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.consume.multitable.spi.UpdateHandler;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.ParameterBindingContext;
-import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 
 /**
  * @author Steve Ebersole

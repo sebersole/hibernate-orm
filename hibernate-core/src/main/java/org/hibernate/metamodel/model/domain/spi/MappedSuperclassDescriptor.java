@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import javax.persistence.metamodel.MappedSuperclassType;
 
-import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;

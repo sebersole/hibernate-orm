@@ -10,7 +10,6 @@ import java.io.Serializable;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.EntityEntryFactory;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.type.descriptor.java.spi.EntityMutabilityPlan;
 
 /**

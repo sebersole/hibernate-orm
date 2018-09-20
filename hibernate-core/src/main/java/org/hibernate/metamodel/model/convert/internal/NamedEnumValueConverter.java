@@ -19,7 +19,6 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.type.descriptor.java.internal.EnumJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
-import org.hibernate.type.spi.TypeConfigurationAware;
 
 import org.jboss.logging.Logger;
 

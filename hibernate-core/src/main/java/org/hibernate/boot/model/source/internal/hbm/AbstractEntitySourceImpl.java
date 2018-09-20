@@ -35,7 +35,6 @@ import org.hibernate.boot.model.source.spi.EntityHierarchySource;
 import org.hibernate.boot.model.source.spi.EntityNamingSource;
 import org.hibernate.boot.model.source.spi.EntitySource;
 import org.hibernate.boot.model.source.spi.FilterSource;
-import org.hibernate.boot.model.source.spi.IdentifiableTypeSource;
 import org.hibernate.boot.model.source.spi.JpaCallbackSource;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
 import org.hibernate.boot.model.source.spi.NaturalIdMutability;

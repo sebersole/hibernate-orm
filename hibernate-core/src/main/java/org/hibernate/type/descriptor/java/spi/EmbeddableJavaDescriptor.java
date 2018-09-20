@@ -6,9 +6,6 @@
  */
 package org.hibernate.type.descriptor.java.spi;
 
-import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
-
 /**
  * Models information about an embeddable.
  *

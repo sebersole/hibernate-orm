@@ -7,7 +7,6 @@
 package org.hibernate.query.sqm.tree.expression.domain;
 
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.query.sqm.tree.from.SqmFromExporter;
 
 /**
  * Models the binding of a persistent attribute of the domain model.
