@@ -24,6 +24,9 @@ import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
 
 /**
+ * EntityFetch implementation for cases where we will immediately load the
+ * entity via subsequent select by the mapped (non-PK) unique key
+ *
  * @author Steve Ebersole
  */
 public class ImmediateUkEntityFetch extends AbstractImmediateEntityFetch {
@@ -55,6 +58,7 @@ public class ImmediateUkEntityFetch extends AbstractImmediateEntityFetch {
 
 		final EntityInitializer initializer = new ImmediateUkEntityFetchInitializer(
 				getFetchedNavigable(),
+				getNavigablePath(),
 				loader,
 				parentAccess,
 				keyResult.createResultAssembler( subInitializerConsumer, creationState, creationContext ),

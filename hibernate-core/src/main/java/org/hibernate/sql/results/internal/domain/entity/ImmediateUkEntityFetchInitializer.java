@@ -13,11 +13,15 @@ import org.hibernate.engine.spi.EntityUniqueKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
+ * Subsequent select initializer.  See {@link ImmediateUkEntityFetch}
+ *
  * @author Steve Ebersole
  */
 public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFetchInitializer {
@@ -29,12 +33,13 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 	public ImmediateUkEntityFetchInitializer(
 			EntityValuedNavigable fetchedNavigable,
+			NavigablePath navigablePath,
 			SingleEntityLoader loader,
 			FetchParentAccess parentAccess,
 			DomainResultAssembler keyValueAssembler,
 			NotFoundAction notFoundAction,
 			BiFunction<Object, SharedSessionContractImplementor,EntityUniqueKey> uniqueKeyGenerator) {
-		super( fetchedNavigable, loader, parentAccess, keyValueAssembler, notFoundAction );
+		super( fetchedNavigable, navigablePath, loader, parentAccess, keyValueAssembler, notFoundAction );
 		this.uniqueKeyGenerator = uniqueKeyGenerator;
 	}
 
@@ -44,10 +49,12 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 	}
 
 	@Override
-	protected void afterHydrate(Object keyValue, RowProcessingState rowProcessingState) {
+	public void resolveInstance(RowProcessingState rowProcessingState) {
 		if ( entityKey != null ) {
 			return;
 		}
+
+		final Object keyValue = getKeyValue();
 
 		if ( keyValue == null ) {
 			return;
@@ -109,7 +116,14 @@ public class ImmediateUkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
+		super.finishUpRow( rowProcessingState );
+
 		entityKey = null;
 		isLoadingEntity = false;
+	}
+
+	@Override
+	public String toString() {
+		return "ImmediateUkEntityFetchInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }

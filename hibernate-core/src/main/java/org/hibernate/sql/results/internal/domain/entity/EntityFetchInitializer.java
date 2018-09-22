@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResult;
@@ -19,6 +20,8 @@ import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
+ * Initializer instance created from {@link EntityFetchImpl}
+ *
  * @author Steve Ebersole
  */
 public class EntityFetchInitializer extends AbstractEntityInitializer {
@@ -59,5 +62,10 @@ public class EntityFetchInitializer extends AbstractEntityInitializer {
 		// Use `parentAccess` to inject the parent instance into
 		// the fetched entity
 		super.finishUpRow( rowProcessingState );
+	}
+
+	@Override
+	public String toString() {
+		return "EntityFetchInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }

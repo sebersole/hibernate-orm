@@ -60,20 +60,21 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		);
 
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
-		sessionFactoryScope().inTransaction(
+
+		sessionFactoryScope().inSession(
 				session -> {
 					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
 					assert value == 1;
 				}
 		);
-		sessionFactoryScope().inTransaction(
+		sessionFactoryScope().inSession(
 				session -> {
 					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfBasics(), 2 );
 				}
 		);
-		sessionFactoryScope().inTransaction(
+		sessionFactoryScope().inSession(
 				session -> {
 					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
 							.multiLoad( 1, 2 );
@@ -88,7 +89,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 	private void checkExpectedSize(Collection collection, int expectedSize) {
 		// todo (6.0) : loading collections not yet implemented
 		//		skip for now
-		Hibernate.initialize( collection );
+		assert Hibernate.isInitialized( collection );
 		if ( collection.size() != expectedSize ) {
 			Assert.fail(
 					"Expecting Collection of size `" + expectedSize +
@@ -100,7 +101,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 
 	@Test
-	@FailureExpected( "A problem in missing rows from the result set" )
+//	@FailureExpected( "A problem in missing rows from the result set" )
 	public void testEagerOperations() {
 		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
 
@@ -146,7 +147,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 //		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-		sessionFactoryScope().inTransaction(
+		sessionFactoryScope().inSession(
 				session -> {
 					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
 					assert value == 1;
@@ -158,15 +159,16 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		//		- for the outer join case, run into a problem with not all of PersistentCollectionDescriptor
 		//			used by PersistentCollection are done (specifically reading size)
 
-		sessionFactoryScope().inTransaction(
+		sessionFactoryScope().inSession(
 				session -> {
+					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e left join fetch e.setOfBasics", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfBasics(), 2 );
 				}
 		);
 
-		sessionFactoryScope().inTransaction(
+		sessionFactoryScope().inSession(
 				session -> {
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e inner join fetch e.setOfBasics", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;

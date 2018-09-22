@@ -11,12 +11,15 @@ import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.LoadingEntityEntry;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
+ * Subsequent select initializer.  See {@link ImmediatePkEntityFetch}
+ *
  * @author Steve Ebersole
  */
 public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFetchInitializer {
@@ -26,11 +29,12 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 	public ImmediatePkEntityFetchInitializer(
 			EntityValuedNavigable fetchedNavigable,
+			NavigablePath navigablePath,
 			SingleEntityLoader loader,
 			FetchParentAccess parentAccess,
 			DomainResultAssembler keyValueAssembler,
 			NotFoundAction notFoundAction) {
-		super( fetchedNavigable, loader, parentAccess, keyValueAssembler, notFoundAction );
+		super( fetchedNavigable, navigablePath, loader, parentAccess, keyValueAssembler, notFoundAction );
 	}
 
 	@Override
@@ -38,11 +42,14 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 		return KeyType.PK;
 	}
 
+
 	@Override
-	protected void afterHydrate(Object keyValue, RowProcessingState rowProcessingState) {
+	public void resolveInstance(RowProcessingState rowProcessingState) {
 		if ( entityKey != null ) {
 			return;
 		}
+
+		final Object keyValue = getKeyValue();
 
 		if ( keyValue == null ) {
 			return;
@@ -95,6 +102,8 @@ public class ImmediatePkEntityFetchInitializer extends AbstractImmediateEntityFe
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
+		super.finishUpRow( rowProcessingState );
+
 		entityKey = null;
 		isLoadingEntity = false;
 	}

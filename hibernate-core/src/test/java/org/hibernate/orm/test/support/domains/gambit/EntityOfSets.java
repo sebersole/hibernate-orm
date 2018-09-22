@@ -26,6 +26,7 @@ public class EntityOfSets {
 	private Integer id;
 	private Set<String> setOfBasics;
 	private Set<Component> setOfComponents;
+	private Set<Component> setOfExtraLazyComponents;
 	private Set<EntityOfSets> setOfOneToMany;
 	private Set<EntityOfSets> setOfManyToMany;
 
@@ -50,7 +51,6 @@ public class EntityOfSets {
 	}
 
 	@ElementCollection
-	@LazyCollection( LazyCollectionOption.EXTRA )
 	public Set<String> getSetOfBasics() {
 		return setOfBasics;
 	}
@@ -66,6 +66,16 @@ public class EntityOfSets {
 
 	public void setSetOfComponents(Set<Component> setOfComponents) {
 		this.setOfComponents = setOfComponents;
+	}
+
+	@ElementCollection
+	@LazyCollection( LazyCollectionOption.EXTRA )
+	public Set<Component> getSetOfExtraLazyComponents() {
+		return setOfExtraLazyComponents;
+	}
+
+	public void setSetOfExtraLazyComponents(Set<Component> setOfExtraLazyComponents) {
+		this.setOfExtraLazyComponents = setOfExtraLazyComponents;
 	}
 
 	@OneToMany

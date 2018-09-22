@@ -462,7 +462,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 
 	public void load(E element) {
 		assert isInitializing();
-		set.add( element );
+		tempList.add( element );
 	}
 
 	final class Clear implements DelayedOperation {

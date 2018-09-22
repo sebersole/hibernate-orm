@@ -11,6 +11,7 @@ import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.collection.internal.PersistentIdentifierBag;
 import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -52,5 +53,10 @@ public class BagInitializer extends AbstractImmediateCollectionInitializer {
 		else {
 			( (PersistentBag) getCollectionInstance() ).load( elementAssembler.assemble( rowProcessingState ) );
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "BagInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }

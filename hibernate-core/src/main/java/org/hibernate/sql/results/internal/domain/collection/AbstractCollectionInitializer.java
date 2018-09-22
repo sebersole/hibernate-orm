@@ -7,9 +7,11 @@
 package org.hibernate.sql.results.internal.domain.collection;
 
 import org.hibernate.engine.spi.CollectionKey;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
@@ -32,6 +34,9 @@ public abstract class AbstractCollectionInitializer implements CollectionInitial
 	// per-row state
 	private Object keyContainerValue;
 	private Object keyCollectionValue;
+
+	private CollectionKey collectionKey;
+
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractCollectionInitializer(
@@ -99,7 +104,7 @@ public abstract class AbstractCollectionInitializer implements CollectionInitial
 	}
 
 	@Override
-	public void hydrate(RowProcessingState rowProcessingState) {
+	public void resolveKey(RowProcessingState rowProcessingState) {
 		keyContainerValue = keyTargetAssembler.assemble(
 				rowProcessingState,
 				rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
@@ -114,16 +119,31 @@ public abstract class AbstractCollectionInitializer implements CollectionInitial
 					rowProcessingState.getJdbcValuesSourceProcessingState().getProcessingOptions()
 			);
 		}
+
+		collectionKey = new CollectionKey(
+				getFetchedAttribute().getPersistentCollectionDescriptor(),
+				getKeyContainerValue()
+		);
+
+		if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+			CollectionLoadingLogger.INSTANCE.debugf(
+					"(%s) Current row collection key : %s",
+					StringHelper.collapse( this.getClass().getName() ),
+					LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() )
+			);
+		}
 	}
 
 	@SuppressWarnings("WeakerAccess")
 	protected CollectionKey resolveCollectionKey(@SuppressWarnings("unused") RowProcessingState rowProcessingState) {
-		return new CollectionKey( getFetchedAttribute().getPersistentCollectionDescriptor(), getKeyContainerValue() );
+		return collectionKey;
 	}
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		keyContainerValue = null;
 		keyCollectionValue = null;
+
+		collectionKey = null;
 	}
 }

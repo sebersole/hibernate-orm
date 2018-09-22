@@ -8,14 +8,12 @@ package org.hibernate.sql.results.internal.domain.embedded;
 
 import java.util.function.Consumer;
 
-import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeInitializer;
 import org.hibernate.sql.results.spi.CompositeMappingNode;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
  * @author Steve Ebersole
@@ -30,11 +28,6 @@ public class CompositeFetchInitializerImpl
 			AssemblerCreationContext creationContext,
 			AssemblerCreationState creationState) {
 		super( resultDescriptor, fetchParentAccess, initializerConsumer, creationContext, creationState );
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-
 	}
 
 	@Override

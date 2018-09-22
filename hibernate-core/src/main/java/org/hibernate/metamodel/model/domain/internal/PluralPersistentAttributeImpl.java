@@ -291,19 +291,18 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 		final Object key = identifierDescriptor.asAttribute( identifierDescriptor.getJavaType() ).getPropertyAccess().getGetter().get( containerInstance );
 
 		PersistentCollectionDescriptor collectionDescriptor = getPersistentCollectionDescriptor();
+
+		final CollectionKey collectionKey = new CollectionKey( collectionDescriptor, key );
+
 		final PersistenceContext persistenceContext = session.getPersistenceContext();
 
 		// check if collection is currently being loaded
-		final LoadingCollectionEntry loadingCollectionEntry = persistenceContext.getLoadContexts().findLoadingCollectionEntry(
-				collectionDescriptor,
-				key
-		);
+		final LoadingCollectionEntry loadingCollectionEntry = persistenceContext.getLoadContexts()
+				.findLoadingCollectionEntry( collectionKey );
 
 		PersistentCollection collection = loadingCollectionEntry == null ? null : loadingCollectionEntry.getCollectionInstance();
 
 		if ( collection == null ) {
-			final CollectionKey collectionKey = new CollectionKey( collectionDescriptor, key );
-
 			// check if it is already completely loaded, but unowned
 			collection = persistenceContext.useUnownedCollection( collectionKey );
 

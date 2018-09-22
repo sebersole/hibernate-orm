@@ -79,7 +79,8 @@ public class NavigableRole implements Serializable {
 	}
 
 	public boolean isRoot() {
-		return parent == null && StringHelper.isEmpty( navigableName );
+//		return parent == null && StringHelper.isEmpty( navigableName );
+		return parent == null;
 	}
 
 	@Override

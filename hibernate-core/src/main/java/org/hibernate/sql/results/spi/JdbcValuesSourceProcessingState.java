@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.PostLoadEvent;
@@ -58,18 +59,15 @@ public interface JdbcValuesSourceProcessingState {
 	/**
 	 * Find a LoadingCollectionEntry locally to this context.
 	 *
-	 * @see LoadContexts#findLoadingCollectionEntry(PersistentCollectionDescriptor, Object)
+	 * @see LoadContexts#findLoadingCollectionEntry(CollectionKey)
 	 */
-	LoadingCollectionEntry findLoadingCollectionLocally(
-			PersistentCollectionDescriptor collectionDescriptor,
-			Object key);
+	LoadingCollectionEntry findLoadingCollectionLocally(CollectionKey key);
 
 	/**
 	 * Registers a LoadingCollectionEntry locally to this context
 	 */
 	void registerLoadingCollection(
-			PersistentCollectionDescriptor collectionDescriptor,
-			Object key,
+			CollectionKey collectionKey,
 			LoadingCollectionEntry loadingCollectionEntry);
 
 	void finishUp();

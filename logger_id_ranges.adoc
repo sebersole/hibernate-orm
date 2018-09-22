@@ -71,7 +71,15 @@
 |org.hibernate.sql.exec.SqlExecLogger
 
 |90005001
-|90006000
+|90005100
 |org.hibernate.sql.results.SqlResultsLogger
+
+|90005101
+|90005200
+|org.hibernate.sql.results.internal.domain.collection.CollectionLoadingLogger
+
+|90005201
+|90005300
+|org.hibernate.sql.results.internal.domain.entity.EntityLoadingLogger
 
 |===

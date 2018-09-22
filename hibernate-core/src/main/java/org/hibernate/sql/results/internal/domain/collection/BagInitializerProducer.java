@@ -74,7 +74,7 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 			);
 		}
 
-		final BagInitializer bagInitializer = new BagInitializer(
+		return new BagInitializer(
 				bagDescriptor,
 				parentAccess,
 				navigablePath,
@@ -85,9 +85,5 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 				elementAssembler,
 				collectionIdAssembler
 		);
-
-		initializerConsumer.accept( bagInitializer );
-
-		return bagInitializer;
 	}
 }

@@ -10,6 +10,7 @@ import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentMap;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -53,5 +54,10 @@ public class MapInitializer extends AbstractImmediateCollectionInitializer {
 				mapKeyAssembler.assemble( rowProcessingState ),
 				mapValueAssembler.assemble( rowProcessingState )
 		);
+	}
+
+	@Override
+	public String toString() {
+		return "MapInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }
