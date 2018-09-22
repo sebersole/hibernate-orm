@@ -61,6 +61,6 @@ public class LoadingCollectionEntry {
 
 	public void finishLoading(ExecutionContext executionContext) {
 		collectionInstance.endRead();
-		collectionInstance.afterInitialize();
+//		collectionInstance.afterInitialize();
 	}
 }

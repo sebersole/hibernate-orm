@@ -31,9 +31,6 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 	private final int assemblerCount;
 	private final Callback callback;
 
-	// todo (6.0) : partition the incoming `initializers` into separate Lists based on type
-	//		e.g. `List<EntityInitializer>` versus `List<CollectionInitializer>` versus `List<ComponentInitializer>`
-
 	public RowReaderStandardImpl(
 			List<DomainResultAssembler> resultAssemblers,
 			List<Initializer> initializers,
@@ -91,11 +88,15 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 			JdbcValuesSourceProcessingOptions options) {
 
 		for ( Initializer initializer : initializers ) {
-			initializer.hydrate( rowProcessingState );
+			initializer.resolveKey( rowProcessingState );
 		}
 
 		for ( Initializer initializer : initializers ) {
-			initializer.resolve( rowProcessingState );
+			initializer.resolveInstance( rowProcessingState );
+		}
+
+		for ( Initializer initializer : initializers ) {
+			initializer.initializeInstance( rowProcessingState );
 		}
 	}
 

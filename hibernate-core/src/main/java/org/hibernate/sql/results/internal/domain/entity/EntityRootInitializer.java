@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResult;
@@ -17,7 +18,8 @@ import org.hibernate.sql.results.spi.EntityMappingNode;
 import org.hibernate.sql.results.spi.Initializer;
 
 /**
- * InitializerEntity for root
+ * Initializer for cases where the entity is a root domain selection
+ *
  * @author Steve Ebersole
  */
 public class EntityRootInitializer extends AbstractEntityInitializer {
@@ -47,5 +49,10 @@ public class EntityRootInitializer extends AbstractEntityInitializer {
 	@Override
 	protected boolean isEntityReturn() {
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "EntityRootInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }

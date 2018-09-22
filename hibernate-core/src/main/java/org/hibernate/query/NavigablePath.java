@@ -81,7 +81,8 @@ public class NavigablePath implements Loggable {
 	}
 
 	public boolean isRoot() {
-		return parent == null && StringHelper.isEmpty( localName );
+//		return parent == null && StringHelper.isEmpty( localName );
+		return parent == null;
 	}
 
 	@Override

@@ -10,6 +10,7 @@ import org.hibernate.LockMode;
 import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -45,7 +46,7 @@ public class SetInitializer extends AbstractImmediateCollectionInitializer {
 	}
 
 	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-		super.finishUpRow( rowProcessingState );
+	public String toString() {
+		return "SetInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";
 	}
 }

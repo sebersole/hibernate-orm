@@ -48,7 +48,8 @@ public class ListInitializerProducer implements CollectionInitializerProducer {
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
-		final ListInitializer listInitializer = new ListInitializer(
+
+		return new ListInitializer(
 				listDescriptor,
 				parentAccess,
 				navigablePath,
@@ -67,9 +68,5 @@ public class ListInitializerProducer implements CollectionInitializerProducer {
 						creationContext
 				)
 		);
-
-		initializerConsumer.accept( listInitializer );
-
-		return listInitializer;
 	}
 }

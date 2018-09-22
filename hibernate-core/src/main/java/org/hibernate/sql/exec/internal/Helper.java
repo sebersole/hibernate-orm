@@ -36,7 +36,9 @@ import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.RowTransformer;
+import org.hibernate.sql.results.SqlResultsLogger;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -120,7 +122,11 @@ public class Helper {
 //		};
 
 		final List<DomainResultAssembler> assemblers = jdbcValues.getResultSetMapping().resolveAssemblers(
-				initializers::add,
+				initializer -> {
+					// noinspection Convert2MethodRef
+					SqlResultsLogger.INSTANCE.debug( "Adding initializer : " + initializer );
+					initializers.add( initializer );
+				},
 				new AssemblerCreationState() {
 					@Override
 					public LoadQueryInfluencers getLoadQueryInfluencers() {

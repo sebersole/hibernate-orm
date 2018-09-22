@@ -61,7 +61,7 @@ public class MapInitializerProducer implements CollectionInitializerProducer {
 				creationContext
 		);
 
-		final MapInitializer mapInitializer = new MapInitializer(
+		return new MapInitializer(
 				mapDescriptor,
 				parentAccess,
 				navigablePath,
@@ -72,9 +72,5 @@ public class MapInitializerProducer implements CollectionInitializerProducer {
 				mapKeyAssembler,
 				mapValueAssembler
 		);
-
-		initializerConsumer.accept( mapInitializer );
-
-		return mapInitializer;
 	}
 }

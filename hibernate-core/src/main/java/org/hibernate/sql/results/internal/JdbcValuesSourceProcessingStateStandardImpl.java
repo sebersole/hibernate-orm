@@ -9,6 +9,7 @@ package org.hibernate.sql.results.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.EventSource;
@@ -18,7 +19,6 @@ import org.hibernate.graph.spi.AttributeNodeContainer;
 import org.hibernate.graph.spi.AttributeNodeImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.EntityGraphQueryHint;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -40,7 +40,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	private final JdbcValuesSourceProcessingOptions processingOptions;
 
 	private Map<EntityKey,LoadingEntityEntry> loadingEntityMap;
-	private Map<PersistentCollectionDescriptor,Map<Object,LoadingCollectionEntry>> loadingCollectionMap;
+	private Map<CollectionKey,LoadingCollectionEntry> loadingCollectionMap;
 
 	private FetchContext fetchContext;
 
@@ -186,41 +186,21 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
-	public LoadingCollectionEntry findLoadingCollectionLocally(
-			PersistentCollectionDescriptor collectionDescriptor,
-			Object key) {
+	public LoadingCollectionEntry findLoadingCollectionLocally(CollectionKey key) {
 		if ( loadingCollectionMap == null ) {
 			return null;
 		}
 
-		final Map<Object, LoadingCollectionEntry> entryMap = loadingCollectionMap.get( collectionDescriptor );
-		if ( entryMap == null ) {
-			return null;
-		}
-
-		return entryMap.get( key );
+		return loadingCollectionMap.get( key );
 	}
 
 	@Override
-	public void registerLoadingCollection(
-			PersistentCollectionDescriptor collectionDescriptor,
-			Object key,
-			LoadingCollectionEntry loadingCollectionEntry) {
-		Map<Object, LoadingCollectionEntry> collectionEntryMap = null;
-
+	public void registerLoadingCollection(CollectionKey key, LoadingCollectionEntry loadingCollectionEntry) {
 		if ( loadingCollectionMap == null ) {
 			loadingCollectionMap = new HashMap<>();
 		}
-		else {
-			collectionEntryMap = loadingCollectionMap.get( collectionDescriptor );
-		}
 
-		if ( collectionEntryMap == null ) {
-			collectionEntryMap = new HashMap<>();
-			loadingCollectionMap.put( collectionDescriptor, collectionEntryMap );
-		}
-
-		collectionEntryMap.put( key, loadingCollectionEntry );
+		loadingCollectionMap.put( key, loadingCollectionEntry );
 	}
 
 	@Override
@@ -277,11 +257,11 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 
 	private void finishLoadingCollections() {
 		if ( loadingCollectionMap != null ) {
-			loadingCollectionMap.values().forEach(
-					loadingEntryMap -> loadingEntryMap.values().forEach(
-							loadingCollectionEntry -> loadingCollectionEntry.finishLoading( getExecutionContext() )
-					)
-			);
+			for ( LoadingCollectionEntry loadingCollectionEntry : loadingCollectionMap.values() ) {
+				loadingCollectionEntry.finishLoading( getExecutionContext() );
+			}
+
+			loadingCollectionMap.clear();
 		}
 	}
 

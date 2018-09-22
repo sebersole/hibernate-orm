@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.hibernate.engine.FetchTiming;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
@@ -26,22 +26,12 @@ import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
+ * The Fetch generated for {@link SingularPersistentAttributeEntity#generateFetch}
+ * for lazy loading
+ *
  * @author Steve Ebersole
  */
 public class DelayedEntityFetch implements EntityFetch {
-	// fetch is one-to-one (#other - SimpleEntity)
-	// fetchParent is the root EntityWithOneToOne reference
-
-	// we have access to the parent instance
-	// we need to be able to ask the fetched-navigable to
-	// be able to extract the "key value" from that parent
-	// instance
-
-	// so in terms of EntityWithOneToOne... we need to be able to
-	// ask EntityWithOneToOne#other (the EntityValuedNavigable)
-	// via Fetchable for the key to load Simple later (by UK or PK?)
-	// key given the FetchParentAccess or parent instance
-
 	private final FetchParent fetchParent;
 	private final EntityValuedNavigable fetchedNavigable;
 	private final DomainResult fkResult;

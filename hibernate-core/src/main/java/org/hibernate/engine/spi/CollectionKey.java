@@ -82,6 +82,10 @@ public final class CollectionKey implements Serializable {
 		return "CollectionKey" + MessageHelper.collectionInfoString( role.getFullPath(), key );
 	}
 
+	public String toLoggableString() {
+		return MessageHelper.collectionInfoString( role.getFullPath(), key );
+	}
+
 	@Override
 	public boolean equals(Object other) {
 		if ( this == other ) {

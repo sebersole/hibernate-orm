@@ -410,6 +410,8 @@ public interface PersistenceContext {
 	/**
 	 * Register a collection for non-lazy loading at the end of the
 	 * two-phase load
+	 *
+	 * todo (6.0) : this method may no longer be needed (given how the collection initializer does the immediate load directly)
 	 */
 	void addNonLazyCollection(PersistentCollection collection);
 

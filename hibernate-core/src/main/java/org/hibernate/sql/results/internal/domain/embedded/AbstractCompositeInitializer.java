@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.hibernate.HibernateException;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.sql.results.internal.NullValueAssembler;
+import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeInitializer;
@@ -28,7 +29,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractCompositeInitializer implements CompositeInitializer {
+public abstract class AbstractCompositeInitializer extends AbstractFetchParentAccess implements CompositeInitializer {
 	private final EmbeddedTypeDescriptor embeddedTypeDescriptor;
 	private final FetchParentAccess fetchParentAccess;
 
@@ -76,12 +77,36 @@ public abstract class AbstractCompositeInitializer implements CompositeInitializ
 	}
 
 	@Override
-	public void hydrate(RowProcessingState rowProcessingState) {
+	public void resolveKey(RowProcessingState rowProcessingState) {
+		// todo (6.0) : register "parent resolution listener" if the composite is defined for `@Parent`
+		//		something like:
+//		final PersistentAttribute parentInjectionTarget = getEmbeddedDescriptor().getParentInjectionTarget();
+//
+//		if ( parentInjectionTarget != null ) {
+//			fetchParentAccess.registerResolutionListener(
+//					owner -> {
+//						if ( compositeInstance == null ) {
+//							return;
+//						}
+//						parentInjectionTarget.getPropertyAccess().getSetter().set(
+//								compositeInstance,
+//								owner,
+//								rowProcessingState.getSession().getFactory()
+//						);
+//					}
+//			);
+//		}
+	}
+
+	@Override
+	public void resolveInstance(RowProcessingState rowProcessingState) {
 		compositeInstance = getEmbeddedDescriptor().instantiate( rowProcessingState.getSession() );
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
+	public void initializeInstance(RowProcessingState rowProcessingState) {
+		notifyParentResolutionListeners( fetchParentAccess.getFetchParentInstance() );
+
 		resolvedValues = new Object[ assemblerMap.size() ];
 
 		for ( Map.Entry<StateArrayContributor, DomainResultAssembler> entry : assemblerMap.entrySet() ) {
@@ -104,5 +129,7 @@ public abstract class AbstractCompositeInitializer implements CompositeInitializ
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		compositeInstance = null;
 		resolvedValues = null;
+
+		clearParentResolutionListeners();
 	}
 }

@@ -6,20 +6,25 @@
  */
 package org.hibernate.sql.results.internal.domain.entity;
 
-import org.hibernate.HibernateException;
+import java.util.function.Consumer;
+
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.FetchParentAccess;
-import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
+ * The initializer created from {@link DelayedEntityFetch}
+ *
  * @author Steve Ebersole
  */
-public class DelayedEntityFetchInitializer implements EntityInitializer {
+public class DelayedEntityFetchInitializer extends AbstractFetchParentAccess implements EntityInitializer {
+
+	// todo (6.0) : what (if anything) do we need to do with `FetchParentAccess`?
+
 	private final EntityValuedNavigable fetchedNavigable;
 	private final FetchParentAccess parentAccess;
 	private final DomainResultAssembler fkValueAssembler;
@@ -48,16 +53,26 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 	}
 
 	@Override
-	public void hydrate(RowProcessingState rowProcessingState) {
-
+	public void resolveKey(RowProcessingState rowProcessingState) {
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
-		final JdbcValuesSourceProcessingOptions processingOptions = rowProcessingState.getJdbcValuesSourceProcessingState() .getProcessingOptions();
+	public void registerResolutionListener(Consumer<Object> listener) {
+		if ( entityInstance != null ) {
+			listener.accept( entityInstance );
+		}
+		else {
+			super.registerResolutionListener( listener );
+		}
+	}
 
-		// todo (6.0) : not sure this works for non-PK-based FKs
-		fkValue = fkValueAssembler.assemble( rowProcessingState, processingOptions );
+	@Override
+	public void resolveInstance(RowProcessingState rowProcessingState) {
+		fkValue = fkValueAssembler.assemble( rowProcessingState );
+
+		// todo (6.0) : technically the entity could be managed or cached already.  who/what handles that?
+
+		// todo (6.0) : could also be getting loaded elsewhere (LoadingEntityEntry)
 
 		if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
 			entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
@@ -71,12 +86,21 @@ public class DelayedEntityFetchInitializer implements EntityInitializer {
 					rowProcessingState.getSession()
 			);
 		}
+
+		notifyParentResolutionListeners( entityInstance );
+	}
+
+	@Override
+	public void initializeInstance(RowProcessingState rowProcessingState) {
+		// nothing to initialize (its lazy)
 	}
 
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		fkValue = null;
 		entityInstance = null;
+
+		clearParentResolutionListeners();
 	}
 
 }

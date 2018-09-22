@@ -9,32 +9,27 @@ package org.hibernate.sql.results.internal.domain.entity;
 import java.util.Locale;
 import javax.persistence.EntityNotFoundException;
 
-import org.hibernate.HibernateException;
 import org.hibernate.annotations.NotFoundAction;
-import org.hibernate.engine.spi.EntityEntry;
-import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
-import org.jboss.logging.Logger;
+import static org.hibernate.sql.results.internal.domain.LoggingHelper.toLoggableString;
 
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractImmediateEntityFetchInitializer implements EntityInitializer {
-	private static final Logger log = Logger.getLogger( AbstractImmediateEntityFetchInitializer.class );
-
+public abstract class AbstractImmediateEntityFetchInitializer extends AbstractFetchParentAccess implements EntityInitializer {
 	private final EntityValuedNavigable fetchedNavigable;
+	private final NavigablePath navigablePath;
 	private final SingleEntityLoader loader;
 	private final FetchParentAccess parentAccess;
 	private final DomainResultAssembler keyValueAssembler;
@@ -45,13 +40,16 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 
 	private Object entityInstance;
 
-	public AbstractImmediateEntityFetchInitializer(
+	@SuppressWarnings("WeakerAccess")
+	protected AbstractImmediateEntityFetchInitializer(
 			EntityValuedNavigable fetchedNavigable,
+			NavigablePath navigablePath,
 			SingleEntityLoader loader,
 			FetchParentAccess parentAccess,
 			DomainResultAssembler keyValueAssembler,
 			NotFoundAction notFoundAction) {
 		this.fetchedNavigable = fetchedNavigable;
+		this.navigablePath = navigablePath;
 		this.loader = loader;
 		this.parentAccess = parentAccess;
 		this.keyValueAssembler = keyValueAssembler;
@@ -63,6 +61,10 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		return fetchedNavigable.getEntityDescriptor();
 	}
 
+	public NavigablePath getNavigablePath() {
+		return navigablePath;
+	}
+
 	public EntityValuedNavigable getFetchedNavigable() {
 		return fetchedNavigable;
 	}
@@ -71,7 +73,8 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		return parentAccess;
 	}
 
-	private Object getKeyValue() {
+	@SuppressWarnings("WeakerAccess")
+	protected Object getKeyValue() {
 		return keyValue;
 	}
 
@@ -88,7 +91,7 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 	protected abstract boolean isLoadingEntityInstance();
 
 	@Override
-	public void hydrate(RowProcessingState rowProcessingState) {
+	public void resolveKey(RowProcessingState rowProcessingState) {
 		if ( keyHydrated ) {
 			return;
 		}
@@ -98,15 +101,16 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		keyValue = keyValueAssembler.assemble( rowProcessingState, processingOptions );
 		keyHydrated = true;
 
-		log.debugf( "Hydrated fetched entity key : %s#%s", getEntityDescriptor().getEntityName(), keyValue );
-
-		afterHydrate( keyValue, rowProcessingState );
+		if ( EntityLoadingLogger.DEBUG_ENABLED ) {
+			EntityLoadingLogger.INSTANCE.debugf(
+					"Hydrated fetched entity key : %s",
+					toLoggableString( getNavigablePath(), keyValue )
+			);
+		}
 	}
 
-	protected abstract void afterHydrate(Object keyValue, RowProcessingState rowProcessingState);
-
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
+	public void initializeInstance(RowProcessingState rowProcessingState) {
 		if ( !isLoadingEntityInstance() ) {
 			return;
 		}
@@ -156,6 +160,8 @@ public abstract class AbstractImmediateEntityFetchInitializer implements EntityI
 		keyHydrated = false;
 		keyValue = null;
 		entityInstance = null;
+
+		clearParentResolutionListeners();
 	}
 
 	@Override

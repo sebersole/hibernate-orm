@@ -13,7 +13,6 @@ import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeMappingNode;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.RowProcessingState;
 
 /**
  * @author Steve Ebersole
@@ -25,10 +24,5 @@ public class CompositeRootInitializerImpl extends AbstractCompositeInitializer {
 			AssemblerCreationState creationOptions,
 			AssemblerCreationContext creationContext) {
 		super( resultDescriptor, fetchParentAccess, initializerConsumer, creationContext, creationOptions );
-	}
-
-	@Override
-	public void finishUpRow(RowProcessingState rowProcessingState) {
-
 	}
 }

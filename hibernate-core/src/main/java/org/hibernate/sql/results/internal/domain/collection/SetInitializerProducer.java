@@ -51,7 +51,7 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 				creationContext
 		);
 
-		final SetInitializer setInitializer = new SetInitializer(
+		return new SetInitializer(
 				setDescriptor,
 				parentAccess,
 				navigablePath,
@@ -61,9 +61,5 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 				keyCollectionAssembler,
 				elementAssembler
 		);
-
-		initializerConsumer.accept( setInitializer );
-
-		return setInitializer;
 	}
 }

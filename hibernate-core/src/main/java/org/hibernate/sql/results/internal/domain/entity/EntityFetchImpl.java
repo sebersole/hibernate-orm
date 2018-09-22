@@ -23,6 +23,10 @@ import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.Initializer;
 
 /**
+ * EntityFetch implementation used for handling cases where the entity values
+ * are expected to be available in the JdbcValues either as a root selection
+ * or as a join fetch.
+ *
  * @author Steve Ebersole
  */
 public class EntityFetchImpl extends AbstractEntityMappingNode implements EntityFetch {

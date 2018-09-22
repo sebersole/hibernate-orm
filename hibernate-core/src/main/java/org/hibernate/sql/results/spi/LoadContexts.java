@@ -8,13 +8,13 @@ package org.hibernate.sql.results.spi;
 
 import java.sql.ResultSet;
 
+import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.collections.StandardStack;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
  * Maps {@link ResultSet result-sets} to specific contextual data related to processing that result set
@@ -52,9 +52,9 @@ public class LoadContexts {
 		);
 	}
 
-	public LoadingCollectionEntry findLoadingCollectionEntry(PersistentCollectionDescriptor descriptor, Object key) {
+	public LoadingCollectionEntry findLoadingCollectionEntry(CollectionKey collectionKey) {
 		return jdbcValuesSourceProcessingStateStack.findCurrentFirst(
-				state -> state.findLoadingCollectionLocally( descriptor, key )
+				state -> state.findLoadingCollectionLocally( collectionKey )
 		);
 	}
 
@@ -84,5 +84,4 @@ public class LoadContexts {
 		}
 		jdbcValuesSourceProcessingStateStack.clear();
 	}
-
 }

@@ -11,9 +11,10 @@ import org.hibernate.LockOptions;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.results.SqlResultsLogger;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
@@ -31,8 +32,10 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 @SuppressWarnings("WeakerAccess")
 public abstract class AbstractImmediateCollectionInitializer extends AbstractCollectionInitializer {
 	private final LockMode lockMode;
+
 	// per-row state
 	private PersistentCollection collectionInstance;
+	private boolean responsible;
 
 	public AbstractImmediateCollectionInitializer(
 			PersistentCollectionDescriptor collectionDescriptor,
@@ -52,7 +55,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 	}
 
 	@Override
-	public void resolve(RowProcessingState rowProcessingState) {
+	public void resolveInstance(RowProcessingState rowProcessingState) {
 		if ( collectionInstance != null ) {
 			return;
 		}
@@ -60,29 +63,51 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 		final SharedSessionContractImplementor session = rowProcessingState.getSession();
 		final CollectionKey collectionKey = resolveCollectionKey( rowProcessingState );
 
-		// see if we are in the process of loading that collection with this initializer
-		// in other words, is this initializers the one responsible for loading
-		// the collection values?
-		final LoadingCollectionEntry existingLoadingEntry = rowProcessingState.getJdbcValuesSourceProcessingState()
-				.findLoadingCollectionLocally( getCollectionDescriptor(), collectionKey.getKey() );
+		if ( CollectionLoadingLogger.TRACE_ENABLED ) {
+			CollectionLoadingLogger.INSTANCE.tracef(
+					"(%s) Beginning Initializer#resolveInstance for collection : %s",
+					StringHelper.collapse( this.getClass().getName() ),
+					LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() )
+			);
+		}
+
+		// determine the PersistentCollection instance to use and whether
+		// we (this initializer) is responsible for loading its state
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// First, look for a LoadingCollectionEntry
+		final LoadingCollectionEntry existingLoadingEntry = session.getPersistenceContext()
+				.getLoadContexts()
+				.findLoadingCollectionEntry( collectionKey );
+//		final LoadingCollectionEntry existingLoadingEntry = rowProcessingState.getJdbcValuesSourceProcessingState()
+//				.findLoadingCollectionLocally( getCollectionDescriptor(), collectionKey.getKey() );
 
 		if ( existingLoadingEntry != null ) {
-			SqlResultsLogger.INSTANCE.debugf(
-					"Found existing loading entry [%s - %s] - using loading collection instance",
-					getNavigablePath().getFullPath(),
-					collectionKey.getKey()
-			);
-
 			collectionInstance = existingLoadingEntry.getCollectionInstance();
 
-			if ( existingLoadingEntry.getInitializer() != this ) {
-				// the entity is already being loaded elsewhere
-				SqlResultsLogger.INSTANCE.debugf(
-						"Collection (%s, %s) being loaded by another initializer [%s] - skipping processing",
-						getNavigablePath().getFullPath(),
-						collectionKey.getKey(),
-						existingLoadingEntry.getInitializer()
+			if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+				CollectionLoadingLogger.INSTANCE.debugf(
+						"(%s) Found existing loading collection entry [%s]; using loading collection instance - %s",
+						StringHelper.collapse( this.getClass().getName() ),
+						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+						collectionInstance
 				);
+			}
+
+			if ( existingLoadingEntry.getInitializer() == this ) {
+				// we are responsible for loading the collection values
+				responsible = true;
+			}
+			else {
+				// the entity is already being loaded elsewhere
+				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+					CollectionLoadingLogger.INSTANCE.debugf(
+							"(%s) Collection [%s] being loaded by another initializer [%s] - skipping processing",
+							StringHelper.collapse( this.getClass().getName() ),
+							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+							existingLoadingEntry.getInitializer()
+					);
+				}
 
 				// EARLY EXIT!!!
 				return;
@@ -93,19 +118,24 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 			if ( existing != null ) {
 				collectionInstance = existing;
 
-				SqlResultsLogger.INSTANCE.debugf(
-						"Found existing Collection instance (%s, %s) in Session [%s] - skipping processing",
-						getNavigablePath().getFullPath(),
-						collectionKey.getKey(),
-						existing
-				);
+				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+					CollectionLoadingLogger.INSTANCE.debugf(
+							"(%s) Found existing Collection instance [%s] in Session; skipping processing - [%s]",
+							StringHelper.collapse( this.getClass().getName() ),
+							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+							existing
+					);
+				}
 
 				// EARLY EXIT!!!
 				return;
 			}
+
 			if ( ! isSelected() ) {
 				// note : this call adds the collection to the PC, so we will find it
 				// next time (`existing`) and not attempt to load values
+				//
+				// todo (6.0) : we could possibly leverage subselect /  batch loading if we delay this until after all JdbcValues have been processed
 				collectionInstance = getCollectionDescriptor().getLoader().load(
 						collectionKey.getKey(),
 						new LockOptions( lockMode ),
@@ -123,15 +153,16 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 					collectionKey.getKey()
 			);
 
-			SqlResultsLogger.INSTANCE.debugf(
-					"Created new collection wrapper (%s - %s) : %s",
-					getNavigablePath().getFullPath(),
-					collectionKey.getKey(),
-					collectionInstance
-			);
+			if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+				CollectionLoadingLogger.INSTANCE.debugf(
+						"(%s) Created new collection wrapper [%s] : %s",
+						StringHelper.collapse( this.getClass().getName() ),
+						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+						collectionInstance
+				);
+			}
 
 			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingCollection(
-					getCollectionDescriptor(),
 					collectionKey,
 					new LoadingCollectionEntry(
 							getCollectionDescriptor(),
@@ -140,10 +171,47 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 							collectionInstance
 					)
 			);
+			responsible = true;
 		}
 
-		if ( getKeyCollectionValue() != null ) {
+		if ( responsible ) {
+			if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+				CollectionLoadingLogger.INSTANCE.debugf(
+						"(%s) Responsible for loading collection [%s] : %s",
+						StringHelper.collapse( this.getClass().getName() ),
+						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+						collectionInstance
+				);
+			}
+
+			getParentAccess().registerResolutionListener(
+					owner -> collectionInstance.setOwner( owner )
+			);
+		}
+	}
+
+	@Override
+	public void initializeInstance(RowProcessingState rowProcessingState) {
+		if ( !responsible ) {
+			return;
+		}
+
+		// the LHS key value of the association
+		final CollectionKey collectionKey = resolveCollectionKey( rowProcessingState );
+		// the RHS key value of the association
+		final Object keyCollectionValue = getKeyCollectionValue();
+
+		if ( keyCollectionValue != null ) {
 			// the row contains an element in the collection...
+			if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+				CollectionLoadingLogger.INSTANCE.debugf(
+						"(%s) Reading element from row for collection [%s] -> %s",
+						StringHelper.collapse( this.getClass().getName() ),
+						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+						collectionInstance
+				);
+			}
+
 			readCollectionRow( rowProcessingState );
 		}
 	}
@@ -153,6 +221,8 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 	@Override
 	public void finishUpRow(RowProcessingState rowProcessingState) {
 		super.finishUpRow( rowProcessingState );
+
 		collectionInstance = null;
+		responsible = false;
 	}
 }

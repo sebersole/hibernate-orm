@@ -24,7 +24,7 @@ public interface EntityInitializer extends Initializer, FetchParentAccess {
 	 * Get the entity instance for the currently processing "row".
 	 *
 	 * @apiNote Calling this method is only valid from the time
-	 * {@link #hydrate} has been called until {@link #finishUpRow}
+	 * {@link #resolveKey} has been called until {@link #finishUpRow}
 	 * has been called for the currently processing row
 	 */
 	Object getEntityInstance();
