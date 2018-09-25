@@ -85,5 +85,13 @@ public class EmbeddedIdEntity {
 		public int hashCode() {
 			return Objects.hash( value1, value2 );
 		}
+
+		@Override
+		public String toString() {
+			return "EmbeddedIdEntityId{" +
+					"value1=" + value1 +
+					", value2='" + value2 + '\'' +
+					'}';
+		}
 	}
 }
