@@ -923,7 +923,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public CollectionEntry addInitializedCollection(PersistentCollectionDescriptor descriptor, PersistentCollection collection, Serializable id)
+	public CollectionEntry addInitializedCollection(PersistentCollectionDescriptor descriptor, PersistentCollection collection, Object id)
 			throws HibernateException {
 		final CollectionEntry ce = new CollectionEntry( collection, descriptor, id, flushing );
 		ce.postInitialize( collection );

@@ -218,8 +218,17 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		initializeIdentifier( rowProcessingState );
 		resolveEntityKey( rowProcessingState );
 
-		// todo (6.0) : should this really be true?  what about fetches that resolve to null?
-		assert entityKey != null;
+		if ( entityKey == null ) {
+			EntityLoadingLogger.INSTANCE.debugf(
+					"(%s) EntityKey (%s) is null",
+					StringHelper.collapse( this.getClass().getName() ),
+					toLoggableString( getNavigablePath() )
+			);
+
+			assert missing;
+
+			return;
+		}
 
 		if ( EntityLoadingLogger.DEBUG_ENABLED ) {
 			EntityLoadingLogger.INSTANCE.debugf(
@@ -263,6 +272,8 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	@SuppressWarnings("WeakerAccess")
 	protected void initializeIdentifier(RowProcessingState rowProcessingState) {
 		identifierInitializers.forEach( initializer -> initializer.resolveKey( rowProcessingState ) );
+		identifierInitializers.forEach( initializer -> initializer.resolveInstance( rowProcessingState ) );
+		identifierInitializers.forEach( initializer -> initializer.initializeInstance( rowProcessingState ) );
 	}
 
 	@SuppressWarnings("WeakerAccess")

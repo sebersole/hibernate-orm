@@ -8,8 +8,10 @@ package org.hibernate.sql.results.internal.domain.collection;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
+import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionKey;
+import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -61,6 +63,8 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 		}
 
 		final SharedSessionContractImplementor session = rowProcessingState.getSession();
+		final PersistenceContext persistenceContext = session.getPersistenceContext();
+
 		final CollectionKey collectionKey = resolveCollectionKey( rowProcessingState );
 
 		if ( CollectionLoadingLogger.TRACE_ENABLED ) {
@@ -76,7 +80,8 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// First, look for a LoadingCollectionEntry
-		final LoadingCollectionEntry existingLoadingEntry = session.getPersistenceContext()
+
+		final LoadingCollectionEntry existingLoadingEntry = persistenceContext
 				.getLoadContexts()
 				.findLoadingCollectionEntry( collectionKey );
 //		final LoadingCollectionEntry existingLoadingEntry = rowProcessingState.getJdbcValuesSourceProcessingState()
@@ -90,7 +95,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 						"(%s) Found existing loading collection entry [%s]; using loading collection instance - %s",
 						StringHelper.collapse( this.getClass().getName() ),
 						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-						collectionInstance
+						LoggingHelper.toLoggableString( collectionInstance )
 				);
 			}
 
@@ -114,16 +119,31 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 			}
 		}
 		else {
-			final PersistentCollection existing = session.getPersistenceContext().getCollection( collectionKey );
+			final PersistentCollection existing = persistenceContext.getCollection( collectionKey );
 			if ( existing != null ) {
 				collectionInstance = existing;
 
 				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
 					CollectionLoadingLogger.INSTANCE.debugf(
-							"(%s) Found existing Collection instance [%s] in Session; skipping processing - [%s]",
+							"(%s) Found existing collection instance [%s] in Session; skipping processing - [%s]",
 							StringHelper.collapse( this.getClass().getName() ),
 							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-							existing
+							LoggingHelper.toLoggableString( collectionInstance )
+					);
+				}
+
+				// EARLY EXIT!!!
+				return;
+			}
+
+			collectionInstance = persistenceContext.useUnownedCollection( collectionKey );
+			if ( collectionInstance != null ) {
+				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+					CollectionLoadingLogger.INSTANCE.debugf(
+							"(%s) Found existing unowned collection instance [%s] in Session; skipping processing - [%s]",
+							StringHelper.collapse( this.getClass().getName() ),
+							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+							LoggingHelper.toLoggableString( collectionInstance )
 					);
 				}
 
@@ -132,6 +152,12 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 			}
 
 			if ( ! isSelected() ) {
+				persistenceContext.addUninitializedCollection(
+						getCollectionDescriptor(),
+						collectionInstance,
+						collectionKey.getKey()
+				);
+
 				// note : this call adds the collection to the PC, so we will find it
 				// next time (`existing`) and not attempt to load values
 				//
@@ -158,9 +184,11 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 						"(%s) Created new collection wrapper [%s] : %s",
 						StringHelper.collapse( this.getClass().getName() ),
 						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-						collectionInstance
+						LoggingHelper.toLoggableString( collectionInstance )
 				);
 			}
+
+			persistenceContext.addUninitializedCollection( getCollectionDescriptor(), collectionInstance, collectionKey );
 
 			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingCollection(
 					collectionKey,
@@ -180,13 +208,17 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 						"(%s) Responsible for loading collection [%s] : %s",
 						StringHelper.collapse( this.getClass().getName() ),
 						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-						collectionInstance
+						LoggingHelper.toLoggableString( collectionInstance )
 				);
 			}
 
 			getParentAccess().registerResolutionListener(
 					owner -> collectionInstance.setOwner( owner )
 			);
+
+			if ( getCollectionDescriptor().getSemantics().getCollectionClassification() == CollectionClassification.ARRAY ) {
+				persistenceContext.addCollectionHolder( collectionInstance );
+			}
 		}
 	}
 
@@ -208,7 +240,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 						"(%s) Reading element from row for collection [%s] -> %s",
 						StringHelper.collapse( this.getClass().getName() ),
 						LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-						collectionInstance
+						LoggingHelper.toLoggableString( collectionInstance )
 				);
 			}
 

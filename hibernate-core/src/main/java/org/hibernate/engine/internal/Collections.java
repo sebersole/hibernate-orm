@@ -19,7 +19,7 @@ import org.hibernate.engine.spi.Status;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 
 import org.jboss.logging.Logger;
@@ -140,13 +140,13 @@ public final class Collections {
      * Initialize the role of the collection.
      *
      * @param collection The collection to be updated by reachability.
-     * @param attributeCollection The PluralAttributeCollection.
+     * @param collectionAttribute The PluralPersistentAttribute.
      * @param entity The owner of the collection.
 	 * @param session The session from which this request originates
      */
 	public static void processReachableCollection(
 			PersistentCollection collection,
-			PluralAttributeCollection attributeCollection,
+			PluralPersistentAttribute collectionAttribute,
 			Object entity,
 			SessionImplementor session) {
 		collection.setOwner( entity );
@@ -155,25 +155,23 @@ public final class Collections {
 		if ( ce == null ) {
 			// refer to comment in StatefulPersistenceContext.addCollection()
 			throw new HibernateException(
-					"Found two representations of same collection: " + attributeCollection.getNavigableName() );
+					"Found two representations of same collection: " + collectionAttribute.getNavigableName() );
 		}
 
 		final SessionFactoryImplementor factory = session.getFactory();
-		final PersistentCollectionDescriptor descriptor = factory
-				.getMetamodel()
-				.findCollectionDescriptor( attributeCollection.getNavigableName() );
-		ce.setCurrentDescriptor( descriptor );
+		ce.setCurrentDescriptor( collectionAttribute.getCollectionDescriptor() );
 
-		//TODO: better to pass the id in as an argument?
-		ce.setCurrentKey( descriptor.getKeyOfOwner( entity, session ) );
+		// todo (6.0) : is there a reason we can't just use the the incoming PersistentCollection's key?
+		//ce.setCurrentKey( collectionAttribute.getCollectionDescriptor().getKeyOfOwner( entity, session ) );
+		ce.setCurrentKey( collection.getKey() );
 
-		final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor( descriptor, factory );
+		final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor( collectionAttribute.getCollectionDescriptor(), factory );
 		final boolean isBytecodeEnhanced = ownerEntityDescriptor.getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
 		if ( isBytecodeEnhanced && !collection.wasInitialized() ) {
 			// skip it
 			LOG.debugf(
 					"Skipping uninitialized bytecode-lazy collection: %s",
-					MessageHelper.collectionInfoString( descriptor, collection, ce.getCurrentKey(), session )
+					MessageHelper.collectionInfoString( collectionAttribute.getCollectionDescriptor(), collection, ce.getCurrentKey(), session )
 			);
 			ce.setReached( true );
 			ce.setProcessed( true );
@@ -184,7 +182,7 @@ public final class Collections {
 			if ( ce.isReached() ) {
 				// We've been here before
 				throw new HibernateException(
-						"Found shared references to a collection: " + descriptor.getNavigableRole().getFullPath()
+						"Found shared references to a collection: " + collectionAttribute.getCollectionDescriptor().getNavigableRole().getFullPath()
 				);
 			}
 			ce.setReached( true );
@@ -194,7 +192,7 @@ public final class Collections {
 					LOG.debugf(
 							"Collection found: %s, was: %s (initialized)",
 							MessageHelper.collectionInfoString(
-									descriptor,
+									collectionAttribute.getCollectionDescriptor(),
 									collection,
 									ce.getCurrentKey(),
 									session
@@ -211,7 +209,7 @@ public final class Collections {
 					LOG.debugf(
 							"Collection found: %s, was: %s (uninitialized)",
 							MessageHelper.collectionInfoString(
-									descriptor,
+									collectionAttribute.getCollectionDescriptor(),
 									collection,
 									ce.getCurrentKey(),
 									session

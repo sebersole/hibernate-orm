@@ -55,6 +55,9 @@ public class CompositeResultImpl extends AbstractFetchParent implements Composit
 				creationOptions,
 				creationContext
 		);
+
+		initializerCollector.accept( initializer );
+
 		return new CompositeAssembler( initializer );
 	}
 

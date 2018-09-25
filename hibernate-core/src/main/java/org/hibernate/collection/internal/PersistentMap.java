@@ -125,7 +125,7 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 	public void beforeInitialize(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		this.map = (Map) getCollectionMetadata().instantiateRaw( anticipatedSize );
+		this.map = (Map) getCollectionDescriptor().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -478,11 +478,11 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 		beforeInitialize( size, collectionDescriptor );
 		for ( int i = 0; i < size; i+=2 ) {
 			map.put(
-					(K) getCollectionMetadata().getIndexDescriptor()
+					(K) getCollectionDescriptor().getIndexDescriptor()
 							.getJavaTypeDescriptor()
 							.getMutabilityPlan()
 							.assemble( array[i] ),
-					getCollectionMetadata().getElementDescriptor()
+					getCollectionDescriptor().getElementDescriptor()
 							.getJavaTypeDescriptor()
 							.getMutabilityPlan()
 							.assemble( array[i+1] )
@@ -541,7 +541,7 @@ public class PersistentMap<K,V> extends AbstractPersistentCollection<V> implemen
 		final Object snValue = sn.get( e.getKey() );
 		return e.getValue() != null
 				&& snValue != null
-				&& getCollectionMetadata().isDirty( snValue, e.getValue(), getSession() );
+				&& getCollectionDescriptor().isDirty( snValue, e.getValue(), getSession() );
 	}
 
 	@Override

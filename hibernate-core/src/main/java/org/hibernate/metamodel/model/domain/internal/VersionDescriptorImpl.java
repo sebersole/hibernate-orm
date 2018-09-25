@@ -158,4 +158,23 @@ public class VersionDescriptorImpl<O,J>
 	public FetchStrategy getMappedFetchStrategy() {
 		return null;
 	}
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return new BasicResultImpl(
+				resultVariable,
+				creationState.getSqlExpressionResolver().resolveSqlSelection(
+						creationState.getSqlExpressionResolver().resolveSqlExpression(
+								creationState.getNavigableReferenceStack().getCurrent().getColumnReferenceQualifier(),
+								getBoundColumn()
+						),
+						getJavaTypeDescriptor(),
+						creationContext.getSessionFactory().getTypeConfiguration()
+				),
+				getBoundColumn().getExpressableType()
+		);
+	}
 }

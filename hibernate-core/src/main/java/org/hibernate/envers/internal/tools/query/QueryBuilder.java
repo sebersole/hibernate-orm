@@ -15,12 +15,14 @@ import java.util.Map;
 import javax.persistence.criteria.JoinType;
 
 import org.hibernate.Session;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.internal.entities.RevisionTypeType;
 import org.hibernate.envers.internal.tools.MutableInteger;
 import org.hibernate.envers.internal.tools.StringTools;
 import org.hibernate.envers.internal.tools.Triple;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.query.Query;
 
 import org.jboss.logging.Logger;
@@ -243,16 +245,21 @@ public class QueryBuilder {
 		return orderList;
 	}
 
-	public Query toQuery(Session session) {
+	public Query toQuery(SharedSessionContractImplementor session) {
 		final StringBuilder querySb = new StringBuilder();
 		final Map<String, Object> queryParamValues = new HashMap<>();
 
 		build( querySb, queryParamValues );
 
-		final String sql = querySb.toString();
-		log.infof( "HQL: %s", sql );
+		final EntityDescriptor<Object> entityDescriptor = session.getSessionFactory()
+				.getMetamodel()
+				.findEntityDescriptor( entityName );
 
-		final Query query = session.createQuery( sql );
+		final String hql = querySb.toString();
+		log.infof( "HQL: %s", hql );
+
+		final Query query = session.createQuery( hql );
+
 		for ( Map.Entry<String, Object> paramValue : queryParamValues.entrySet() ) {
 			if ( paramValue.getValue() instanceof RevisionType ) {
 				// this is needed when the ClassicQueryTranslatorFactory is used

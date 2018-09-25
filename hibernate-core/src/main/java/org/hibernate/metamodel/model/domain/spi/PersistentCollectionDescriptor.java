@@ -31,6 +31,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
+import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -92,6 +93,8 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	NavigableRole getNavigableRole();
 
 	PluralPersistentAttribute getDescribedAttribute() ;
+
+	CollectionMutabilityPlan<C> getMutabilityPlan();
 
 	/**
 	 * The Navigable that is the target of the FK in the
@@ -612,5 +615,4 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	default Object indexOf(Object collection, Object element) {
 		throw new UnsupportedOperationException( "Collection type does not support indexes" );
 	}
-
 }

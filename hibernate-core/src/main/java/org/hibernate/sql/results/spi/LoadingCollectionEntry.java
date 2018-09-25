@@ -7,6 +7,9 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.collection.spi.PersistentCollection;
+import org.hibernate.engine.spi.CollectionEntry;
+import org.hibernate.engine.spi.PersistenceContext;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
@@ -61,6 +64,24 @@ public class LoadingCollectionEntry {
 
 	public void finishLoading(ExecutionContext executionContext) {
 		collectionInstance.endRead();
-//		collectionInstance.afterInitialize();
+
+		final SharedSessionContractImplementor session = executionContext.getSession();
+		final PersistenceContext persistenceContext = session.getPersistenceContext();
+
+		CollectionEntry collectionEntry = persistenceContext.getCollectionEntry( collectionInstance );
+
+		if ( collectionEntry == null ) {
+			collectionEntry = persistenceContext.addInitializedCollection(
+					getCollectionDescriptor(),
+					getCollectionInstance(),
+					getKey()
+			);
+		}
+		else {
+			collectionEntry.postInitialize( collectionInstance );
+		}
+
+		// todo (6.0) : there is other logic still needing to be implemented here.  caching, etc
+		// 		see org.hibernate.engine.loading.internal.CollectionLoadContext#endLoadingCollection in 5.x
 	}
 }

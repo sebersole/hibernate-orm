@@ -97,7 +97,7 @@ public abstract class AbstractAuditQuery implements AuditQueryImplementor {
 	}
 	
 	protected Query buildQuery() {
-		Query query = qb.toQuery( versionsReader.getSession() );
+		Query query = qb.toQuery( versionsReader.getSessionImplementor() );
 		setQueryProperties( query );
 		return query;
 	}

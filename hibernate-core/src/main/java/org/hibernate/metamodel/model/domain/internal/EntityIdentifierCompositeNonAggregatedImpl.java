@@ -28,6 +28,7 @@ import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.results.internal.domain.embedded.CompositeResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -106,18 +107,6 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	}
 
 	@Override
-	public DomainResult createDomainResult(
-			NavigableReference expression,
-			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
-		return getEmbeddedDescriptor().createDomainResult(
-				expression,
-				resultVariable,
-				creationState, creationContext
-		);
-	}
-
-	@Override
 	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
 		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
 	}
@@ -152,5 +141,13 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 						session
 				)
 		);
+	}
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return new CompositeResultImpl( resultVariable, getEmbeddedDescriptor(), creationState );
 	}
 }

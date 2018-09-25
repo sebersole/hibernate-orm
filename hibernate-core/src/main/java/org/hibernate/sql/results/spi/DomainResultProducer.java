@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.NotYetImplementedFor6Exception;
-
 /**
  * Represents something that can produce a {@link DomainResult}
  * instances which can be used as selection items and
@@ -16,10 +14,8 @@ import org.hibernate.NotYetImplementedFor6Exception;
  * @author Steve Ebersole
  */
 public interface DomainResultProducer {
-	default DomainResult createDomainResult(
+	DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
-
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext);
 }

@@ -19,7 +19,8 @@ import org.hibernate.sql.results.spi.Initializer;
  */
 public class CompositeRootInitializerImpl extends AbstractCompositeInitializer {
 	public CompositeRootInitializerImpl(
-			FetchParentAccess fetchParentAccess, CompositeMappingNode resultDescriptor,
+			FetchParentAccess fetchParentAccess,
+			CompositeMappingNode resultDescriptor,
 			Consumer<Initializer> initializerConsumer,
 			AssemblerCreationState creationOptions,
 			AssemblerCreationContext creationContext) {

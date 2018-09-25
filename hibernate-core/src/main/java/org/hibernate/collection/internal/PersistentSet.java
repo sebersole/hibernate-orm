@@ -119,7 +119,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 	public void beforeInitialize(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		this.set = (Set) getCollectionMetadata().instantiateRaw( anticipatedSize );
+		this.set = (Set) getCollectionDescriptor().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 		final int size = array.length;
 		beforeInitialize( size, collectionDescriptor );
 		for ( Serializable arrayElement : array ) {
-			final Object assembledArrayElement = getCollectionMetadata().getElementDescriptor()
+			final Object assembledArrayElement = getCollectionDescriptor().getElementDescriptor()
 					.getJavaTypeDescriptor()
 					.getMutabilityPlan()
 					.assemble( arrayElement );
@@ -396,7 +396,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 		// note that it might be better to iterate the snapshot but this is safe,
 		// assuming the user implements equals() properly, as required by the Set
 		// contract!
-		return ( oldValue == null && entry != null ) || getCollectionMetadata().isDirty( oldValue, entry, getSession() );
+		return ( oldValue == null && entry != null ) || getCollectionDescriptor().isDirty( oldValue, entry, getSession() );
 	}
 
 	@Override
