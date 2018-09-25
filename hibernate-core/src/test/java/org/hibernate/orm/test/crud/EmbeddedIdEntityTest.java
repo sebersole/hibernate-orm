@@ -6,12 +6,14 @@
  */
 package org.hibernate.orm.test.crud;
 
+import org.hamcrest.CoreMatchers;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EmbeddedIdEntity;
 import org.hibernate.orm.test.support.domains.gambit.EmbeddedIdEntity.EmbeddedIdEntityId;
 import org.junit.jupiter.api.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,6 +42,7 @@ public class EmbeddedIdEntityTest extends SessionFactoryBasedFunctionalTest {
 
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 
+		// select non-embeddable data
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final String value = session.createQuery( "select e.data FROM EmbeddedIdEntity e", String.class ).uniqueResult();
@@ -47,23 +50,32 @@ public class EmbeddedIdEntityTest extends SessionFactoryBasedFunctionalTest {
 				}
 		);
 
-		// todo (6.0) - Still WIP, NotYetImplemented
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final EmbeddedIdEntityId value = session.createQuery( "select e.id FROM EmbeddedIdEntity e", EmbeddedIdEntityId.class ).uniqueResult();
-//					assertThat( value, is( entityId ) );
-//				}
-//		);
+		// select entity
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EmbeddedIdEntity loaded = session.createQuery( "select e FROM EmbeddedIdEntity e", EmbeddedIdEntity.class ).uniqueResult();
+					assertThat( loaded.getData(), is( "test" ) );
+					assertThat( loaded.getId(), equalTo( entityId ) );
+				}
+		);
 
-		// todo (6.0) - Still WIP, NotYetImplemented
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final EmbeddedIdEntity loaded = session.get( EmbeddedIdEntity.class, entityId );
-//					assertThat( loaded, notNullValue() );
-//					assertThat( loaded.getId(), notNullValue() );
-//					assertThat( loaded.getId(), is( entityId ) );
-//					assertThat( loaded.getData(), is( "test" ) );
-//				}
-//		);
+		// select just embeddable
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EmbeddedIdEntityId value = session.createQuery( "select e.id FROM EmbeddedIdEntity e", EmbeddedIdEntityId.class ).uniqueResult();
+					assertThat( value, equalTo( entityId ) );
+				}
+		);
+
+		// load entity
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EmbeddedIdEntity loaded = session.get( EmbeddedIdEntity.class, entityId );
+					assertThat( loaded, notNullValue() );
+					assertThat( loaded.getId(), notNullValue() );
+					assertThat( loaded.getId(), equalTo( entityId ) );
+					assertThat( loaded.getData(), is( "test" ) );
+				}
+		);
 	}
 }
