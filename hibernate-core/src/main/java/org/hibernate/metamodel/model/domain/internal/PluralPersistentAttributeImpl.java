@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
@@ -54,6 +55,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -155,6 +157,12 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public boolean isNullable() {
 		return false;
+	}
+
+	@Override
+	public void visitColumns(
+			BiConsumer action, Clause clause, TypeConfiguration typeConfiguration) {
+
 	}
 
 	@Override
