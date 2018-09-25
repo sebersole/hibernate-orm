@@ -45,7 +45,7 @@ public class ListResultsConsumer<R> implements ResultsConsumer<List<R>, R> {
 
 			boolean uniqueRows = false;
 			final Class<R> resultJavaType = rowReader.getResultJavaType();
-			if ( ! resultJavaType.isArray() ) {
+			if ( resultJavaType != null && ! resultJavaType.isArray() ) {
 				final EntityDescriptor<R> entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( resultJavaType );
 				if ( entityDescriptor != null ) {
 					uniqueRows = true;

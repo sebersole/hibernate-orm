@@ -73,9 +73,9 @@ public final class CollectionEntry implements Serializable {
 
 		collection.clearDirty(); //a newly wrapped collection is NOT dirty (or we get unnecessary version updates)
 
-		snapshot = collectionDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ?
-				collection.getSnapshot(collectionDescriptor) :
-				null;
+		snapshot = collectionDescriptor.getMutabilityPlan().isMutable()
+				? collection.getSnapshot(collectionDescriptor)
+				: null;
 		collection.setSnapshot( loadedKey, collectionDescriptor.getNavigableRole(), snapshot );
 	}
 
@@ -86,8 +86,7 @@ public final class CollectionEntry implements Serializable {
 			final PersistentCollection collection,
 			final PersistentCollectionDescriptor loadedDescriptor,
 			final Object loadedKey,
-			final boolean ignore
-	) {
+			final boolean ignore) {
 		this.ignore=ignore;
 
 		//collection.clearDirty()
@@ -95,7 +94,7 @@ public final class CollectionEntry implements Serializable {
 		this.loadedKey = loadedKey;
 		setLoadedDescriptor( loadedDescriptor);
 
-		collection.setSnapshot(loadedKey, loadedDescriptor.getNavigableRole(), null);
+		collection.setSnapshot( loadedKey, loadedDescriptor.getNavigableRole(), null );
 
 		//postInitialize() will be called after initialization
 	}
@@ -166,8 +165,7 @@ public final class CollectionEntry implements Serializable {
 			return;
 		}
 
-		final JavaTypeDescriptor javaTypeDescriptor = loadedDescriptor.getJavaTypeDescriptor();
-		final MutabilityPlan mutabilityPlan = javaTypeDescriptor.getMutabilityPlan();
+		final MutabilityPlan mutabilityPlan = loadedDescriptor.getDescribedAttribute().getMutabilityPlan();
 
 		if ( ! mutabilityPlan.isMutable() ) {
 			return;
@@ -191,7 +189,7 @@ public final class CollectionEntry implements Serializable {
 
 		boolean nonMutableChange = collection.isDirty()
 				&& getLoadedCollectionDescriptor() != null
-				&& !getLoadedCollectionDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable();
+				&& !getLoadedCollectionDescriptor().getMutabilityPlan().isMutable();
 		if ( nonMutableChange ) {
 			throw new HibernateException(
 					"changed an immutable collection instance: " +
@@ -217,7 +215,7 @@ public final class CollectionEntry implements Serializable {
 	}
 
 	public void postInitialize(PersistentCollection collection) throws HibernateException {
-		snapshot = getLoadedCollectionDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable()
+		snapshot = getLoadedCollectionDescriptor().getMutabilityPlan().isMutable()
 				? collection.getSnapshot( getLoadedCollectionDescriptor() )
 				: null;
 		collection.setSnapshot(loadedKey, role, snapshot);
@@ -252,9 +250,10 @@ public final class CollectionEntry implements Serializable {
 		boolean resnapshot = collection.wasInitialized() &&
 				( isDoremove() || isDorecreate() || isDoupdate() );
 		if ( resnapshot ) {
-			snapshot = loadedCollectionDescriptor ==null || !loadedCollectionDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ?
-					null :
-					collection.getSnapshot( loadedCollectionDescriptor ); //re-snapshot
+			snapshot = loadedCollectionDescriptor == null || !loadedCollectionDescriptor.getMutabilityPlan().isMutable()
+					? null
+					//re-snapshot
+					: collection.getSnapshot( loadedCollectionDescriptor );
 		}
 
 		collection.postAction();
@@ -422,8 +421,8 @@ public final class CollectionEntry implements Serializable {
 		//      does the collection already have
 		//      it's own up-to-date snapshot?
 		return collection.wasInitialized() &&
-			( getLoadedCollectionDescriptor()==null || getLoadedCollectionDescriptor().getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) &&
-			collection.isSnapshotEmpty( getSnapshot() );
+			( getLoadedCollectionDescriptor() == null || getLoadedCollectionDescriptor().getMutabilityPlan().isMutable() )
+				&& collection.isSnapshotEmpty( getSnapshot() );
 	}
 
 

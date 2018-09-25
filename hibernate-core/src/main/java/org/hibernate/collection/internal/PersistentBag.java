@@ -128,7 +128,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 	public void beforeInitialize(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		this.bag = (List) getCollectionMetadata().instantiateRaw( anticipatedSize );
+		this.bag = (List) getCollectionDescriptor().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -156,7 +156,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 		final Iterator iter = list.iterator();
 		int result = 0;
 		while ( iter.hasNext() ) {
-			if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( (E) element, (E) iter.next() ) ) {
+			if ( getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().areEqual( (E) element, (E) iter.next() ) ) {
 				result++;
 			}
 		}
@@ -169,7 +169,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 			throws HibernateException {
 		final ArrayList clonedList = new ArrayList( bag.size() );
 		for ( Object item : bag ) {
-			clonedList.add( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( (E) item ) );
+			clonedList.add( getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( (E) item ) );
 		}
 		return clonedList;
 	}
@@ -186,7 +186,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 		final int length = bag.size();
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( (E) bag.get( i ) );
+			result[i] = getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( (E) bag.get( i ) );
 		}
 		return result;
 	}
@@ -202,7 +202,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 //		final int size = array.length;
 //		beforeInitialize( size, collectionDescriptor );
 //		for ( Object item : array ) {
-//			final E element = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( item );
+//			final E element = getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( item );
 //			if ( element != null ) {
 //				bag.add( element );
 //			}
@@ -233,7 +233,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 		int i=0;
 		for ( E old : sn ) {
 			boolean found = false;
-			if ( bag.size() > i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, bag.get( i++ ) ) ) {
+			if ( bag.size() > i && getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, bag.get( i++ ) ) ) {
 				//a shortcut if its location didn't change!
 				found = true;
 			}
@@ -241,7 +241,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 				//search for it
 				//note that this code is incorrect for other than one-to-many
 				for ( E aBag : bag ) {
-					if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, aBag ) ) {
+					if ( getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, aBag ) ) {
 						found = true;
 						break;
 					}
@@ -259,7 +259,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 	@SuppressWarnings("unchecked")
 	public boolean needsInserting(Object entry, int i) throws HibernateException {
 		final List<E> sn = (List<E>) getSnapshot();
-		if ( sn.size() > i && getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( sn.get( i ), (E) entry ) ) {
+		if ( sn.size() > i && getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().areEqual( sn.get( i ), (E) entry ) ) {
 			//a shortcut if its location didn't change!
 			return false;
 		}
@@ -267,7 +267,7 @@ public class PersistentBag<E> extends AbstractPersistentCollection<E> implements
 			//search for it
 			//note that this code is incorrect for other than one-to-many
 			for ( E old : sn ) {
-				if ( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, (E) entry ) ) {
+				if ( getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().areEqual( old, (E) entry ) ) {
 					return false;
 				}
 			}

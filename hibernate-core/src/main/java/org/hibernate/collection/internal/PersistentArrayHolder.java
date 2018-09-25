@@ -194,7 +194,7 @@ public class PersistentArrayHolder<E> extends AbstractPersistentCollection<E> {
 		setInitialized();
 
 		array = (E[]) Array.newInstance(
-				getCollectionMetadata().getElementDescriptor().getJavaType(),
+				getCollectionDescriptor().getElementDescriptor().getJavaType(),
 				tempList.size()
 		);
 		for ( int i=0; i<tempList.size(); i++ ) {
@@ -222,10 +222,10 @@ public class PersistentArrayHolder<E> extends AbstractPersistentCollection<E> {
 			Object owner,
 			PersistentCollectionDescriptor collectionDescriptor) {
 		final Serializable[] cached = (Serializable[]) disassembled;
-		array = (E[]) Array.newInstance( getCollectionMetadata().getElementDescriptor().getJavaType(), cached.length );
+		array = (E[]) Array.newInstance( getCollectionDescriptor().getElementDescriptor().getJavaType(), cached.length );
 
 		for ( int i=0; i<cached.length; i++ ) {
-			Array.set( array, i, getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( cached[i] ) );
+			Array.set( array, i, getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( cached[i] ) );
 		}
 	}
 

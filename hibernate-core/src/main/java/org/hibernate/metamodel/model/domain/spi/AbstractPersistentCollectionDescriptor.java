@@ -116,6 +116,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	private Navigable foreignKeyTargetNavigable;
 
 	private CollectionJavaDescriptor<C> javaTypeDescriptor;
+	private CollectionMutabilityPlan mutabilityPlan;
 	private CollectionIdentifier idDescriptor;
 	private CollectionElement elementDescriptor;
 	private CollectionIndex indexDescriptor;
@@ -158,6 +159,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.container = runtimeContainer;
 
 		this.navigableRole = container.getNavigableRole().append( pluralProperty.getName() );
+
+		this.mutabilityPlan = determineMutabilityPlan( pluralProperty, creationContext );
 
 		this.attribute = new PluralPersistentAttributeImpl(
 				this,
@@ -210,13 +213,17 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 		this.inverse = collectionBinding.isInverse();
 	}
 
-	/**
-	 * todo (6.0) - get CollectionSemantics from Collection boot metadata
-	 * 		this should have been resolved already when determining that we have a collection
-	 * 		as part of boot metamodel building.  this is how custom collection types are hooked in
-	 * 		eventually too
-	 * or - todo (7.0) - ^^
-	 */
+	private CollectionMutabilityPlan determineMutabilityPlan(
+			Property bootProperty,
+			RuntimeModelCreationContext creationContext) {
+		// todo (6.0) : implement this properly
+		return CollectionMutabilityPlan.INSTANCE;
+
+		// todo (6.0) : delegate this to CollectionSemantics?
+		// 		support for users extending Hibernate with custom collection types
+		//return collectionDescriptor.getSemantics().determineMutabilityPlan( ... );
+	}
+
 	protected abstract CollectionJavaDescriptor resolveCollectionJtd(
 			Collection collectionBinding,
 			RuntimeModelCreationContext creationContext);
@@ -918,6 +925,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	@Override
 	public PluralPersistentAttribute getDescribedAttribute() {
 		return attribute;
+	}
+
+	@Override
+	public CollectionMutabilityPlan<C> getMutabilityPlan() {
+		return mutabilityPlan;
 	}
 
 	@Override

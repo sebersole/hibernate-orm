@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.internal.domain;
 
+import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.internal.util.StringHelper;
@@ -19,9 +20,12 @@ import org.hibernate.query.NavigablePath;
  * @author Steve Ebersole
  */
 public class LoggingHelper {
+	private static final String NULL = "<null>";
+	private static final String UNREFERENCED = "<unreferenced>";
+
 	public static String toLoggableString(NavigableRole role) {
 		if ( role == null ) {
-			return "<unreferenced>";
+			return UNREFERENCED;
 		}
 
 		if ( role.isRoot() ) {
@@ -47,7 +51,7 @@ public class LoggingHelper {
 
 	public static String toLoggableString(NavigableRole role, Object key) {
 		if ( role == null ) {
-			return "<unreferenced>";
+			return UNREFERENCED;
 		}
 
 		return toLoggableString( toLoggableString( role ), key );
@@ -75,12 +79,23 @@ public class LoggingHelper {
 		buffer.append( '#' );
 
 		if ( key == null ) {
-			buffer.append( "<null>" );
+			buffer.append( NULL );
 		}
 		else {
 			buffer.append( key );
 		}
 
 		return buffer.toString();
+	}
+
+	public static String toLoggableString(PersistentCollection collectionInstance) {
+		if ( collectionInstance == null ) {
+			return NULL;
+		}
+
+		return toLoggableString(
+				collectionInstance.getRole(),
+				collectionInstance.getKey()
+		);
 	}
 }

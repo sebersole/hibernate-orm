@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.NullValueAssembler;
+import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
@@ -32,6 +32,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
 public abstract class AbstractCompositeInitializer extends AbstractFetchParentAccess implements CompositeInitializer {
 	private final EmbeddedTypeDescriptor embeddedTypeDescriptor;
 	private final FetchParentAccess fetchParentAccess;
+	private final NavigablePath navigablePath;
 
 	private final Map<StateArrayContributor, DomainResultAssembler> assemblerMap = new HashMap<>();
 
@@ -48,6 +49,7 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 			AssemblerCreationState creationState) {
 		this.embeddedTypeDescriptor = resultDescriptor.getCompositeNavigableDescriptor().getEmbeddedDescriptor();
 		this.fetchParentAccess = fetchParentAccess;
+		this.navigablePath = resultDescriptor.getNavigablePath();
 
 		embeddedTypeDescriptor.visitStateArrayContributors(
 				stateArrayContributor -> {
@@ -69,6 +71,10 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 
 	public FetchParentAccess getFetchParentAccess() {
 		return fetchParentAccess;
+	}
+
+	public NavigablePath getNavigablePath() {
+		return navigablePath;
 	}
 
 	@Override
@@ -96,16 +102,29 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 //					}
 //			);
 //		}
+
+		// todo (6.0) : ? - add FetchParentAccess#findFirstEntity` for backwards-compatibility in regards to ^^ ?
+		//		notifyParentResolutionListeners( fetchParentAccess.getFetchParentInstance() );
 	}
 
 	@Override
 	public void resolveInstance(RowProcessingState rowProcessingState) {
 		compositeInstance = getEmbeddedDescriptor().instantiate( rowProcessingState.getSession() );
+		CompositeLoadingLogger.INSTANCE.debugf(
+				"Created composite instance [%s] : %s",
+				LoggingHelper.toLoggableString( navigablePath ),
+				compositeInstance
+		);
 	}
 
 	@Override
 	public void initializeInstance(RowProcessingState rowProcessingState) {
-		notifyParentResolutionListeners( fetchParentAccess.getFetchParentInstance() );
+
+		CompositeLoadingLogger.INSTANCE.debugf(
+				"Initializing composite instance [%s] : %s",
+				LoggingHelper.toLoggableString( navigablePath ),
+				compositeInstance
+		);
 
 		resolvedValues = new Object[ assemblerMap.size() ];
 
@@ -116,13 +135,10 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 			);
 
 			resolvedValues[ entry.getKey().getStateArrayPosition() ] = contributorValue;
-
 		}
 
 		getEmbeddedDescriptor().setPropertyValues( compositeInstance, resolvedValues );
 
-		// todo (6.0) : handle `org.hibernate.annotations.Parent` injection as well
-		// todo (6.0) : ? - add FetchParentAccess#findFirstEntity` for backwards-compatibility in regards to ^^ ?
 	}
 
 	@Override

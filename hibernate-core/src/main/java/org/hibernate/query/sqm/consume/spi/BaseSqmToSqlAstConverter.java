@@ -27,6 +27,9 @@ import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifierComposite;
+import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
@@ -165,8 +168,9 @@ import org.hibernate.sql.ast.tree.spi.expression.UnaryOperation;
 import org.hibernate.sql.ast.tree.spi.expression.UpperFunction;
 import org.hibernate.sql.ast.tree.spi.expression.domain.AnyValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.BasicValuedNavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.CompositeIdentifierReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
-import org.hibernate.sql.ast.tree.spi.expression.domain.EntityIdentifierReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.SimpleIdentifierReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
@@ -741,11 +745,27 @@ public abstract class BaseSqmToSqlAstConverter
 			throw new ConversionException( "Could not find matching resolved TableGroup : " + expression.getExportedFromElement() );
 		}
 
-		return new EntityIdentifierReference(
-				(EntityValuedNavigableReference) resolvedTableGroup.getNavigableReference(),
-				expression.getReferencedNavigable(),
-				expression.getNavigablePath()
-		);
+		final EntityValuedNavigableReference entityReference = (EntityValuedNavigableReference) resolvedTableGroup.getNavigableReference();
+
+		final EntityIdentifier identifierDescriptor = entityReference.getNavigable()
+				.getEntityDescriptor()
+				.getIdentifierDescriptor();
+
+		if ( identifierDescriptor instanceof EntityIdentifierSimple ) {
+			return new SimpleIdentifierReference(
+					entityReference,
+					expression.getReferencedNavigable(),
+					expression.getNavigablePath()
+			);
+		}
+		else {
+			assert identifierDescriptor instanceof EntityIdentifierComposite;
+			return new CompositeIdentifierReference(
+					entityReference,
+					(EntityIdentifierComposite) expression.getReferencedNavigable(),
+					expression.getNavigablePath()
+			);
+		}
 	}
 
 	@Override

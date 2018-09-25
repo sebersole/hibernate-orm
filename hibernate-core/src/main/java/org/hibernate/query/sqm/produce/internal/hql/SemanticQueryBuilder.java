@@ -1081,12 +1081,13 @@ public class SemanticQueryBuilder
 	@Override
 	public SqmQualifiedJoin visitQualifiedJoin(HqlParser.QualifiedJoinContext ctx) {
 		final SqmJoinType joinType;
-		if ( ctx.OUTER() != null ) {
+		final HqlParser.JoinTypeQualifierContext joinTypeQualifier = ctx.joinTypeQualifier();
+		if ( joinTypeQualifier.OUTER() != null ) {
 			// for outer joins, only left outer joins are currently supported
-			if ( ctx.FULL() != null ) {
+			if ( joinTypeQualifier.FULL() != null ) {
 				throw new SemanticException( "FULL OUTER joins are not yet supported : " + ctx.getText() );
 			}
-			if ( ctx.RIGHT() != null ) {
+			if ( joinTypeQualifier.RIGHT() != null ) {
 				throw new SemanticException( "RIGHT OUTER joins are not yet supported : " + ctx.getText() );
 			}
 

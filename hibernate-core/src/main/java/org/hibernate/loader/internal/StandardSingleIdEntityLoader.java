@@ -103,8 +103,8 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 		entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
-//				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
-				id,
+				entityDescriptor.getHierarchy().getIdentifierDescriptor().unresolve( id, session ),
+//				id,
 				new ExpressableType.JdbcValueCollector() {
 					private int count = 0;
 

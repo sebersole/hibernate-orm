@@ -54,6 +54,10 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerRefere
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.domain.embedded.CompositeFetchImpl;
+import org.hibernate.sql.results.internal.domain.embedded.CompositeResultImpl;
+import org.hibernate.sql.results.internal.domain.embedded.CompositeRootInitializerImpl;
+import org.hibernate.sql.results.spi.CompositeInitializer;
+import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
@@ -427,4 +431,11 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		);
 	}
 
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		return new CompositeResultImpl( resultVariable, getEmbeddedDescriptor(), creationState );
+	}
 }

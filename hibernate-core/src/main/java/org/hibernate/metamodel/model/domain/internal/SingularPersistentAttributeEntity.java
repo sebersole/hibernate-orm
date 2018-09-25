@@ -20,6 +20,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.engine.FetchStrategy;
@@ -748,6 +749,14 @@ public class SingularPersistentAttributeEntity<O, J>
 		return foreignKey.getColumnMappings().getReferringColumns();
 //		}
 //		return new ArrayList<>();
+	}
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {

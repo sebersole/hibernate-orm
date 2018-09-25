@@ -10,7 +10,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
  * When an entity is passed to replicate(), and there is an existing row, we must
@@ -33,7 +33,7 @@ public class OnReplicateVisitor extends ReattachVisitor {
 	}
 
 	@Override
-	public Object processCollection(Object collection, PluralAttributeCollection attributeCollection) throws HibernateException {
+	public Object processCollection(Object collection, PluralPersistentAttribute collectionAttribute) throws HibernateException {
 		if ( collection == PersistentCollectionDescriptor.UNFETCHED_COLLECTION ) {
 			return null;
 		}
@@ -42,7 +42,7 @@ public class OnReplicateVisitor extends ReattachVisitor {
 
 		final PersistentCollectionDescriptor descriptor = session.getFactory()
 				.getMetamodel()
-				.findCollectionDescriptor( attributeCollection.getNavigableName() );
+				.findCollectionDescriptor( collectionAttribute.getNavigableName() );
 
 		if ( isUpdate ) {
 			removeCollection( descriptor, extractCollectionKeyFromOwner( descriptor ), session );

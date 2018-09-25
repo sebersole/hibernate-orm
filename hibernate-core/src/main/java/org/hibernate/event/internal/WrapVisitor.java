@@ -20,7 +20,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
  * Wrap collections in a Hibernate collection wrapper.
@@ -41,7 +41,7 @@ public class WrapVisitor extends ProxyVisitor {
 	}
 
 	@Override
-	Object processCollection(Object collection, PluralAttributeCollection attributeCollection)
+	Object processCollection(Object collection, PluralPersistentAttribute collectionAttribute)
 			throws HibernateException {
 
 		if ( collection != null && ( collection instanceof PersistentCollection ) ) {
@@ -49,16 +49,13 @@ public class WrapVisitor extends ProxyVisitor {
 			final SessionImplementor session = getSession();
 			PersistentCollection coll = (PersistentCollection) collection;
 			if ( coll.setCurrentSession( session ) ) {
-				reattachCollection( coll, attributeCollection.getNavigableRole() );
+				reattachCollection( coll, collectionAttribute.getNavigableRole() );
 			}
 			return null;
 
 		}
 		else {
-			final PersistentCollectionDescriptor descriptor = getSession().getFactory()
-					.getMetamodel()
-					.findCollectionDescriptor( attributeCollection.getNavigableName() );
-			return processArrayOrNewCollection( collection, descriptor );
+			return processArrayOrNewCollection( collection, collectionAttribute.getCollectionDescriptor() );
 		}
 
 	}

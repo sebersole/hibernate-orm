@@ -18,6 +18,7 @@ import org.hibernate.LockOptions;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.boot.spi.AuditServiceOptions;
@@ -239,7 +240,7 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		);
 		addEndRevisionNullRestriction( options, qb.getRootParameters() );
 
-		final List<Object> l = qb.toQuery( session ).setLockOptions( LockOptions.UPGRADE ).list();
+		final List<Object> l = qb.toQuery( (SharedSessionContractImplementor) session ).setLockOptions( LockOptions.UPGRADE ).list();
 
 		// Update the last revision if one exists.
 		// HHH-5967: with collections, the same element can be added and removed multiple times. So even if it's an

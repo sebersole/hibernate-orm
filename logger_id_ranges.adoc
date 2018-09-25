@@ -82,4 +82,8 @@
 |90005300
 |org.hibernate.sql.results.internal.domain.entity.EntityLoadingLogger
 
+|90005301
+|90005400
+|org.hibernate.sql.results.internal.domain.embedded.CompositeLoadingLogger
+
 |===

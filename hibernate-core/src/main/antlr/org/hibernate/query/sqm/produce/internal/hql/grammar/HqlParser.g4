@@ -28,7 +28,7 @@ selectStatement
 	;
 
 updateStatement
-	: UPDATE FROM? mainEntityPersisterReference setClause whereClause
+	: UPDATE FROM? mainEntityPersisterReference setClause whereClause?
 	;
 
 setClause
@@ -40,7 +40,7 @@ assignment
 	;
 
 deleteStatement
-	: DELETE FROM? mainEntityPersisterReference whereClause
+	: DELETE FROM? mainEntityPersisterReference whereClause?
 	;
 
 insertStatement
@@ -268,7 +268,13 @@ jpaCollectionJoin
 	;
 
 qualifiedJoin
-	: ( INNER | ((LEFT|RIGHT|FULL)? OUTER) )? JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
+//	: ( INNER | ((LEFT|RIGHT|FULL)? OUTER) )? JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
+	: (joinTypeQualifier)? JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
+	;
+
+joinTypeQualifier
+	: INNER
+	| ( (LEFT|RIGHT|FULL)? OUTER? )
 	;
 
 qualifiedJoinRhs

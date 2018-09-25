@@ -14,12 +14,12 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 /**
  * @author Steve Ebersole
  */
-public class EntityIdentifierReference implements NavigableReference {
+public class SimpleIdentifierReference implements NavigableReference {
 	private final EntityValuedNavigableReference entityReference;
 	private final EntityIdentifier identifierDescriptor;
 	private final NavigablePath navigablePath;
 
-	public EntityIdentifierReference(
+	public SimpleIdentifierReference(
 			EntityValuedNavigableReference entityReference,
 			EntityIdentifier identifierDescriptor,
 			NavigablePath navigablePath) {

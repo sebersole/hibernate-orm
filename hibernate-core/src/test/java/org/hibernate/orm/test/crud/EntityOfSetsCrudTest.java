@@ -101,7 +101,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 
 	@Test
-//	@FailureExpected( "A problem in missing rows from the result set" )
+//	@FailureExpected( "Problem flushing the Session with initialized collection(s).  Flush tries to remove them (luckily its remove support is not yet implemented)" )
 	public void testEagerOperations() {
 		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
 
@@ -112,7 +112,8 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		// Cascading is not yet implemented, so for now manually create the
 		// collection rows
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
-		sessionFactoryScope().inSession(
+
+		sessionFactoryScope().inTransaction(
 				session -> session.doWork(
 						connection -> {
 							final PreparedStatement statement = connection.prepareStatement(
@@ -147,7 +148,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 //		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-		sessionFactoryScope().inSession(
+		sessionFactoryScope().inTransaction(
 				session -> {
 					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
 					assert value == 1;
@@ -159,7 +160,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		//		- for the outer join case, run into a problem with not all of PersistentCollectionDescriptor
 		//			used by PersistentCollection are done (specifically reading size)
 
-		sessionFactoryScope().inSession(
+		sessionFactoryScope().inTransaction(
 				session -> {
 					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e left join fetch e.setOfBasics", EntityOfSets.class ).uniqueResult();

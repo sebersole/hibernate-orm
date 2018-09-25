@@ -107,7 +107,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 	public void beforeInitialize(
 			int anticipatedSize,
 			PersistentCollectionDescriptor collectionDescriptor) {
-		this.list = (List) getCollectionMetadata().instantiateRaw( anticipatedSize );
+		this.list = (List) getCollectionDescriptor().instantiateRaw( anticipatedSize );
 	}
 
 	@Override
@@ -410,7 +410,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 		final int size = array.length;
 		beforeInitialize( size, collectionDescriptor );
 		for ( Serializable arrayElement : array ) {
-			list.add( getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement ) );
+			list.add( getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().assemble( arrayElement ) );
 		}
 	}
 
@@ -420,7 +420,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 		final int length = list.size();
 		final Serializable[] result = new Serializable[length];
 		for ( int i=0; i<length; i++ ) {
-			result[i] = getCollectionMetadata().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( list.get( i ) );
+			result[i] = getCollectionDescriptor().getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().disassemble( list.get( i ) );
 		}
 		return result;
 	}
@@ -462,7 +462,7 @@ public class PersistentList<E> extends AbstractPersistentCollection<E> implement
 		return i < sn.size()
 				&& sn.get( i ) != null
 				&& list.get( i ) != null
-				&& getCollectionMetadata().isDirty( list.get( i ), sn.get( i ), getSession() );
+				&& getCollectionDescriptor().isDirty( list.get( i ), sn.get( i ), getSession() );
 	}
 
 	@Override

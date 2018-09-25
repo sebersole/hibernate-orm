@@ -97,15 +97,15 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 		beforeInitialize( size, collectionDescriptor );
 		for ( int i = 0; i < size; i+=2 ) {
 			identifiers.put(
-				(i/2),
-				getCollectionMetadata().getIdDescriptor()
+					(i/2),
+					getCollectionDescriptor().getIdDescriptor()
 						.getBasicType()
 						.getJavaTypeDescriptor()
 						.getMutabilityPlan()
 						.assemble( array[i] )
 			);
 			values.add(
-					getCollectionMetadata().getElementDescriptor()
+					getCollectionDescriptor().getElementDescriptor()
 							.getJavaTypeDescriptor()
 							.getMutabilityPlan()
 							.assemble( array[i+1] )
@@ -356,7 +356,7 @@ public class PersistentIdentifierBag<E> extends AbstractPersistentCollection<E> 
 		}
 
 		final Object old = snap.get( id );
-		return old != null && getCollectionMetadata().isDirty( old, entry, getSession() );
+		return old != null && getCollectionDescriptor().isDirty( old, entry, getSession() );
 	}
 
 	@Override

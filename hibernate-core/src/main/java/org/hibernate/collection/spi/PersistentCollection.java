@@ -89,7 +89,7 @@ public interface PersistentCollection<E> {
 	// PersistentCollectionDescriptor passed in.  The others
 	// mainly consist of methods used during re-attachment
 
-	PersistentCollectionDescriptor<?,?,E> getCollectionMetadata();
+	PersistentCollectionDescriptor<?,?,E> getCollectionDescriptor();
 
 	/**
 	 * Get the owning entity. Note that the owner is only

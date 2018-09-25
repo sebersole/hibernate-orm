@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
@@ -25,6 +26,7 @@ import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.CollectionMutabilityPlan;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
@@ -36,6 +38,7 @@ import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmPluralAttributeReference;
@@ -43,13 +46,13 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.internal.domain.collection.CollectionResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 import org.jboss.logging.Logger;
@@ -89,9 +92,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 
 		creationContext.registerCollectionDescriptor( collectionDescriptor, bootCollectionDescriptor );
 
-		final FetchStrategy fetchStrategy = Helper.determineFetchStrategy( bootCollectionDescriptor );
-
-		this.fetchStrategy = fetchStrategy;
+		this.fetchStrategy = Helper.determineFetchStrategy( bootCollectionDescriptor );
 	}
 
 	@Override
@@ -177,8 +178,8 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	}
 
 	@Override
-	public MutabilityPlan getMutabilityPlan() {
-		return getJavaTypeDescriptor().getMutabilityPlan();
+	public CollectionMutabilityPlan getMutabilityPlan() {
+		return getCollectionDescriptor().getMutabilityPlan();
 	}
 
 	@Override
@@ -386,5 +387,26 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public String toString() {
 		return "PluralPersistentAttribute(" + getNavigableRole() + ")";
+	}
+
+	@Override
+	public DomainResult createDomainResult(
+			String resultVariable,
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
+		throw new NotYetImplementedFor6Exception();
+
+		// todo (6.0) : implement - need to build CollectionTableGroup, etc
+
+//		DomainResult collectionKeyResult = getCollectionDescriptor().getCollectionKeyDescriptor().createCollectionResult(
+//				creationState.
+//		);
+//		return new CollectionResultImpl(
+//				this,
+//				new NavigablePath( getNavigableRole().getFullPath() ),
+//				resultVariable,
+//				creationState.determineLockMode( resultVariable ),
+//				createDomainResult(  ),
+//		);
 	}
 }

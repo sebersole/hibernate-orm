@@ -393,14 +393,17 @@ public interface PersistenceContext {
 	 * add an (initialized) collection that was created by another session and passed
 	 * into update() (ie. one with a snapshot and existing state on the database)
 	 */
-	void addInitializedDetachedCollection(PersistentCollectionDescriptor descriptor,
+	void addInitializedDetachedCollection(
+			PersistentCollectionDescriptor descriptor,
 			PersistentCollection collection) throws HibernateException;
 
 	/**
 	 * add a collection we just pulled out of the cache (does not need initializing)
 	 */
-	CollectionEntry addInitializedCollection(PersistentCollectionDescriptor descriptor,
-			PersistentCollection collection, Serializable id) throws HibernateException;
+	CollectionEntry addInitializedCollection(
+			PersistentCollectionDescriptor descriptor,
+			PersistentCollection collection,
+			Object id) throws HibernateException;
 
 	/**
 	 * Get the collection instance associated with the <tt>CollectionKey</tt>
@@ -412,6 +415,12 @@ public interface PersistenceContext {
 	 * two-phase load
 	 *
 	 * todo (6.0) : this method may no longer be needed (given how the collection initializer does the immediate load directly)
+	 * 		^^ however - see note wrt possibly using some form of multi-key collection loading
+	 * 		(batch, subselect, specialized) for performance
+	 *
+	 * todo (6.0) : add call handling for this to the CollectionLoader impls
+	 * 		though technically the CollectionInitializer could do this in the case
+	 * 		it is the root
 	 */
 	void addNonLazyCollection(PersistentCollection collection);
 

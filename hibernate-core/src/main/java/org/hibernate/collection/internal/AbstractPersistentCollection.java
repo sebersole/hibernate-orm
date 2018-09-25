@@ -44,7 +44,7 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( AbstractPersistentCollection.class );
 
 	private transient SharedSessionContractImplementor session;
-	private transient PersistentCollectionDescriptor<?,?,E> collectionMetadata;
+	private transient PersistentCollectionDescriptor<?,?,E> collectionDescriptor;
 
 	private NavigableRole role;
 	private Object key;
@@ -77,7 +77,7 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 			SharedSessionContractImplementor session,
 			PersistentCollectionDescriptor<?,?,E> collectionDescriptor) {
 		this.session = session;
-		this.collectionMetadata = collectionDescriptor;
+		this.collectionDescriptor = collectionDescriptor;
 		this.role = collectionDescriptor.getNavigableRole();
 	}
 
@@ -86,7 +86,8 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 			PersistentCollectionDescriptor<?, ?, E> collectionDescriptor,
 			Object key) {
 		this.session = session;
-		this.collectionMetadata = collectionDescriptor;
+		this.collectionDescriptor = collectionDescriptor;
+		this.role = collectionDescriptor.getNavigableRole();
 		this.key = key;
 	}
 
@@ -96,12 +97,12 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	}
 
 	@Override
-	public PersistentCollectionDescriptor<?,?,E> getCollectionMetadata() {
-		if ( collectionMetadata == null ) {
+	public PersistentCollectionDescriptor<?,?,E> getCollectionDescriptor() {
+		if ( collectionDescriptor == null ) {
 			throw new HibernateException( "Collection metadata is not available while disconnected" );
 		}
 
-		return collectionMetadata;
+		return collectionDescriptor;
 	}
 
 	@Override
@@ -657,12 +658,12 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 	@Override
 	public final boolean setCurrentSession(SharedSessionContractImplementor session) throws HibernateException {
 		if ( session == this.session ) {
-			assert collectionMetadata != null;
+			assert collectionDescriptor != null;
 			return false;
 		}
 		else {
 			if ( this.session != null ) {
-				assert collectionMetadata != null;
+				assert collectionDescriptor != null;
 				final String msg = generateUnexpectedSessionStateMessage( session );
 				if ( isConnectedToSession() ) {
 					throw new HibernateException(
@@ -672,7 +673,7 @@ public abstract class AbstractPersistentCollection<E> implements Serializable, P
 				else {
 					LOG.logUnexpectedSessionInCollectionNotConnected( msg );
 					this.session = session;
-					this.collectionMetadata = session.getFactory().getMetamodel().findCollectionDescriptor( getRole() );
+					this.collectionDescriptor = session.getFactory().getMetamodel().findCollectionDescriptor( getRole() );
 					return true;
 				}
 			}
