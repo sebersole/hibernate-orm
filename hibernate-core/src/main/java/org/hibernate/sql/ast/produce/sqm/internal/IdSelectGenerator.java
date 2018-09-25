@@ -6,16 +6,20 @@
  */
 package org.hibernate.sql.ast.produce.sqm.internal;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.SingletonStack;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteOrUpdateStatement;
@@ -23,6 +27,7 @@ import org.hibernate.query.sqm.tree.predicate.SqmPredicate;
 import org.hibernate.query.sqm.tree.predicate.SqmWhereClause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
+import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -38,6 +43,7 @@ import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
 import org.hibernate.sql.ast.tree.spi.predicate.Junction;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
+import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -132,6 +138,13 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 		final Stack<ColumnReferenceQualifier> tableGroupStack = new SingletonStack<>( rootTableGroup );
 		final Stack<NavigableReference> navRefStack = new SingletonStack<>( rootTableGroup.getNavigableReference() );
 
+		final DomainResultCreationContext domainResultCreationContext = new DomainResultCreationContext() {
+			@Override
+			public SessionFactoryImplementor getSessionFactory() {
+				return sessionFactory;
+			}
+		};
+
 		final DomainResultCreationState domainResultCreationState = new DomainResultCreationState() {
 			@Override
 			public SqlExpressionResolver getSqlExpressionResolver() {
@@ -160,7 +173,35 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 			@Override
 			public List<Fetch> visitFetches(FetchParent fetchParent) {
-				throw new NotYetImplementedFor6Exception( getClass() );
+				final List<Fetch> fetches = new ArrayList<>();
+				final Consumer<Fetchable> fetchableConsumer = fetchable -> {
+					if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
+						return;
+					}
+
+					fetches.add(
+							fetchable.generateFetch(
+									fetchParent,
+									FetchTiming.IMMEDIATE,
+									true,
+									LockMode.NONE,
+									null,
+									this,
+									domainResultCreationContext
+							)
+					);
+				};
+
+				try {
+					NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
+					navigableContainer.visitKeyFetchables( fetchableConsumer );
+					navigableContainer.visitFetchables( fetchableConsumer );
+				}
+				finally {
+
+				}
+
+				return fetches;
 			}
 
 			@Override

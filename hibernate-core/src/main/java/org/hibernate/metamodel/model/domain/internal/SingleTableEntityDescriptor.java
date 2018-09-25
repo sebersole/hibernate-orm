@@ -262,8 +262,8 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				// NOTE : at least according to the argument name (`unresolvedId`), the
 				// 		incoming id value should already be unresolved - so do not
 				// 		unresolve it again
-				// getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
-				unresolvedId,
+				getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
+				//unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
 					final Column referringColumn = tableBindings.getJoinForeignKey()
 							.getColumnMappings()
