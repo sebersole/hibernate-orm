@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Andrea Boriero
  */
-public class EntityWithOneToOneJoinTableTest extends SessionFactoryBasedFunctionalTest {
+public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactoryBasedFunctionalTest {
 
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
