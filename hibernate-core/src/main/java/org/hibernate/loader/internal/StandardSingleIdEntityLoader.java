@@ -469,6 +469,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			idExpression = new SqlTuple( columnReferences );
 		}
 
+		// todo (6.0) : is this correct and/or is theew a better way to add the SqlSelection to the SelectClause?
 		entityDescriptor.visitStateArrayContributors(
 				stateArrayContributor ->
 						stateArrayContributor.visitColumns(

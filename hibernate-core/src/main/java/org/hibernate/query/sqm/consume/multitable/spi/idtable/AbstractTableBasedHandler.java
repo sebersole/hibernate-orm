@@ -246,7 +246,6 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		final TableSpace tableSpace = idTableSelect.getFromClause().makeTableSpace();
 		tableSpace.setRootTableGroup( createTableGroupForIdTable( idTableInfo, tableSpace ) );
 
-		// todo (6.0) : still need to add SqlSelections
 		Collection<Column> columns = idTableInfo.getColumns();
 		columns.forEach( column -> {
 			SqlSelection sqlSelection = new SqlSelectionImpl(
