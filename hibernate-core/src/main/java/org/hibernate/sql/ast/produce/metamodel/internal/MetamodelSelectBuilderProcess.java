@@ -436,7 +436,7 @@ public class MetamodelSelectBuilderProcess
 			if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
 				return;
 			}
-
+			// todo (6.0) : is this correct to determine fetches circularity?
 			final AssociationKey associationKey = fetchable.getAssociationKey();
 			if ( associationKey != null ) {
 				if ( fetchedAssociationKey.contains( associationKey ) ) {
