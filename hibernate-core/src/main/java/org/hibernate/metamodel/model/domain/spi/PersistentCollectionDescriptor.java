@@ -402,7 +402,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 * Completely remove the persistent state of the collection
 	 */
 	default void remove(Object id, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -412,7 +412,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -423,7 +423,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -433,7 +433,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -443,7 +443,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	/**
@@ -453,7 +453,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 //	/**
