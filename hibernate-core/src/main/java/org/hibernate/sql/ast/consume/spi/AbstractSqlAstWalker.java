@@ -85,6 +85,15 @@ import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
 import org.hibernate.type.descriptor.sql.spi.JdbcLiteralFormatter;
 import org.hibernate.type.spi.TypeConfiguration;
 
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.CLOSE_PARENTHESYS;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.COMA_SEPARATOR;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.DISTINCT_KEYWORD;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.EMPTY_STRING_SEPARATOR;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.FROM_KEYWORD;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.NO_SEPARATOR;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.OPEN_PARENTHESYS;
+import static org.hibernate.sql.ast.consume.spi.SqlAppender.SELECT_KEYWORD;
+
 /**
  * @author Steve Ebersole
  */
@@ -177,11 +186,11 @@ public abstract class AbstractSqlAstWalker
 		if ( sortSpecifications != null && !sortSpecifications.isEmpty() ) {
 			appendSql( " order by " );
 
-			String separator = "";
+			String separator = NO_SEPARATOR;
 			for (SortSpecification sortSpecification : sortSpecifications ) {
 				appendSql( separator );
 				visitSortSpecification( sortSpecification );
-				separator = ", ";
+				separator = COMA_SEPARATOR;
 			}
 		}
 
@@ -242,19 +251,19 @@ public abstract class AbstractSqlAstWalker
 		clauseStack.push( Clause.SELECT );
 
 		try {
-			appendSql( "select " );
+			appendSql( SELECT_KEYWORD );
 			if ( selectClause.isDistinct() ) {
-				appendSql( "distinct " );
+				appendSql( DISTINCT_KEYWORD );
 			}
 
-			String separator = "";
+			String separator = NO_SEPARATOR;
 			for ( SqlSelection sqlSelection : selectClause.getSqlSelections() ) {
 				if ( sqlSelection instanceof EmptySqlSelection ) {
 					continue;
 				}
 				appendSql( separator );
 				sqlSelection.accept( this );
-				separator = ", ";
+				separator = COMA_SEPARATOR;
 			}
 		}
 		finally {
@@ -272,13 +281,13 @@ public abstract class AbstractSqlAstWalker
 
 	@Override
 	public void visitFromClause(FromClause fromClause) {
-		appendSql( " from " );
+		appendSql( FROM_KEYWORD );
 
-		String separator = "";
+		String separator = NO_SEPARATOR;
 		for ( TableSpace tableSpace : fromClause.getTableSpaces() ) {
 			appendSql( separator );
 			visitTableSpace( tableSpace );
-			separator = ", ";
+			separator = COMA_SEPARATOR;
 		}
 	}
 
@@ -286,24 +295,28 @@ public abstract class AbstractSqlAstWalker
 	public void visitTableSpace(TableSpace tableSpace) {
 		// todo (6.0) : possibly have a way for Dialect to influence rendering the from-clause nodes.
 		//		at what level?  FromClause?  TableSpace?
-		visitTableGroup( tableSpace.getRootTableGroup() );
+		TableGroup rootTableGroup = tableSpace.getRootTableGroup();
+		visitTableGroup( rootTableGroup );
 
 		for ( TableGroupJoin tableGroupJoin : tableSpace.getJoinedTableGroups() ) {
-			appendSql( " " );
-			appendSql( tableGroupJoin.getJoinType().getText() );
-			appendSql( " join (" );
-			visitTableGroup( tableGroupJoin.getJoinedGroup() );
-			appendSql( ") " );
+			TableGroup joinedGroup = tableGroupJoin.getJoinedGroup();
+			if ( !joinedGroup.equals( rootTableGroup ) ) {
+				appendSql( EMPTY_STRING_SEPARATOR );
+				appendSql( tableGroupJoin.getJoinType().getText() );
+				appendSql( " join (" );
+				visitTableGroup( joinedGroup );
+				appendSql( CLOSE_PARENTHESYS );
 
-			clauseStack.push( Clause.WHERE );
-			try {
-				if ( tableGroupJoin.getPredicate() != null && !tableGroupJoin.getPredicate().isEmpty() ) {
-					appendSql( " on " );
-					tableGroupJoin.getPredicate().accept( this );
+				clauseStack.push( Clause.WHERE );
+				try {
+					if ( tableGroupJoin.getPredicate() != null && !tableGroupJoin.getPredicate().isEmpty() ) {
+						appendSql( " on " );
+						tableGroupJoin.getPredicate().accept( this );
+					}
 				}
-			}
-			finally {
-				clauseStack.pop();
+				finally {
+					clauseStack.pop();
+				}
 			}
 		}
 
@@ -386,14 +399,14 @@ public abstract class AbstractSqlAstWalker
 	public void visitNonStandardFunctionExpression(NonStandardFunction function) {
 		appendSql( function.getFunctionName() );
 		if ( !function.getArguments().isEmpty() ) {
-			appendSql( "(" );
-			String separator = "";
+			appendSql( OPEN_PARENTHESYS );
+			String separator = NO_SEPARATOR;
 			for ( Expression argumentExpression : function.getArguments() ) {
 				appendSql( separator );
 				argumentExpression.accept( this );
-				separator = ", ";
+				separator = COMA_SEPARATOR;
 			}
-			appendSql( ")" );
+			appendSql( CLOSE_PARENTHESYS );
 		}
 	}
 
@@ -406,7 +419,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitAbsFunction(AbsFunction function) {
 		appendSql( "abs(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -414,7 +427,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitAvgFunction(AvgFunction function) {
 		appendSql( "avg(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -422,7 +435,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitBitLengthFunction(BitLengthFunction function) {
 		appendSql( "bit_length(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -432,7 +445,7 @@ public abstract class AbstractSqlAstWalker
 		function.getExpressionToCast().accept( this );
 		sqlAppender.appendSql( " as " );
 		sqlAppender.appendSql( determineCastTargetTypeSqlExpression( function ) );
-		sqlAppender.appendSql( ")" );
+		sqlAppender.appendSql( CLOSE_PARENTHESYS );
 	}
 
 	private String determineCastTargetTypeSqlExpression(CastFunction castFunction) {
@@ -462,13 +475,13 @@ public abstract class AbstractSqlAstWalker
 		boolean firstPass = true;
 		for ( Expression expression : function.getExpressions() ) {
 			if ( ! firstPass ) {
-				appendSql( ", " );
+				appendSql( COMA_SEPARATOR );
 			}
 			expression.accept( this );
 			firstPass = false;
 		}
 
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -476,17 +489,17 @@ public abstract class AbstractSqlAstWalker
 	public void visitCountFunction(CountFunction function) {
 		appendSql( "count(" );
 		if ( function.isDistinct() ) {
-			appendSql( "distinct " );
+			appendSql( DISTINCT_KEYWORD );
 		}
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
 	public void visitCountStarFunction(CountStarFunction function) {
 		appendSql( "count(" );
 		if ( function.isDistinct() ) {
-			appendSql( "distinct " );
+			appendSql( DISTINCT_KEYWORD );
 		}
 		appendSql( "*)" );
 	}
@@ -509,18 +522,18 @@ public abstract class AbstractSqlAstWalker
 	@Override
 	public void visitTuple(SqlTuple tuple) {
 		List<Expression> expressions = tuple.getExpressions();
-		String separator = "";
+		String separator = NO_SEPARATOR;
 		boolean isCurrentWhereClause = clauseStack.getCurrent() == Clause.WHERE;
 		if ( isCurrentWhereClause ) {
-			appendSql( "(" );
+			appendSql( OPEN_PARENTHESYS );
 		}
 		for ( Expression expression : expressions ) {
 			appendSql( separator );
 			expression.accept( this );
-			separator = ", ";
+			separator = COMA_SEPARATOR;
 		}
 		if ( isCurrentWhereClause ) {
-			appendSql( ")" );
+			appendSql( CLOSE_PARENTHESYS );
 		}
 	}
 
@@ -529,9 +542,9 @@ public abstract class AbstractSqlAstWalker
 	public void visitExtractFunction(ExtractFunction extractFunction) {
 		appendSql( "extract(" );
 		extractFunction.getUnitToExtract().accept( this );
-		appendSql( " from " );
+		appendSql( FROM_KEYWORD );
 		extractFunction.getExtractionSource().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -539,7 +552,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitLengthFunction(LengthFunction function) {
 		sqlAppender.appendSql( "length(" );
 		function.getArgument().accept( this );
-		sqlAppender.appendSql( ")" );
+		sqlAppender.appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -547,13 +560,13 @@ public abstract class AbstractSqlAstWalker
 	public void visitLocateFunction(LocateFunction function) {
 		appendSql( "locate(" );
 		function.getPatternString().accept( this );
-		appendSql( ", " );
+		appendSql( COMA_SEPARATOR );
 		function.getStringToSearch().accept( this );
 		if ( function.getStartPosition() != null ) {
-			appendSql( ", " );
+			appendSql( COMA_SEPARATOR );
 			function.getStartPosition().accept( this );
 		}
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -561,7 +574,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitLowerFunction(LowerFunction function) {
 		appendSql( "lower(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -569,10 +582,10 @@ public abstract class AbstractSqlAstWalker
 	public void visitMaxFunction(MaxFunction function) {
 		appendSql( "max(" );
 		if ( function.isDistinct() ) {
-			appendSql( "distinct " );
+			appendSql( DISTINCT_KEYWORD );
 		}
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -580,10 +593,10 @@ public abstract class AbstractSqlAstWalker
 	public void visitMinFunction(MinFunction function) {
 		appendSql( "min(" );
 		if ( function.isDistinct() ) {
-			appendSql( "distinct " );
+			appendSql( DISTINCT_KEYWORD );
 		}
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -591,9 +604,9 @@ public abstract class AbstractSqlAstWalker
 	public void visitModFunction(ModFunction function) {
 		sqlAppender.appendSql( "mod(" );
 		function.getDividend().accept( this );
-		sqlAppender.appendSql( ", " );
+		sqlAppender.appendSql( COMA_SEPARATOR );
 		function.getDivisor().accept( this );
-		sqlAppender.appendSql( ")" );
+		sqlAppender.appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -601,7 +614,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitSqrtFunction(SqrtFunction function) {
 		appendSql( "sqrt(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -609,10 +622,10 @@ public abstract class AbstractSqlAstWalker
 	public void visitSumFunction(SumFunction function) {
 		appendSql( "sum(" );
 		if ( function.isDistinct() ) {
-			appendSql( "distinct " );
+			appendSql( DISTINCT_KEYWORD );
 		}
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -620,11 +633,11 @@ public abstract class AbstractSqlAstWalker
 	public void visitTrimFunction(TrimFunction function) {
 		sqlAppender.appendSql( "trim(" );
 		sqlAppender.appendSql( function.getSpecification().toSqlText() );
-		sqlAppender.appendSql( " " );
+		sqlAppender.appendSql( EMPTY_STRING_SEPARATOR );
 		function.getTrimCharacter().accept( this );
-		sqlAppender.appendSql( " from " );
+		sqlAppender.appendSql( FROM_KEYWORD );
 		function.getSource().accept( this );
-		sqlAppender.appendSql( ")" );
+		sqlAppender.appendSql( CLOSE_PARENTHESYS );
 
 	}
 
@@ -633,7 +646,7 @@ public abstract class AbstractSqlAstWalker
 	public void visitUpperFunction(UpperFunction function) {
 		appendSql( "lower(" );
 		function.getArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -695,14 +708,14 @@ public abstract class AbstractSqlAstWalker
 	@SuppressWarnings("unchecked")
 	public void visitCoalesceFunction(CoalesceFunction coalesceExpression) {
 		appendSql( "coalesce(" );
-		String separator = "";
+		String separator = NO_SEPARATOR;
 		for ( Expression expression : coalesceExpression.getValues() ) {
 			appendSql( separator );
 			expression.accept( this );
-			separator = ", ";
+			separator = COMA_SEPARATOR;
 		}
 
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -794,9 +807,9 @@ public abstract class AbstractSqlAstWalker
 	public void visitNullifFunction(NullifFunction function) {
 		appendSql( "nullif(" );
 		function.getFirstArgument().accept( this );
-		appendSql( ", " );
+		appendSql( COMA_SEPARATOR );
 		function.getSecondArgument().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -848,9 +861,9 @@ public abstract class AbstractSqlAstWalker
 			return;
 		}
 
-		appendSql( "(" );
+		appendSql( OPEN_PARENTHESYS );
 		groupedPredicate.getSubPredicate().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -864,14 +877,14 @@ public abstract class AbstractSqlAstWalker
 			appendSql( "null" );
 		}
 		else {
-			String separator = "";
+			String separator = NO_SEPARATOR;
 			for ( Expression expression : inListPredicate.getListExpressions() ) {
 				appendSql( separator );
 				expression.accept( this );
-				separator = ", ";
+				separator = COMA_SEPARATOR;
 			}
 		}
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -882,7 +895,7 @@ public abstract class AbstractSqlAstWalker
 		}
 		appendSql( " in(" );
 		visitQuerySpec( inSubQueryPredicate.getSubQuery() );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override
@@ -891,7 +904,7 @@ public abstract class AbstractSqlAstWalker
 			return;
 		}
 
-		String separator = "";
+		String separator = NO_SEPARATOR;
 		for ( Predicate predicate : junction.getPredicates() ) {
 			appendSql( separator );
 			predicate.accept( this );
@@ -921,7 +934,7 @@ public abstract class AbstractSqlAstWalker
 
 		appendSql( "not(" );
 		negatedPredicate.getPredicate().accept( this );
-		appendSql( ")" );
+		appendSql( CLOSE_PARENTHESYS );
 	}
 
 	@Override

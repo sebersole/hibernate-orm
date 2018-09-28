@@ -10,7 +10,6 @@ import java.sql.CallableStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.hibernate.sql.exec.SqlExecLogger;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**

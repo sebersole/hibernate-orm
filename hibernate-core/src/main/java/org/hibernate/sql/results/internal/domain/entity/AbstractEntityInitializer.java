@@ -417,9 +417,13 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		preLoad( rowProcessingState );
 	}
 
+	protected boolean shouldNotInitializeInstance(){
+		return !responsible || missing;
+	}
+
 	@Override
 	public void initializeInstance(RowProcessingState rowProcessingState) {
-		if ( !responsible || missing ) {
+		if ( shouldNotInitializeInstance() ) {
 			return;
 		}
 
