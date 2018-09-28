@@ -169,11 +169,10 @@ public class MetamodelSelectBuilderProcess
 		final UniqueIdGenerator uidGenerator = new UniqueIdGenerator();
 		final String uid = uidGenerator.generateUniqueId();
 
-		final SqlAliasBaseManager aliasBaseManager = new SqlAliasBaseManager();
 		final TableSpace rootTableSpace = rootQuerySpec.getFromClause().makeTableSpace();
 		tableSpaceStack.push( rootTableSpace );
 
-		final TableGroup rootTableGroup = makeRootTableGroup( uid, rootQuerySpec, rootTableSpace, aliasBaseManager );
+		final TableGroup rootTableGroup = makeRootTableGroup( uid, rootQuerySpec, rootTableSpace, getSqlAliasBaseGenerator() );
 		rootTableSpace.setRootTableGroup( rootTableGroup );
 		tableGroupStack.push( rootTableGroup );
 
@@ -320,7 +319,7 @@ public class MetamodelSelectBuilderProcess
 			String uid,
 			QuerySpec querySpec,
 			TableSpace rootTableSpace,
-			SqlAliasBaseManager aliasBaseManager) {
+			SqlAliasBaseGenerator aliasBaseManager) {
 		// todo (6.0) : alias?
 		final NavigablePath path = new NavigablePath( rootNavigableContainer.getNavigableName() );
 		return ( (RootTableGroupProducer) rootNavigableContainer ).createRootTableGroup(

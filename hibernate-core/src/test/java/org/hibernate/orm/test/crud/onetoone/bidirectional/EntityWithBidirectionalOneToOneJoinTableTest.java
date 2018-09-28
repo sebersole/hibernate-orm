@@ -58,8 +58,8 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 	@AfterEach
 	public void tearDown() {
 		sessionFactoryScope().inTransaction( session -> {
-			session.createQuery( "delete from CHILD" );
-			session.createQuery( "delete from PARENT" );
+			session.createQuery( "delete from Parent" ).executeUpdate();
+			session.createQuery( "delete from Child" ).executeUpdate();
 		} );
 	}
 
