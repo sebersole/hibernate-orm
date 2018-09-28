@@ -32,7 +32,6 @@ import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.RowTransformer;
 import org.hibernate.sql.results.SqlResultsLogger;
 import org.hibernate.sql.results.internal.RowReaderStandardImpl;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.internal.values.JdbcValues;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResultAssembler;

@@ -31,7 +31,6 @@ import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
 import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
-import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 

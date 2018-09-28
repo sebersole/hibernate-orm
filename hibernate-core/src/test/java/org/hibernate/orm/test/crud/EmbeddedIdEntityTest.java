@@ -6,11 +6,11 @@
  */
 package org.hibernate.orm.test.crud;
 
-import org.hamcrest.CoreMatchers;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.EmbeddedIdEntity;
 import org.hibernate.orm.test.support.domains.gambit.EmbeddedIdEntity.EmbeddedIdEntityId;
+
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;

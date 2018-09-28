@@ -31,7 +31,6 @@ import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.domain.embedded.CompositeResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;

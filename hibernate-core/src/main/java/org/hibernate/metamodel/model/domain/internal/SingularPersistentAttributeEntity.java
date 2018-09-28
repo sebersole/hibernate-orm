@@ -646,7 +646,6 @@ public class SingularPersistentAttributeEntity<O, J>
 			LockMode lockMode,
 			TableSpace tableSpace) {
 		final SqlAliasBase sqlAliasBase = sqlAliasBaseGenerator.createSqlAliasBase( getSqlAliasStem() );
-
 		final TableReferenceJoinCollectorImpl joinCollector = new TableReferenceJoinCollectorImpl(
 				tableSpace,
 				lhs,
