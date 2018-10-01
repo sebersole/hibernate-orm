@@ -67,6 +67,7 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 			final Parent parent = session.get( Parent.class, 1 );
 			assertThat( parent.getChild(), CoreMatchers.notNullValue() );
 			assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
+			assertThat( parent.getChild().getParent(), CoreMatchers.notNullValue() );
 		} );
 	}
 
@@ -76,6 +77,7 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 			final Child child = session.get( Child.class, 2 );
 			assertThat( child.getParent(), CoreMatchers.notNullValue() );
 			assertThat( child.getParent().getDescription(), CoreMatchers.notNullValue() );
+			assertThat( child.getParent().getChild(), CoreMatchers.notNullValue() );
 		} );
 	}
 
