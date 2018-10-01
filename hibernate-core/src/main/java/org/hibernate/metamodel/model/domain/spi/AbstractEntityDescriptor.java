@@ -691,21 +691,6 @@ public abstract class AbstractEntityDescriptor<J>
 				creationState
 		);
 
-//		entityValuedReference.getNavigable().getEntityDescriptor().visitStateArrayContributors(
-//				stateArrayContributor -> {
-//					if ( stateArrayContributor instanceof Fetchable ) {
-//						final Fetchable fetchable = ( (Fetchable) stateArrayContributor );
-//						fetchable.generateFetch(
-//								entityQueryResult,
-//								navigableReference.getColumnReferenceQualifier(),
-//								fetchable.getMappedFetchStrategy(),
-//								null,
-//								creationContext
-//						);
-//					}
-//				}
-//		);
-
 		return entityQueryResult;
 	}
 

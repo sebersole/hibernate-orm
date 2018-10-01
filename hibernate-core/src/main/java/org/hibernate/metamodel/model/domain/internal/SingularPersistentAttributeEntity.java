@@ -83,6 +83,7 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
@@ -281,17 +282,8 @@ public class SingularPersistentAttributeEntity<O, J>
 	}
 
 	@Override
-	public AssociationKey getAssociationKey() {
-		if ( referencedUkAttribute != null ) {
-			return new AssociationKey(
-					foreignKey.getReferringTable().getTableExpression(),
-					foreignKey.getColumnMappings().getReferringColumns()
-			);
-		}
-		return new AssociationKey(
-				foreignKey.getTargetTable().getTableExpression(),
-				foreignKey.getColumnMappings().getTargetColumns()
-		);
+	public AssociationKey getAssociationKey(TableGroup tableGroup) {
+		return new AssociationKey( tableGroup.getUniqueIdentifier(), getN );
 	}
 
 	@Override
@@ -555,10 +547,11 @@ public class SingularPersistentAttributeEntity<O, J>
 			Stack<NavigableReference> navigableReferenceStack) {
 		final NavigableContainerReference parentReference = (NavigableContainerReference) navigableReferenceStack.getCurrent();
 
-		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( getNavigableName() );
+		final String navigableName = getNavigableName();
+		final NavigablePath navigablePath = fetchParent.getNavigablePath().append( navigableName );
 
 		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
-		NavigableReference navigableReference = parentReference.findNavigableReference( getNavigableName() );
+		NavigableReference navigableReference = parentReference.findNavigableReference( navigableName );
 		if ( navigableReference == null ) {
 			// this creates the SQL AST join(s) in the from clause
 			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
@@ -576,9 +569,6 @@ public class SingularPersistentAttributeEntity<O, J>
 			parentReference.addNavigableReference( navigableReference );
 		}
 
-		assert navigableReference.getNavigable() == this;
-
-
 		creationState.getNavigableReferenceStack().push( navigableReference );
 		creationState.getColumnReferenceQualifierStack().push( navigableReference.getColumnReferenceQualifier() );
 
@@ -587,7 +577,7 @@ public class SingularPersistentAttributeEntity<O, J>
 					fetchParent,
 					this,
 					lockMode,
-					fetchParent.getNavigablePath().append( getNavigableName() ),
+					navigablePath,
 					creationContext,
 					creationState
 			);

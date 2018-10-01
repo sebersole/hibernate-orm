@@ -233,7 +233,7 @@ public class SqmSelectToSqlAstConverter
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
 			LockMode lockMode = LockMode.READ;
-			final AssociationKey associationKey = fetchable.getAssociationKey();
+			final AssociationKey associationKey = fetchable.getAssociationKey( tableGroupStack.getCurrent() );
 			if ( associationKey != null ) {
 				if ( fetchedAssociationKey.contains( associationKey ) ) {
 					return;
