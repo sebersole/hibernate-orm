@@ -9,6 +9,7 @@ package org.hibernate.sql.ast.produce.metamodel.spi;
 import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
+import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
@@ -34,7 +35,7 @@ public interface Fetchable<T> extends Joinable<T> {
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext);
 
-	default AssociationKey getAssociationKey(){
+	default AssociationKey getAssociationKey(TableGroup tableGroup){
 		return null;
 	}
 }

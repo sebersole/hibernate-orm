@@ -6,11 +6,12 @@
  */
 package org.hibernate.orm.test.crud.onetoone.bidirectional;
 
-import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
+import org.hibernate.Hibernate;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 
@@ -20,7 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import org.hamcrest.CoreMatchers;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Chris Cranford
@@ -32,6 +35,7 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 		super.applyMetadataSources( metadataSources );
 		metadataSources.addAnnotatedClass( Parent.class );
 		metadataSources.addAnnotatedClass( Child.class );
+		metadataSources.addAnnotatedClass( Child2.class );
 	}
 
 	@Override
@@ -42,22 +46,23 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 	@BeforeEach
 	public void setUp() {
 		sessionFactoryScope().inTransaction( session -> {
-			Parent parent = new Parent( 1 );
-			parent.setDescription( "Hibernate" );
+			Parent parent = new Parent( 1, "Hibernate ORM" );
 			Child child = new Child( 2, parent );
 			child.setName( "Acme" );
+			Child2 child2 = new Child2( 3, parent );
+			child2.setName( "Fab" );
 			session.save( parent );
 			session.save( child );
+			session.save( child2 );
 		} );
 	}
 
 	@AfterEach
 	public void tearDown() {
 		sessionFactoryScope().inTransaction( session -> {
-			final Parent parent = session.get( Parent.class, 1 );
-			Child child = parent.getChild();
-			session.remove( child );
-			session.remove( parent );
+			session.createQuery( "delete from Child" ).executeUpdate();
+			session.createQuery( "delete from Child2" ).executeUpdate();
+			session.createQuery( "delete from Parent" ).executeUpdate();
 		} );
 	}
 
@@ -65,8 +70,124 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 	public void testGetParent() {
 		sessionFactoryScope().inTransaction( session -> {
 			final Parent parent = session.get( Parent.class, 1 );
-			assertThat( parent.getChild(), CoreMatchers.notNullValue() );
-			assertThat( parent.getChild().getName(), CoreMatchers.notNullValue() );
+			Child child = parent.getChild();
+			assertThat( child, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child )
+			);
+			assertThat( child.getName(), CoreMatchers.notNullValue() );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getName(), equalTo( "Fab" ) );
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+
+		} );
+	}
+
+	@Test
+	public void testGetParent2() {
+		sessionFactoryScope().inTransaction( session ->{
+			Parent parent = new Parent( 4, "Hibernate OGM" );
+			Child child = new Child( 5, parent );
+			child.setName( "Acme2" );
+
+			Child2 child2 = new Child2( 6, parent );
+			child2.setName( "Fab2" );
+
+			child2.setParent2( parent );
+
+			session.save( parent );
+			session.save( child );
+			session.save( child2 );
+		} );
+
+		sessionFactoryScope().inTransaction( session -> {
+			final Parent parent = session.get( Parent.class, 4 );
+			Child child = parent.getChild();
+			assertThat( child, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child )
+			);
+			assertThat( child.getName(), CoreMatchers.notNullValue() );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getName(), equalTo( "Fab2" ) );
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+			assertThat( child2.getParent().getDescription(), equalTo( "Hibernate OGM" ) );
+
+			Parent parent2 = child2.getParent2();
+			assertThat( parent2, CoreMatchers.notNullValue() );
+			assertThat( parent2.getDescription(), equalTo( "Hibernate OGM" ) );
+			assertThat( parent2.getChild(), CoreMatchers.notNullValue() );
+
+		} );
+	}
+
+	@Test
+	public void testGetParent3() {
+		sessionFactoryScope().inTransaction( session ->{
+
+			Parent parent = new Parent( 4, "Hibernate Search" );
+			Child child = new Child( 5, parent );
+			child.setName( "Acme2" );
+			Child2 child2 = new Child2( 7, parent );
+			child2.setName( "Fab2" );
+
+			Parent parent2 = new Parent( 6, "Hibernate OGM" );
+			child2.setParent2( parent2 );
+
+			Child child1 = new Child( 8, parent2 );
+
+			session.save( parent );
+			session.save( parent2 );
+			session.save( child );
+			session.save( child1 );
+			session.save( child2 );
+		} );
+
+		sessionFactoryScope().inTransaction( session -> {
+			final Parent parent = session.get( Parent.class, 4 );
+			assertThat( parent.getDescription(), equalTo( "Hibernate Search" ) );
+
+			Child child = parent.getChild();
+			assertThat( child, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child )
+			);
+			assertThat( child.getName(), CoreMatchers.notNullValue() );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getName(), equalTo( "Fab2" ) );
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+			assertThat( child2.getParent().getDescription(), equalTo( "Hibernate Search" ) );
+
+			Parent parent2 = child2.getParent2();
+			assertThat( parent2, CoreMatchers.notNullValue() );
+			assertThat( parent2.getDescription(), equalTo( "Hibernate OGM" ) );
+			assertThat( parent2.getChild(), CoreMatchers.notNullValue() );
+
 		} );
 	}
 
@@ -74,8 +195,26 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 	public void testGetChild() {
 		sessionFactoryScope().inTransaction( session -> {
 			final Child child = session.get( Child.class, 2 );
-			assertThat( child.getParent(), CoreMatchers.notNullValue() );
-			assertThat( child.getParent().getDescription(), CoreMatchers.notNullValue() );
+			Parent parent = child.getParent();
+			assertTrue(
+					"The parent eager OneToOne association is not initialized",
+					Hibernate.isInitialized( parent )
+			);
+			assertThat( parent, CoreMatchers.notNullValue() );
+			assertThat( parent.getDescription(), CoreMatchers.notNullValue() );
+			Child child1 = parent.getChild();
+			assertThat( child1, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child1 )
+			);
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
 		} );
 	}
 
@@ -111,7 +250,6 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 					String description = child.getParent().getDescription();
 					assertThat( description, CoreMatchers.notNullValue() );
 				}
-
 		);
 	}
 
@@ -122,9 +260,15 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 		private String description;
 		@OneToOne(mappedBy = "parent")
 		private Child child;
+		@OneToOne(mappedBy = "parent")
+		private Child2 child2;
 
 		Parent() {
+		}
 
+		public Parent(Integer id, String description) {
+			this.id = id;
+			this.description = description;
 		}
 
 		Parent(Integer id) {
@@ -155,23 +299,14 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 			this.child = child;
 		}
 
-		@Override
-		public boolean equals(Object o) {
-			if ( this == o ) {
-				return true;
-			}
-			if ( o == null || getClass() != o.getClass() ) {
-				return false;
-			}
-			Parent parent = (Parent) o;
-			return Objects.equals( id, parent.id ) &&
-					Objects.equals( description, parent.description );
+		public Child2 getChild2() {
+			return child2;
 		}
 
-		@Override
-		public int hashCode() {
-			return Objects.hash( id, description );
+		public void setChild2(Child2 child2) {
+			this.child2 = child2;
 		}
+
 	}
 
 	@Entity(name = "Child")
@@ -215,24 +350,63 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 		public void setParent(Parent parent) {
 			this.parent = parent;
 		}
+	}
 
-		@Override
-		public boolean equals(Object o) {
-			if ( this == o ) {
-				return true;
-			}
-			if ( o == null || getClass() != o.getClass() ) {
-				return false;
-			}
-			Child child = (Child) o;
-			return Objects.equals( id, child.id ) &&
-					Objects.equals( name, child.name ) &&
-					Objects.equals( parent, child.parent );
+	@Entity(name = "Child2")
+	@Table(name = "CHILD2")
+	public static class Child2 {
+		@Id
+		private Integer id;
+
+		private String name;
+
+		@OneToOne
+		private Parent parent;
+
+
+		@OneToOne
+		private Parent parent2;
+
+		Child2() {
 		}
 
-		@Override
-		public int hashCode() {
-			return Objects.hash( id, name, parent );
+		Child2(Integer id, Parent parent) {
+			this.id = id;
+			this.parent = parent;
+			this.parent.setChild2( this );
+		}
+
+
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public Parent getParent() {
+			return parent;
+		}
+
+		public void setParent(Parent parent) {
+			this.parent = parent;
+		}
+
+		public Parent getParent2() {
+			return parent2;
+		}
+
+		public void setParent2(Parent parent) {
+			this.parent2 = parent;
 		}
 	}
 }

@@ -8,8 +8,10 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -24,6 +26,8 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
+import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -120,7 +124,7 @@ public class MetamodelSelectBuilderProcess
 
 	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
+//	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
 
@@ -432,11 +436,7 @@ public class MetamodelSelectBuilderProcess
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
-				return;
-			}
-			// todo (6.0) : is this correct to determine fetches circularity?
-			final AssociationKey associationKey = fetchable.getAssociationKey();
+			final AssociationKey associationKey = fetchable.getAssociationKey(tableGroupStack.getCurrent(), navigablePathStack.getCurrent());
 			if ( associationKey != null ) {
 				if ( fetchedAssociationKey.contains( associationKey ) ) {
 					return;
@@ -457,24 +457,14 @@ public class MetamodelSelectBuilderProcess
 			else if ( fetchDepth > maximumFetchDepth ) {
 				return;
 			}
-
-			fetches.add( fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this ) );
+			Fetch fetch = fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this );
+			fetches.add( fetch );
 		};
-
-		fetchParentStack.push( fetchParent );
-
-		try {
-			NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
-			navigableContainer.visitKeyFetchables( fetchableConsumer );
-			navigableContainer.visitFetchables( fetchableConsumer );
-		}
-		finally {
-			fetchParentStack.pop();
-		}
-
+		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
+		navigableContainer.visitKeyFetchables( fetchableConsumer );
+		navigableContainer.visitFetchables( fetchableConsumer );
 		return fetches;
 	}
-
 	@Override
 	public TableSpace getCurrentTableSpace() {
 		return tableSpaceStack.getCurrent();
