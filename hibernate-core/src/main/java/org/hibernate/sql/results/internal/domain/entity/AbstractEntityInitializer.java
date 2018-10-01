@@ -78,7 +78,6 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	private EntityDescriptor <?> concreteDescriptor;
 	private EntityKey entityKey;
 	private Object entityInstance;
-	private boolean responsible;
 	private boolean missing;
 	private Object[] resolvedEntityState;
 
@@ -385,9 +384,6 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		}
 
 		if ( entityInstance == null ) {
-			// we are responsible for loading it
-			responsible = true;
-
 			entityInstance = session.instantiate( concreteDescriptor.getEntityName(), entityKey.getIdentifier() );
 
 			if ( EntityLoadingLogger.DEBUG_ENABLED ) {
@@ -417,13 +413,9 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		preLoad( rowProcessingState );
 	}
 
-	protected boolean shouldNotInitializeInstance(){
-		return !responsible || missing;
-	}
-
 	@Override
 	public void initializeInstance(RowProcessingState rowProcessingState) {
-		if ( shouldNotInitializeInstance() ) {
+		if ( missing ) {
 			return;
 		}
 
@@ -599,7 +591,6 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			factory.getStatistics().loadEntity( entityDescriptor.getEntityName() );
 		}
 
-
 		postLoad( rowProcessingState );
 	}
 
@@ -661,7 +652,6 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		concreteDescriptor = null;
 		entityKey = null;
 		entityInstance = null;
-		responsible = false;
 		missing = false;
 		resolvedEntityState = null;
 

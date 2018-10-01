@@ -119,7 +119,8 @@ public abstract class AbstractParameter
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		return new BasicResultImpl(
 				resultVariable,
 				creationState.getSqlExpressionResolver().resolveSqlSelection(

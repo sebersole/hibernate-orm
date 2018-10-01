@@ -59,7 +59,8 @@ public interface NavigableReference extends DomainResultProducer, Loggable {
 	@Override
 	default DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		creationState.getColumnReferenceQualifierStack().push( getColumnReferenceQualifier() );
 		creationState.getNavigableReferenceStack().push( this );
 		try {

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import org.hamcrest.CoreMatchers;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -37,6 +38,7 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 
 		metadataSources.addAnnotatedClass( Parent.class );
 		metadataSources.addAnnotatedClass( Child.class );
+		metadataSources.addAnnotatedClass( Child2.class );
 	}
 
 	@Override
@@ -50,8 +52,11 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 			Parent parent = new Parent( 1, "Hibernate" );
 			Child child = new Child( 2, parent );
 			child.setName( "Acme" );
+			Child2 child2 = new Child2( 3, parent );
+			child2.setName( "Fab" );
 			session.save( parent );
 			session.save( child );
+			session.save( child2 );
 		} );
 	}
 
@@ -60,6 +65,7 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 		sessionFactoryScope().inTransaction( session -> {
 			session.createQuery( "delete from Parent" ).executeUpdate();
 			session.createQuery( "delete from Child" ).executeUpdate();
+			session.createQuery( "delete from Child2" ).executeUpdate();
 		} );
 	}
 
@@ -70,10 +76,22 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 			Child child = parent.getChild();
 			assertThat( child, CoreMatchers.notNullValue() );
 			assertTrue(
-					"getId() should not trigger the lazy association initialization",
+					"The child eager OneToOne association is not initialized",
 					Hibernate.isInitialized( child )
 			);
-			assertThat( child.getName(), CoreMatchers.notNullValue() );
+			assertThat( child.getName(), equalTo( "Acme" ) );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
+
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getName(), equalTo( "Fab" ) );
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+
 		} );
 	}
 
@@ -84,10 +102,25 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 			Parent parent = child.getParent();
 			assertThat( parent, CoreMatchers.notNullValue() );
 			assertTrue(
-					"getId() should not trigger the lazy association initialization",
+					"The parent eager OneToOne association is not initialized",
 					Hibernate.isInitialized( parent )
 			);
 			assertThat( parent.getDescription(), CoreMatchers.notNullValue() );
+
+			Child child1 = parent.getChild();
+			assertThat( child1, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child1 )
+			);
+
+			Child2 child2 = parent.getChild2();
+			assertThat( child2, CoreMatchers.notNullValue() );
+			assertTrue(
+					"The child2 eager OneToOne association is not initialized",
+					Hibernate.isInitialized( child2 )
+			);
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
 		} );
 	}
 
@@ -119,8 +152,13 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 							.setParameter( "id", 1 )
 							.getSingleResult();
 
-					assertThat( parent.getChild(), CoreMatchers.notNullValue() );
-					String name = parent.getChild().getName();
+					Child child = parent.getChild();
+					assertThat( child, CoreMatchers.notNullValue() );
+					assertTrue(
+							"the child have to be initialized",
+							Hibernate.isInitialized( child )
+					);
+					String name = child.getName();
 					assertThat( name, CoreMatchers.notNullValue() );
 				}
 
@@ -134,6 +172,7 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 
 		private String description;
 		private Child child;
+		private Child2 child2;
 
 		Parent() {
 		}
@@ -168,6 +207,16 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 
 		public void setChild(Child other) {
 			this.child = other;
+		}
+
+		@OneToOne
+		@JoinTable(name = "PARENT_CHILD2", inverseJoinColumns = @JoinColumn(name = "child_id"), joinColumns = @JoinColumn(name = "parent_id"))
+		public Child2 getChild2() {
+			return child2;
+		}
+
+		public void setChild2(Child2 child2) {
+			this.child2 = child2;
 		}
 	}
 
@@ -206,6 +255,50 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 		}
 
 		@OneToOne(mappedBy = "child")
+		public Parent getParent() {
+			return parent;
+		}
+
+		public void setParent(Parent parent) {
+			this.parent = parent;
+		}
+	}
+
+	@Entity(name = "Child2")
+	@Table(name = "CHILD2")
+	public static class Child2 {
+		private Integer id;
+
+		private String name;
+		private Parent parent;
+
+		Child2() {
+		}
+
+		Child2(Integer id, Parent child) {
+			this.id = id;
+			this.parent = child;
+			this.parent.setChild2( this );
+		}
+
+		@Id
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		@OneToOne(mappedBy = "child2")
 		public Parent getParent() {
 			return parent;
 		}

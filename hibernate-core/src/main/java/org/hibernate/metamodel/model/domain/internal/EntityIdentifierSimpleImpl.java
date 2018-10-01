@@ -154,7 +154,8 @@ public class EntityIdentifierSimpleImpl<O,J>
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		return createDomainResult(
 				creationState.getNavigableReferenceStack().getCurrent(),
 				resultVariable,
