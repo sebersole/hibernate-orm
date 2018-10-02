@@ -24,6 +24,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
+import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -432,6 +433,10 @@ public class MetamodelSelectBuilderProcess
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
+			NavigablePath navigablePath = this.current.getCurrent();
+			if( navigablePath.getParent()!= null && navigablePaths.contains( navigablePath.getParent().getParent())){
+				return ;
+			}
 			if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
 				return;
 			}
@@ -458,16 +463,21 @@ public class MetamodelSelectBuilderProcess
 				return;
 			}
 
-			fetches.add( fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this ) );
+			Fetch fetch = fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this );
+			fetches.add( fetch );
 		};
-
+		NavigablePath navigablePath = fetchParent.getNavigablePath();
 		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
+		current.push( navigablePath);
+		navigablePaths.add( navigablePath );
 		navigableContainer.visitKeyFetchables( fetchableConsumer );
 		navigableContainer.visitFetchables( fetchableConsumer );
+		current.pop();
 
 		return fetches;
 	}
-
+	List<NavigablePath> navigablePaths = new ArrayList<>(  );
+	Stack<NavigablePath> current = new StandardStack();
 	@Override
 	public TableSpace getCurrentTableSpace() {
 		return tableSpaceStack.getCurrent();

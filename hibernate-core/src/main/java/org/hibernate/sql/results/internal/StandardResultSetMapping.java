@@ -45,7 +45,8 @@ public class StandardResultSetMapping implements ResultSetMapping {
 
 	@Override
 	public List<DomainResultAssembler> resolveAssemblers(
-			Consumer<Initializer> initializerConsumer, AssemblerCreationState creationState,
+			Consumer<Initializer> initializerConsumer,
+			AssemblerCreationState creationState,
 			AssemblerCreationContext creationContext) {
 		final List<DomainResultAssembler> assemblers = CollectionHelper.arrayList( domainResults.size() );
 
