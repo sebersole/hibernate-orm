@@ -599,9 +599,6 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			factory.getStatistics().loadEntity( entityDescriptor.getEntityName() );
 		}
 
-		rowProcessingState.getJdbcValuesSourceProcessingState().deregisterLoadingEntity(
-				entityKey
-		);
 		postLoad( rowProcessingState );
 	}
 
