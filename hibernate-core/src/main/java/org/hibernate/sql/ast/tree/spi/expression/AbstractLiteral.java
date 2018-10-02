@@ -79,7 +79,8 @@ public abstract class AbstractLiteral
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 
 		// todo (6.0) : consider just returning the literal value back directly
 

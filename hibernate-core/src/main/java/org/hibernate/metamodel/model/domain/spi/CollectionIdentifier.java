@@ -47,7 +47,8 @@ public class CollectionIdentifier implements DomainResultProducer {
 	@Override
 	public DomainResult createDomainResult(
 			String resultVariable,
-			DomainResultCreationState creationState, DomainResultCreationContext creationContext) {
+			DomainResultCreationState creationState,
+			DomainResultCreationContext creationContext) {
 		final SqlExpressionResolver sqlExpressionResolver = creationState.getSqlExpressionResolver();
 
 		return new BasicResultImpl(

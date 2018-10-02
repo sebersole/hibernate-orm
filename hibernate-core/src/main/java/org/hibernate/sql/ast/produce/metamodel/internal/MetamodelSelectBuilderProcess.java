@@ -120,7 +120,7 @@ public class MetamodelSelectBuilderProcess
 
 	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
+//	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
 
@@ -461,16 +461,9 @@ public class MetamodelSelectBuilderProcess
 			fetches.add( fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this ) );
 		};
 
-		fetchParentStack.push( fetchParent );
-
-		try {
-			NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
-			navigableContainer.visitKeyFetchables( fetchableConsumer );
-			navigableContainer.visitFetchables( fetchableConsumer );
-		}
-		finally {
-			fetchParentStack.pop();
-		}
+		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
+		navigableContainer.visitKeyFetchables( fetchableConsumer );
+		navigableContainer.visitFetchables( fetchableConsumer );
 
 		return fetches;
 	}
