@@ -51,10 +51,6 @@ public class EntityRootInitializer extends AbstractEntityInitializer {
 		return true;
 	}
 
-	protected boolean shouldNotInitializeInstance(){
-		return false;
-	}
-
 	@Override
 	public String toString() {
 		return "EntityRootInitializer(" + LoggingHelper.toLoggableString( getNavigablePath() ) + ")";

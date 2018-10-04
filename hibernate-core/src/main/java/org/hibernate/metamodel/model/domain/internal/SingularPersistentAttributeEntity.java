@@ -283,15 +283,15 @@ public class SingularPersistentAttributeEntity<O, J>
 	@Override
 	public AssociationKey getAssociationKey() {
 //		if ( referencedUkAttribute != null ) {
-//			return new AssociationKey(
-//					foreignKey.getReferringTable().getTableExpression(),
-//					foreignKey.getColumnMappings().getReferringColumns()
-//			);
+			return new AssociationKey(
+					foreignKey.getReferringTable().getTableExpression(),
+					foreignKey.getColumnMappings().getReferringColumns()
+			);
 //		}
-		return new AssociationKey(
-				foreignKey.getTargetTable().getTableExpression(),
-				foreignKey.getColumnMappings().getTargetColumns()
-		);
+//		return new AssociationKey(
+//				foreignKey.getTargetTable().getTableExpression(),
+//				foreignKey.getColumnMappings().getTargetColumns()
+//		);
 	}
 
 	@Override
@@ -561,28 +561,20 @@ public class SingularPersistentAttributeEntity<O, J>
 		// if there is an existing NavigableReference this fetch can use, use it.  otherwise create one
 		NavigableReference navigableReference = parentReference.findNavigableReference( navigableName );
 		if ( navigableReference == null ) {
-			NavigableContainerReference navigableContainerReference = parentReference.getNavigableContainerReference();
-			if ( navigableContainerReference != null && navigableContainerReference.getNavigablePath().equals( getEntityDescriptor().getNavigableName()) ) {
-				navigableReference = navigableContainerReference
-						.findNavigableReference( parentReference.getNavigable().getNavigableName() );
-
-			}
-			if ( navigableReference == null ) {
-				// this creates the SQL AST join(s) in the from clause
-				final TableGroupJoin tableGroupJoin = createTableGroupJoin(
-						creationState.getSqlAliasBaseGenerator(),
-						parentReference,
-						creationState.getSqlExpressionResolver(),
-						navigablePath,
-						isNullable() ? JoinType.LEFT : JoinType.INNER,
-						resultVariable,
-						lockMode,
-						creationState.getCurrentTableSpace()
-				);
-				creationState.getCurrentTableSpace().addJoinedTableGroup( tableGroupJoin );
-				navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
-				parentReference.addNavigableReference( navigableReference );
-			}
+			// this creates the SQL AST join(s) in the from clause
+			final TableGroupJoin tableGroupJoin = createTableGroupJoin(
+					creationState.getSqlAliasBaseGenerator(),
+					parentReference,
+					creationState.getSqlExpressionResolver(),
+					navigablePath,
+					isNullable() ? JoinType.LEFT : JoinType.INNER,
+					resultVariable,
+					lockMode,
+					creationState.getCurrentTableSpace()
+			);
+			creationState.getCurrentTableSpace().addJoinedTableGroup( tableGroupJoin );
+			navigableReference = tableGroupJoin.getJoinedGroup().getNavigableReference();
+			parentReference.addNavigableReference( navigableReference );
 		}
 
 		creationState.getNavigableReferenceStack().push( navigableReference );

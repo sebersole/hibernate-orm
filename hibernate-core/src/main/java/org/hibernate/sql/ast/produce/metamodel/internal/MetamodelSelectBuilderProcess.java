@@ -8,8 +8,10 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -25,6 +27,7 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -426,6 +429,10 @@ public class MetamodelSelectBuilderProcess
 	// todo (6.0) : also consider passing along NavigableReference rather than using context+stack
 	//		when calling `Fetchable#generateFetch`
 
+	private boolean skipFetchGeneration;
+
+	private Set<String> visitedRolesFullPath = new HashSet<>(  );
+
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		log.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
@@ -433,20 +440,14 @@ public class MetamodelSelectBuilderProcess
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			NavigablePath navigablePath = this.current.getCurrent();
-			if( navigablePath.getParent()!= null && navigablePaths.contains( navigablePath.getParent().getParent())){
-				return ;
-			}
-			if ( fetchParent.findFetch( fetchable.getNavigableName() ) != null ) {
-				return;
-			}
-			// todo (6.0) : is this correct to determine fetches circularity?
-			final AssociationKey associationKey = fetchable.getAssociationKey();
-			if ( associationKey != null ) {
-				if ( fetchedAssociationKey.contains( associationKey ) ) {
+			if ( !( fetchable instanceof SingularPersistentAttributeBasic ) ) {
+				if ( skipFetchGeneration ) {
 					return;
 				}
-				fetchedAssociationKey.add( associationKey );
+				if ( visitedRolesFullPath.contains( fetchable.getJavaTypeDescriptor().getTypeName() ) ) {
+					skipFetchGeneration = true;
+				}
+				visitedRolesFullPath.add( fetchable.getNavigableRole().getFullPath() );
 			}
 			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
@@ -462,22 +463,16 @@ public class MetamodelSelectBuilderProcess
 			else if ( fetchDepth > maximumFetchDepth ) {
 				return;
 			}
-
 			Fetch fetch = fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this );
 			fetches.add( fetch );
 		};
-		NavigablePath navigablePath = fetchParent.getNavigablePath();
 		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
-		current.push( navigablePath);
-		navigablePaths.add( navigablePath );
+		visitedRolesFullPath.add( navigableContainer.getNavigableRole().getFullPath() );
 		navigableContainer.visitKeyFetchables( fetchableConsumer );
 		navigableContainer.visitFetchables( fetchableConsumer );
-		current.pop();
-
+		skipFetchGeneration = false;
 		return fetches;
 	}
-	List<NavigablePath> navigablePaths = new ArrayList<>(  );
-	Stack<NavigablePath> current = new StandardStack();
 	@Override
 	public TableSpace getCurrentTableSpace() {
 		return tableSpaceStack.getCurrent();

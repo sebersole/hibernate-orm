@@ -80,6 +80,8 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 					Hibernate.isInitialized( child )
 			);
 			assertThat( child.getName(), equalTo( "Acme" ) );
+			assertThat( child.getParent(), CoreMatchers.notNullValue() );
+
 
 			Child2 child2 = parent.getChild2();
 			assertThat( child2, CoreMatchers.notNullValue() );
@@ -88,6 +90,8 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 					Hibernate.isInitialized( child2 )
 			);
 			assertThat( child2.getName(), equalTo( "Fab" ) );
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+
 		} );
 	}
 
@@ -102,18 +106,22 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 					Hibernate.isInitialized( parent )
 			);
 			assertThat( parent.getDescription(), CoreMatchers.notNullValue() );
+
 			Child child1 = parent.getChild();
 			assertThat( child1, CoreMatchers.notNullValue() );
 			assertTrue(
 					"The child eager OneToOne association is not initialized",
 					Hibernate.isInitialized( child1 )
 			);
+
 			Child2 child2 = parent.getChild2();
 			assertThat( child2, CoreMatchers.notNullValue() );
 			assertTrue(
 					"The child2 eager OneToOne association is not initialized",
 					Hibernate.isInitialized( child2 )
 			);
+			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
+
 		} );
 	}
 
