@@ -83,6 +83,7 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
+import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
@@ -281,17 +282,8 @@ public class SingularPersistentAttributeEntity<O, J>
 	}
 
 	@Override
-	public AssociationKey getAssociationKey() {
-//		if ( referencedUkAttribute != null ) {
-			return new AssociationKey(
-					foreignKey.getReferringTable().getTableExpression(),
-					foreignKey.getColumnMappings().getReferringColumns()
-			);
-//		}
-//		return new AssociationKey(
-//				foreignKey.getTargetTable().getTableExpression(),
-//				foreignKey.getColumnMappings().getTargetColumns()
-//		);
+	public AssociationKey getAssociationKey(TableGroup tableGroup) {
+		return new AssociationKey( tableGroup.getUniqueIdentifier(), getN );
 	}
 
 	@Override

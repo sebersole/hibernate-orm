@@ -429,10 +429,6 @@ public class MetamodelSelectBuilderProcess
 	// todo (6.0) : also consider passing along NavigableReference rather than using context+stack
 	//		when calling `Fetchable#generateFetch`
 
-	private boolean skipFetchGeneration;
-
-	private Set<String> visitedRolesFullPath = new HashSet<>(  );
-
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		log.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
@@ -440,14 +436,12 @@ public class MetamodelSelectBuilderProcess
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			if ( !( fetchable instanceof SingularPersistentAttributeBasic ) ) {
-				if ( skipFetchGeneration ) {
+			final AssociationKey associationKey = fetchable.getAssociationKey(tableGroupStack.getCurrent(), navigablePathStack.getCurrent());
+			if ( associationKey != null ) {
+				if ( fetchedAssociationKey.contains( associationKey ) ) {
 					return;
 				}
-				if ( visitedRolesFullPath.contains( fetchable.getJavaTypeDescriptor().getTypeName() ) ) {
-					skipFetchGeneration = true;
-				}
-				visitedRolesFullPath.add( fetchable.getNavigableRole().getFullPath() );
+				fetchedAssociationKey.add( associationKey );
 			}
 			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
@@ -467,10 +461,8 @@ public class MetamodelSelectBuilderProcess
 			fetches.add( fetch );
 		};
 		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
-		visitedRolesFullPath.add( navigableContainer.getNavigableRole().getFullPath() );
 		navigableContainer.visitKeyFetchables( fetchableConsumer );
 		navigableContainer.visitFetchables( fetchableConsumer );
-		skipFetchGeneration = false;
 		return fetches;
 	}
 	@Override
