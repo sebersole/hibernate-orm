@@ -7,10 +7,13 @@
 package org.hibernate.sql.results.internal;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.named.spi.RowReaderMemento;
+import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
@@ -48,6 +51,11 @@ public class RowReaderNoResultsExpectedImpl implements RowReader {
 	@Override
 	public Class getResultJavaType() {
 		return Void.TYPE;
+	}
+
+	@Override
+	public List<Initializer> getInitializers() {
+		return Collections.emptyList();
 	}
 
 	@Override

@@ -37,7 +37,6 @@ import org.hibernate.query.sqm.tree.select.SqmDynamicInstantiationTarget;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
 import org.hibernate.sql.ast.produce.internal.PerQuerySpecSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
-import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -47,10 +46,10 @@ import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiation;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiationNature;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
+import org.hibernate.sql.results.spi.CircularFetchDetector;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -221,27 +220,27 @@ public class SqmSelectToSqlAstConverter
 		return null;
 	}
 
-	private List<AssociationKey> fetchedAssociationKey = new ArrayList<>(  );
+	private final CircularFetchDetector circularFetchDetector = new CircularFetchDetector();
 
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
-		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
-
-//		assert fetchParent.getNavigablePath().equals( parentNavigableReference.getNavigablePath() );
-
 		final List<Fetch> fetches = new ArrayList();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			LockMode lockMode = LockMode.READ;
-			final AssociationKey associationKey = fetchable.getAssociationKey( tableGroupStack.getCurrent() );
-			if ( associationKey != null ) {
-				if ( fetchedAssociationKey.contains( associationKey ) ) {
-					return;
-				}
-				fetchedAssociationKey.add( associationKey );
+			final Fetch biDirectionalFetch = circularFetchDetector.findBiDirectionalFetch(
+					fetchParent,
+					fetchable
+			);
+
+			if ( biDirectionalFetch != null ) {
+				fetches.add( biDirectionalFetch );
+				return;
 			}
+
+
+			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
-			boolean joined = false;
+			boolean joined;
 
 			final Integer maximumFetchDepth = getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
 			// minus one because the root is not a fetch
@@ -279,17 +278,17 @@ public class SqmSelectToSqlAstConverter
 				return;
 			}
 
-			fetches.add(
-					fetchable.generateFetch(
-							fetchParent,
-							fetchTiming,
-							joined,
-							lockMode,
-							alias,
-							SqmSelectToSqlAstConverter.this,
-							SqmSelectToSqlAstConverter.this
-					)
+			final Fetch fetch = fetchable.generateFetch(
+					fetchParent,
+					fetchTiming,
+					joined,
+					lockMode,
+					alias,
+					SqmSelectToSqlAstConverter.this,
+					SqmSelectToSqlAstConverter.this
 			);
+
+			fetches.add( fetch );
 		};
 
 		( ( NavigableContainer<?>) fetchParent.getNavigableContainer() ).visitKeyFetchables( fetchableConsumer );

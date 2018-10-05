@@ -29,6 +29,11 @@ public interface EntityInitializer extends Initializer, FetchParentAccess {
 	 */
 	Object getEntityInstance();
 
+	@Override
+	default Object getInitializedInstance() {
+		return getEntityInstance();
+	}
+
 	/**
 	 * For an EntityInitializer, the FetchParent reference would be
 	 * the loading entity instance.
