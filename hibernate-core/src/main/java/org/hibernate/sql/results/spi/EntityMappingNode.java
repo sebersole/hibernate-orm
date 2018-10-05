@@ -7,6 +7,7 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.query.NavigablePath;
 
 /**
  * Represents a reference to an entity either as a return, fetch, or collection element or index.
@@ -16,4 +17,6 @@ import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 public interface EntityMappingNode extends ResultSetMappingNode, FetchParent {
 	EntityValuedNavigable getEntityValuedNavigable();
 
+	@Override
+	NavigablePath getNavigablePath();
 }

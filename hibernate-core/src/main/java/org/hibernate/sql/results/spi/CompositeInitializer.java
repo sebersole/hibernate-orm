@@ -13,7 +13,13 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
  */
 public interface CompositeInitializer extends Initializer, FetchParentAccess {
 	EmbeddedTypeDescriptor getEmbeddedDescriptor();
+
 	Object getCompositeInstance();
+
+	@Override
+	default Object getInitializedInstance() {
+		return getCompositeInstance();
+	}
 
 	@Override
 	default Object getFetchParentInstance() {

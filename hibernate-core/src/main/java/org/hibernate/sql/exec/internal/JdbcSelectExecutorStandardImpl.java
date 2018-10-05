@@ -174,6 +174,7 @@ public class JdbcSelectExecutorStandardImpl implements JdbcSelectExecutor {
 		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
 				jdbcValuesSourceProcessingState,
 				executionContext.getQueryOptions(),
+				rowReader,
 				jdbcValues
 		);
 
