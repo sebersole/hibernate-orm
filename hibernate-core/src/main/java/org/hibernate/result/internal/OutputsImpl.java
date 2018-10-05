@@ -181,7 +181,7 @@ public abstract class OutputsImpl
 		final RowProcessingStateStandardImpl rowProcessingState = new RowProcessingStateStandardImpl(
 				jdbcValuesSourceProcessingState,
 				context.getQueryOptions(),
-				jdbcValuesSource
+				rowReader, jdbcValuesSource
 		);
 
 		try {

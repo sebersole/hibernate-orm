@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
@@ -34,4 +35,6 @@ public interface RowProcessingState extends ExecutionContext {
 	void registerNonExists(EntityFetch fetch);
 
 	void finishRowProcessing();
+
+	Initializer resolveInitializer(NavigablePath path);
 }

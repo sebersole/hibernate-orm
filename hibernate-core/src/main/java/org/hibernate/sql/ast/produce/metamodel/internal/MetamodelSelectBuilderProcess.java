@@ -8,10 +8,8 @@ package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -26,8 +24,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
-import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
@@ -42,7 +38,6 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.internal.SqlAstSelectDescriptorImpl;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
-import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.SqlAliasBaseGenerator;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -73,6 +68,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.internal.StandardJdbcParameterImpl;
+import org.hibernate.sql.results.spi.CircularFetchDetector;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
@@ -137,8 +133,6 @@ public class MetamodelSelectBuilderProcess
 	private final StandardSqlExpressionResolver sqlExpressionResolver;
 
 	private final Stack<ColumnReferenceQualifier> columnReferenceQualifierStack = new StandardStack<>();
-
-	private List<AssociationKey> fetchedAssociationKey = new ArrayList<>(  );
 
 	private MetamodelSelectBuilderProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -429,20 +423,47 @@ public class MetamodelSelectBuilderProcess
 	// todo (6.0) : also consider passing along NavigableReference rather than using context+stack
 	//		when calling `Fetchable#generateFetch`
 
+
+	private final CircularFetchDetector circularFetchDetector = new CircularFetchDetector();
+
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		log.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
 
+		// will hold both:
+		//
+		// ... join fetch a.parent.child.parent
+		//
+		// and
+		//
+		// ... join fetch a.parent
+		//
+		// but `a.parent` points to the "real" `Fetch`, while `a.parent.child.parent` points to
+		// the `BiDirFetchReference`
+		//
+
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
-			final AssociationKey associationKey = fetchable.getAssociationKey(tableGroupStack.getCurrent(), navigablePathStack.getCurrent());
-			if ( associationKey != null ) {
-				if ( fetchedAssociationKey.contains( associationKey ) ) {
-					return;
-				}
-				fetchedAssociationKey.add( associationKey );
+
+			final Fetch biDirectionalFetch = circularFetchDetector.findBiDirectionalFetch(
+					fetchParent,
+					fetchable
+			);
+
+			if ( biDirectionalFetch != null ) {
+				fetches.add( biDirectionalFetch );
+				return;
 			}
+
+
+			// todo (6.0) : move this code into `fetchable.generateFetch` call
+			//		this can mean duplicated code, but is more appropriate
+			//		because returning null is actually inaccurate, it should
+			//		so a "later" fetch (lazy, n+1, ...) - and those would
+			//		be specific to each Fetchable anyway (DelayedEntityFetch,
+			//		DelayedCollectionFetch, ...)
+
 			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
 			boolean joined = fetchable.getMappedFetchStrategy().getStyle() == FetchStyle.JOIN;
@@ -457,14 +478,21 @@ public class MetamodelSelectBuilderProcess
 			else if ( fetchDepth > maximumFetchDepth ) {
 				return;
 			}
+
 			Fetch fetch = fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this );
+			circularFetchDetector.addFetch( fetch );
+
 			fetches.add( fetch );
 		};
+
 		NavigableContainer navigableContainer = fetchParent.getNavigableContainer();
 		navigableContainer.visitKeyFetchables( fetchableConsumer );
 		navigableContainer.visitFetchables( fetchableConsumer );
+
 		return fetches;
 	}
+
+
 	@Override
 	public TableSpace getCurrentTableSpace() {
 		return tableSpaceStack.getCurrent();

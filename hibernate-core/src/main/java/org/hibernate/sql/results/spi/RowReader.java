@@ -7,6 +7,7 @@
 package org.hibernate.sql.results.spi;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.query.named.spi.RowReaderMemento;
@@ -23,6 +24,8 @@ public interface RowReader<R> {
 	 * results (domain selections).
 	 */
 	Class<R> getResultJavaType();
+
+	List<Initializer> getInitializers();
 
 	/**
 	 * How many results (domain selections) are returned by this reader?

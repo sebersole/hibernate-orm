@@ -67,7 +67,6 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.JoinType;
-import org.hibernate.sql.ast.produce.metamodel.spi.AssociationKey;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -83,7 +82,6 @@ import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
-import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
 import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
@@ -279,11 +277,6 @@ public class SingularPersistentAttributeEntity<O, J>
 	@Override
 	public EntityValuedExpressableType<J> getType() {
 		return (EntityValuedExpressableType<J>) super.getType();
-	}
-
-	@Override
-	public AssociationKey getAssociationKey(TableGroup tableGroup) {
-		return new AssociationKey( tableGroup.getUniqueIdentifier(), getN );
 	}
 
 	@Override
