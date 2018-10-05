@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
+import org.hibernate.query.NavigablePath;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
@@ -16,8 +17,17 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface ResultSetMappingNode {
-	// todo (6.0) : NavigablePath?  Can be useful for logging
 	// todo (6.0) : result variable (selection alias)?  - even fetches can have alias
 
 	JavaTypeDescriptor getJavaTypeDescriptor();
+
+	/**
+	 * The NavigablePath for this node (if one!).  Certain nodes will not
+	 * have a NavigablePath, namely those not associated with a Navigable
+	 */
+	default NavigablePath getNavigablePath() {
+		// by default these nodes would not have a path.  those that do explicitly
+		// override this already to return it
+		return null;
+	}
 }

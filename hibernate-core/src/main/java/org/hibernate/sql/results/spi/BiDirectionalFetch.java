@@ -6,15 +6,12 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.query.NavigablePath;
-
 /**
+ * Marker interface for Fetches that are actually references to
+ * another fetch based on "normalized navigable path"
+ *
  * @author Steve Ebersole
  */
-public interface CompositeMappingNode extends ResultSetMappingNode, FetchParent {
-	EmbeddedValuedNavigable getCompositeNavigableDescriptor();
-
-	@Override
-	NavigablePath getNavigablePath();
+public interface BiDirectionalFetch extends Fetch {
+	Fetch getReferencedFetch();
 }

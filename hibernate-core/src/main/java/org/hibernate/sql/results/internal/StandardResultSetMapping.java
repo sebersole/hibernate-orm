@@ -51,9 +51,13 @@ public class StandardResultSetMapping implements ResultSetMapping {
 		final List<DomainResultAssembler> assemblers = CollectionHelper.arrayList( domainResults.size() );
 
 		for ( DomainResult domainResult : domainResults ) {
-			assemblers.add(
-					domainResult.createResultAssembler( initializerConsumer, creationState, creationContext )
+			final DomainResultAssembler resultAssembler = domainResult.createResultAssembler(
+					initializerConsumer,
+					creationState,
+					creationContext
 			);
+
+			assemblers.add( resultAssembler );
 		}
 
 		return assemblers;
