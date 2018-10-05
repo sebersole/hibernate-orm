@@ -55,6 +55,11 @@ public class RowReaderStandardImpl<T> implements RowReader<T> {
 	}
 
 	@Override
+	public List<Initializer> getInitializers() {
+		return initializers;
+	}
+
+	@Override
 	public int getNumberOfResults() {
 		return rowTransformer.determineNumberOfResultElements( assemblerCount );
 	}

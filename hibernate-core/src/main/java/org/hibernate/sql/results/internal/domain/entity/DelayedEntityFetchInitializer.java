@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
@@ -29,6 +30,8 @@ public class DelayedEntityFetchInitializer extends AbstractFetchParentAccess imp
 	private final FetchParentAccess parentAccess;
 	private final DomainResultAssembler fkValueAssembler;
 
+	private final NavigablePath path;
+
 	// per-row state
 	private Object entityInstance;
 	private Object fkValue;
@@ -40,11 +43,17 @@ public class DelayedEntityFetchInitializer extends AbstractFetchParentAccess imp
 		this.fetchedNavigable = fetchedNavigable;
 		this.parentAccess = parentAccess;
 		this.fkValueAssembler = fkValueAssembler;
+		this.path = parentAccess.getNavigablePath().append( fetchedNavigable.getNavigableName() );
 	}
 
 	@Override
 	public EntityDescriptor getEntityDescriptor() {
 		return fetchedNavigable.getEntityDescriptor();
+	}
+
+	@Override
+	public NavigablePath getNavigablePath() {
+		return path;
 	}
 
 	@Override
