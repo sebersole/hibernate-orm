@@ -121,7 +121,6 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 					Hibernate.isInitialized( child2 )
 			);
 			assertThat( child2.getParent(), CoreMatchers.notNullValue() );
-
 		} );
 	}
 
