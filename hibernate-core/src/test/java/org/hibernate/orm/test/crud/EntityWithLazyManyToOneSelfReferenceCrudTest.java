@@ -17,6 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -44,7 +46,7 @@ public class EntityWithLazyManyToOneSelfReferenceCrudTest extends SessionFactory
 		final EntityWithLazyManyToOneSelfReference entity2 = new EntityWithLazyManyToOneSelfReference(
 				2,
 				"second",
-				Integer.MAX_VALUE,
+				Integer.MIN_VALUE,
 				entity1
 		);
 
@@ -69,31 +71,34 @@ public class EntityWithLazyManyToOneSelfReferenceCrudTest extends SessionFactory
 	}
 
 	@Test
-	public void testGet() {
+	public void testGetEntityWithNoAssociation() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithLazyManyToOneSelfReference loaded = session.get(
 							EntityWithLazyManyToOneSelfReference.class,
 							1
 					);
-					assert loaded != null;
+					assertThat( loaded, notNullValue() );
 					assertThat( loaded.getName(), equalTo( "first" ) );
+					assertThat( loaded.getOther(), nullValue() );
 				}
 		);
+	}
 
+	@Test
+	public void testGetEntityWithTheAssociation() {
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityWithLazyManyToOneSelfReference loaded = session.get(
 							EntityWithLazyManyToOneSelfReference.class,
 							2
 					);
-					assert loaded != null;
+					assertThat( loaded, notNullValue() );
 					assertThat( loaded.getName(), equalTo( "second" ) );
-					assert loaded.getOther() != null;
+					assertThat( loaded.getOther(), notNullValue() );
 					assertThat( loaded.getOther().getName(), equalTo( "first" ) );
 				}
 		);
-
 	}
 
 	@Test

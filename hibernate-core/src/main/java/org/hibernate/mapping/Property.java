@@ -79,6 +79,17 @@ public class Property implements Serializable, PersistentAttributeMapping {
 	private boolean naturalIdentifier;
 	private boolean lob;
 
+	@Override
+	public String getMappedBy() {
+		return mappedBy;
+	}
+
+	public void setMappedBy(String mappedBy) {
+		this.mappedBy = mappedBy;
+	}
+
+	private String mappedBy;
+
 	public Property(MetadataBuildingContext context) {
 		this.context = context;
 	}
@@ -88,6 +99,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return value;
 	}
 
+	@Override
 	public boolean isBackRef() {
 		return false;
 	}
@@ -99,6 +111,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 	 *
 	 * @return True if synthetic; false otherwise.
 	 */
+
 	public boolean isSynthetic() {
 		return false;
 	}
@@ -114,6 +127,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return value.getMappedColumns();
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -179,6 +193,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		}
 	}
 
+	@Override
 	public String getCascade() {
 		return cascade;
 	}
@@ -195,6 +210,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.value = value;
 	}
 
+	@Override
 	public boolean isUpdateable() {
 		// if the property mapping consists of all formulas,
 		// make it non-updateable
@@ -212,6 +228,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return value instanceof Collection || value instanceof ManyToOne;
 	}
 
+	@Override
 	public boolean isInsertable() {
 		// if the property mapping consists of all formulas,
 		// make it non-insertable
@@ -222,6 +239,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 			);
 	}
 
+	@Override
 	public ValueGeneration getValueGenerationStrategy() {
 		return valueGenerationStrategy;
 	}
@@ -238,6 +256,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.insertable = insertable;
 	}
 
+	@Override
 	public String getPropertyAccessorName() {
 		return propertyAccessorName;
 	}
@@ -257,14 +276,17 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return propertyAccessorName==null || "property".equals( propertyAccessorName );
 	}
 
+	@Override
 	public java.util.Map getMetaAttributes() {
 		return metaAttributes;
 	}
 
+	@Override
 	public MetaAttribute getMetaAttribute(String attributeName) {
 		return metaAttributes==null?null:(MetaAttribute) metaAttributes.get(attributeName);
 	}
 
+	@Override
 	public void setMetaAttributes(java.util.Map metas) {
 		this.metaAttributes = metas;
 	}
@@ -273,6 +295,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return getValue().isValid();
 	}
 
+	@Override
 	public String toString() {
 		return getClass().getName() + '(' + name + ')';
 	}
@@ -281,6 +304,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.lazy=lazy;
 	}
 
+	@Override
 	public boolean isLazy() {
 		if ( value instanceof ToOne ) {
 			// both many-to-one and one-to-one are represented as a
@@ -306,6 +330,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		return lazy;
 	}
 
+	@Override
 	public String getLazyGroup() {
 		return lazyGroup;
 	}
@@ -322,6 +347,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.optimisticLocked = optimisticLocked;
 	}
 
+	@Override
 	public boolean isOptional() {
 		return optional || isNullable();
 	}
@@ -338,6 +364,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.persistentClass = persistentClass;
 	}
 
+	@Override
 	public boolean isSelectable() {
 		return selectable;
 	}
@@ -403,6 +430,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		throw new HibernateException( "Could not resolve ServiceRegistry" );
 	}
 
+	@Override
 	public boolean isNaturalIdentifier() {
 		return naturalIdentifier;
 	}
@@ -411,6 +439,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 		this.naturalIdentifier = naturalIdentifier;
 	}
 
+	@Override
 	public boolean isLob() {
 		return lob;
 	}

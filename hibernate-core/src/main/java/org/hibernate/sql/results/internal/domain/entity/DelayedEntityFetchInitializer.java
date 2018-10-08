@@ -82,21 +82,29 @@ public class DelayedEntityFetchInitializer extends AbstractFetchParentAccess imp
 		// todo (6.0) : technically the entity could be managed or cached already.  who/what handles that?
 
 		// todo (6.0) : could also be getting loaded elsewhere (LoadingEntityEntry)
-
-		if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
-			entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
-					fkValue,
-					rowProcessingState.getSession()
-			);
+		if ( fkValue == null ) {
+			// todo (6.0) : check this is the correct behaviour
+			entityInstance = null;
 		}
-		else if ( fetchedNavigable.getEntityDescriptor().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
-			entityInstance = fetchedNavigable.getEntityDescriptor().instantiate(
-					fkValue,
-					rowProcessingState.getSession()
-			);
-		}
+		else {
+			if ( fetchedNavigable.getEntityDescriptor().hasProxy() ) {
 
-		notifyParentResolutionListeners( entityInstance );
+				entityInstance = fetchedNavigable.getEntityDescriptor().createProxy(
+						fkValue,
+						rowProcessingState.getSession()
+				);
+			}
+			else if ( fetchedNavigable.getEntityDescriptor()
+					.getBytecodeEnhancementMetadata()
+					.isEnhancedForLazyLoading() ) {
+				entityInstance = fetchedNavigable.getEntityDescriptor().instantiate(
+						fkValue,
+						rowProcessingState.getSession()
+				);
+			}
+
+			notifyParentResolutionListeners( entityInstance );
+		}
 	}
 
 	@Override

@@ -55,6 +55,8 @@ public interface PersistentAttributeMapping extends MetaAttributable, ValueMappi
 
 	ValueGeneration getValueGenerationStrategy();
 
+	String getMappedBy();
+
 	// todo (6.0) : `#makeRuntimeAttribute` should not be exposed on API
 
 	// todo (6.0) relatedly (^^), we ought to pass the PersistentAttributeMapping into the runtime ctor as we build it

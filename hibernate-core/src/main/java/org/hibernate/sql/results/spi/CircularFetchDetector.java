@@ -6,15 +6,9 @@
  */
 package org.hibernate.sql.results.spi;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.results.internal.BiDirectionalFetchImpl;
-import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Maintains state while processing a Fetch graph to be able to detect
@@ -23,13 +17,8 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class CircularFetchDetector {
-	private Map<NavigablePath, Fetch> navigablePathFetchMap;
 
 	public Fetch findBiDirectionalFetch(FetchParent fetchParent, Fetchable fetchable) {
-		if ( navigablePathFetchMap == null ) {
-			return null;
-		}
-
 		// bi-directional references are a special case that need special treatment.
 		//
 		// `p.address.resident.homeAddress
@@ -43,19 +32,11 @@ public class CircularFetchDetector {
 		// see if we have such a case...
 
 		final NavigablePath parentParentPath = fetchParent.getNavigablePath().getParent();
-
-		final NavigableRole fetchableNavigableRole = fetchable.getNavigableRole();
-		final String fetchableNavName = fetchableNavigableRole.getNavigableName();
-
 		if ( parentParentPath != null ) {
-			// NOTE : pointing back to the root is a special special case :)
-			//		it requires type checking to detect
+			boolean isCircular = fetchable.isCircular( fetchParent );
+			if ( isCircular ) {
+				final FetchParent parentFetchParent = ( (Fetch) fetchParent ).getFetchParent();
 
-			final FetchParent parentFetchParent = ( (Fetch) fetchParent ).getFetchParent();
-//			final Fetch parentParentFetch = navigablePathFetchMap.get( parentParentPath );
-			final Navigable parentParentNavigable = parentFetchParent.getNavigableContainer();
-
-			if ( parentParentNavigable == fetchable ) {
 				// we do...
 				//
 				// in other words, the `Fetchable`'s `NavigablePath`, relative to its FetchParent here would
@@ -70,29 +51,19 @@ public class CircularFetchDetector {
 
 				// and use it to create and register the "bi directional" form
 
-				final NavigablePath fetchableNavigablePath = fetchParent.getNavigablePath().append( fetchableNavName );
+				final NavigablePath fetchableNavigablePath = fetchParent.getNavigablePath()
+						.append( fetchable.getNavigableRole().getNavigableName() );
 
 				final Fetch biDirectionalFetch = new BiDirectionalFetchImpl(
-						(Fetch) parentFetchParent,
+						parentFetchParent,
 						fetchableNavigablePath
 				);
-
-				addFetch( biDirectionalFetch );
 
 				return biDirectionalFetch;
 			}
 		}
 
-		if ( parentParentPath != null && parentParentPath.getLocalName().equals( fetchableNavName ) ) {
-		}
-
 		return null;
 	}
 
-	public void addFetch(Fetch fetch) {
-		if ( navigablePathFetchMap == null ) {
-			navigablePathFetchMap = new HashMap<>();
-		}
-		navigablePathFetchMap.put( fetch.getNavigablePath(), fetch );
-	}
 }

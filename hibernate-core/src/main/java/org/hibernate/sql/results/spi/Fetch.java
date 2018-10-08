@@ -43,6 +43,15 @@ public interface Fetch extends ResultSetMappingNode {
 	Navigable getFetchedNavigable();
 
 	/**
+	 * Get the navigable name of the fetched navigable
+	 *
+	 * @return The navigable name
+	 */
+	default String getFetchedNavigableName(){
+		return getFetchedNavigable().getNavigableName();
+	}
+
+	/**
 	 * Get the property path to this fetch
 	 *
 	 * @return The property path

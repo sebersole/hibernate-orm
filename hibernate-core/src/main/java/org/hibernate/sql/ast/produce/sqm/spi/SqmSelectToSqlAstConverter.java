@@ -293,8 +293,6 @@ public class SqmSelectToSqlAstConverter
 					SqmSelectToSqlAstConverter.this
 			);
 
-			circularFetchDetector.addFetch( fetch );
-
 			fetches.add( fetch );
 		};
 

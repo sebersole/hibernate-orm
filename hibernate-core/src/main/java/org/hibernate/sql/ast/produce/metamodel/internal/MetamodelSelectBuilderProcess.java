@@ -480,8 +480,6 @@ public class MetamodelSelectBuilderProcess
 			}
 
 			Fetch fetch = fetchable.generateFetch( fetchParent, fetchTiming, joined, lockMode, null, this, this );
-			circularFetchDetector.addFetch( fetch );
-
 			fetches.add( fetch );
 		};
 

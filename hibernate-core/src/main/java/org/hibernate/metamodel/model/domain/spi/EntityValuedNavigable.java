@@ -43,4 +43,8 @@ public interface EntityValuedNavigable<J>
 	}
 
 	boolean isNullable();
+
+	default String getMappedBy(){
+		return null;
+	}
 }

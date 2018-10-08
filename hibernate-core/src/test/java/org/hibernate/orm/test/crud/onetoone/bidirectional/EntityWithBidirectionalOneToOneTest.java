@@ -363,7 +363,6 @@ public class EntityWithBidirectionalOneToOneTest extends SessionFactoryBasedFunc
 		@OneToOne
 		private Parent parent;
 
-
 		@OneToOne
 		private Parent parent2;
 

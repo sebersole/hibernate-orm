@@ -13,5 +13,4 @@ package org.hibernate.sql.results.spi;
  * @author Steve Ebersole
  */
 public interface BiDirectionalFetch extends Fetch {
-	Fetch getReferencedFetch();
 }
