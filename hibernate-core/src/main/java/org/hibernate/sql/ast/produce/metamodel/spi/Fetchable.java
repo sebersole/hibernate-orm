@@ -34,4 +34,8 @@ public interface Fetchable<T> extends Joinable<T> {
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext);
 
+	default boolean isCircular(FetchParent fetchParent){
+		return false;
+	}
+
 }

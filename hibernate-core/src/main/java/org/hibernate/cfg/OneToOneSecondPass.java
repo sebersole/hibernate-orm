@@ -198,6 +198,7 @@ public class OneToOneSecondPass implements SecondPass {
 								+ StringHelper.qualify( value.getReferencedEntityName(), mappedBy )
 				);
 			}
+			prop.setMappedBy( mappedBy );
 			if ( otherSideProperty.getValue() instanceof OneToOne ) {
 				propertyHolder.addProperty( prop, inferredData.getDeclaringClass() );
 			}
