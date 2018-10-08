@@ -48,6 +48,7 @@ import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
@@ -97,6 +98,7 @@ import org.hibernate.sql.results.internal.domain.entity.ImmediateUkEntityFetch;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.EntityFetch;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.sql.results.spi.SqlSelection;
@@ -135,6 +137,7 @@ public class SingularPersistentAttributeEntity<O, J>
 	private StateArrayContributor referencedUkAttribute;
 	private SingleEntityLoader singleEntityLoader;
 	private ForeignKey foreignKey;
+	private String mappedBy;
 
 	public SingularPersistentAttributeEntity(
 			ManagedTypeDescriptor<O> runtimeModelContainer,
@@ -146,6 +149,7 @@ public class SingularPersistentAttributeEntity<O, J>
 		super( runtimeModelContainer, bootModelAttribute, propertyAccess, disposition );
 		this.classification = classification;
 		this.navigableRole = runtimeModelContainer.getNavigableRole().append( bootModelAttribute.getName() );
+		this.mappedBy = bootModelAttribute.getMappedBy();
 
 		final ToOne valueMapping = (ToOne) bootModelAttribute.getValueMapping();
 		referencedUkAttributeName = valueMapping.getReferencedPropertyName();
@@ -207,6 +211,64 @@ public class SingularPersistentAttributeEntity<O, J>
 				runtimeModelContainer,
 				entityDescriptor
 		);
+	}
+
+	@Override
+	public boolean isCircular(FetchParent fetchParent) {
+		final NavigableContainer parentNavigableContainer = fetchParent.getNavigableContainer();
+		if ( parentNavigableContainer != null ) {
+			NavigableRole parentParentNavigableRole = parentNavigableContainer.getNavigableRole().getParent();
+			if ( parentParentNavigableRole != null &&
+					parentParentNavigableRole.getNavigableName().equals( getEntityDescriptor().getNavigableName() ) ) {
+				/*
+				if we have the following mapping
+				@Entity
+				public class Parent {
+					...
+					@OneToOne(mappedBy = "parent")
+					private Child child;
+					@OneToOne(mappedBy = "parent")
+					private Child2 child2;
+					...
+				}
+				@Entity
+				public static class Child {
+					...
+					@OneToOne
+					private Parent parent;
+					...
+				}
+				@Entity
+				public static class Child2 {
+					...
+					@OneToOne
+					private Parent parent;
+					...
+				}
+				when we do a Session.get(Child.class,...);
+				we have to distinguish between:
+				- Child.parent.child,
+					where mappedBy == null && getNavigableName().equals( parentMappedBy ) and isCircular = true
+				- Child.parent.child2,
+					where as in the previous case mappedBy == null && getNavigableName().equals( parentMappedBy ) but isCircular is false
+
+				checking parentParentNavigableRole.getNavigableName().equals( getEntityDescriptor().getNavigableName() ) ) helps to distinguish the 2 situations because for the first case it is true while in the second case it is false.
+				 */
+				if ( mappedBy != null && mappedBy.equals( fetchParent.getNavigablePath().getLocalName() ) ) {
+					return true;
+				}
+				String parentMappedBy = ( (EntityFetch) fetchParent ).getEntityValuedNavigable().getMappedBy();
+				if ( mappedBy == null && getNavigableName().equals( parentMappedBy ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public String getMappedBy() {
+		return mappedBy;
 	}
 
 	@Override

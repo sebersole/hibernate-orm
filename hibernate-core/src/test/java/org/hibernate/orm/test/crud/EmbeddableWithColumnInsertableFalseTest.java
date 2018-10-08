@@ -25,7 +25,8 @@ import static org.hamcrest.core.IsNull.nullValue;
 /**
  * @author Andrea Boriero
  */
-public class EmbeddableWithColumnInsertableFalseTest extends SessionFactoryBasedFunctionalTest {
+public class EmbeddableWithColumnInsertableFalseTest
+		extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
 		super.applyMetadataSources( metadataSources );
