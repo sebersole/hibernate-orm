@@ -33,4 +33,6 @@ public interface NavigableContainer<J> extends Navigable<J> {
 	}
 
 	void visitFetchables(Consumer<Fetchable> fetchableConsumer);
+
+	int getNumberOfContributors();
 }

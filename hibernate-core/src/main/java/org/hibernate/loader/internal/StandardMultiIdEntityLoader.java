@@ -14,6 +14,8 @@ import org.hibernate.loader.spi.MultiIdEntityLoader;
 import org.hibernate.loader.spi.MultiIdLoaderSelectors;
 import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.SqlExpressableType;
@@ -108,13 +110,18 @@ public class StandardMultiIdEntityLoader<J>
 				Collections.emptyList()
 		);
 
-
+		final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
 		return JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
 				new ExecutionContext() {
 					@Override
 					public SharedSessionContractImplementor getSession() {
 						return session;
+					}
+
+					@Override
+					public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+						return jdbcStateCollectorContainer;
 					}
 
 					@Override
@@ -134,7 +141,8 @@ public class StandardMultiIdEntityLoader<J>
 
 					@Override
 					public Callback getCallback() {
-						return afterLoadAction -> {};
+						return afterLoadAction -> {
+						};
 					}
 				},
 				RowTransformerSingularReturnImpl.instance()

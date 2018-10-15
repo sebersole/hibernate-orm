@@ -82,8 +82,8 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		// else inserted the same pk first, the insert would fail
 
 		if ( !veto ) {
-			
 			entityDescriptor.insert( id, getState(), instance, session );
+
 			PersistenceContext persistenceContext = session.getPersistenceContext();
 			final EntityEntry entry = persistenceContext.getEntry( instance );
 			if ( entry == null ) {

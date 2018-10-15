@@ -20,6 +20,8 @@ import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.Writeable;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
@@ -105,12 +107,19 @@ public class CollectionLoaderImpl implements CollectionLoader {
 				session
 		);
 
+		final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+
 		JdbcSelectExecutorStandardImpl.INSTANCE.list(
 				jdbcSelect,
 				new ExecutionContext() {
 					@Override
 					public SharedSessionContractImplementor getSession() {
 						return session;
+					}
+
+					@Override
+					public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+						return jdbcStateCollectorContainer;
 					}
 
 					@Override

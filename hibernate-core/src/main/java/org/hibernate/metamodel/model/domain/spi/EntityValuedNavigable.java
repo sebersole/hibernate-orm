@@ -31,6 +31,11 @@ public interface EntityValuedNavigable<J>
 	EntityJavaDescriptor<J> getJavaTypeDescriptor();
 
 	@Override
+	default int getNumberOfContributors() {
+		return getEntityDescriptor().getNumberOfContributors();
+	}
+
+	@Override
 	default DomainResult createDomainResult(
 			NavigableReference navigableReference,
 			String resultVariable,

@@ -7,6 +7,7 @@
 package org.hibernate.sql.results.internal.domain.entity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.WrongClassException;
+import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.engine.spi.EntityEntry;
@@ -43,17 +45,20 @@ import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.EntityInitializer;
 import org.hibernate.sql.results.spi.EntityMappingNode;
 import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.metamodel.spi.JdbcStateCollector;
 import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.LoadingEntityEntry;
+import org.hibernate.metamodel.spi.NestableJdbcStateCollector;
 import org.hibernate.sql.results.spi.RowProcessingState;
-import org.hibernate.type.internal.TypeHelper;
 
 import static org.hibernate.sql.results.internal.domain.LoggingHelper.toLoggableString;
 
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractEntityInitializer extends AbstractFetchParentAccess implements EntityInitializer {
+public abstract class AbstractEntityInitializer
+		extends AbstractFetchParentAccess
+		implements EntityInitializer, NestableJdbcStateCollector {
 
 	// NOTE : even though we only keep the EntityDescriptor here, rather than EntityReference
 	//		the "scope" of this initializer is a specific EntityReference.
@@ -79,9 +84,17 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	private EntityKey entityKey;
 	private Object entityInstance;
 	private boolean missing;
-	private Object[] resolvedEntityState;
 
-	// todo (6.0) : ^^ need a better way to track whether we are loading the entity state or if something else is/has
+	// NOTE : the `jdbcState` array is ultimately used in EntityEntry
+	//		to keep the entity's loaded state, which means we need to create this
+	//		array for each entity
+	//
+	// todo (6.0) : this should take into account "read only"
+	// 		don't do anything with hydrated state if Session/entity set to read-only
+	private Object[] jdbcState;
+	private int jdbcStatePosition = -1;
+
+	private Object[] resolvedState;
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractEntityInitializer(
@@ -162,11 +175,15 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 				}
 		);
 
+		this.resolvedState = new Object[ assemblerMap.size() ];
+
+		resetResolvedState();
 		initializerConsumer.accept( this );
 
 		subInitializerConsumer.finishUp();
 	}
 
+	@Override
 	public NavigablePath getNavigablePath() {
 		return navigablePath;
 	}
@@ -450,12 +467,23 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 
 		entityDescriptor.setIdentifier( entityInstance, entityIdentifier, session );
 
-		resolvedEntityState = new Object[ assemblerMap.size() ];
-		assemblerMap.forEach(
-				(key, value) -> resolvedEntityState[ key.getStateArrayPosition() ] = value.assemble( rowProcessingState )
-		);
+		jdbcState = new Object[ assemblerMap.size() ];
 
-		entityDescriptor.setPropertyValues( entityInstance, resolvedEntityState );
+		rowProcessingState.getJdbcStateCollectorContainer().pushCollector( this );
+
+		try {
+			assemblerMap.forEach(
+					(key, value) -> {
+						jdbcStatePosition = key.getStateArrayPosition();
+						resolvedState[key.getStateArrayPosition()] = value.assemble( rowProcessingState );
+					}
+			);
+		}
+		finally {
+			rowProcessingState.getJdbcStateCollectorContainer().popCollector();
+		}
+
+		entityDescriptor.setPropertyValues( entityInstance, resolvedState );
 
 		session.getPersistenceContext().addEntity(
 				entityKey,
@@ -473,7 +501,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		final EntityEntry entityEntry = session.getPersistenceContext().addEntry(
 				entityInstance,
 				Status.LOADING,
-				resolvedEntityState,
+				jdbcState,
 				rowId,
 				entityKey.getIdentifier(),
 				version,
@@ -494,7 +522,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 				);
 			}
 
-			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, resolvedEntityState, version, session );
+			final CacheEntry entry = entityDescriptor.buildCacheEntry( entityInstance, resolvedState, version, session );
 			final Object cacheKey = cacheAccess.generateCacheKey(
 					entityIdentifier,
 					entityDescriptor.getHierarchy(),
@@ -544,7 +572,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			session.getPersistenceContext().getNaturalIdHelper().cacheNaturalIdCrossReferenceFromLoad(
 					entityDescriptor,
 					entityIdentifier,
-					session.getPersistenceContext().getNaturalIdHelper().extractNaturalIdValues( resolvedEntityState, entityDescriptor )
+					session.getPersistenceContext().getNaturalIdHelper().extractNaturalIdValues( resolvedState, entityDescriptor )
 			);
 		}
 
@@ -568,13 +596,13 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			session.getPersistenceContext().setEntryStatus( entityEntry, Status.READ_ONLY );
 		}
 		else {
-			//take a snapshot
-			TypeHelper.deepCopy(
-					entityDescriptor,
-					resolvedEntityState,
-					resolvedEntityState,
-					StateArrayContributor::isUpdatable
-			);
+//			//take a snapshot
+//			TypeHelper.deepCopy(
+//					entityDescriptor,
+//					resolvedState,
+//					resolvedState,
+//					StateArrayContributor::isUpdatable
+//			);
 			session.getPersistenceContext().setEntryStatus( entityEntry, Status.MANAGED );
 		}
 
@@ -592,6 +620,28 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		}
 
 		postLoad( rowProcessingState );
+	}
+
+	@Override
+	public void registerState(Object state) {
+		assert jdbcStatePosition < assemblerMap.size();
+		jdbcState[jdbcStatePosition] = state;
+	}
+
+	@Override
+	public void startingPosition(int currentPosition) {
+		assert currentPosition < assemblerMap.size();
+		jdbcStatePosition = currentPosition;
+	}
+
+	@Override
+	public Object getCollectedState() {
+		return jdbcState;
+	}
+
+	@Override
+	public void startingSubCollector(JdbcStateCollector subCollector) {
+		registerState( subCollector.getCollectedState() );
 	}
 
 	private boolean isReadOnly(
@@ -653,8 +703,16 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		entityKey = null;
 		entityInstance = null;
 		missing = false;
-		resolvedEntityState = null;
+
+		jdbcStatePosition = -1;
+		jdbcState = null;
+
+		resetResolvedState();
 
 		clearParentResolutionListeners();
+	}
+
+	private void resetResolvedState() {
+		Arrays.fill( resolvedState, LazyPropertyInitializer.UNFETCHED_PROPERTY );
 	}
 }

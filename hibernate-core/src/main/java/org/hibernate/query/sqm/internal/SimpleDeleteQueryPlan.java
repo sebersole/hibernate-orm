@@ -13,6 +13,8 @@ import java.util.Set;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
@@ -90,6 +92,11 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 					@Override
 					public SharedSessionContractImplementor getSession() {
 						return session;
+					}
+
+					@Override
+					public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+						return NoOpJdbcStateCollectorContainer.INSTANCE;
 					}
 
 					@Override

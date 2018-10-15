@@ -42,6 +42,8 @@ public class BasicResultAssembler implements DomainResultAssembler {
 			JdbcValuesSourceProcessingOptions options) {
 		final Object rawJdbcValue = rowProcessingState.getJdbcValue( sqlSelection );
 
+		rowProcessingState.getJdbcStateCollectorContainer().registerJdbcState( rawJdbcValue );
+
 		if ( valueConverter != null ) {
 			return valueConverter.toDomainValue( rawJdbcValue, rowProcessingState.getJdbcValuesSourceProcessingState().getSession() );
 		}

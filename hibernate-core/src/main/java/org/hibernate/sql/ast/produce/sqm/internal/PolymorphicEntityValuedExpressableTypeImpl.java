@@ -57,6 +57,7 @@ import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
@@ -453,16 +454,16 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	@Override
 	public void insert(
 			Object id,
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
 	public Object insert(
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
@@ -486,7 +487,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 			Object oldVersion,
 			Object object,
 			Object rowId,
-			SharedSessionContractImplementor session) {
+			JdbcStateCollectorContainer jdbcStateCollectorContainer, SharedSessionContractImplementor session) {
 		throw new UnsupportedOperationException(  );
 	}
 

@@ -22,6 +22,7 @@ import org.hibernate.JDBCException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.AfterLoadAction;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.procedure.ProcedureOutputs;
 import org.hibernate.procedure.spi.CallableStatementSupport;
 import org.hibernate.procedure.spi.ParameterStrategy;
@@ -277,6 +278,11 @@ public class ProcedureOutputsImpl extends OutputsImpl
 	@Override
 	public SharedSessionContractImplementor getSession() {
 		return session;
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return procedureCall.getJdbcStateCollectorContainer();
 	}
 
 	@Override

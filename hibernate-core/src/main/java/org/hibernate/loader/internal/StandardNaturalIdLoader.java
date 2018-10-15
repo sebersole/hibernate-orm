@@ -18,6 +18,8 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.NaturalIdLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.SqlExpressableType;
@@ -155,11 +157,17 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 				Collections.emptyList()
 		);
 
-		final ExecutionContext executionContext = new ExecutionContext() {
+		final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
 
+		final ExecutionContext executionContext = new ExecutionContext() {
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;
+			}
+
+			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return jdbcStateCollectorContainer;
 			}
 
 			@Override

@@ -40,6 +40,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassRes
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupProducer;
@@ -299,14 +300,19 @@ public interface EntityDescriptor<T>
 	/**
 	 * Persist an instance
 	 */
-	void insert(Object id, Object[] fields, Object object, SharedSessionContractImplementor session)
-	throws HibernateException;
+	void insert(
+			Object id,
+			Object[] domainState,
+			Object entityInstance,
+			SharedSessionContractImplementor session) throws HibernateException;
 
 	/**
 	 * Persist an instance, using a natively generated identifier (optional operation)
 	 */
-	Object insert(Object[] fields, Object object, SharedSessionContractImplementor session)
-	throws HibernateException;
+	Object insert(
+			Object[] domainState,
+			Object entityInstance,
+			SharedSessionContractImplementor session) throws HibernateException;
 
 	/**
 	 * Delete a persistent instance
@@ -326,8 +332,8 @@ public interface EntityDescriptor<T>
 			Object oldVersion,
 			Object object,
 			Object rowId,
-			SharedSessionContractImplementor session
-	) throws HibernateException;
+			JdbcStateCollectorContainer jdbcStateCollectorContainer,
+			SharedSessionContractImplementor session) throws HibernateException;
 
 	/**
 	 * Determine whether this entity has any non-none cascading.
@@ -628,9 +634,6 @@ public interface EntityDescriptor<T>
 	 * Does this entity define a natural-id.
 	 */
 	boolean hasNaturalIdentifier();
-
-	boolean hasCollections();
-
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

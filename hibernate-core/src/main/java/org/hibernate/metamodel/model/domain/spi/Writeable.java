@@ -66,6 +66,14 @@ public interface Writeable {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
+//	void write(
+//			Object value,
+//			JdbcValueCollector jdbcValueCollector,
+//			Clause clause,
+//			SharedSessionContractImplementor session) {
+//
+//	}
+
 	/**
 	 * Produce a multi-dimensional array of extracted simple value
 	 */

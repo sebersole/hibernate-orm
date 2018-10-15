@@ -174,4 +174,6 @@ public interface ManagedTypeDescriptor<T>
 	default Object getPropertyValue(Object object, String propertyName) {
 		return findPersistentAttribute( propertyName ).getPropertyAccess().getGetter().get( object );
 	}
+
+	boolean hasCollections();
 }

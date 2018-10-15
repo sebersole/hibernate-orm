@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -37,6 +39,8 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 	private final QueryOptions queryOptions;
 
 	private final Map<NavigablePath,Initializer> initializerMap;
+
+	private final StandardJdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
 
 	private final JdbcValues jdbcValues;
 	private Object[] currentRowJdbcValues;
@@ -86,6 +90,11 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 
 	@Override
 	public void registerNonExists(EntityFetch fetch) {
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return jdbcStateCollectorContainer;
 	}
 
 	@Override

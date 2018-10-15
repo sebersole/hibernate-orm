@@ -203,6 +203,11 @@ public class SingularPersistentAttributeEmbedded<O,J>
 		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
 	}
 
+	@Override
+	public int getNumberOfContributors() {
+		return getEmbeddedDescriptor().getNumberOfContributors();
+	}
+
 	private final FetchStrategy mappedFetchStrategy = new FetchStrategy(
 			FetchTiming.IMMEDIATE,
 			FetchStyle.JOIN

@@ -27,6 +27,11 @@ public interface EmbeddedValuedNavigable<J> extends EmbeddedValueExpressableType
 	EmbeddedTypeDescriptor<J> getEmbeddedDescriptor();
 
 	@Override
+	default int getNumberOfContributors() {
+		return getEmbeddedDescriptor().getNumberOfContributors();
+	}
+
+	@Override
 	EmbeddableJavaDescriptor<J> getJavaTypeDescriptor();
 
 	@Override

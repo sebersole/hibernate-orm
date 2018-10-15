@@ -31,6 +31,7 @@ import org.hibernate.id.IdentifierGeneratorHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -148,7 +149,19 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 		else {
 			oldVersion = null;
 		}
-		entityDescriptor.update( id, state, null, false, null, oldVersion, entity, null, this );
+
+		entityDescriptor.update(
+				id,
+				state,
+				null,
+				false,
+				null,
+				oldVersion,
+				entity,
+				null,
+				NoOpJdbcStateCollectorContainer.INSTANCE,
+				this
+		);
 	}
 
 

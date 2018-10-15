@@ -19,6 +19,8 @@ import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
@@ -228,10 +230,17 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 			JdbcParameterBindings jdbcParameterBindings) {
 		final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
 
+		final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+
 		return new ExecutionContext() {
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;
+			}
+
+			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return jdbcStateCollectorContainer;
 			}
 
 			@Override

@@ -18,6 +18,8 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.collections.streams.StingArrayCollector;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.query.IllegalQueryOperationException;
 import org.hibernate.query.JpaTupleTransformer;
 import org.hibernate.query.spi.QueryOptions;
@@ -179,6 +181,11 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 			}
 
 			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return NoOpJdbcStateCollectorContainer.INSTANCE;
+			}
+
+			@Override
 			public QueryOptions getQueryOptions() {
 				return executionContext.getQueryOptions();
 			}
@@ -268,6 +275,11 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return executionContext.getSession();
+			}
+
+			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return NoOpJdbcStateCollectorContainer.INSTANCE;
 			}
 
 			@Override

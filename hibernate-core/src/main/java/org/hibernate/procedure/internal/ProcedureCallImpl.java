@@ -38,6 +38,8 @@ import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.procedure.NoSuchParameterException;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.procedure.ParameterStrategyException;
@@ -259,6 +261,11 @@ public class ProcedureCallImpl<R>
 	@Override
 	public QueryParameterBindings getQueryParameterBindings() {
 		return paramBindings;
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return NoOpJdbcStateCollectorContainer.INSTANCE;
 	}
 
 	@Override

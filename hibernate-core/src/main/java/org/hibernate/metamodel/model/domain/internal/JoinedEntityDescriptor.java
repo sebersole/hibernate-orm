@@ -8,7 +8,6 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.HibernateException;
@@ -29,6 +28,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableReference;
@@ -123,19 +123,6 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public void insert(
-			Object id, Object[] fields, Object object, SharedSessionContractImplementor session)
-			throws HibernateException {
-
-	}
-
-	@Override
-	public Object insert(
-			Object[] fields, Object object, SharedSessionContractImplementor session) throws HibernateException {
-		return null;
-	}
-
-	@Override
 	public void delete(
 			Object id, Object version, Object object, SharedSessionContractImplementor session)
 			throws HibernateException {
@@ -152,7 +139,7 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 			Object oldVersion,
 			Object object,
 			Object rowId,
-			SharedSessionContractImplementor session) throws HibernateException {
+			JdbcStateCollectorContainer jdbcStateCollectorContainer, SharedSessionContractImplementor session) throws HibernateException {
 
 	}
 
@@ -262,12 +249,6 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public Object[] getPropertyValuesToInsert(
-			Object object, Map mergeMap, SharedSessionContractImplementor session) throws HibernateException {
-		return new Object[0];
-	}
-
-	@Override
 	public void processInsertGeneratedProperties(
 			Object id, Object entity, Object[] state, SharedSessionContractImplementor session) {
 
@@ -323,11 +304,6 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	@Override
 	public void registerAffectingFetchProfile(String fetchProfileName) {
 
-	}
-
-	@Override
-	public boolean hasCollections() {
-		return false;
 	}
 
 	@Override

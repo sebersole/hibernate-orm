@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -49,6 +48,10 @@ import org.hibernate.metamodel.model.domain.spi.TenantDiscrimination;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.metamodel.spi.JdbcStateCollector;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollector;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
@@ -86,7 +89,6 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> {
-	private Boolean hasCollections;
 	private final boolean isJpaCacheComplianceEnabled;
 
 	public SingleTableEntityDescriptor(
@@ -182,28 +184,32 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 	protected Object insertInternal(
 			Object id,
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
+
+		final StandardJdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+		jdbcStateCollectorContainer.pushCollector( new StandardJdbcStateCollector( getNumberOfContributors() ) );
+
 		// generate id if needed
 		if ( id == null ) {
 			final IdentifierGenerator generator = getHierarchy().getIdentifierDescriptor().getIdentifierValueGenerator();
 			if ( generator != null ) {
-				id = generator.generate( session, object );
+				id = generator.generate( session, entityInstance );
 			}
 		}
 
 //		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
 		final Object unresolvedId = id;
-		final ExecutionContext executionContext = getExecutionContext( session );
+		final ExecutionContext executionContext = getExecutionContext( jdbcStateCollectorContainer, session );
 
 		// for now - just root table
 		// for now - we also regenerate these SQL AST objects each time - we can cache these
-		executeInsert( fields, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null, false) );
+		executeInsert( domainState, session, unresolvedId, executionContext, new TableReference( getPrimaryTable(), null, false) );
 
 		getSecondaryTableBindings().forEach(
 				tableBindings -> executeJoinTableInsert(
-						fields,
+						domainState,
 						session,
 						unresolvedId,
 						executionContext,
@@ -219,12 +225,12 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			SharedSessionContractImplementor session,
 			Object unresolvedId,
 			ExecutionContext executionContext,
-			JoinedTableBinding tableBindings) {
-		if ( tableBindings.isInverse() ) {
+			JoinedTableBinding joinedTableBinding) {
+		if ( joinedTableBinding.isInverse() ) {
 			return;
 		}
 
-		final TableReference tableReference = new TableReference( tableBindings.getReferringTable(), null , tableBindings.isOptional());
+		final TableReference tableReference = new TableReference( joinedTableBinding.getReferringTable(), null , joinedTableBinding.isOptional());
 		final ValuesNullChecker jdbcValuesToInsert = new ValuesNullChecker();
 		final InsertStatement insertStatement = new InsertStatement( tableReference );
 
@@ -247,6 +253,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 										addInsertColumn( session, insertStatement, jdbcValue, boundColumn, type );
 									}
 								}
+								executionContext.getJdbcStateCollectorContainer().registerJdbcState( jdbcValue );
 							},
 							Clause.INSERT,
 							session
@@ -265,7 +272,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				getHierarchy().getIdentifierDescriptor().unresolve( unresolvedId, session ),
 				//unresolvedId,
 				(jdbcValue, type, boundColumn) -> {
-					final Column referringColumn = tableBindings.getJoinForeignKey()
+					final Column referringColumn = joinedTableBinding.getJoinForeignKey()
 							.getColumnMappings()
 							.findReferringColumn( boundColumn );
 					addInsertColumn(
@@ -351,6 +358,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				contributor -> {
 					final int position = contributor.getStateArrayPosition();
 					final Object domainValue = fields[position];
+
 					contributor.dehydrate(
 							// todo (6.0) : fix this - specifically this isInstance check is bad
 							// 		sometimes the values here are unresolved and sometimes not;
@@ -411,7 +419,10 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		// todo (6.0) - initial basic pass at entity deletes
 
 		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
-		final ExecutionContext executionContext = getExecutionContext( session );
+		final ExecutionContext executionContext = getExecutionContext(
+				null,
+				session
+		);
 
 
 		deleteSecondaryTables( session, unresolvedId, executionContext );
@@ -515,13 +526,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	@Override
 	public void update(
 			Object id,
-			Object[] fields,
+			Object[] domainState,
 			int[] dirtyFields,
 			boolean hasDirtyCollection,
 			Object[] oldFields,
 			Object oldVersion,
 			Object object,
 			Object rowId,
+			JdbcStateCollectorContainer jdbcStateCollectorContainer,
 			SharedSessionContractImplementor session) throws HibernateException {
 
 		// todo (6.0) - initial basic pass at entity updates
@@ -532,14 +544,14 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 			throw new IllegalStateException( "Updating immutable entity that is not in session yet!" );
 		}
 		final Object unresolvedId = getHierarchy().getIdentifierDescriptor().unresolve( id, session );
-		final ExecutionContext executionContext = getExecutionContext( session );
+		final ExecutionContext executionContext = getExecutionContext( jdbcStateCollectorContainer, session );
 
 		Table primaryTable = getPrimaryTable();
 
 		final TableReference tableReference = new TableReference( primaryTable, null, false );
 		if ( isTableNeedUpdate( tableReference, dirtyFields, hasDirtyCollection, true ) ) {
 			updateInternal(
-					fields,
+					domainState,
 					dirtyFields,
 					oldFields,
 					session,
@@ -567,7 +579,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 							)
 					) {
 						final boolean isRowToInsert = updateInternal(
-								fields,
+								domainState,
 								dirtyFields,
 								oldFields,
 								session,
@@ -579,7 +591,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 
 						if ( isRowToInsert ) {
 							executeJoinTableInsert(
-									fields,
+									domainState,
 									session,
 									unresolvedId,
 									executionContext,
@@ -790,10 +802,16 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		return tableReference.isOptional() || isJpaCacheComplianceEnabled;
 	}
 
-	private ExecutionContext getExecutionContext(SharedSessionContractImplementor session) {
+	private ExecutionContext getExecutionContext(
+			JdbcStateCollectorContainer jdbcStateCollectorContainer,
+			SharedSessionContractImplementor session) {
 		return new ExecutionContext() {
 			private final ParameterBindingContext parameterBindingContext = new TemplateParameterBindingContext( session.getFactory() );
 
+			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return jdbcStateCollectorContainer;
+			}
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;
@@ -997,25 +1015,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public Object[] getPropertyValuesToInsert(
-			Object object,
-			Map mergeMap,
-			SharedSessionContractImplementor session) throws HibernateException {
-		final Object[] stateArray = new Object[ getStateArrayContributors().size() ];
-		visitStateArrayContributors(
-				contributor -> {
-					stateArray[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().getForInsert(
-							object,
-							mergeMap,
-							session
-					);
-				}
-		);
-
-		return stateArray;
-	}
-
-	@Override
 	public void processInsertGeneratedProperties(
 			Object id, Object entity, Object[] state, SharedSessionContractImplementor session) {
 
@@ -1071,26 +1070,6 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	@Override
 	public void registerAffectingFetchProfile(String fetchProfileName) {
 
-	}
-
-	@Override
-	public boolean hasCollections() {
-		// todo (6.0) : do this init up front?
-		if ( hasCollections == null ) {
-			hasCollections = false;
-			controlledVisitAttributes(
-					attr -> {
-						if ( attr instanceof PluralPersistentAttribute ) {
-							hasCollections = true;
-							return false;
-						}
-
-						return true;
-					}
-			);
-		}
-
-		return hasCollections;
 	}
 
 	private static class RowToUpdateChecker {

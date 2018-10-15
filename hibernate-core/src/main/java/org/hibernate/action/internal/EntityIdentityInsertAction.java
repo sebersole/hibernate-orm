@@ -18,6 +18,9 @@ import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PreInsertEvent;
 import org.hibernate.event.spi.PreInsertEventListener;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollector;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 
 /**
  * The action for performing entity insertions when entity is using IDENTITY column identifier generation
@@ -76,16 +79,26 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 		// else inserted the same pk first, the insert would fail
 
 		if ( !isVeto() ) {
-			generatedId = descriptor.insert( getState(), instance, session );
-			if ( descriptor.hasInsertGeneratedProperties() ) {
-				descriptor.processInsertGeneratedProperties( generatedId, instance, getState(), session );
+			final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+			jdbcStateCollectorContainer.pushCollector(
+					new StandardJdbcStateCollector( getState().length )
+			);
+			try {
+				generatedId = descriptor.insert( getState(), instance, session );
+				if ( descriptor.hasInsertGeneratedProperties() ) {
+					descriptor.processInsertGeneratedProperties( generatedId, instance, getState(), session );
+				}
+				//need to do that here rather than in the save event listener to let
+				//the post insert events to have a id-filled entity when IDENTITY is used (EJB3)
+				descriptor.setIdentifier( instance, generatedId, session );
+				session.getPersistenceContext().registerInsertedKey( getEntityDescriptor(), generatedId );
+				entityKey = session.generateEntityKey( generatedId, descriptor );
+				session.getPersistenceContext().checkUniqueness( entityKey, getInstance() );
 			}
-			//need to do that here rather than in the save event listener to let
-			//the post insert events to have a id-filled entity when IDENTITY is used (EJB3)
-			descriptor.setIdentifier( instance, generatedId, session );
-			session.getPersistenceContext().registerInsertedKey( getEntityDescriptor(), generatedId );
-			entityKey = session.generateEntityKey( generatedId, descriptor );
-			session.getPersistenceContext().checkUniqueness( entityKey, getInstance() );
+			finally {
+				jdbcStateCollectorContainer.popCollector();
+				assert jdbcStateCollectorContainer.isEmpty();
+			}
 		}
 
 

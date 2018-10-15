@@ -184,6 +184,13 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	}
 
 	@Override
+	default int getNumberOfContributors() {
+		return getIndexDescriptor() == null
+				? 1
+				: 2;
+	}
+
+	@Override
 	default void visitNavigables(NavigableVisitationStrategy visitor) {
 		if ( getIndexDescriptor() != null ) {
 			getIndexDescriptor().visitNavigable( visitor );

@@ -680,6 +680,18 @@ public class SingularPersistentAttributeEntity<O, J>
 	}
 
 	@Override
+	public void visitJdbcTypes(
+			Consumer<SqlExpressableType> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		for ( Column column : foreignKey.getColumnMappings().getReferringColumns() ) {
+			action.accept( column.getExpressableType() );
+		}
+	}
+
+
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public void dehydrate(
 			Object value,

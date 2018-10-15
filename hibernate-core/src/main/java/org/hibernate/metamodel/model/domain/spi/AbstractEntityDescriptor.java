@@ -69,6 +69,7 @@ import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.metamodel.model.relational.spi.Table;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.sql.ast.JoinType;
@@ -120,9 +121,9 @@ public abstract class AbstractEntityDescriptor<J>
 	private final boolean hasProxy;
 	private final Class proxyInterface;
 
-	private ProxyFactory proxyFactory;
-
 	protected final ExecuteUpdateResultCheckStyle rootUpdateResultCheckStyle;
+
+	private ProxyFactory proxyFactory;
 
 	@SuppressWarnings("UnnecessaryBoxing")
 	public AbstractEntityDescriptor(
@@ -783,26 +784,29 @@ public abstract class AbstractEntityDescriptor<J>
 	@Override
 	public void insert(
 			Object id,
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
-		insertInternal( id, fields, object, session );
+		insertInternal( id, domainState, entityInstance, session );
 	}
 
+	/**
+	 * @return The generated identifier if `id` == null
+	 */
 	protected Object insertInternal(
 			Object id,
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
 		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public Object insert(
-			Object[] fields,
-			Object object,
+			Object[] domainState,
+			Object entityInstance,
 			SharedSessionContractImplementor session) {
-		return insertInternal( null, fields, object, session );
+		return insertInternal( null, domainState, entityInstance, session );
 	}
 
 	public Class getProxyInterface() {
@@ -817,5 +821,24 @@ public abstract class AbstractEntityDescriptor<J>
 		else {
 			return Map.class;
 		}
+	}
+
+	@Override
+	public Object[] getPropertyValuesToInsert(
+			Object object,
+			Map mergeMap,
+			SharedSessionContractImplementor session) throws HibernateException {
+		final Object[] stateArray = new Object[ getStateArrayContributors().size() ];
+		visitStateArrayContributors(
+				contributor -> {
+					stateArray[ contributor.getStateArrayPosition() ] = contributor.getPropertyAccess().getGetter().getForInsert(
+							object,
+							mergeMap,
+							session
+					);
+				}
+		);
+
+		return stateArray;
 	}
 }

@@ -42,6 +42,8 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.query.Limit;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
@@ -172,6 +174,11 @@ public class NativeQueryImpl<R>
 		}
 
 		applyResultSetMapping( resultSetMappingDescriptor );
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return NoOpJdbcStateCollectorContainer.INSTANCE;
 	}
 
 	@Override

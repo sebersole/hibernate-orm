@@ -7,6 +7,8 @@
 package org.hibernate.query.sqm.internal;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.multitable.spi.DeleteHandler;
@@ -34,6 +36,11 @@ public class MultiTableDeleteQueryPlan implements NonSelectQueryPlan {
 					@Override
 					public SharedSessionContractImplementor getSession() {
 						return session;
+					}
+
+					@Override
+					public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+						return NoOpJdbcStateCollectorContainer.INSTANCE;
 					}
 
 					@Override

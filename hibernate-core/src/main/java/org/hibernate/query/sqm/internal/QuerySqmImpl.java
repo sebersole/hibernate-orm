@@ -22,6 +22,8 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.Query;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.ParameterMetadataImpl;
@@ -74,6 +76,8 @@ public class QuerySqmImpl<R>
 	private final Map<QueryParameterImplementor, SqmParameter> sqmParamByQueryParam = new HashMap<>(  );
 
 	private final QueryOptionsImpl queryOptions = new QueryOptionsImpl();
+
+	private final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
 
 	public QuerySqmImpl(
 			String sourceQueryString,
@@ -156,6 +160,11 @@ public class QuerySqmImpl<R>
 	@SuppressWarnings("unchecked")
 	public Class<R> getResultType() {
 		return resultType;
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return jdbcStateCollectorContainer;
 	}
 
 	@Override

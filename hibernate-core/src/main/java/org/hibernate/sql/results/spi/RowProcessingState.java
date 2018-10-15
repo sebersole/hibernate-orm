@@ -32,9 +32,9 @@ public interface RowProcessingState extends ExecutionContext {
 	 */
 	Object getJdbcValue(SqlSelection sqlSelection);
 
+	Initializer resolveInitializer(NavigablePath path);
+
 	void registerNonExists(EntityFetch fetch);
 
 	void finishRowProcessing();
-
-	Initializer resolveInitializer(NavigablePath path);
 }

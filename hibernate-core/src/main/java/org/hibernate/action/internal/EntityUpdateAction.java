@@ -28,6 +28,9 @@ import org.hibernate.event.spi.PreUpdateEvent;
 import org.hibernate.event.spi.PreUpdateEventListener;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollector;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.type.internal.TypeHelper;
 
 /**
@@ -140,17 +143,28 @@ public final class EntityUpdateAction extends EntityAction {
 		}
 
 		if ( !veto ) {
-			entityDescriptor.update(
-					id, 
-					state, 
-					dirtyFields, 
-					hasDirtyCollection, 
-					previousState, 
-					previousVersion, 
-					instance, 
-					rowId, 
-					session 
+			final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+			jdbcStateCollectorContainer.pushCollector(
+					new StandardJdbcStateCollector( state.length )
 			);
+			try {
+				entityDescriptor.update(
+						id,
+						state,
+						dirtyFields,
+						hasDirtyCollection,
+						previousState,
+						previousVersion,
+						instance,
+						rowId,
+						jdbcStateCollectorContainer,
+						session
+				);
+			}
+			finally {
+				jdbcStateCollectorContainer.popCollector();
+				assert jdbcStateCollectorContainer.isEmpty();
+			}
 		}
 
 		final EntityEntry entry = session.getPersistenceContext().getEntry( instance );

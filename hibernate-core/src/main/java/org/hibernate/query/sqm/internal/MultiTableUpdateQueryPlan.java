@@ -7,6 +7,8 @@
 package org.hibernate.query.sqm.internal;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
@@ -29,11 +31,18 @@ public class MultiTableUpdateQueryPlan implements NonSelectQueryPlan {
 			SharedSessionContractImplementor session,
 			QueryOptions queryOptions,
 			ParameterBindingContext parameterBindingContext) {
+		final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+
 		return updateHandler.execute(
 				new HandlerExecutionContext() {
 					@Override
 					public SharedSessionContractImplementor getSession() {
 						return session;
+					}
+
+					@Override
+					public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+						return jdbcStateCollectorContainer;
 					}
 
 					@Override

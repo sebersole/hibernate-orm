@@ -12,6 +12,8 @@ import java.util.List;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.NoOpJdbcStateCollectorContainer;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfBasics;
 import org.hibernate.query.internal.QueryOptionsImpl;
 import org.hibernate.query.spi.QueryOptions;
@@ -95,6 +97,11 @@ public class SqlAstGenSmokeTest extends BaseSqmSqlTest {
 						@Override
 						public SharedSessionContractImplementor getSession() {
 							return session;
+						}
+
+						@Override
+						public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+							return NoOpJdbcStateCollectorContainer.INSTANCE;
 						}
 
 						@Override

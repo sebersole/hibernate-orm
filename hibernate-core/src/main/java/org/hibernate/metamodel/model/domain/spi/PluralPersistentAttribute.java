@@ -42,6 +42,11 @@ public interface PluralPersistentAttribute<O,C,E>
 	PersistentCollectionDescriptor<O,C,E> getPersistentCollectionDescriptor();
 
 	@Override
+	default int getNumberOfContributors() {
+		return getPersistentCollectionDescriptor().getNumberOfContributors();
+	}
+
+	@Override
 	CollectionJavaDescriptor<C> getJavaTypeDescriptor();
 
 	@Override

@@ -57,6 +57,9 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	// a cache to more easily find the PersistentAttribute by name
 	private Map<String,NonIdPersistentAttribute> declaredAttributesByName;
 
+	private boolean hasCollections;
+	private int numberOfContributors;
+
 	@SuppressWarnings("WeakerAccess")
 	public AbstractManagedType(
 			ManagedTypeMapping bootDescriptor,
@@ -123,6 +126,23 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			this.stateArrayContributors.add( attribute );
 		}
 
+		visitStateArrayContributors(
+				contributor -> {
+					numberOfContributors++;
+
+					if ( ! hasCollections ) {
+						if ( contributor instanceof PluralPersistentAttribute ) {
+							hasCollections = true;
+						}
+						else if ( contributor instanceof EmbeddedValuedNavigable ) {
+							if ( ( (EmbeddedValuedNavigable) contributor ).getEmbeddedDescriptor().hasCollections() ) {
+								hasCollections = true;
+							}
+						}
+					}
+				}
+		);
+
 		fullyInitialized = true;
 	}
 
@@ -149,6 +169,16 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 			( (AbstractManagedType) superTypeDescriptor ).addSubclassName( subclassType );
 		}
+	}
+
+	@Override
+	public boolean hasCollections() {
+		return hasCollections;
+	}
+
+	@Override
+	public int getNumberOfContributors() {
+		return numberOfContributors;
 	}
 
 	@Override

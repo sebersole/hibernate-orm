@@ -11,6 +11,8 @@ import java.util.List;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
@@ -23,6 +25,7 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 public class BasicExecutionContext implements ExecutionContext {
 	private final SharedSessionContractImplementor session;
 	private final ParameterBindingContext parameterBindingContext;
+	private final JdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
 
 	public BasicExecutionContext(SharedSessionContractImplementor session) {
 		this.session = session;
@@ -47,6 +50,11 @@ public class BasicExecutionContext implements ExecutionContext {
 	@Override
 	public SharedSessionContractImplementor getSession() {
 		return session;
+	}
+
+	@Override
+	public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+		return jdbcStateCollectorContainer;
 	}
 
 	@Override

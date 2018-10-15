@@ -8,7 +8,10 @@ package org.hibernate.sql.exec.spi;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.LoadQueryInfluencers;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 
@@ -18,7 +21,6 @@ import org.hibernate.sql.ast.produce.sqm.spi.Callback;
  *
  * @author Steve Ebersole
  */
-//public interface ExecutionContext extends QueryResultAssemblerCreationContext {
 public interface ExecutionContext {
 	default Object resolveEntityInstance(EntityKey entityKey, boolean eager) {
 		return StandardEntityInstanceResolver.resolveEntityInstance(
@@ -30,17 +32,9 @@ public interface ExecutionContext {
 
 	SharedSessionContractImplementor getSession();
 
-//	@Override
-//	default SessionFactoryImplementor getSessionFactory() {
-//		return getSession().getSessionFactory();
-//	}
+	JdbcStateCollectorContainer getJdbcStateCollectorContainer();
 
 	QueryOptions getQueryOptions();
-
-//	@Override
-//	default LoadQueryInfluencers getLoadQueryInfluencers() {
-//		return getSession().getLoadQueryInfluencers();
-//	}
 
 	// todo (6.0) : ParameterBindingContext is not needed here, although should be available via SqlAstCreationContext
 	//		here, should just be JdbcParameterBindings and possibly a list of JdbcParameters
@@ -56,4 +50,13 @@ public interface ExecutionContext {
 	}
 
 	Callback getCallback();
+
+
+	default LoadQueryInfluencers getLoadQueryInfluencers() {
+		return getSession().getLoadQueryInfluencers();
+	}
+
+	default SessionFactoryImplementor getSessionFactory() {
+		return getSession().getSessionFactory();
+	}
 }

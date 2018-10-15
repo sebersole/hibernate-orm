@@ -21,6 +21,9 @@ import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.metamodel.spi.JdbcStateCollectorContainer;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollector;
+import org.hibernate.metamodel.spi.StandardJdbcStateCollectorContainer;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
@@ -141,43 +144,56 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				session
 		);
 
-		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
-				jdbcSelect,
-				new ExecutionContext() {
-					@Override
-					public SharedSessionContractImplementor getSession() {
-						return session;
-					}
+		final StandardJdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+		jdbcStateCollectorContainer.pushCollector( new StandardJdbcStateCollector( entityDescriptor.getNumberOfContributors() ) );
 
-					@Override
-					public QueryOptions getQueryOptions() {
-						return QueryOptions.NONE;
-					}
+		try {
+			final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
+					jdbcSelect,
+					new ExecutionContext() {
+						@Override
+						public SharedSessionContractImplementor getSession() {
+							return session;
+						}
 
-					@Override
-					public ParameterBindingContext getParameterBindingContext() {
-						return parameterBindingContext;
-					}
+						@Override
+						public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+							return jdbcStateCollectorContainer;
+						}
 
-					@Override
-					public JdbcParameterBindings getJdbcParameterBindings() {
-						return jdbcParameterBindings;
-					}
+						@Override
+						public QueryOptions getQueryOptions() {
+							return QueryOptions.NONE;
+						}
 
-					@Override
-					public Callback getCallback() {
-						return null;
-					}
-				},
-				RowTransformerSingularReturnImpl.instance()
-		);
+						@Override
+						public ParameterBindingContext getParameterBindingContext() {
+							return parameterBindingContext;
+						}
 
-		if ( list.isEmpty() ) {
-			return null;
+						@Override
+						public JdbcParameterBindings getJdbcParameterBindings() {
+							return jdbcParameterBindings;
+						}
+
+						@Override
+						public Callback getCallback() {
+							return null;
+						}
+					},
+					RowTransformerSingularReturnImpl.instance()
+			);
+
+			if ( list.isEmpty() ) {
+				return null;
+			}
+
+			return list.get( 0 );
 		}
-
-		final T entityInstance = list.get( 0 );
-		return entityInstance;
+		finally {
+			jdbcStateCollectorContainer.popCollector();
+			assert jdbcStateCollectorContainer.isEmpty();
+		}
 	}
 
 	private JdbcSelect resolveJdbcSelect(
@@ -264,20 +280,32 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 				session.getSessionFactory()
 		);
 
-		final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
-				jdbcSelect,
-				getExecutionContext( id, session ),
-				RowTransformerPassThruImpl.instance()
-		);
 
-		if ( list.isEmpty() ) {
-			return null;
+		final StandardJdbcStateCollectorContainer jdbcStateCollectorContainer = new StandardJdbcStateCollectorContainer();
+		jdbcStateCollectorContainer.pushCollector( new StandardJdbcStateCollector( entityDescriptor.getNumberOfContributors() ) );
+
+		try {
+			final List<T> list = JdbcSelectExecutorStandardImpl.INSTANCE.list(
+					jdbcSelect,
+					getExecutionContext( id, session, jdbcStateCollectorContainer ),
+					RowTransformerPassThruImpl.instance()
+			);
+
+			if ( list.isEmpty() ) {
+				return null;
+			}
+
+			return (Object[]) list.get( 0 );
 		}
-
-		return (Object[]) list.get( 0 );
+		finally {
+			jdbcStateCollectorContainer.popCollector();
+		}
 	}
 
-	private ExecutionContext getExecutionContext(Object id,SharedSessionContractImplementor session) {
+	private ExecutionContext getExecutionContext(
+			Object id,
+			SharedSessionContractImplementor session,
+			StandardJdbcStateCollectorContainer jdbcStateCollectorContainer) {
 		final JdbcParameterBindings jdbcParameterBindings = new JdbcParameterBindingsImpl();
 			entityDescriptor.getHierarchy().getIdentifierDescriptor().dehydrate(
 					id,
@@ -321,6 +349,11 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			@Override
 			public SharedSessionContractImplementor getSession() {
 				return session;
+			}
+
+			@Override
+			public JdbcStateCollectorContainer getJdbcStateCollectorContainer() {
+				return jdbcStateCollectorContainer;
 			}
 
 			@Override
