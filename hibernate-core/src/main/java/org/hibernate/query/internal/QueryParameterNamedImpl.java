@@ -7,6 +7,8 @@
 
 package org.hibernate.query.internal;
 
+import java.util.Objects;
+
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
@@ -63,5 +65,22 @@ public class QueryParameterNamedImpl<T> extends AbstractQueryParameter<T> {
 	@Override
 	public ParameterMemento toMemento() {
 		return session -> new QueryParameterNamedImpl( getName(), allowsMultiValuedBinding(), getHibernateType() );
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		QueryParameterNamedImpl<?> that = (QueryParameterNamedImpl<?>) o;
+		return Objects.equals( name, that.name );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( name );
 	}
 }

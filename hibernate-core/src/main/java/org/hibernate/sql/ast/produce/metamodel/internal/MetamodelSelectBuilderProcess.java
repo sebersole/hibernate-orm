@@ -120,7 +120,6 @@ public class MetamodelSelectBuilderProcess
 
 	private final Stack<TableSpace> tableSpaceStack = new StandardStack<>();
 	private final Stack<TableGroup> tableGroupStack = new StandardStack<>();
-//	private final Stack<FetchParent> fetchParentStack = new StandardStack<>();
 	private final NavigablePathStack navigablePathStack = new NavigablePathStack();
 	private final Stack<NavigableReference> navigableReferenceStack = new StandardStack<>();
 

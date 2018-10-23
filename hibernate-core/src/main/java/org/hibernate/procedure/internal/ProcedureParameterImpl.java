@@ -6,6 +6,7 @@
  */
 package org.hibernate.procedure.internal;
 
+import java.util.Objects;
 import javax.persistence.ParameterMode;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -101,5 +102,24 @@ public class ProcedureParameterImpl<T> extends AbstractQueryParameter<T> impleme
 				}
 			}
 		};
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		ProcedureParameterImpl<?> that = (ProcedureParameterImpl<?>) o;
+		return Objects.equals( name, that.name ) &&
+				Objects.equals( position, that.position ) &&
+				mode == that.mode;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( name, position, mode );
 	}
 }

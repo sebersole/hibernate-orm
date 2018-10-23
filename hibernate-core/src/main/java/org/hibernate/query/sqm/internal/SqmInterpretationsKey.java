@@ -27,7 +27,7 @@ public class SqmInterpretationsKey implements QueryPlanCache.Key {
 		}
 
 		return new SqmInterpretationsKey(
-				query.getSqmStatement(),
+				query.getQueryString(),
 				query.getResultType(),
 				query.getQueryOptions()
 		);
@@ -76,16 +76,16 @@ public class SqmInterpretationsKey implements QueryPlanCache.Key {
 	}
 
 
-	private final SqmStatement sqmStatement;
+	private final String query;
 	private final Class resultType;
 	private final TupleTransformer tupleTransformer;
 	private final ResultListTransformer resultListTransformer;
 
 	private SqmInterpretationsKey(
-			SqmStatement sqmStatement,
+			String query,
 			Class resultType,
 			QueryOptions queryOptions) {
-		this.sqmStatement = sqmStatement;
+		this.query = query;
 		this.resultType = resultType;
 		this.tupleTransformer = queryOptions.getTupleTransformer();
 		this.resultListTransformer = queryOptions.getResultListTransformer();
@@ -101,7 +101,7 @@ public class SqmInterpretationsKey implements QueryPlanCache.Key {
 		}
 
 		final SqmInterpretationsKey that = (SqmInterpretationsKey) o;
-		return sqmStatement.equals( that.sqmStatement )
+		return query.equals( that.query )
 				&& areEqual( resultType, that.resultType )
 				&& areEqual( tupleTransformer, that.tupleTransformer )
 				&& areEqual( resultListTransformer, that.resultListTransformer );
@@ -118,7 +118,7 @@ public class SqmInterpretationsKey implements QueryPlanCache.Key {
 
 	@Override
 	public int hashCode() {
-		int result = sqmStatement.hashCode();
+		int result = query.hashCode();
 		result = 31 * result + ( resultType != null ? resultType.hashCode() : 0 );
 		result = 31 * result + ( tupleTransformer != null ? tupleTransformer.hashCode() : 0 );
 		result = 31 * result + ( resultListTransformer != null ? resultListTransformer.hashCode() : 0 );

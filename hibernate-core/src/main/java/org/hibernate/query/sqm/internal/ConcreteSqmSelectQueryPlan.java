@@ -58,6 +58,9 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 	private final Map<QueryParameterImplementor, SqmParameter> sqmParamByQueryParam;
 	private final RowTransformer<R> rowTransformer;
 
+	private JdbcSelect jdbcSelect;
+	private  Map<QueryParameterImplementor, List<JdbcParameter>> jdbcParamsByDomainParams;
+
 	@SuppressWarnings("WeakerAccess")
 	public ConcreteSqmSelectQueryPlan(
 			SqmSelectStatement sqm,
@@ -154,17 +157,17 @@ public class ConcreteSqmSelectQueryPlan<R> implements SelectQueryPlan<R> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<R> performList(ExecutionContext executionContext) {
-		final SqmSelectToSqlAstConverter sqmConverter = getSqmSelectToSqlAstConverter( executionContext );
+		if ( jdbcSelect == null ) {
+			SqmSelectToSqlAstConverter sqmConverter = getSqmSelectToSqlAstConverter( executionContext );
+			SqlAstSelectDescriptor interpretation = sqmConverter.interpret( sqm );
+			jdbcSelect = SqlAstSelectToJdbcSelectConverter.interpret(
+					interpretation,
+					executionContext.getSession().getSessionFactory()
+			);
 
-		final SqlAstSelectDescriptor interpretation = sqmConverter.interpret( sqm );
-
-		final JdbcSelect jdbcSelect = SqlAstSelectToJdbcSelectConverter.interpret(
-				interpretation,
-				executionContext.getSession().getSessionFactory()
-		);
-
-		final Map<QueryParameterImplementor, List<JdbcParameter>> jdbcParamsByDomainParams
-				= generateJdbcParamsByQueryParamMap( sqmConverter );
+			jdbcParamsByDomainParams = generateJdbcParamsByQueryParamMap(
+					sqmConverter );
+		}
 
 		final JdbcParameterBindings jdbcParameterBindings = Helper.createJdbcParameterBindings(
 				executionContext.getParameterBindingContext().getQueryParameterBindings(),

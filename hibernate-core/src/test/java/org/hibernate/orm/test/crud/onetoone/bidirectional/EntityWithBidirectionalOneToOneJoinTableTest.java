@@ -163,6 +163,27 @@ public class EntityWithBidirectionalOneToOneJoinTableTest extends SessionFactory
 				}
 
 		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final Parent parent = session.createQuery(
+							"SELECT p FROM Parent p JOIN p.child WHERE p.id = :id",
+							Parent.class
+					)
+							.setParameter( "id", 1 )
+							.getSingleResult();
+
+					Child child = parent.getChild();
+					assertThat( child, CoreMatchers.notNullValue() );
+					assertTrue(
+							"the child have to be initialized",
+							Hibernate.isInitialized( child )
+					);
+					String name = child.getName();
+					assertThat( name, CoreMatchers.notNullValue() );
+				}
+
+		);
 	}
 
 	@Entity(name = "Parent")
