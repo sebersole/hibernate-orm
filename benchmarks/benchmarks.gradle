@@ -1,0 +1,62 @@
+apply from: rootProject.file( 'gradle/libraries.gradle' )
+
+
+apply plugin: 'java'
+
+group = 'org.hibernate'
+version = project.ormVersion.fullName
+
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile project( 'processor' )
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			srcDir 'src/jmh/java'
+		}
+	}
+}
+
+subprojects { subproject ->
+	apply plugin: 'java'
+
+	ext {
+		hibernate5Version = '5.3.7.Final'
+	}
+
+	dependencies {
+		compile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+		compile 'org.openjdk.jmh:jmh-core:1.21'
+		compile group: 'javax.persistence', name: 'javax.persistence-api', version: '2.2'
+	}
+
+	if ( !subproject.name.equals( "processor" ) ) {
+		apply plugin: 'application'
+		dependencies {
+			compile libraries.h2
+			compile libraries.logging
+			runtime libraries.jta
+			runtime libraries.dom4j
+			runtime libraries.classmate
+			runtime libraries.byteBuddy
+		}
+
+		mainClassName = 'org.openjdk.jmh.Main'
+
+		jar {
+			manifest {
+				attributes 'Main-Class': 'org.openjdk.jmh.Main'
+			}
+		}
+	}
+
+	// ./gradlew -p benchmarks/orm6 --no-daemon clean runShadow --args='-wi 10 -i 20 -f 1 -o human_report.jmh'
+}

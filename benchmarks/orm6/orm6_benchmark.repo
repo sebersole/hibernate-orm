@@ -1,0 +1,119 @@
+# JMH version: 1.21
+# VM version: JDK 1.8.0_161, Java HotSpot(TM) 64-Bit Server VM, 25.161-b12
+# VM invoker: /opt/jdk1.8.0_161/jre/bin/java
+# VM options: -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant
+# Warmup: 1 iterations, 10 s each
+# Measurement: 1 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.jboss.perf.EntityWithBidirectionalOneToOneJoinTableTest.getParent
+
+# Run progress: 0.00% complete, ETA 00:01:40
+# Fork: 1 of 1
+# Warmup Iteration   1: 77866.591 ops/s
+Iteration   1: 116064.594 ops/s
+
+
+Result "org.jboss.perf.EntityWithBidirectionalOneToOneJoinTableTest.getParent":
+  116064.594 ops/s
+
+
+# JMH version: 1.21
+# VM version: JDK 1.8.0_161, Java HotSpot(TM) 64-Bit Server VM, 25.161-b12
+# VM invoker: /opt/jdk1.8.0_161/jre/bin/java
+# VM options: -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant
+# Warmup: 1 iterations, 10 s each
+# Measurement: 1 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleSelect
+
+# Run progress: 20.00% complete, ETA 00:01:26
+# Fork: 1 of 1
+# Warmup Iteration   1: 5.439 us/op
+Iteration   1: 4.674 us/op
+
+
+Result "org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleSelect":
+  4.674 us/op
+
+
+# JMH version: 1.21
+# VM version: JDK 1.8.0_161, Java HotSpot(TM) 64-Bit Server VM, 25.161-b12
+# VM invoker: /opt/jdk1.8.0_161/jre/bin/java
+# VM options: -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant
+# Warmup: 1 iterations, 10 s each
+# Measurement: 1 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleSelect_multiple
+
+# Run progress: 40.00% complete, ETA 00:01:05
+# Fork: 1 of 1
+# Warmup Iteration   1: 20.343 us/op
+Iteration   1: 17.390 us/op
+
+
+Result "org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleSelect_multiple":
+  17.390 us/op
+
+
+# JMH version: 1.21
+# VM version: JDK 1.8.0_161, Java HotSpot(TM) 64-Bit Server VM, 25.161-b12
+# VM invoker: /opt/jdk1.8.0_161/jre/bin/java
+# VM options: -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant
+# Warmup: 1 iterations, 10 s each
+# Measurement: 1 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleWhere
+
+# Run progress: 60.00% complete, ETA 00:00:44
+# Fork: 1 of 1
+# Warmup Iteration   1: 10.923 us/op
+Iteration   1: 9.114 us/op
+
+
+Result "org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleWhere":
+  9.114 us/op
+
+
+# JMH version: 1.21
+# VM version: JDK 1.8.0_161, Java HotSpot(TM) 64-Bit Server VM, 25.161-b12
+# VM invoker: /opt/jdk1.8.0_161/jre/bin/java
+# VM options: -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant
+# Warmup: 1 iterations, 10 s each
+# Measurement: 1 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleWhere_multiple
+
+# Run progress: 80.00% complete, ETA 00:00:22
+# Fork: 1 of 1
+# Warmup Iteration   1: 41.509 us/op
+Iteration   1: 25.888 us/op
+
+
+Result "org.jboss.perf.HqlQueryBenchmarks_SemanticModel.simpleWhere_multiple":
+  25.888 us/op
+
+
+# Run complete. Total time: 00:01:50
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+Benchmark                                                Mode  Cnt       Score   Error  Units
+EntityWithBidirectionalOneToOneJoinTableTest.getParent  thrpt       116064.594          ops/s
+HqlQueryBenchmarks_SemanticModel.simpleSelect            avgt            4.674          us/op
+HqlQueryBenchmarks_SemanticModel.simpleSelect_multiple   avgt           17.390          us/op
+HqlQueryBenchmarks_SemanticModel.simpleWhere             avgt            9.114          us/op
+HqlQueryBenchmarks_SemanticModel.simpleWhere_multiple    avgt           25.888          us/op

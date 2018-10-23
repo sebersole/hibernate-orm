@@ -1,0 +1,6 @@
+dependencies {
+	dependencies {
+		compile 'com.squareup:javapoet:1.11.1'
+		compile group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc1'
+	}
+}

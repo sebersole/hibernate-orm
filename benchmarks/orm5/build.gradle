@@ -1,0 +1,14 @@
+plugins {
+	id "com.github.johnrengelman.shadow" version "4.0.2"
+}
+
+dependencies {
+	compile project( ':benchmarks' )
+	compile group: 'org.hibernate', name: 'hibernate-core', version: hibernate5Version
+}
+
+shadowJar {
+	baseName = 'orm5'
+	classifier = null
+	version = null
+}

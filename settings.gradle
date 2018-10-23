@@ -16,6 +16,8 @@ include 'hibernate-envers'
 
 include 'hibernate-java8'
 
+include 'benchmarks'
+
 //include 'hibernate-osgi'
 
 //include 'hibernate-c3p0'
@@ -37,6 +39,13 @@ include 'hibernate-java8'
 include 'metamodel-generator'
 project(':metamodel-generator').projectDir = new File(rootProject.projectDir, "tooling/metamodel-generator")
 project(':metamodel-generator').name = 'hibernate-jpamodelgen'
+
+include 'benchmarks:orm5'
+findProject(':benchmarks:orm5')?.name = 'orm5'
+include 'benchmarks:orm6'
+findProject(':benchmarks:orm6')?.name = 'orm6'
+include 'benchmarks:processor'
+findProject(':benchmarks:processor')?.name = 'processor'
 
 //include 'hibernate-gradle-plugin'
 //project(':hibernate-gradle-plugin').projectDir = new File(rootProject.projectDir, "tooling/hibernate-gradle-plugin")

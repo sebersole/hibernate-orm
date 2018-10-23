@@ -1,0 +1,16 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.2'
+}
+
+dependencies {
+    compile project( ':benchmarks' )
+    compile project(':hibernate-core')
+    compile 'org.antlr:antlr4:4.7.1'
+    runtime 'org.hibernate.common:hibernate-commons-annotations:5.0.3.Final'
+}
+
+shadowJar {
+    baseName = 'orm6'
+    classifier = null
+    version = null
+}
