@@ -6,10 +6,14 @@
  */
 package org.hibernate.query.internal;
 
+import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.internal.util.collections.BoundedConcurrentHashMap;
+import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.query.spi.SelectQueryPlan;
+import org.hibernate.query.sqm.tree.SqmStatement;
 
 /**
  * Standard QueryInterpretations implementation
@@ -18,20 +22,50 @@ import org.hibernate.query.spi.SelectQueryPlan;
  */
 public class QueryPlanCacheImpl implements QueryPlanCache {
 	private final SessionFactoryImplementor sessionFactory;
+	/**
+	 * The default strong reference count.
+	 */
+	public static final int DEFAULT_PARAMETER_METADATA_MAX_COUNT = 128;
+	/**
+	 * The default soft reference count.
+	 */
+	public static final int DEFAULT_QUERY_PLAN_MAX_COUNT = 2048;
+
+	/**
+	 * the cache of the actual plans...
+	 */
+	private final BoundedConcurrentHashMap queryPlanCache;
+	private final BoundedConcurrentHashMap sqmStatementCache;
 
 	public QueryPlanCacheImpl(SessionFactoryImplementor sessionFactory) {
 		this.sessionFactory = sessionFactory;
+
+		Integer maxQueryPlanCount = ConfigurationHelper.getInteger(
+				Environment.QUERY_PLAN_CACHE_MAX_SIZE,
+				sessionFactory.getProperties()
+		);
+		if ( maxQueryPlanCount == null ) {
+			maxQueryPlanCount = ConfigurationHelper.getInt(
+					Environment.QUERY_PLAN_CACHE_MAX_SIZE,
+					sessionFactory.getProperties(),
+					DEFAULT_QUERY_PLAN_MAX_COUNT
+			);
+		}
+
+		queryPlanCache = new BoundedConcurrentHashMap( maxQueryPlanCount, 20, BoundedConcurrentHashMap.Eviction.LIRS );
+		sqmStatementCache = new BoundedConcurrentHashMap( maxQueryPlanCount, 20, BoundedConcurrentHashMap.Eviction.LIRS );
 	}
 
 	@Override
 	public SelectQueryPlan getSelectQueryPlan(Key key) {
-		// todo (6.0) : implement
-		return null;
+		// todo (6.0) : Log and stats
+		return (SelectQueryPlan) queryPlanCache.get( key );
 	}
 
 	@Override
 	public void cacheSelectQueryPlan(Key key, SelectQueryPlan plan) {
-		// todo (6.0) : implement
+		// todo (6.0) : LOG
+		queryPlanCache.putIfAbsent( key, plan );
 	}
 
 	@Override
@@ -46,7 +80,18 @@ public class QueryPlanCacheImpl implements QueryPlanCache {
 	}
 
 	@Override
+	public SqmStatement getSqmStatement(String queryString) {
+		return (SqmStatement) sqmStatementCache.get( queryString );
+	}
+
+	@Override
+	public void cacheSqmStatement(String key, SqmStatement sqmStatement) {
+		sqmStatementCache.putIfAbsent( key, sqmStatement );
+	}
+
+	@Override
 	public void close() {
-		// todo (6.0) : clear maps/caches
+		// todo (6.0) : clear maps/caches and LOG
+		queryPlanCache.clear();
 	}
 }
