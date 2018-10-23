@@ -227,8 +227,6 @@ public class SqmSelectToSqlAstConverter
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
 		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
 
-//		assert fetchParent.getNavigablePath().equals( parentNavigableReference.getNavigablePath() );
-
 		final List<Fetch> fetches = new ArrayList();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
@@ -242,10 +240,8 @@ public class SqmSelectToSqlAstConverter
 				return;
 			}
 
-
 			LockMode lockMode = LockMode.READ;
 			FetchTiming fetchTiming = fetchable.getMappedFetchStrategy().getTiming();
-			boolean joined = false;
 
 			final Integer maximumFetchDepth = getSessionFactory().getSessionFactoryOptions().getMaximumFetchDepth();
 			// minus one because the root is not a fetch
@@ -257,6 +253,7 @@ public class SqmSelectToSqlAstConverter
 			);
 
 			final String alias;
+			boolean joined;
 			if ( fetchedJoin != null ) {
 				fetchTiming = FetchTiming.IMMEDIATE;
 				joined = true;
@@ -294,10 +291,12 @@ public class SqmSelectToSqlAstConverter
 			);
 
 			fetches.add( fetch );
+
 		};
 
-		( ( NavigableContainer<?>) fetchParent.getNavigableContainer() ).visitKeyFetchables( fetchableConsumer );
-		( ( NavigableContainer<?>) fetchParent.getNavigableContainer() ).visitFetchables( fetchableConsumer );
+		NavigableContainer<?> navigableContainer = fetchParent.getNavigableContainer();
+		navigableContainer.visitKeyFetchables( fetchableConsumer );
+		navigableContainer.visitFetchables( fetchableConsumer );
 
 		return fetches;
 	}

@@ -6,6 +6,8 @@
  */
 package org.hibernate.query.spi;
 
+import org.hibernate.query.sqm.tree.SqmStatement;
+
 /**
  * A cache for QueryPlans used (and produced) by the translation
  * and execution of a query.
@@ -21,6 +23,10 @@ public interface QueryPlanCache {
 
 	NonSelectQueryPlan getNonSelectQueryPlan(Key key);
 	void cacheNonSelectQueryPlan(Key key, NonSelectQueryPlan plan);
+
+	// todo (6.0) : create a SqmStatementCache ?
+	SqmStatement getSqmStatement(String queryString);
+	void cacheSqmStatement(String key, SqmStatement sqmStatement);
 
 	void close();
 }

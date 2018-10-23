@@ -249,7 +249,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 			return false;
 		}
 
-		if ( lockOptions.getTimeOut() == LockOptions.WAIT_FOREVER ) {
+		if ( lockOptions.getTimeOut() != LockOptions.WAIT_FOREVER ) {
 			return false;
 		}
 

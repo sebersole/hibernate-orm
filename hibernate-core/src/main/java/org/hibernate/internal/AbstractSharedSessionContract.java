@@ -59,7 +59,9 @@ import org.hibernate.query.named.spi.NamedCallableQueryMemento;
 import org.hibernate.query.named.spi.NamedHqlQueryMemento;
 import org.hibernate.query.named.spi.NamedNativeQueryMemento;
 import org.hibernate.query.spi.NativeQueryImplementor;
+import org.hibernate.query.spi.QueryEngine;
 import org.hibernate.query.spi.QueryImplementor;
+import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
@@ -74,16 +76,16 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * Base class for SharedSessionContract/SharedSessionContractImplementor
  * implementations.  Intended for Session and StatelessSession implementations
- * <P/>
+ * <p/>
  * NOTE: This implementation defines access to a number of instance state values
  * in a manner that is not exactly concurrent-access safe.  However, a Session/EntityManager
  * is never intended to be used concurrently; therefore the condition is not expected
  * and so a more synchronized/concurrency-safe is not defined to be as negligent
  * (performance-wise) as possible.  Some of these methods include:<ul>
- *     <li>{@link #getEventListenerManager()}</li>
- *     <li>{@link #getJdbcConnectionAccess()}</li>
- *     <li>{@link #getJdbcServices()}</li>
- *     <li>{@link #getTransaction()} (and therefore related methods such as {@link #beginTransaction()}, etc)</li>
+ * <li>{@link #getEventListenerManager()}</li>
+ * <li>{@link #getJdbcConnectionAccess()}</li>
+ * <li>{@link #getJdbcServices()}</li>
+ * <li>{@link #getTransaction()} (and therefore related methods such as {@link #beginTransaction()}, etc)</li>
  * </ul>
  *
  * @author Steve Ebersole
@@ -126,7 +128,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	protected transient ExceptionConverter exceptionConverter;
 
 	private transient Boolean useStreamForLobBinding;
-	private  Integer jdbcBatchSize;
+	private Integer jdbcBatchSize;
 
 
 	public AbstractSharedSessionContract(SessionFactoryImpl factory, SessionCreationOptions options) {
@@ -145,7 +147,8 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		}
 		else {
 			if ( tenantIdentifier == null ) {
-				throw new HibernateException( "SessionFactory configured for multi-tenancy, but no tenant identifier specified" );
+				throw new HibernateException(
+						"SessionFactory configured for multi-tenancy, but no tenant identifier specified" );
 			}
 		}
 
@@ -178,7 +181,8 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 				);
 				autoJoinTransactions = false;
 			}
-			if ( sharedOptions.getPhysicalConnectionHandlingMode() != this.jdbcCoordinator.getLogicalConnection().getConnectionHandlingMode() ) {
+			if ( sharedOptions.getPhysicalConnectionHandlingMode() != this.jdbcCoordinator.getLogicalConnection()
+					.getConnectionHandlingMode() ) {
 				log.debug(
 						"Session creation specified 'PhysicalConnectionHandlingMode which is invalid in conjunction " +
 								"with sharing JDBC connection between sessions; ignoring"
@@ -287,7 +291,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		try {
 			delayedAfterCompletion();
 		}
-		catch ( HibernateException e ) {
+		catch (HibernateException e) {
 			if ( getFactory().getSessionFactoryOptions().isJpaBootstrap() ) {
 				throw this.exceptionConverter.convert( e );
 			}
@@ -414,7 +418,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 					this
 			);
 		}
-		if ( !isClosed() || (waitingForAutoClose && factory.isOpen()) ) {
+		if ( !isClosed() || ( waitingForAutoClose && factory.isOpen() ) ) {
 			getTransactionCoordinator().pulse();
 		}
 		return this.currentHibernateTransaction;
@@ -615,7 +619,13 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		delayedAfterCompletion();
 
 		try {
-			final SqmStatement sqm = getFactory().getQueryEngine().getSemanticQueryProducer().interpret( queryString );
+			final QueryEngine queryEngine = getFactory().getQueryEngine();
+			final QueryPlanCache queryPlanCache = queryEngine.getQueryPlanCache();
+			SqmStatement sqm = queryPlanCache.getSqmStatement( queryString );
+			if ( sqm == null ) {
+				sqm = queryEngine.getSemanticQueryProducer().interpret( queryString );
+				queryPlanCache.cacheSqmStatement( queryString, sqm );
+			}
 
 			final QuerySqmImpl query = new QuerySqmImpl(
 					queryString,
@@ -654,7 +664,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			query.setComment( "dynamic native SQL query" );
 			return query;
 		}
-		catch ( RuntimeException he ) {
+		catch (RuntimeException he) {
 			throw exceptionConverter.convert( he );
 		}
 	}
@@ -677,7 +687,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			query.addEntity( "alias1", resultClass.getName(), LockMode.READ );
 			return query;
 		}
-		catch ( RuntimeException he ) {
+		catch (RuntimeException he) {
 			throw exceptionConverter.convert( he );
 		}
 	}
@@ -705,7 +715,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 				query = new NativeQueryImpl( sqlString, this );
 			}
 		}
-		catch ( RuntimeException he ) {
+		catch (RuntimeException he) {
 			throw exceptionConverter.convert( he );
 		}
 
@@ -753,7 +763,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@SuppressWarnings("unchecked")
-	protected  <T> QueryImplementor<T> buildNamedQuery(String queryName, Class<T> resultType) {
+	protected <T> QueryImplementor<T> buildNamedQuery(String queryName, Class<T> resultType) {
 		checkOpen();
 		checkTransactionSynchStatus();
 		delayedAfterCompletion();
@@ -836,7 +846,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	protected abstract Object load(String entityName, Object identifier);
 
 	@Override
-	public ExceptionConverter getExceptionConverter(){
+	public ExceptionConverter getExceptionConverter() {
 		return exceptionConverter;
 	}
 

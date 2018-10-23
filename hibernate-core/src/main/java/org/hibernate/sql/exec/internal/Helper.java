@@ -9,6 +9,7 @@ package org.hibernate.sql.exec.internal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
@@ -23,7 +24,6 @@ import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.internal.StandardSqlExpressionResolver;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
-import org.hibernate.sql.ast.produce.spi.SqlAstProducerContext;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.produce.sqm.spi.Callback;
 import org.hibernate.sql.exec.spi.JdbcParameter;
@@ -42,6 +42,14 @@ import org.hibernate.sql.results.spi.RowReader;
  * @author Steve Ebersole
  */
 public class Helper {
+
+	public static final SqlExpressionResolver SQL_EXPRESSION_RESOLVER = new StandardSqlExpressionResolver(
+			() -> null,
+			expression -> expression,
+			(expression, sqlSelection) -> {
+			}
+	);
+
 	public static <R> RowReader<R> createRowReader(
 			SessionFactoryImplementor sessionFactory,
 			Callback callback,
@@ -49,77 +57,8 @@ public class Helper {
 			JdbcValues jdbcValues) {
 		final List<Initializer> initializers = new ArrayList<>();
 
-		final SqlExpressionResolver sqlExpressionResolver = new StandardSqlExpressionResolver(
-				() -> null,
-				expression -> expression,
-				(expression, sqlSelection) -> {}
-		);
-
-		final SqlAstProducerContext sqlAstProducerContext = new SqlAstProducerContext() {
-			@Override
-			public SessionFactoryImplementor getSessionFactory() {
-				return sessionFactory;
-			}
-
-			@Override
-			public LoadQueryInfluencers getLoadQueryInfluencers() {
-				return LoadQueryInfluencers.NONE;
-			}
-
-			@Override
-			public Callback getCallback() {
-				return callback;
-			}
-		};
-
-//		final ColumnReferenceQualifier columnReferenceQualifier = new ColumnReferenceQualifier() {
-//			private Map<Column,ColumnReference> columnReferenceMap;
-//
-//			@Override
-//			public String getUniqueIdentifier() {
-//				return null;
-//			}
-//
-//			@Override
-//			public TableReference locateTableReference(Table table) {
-//				return null;
-//			}
-//
-//			@Override
-//			public ColumnReference resolveColumnReference(Column column) {
-//				if ( columnReferenceMap != null ) {
-//					return columnReferenceMap.get( column );
-//				}
-//				return null;
-//			}
-//
-//			@Override
-//			public Expression qualify(QualifiableSqlExpressable sqlSelectable) {
-//				Column column = (Column) sqlSelectable;
-//
-//				ColumnReference expression = null;
-//				if ( columnReferenceMap == null ) {
-//					columnReferenceMap = new HashMap<>();
-//				}
-//				else {
-//					expression = columnReferenceMap.get( column );
-//				}
-//
-//				if ( expression == null ) {
-//					expression = (ColumnReference) sqlSelectable.createSqlExpression( this, sqlAstProducerContext );
-//					columnReferenceMap.put( column, expression );
-//				}
-//
-//				return expression;
-//			}
-//		};
-
 		final List<DomainResultAssembler> assemblers = jdbcValues.getResultSetMapping().resolveAssemblers(
-				initializer -> {
-					// noinspection Convert2MethodRef
-					SqlResultsLogger.INSTANCE.debug( "Adding initializer : " + initializer );
-					initializers.add( initializer );
-				},
+				getInitializerConsumer( initializers ),
 				new AssemblerCreationState() {
 					@Override
 					public LoadQueryInfluencers getLoadQueryInfluencers() {
@@ -128,7 +67,7 @@ public class Helper {
 
 					@Override
 					public SqlExpressionResolver getSqlExpressionResolver() {
-						return sqlExpressionResolver;
+						return SQL_EXPRESSION_RESOLVER;
 					}
 
 					@Override
@@ -157,6 +96,21 @@ public class Helper {
 		);
 	}
 
+	private static Consumer<Initializer> getInitializerConsumer(List<Initializer> initializers) {
+		if ( SqlResultsLogger.INSTANCE.isDebugEnabled() ) {
+			return initializer -> {
+				// noinspection Convert2MethodRef
+				SqlResultsLogger.INSTANCE.debug( "Adding initializer : " + initializer );
+				initializers.add( initializer );
+			};
+		}
+		else {
+			return initializer -> {
+				// noinspection Convert2MethodRef
+				initializers.add( initializer );
+			};
+		}
+	}
 
 
 	public static JdbcParameterBindings createJdbcParameterBindings(

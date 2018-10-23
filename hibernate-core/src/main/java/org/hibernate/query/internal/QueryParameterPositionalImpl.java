@@ -7,6 +7,8 @@
 
 package org.hibernate.query.internal;
 
+import java.util.Objects;
+
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.named.spi.ParameterMemento;
 import org.hibernate.query.sqm.tree.expression.SqmParameter;
@@ -17,6 +19,9 @@ import org.hibernate.query.sqm.tree.expression.SqmParameter;
  * @author Steve Ebersole
  */
 public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
+
+	private final int position;
+
 	/**
 	 * Create a positional parameter descriptor from the SQM parameter
 	 *
@@ -45,8 +50,6 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 		);
 	}
 
-	private final int position;
-
 	public QueryParameterPositionalImpl(
 			Integer position,
 			boolean allowMultiValuedBinding,
@@ -63,5 +66,22 @@ public class QueryParameterPositionalImpl<T> extends AbstractQueryParameter<T> {
 	@Override
 	public ParameterMemento toMemento() {
 		return session -> new QueryParameterPositionalImpl( getPosition(), allowsMultiValuedBinding(), getHibernateType() );
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		QueryParameterPositionalImpl<?> that = (QueryParameterPositionalImpl<?>) o;
+		return position == that.position;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( position );
 	}
 }
