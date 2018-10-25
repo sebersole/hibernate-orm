@@ -837,10 +837,11 @@ public abstract class BaseSqmToSqlAstConverter
 
 		// todo (6.0) : most likely how we execute this depends on the context - where is it used?
 
+		final PluralPersistentAttribute referencedCollection = reference.getReferencedNavigable();
+
 		final NavigableContainerReference containerReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
-		final NavigablePath navigablePath = containerReference.getNavigablePath().append(
-				reference.getReferencedNavigable().getNavigableName()
-		);
+
+		final NavigablePath navigablePath = containerReference.getNavigablePath().append( referencedCollection.getNavigableName() );
 
 		final PluralAttributeReference result;
 
@@ -852,9 +853,10 @@ public abstract class BaseSqmToSqlAstConverter
 		else {
 			result = new PluralAttributeReference(
 					containerReference,
-					reference.getReferencedNavigable(),
-					null,
-					navigablePath
+					referencedCollection,
+					navigablePath,
+					containerReference.getColumnReferenceQualifier(),
+					getLockOptions().getEffectiveLockMode( reference.getIdentificationVariable() )
 			);
 		}
 

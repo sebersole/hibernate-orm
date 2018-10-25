@@ -6,13 +6,25 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.metamodel.model.relational.spi.Table;
+
 /**
  * @author Steve Ebersole
  */
 public interface BasicCollectionElement<J>
 		extends CollectionElement<J>, BasicValuedNavigable<J> {
 	@Override
+	default boolean canContainSubGraphs() {
+		return false;
+	}
+
+	@Override
 	default void visitNavigable(NavigableVisitationStrategy visitor) {
 		visitor.visitCollectionElementBasic( this );
+	}
+
+	@Override
+	default Table getPrimaryDmlTable() {
+		return getCollectionDescriptor().getSeparateCollectionTable();
 	}
 }

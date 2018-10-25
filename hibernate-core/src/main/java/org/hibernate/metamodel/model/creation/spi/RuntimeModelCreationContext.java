@@ -104,7 +104,7 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 			EmbeddedTypeDescriptor runtimeDescriptor,
 			EmbeddedValueMappingImplementor bootDescriptor);
 
-	void registerNavigable(Navigable navigable);
+	void registerNavigable(Navigable navigable, Object bootModelReference);
 
 	default Table resolve(MappedTable mappedTable) {
 		final Namespace namespace = getDatabaseModel().getNamespace(

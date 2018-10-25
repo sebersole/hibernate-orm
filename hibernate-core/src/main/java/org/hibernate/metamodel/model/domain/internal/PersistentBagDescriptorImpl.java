@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.hibernate.LockMode;
 import org.hibernate.mapping.Property;
@@ -21,7 +20,6 @@ import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -32,15 +30,6 @@ public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollecti
 			ManagedTypeDescriptor runtimeContainer,
 			RuntimeModelCreationContext context) {
 		super( bootProperty, runtimeContainer, context );
-	}
-
-	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(
-			org.hibernate.mapping.Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		return (CollectionJavaDescriptor) creationContext.getTypeConfiguration()
-				.getJavaTypeDescriptorRegistry()
-				.getDescriptor( Set.class );
 	}
 
 	@Override

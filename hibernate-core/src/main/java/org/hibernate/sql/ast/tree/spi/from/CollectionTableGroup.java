@@ -84,8 +84,9 @@ public class CollectionTableGroup extends AbstractTableGroup {
 		this.navigableReference = new PluralAttributeReference(
 				lhs,
 				descriptor.getDescribedAttribute(),
+				navigablePath,
 				this,
-				navigablePath
+				lockMode
 		);
 
 		if ( lhs == null ) {

@@ -40,7 +40,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	private final Map<String,String> nameImportMap;
 	private final Set<EntityNameResolver> entityNameResolvers;
 
-	private final Map<String,EntityGraphImplementor<?>> entityGraphMap;
+	private final Map<String, RootGraphImplementor<?>> entityGraphMap;
 
 	public AbstractRuntimeModel() {
 		this.entityDescriptorMap = new ConcurrentHashMap<>();
@@ -74,7 +74,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 			Map<String, PersistentCollectionDescriptor<?, ?, ?>> collectionDescriptorMap,
 			Set<EntityNameResolver> entityNameResolvers,
 			Map<String, String> nameImportMap,
-			Map<String, EntityGraphImplementor<?>> entityGraphMap) {
+			Map<String, RootGraphImplementor<?>> entityGraphMap) {
 		this.entityHierarchySet = Collections.unmodifiableSet( entityHierarchySet );
 		this.entityDescriptorMap = Collections.unmodifiableMap( entityDescriptorMap );
 		this.mappedSuperclassDescriptorMap = Collections.unmodifiableMap( mappedSuperclassDescriptorMap );
@@ -273,14 +273,14 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	// EntityGraph
 
 
-	protected Map<String, EntityGraphImplementor<?>> getEntityGraphMap() {
+	protected Map<String, RootGraphImplementor<?>> getRootGraphMap() {
 		return entityGraphMap;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityGraphImplementor<? super T> findEntityGraph(String name) {
-		return (EntityGraphImplementor<T>) entityGraphMap.get( name );
+	public <T> RootGraphImplementor<? super T> findRootGraph(String name) {
+		return (RootGraphImplementor<T>) entityGraphMap.get( name );
 	}
 
 	@Override
@@ -297,14 +297,9 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 
 		final List<EntityGraph<? super T>> results = new ArrayList<>();
 
-		for ( EntityGraph entityGraph : entityGraphMap.values() ) {
-			if ( !EntityGraphImplementor.class.isInstance( entityGraph ) ) {
-				continue;
-			}
-
-			final EntityGraphImplementor egi = (EntityGraphImplementor) entityGraph;
-			if ( egi.appliesTo( entityDescriptor ) ) {
-				results.add( egi );
+		for ( RootGraphImplementor rootGraph : entityGraphMap.values() ) {
+			if ( rootGraph.appliesTo( entityDescriptor ) ) {
+				results.add( rootGraph );
 			}
 		}
 

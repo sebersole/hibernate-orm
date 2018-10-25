@@ -6,13 +6,44 @@
  */
 package org.hibernate.graph.spi;
 
-import javax.persistence.Subgraph;
+import javax.persistence.metamodel.Attribute;
+
+import org.hibernate.graph.CannotBecomeEntityGraphException;
+import org.hibernate.graph.CannotContainSubGraphException;
+import org.hibernate.graph.SubGraph;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 
 /**
- * Hibernate extension to the JPA entity-graph EntityGraph contract.
+ * Integration version of the SubGraph contract
  *
  * @author Steve Ebersole
- * @author Andrea Boriero
  */
-public interface SubGraphImplementor<T> extends AttributeNodeContainer, Subgraph<T> {
+public interface SubGraphImplementor<J> extends SubGraph<J>, GraphImplementor<J> {
+	@Override
+	SubGraphImplementor<J> makeCopy(boolean mutable);
+
+	@Override
+	default SubGraphImplementor<J> makeSubGraph(boolean mutable) {
+		if ( ! mutable && ! isMutable() ) {
+			return this;
+		}
+
+		return makeCopy( mutable );
+	}
+
+	@Override
+	RootGraphImplementor<J> makeRootGraph(String name, boolean mutable) throws CannotBecomeEntityGraphException;
+
+	@Override
+	<AJ> SubGraphImplementor<AJ> addKeySubGraph(String attributeName);
+
+	@Override
+	<AJ> AttributeNodeImplementor<AJ> addAttributeNode(Attribute<? extends J, AJ> attribute);
+
+	@Override
+	default <AJ> SubGraphImplementor<AJ> addKeySubGraph(
+			PersistentAttributeDescriptor<? extends J, AJ> attribute,
+			Class<? extends AJ> subType) throws CannotContainSubGraphException {
+		return null;
+	}
 }

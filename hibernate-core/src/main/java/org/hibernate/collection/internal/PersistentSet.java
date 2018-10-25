@@ -81,7 +81,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 	public Serializable getSnapshot(PersistentCollectionDescriptor descriptor) throws HibernateException {
 		final HashMap clonedSet = new HashMap( set.size() );
 		for ( Object aSet : set ) {
-			final Object copied = descriptor.getElementDescriptor().getJavaTypeDescriptor().getMutabilityPlan().deepCopy( aSet );
+			final Object copied = descriptor.getMutabilityPlan().deepCopy( aSet );
 			clonedSet.put( copied, copied );
 		}
 		return clonedSet;

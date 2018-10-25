@@ -78,13 +78,20 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void finishInitialization(
+	public boolean finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
-		if ( fullyInitialized ) {
-			return;
+		if ( ! fullyInitialized ) {
+			tryFinishInitialization( bootDescriptor, creationContext );
+			fullyInitialized = true;
 		}
 
+		return true;
+	}
+
+	private void tryFinishInitialization(
+			ManagedTypeMappingImplementor bootDescriptor,
+			RuntimeModelCreationContext creationContext) {
 		final int declaredAttributeCount = bootDescriptor.getDeclaredPersistentAttributes().size();
 
 		declaredAttributes = CollectionHelper.arrayList( declaredAttributeCount );
@@ -122,8 +129,6 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			this.declaredAttributesByName.putIfAbsent( attribute.getName(), attribute );
 			this.stateArrayContributors.add( attribute );
 		}
-
-		fullyInitialized = true;
 	}
 
 	public void addSubclassDescriptor(InheritanceCapable<? extends J> subclassType) {

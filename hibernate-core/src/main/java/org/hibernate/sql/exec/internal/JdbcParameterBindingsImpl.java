@@ -58,4 +58,10 @@ public class JdbcParameterBindingsImpl implements JdbcParameterBindings {
 			action.accept( entry.getKey(), entry.getValue() );
 		}
 	}
+
+	public void clear() {
+		if ( bindingMap != null ) {
+			bindingMap.clear();
+		}
+	}
 }

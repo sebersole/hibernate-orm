@@ -69,6 +69,7 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 		return embeddedTypeDescriptor;
 	}
 
+	@Override
 	public FetchParentAccess getFetchParentAccess() {
 		return fetchParentAccess;
 	}
@@ -103,8 +104,24 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 //			);
 //		}
 
-		// todo (6.0) : ? - add FetchParentAccess#findFirstEntity` for backwards-compatibility in regards to ^^ ?
-		//		notifyParentResolutionListeners( fetchParentAccess.getFetchParentInstance() );
+		if ( parentInjectionTarget != null ) {
+			getFetchParentAccess().findFirstEntityDescriptorAccess().registerResolutionListener(
+					// todo (6.0) : this is the legacy behavior
+					// 		- the first entity is injected as the parent, even if the composite
+					//		is defined on another composite
+					owner -> {
+						if ( compositeInstance == null ) {
+							return;
+						}
+						parentInjectionTarget.getPropertyAccess().getSetter().set(
+								compositeInstance,
+								owner,
+								rowProcessingState.getSession().getFactory()
+						);
+					}
+			);
+		}
+
 	}
 
 	@Override

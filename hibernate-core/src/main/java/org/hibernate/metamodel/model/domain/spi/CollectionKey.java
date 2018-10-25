@@ -8,10 +8,12 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -30,6 +32,8 @@ import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
+import static org.hibernate.internal.util.StringHelper.isEmpty;
+
 /**
  * @author Steve Ebersole
  */
@@ -42,15 +46,21 @@ public class CollectionKey implements Navigable {
 	private ForeignKey joinForeignKey;
 
 	public CollectionKey(
-			AbstractPersistentCollectionDescriptor<?, ?, ?> collectionDescriptor,
-			Collection bootCollectionValue,
+			AbstractPersistentCollectionDescriptor<?, ?, ?> runtimeDescriptor,
+			Collection bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
-		this.collectionDescriptor = collectionDescriptor;
-		this.javaTypeDescriptor = resolveJavaTypeDescriptor( bootCollectionValue );
-		this.navigableRole = collectionDescriptor.getNavigableRole().append( "{collection-key}" );
-		this.joinForeignKey = creationContext.getDatabaseObjectResolver().resolveForeignKey(
-				bootCollectionValue.getForeignKey()
-		);
+		this.collectionDescriptor = runtimeDescriptor;
+		this.javaTypeDescriptor = resolveJavaTypeDescriptor( bootDescriptor );
+		this.navigableRole = runtimeDescriptor.getNavigableRole().append( "{collection-key}" );
+		this.joinForeignKey = creationContext.getDatabaseObjectResolver().resolveForeignKey( bootDescriptor.getForeignKey() );
+
+		final String mappedBy = bootDescriptor.getMappedByProperty();
+		if ( isEmpty( mappedBy ) ) {
+			this.foreignKeyTargetNavigable = runtimeDescriptor.findEntityOwnerDescriptor().getIdentifierDescriptor();
+		}
+		else {
+			this.foreignKeyTargetNavigable = runtimeDescriptor.findEntityOwnerDescriptor().findNavigable( mappedBy );
+		}
 	}
 
 	public ForeignKey getJoinForeignKey() {
@@ -218,18 +228,28 @@ public class CollectionKey implements Navigable {
 	}
 
 	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return foreignKeyTargetNavigable.unresolve( value, session );
+	}
+
+	@Override
 	public void dehydrate(
 			Object value,
 			JdbcValueCollector jdbcValueCollector,
 			Clause clause,
 			SharedSessionContractImplementor session) {
-		// hack - only works with non-composite keys
-		// todo (6.0) : fix
-		final List<Column> columns = getJoinForeignKey().getColumnMappings().getReferringColumns();
-		assert columns.size() == 1;
+		final List<Column> referringColumns = getJoinForeignKey().getColumnMappings().getReferringColumns();
+		final AtomicInteger position = new AtomicInteger();
 
-		final Column column = columns.get( 0 );
-		jdbcValueCollector.collect( value, column.getExpressableType(), column );
+		foreignKeyTargetNavigable.dehydrate(
+				value,
+				(jdbcValue, type, boundColumn) -> {
+					final Column fkColumn = referringColumns.get( position.getAndIncrement() );
+					jdbcValueCollector.collect( jdbcValue, type, fkColumn );
+				},
+				clause,
+				session
+		);
 	}
 
 	private static JavaTypeDescriptor resolveJavaTypeDescriptor(Collection collectionValue) {

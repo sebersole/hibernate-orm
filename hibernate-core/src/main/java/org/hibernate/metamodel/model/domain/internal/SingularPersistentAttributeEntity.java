@@ -203,7 +203,8 @@ public class SingularPersistentAttributeEntity<O, J>
 
 		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( bootModelAttribute.getName() );
 
-		context.registerNavigable( this );
+		context.registerNavigable( this, bootModelAttribute );
+
 		instantiationComplete( bootModelAttribute, context );
 
 		this.fetchStrategy = Helper.determineFetchStrategy(
@@ -273,7 +274,9 @@ public class SingularPersistentAttributeEntity<O, J>
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean finishInitialization(RuntimeModelCreationContext creationContext) {
+	public boolean finishInitialization(
+			Object bootReference,
+			RuntimeModelCreationContext creationContext) {
 		if ( referencedUkAttributeName == null ) {
 			singleEntityLoader = getAssociatedEntityDescriptor().getSingleIdLoader();
 		}

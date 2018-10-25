@@ -53,6 +53,15 @@ public interface EmbeddedTypeDescriptor<T>
 	EmbeddedContainer<?> getContainer();
 
 	@Override
+	default boolean finishInitialization(
+			Object bootReference,
+			RuntimeModelCreationContext creationContext) {
+		// todo (6.0) : define this delegated `#finishInitialization` to return boolean as well?
+		finishInitialization( (ManagedTypeMappingImplementor) bootReference, creationContext );
+		return true;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	default Class<T> getJavaType() {
 		return getJavaTypeDescriptor().getJavaType();

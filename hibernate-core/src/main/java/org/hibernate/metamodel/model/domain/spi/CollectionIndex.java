@@ -29,4 +29,9 @@ public interface CollectionIndex<J> extends Navigable<J>, TableReferenceContribu
 	IndexClassification getClassification();
 
 	List<Column> getColumns();
+
+	default boolean canContainSubGraphs() {
+		final IndexClassification classification = getClassification();
+		return classification == IndexClassification.BASIC || classification == IndexClassification.ANY;
+	}
 }

@@ -52,7 +52,7 @@ import org.hibernate.exception.SerializationException;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.xml.XmlDocument;
-import org.hibernate.metamodel.model.domain.internal.StandardManagedTypeRepresentationResolver;
+import org.hibernate.metamodel.model.domain.internal.mode.StandardManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;

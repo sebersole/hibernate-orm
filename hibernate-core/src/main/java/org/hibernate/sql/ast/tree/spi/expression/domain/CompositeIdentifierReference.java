@@ -14,7 +14,7 @@ import org.hibernate.sql.results.spi.DomainResultProducer;
 /**
  * @author Steve Ebersole
  */
-public class CompositeIdentifierReference extends AbstractNavigableContainerReference implements DomainResultProducer, NavigableContainerReference {
+public class CompositeIdentifierReference extends AbstractNavigableContainerReference implements DomainResultProducer {
 
 	public CompositeIdentifierReference(
 			EntityValuedNavigableReference entityReference,

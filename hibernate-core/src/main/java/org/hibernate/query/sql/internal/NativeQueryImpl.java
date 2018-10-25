@@ -39,7 +39,9 @@ import org.hibernate.QueryException;
 import org.hibernate.ScrollMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.RootGraph;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.Limit;
@@ -719,7 +721,7 @@ public class NativeQueryImpl<R>
 
 
 	@Override
-	protected void applyEntityGraphQueryHint(String hintName, EntityGraphImplementor entityGraph) {
+	protected void applyEntityGraphQueryHint(String hintName, RootGraphImplementor entityGraph) {
 		// technically we *could* support EntityGraph applied to NativeQuery
 		// 		but that would mean that loading the eager state that was not loaded by
 		// 		the SQL would need to be performed as a follow-up (N+1)

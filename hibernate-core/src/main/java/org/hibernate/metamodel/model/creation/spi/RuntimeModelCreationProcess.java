@@ -6,9 +6,7 @@
  */
 package org.hibernate.metamodel.model.creation.spi;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -90,15 +88,15 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 	private final Map<EntityMappingHierarchy,IdentifiableTypeDescriptor> runtimeRootByBootHierarchy = new HashMap<>();
 	private final Map<EntityMappingHierarchy,EntityDescriptor> runtimeRootEntityByBootHierarchy = new HashMap<>();
 
-	private final Map<IdentifiableTypeMappingImplementor,IdentifiableTypeDescriptor> runtimeByBoot = new HashMap<>();
-	private final Map<IdentifiableTypeDescriptor,IdentifiableTypeMappingImplementor> bootByRuntime = new HashMap<>();
+	private final Map<IdentifiableTypeMappingImplementor,IdentifiableTypeDescriptor> runtimeByBoot = new LinkedHashMap<>();
+	private final Map<IdentifiableTypeDescriptor,IdentifiableTypeMappingImplementor> bootByRuntime = new LinkedHashMap<>();
 
-	private final Map<EmbeddedValueMappingImplementor,EmbeddedTypeDescriptor> embeddableRuntimeByBoot = new HashMap<>();
-	private final Map<Collection,PersistentCollectionDescriptor> collectionRuntimeByBoot = new HashMap<>();
+	private final Map<EmbeddedValueMappingImplementor,EmbeddedTypeDescriptor> embeddableRuntimeByBoot = new LinkedHashMap<>();
+	private final Map<Collection,PersistentCollectionDescriptor> collectionRuntimeByBoot = new LinkedHashMap<>();
 
 	private final Map<String, DomainDataRegionConfigImpl.Builder> regionConfigBuilders = new ConcurrentHashMap<>();
 
-	private final List<Navigable> navigablesToFinalize = new ArrayList<>();
+	private final Map<Navigable,Object> navigablesToFinalize = new LinkedHashMap<>();
 
 	private RuntimeModelCreationProcess(
 			SessionFactoryImplementor sessionFactory,
@@ -212,39 +210,59 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 			runtimeRootEntity.getHierarchy().finishInitialization( creationContext, bootRootEntity );
 		}
 
-		boolean moreEmbeddables = !embeddableRuntimeByBoot.isEmpty();
-		boolean moreCollections = !collectionRuntimeByBoot.isEmpty();
+		while ( true ) {
+			boolean anyEmbeddablesFinalized = false;
+			boolean anyCollectionsFinalized = false;
+			boolean anyNavigablesFinalized = false;
 
-		while ( moreEmbeddables || moreCollections ) {
-			final int initialEmbeddableCount = embeddableRuntimeByBoot.size();
-			for ( Map.Entry<EmbeddedValueMappingImplementor, EmbeddedTypeDescriptor> entry : embeddableRuntimeByBoot.entrySet() ) {
-				entry.getValue().finishInitialization( entry.getKey(), creationContext );
-			}
-			moreEmbeddables = embeddableRuntimeByBoot.size() > initialEmbeddableCount;
+			if ( ! embeddableRuntimeByBoot.isEmpty() ) {
+				final LinkedHashMap<EmbeddedValueMappingImplementor, EmbeddedTypeDescriptor> copy = new LinkedHashMap<>( embeddableRuntimeByBoot );
+				embeddableRuntimeByBoot.clear();
 
-			final int initialCollectionCount = collectionRuntimeByBoot.size();
-			for ( Map.Entry<Collection, PersistentCollectionDescriptor> entry : collectionRuntimeByBoot.entrySet() ) {
-				entry.getValue().finishInitialization( entry.getKey(), creationContext );
-			}
-			moreCollections = collectionRuntimeByBoot.size() > initialCollectionCount;
-		}
+				anyEmbeddablesFinalized = copy.entrySet().removeIf(
+						entry -> entry.getValue().finishInitialization( entry.getKey(), creationContext )
+				);
 
-		// todo (6.0) - could this be moved to descriptorFactory#finishUp?
-		int navigablesCounter = navigablesToFinalize.size();
-		if ( navigablesCounter > 0 ) {
-			while ( true ) {
-				if ( !navigablesToFinalize.removeIf( navigable -> navigable.finishInitialization( creationContext ) ) ) {
-
-					break;
+				if ( ! copy.isEmpty() ) {
+					embeddableRuntimeByBoot.putAll( copy );
 				}
-				else {
-					if ( navigablesToFinalize.size() == navigablesCounter ) {
-						throw new MappingException( "Unable to complete initialization of run-time meta-model" );
-					}
-					else {
-						navigablesCounter = navigablesToFinalize.size();
-					}
+			}
+
+			if ( ! collectionRuntimeByBoot.isEmpty() ) {
+				final LinkedHashMap<Collection, PersistentCollectionDescriptor> copy = new LinkedHashMap<>( collectionRuntimeByBoot );
+				collectionRuntimeByBoot.clear();
+
+				anyCollectionsFinalized = copy.entrySet().removeIf(
+						entry -> entry.getValue().finishInitialization( entry.getKey(), creationContext )
+				);
+
+				if ( ! copy.isEmpty() ) {
+					collectionRuntimeByBoot.putAll( copy );
 				}
+			}
+
+			if ( ! navigablesToFinalize.isEmpty() ) {
+				final LinkedHashMap<Navigable, Object> copy = new LinkedHashMap<>( navigablesToFinalize );
+				navigablesToFinalize.clear();
+
+				anyNavigablesFinalized = copy.entrySet().removeIf(
+						entry -> entry.getKey().finishInitialization( entry.getValue(), creationContext )
+				);
+
+				if ( ! copy.isEmpty() ) {
+					navigablesToFinalize.putAll( copy );
+				}
+			}
+
+			if ( embeddableRuntimeByBoot.isEmpty()
+					&& collectionRuntimeByBoot.isEmpty()
+					&& navigablesToFinalize.isEmpty() ) {
+				// we are done
+				break;
+			}
+
+			if ( ! anyEmbeddablesFinalized && ! anyCollectionsFinalized && ! anyNavigablesFinalized ) {
+				throw new MappingException( "Unable to complete initialization of run-time meta-model" );
 			}
 		}
 
@@ -613,8 +631,8 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 
 		@Override
-		public void registerNavigable(Navigable navigable) {
-			navigablesToFinalize.add( navigable );
+		public void registerNavigable(Navigable navigable, Object bootModelReference) {
+			navigablesToFinalize.put( navigable, bootModelReference );
 		}
 
 		@Override

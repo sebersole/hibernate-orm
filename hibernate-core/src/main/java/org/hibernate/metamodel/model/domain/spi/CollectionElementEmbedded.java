@@ -6,10 +6,17 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.metamodel.model.relational.spi.Table;
+
 /**
  * @author Steve Ebersole
  */
 public interface CollectionElementEmbedded<J> extends CollectionElement<J>, EmbeddedValuedNavigable<J> {
+	@Override
+	default boolean canContainSubGraphs() {
+		return true;
+	}
+
 	@Override
 	default ElementClassification getClassification() {
 		return ElementClassification.EMBEDDABLE;
@@ -19,5 +26,10 @@ public interface CollectionElementEmbedded<J> extends CollectionElement<J>, Embe
 	default void visitNavigable(NavigableVisitationStrategy visitor) {
 		// visit ourself
 		visitor.visitCollectionElementEmbedded( this );
+	}
+
+	@Override
+	default Table getPrimaryDmlTable() {
+		return getCollectionDescriptor().getSeparateCollectionTable();
 	}
 }

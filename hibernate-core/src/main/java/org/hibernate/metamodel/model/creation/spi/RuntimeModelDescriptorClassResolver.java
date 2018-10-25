@@ -10,7 +10,7 @@ import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.mapping.Collection;
-import org.hibernate.metamodel.model.domain.internal.EmbeddedTypeDescriptorImpl;
+import org.hibernate.metamodel.model.domain.internal.composite.EmbeddedTypeDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.MappedSuperclassImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;

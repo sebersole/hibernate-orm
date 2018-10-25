@@ -75,7 +75,8 @@ public final class CollectionEntry implements Serializable {
 		snapshot = collectionDescriptor.getMutabilityPlan().isMutable()
 				? collection.getSnapshot(collectionDescriptor)
 				: null;
-		collection.setSnapshot( loadedKey, collectionDescriptor.getNavigableRole(), snapshot );
+
+		collection.setSnapshot( null, collectionDescriptor.getNavigableRole(), snapshot );
 	}
 
 	/**

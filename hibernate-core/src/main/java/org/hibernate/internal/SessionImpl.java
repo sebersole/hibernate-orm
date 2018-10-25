@@ -117,8 +117,8 @@ import org.hibernate.event.spi.ResolveNaturalIdEvent;
 import org.hibernate.event.spi.ResolveNaturalIdEventListener;
 import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.hibernate.event.spi.SaveOrUpdateEventListener;
-import org.hibernate.graph.internal.EntityGraphImpl;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.internal.RootGraphImpl;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.jdbc.ReturningWork;
 import org.hibernate.jdbc.Work;
 import org.hibernate.jdbc.WorkExecutor;
@@ -3318,12 +3318,7 @@ public final class SessionImpl
 			return null;
 		}
 
-		if ( EntityGraphImplementor.class.isInstance( named ) ) {
-			return ( (EntityGraphImplementor) named ).makeMutableCopy();
-		}
-		else {
-			return named;
-		}
+		return named.makeCopy( true );
 	}
 
 	@Override

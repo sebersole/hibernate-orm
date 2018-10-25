@@ -111,37 +111,38 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Cascading is not yet implemented, so for now manually create the
 		// collection rows
-		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+		entity.getSetOfBasics().add( "first string" );
+		entity.getSetOfBasics().add( "second string" );
 
-		sessionFactoryScope().inTransaction(
-				session -> session.doWork(
-						connection -> {
-							final PreparedStatement statement = connection.prepareStatement(
-									"insert into EntityOfSets_setOfBasics (EntityOfSets_id, setOfBasics) values (?,?)"
-							);
-							statement.setInt( 1, 1 );
-							statement.setString( 2, "first string" );
-							statement.addBatch();
-							statement.setInt( 1, 1 );
-							statement.setString( 2, "second string" );
-							statement.addBatch();
-							statement.executeBatch();
-						}
+		entity.getSetOfComponents().add(
+				new Component(
+						5,
+						10L,
+						15,
+						"component string",
+						new Component.Nested(
+								"first nested string",
+								"second nested string"
+						)
 				)
 		);
-//		entity.getSetOfBasics().add( "first string" );
-//		entity.getSetOfBasics().add( "second string" );
-//
-//		entity.getSetOfComponents().add(
-//				new Component(
-//						5,
-//						10L,
-//						15,
-//						"component string",
-//						new Component.Nested(
-//								"first nested string",
-//								"second nested string"
-//						)
+
+		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
+
+//		sessionFactoryScope().inTransaction(
+//				session -> session.doWork(
+//						connection -> {
+//							final PreparedStatement statement = connection.prepareStatement(
+//									"insert into EntityOfSets_setOfBasics (EntityOfSets_id, setOfBasics) values (?,?)"
+//							);
+//							statement.setInt( 1, 1 );
+//							statement.setString( 2, "first string" );
+//							statement.addBatch();
+//							statement.setInt( 1, 1 );
+//							statement.setString( 2, "second string" );
+//							statement.addBatch();
+//							statement.executeBatch();
+//						}
 //				)
 //		);
 //
@@ -169,11 +170,28 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 				}
 		);
 
-		sessionFactoryScope().inSession(
+		sessionFactoryScope().inTransaction(
 				session -> {
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e inner join fetch e.setOfBasics", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfBasics(), 2 );
+				}
+		);
+
+		sessionFactoryScope().inTransaction(
+				session -> {
+					session.setDefaultReadOnly( true );
+					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e left join fetch e.setOfComponents", EntityOfSets.class ).uniqueResult();
+					assert loaded != null;
+					checkExpectedSize( loaded.getSetOfComponents(), 1 );
+				}
+		);
+
+		sessionFactoryScope().inSession(
+				session -> {
+					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e inner join fetch e.setOfComponents", EntityOfSets.class ).uniqueResult();
+					assert loaded != null;
+					checkExpectedSize( loaded.getSetOfComponents(), 1 );
 				}
 		);
 

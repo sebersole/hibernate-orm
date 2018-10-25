@@ -9,7 +9,6 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.List;
 
 import org.hibernate.LockMode;
-import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
@@ -20,7 +19,6 @@ import org.hibernate.sql.results.internal.domain.collection.ListInitializerProdu
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * Hibernate's standard PersistentCollectionDescriptor implementor
@@ -35,15 +33,6 @@ public class PersistentListDescriptorImpl<O,E> extends AbstractPersistentCollect
 			RuntimeModelCreationContext context) {
 		super( bootProperty, runtimeContainer, context );
 	}
-
-	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		return findCollectionJtd( List.class, creationContext );
-	}
-
-
 
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(

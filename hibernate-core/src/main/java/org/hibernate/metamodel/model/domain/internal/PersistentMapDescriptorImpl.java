@@ -24,7 +24,6 @@ import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -46,13 +45,6 @@ public class PersistentMapDescriptorImpl<O,K,E>
 		else {
 			this.comparator = null;
 		}
-	}
-
-	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		return findCollectionJtd( Map.class, creationContext );
 	}
 
 	@Override

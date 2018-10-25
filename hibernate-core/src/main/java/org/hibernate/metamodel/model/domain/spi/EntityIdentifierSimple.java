@@ -23,6 +23,11 @@ import org.hibernate.type.spi.TypeConfiguration;
 public interface EntityIdentifierSimple<O,J>
 		extends EntityIdentifier<O,J>, SingularPersistentAttribute<O,J>, BasicValuedNavigable<J> {
 	@Override
+	default boolean canContainSubGraphs() {
+		return false;
+	}
+
+	@Override
 	default void visitNavigable(NavigableVisitationStrategy visitor) {
 		visitor.visitSimpleIdentifier( this );
 	}
