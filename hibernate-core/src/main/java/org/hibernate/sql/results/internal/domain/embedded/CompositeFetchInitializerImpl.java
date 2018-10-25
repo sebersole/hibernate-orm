@@ -29,9 +29,4 @@ public class CompositeFetchInitializerImpl
 			AssemblerCreationState creationState) {
 		super( resultDescriptor, fetchParentAccess, initializerConsumer, creationContext, creationState );
 	}
-
-	@Override
-	public Object getFetchParentInstance() {
-		return getCompositeInstance();
-	}
 }

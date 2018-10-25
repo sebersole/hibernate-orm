@@ -48,7 +48,7 @@ public abstract class AbstractCreationExecutor implements CollectionCreationExec
 		final Map<Column, JdbcParameter> jdbcParameterMap = new HashMap<>();
 
 		this.creationOperation = generateCreationOperation(
-				new TableReference( dmlTargetTable, null ),
+				new TableReference( dmlTargetTable, null, false ),
 				sessionFactory,
 				jdbcParameterMap::put
 		);
