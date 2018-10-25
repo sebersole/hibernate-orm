@@ -11,11 +11,11 @@ import javax.persistence.EntityGraph;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.metamodel.internal.MetamodelImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.AbstractRuntimeModel;
@@ -48,8 +48,8 @@ public class InFlightRuntimeModel extends AbstractRuntimeModel {
 		}
 	}
 
-	public <T> void addEntityDescriptor(EntityDescriptor<T> descriptor) {
-		final EntityDescriptor previous = getEntityDescriptorMap().put(
+	public <T> void addEntityDescriptor(EntityTypeDescriptor<T> descriptor) {
+		final EntityTypeDescriptor previous = getEntityDescriptorMap().put(
 				descriptor.getNavigableRole().getFullPath(),
 				descriptor
 		);
@@ -96,7 +96,7 @@ public class InFlightRuntimeModel extends AbstractRuntimeModel {
 		final EntityGraph<?> previous = getRootGraphMap().put( name, rootGraph );
 
 		if ( previous != null ) {
-			log.debugf( "Adding EntityGraph [%s -> %s] replaced existing registration [%s]", name, entityGraph, previous );
+			log.debugf( "Adding EntityGraph [%s -> %s] replaced existing registration [%s]", name, rootGraph, previous );
 		}
 	}
 

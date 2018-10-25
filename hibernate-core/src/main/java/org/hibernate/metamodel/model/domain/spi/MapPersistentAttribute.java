@@ -6,13 +6,13 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
- * todo (6.0) : rename this PluralAttributeBag?
- *
  * @author Steve Ebersole
  */
-public interface PluralAttributeCollection<O,E> extends PluralPersistentAttribute<O,Collection<E>,E>,
-		javax.persistence.metamodel.CollectionAttribute<O,E> {
+public interface MapPersistentAttribute<O,K,E> extends PluralPersistentAttribute<O,Map<K,E>,E>,
+		javax.persistence.metamodel.MapAttribute<O,K,E> {
+	@Override
+	SimpleTypeDescriptor<K> getKeyType();
 }

@@ -20,8 +20,10 @@ import org.hibernate.ScrollMode;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.graph.spi.EntityGraphImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.RootGraph;
+import org.hibernate.graph.spi.RootGraphImplementor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.Query;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.ParameterMetadataImpl;
@@ -149,6 +151,19 @@ public class QuerySqmImpl<R>
 		return sourceQueryString;
 	}
 
+	@Override
+	public Query<R> applyGraph(RootGraph graph, GraphSemantic semantic) {
+		queryOptions.applyGraph( (RootGraphImplementor<?>) graph, semantic );
+		return this;
+	}
+
+	@Override
+	protected void applyEntityGraphQueryHint(String hintName, RootGraphImplementor entityGraph) {
+		final GraphSemantic graphSemantic = GraphSemantic.fromJpaHintName( hintName );
+
+		applyGraph( entityGraph, graphSemantic );
+	}
+
 	public SqmStatement getSqmStatement() {
 		return sqmStatement;
 	}
@@ -161,10 +176,6 @@ public class QuerySqmImpl<R>
 	@Override
 	public MutableQueryOptions getQueryOptions() {
 		return queryOptions;
-	}
-
-	public EntityGraphQueryHint getEntityGraphHint() {
-		return getQueryOptions().getEntityGraphQueryHint();
 	}
 
 	@Override
@@ -225,8 +236,12 @@ public class QuerySqmImpl<R>
 			return (T) queryOptions;
 		}
 
-		if ( cls.isInstance( queryOptions.getEntityGraphQueryHint() ) ) {
-			return (T) queryOptions.getEntityGraphQueryHint();
+		if ( cls.isInstance( queryOptions.getAppliedGraph() ) ) {
+			return (T) queryOptions.getAppliedGraph();
+		}
+
+		if ( EntityGraphQueryHint.class.isAssignableFrom( cls ) ) {
+			return (T) new EntityGraphQueryHint( queryOptions.getAppliedGraph() );
 		}
 
 		throw new PersistenceException( "Unrecognized unwrap type [" + cls.getName() + "]" );
@@ -243,10 +258,10 @@ public class QuerySqmImpl<R>
 	protected void collectHints(Map<String, Object> hints) {
 		super.collectHints( hints );
 
-		if ( queryOptions.getEntityGraphQueryHint() != null ) {
+		if ( queryOptions.getAppliedGraph() != null ) {
 			hints.put(
-					queryOptions.getEntityGraphQueryHint().getHintName(),
-					queryOptions.getEntityGraphQueryHint().getHintedGraph()
+					queryOptions.getAppliedGraph().getSemantic().getJpaHintName(),
+					queryOptions.getAppliedGraph().getGraph()
 			);
 		}
 	}
@@ -395,7 +410,7 @@ public class QuerySqmImpl<R>
 
 		// If the entity to delete is multi-table we need to leverage the
 		// configured org.hibernate.hql.spi.id.MultiTableBulkIdStrategy
-		final EntityDescriptor entityToDelete = sqmStatement.getEntityFromElement()
+		final EntityTypeDescriptor entityToDelete = sqmStatement.getEntityFromElement()
 				.getNavigableReference()
 				.getReferencedNavigable()
 				.getEntityDescriptor();
@@ -417,7 +432,7 @@ public class QuerySqmImpl<R>
 
 		// If the entity to update is multi-table we need to leverage the
 		// configured org.hibernate.hql.spi.id.MultiTableBulkIdStrategy
-		final EntityDescriptor entityToDelete = sqmStatement.getEntityFromElement()
+		final EntityTypeDescriptor entityToDelete = sqmStatement.getEntityFromElement()
 				.getNavigableReference()
 				.getReferencedNavigable()
 				.getEntityDescriptor();

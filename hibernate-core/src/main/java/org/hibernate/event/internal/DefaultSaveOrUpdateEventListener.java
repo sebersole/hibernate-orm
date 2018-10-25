@@ -26,7 +26,7 @@ import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.hibernate.event.spi.SaveOrUpdateEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -214,7 +214,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 
 		Object entity = event.getEntity();
 
-		EntityDescriptor entityDescriptor = event.getSession().getEntityDescriptor( event.getEntityName(), entity );
+		EntityTypeDescriptor entityDescriptor = event.getSession().getEntityDescriptor( event.getEntityName(), entity );
 
 		event.setRequestedId(
 				getUpdateId( entity, entityDescriptor, event.getRequestedId(), event.getSession() )
@@ -238,7 +238,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 	 */
 	protected Object getUpdateId(
 			Object entity,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			Object requestedId,
 			SessionImplementor session) {
 		// use the id assigned to the instance
@@ -260,7 +260,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 	protected void performUpdate(
 			SaveOrUpdateEvent event,
 			Object entity,
-			EntityDescriptor entityDescriptor) throws HibernateException {
+			EntityTypeDescriptor entityDescriptor) throws HibernateException {
 
 		final boolean traceEnabled = LOG.isTraceEnabled();
 		if ( traceEnabled && !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() ) {
@@ -327,7 +327,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 		cascadeOnUpdate( event, entityDescriptor, entity );
 	}
 
-	protected boolean invokeUpdateLifecycle(Object entity, EntityDescriptor entityDescriptor, EventSource source) {
+	protected boolean invokeUpdateLifecycle(Object entity, EntityTypeDescriptor entityDescriptor, EventSource source) {
 		if ( entityDescriptor.implementsLifecycle() ) {
 			LOG.debug( "Calling onUpdate()" );
 			if ( ( (Lifecycle) entity ).onUpdate( source ) ) {
@@ -346,7 +346,7 @@ public class DefaultSaveOrUpdateEventListener extends AbstractSaveEventListener 
 	 * @param entityDescriptor The defined entityDescriptor for the entity being updated.
 	 * @param entity The entity being updated.
 	 */
-	private void cascadeOnUpdate(SaveOrUpdateEvent event, EntityDescriptor entityDescriptor, Object entity) {
+	private void cascadeOnUpdate(SaveOrUpdateEvent event, EntityTypeDescriptor entityDescriptor, Object entity) {
 		final EventSource source = event.getSession();
 		source.getPersistenceContext().incrementCascadeLevel();
 		try {

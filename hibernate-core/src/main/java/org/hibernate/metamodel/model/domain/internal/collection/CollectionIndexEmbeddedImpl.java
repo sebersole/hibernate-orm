@@ -20,6 +20,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -82,6 +83,11 @@ public class CollectionIndexEmbeddedImpl<J>
 		return getEmbeddedDescriptor().getJavaTypeDescriptor();
 	}
 
+
+	@Override
+	public SimpleTypeDescriptor<?> getDomainTypeDescriptor() {
+		return getEmbeddedDescriptor();
+	}
 
 	@Override
 	public List<Column> getColumns() {

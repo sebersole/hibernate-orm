@@ -9,7 +9,7 @@ package org.hibernate.query.sqm.tree.expression.domain;
 import java.util.Locale;
 
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeBasic;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
@@ -51,7 +51,7 @@ public class SqmSingularAttributeReferenceBasic extends AbstractSqmSingularAttri
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 		return null;
 	}
 

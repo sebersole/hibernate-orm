@@ -9,7 +9,7 @@ package org.hibernate.loader.spi;
 import java.util.List;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Loader subtype for loading multiple entities by multiple identifier values.
@@ -19,7 +19,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public interface MultiIdEntityLoader<J> extends Loader {
 	// todo (6.0) - any additional Options info?
 
-	EntityDescriptor<J> getEntityDescriptor();
+	EntityTypeDescriptor<J> getEntityDescriptor();
 
 	List<J> load(Object[] ids, MultiLoadOptions options, SharedSessionContractImplementor session);
 }

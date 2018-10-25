@@ -12,6 +12,7 @@ import java.util.List;
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
+import org.hibernate.graph.spi.AppliedGraph;
 import org.hibernate.query.Limit;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
@@ -34,7 +35,7 @@ public interface QueryOptions extends SqlQueryOptions {
 	Boolean isResultCachingEnabled();
 	String getResultCacheRegionName();
 
-	EntityGraphQueryHint getEntityGraphQueryHint();
+	AppliedGraph getAppliedGraph();
 
 	TupleTransformer getTupleTransformer();
 	ResultListTransformer getResultListTransformer();
@@ -71,7 +72,7 @@ public interface QueryOptions extends SqlQueryOptions {
 	/**
 	 * Singleton access
 	 */
-	public static final QueryOptions NONE = new QueryOptions() {
+	QueryOptions NONE = new QueryOptions() {
 		@Override
 		public Limit getLimit() {
 			return Limit.NONE;
@@ -128,7 +129,7 @@ public interface QueryOptions extends SqlQueryOptions {
 		}
 
 		@Override
-		public EntityGraphQueryHint getEntityGraphQueryHint() {
+		public AppliedGraph getAppliedGraph() {
 			return null;
 		}
 

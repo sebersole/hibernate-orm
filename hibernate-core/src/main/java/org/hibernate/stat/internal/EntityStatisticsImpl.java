@@ -9,7 +9,7 @@ package org.hibernate.stat.internal;
 import java.io.Serializable;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.stat.EntityStatistics;
 
 /**
@@ -27,7 +27,7 @@ public class EntityStatisticsImpl extends AbstractCacheableDataStatistics implem
 	private final LongAdder fetchCount = new LongAdder();
 	private final LongAdder optimisticFailureCount = new LongAdder();
 
-	EntityStatisticsImpl(EntityDescriptor rootEntityDescriptor) {
+	EntityStatisticsImpl(EntityTypeDescriptor rootEntityDescriptor) {
 		super(
 				() -> rootEntityDescriptor.getHierarchy().getEntityCacheAccess() != null
 						? rootEntityDescriptor.getHierarchy().getEntityCacheAccess().getRegion()

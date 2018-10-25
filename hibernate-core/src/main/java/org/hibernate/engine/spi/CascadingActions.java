@@ -17,8 +17,8 @@ import org.hibernate.ReplicationMode;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 import org.jboss.logging.Logger;
@@ -460,8 +460,8 @@ public class CascadingActions {
 		public void noCascade(
 				EventSource session,
 				Object parent,
-				EntityDescriptor entityDescriptor,
-				PersistentAttribute attribute,
+				EntityTypeDescriptor entityDescriptor,
+				PersistentAttributeDescriptor attribute,
 				int propertyIndex) {
 		}
 

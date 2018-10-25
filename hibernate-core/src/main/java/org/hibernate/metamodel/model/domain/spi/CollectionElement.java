@@ -28,6 +28,14 @@ public interface CollectionElement<J> extends Navigable<J>, CollectionDomainType
 
 	ElementClassification getClassification();
 
-	// todo (6.0) : another place to consider removing generic access to columns
-	//List<Column> getColumns();
+	PersistentCollectionDescriptor getCollectionDescriptor();
+
+	Table getPrimaryDmlTable();
+
+	SimpleTypeDescriptor getDomainTypeDescriptor();
+
+	@Override
+	default Class<J> getJavaType() {
+		return getJavaTypeDescriptor().getJavaType();
+	}
 }

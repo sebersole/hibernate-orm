@@ -24,7 +24,7 @@ import org.hibernate.event.spi.PostInsertEvent;
 import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PreInsertEvent;
 import org.hibernate.event.spi.PreInsertEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * The action for performing an entity insertion, for entities not defined to use IDENTITY generation.
@@ -50,7 +50,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 			Object[] state,
 			Object instance,
 			Object version,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			boolean isVersionIncrementDisabled,
 			SharedSessionContractImplementor session) {
 		super( id, state, instance, isVersionIncrementDisabled, descriptor, session );
@@ -71,7 +71,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 	public void execute() throws HibernateException {
 		nullifyTransientReferencesIfNotAlready();
 
-		final EntityDescriptor entityDescriptor = getEntityDescriptor();
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();
 		final Object id = getId();
@@ -139,11 +139,11 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		markExecuted();
 	}
 
-	private boolean cacheInsert(EntityDescriptor descriptor, Object ck) {
+	private boolean cacheInsert(EntityTypeDescriptor descriptor, Object ck) {
 		SharedSessionContractImplementor session = getSession();
 		try {
 			session.getEventListenerManager().cachePutStart();
-			final EntityDescriptor rootDescriptor = descriptor.getHierarchy().getRootEntityType();
+			final EntityTypeDescriptor rootDescriptor = descriptor.getHierarchy().getRootEntityType();
 			return session.getFactory().getCache().getEntityRegionAccess( rootDescriptor.getNavigableRole() ).insert(
 					session,
 					ck,
@@ -217,7 +217,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 
 	@Override
 	public void doAfterTransactionCompletion(boolean success, SharedSessionContractImplementor session) throws HibernateException {
-		final EntityDescriptor entityDescriptor = getEntityDescriptor();
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor();
 		if ( success && isCachePutEnabled( entityDescriptor, getSession() ) ) {
 			final EntityDataAccess cache = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final SessionFactoryImplementor factory = session.getFactory();
@@ -258,7 +258,7 @@ public final class EntityInsertAction extends AbstractEntityInsertAction {
 		return false;
 	}
 	
-	private boolean isCachePutEnabled(EntityDescriptor entityDescriptor, SharedSessionContractImplementor session) {
+	private boolean isCachePutEnabled(EntityTypeDescriptor entityDescriptor, SharedSessionContractImplementor session) {
 		return entityDescriptor.canWriteToCache()
 				&& !entityDescriptor.isCacheInvalidationRequired()
 				&& session.getCacheMode().isPutEnabled();

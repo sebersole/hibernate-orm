@@ -13,7 +13,7 @@ import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
@@ -22,7 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.service.Service;
 
 /**
- * Contract for creating persister instances including {@link EntityDescriptor},
+ * Contract for creating persister instances including {@link EntityTypeDescriptor},
  * {@link PersistentCollectionDescriptor} and {@link EmbeddedTypeDescriptor}
  *
  * @author Steve Ebersole
@@ -33,7 +33,7 @@ public interface RuntimeModelDescriptorFactory extends Service {
 	 * <p/>
 	 * A descriptor will not be completely usable after return from this method.  The returned
 	 * reference is good for linking references together, etc.  The persister will be fully
-	 * initialized later via {@link EntityDescriptor#finishInitialization}
+	 * initialized later via {@link EntityTypeDescriptor#finishInitialization}
 	 *
 	 * @param bootMapping The mapping information describing the entity
 	 * @param superTypeDescriptor
@@ -43,7 +43,7 @@ public interface RuntimeModelDescriptorFactory extends Service {
 	 *
 	 * @throws HibernateException Indicates a problem building the persister.
 	 */
-	<J> EntityDescriptor<J> createEntityDescriptor(
+	<J> EntityTypeDescriptor<J> createEntityDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException;

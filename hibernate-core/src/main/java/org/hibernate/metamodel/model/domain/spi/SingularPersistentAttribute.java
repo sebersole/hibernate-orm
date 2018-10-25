@@ -10,11 +10,19 @@ package org.hibernate.metamodel.model.domain.spi;
  * @author Steve Ebersole
  */
 public interface SingularPersistentAttribute<O, J>
-		extends PersistentAttribute<O, J>, javax.persistence.metamodel.SingularAttribute<O, J> {
+		extends PersistentAttributeDescriptor<O, J>, javax.persistence.metamodel.SingularAttribute<O, J> {
 
 	@Override
 	default Class<J> getJavaType() {
 		return getJavaTypeDescriptor().getJavaType();
+	}
+
+	@Override
+	SimpleTypeDescriptor<J> getType();
+
+	@Override
+	default SimpleTypeDescriptor<J> getAttributeType() {
+		return getType();
 	}
 
 	/**

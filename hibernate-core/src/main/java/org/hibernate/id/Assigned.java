@@ -11,7 +11,7 @@ import java.util.Properties;
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -25,7 +25,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  */
 public class Assigned implements IdentifierGenerator, Configurable {
 	private String entityName;
-	private EntityDescriptor entityDescriptor;
+	private EntityTypeDescriptor entityDescriptor;
 
 	@Override
 	public Object generate(SharedSessionContractImplementor session, Object object) throws HibernateException {

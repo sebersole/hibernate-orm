@@ -30,7 +30,7 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.spi.AllowableFunctionReturnType;
 import org.hibernate.metamodel.model.domain.spi.CollectionElement;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.NavigablePath;
@@ -1557,7 +1557,7 @@ public class SemanticQueryBuilder
 		final SqmNavigableReference basePathPart = (SqmNavigableReference) ctx.path().accept( this );
 
 		final String castTargetName = ctx.dotIdentifierSequence().getText();
-		final EntityDescriptor castTarget = resolveEntityReference( castTargetName ).getEntityDescriptor();
+		final EntityTypeDescriptor castTarget = resolveEntityReference( castTargetName ).getEntityDescriptor();
 
 		treatHandlerStack.getCurrent().addDowncast( basePathPart.getExportedFromElement(), castTarget );;
 

@@ -15,10 +15,11 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.CollectionIndexEntity;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -45,7 +46,7 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
 public class CollectionIndexEntityImpl<J>
 		extends AbstractCollectionIndex<J>
 		implements CollectionIndexEntity<J> {
-	private final EntityDescriptor<J> entityDescriptor;
+	private final EntityTypeDescriptor<J> entityDescriptor;
 	private final NavigableRole navigableRole;
 
 	public CollectionIndexEntityImpl(
@@ -59,7 +60,7 @@ public class CollectionIndexEntityImpl<J>
 	}
 
 	@Override
-	public EntityDescriptor<J> getEntityDescriptor() {
+	public EntityTypeDescriptor<J> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -71,6 +72,11 @@ public class CollectionIndexEntityImpl<J>
 	@Override
 	public String getJpaEntityName() {
 		return getEntityDescriptor().getJpaEntityName();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getDomainTypeDescriptor() {
+		return getEntityDescriptor();
 	}
 
 	@Override

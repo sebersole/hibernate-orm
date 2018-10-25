@@ -45,6 +45,7 @@ import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.Limit;
+import org.hibernate.query.Query;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
@@ -113,6 +114,11 @@ public class NativeQueryImpl<R>
 
 	private void applyResultSetMapping(ResultSetMappingDescriptor resultSetMappingDescriptor) {
 		this.resultSetMappingDescriptor = resultSetMappingDescriptor;
+	}
+
+	@Override
+	public Query<R> applyGraph(RootGraph<?> graph, GraphSemantic semantic) {
+		throw new HibernateException( "A native SQL query cannot use EntityGraphs" );
 	}
 
 	public NativeQueryImpl(

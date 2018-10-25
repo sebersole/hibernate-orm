@@ -38,6 +38,9 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableOutputPara
 	String NAVIGABLE_ID = "{id}";
 	String LEGACY_NAVIGABLE_ID = "id";
 
+	@Override
+	SimpleTypeDescriptor<J> getNavigableType();
+
 	/**
 	 * Is this identifier defined by a single attribute on the entity?
 	 * <p/>

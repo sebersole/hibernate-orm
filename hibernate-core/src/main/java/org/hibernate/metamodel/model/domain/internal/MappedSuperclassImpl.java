@@ -8,11 +8,12 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import java.util.Set;
 import javax.persistence.metamodel.SingularAttribute;
-import javax.persistence.metamodel.Type;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
+import org.hibernate.graph.internal.SubGraphImpl;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractIdentifiableType;
@@ -21,6 +22,7 @@ import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 
 /**
@@ -64,6 +66,16 @@ public class MappedSuperclassImpl<J>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public <S extends J> SubGraphImplementor<S> makeSubGraph(Class<S> subType) {
+		return new SubGraphImpl(
+				this,
+				true,
+				getTypeConfiguration().getSessionFactory()
+		);
+	}
+
+	@Override
 	public <Y> SingularAttribute<? super J, Y> getId(Class<Y> type) {
 		throw new NotYetImplementedFor6Exception(  );
 	}
@@ -99,7 +111,7 @@ public class MappedSuperclassImpl<J>
 	}
 
 	@Override
-	public Type<?> getIdType() {
+	public SimpleTypeDescriptor<?> getIdType() {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 

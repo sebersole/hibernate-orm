@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.ast.produce.ordering.internal;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.sqm.SemanticException;
 import org.hibernate.query.sqm.produce.path.internal.SemanticPathPartNamedEntity;
 import org.hibernate.query.sqm.produce.path.internal.SemanticPathPartNamedPackage;
@@ -59,7 +59,7 @@ public class SemanticPathPartRoot implements SemanticPathPart {
 		}
 
 		// #3
-		final EntityDescriptor entityByName = context.getSessionFactory()
+		final EntityTypeDescriptor entityByName = context.getSessionFactory()
 				.getMetamodel()
 				.findEntityDescriptor( name );
 		if ( entityByName != null ) {

@@ -12,7 +12,7 @@ import org.hibernate.envers.internal.synchronization.work.AuditWorkUnit;
 import org.hibernate.envers.internal.synchronization.work.DelWorkUnit;
 import org.hibernate.event.spi.PostDeleteEvent;
 import org.hibernate.event.spi.PostDeleteEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Envers-specific entity (post) deletion event listener
@@ -60,7 +60,7 @@ public class EnversPostDeleteEventListenerImpl extends BaseEnversEventListener i
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+	public boolean requiresPostCommitHandling(EntityTypeDescriptor descriptor) {
 		return getAuditService().getEntityBindings().isVersioned( descriptor.getEntityName() );
 	}
 }

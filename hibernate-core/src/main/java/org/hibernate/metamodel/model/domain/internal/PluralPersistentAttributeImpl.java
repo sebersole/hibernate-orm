@@ -25,17 +25,23 @@ import org.hibernate.internal.util.MarkerObject;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.DomainType;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.BagPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.CollectionMutabilityPlan;
+import org.hibernate.metamodel.model.domain.spi.DomainModelHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
-import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.ListPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MapPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.SetPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
@@ -59,10 +65,10 @@ import org.jboss.logging.Logger;
 
 /**
  * todo (6.0) : potentially split this single impl into specific impls for each "collection nature":
- * 		`collection`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection}
- * 		`list`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeList}
- * 		`set`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeSet}
- * 		`map`:: {@link org.hibernate.metamodel.model.domain.spi.PluralAttributeMap}
+ * 		`collection`:: {@link BagPersistentAttribute}
+ * 		`list`:: {@link ListPersistentAttribute}
+ * 		`set`:: {@link SetPersistentAttribute}
+ * 		`map`:: {@link MapPersistentAttribute}
  * 		`bag`:: synonym for `collection`
  * 		`idbag`:: not sure yet
  *
@@ -92,7 +98,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 
 		creationContext.registerCollectionDescriptor( collectionDescriptor, bootCollectionDescriptor );
 
-		this.fetchStrategy = Helper.determineFetchStrategy( bootCollectionDescriptor );
+		this.fetchStrategy = DomainModelHelper.determineFetchStrategy( bootCollectionDescriptor );
 	}
 
 	@Override
@@ -125,6 +131,23 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	@Override
 	public ManagedTypeDescriptor getContainer() {
 		return getPersistentCollectionDescriptor().getContainer();
+	}
+
+	@Override
+	public SimpleTypeDescriptor getElementType() {
+		return collectionDescriptor.getElementDescriptor().getDomainTypeDescriptor();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getValueGraphType() {
+		return getElementType();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return collectionDescriptor.getIndexDescriptor() == null
+				? null
+				: collectionDescriptor.getIndexDescriptor().getDomainTypeDescriptor();
 	}
 
 	@Override
@@ -413,5 +436,10 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 //				creationState.determineLockMode( resultVariable ),
 //				createDomainResult(  ),
 //		);
+	}
+
+	@Override
+	public DomainType getAttributeType() {
+		return null;
 	}
 }

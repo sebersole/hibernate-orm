@@ -16,8 +16,8 @@ import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.envers.query.internal.property.PropertyNameGetter;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -60,14 +60,14 @@ public class SimpleAuditExpression extends AbstractAtomicExpression {
 			// Any other operator for a component type will not be supported.
 			// Non-component types will continue to behave normally.
 			final SessionImplementor session = versionsReader.getSessionImplementor();
-			final PersistentAttribute persistentAttribute = getPersistentAttribute( session, entityName, propertyName );
+			final PersistentAttributeDescriptor persistentAttribute = getPersistentAttribute( session, entityName, propertyName );
 			if ( persistentAttribute != null && persistentAttribute instanceof SingularPersistentAttributeEmbedded ) {
 				if ( !"=".equals( op ) && !"<>".equals( op ) ) {
 					throw new AuditException( "Component-based criterion is not supported for op: " + op );
 				}
 				final SingularPersistentAttributeEmbedded embeddedAttribute = (SingularPersistentAttributeEmbedded) persistentAttribute;
-				final Collection<PersistentAttribute> attributes = embeddedAttribute.getEmbeddedDescriptor().getPersistentAttributes();
-				for ( PersistentAttribute attribute : attributes ) {
+				final Collection<PersistentAttributeDescriptor> attributes = embeddedAttribute.getEmbeddedDescriptor().getPersistentAttributes();
+				for ( PersistentAttributeDescriptor attribute : attributes ) {
 					final Object attributeValue = embeddedAttribute.getEmbeddedDescriptor().getPropertyValue( value, attribute.getName() );
 					parameters.addWhereWithParam(
 							alias,
@@ -102,11 +102,11 @@ public class SimpleAuditExpression extends AbstractAtomicExpression {
 	 *
 	 * @return the persistent attribute or {@code null} if the attribute isn't found.
 	 */
-	private PersistentAttribute getPersistentAttribute(
+	private PersistentAttributeDescriptor getPersistentAttribute(
 			SessionImplementor session,
 			String entityName,
 			String attributeName) {
-		final EntityDescriptor entityDescriptor = session
+		final EntityTypeDescriptor entityDescriptor = session
 				.getSessionFactory()
 				.getMetamodel()
 				.findEntityDescriptor( entityName );

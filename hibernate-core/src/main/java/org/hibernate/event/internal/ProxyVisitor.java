@@ -12,7 +12,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -27,7 +27,7 @@ public abstract class ProxyVisitor extends AbstractVisitor {
 	}
 
 	@Override
-	Object processEntity(Object value, EntityDescriptor descriptor) throws HibernateException {
+	Object processEntity(Object value, EntityTypeDescriptor descriptor) throws HibernateException {
 
 		if (value!=null) {
 			getSession().getPersistenceContext().reassociateIfUninitializedProxy(value);

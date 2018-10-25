@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Structured CacheEntry format for entities.  Used to store the entry into the second-level cache
@@ -24,14 +24,14 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 	public static final String SUBCLASS_KEY = "_subclass";
 	public static final String VERSION_KEY = "_version";
 
-	private EntityDescriptor descriptor;
+	private EntityTypeDescriptor descriptor;
 
 	/**
 	 * Constructs a StructuredCacheEntry strategy
 	 *
 	 * @param descriptor The descriptor whose data needs to be structured.
 	 */
-	public StructuredCacheEntry(EntityDescriptor descriptor) {
+	public StructuredCacheEntry(EntityTypeDescriptor descriptor) {
 		this.descriptor = descriptor;
 	}
 
@@ -41,7 +41,7 @@ public class StructuredCacheEntry implements CacheEntryStructure {
 		final Map map = (Map) structured;
 		final String subclass = (String) map.get( SUBCLASS_KEY );
 		final Object version = map.get( VERSION_KEY );
-		final EntityDescriptor subclassDescriptor = factory.getEntityPersister( subclass );
+		final EntityTypeDescriptor subclassDescriptor = factory.getEntityPersister( subclass );
 		final String[] names = subclassDescriptor.getPropertyNames();
 		final Serializable[] state = new Serializable[names.length];
 		for ( int i = 0; i < names.length; i++ ) {

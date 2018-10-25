@@ -57,8 +57,8 @@ public abstract class AbstractSingularPersistentAttribute<O,J>
 	}
 
 	@Override
-	public javax.persistence.metamodel.Type<J> getType() {
-		return this;
+	public SimpleTypeDescriptor<J> getAttributeType() {
+		return getType();
 	}
 
 	@Override

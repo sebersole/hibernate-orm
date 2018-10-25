@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -45,7 +45,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 public class QueryResultBuilderRootEntity
 		implements NativeQuery.RootReturn, WrappableQueryResultBuilder, ColumnReferenceQualifier {
 	private final String tableAlias;
-	private final EntityDescriptor entityDescriptor ;
+	private final EntityTypeDescriptor entityDescriptor ;
 	private LockMode lockMode = LockMode.READ;
 
 	private List<String> idColumnAliases;
@@ -53,7 +53,7 @@ public class QueryResultBuilderRootEntity
 
 	private Map<String, AttributeMapping> propertyMappings;
 
-	public QueryResultBuilderRootEntity(String tableAlias, EntityDescriptor entityDescriptor ) {
+	public QueryResultBuilderRootEntity(String tableAlias, EntityTypeDescriptor entityDescriptor ) {
 		this.tableAlias = tableAlias;
 		this.entityDescriptor = entityDescriptor;
 //		sqlSelectionGroupBuilder = new EntitySqlSelectionGroupOverridableBuilder(  );
@@ -151,11 +151,11 @@ public class QueryResultBuilderRootEntity
 	}
 
 	public static class EntityResultImpl extends AbstractEntityMappingNode implements EntityResult {
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private final String queryResultVariable;
 
 		public EntityResultImpl(
-				EntityDescriptor entityDescriptor,
+				EntityTypeDescriptor entityDescriptor,
 				String queryResultVariable,
 				LockMode lockMode,
 				DomainResultCreationState creationState,

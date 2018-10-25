@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.from;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Convenience base class for FromElement implementations
@@ -51,7 +51,7 @@ public abstract class AbstractSqmFrom implements SqmFrom {
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
-		return (EntityDescriptor) getUsageDetails().getIntrinsicSubclassIndicator();
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
+		return (EntityTypeDescriptor) getUsageDetails().getIntrinsicSubclassIndicator();
 	}
 }

@@ -11,8 +11,10 @@ import java.util.function.Consumer;
 
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Metamodel;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -30,10 +32,23 @@ public interface MetamodelImplementor extends Metamodel {
 	//		that DatabaseModel holds state that we do not need beyond
 	//		schema-management tooling - init-commands and aux-db-objects
 
-	Set<PersistentCollectionDescriptor<?,?,?>> findCollectionsByEntityParticipant(EntityDescriptor entityDescriptor);
-	Set<String> findCollectionRolesByEntityParticipant(EntityDescriptor entityDescriptor);
+
+	@Override
+	<X> EntityTypeDescriptor<X> entity(Class<X> cls);
+
+	@Override
+	<X> EntityTypeDescriptor<X> entity(String entityName);
+
+	@Override
+	<X> ManagedTypeDescriptor<X> managedType(Class<X> cls);
+
+	Set<PersistentCollectionDescriptor<?,?,?>> findCollectionsByEntityParticipant(EntityTypeDescriptor entityDescriptor);
+	Set<String> findCollectionRolesByEntityParticipant(EntityTypeDescriptor entityDescriptor);
 
 	void visitEntityNameResolvers(Consumer<EntityNameResolver> action);
+
+	@Override
+	<T> RootGraphImplementor<T> findRootGraph(String name);
 
 	/**
 	 * When a Class is referenced in a query, this method is invoked to resolve

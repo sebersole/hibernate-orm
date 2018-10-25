@@ -11,7 +11,7 @@ import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author <a href="mailto:kabir.khan@jboss.org">Kabir Khan</a>
@@ -32,7 +32,7 @@ public class PostInsertEventListenerStandardImpl implements PostInsertEventListe
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+	public boolean requiresPostCommitHandling(EntityTypeDescriptor descriptor) {
 		return callbackRegistry.hasRegisteredCallbacks( descriptor.getMappedClass(), CallbackType.POST_PERSIST );
 	}
 }

@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.secure.spi.PermissionCheckEntityInformation;
 
 /**
@@ -18,7 +18,7 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 	private Object entity;
 	private Object[] state;
 	private Object id;
-	private EntityDescriptor descriptor;
+	private EntityTypeDescriptor descriptor;
 
 	public PreLoadEvent(EventSource session) {
 		super( session );
@@ -45,11 +45,11 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 	 * @deprecated use {@link #getDescriptor()}
 	 */
 	@Deprecated
-	public EntityDescriptor getPersister() {
+	public EntityTypeDescriptor getPersister() {
 		return descriptor;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return descriptor;
 	}
 	
@@ -69,15 +69,15 @@ public class PreLoadEvent extends AbstractEvent implements PermissionCheckEntity
 
 	/**
 	 *
-	 * @deprecated use {@link #setDescriptor(EntityDescriptor)}
+	 * @deprecated use {@link #setDescriptor(EntityTypeDescriptor)}
 	 */
 	@Deprecated
-	public PreLoadEvent setPersister(EntityDescriptor descriptor) {
+	public PreLoadEvent setPersister(EntityTypeDescriptor descriptor) {
 		this.descriptor = descriptor;
 		return this;
 	}
 
-	public PreLoadEvent setDescriptor(EntityDescriptor descriptor) {
+	public PreLoadEvent setDescriptor(EntityTypeDescriptor descriptor) {
 		this.descriptor = descriptor;
 		return this;
 	}

@@ -24,7 +24,7 @@ import org.hibernate.engine.jdbc.LobCreationContext;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.util.config.ConfigurationHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.QueryParameterBindingTypeResolver;
 import org.hibernate.query.spi.QueryProducerImplementor;
@@ -38,7 +38,7 @@ import org.hibernate.type.descriptor.spi.WrapperOptions;
 /**
  * Defines the internal contract shared between {@link org.hibernate.Session} and
  * {@link org.hibernate.StatelessSession} as used by other parts of Hibernate (such as
- * {@link Type}, {@link EntityDescriptor} and
+ * {@link Type}, {@link EntityTypeDescriptor} and
  * {@link PersistentCollectionDescriptor} implementors
  *
  * A Session, through this interface and SharedSessionContractImplementor, implements:<ul>
@@ -197,7 +197,7 @@ public interface SharedSessionContractImplementor
 	 *
 	 * @return The entity key
 	 */
-	EntityKey generateEntityKey(Object id, EntityDescriptor descriptor);
+	EntityKey generateEntityKey(Object id, EntityTypeDescriptor descriptor);
 
 	/**
 	 * Retrieves the interceptor currently in use by this event source.
@@ -248,11 +248,11 @@ public interface SharedSessionContractImplementor
 	 * @deprecated since 6.0, use {@link #getEntityDescriptor(String, Object)} instead.
 	 */
 	@Deprecated
-	default EntityDescriptor getEntityPersister(String entityName, Object object) throws HibernateException {
+	default EntityTypeDescriptor getEntityPersister(String entityName, Object object) throws HibernateException {
 		return getEntityDescriptor( entityName, object );
 	}
 
-	EntityDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException;
+	EntityTypeDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException;
 
 	/**
 	 * Get the entity instance associated with the given <tt>Key</tt>,

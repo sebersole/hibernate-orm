@@ -9,7 +9,7 @@ package org.hibernate.sql.results.spi;
 import java.util.Locale;
 
 import org.hibernate.engine.spi.EntityKey;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Representation of an entity being loaded, containing its state
@@ -19,13 +19,13 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public class LoadingEntityEntry {
 	private final EntityInitializer entityInitializer;
 	private final EntityKey entityKey;
-	private final EntityDescriptor descriptor;
+	private final EntityTypeDescriptor descriptor;
 	private final Object entityInstance;
 
 	public LoadingEntityEntry(
 			EntityInitializer entityInitializer,
 			EntityKey entityKey,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			Object entityInstance) {
 		this.entityInitializer = entityInitializer;
 		this.entityKey = entityKey;
@@ -41,7 +41,7 @@ public class LoadingEntityEntry {
 		return entityKey;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return descriptor;
 	}
 

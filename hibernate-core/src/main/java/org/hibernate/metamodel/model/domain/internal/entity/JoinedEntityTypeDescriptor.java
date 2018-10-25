@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.metamodel.model.domain.internal;
+package org.hibernate.metamodel.model.domain.internal.entity;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -26,8 +26,8 @@ import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.mapping.JoinedSubclass;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractEntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
 import org.hibernate.query.sqm.tree.expression.domain.SqmNavigableContainerReference;
@@ -39,9 +39,9 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
+public class JoinedEntityTypeDescriptor<J> extends AbstractEntityTypeDescriptor<J> {
 
-	public JoinedEntityDescriptor(
+	public JoinedEntityTypeDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor<? super J> superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
@@ -55,10 +55,13 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public void finishInitialization(
+	public boolean finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
-		super.finishInitialization( bootDescriptor, creationContext );
+		final boolean superDone = super.finishInitialization( bootDescriptor, creationContext );
+		if ( ! superDone ) {
+			return false;
+		}
 
 		if ( bootDescriptor instanceof RootClass ) {
 			// the hierarchy root
@@ -69,6 +72,8 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 		else {
 			throw new IllegalStateException( "Expecting boot model descriptor to be RootClass or JoinedSubclass, but found : " + bootDescriptor );
 		}
+
+		return true;
 	}
 
 
@@ -300,7 +305,7 @@ public class JoinedEntityDescriptor<J> extends AbstractEntityDescriptor<J> {
 	}
 
 	@Override
-	public EntityDescriptor getSubclassEntityPersister(
+	public EntityTypeDescriptor getSubclassEntityPersister(
 			Object instance, SessionFactoryImplementor factory) {
 		return null;
 	}

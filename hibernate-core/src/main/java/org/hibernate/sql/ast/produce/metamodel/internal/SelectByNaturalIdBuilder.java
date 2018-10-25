@@ -11,7 +11,7 @@ import java.util.Collections;
 import org.hibernate.LockOptions;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.sql.ast.produce.spi.SqlAstSelectDescriptor;
 
@@ -22,12 +22,12 @@ public class SelectByNaturalIdBuilder extends AbstractMetamodelSelectBuilder {
 	public SelectByNaturalIdBuilder(
 			SessionFactoryImplementor sessionFactory,
 			NavigableContainer rootNavigable) {
-		super( sessionFactory, rootNavigable, ( (EntityDescriptor) rootNavigable ).getHierarchy().getNaturalIdDescriptor() );
+		super( sessionFactory, rootNavigable, ( (EntityTypeDescriptor) rootNavigable ).getHierarchy().getNaturalIdDescriptor() );
 	}
 
 	@Override
-	public EntityDescriptor getRootNavigableContainer() {
-		return (EntityDescriptor) super.getRootNavigableContainer();
+	public EntityTypeDescriptor getRootNavigableContainer() {
+		return (EntityTypeDescriptor) super.getRootNavigableContainer();
 	}
 
 	@Override

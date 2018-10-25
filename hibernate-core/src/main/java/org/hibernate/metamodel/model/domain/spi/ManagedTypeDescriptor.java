@@ -16,7 +16,10 @@ import org.hibernate.HibernateException;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
+import org.hibernate.graph.Graph;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.ManagedDomainType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.ManagedJavaDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -24,7 +27,7 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * Hibernate extension SPI for working with {@link ManagedType} implementations.  All
  * concrete ManagedType implementations (entity and embedded) are modelled as a
- * "descriptor" (see {@link EntityDescriptor} and {@link EmbeddedTypeDescriptor}
+ * "descriptor" (see {@link EntityTypeDescriptor} and {@link EmbeddedTypeDescriptor}
  *
  * NOTE : Hibernate additionally classifies plural attributes via a "descriptor" :
  * {@link PersistentCollectionDescriptor}.
@@ -34,7 +37,8 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 public interface ManagedTypeDescriptor<T>
-		extends ManagedType<T>, NavigableContainer<T>, EmbeddedContainer<T>, ExpressableType<T>, StateArrayContributorContainer {
+		extends ManagedDomainType<T>,
+		SimpleTypeDescriptor<T>, NavigableContainer<T>, EmbeddedContainer<T>, ExpressableType<T>, StateArrayContributorContainer {
 
 	/**
 	 * Opportunity to perform any final tasks as part of initialization of the
@@ -53,6 +57,13 @@ public interface ManagedTypeDescriptor<T>
 	TypeConfiguration getTypeConfiguration();
 
 	ManagedJavaDescriptor<T> getJavaTypeDescriptor();
+
+	/**
+	 * The Hibernate "type name" ("entity name" - for non-POJO representations)
+	 */
+	default String getDomainTypeName() {
+		return getJavaTypeDescriptor().getTypeName();
+	}
 
 	ManagedTypeRepresentationStrategy getRepresentationStrategy();
 
@@ -89,7 +100,7 @@ public interface ManagedTypeDescriptor<T>
 	}
 
 	@SuppressWarnings("unchecked")
-	default <O,J> void visitAttributes(Consumer<PersistentAttribute<O,J>> action, Predicate<PersistentAttribute<O,J>> filter) {
+	default <O,J> void visitAttributes(Consumer<PersistentAttributeDescriptor<O,J>> action, Predicate<PersistentAttributeDescriptor<O,J>> filter) {
 		visitAttributes(
 				attribute -> {
 					if ( filter.test( attribute ) ) {
@@ -174,4 +185,33 @@ public interface ManagedTypeDescriptor<T>
 	default Object getPropertyValue(Object object, String propertyName) {
 		return findPersistentAttribute( propertyName ).getPropertyAccess().getGetter().get( object );
 	}
+
+	/**
+	 * Make an empty sub-graph based on this type.
+	 *
+	 * @apiNote Note that this is *not* the same as the type's
+	 * {@linkplain #getDefaultGraph "default" graph}
+	 */
+	SubGraphImplementor<T> makeSubGraph();
+
+	/**
+	 * The default graph for this type.  Generally this is used to
+	 * implement JPA's notion of a "load graph" for undefined sub-graphs.
+	 *
+	 * @apiNote The return is immutable ({@link Graph#isMutable()} == {@code false}) -
+	 * use a {@linkplain Graph#makeCopy mutable copy}
+	 */
+	default SubGraphImplementor<T> getDefaultGraph() {
+		throw new UnsupportedOperationException( "Not yet implemented - " + getClass().getName() );
+	}
+
+	/**
+	 * Make a sub-graph based on one of this type's sub-types
+	 */
+	<S extends T> SubGraphImplementor<S> makeSubGraph(Class<S> subType);
+
+	<S extends T> ManagedTypeDescriptor<S> findSubType(String subTypeName);
+
+	<S extends T> ManagedTypeDescriptor<S> findSubType(Class<S> type);
+
 }

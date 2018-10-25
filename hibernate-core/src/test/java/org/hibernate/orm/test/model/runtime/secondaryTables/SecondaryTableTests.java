@@ -7,7 +7,7 @@
 package org.hibernate.orm.test.model.runtime.secondaryTables;
 
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -34,7 +34,7 @@ public class SecondaryTableTests extends SessionFactoryBasedFunctionalTest {
 
 	@Test
 	public void basicSecondaryTableTest() {
-		final EntityDescriptor<? extends Contact> contactDescriptor = sessionFactory().getMetamodel()
+		final EntityTypeDescriptor<? extends Contact> contactDescriptor = sessionFactory().getMetamodel()
 				.findEntityDescriptor( Contact.class );
 		assertThat( contactDescriptor.getPrimaryTable(), notNullValue() );
 		assertThat( contactDescriptor.getSecondaryTableBindings(), hasSize( 1 ) );

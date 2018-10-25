@@ -12,7 +12,7 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -70,7 +70,7 @@ public final class MessageHelper {
 	 * @return An info string, in the form [FooBar#1]
 	 */
 	public static String infoString(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object id, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
@@ -118,7 +118,7 @@ public final class MessageHelper {
 	 * @return An info string, in the form [FooBar#1]
 	 */
 	public static String infoString(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object id, 
 			JavaTypeDescriptor identifierJavaTypeDescriptor,
 			SessionFactoryImplementor factory) {
@@ -152,7 +152,7 @@ public final class MessageHelper {
 	 * @return An info string, in the form [FooBar#<1,2,3>]
 	 */
 	public static String infoString(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Serializable[] ids, 
 			SessionFactoryImplementor factory) {
 		StringBuilder s = new StringBuilder();
@@ -187,7 +187,7 @@ public final class MessageHelper {
 	 * @param descriptor The descriptor.
 	 * @return An info string, in the form [FooBar]
 	 */
-	public static String infoString(EntityDescriptor descriptor) {
+	public static String infoString(EntityTypeDescriptor descriptor) {
 		StringBuilder s = new StringBuilder();
 		s.append( '[' );
 		if ( descriptor == null ) {

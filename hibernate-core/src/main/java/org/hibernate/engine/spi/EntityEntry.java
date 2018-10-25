@@ -11,7 +11,7 @@ import java.io.ObjectOutputStream;
 
 import org.hibernate.LockMode;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * We need an entry to tell us all about the current state of an object with respect to its persistent state
@@ -49,7 +49,7 @@ public interface EntityEntry {
 
 	Object getVersion();
 
-	default EntityDescriptor getDescriptor(){
+	default EntityTypeDescriptor getDescriptor(){
 		return getPersister();
 	}
 
@@ -58,7 +58,7 @@ public interface EntityEntry {
 	 * @deprecated use {@link #getDescriptor()}
 	 */
 	@Deprecated
-	EntityDescriptor getPersister();
+	EntityTypeDescriptor getPersister();
 
 	/**
 	 * Get the EntityKey based on this EntityEntry.

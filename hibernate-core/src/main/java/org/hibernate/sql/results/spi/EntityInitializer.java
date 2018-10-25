@@ -6,7 +6,7 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Initializer implementation for initializing entity references.
@@ -18,7 +18,7 @@ public interface EntityInitializer extends Initializer, FetchParentAccess {
 	/**
 	 * Get the descriptor for the type of entity being initialized
 	 */
-	EntityDescriptor getEntityDescriptor();
+	EntityTypeDescriptor getEntityDescriptor();
 
 	@Override
 	default FetchParentAccess findFirstEntityDescriptorAccess() {

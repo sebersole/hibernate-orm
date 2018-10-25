@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.hibernate.LockOptions;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
@@ -79,7 +79,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 	}
 
 	private final NonSelectSqlExpressionResolver expressionResolver;
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 	private final EntityTableGroup entityTableGroup;
 
 	private final QuerySpec idTableSelect;
@@ -125,7 +125,7 @@ public class SqmUpdateToSqlAstConverterMultiTable
 					}
 
 					@Override
-					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+					public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 						return sqmStatement.getEntityFromElement().getIntrinsicSubclassEntityMetadata();
 					}
 

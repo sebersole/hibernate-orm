@@ -40,7 +40,7 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.descriptor.java.internal.StringJavaDescriptor;
@@ -219,7 +219,7 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 
 	@Override
 	public boolean containsEntity(String entityName, Serializable identifier) {
-		final EntityDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
+		final EntityTypeDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
 		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		if ( cacheAccess == null ) {
 			return false;
@@ -236,7 +236,7 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 
 	@Override
 	public void evictEntityData(String entityName, Serializable identifier) {
-		final EntityDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
+		final EntityTypeDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
 		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		if ( cacheAccess == null ) {
 			return;
@@ -263,8 +263,8 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 		evictEntityData( sessionFactory.getMetamodel().findEntityDescriptor( entityName ) );
 	}
 
-	protected void evictEntityData(EntityDescriptor entityDescriptor) {
-		final EntityDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
+	protected void evictEntityData(EntityTypeDescriptor entityDescriptor) {
+		final EntityTypeDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
 
 		evictEntityData(
 				rootEntityDescriptor.getNavigableRole(),
@@ -306,7 +306,7 @@ public class EnabledCaching implements CacheImplementor, DomainDataRegionBuildin
 		);
 	}
 
-	private void evictNaturalIdData(EntityDescriptor rootEntityDescriptor) {
+	private void evictNaturalIdData(EntityTypeDescriptor rootEntityDescriptor) {
 		evictNaturalIdData( rootEntityDescriptor.getNavigableRole(), rootEntityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess() );
 	}
 

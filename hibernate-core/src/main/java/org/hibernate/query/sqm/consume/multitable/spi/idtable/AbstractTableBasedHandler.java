@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.consume.multitable.spi.Handler;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
@@ -52,7 +52,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	private static final Logger log = Logger.getLogger( AbstractTableBasedHandler.class );
 
 	private final SqmDeleteOrUpdateStatement sqmDeleteOrUpdateStatement;
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 	private final IdTable idTableInfo;
 	private final SessionUidSupport sessionUidSupport;
 	private final BeforeUseAction beforeUseAction;
@@ -63,7 +63,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 
 	public AbstractTableBasedHandler(
 			SqmDeleteOrUpdateStatement sqmDeleteOrUpdateStatement,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			IdTable idTableInfo,
 			SessionUidSupport sessionUidSupport,
 			BeforeUseAction beforeUseAction,
@@ -81,7 +81,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 		this.tableHelper = idTableHelper;
 	}
 
-	public EntityDescriptor<?> getEntityDescriptor() {
+	public EntityTypeDescriptor<?> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -211,7 +211,7 @@ public abstract class AbstractTableBasedHandler implements Handler {
 	}
 
 	protected static QuerySpec generateEntityIdSelect(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SqmDeleteOrUpdateStatement sqmUpdateStatement,
 			HandlerExecutionContext executionContext) {
 		// todo (6.0) : we are parsing the SQM multiple times here:

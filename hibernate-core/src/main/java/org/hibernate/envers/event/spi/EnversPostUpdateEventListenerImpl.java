@@ -12,7 +12,7 @@ import org.hibernate.envers.internal.synchronization.work.AuditWorkUnit;
 import org.hibernate.envers.internal.synchronization.work.ModWorkUnit;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Envers-specific entity (post) update event listener
@@ -72,7 +72,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 	private Object[] postUpdateDBState(PostUpdateEvent event) {
 		final Object[] newDbState = event.getState().clone();
 		if ( event.getOldState() != null ) {
-			final EntityDescriptor<?> entityDescriptor = event.getDescriptor();
+			final EntityTypeDescriptor<?> entityDescriptor = event.getDescriptor();
 			entityDescriptor.visitStateArrayContributors(
 					contributor -> {
 						int index = contributor.getStateArrayPosition();
@@ -89,7 +89,7 @@ public class EnversPostUpdateEventListenerImpl extends BaseEnversUpdateEventList
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+	public boolean requiresPostCommitHandling(EntityTypeDescriptor descriptor) {
 		return getAuditService().getEntityBindings().isVersioned( descriptor.getEntityName() );
 	}
 }

@@ -21,10 +21,12 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -34,7 +36,6 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmSingularAttributeRefere
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
-import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
@@ -121,8 +122,8 @@ public class SingularPersistentAttributeBasic<O, J>
 	}
 
 	@Override
-	public BasicValuedExpressableType<J> getType() {
-		return (BasicValuedExpressableType<J>) super.getType();
+	public BasicTypeDescriptor<J> getType() {
+		return basicType;
 	}
 
 	@Override
@@ -291,5 +292,15 @@ public class SingularPersistentAttributeBasic<O, J>
 				),
 				getBoundColumn().getExpressableType()
 		);
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getValueGraphType() {
+		return getAttributeType();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return null;
 	}
 }

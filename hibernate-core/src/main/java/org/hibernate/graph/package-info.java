@@ -6,7 +6,11 @@
  */
 
 /**
- * Definition of the Hibernate support for the JPA {@link javax.persistence.EntityGraph} feature-set
- * introduced in JPA 2.1
+ * Hibernate's (extended) support for JPA's entity graphs
+ *
+ * @apiNote This entire package (including sub-ppackages) is considered incubating
  */
+@Incubating
 package org.hibernate.graph;
+
+import org.hibernate.Incubating;

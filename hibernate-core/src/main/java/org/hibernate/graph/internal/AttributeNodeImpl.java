@@ -18,8 +18,8 @@ import org.hibernate.graph.spi.AttributeNodeImplementor;
 import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -118,14 +118,8 @@ public class AttributeNodeImpl<J>
 	}
 
 	@SuppressWarnings("unchecked")
-	public <X> SubgraphImpl<X> makeSubgraph() {
-		return (SubgraphImpl<X>) internalMakeSubgraph( null );
-	}
-
-	@SuppressWarnings("WeakerAccess")
-	public <X extends T> SubgraphImpl<X> makeSubgraph(Class<X> type) {
-		return internalMakeSubgraph( type );
-	}
+	private <T extends J> ManagedTypeDescriptor<T> valueGraphTypeAsManaged() {
+		final SimpleTypeDescriptor<J> valueGraphType = (SimpleTypeDescriptor) getAttributeDescriptor().getValueGraphType();
 
 		if ( valueGraphType instanceof ManagedTypeDescriptor ) {
 			return (ManagedTypeDescriptor) valueGraphType;
@@ -231,27 +225,18 @@ public class AttributeNodeImpl<J>
 			keySubGraphMap = new HashMap<>();
 		}
 
-			if ( EntityIdentifierSimple.class.isInstance( attribute ) ) {
-				throw new IllegalArgumentException(
-						String.format( "Entity identifier [%s] is not of managed type", getAttributeName() )
-				);
-			}
-			else if ( EntityIdentifierCompositeAggregated.class.isInstance( attribute ) ) {
-				associatedManagedTypeDescriptor = ( (EntityIdentifierCompositeAggregated) attribute ).getEmbeddedDescriptor();
-			}
-			else if ( EntityIdentifierCompositeNonAggregated.class.isInstance( attribute ) ) {
-				associatedManagedTypeDescriptor = ( (EntityIdentifierCompositeNonAggregated) attribute ).getEmbeddedDescriptor();
-			}
-			else {
-				throw new IllegalArgumentException(
-						String.format(
-								"Entity identifier metadata not of expected type (%s,%s) : %s",
-								EntityIdentifierCompositeAggregated.class.getName(),
-								EntityIdentifierCompositeNonAggregated.class.getName(),
-								attribute.getClass().getName()
-						)
-				);
-			}
+		final SubGraphImplementor<? extends J> previous = keySubGraphMap.put( subType, (SubGraphImplementor) subGraph );
+		if ( previous != null ) {
+			log.debugf( "Adding key sub-graph [%s] over-wrote existing [%]", subGraph, previous );
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends J> ManagedTypeDescriptor<T> keyGraphTypeAsManaged() {
+		final SimpleTypeDescriptor<J> keyGraphType = (SimpleTypeDescriptor) getAttributeDescriptor().getKeyGraphType();
+
+		if ( keyGraphType instanceof ManagedTypeDescriptor ) {
+			return (ManagedTypeDescriptor) keyGraphType;
 		}
 
 		throw new CannotContainSubGraphException(

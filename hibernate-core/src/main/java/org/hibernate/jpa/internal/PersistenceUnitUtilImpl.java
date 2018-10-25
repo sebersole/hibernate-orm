@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.ManagedEntity;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.jpa.internal.util.PersistenceUtilHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.proxy.HibernateProxy;
 
 import org.jboss.logging.Logger;
@@ -93,7 +93,7 @@ public class PersistenceUnitUtilImpl implements PersistenceUnitUtil, Serializabl
 
 	private Object getIdentifierFromDescriptor(Object entity) {
 		Class<?> entityClass = Hibernate.getClass( entity );
-		final EntityDescriptor descriptor;
+		final EntityTypeDescriptor descriptor;
 		try {
 			descriptor = sessionFactory.getMetamodel().getEntityDescriptor( entityClass );
 			if ( descriptor == null ) {

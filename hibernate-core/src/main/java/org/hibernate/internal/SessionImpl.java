@@ -50,7 +50,6 @@ import org.hibernate.LobHelper;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
-import org.hibernate.Metamodel;
 import org.hibernate.MultiIdentifierLoadAccess;
 import org.hibernate.NaturalIdLoadAccess;
 import org.hibernate.ObjectDeletedException;
@@ -131,9 +130,10 @@ import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
 import org.hibernate.loader.spi.MultiLoadOptions;
 import org.hibernate.loader.spi.NaturalIdLoader;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
+import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
@@ -1075,7 +1075,7 @@ public final class SessionImpl
 	@Override
 	public Object immediateLoad(String entityName, Object id) throws HibernateException {
 		if ( log.isDebugEnabled() ) {
-			EntityDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
+			EntityTypeDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
 			log.debugf( "Initializing proxy: %s", MessageHelper.infoString( descriptor, id, getFactory() ) );
 		}
 		LoadEvent event = loadEvent;
@@ -1466,7 +1466,7 @@ public final class SessionImpl
 	 * give the interceptor an opportunity to override the default instantiation
 	 */
 	@Override
-	public Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException {
+	public Object instantiate(EntityTypeDescriptor entityDescriptor, Object id) throws HibernateException {
 		checkOpenOrWaitingForAutoClose();
 		checkTransactionSynchStatus();
 		Object result = getInterceptor().instantiate(
@@ -1482,7 +1482,7 @@ public final class SessionImpl
 	}
 
 	@Override
-	public EntityDescriptor getEntityDescriptor(final String entityName, final Object object) {
+	public EntityTypeDescriptor getEntityDescriptor(final String entityName, final Object object) {
 		checkOpenOrWaitingForAutoClose();
 		if ( entityName == null ) {
 			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );
@@ -2199,11 +2199,11 @@ public final class SessionImpl
 	}
 
 	private class IdentifierLoadAccessImpl<T> implements IdentifierLoadAccess<T> {
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private CacheMode cacheMode;
 
-		private IdentifierLoadAccessImpl(EntityDescriptor entityDescriptor) {
+		private IdentifierLoadAccessImpl(EntityTypeDescriptor entityDescriptor) {
 			this.entityDescriptor = entityDescriptor;
 		}
 
@@ -2331,7 +2331,7 @@ public final class SessionImpl
 	}
 
 	private class MultiIdentifierLoadAccessImpl<T> implements MultiIdentifierLoadAccess<T>, MultiLoadOptions {
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private CacheMode cacheMode;
 		private Integer batchSize;
@@ -2339,7 +2339,7 @@ public final class SessionImpl
 		private boolean returnOfDeletedEntitiesEnabled;
 		private boolean orderedReturnEnabled = true;
 
-		public MultiIdentifierLoadAccessImpl(EntityDescriptor entityDescriptor) {
+		public MultiIdentifierLoadAccessImpl(EntityTypeDescriptor entityDescriptor) {
 			this.entityDescriptor = entityDescriptor;
 		}
 
@@ -2464,20 +2464,20 @@ public final class SessionImpl
 		}
 	}
 
-	private <T> EntityDescriptor<? extends T> locateEntityDescriptor(Class<T> entityClass) {
+	private <T> EntityTypeDescriptor<? extends T> locateEntityDescriptor(Class<T> entityClass) {
 		return getFactory().getMetamodel().getEntityDescriptor( entityClass );
 	}
 
-	private <T> EntityDescriptor<? extends T> locateEntityDescriptor(String entityName) {
+	private <T> EntityTypeDescriptor<? extends T> locateEntityDescriptor(String entityName) {
 		return getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
 	private abstract class BaseNaturalIdLoadAccessImpl<T> implements NaturalIdLoader.LoadOptions {
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private LockOptions lockOptions;
 		private boolean synchronizationEnabled = true;
 
-		private BaseNaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+		private BaseNaturalIdLoadAccessImpl(EntityTypeDescriptor entityDescriptor) {
 			this.entityDescriptor = entityDescriptor;
 
 			if ( entityDescriptor.getHierarchy().getNaturalIdDescriptor() == null ) {
@@ -2572,11 +2572,11 @@ public final class SessionImpl
 		 * @deprecated (since 6.0) Use {@link #entityDescriptor()} instead
 		 */
 		@Deprecated
-		protected EntityDescriptor entityPersister() {
+		protected EntityTypeDescriptor entityPersister() {
 			return entityDescriptor;
 		}
 
-		protected EntityDescriptor entityDescriptor() {
+		protected EntityTypeDescriptor entityDescriptor() {
 			return entityDescriptor;
 		}
 
@@ -2594,7 +2594,7 @@ public final class SessionImpl
 	private class NaturalIdLoadAccessImpl<T> extends BaseNaturalIdLoadAccessImpl<T> implements NaturalIdLoadAccess<T> {
 		private final Map<String, Object> naturalIdParameters = new LinkedHashMap<>();
 
-		private NaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+		private NaturalIdLoadAccessImpl(EntityTypeDescriptor entityDescriptor) {
 			super( entityDescriptor );
 		}
 
@@ -2655,7 +2655,7 @@ public final class SessionImpl
 			implements SimpleNaturalIdLoadAccess<T> {
 		private final String naturalIdAttributeName;
 
-		private SimpleNaturalIdLoadAccessImpl(EntityDescriptor entityDescriptor) {
+		private SimpleNaturalIdLoadAccessImpl(EntityTypeDescriptor entityDescriptor) {
 			super( entityDescriptor );
 
 			final NaturalIdDescriptor<?> naturalIdentifierDescriptor = entityDescriptor.getHierarchy()
@@ -2679,7 +2679,7 @@ public final class SessionImpl
 				);
 			}
 
-			final PersistentAttribute persistentAttribute = naturalIdentifierDescriptor.getAttributeInfos().iterator().next().getUnderlyingAttributeDescriptor();
+			final PersistentAttributeDescriptor persistentAttribute = naturalIdentifierDescriptor.getAttributeInfos().iterator().next().getUnderlyingAttributeDescriptor();
 			this.naturalIdAttributeName = persistentAttribute.getAttributeName();
 		}
 
@@ -3294,26 +3294,26 @@ public final class SessionImpl
 	}
 
 	@Override
-	public Metamodel getMetamodel() {
+	public MetamodelImplementor getMetamodel() {
 		checkOpen();
 		return getFactory().getMetamodel();
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityGraph<T> createEntityGraph(Class<T> rootType) {
+	public <T> RootGraphImplementor<T> createEntityGraph(Class<T> rootType) {
 		checkOpen();
-		return new EntityGraphImpl<T>(
+		return new RootGraphImpl<>(
 				null,
-				(EntityDescriptor<T>) getFactory().getMetamodel().getEntityDescriptor( rootType ),
+				getFactory().getMetamodel().getEntityDescriptor( rootType ),
 				getEntityManagerFactory()
 		);
 	}
 
 	@Override
-	public EntityGraph<?> createEntityGraph(String graphName) {
+	public RootGraphImplementor<?> createEntityGraph(String graphName) {
 		checkOpen();
-		final EntityGraph named = getEntityManagerFactory().findEntityGraphByName( graphName );
+		final RootGraphImplementor named = getMetamodel().findRootGraph( graphName );
 		if ( named == null ) {
 			return null;
 		}

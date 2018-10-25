@@ -26,11 +26,12 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierComposite;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.tree.SqmQuerySpec;
@@ -498,7 +499,7 @@ public abstract class BaseSqmToSqlAstConverter
 		}
 
 		final SqmEntityReference binding = sqmRoot.getNavigableReference();
-		final EntityDescriptor entityMetadata = (EntityDescriptor) binding.getReferencedNavigable();
+		final EntityTypeDescriptor entityMetadata = (EntityTypeDescriptor) binding.getReferencedNavigable();
 		final EntityTableGroup group = entityMetadata.createRootTableGroup(
 				sqmRoot,
 				new RootTableGroupContext() {
@@ -566,7 +567,7 @@ public abstract class BaseSqmToSqlAstConverter
 		final QuerySpec querySpec = currentQuerySpec();
 		final TableGroup lhsTableGroup = fromClauseIndex.findResolvedTableGroup( joinedFromElement.getLhs() );
 
-		final PersistentAttribute joinedAttribute = joinedFromElement.getAttributeReference().getReferencedNavigable();
+		final PersistentAttributeDescriptor joinedAttribute = joinedFromElement.getAttributeReference().getReferencedNavigable();
 		if ( joinedAttribute instanceof SingularPersistentAttributeEmbedded ) {
 			return lhsTableGroup;
 		}
@@ -655,7 +656,7 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public TableGroupJoin visitCrossJoinedFromElement(SqmCrossJoin joinedFromElement) {
 		final QuerySpec querySpec = currentQuerySpec();
-		final EntityDescriptor entityDescriptor = joinedFromElement.getIntrinsicSubclassEntityMetadata();
+		final EntityTypeDescriptor entityDescriptor = joinedFromElement.getIntrinsicSubclassEntityMetadata();
 		final EntityTableGroup group = entityDescriptor.createRootTableGroup(
 				joinedFromElement,
 				new RootTableGroupContext() {

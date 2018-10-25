@@ -13,7 +13,7 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.domain.internal.composite.EmbeddedTypeDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.MappedSuperclassImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.service.Service;
@@ -39,7 +39,7 @@ public interface RuntimeModelDescriptorClassResolver extends Service {
 	 *
 	 * @return The entity persister class to use
 	 */
-	Class<? extends EntityDescriptor> getEntityDescriptorClass(EntityMapping bootMapping);
+	Class<? extends EntityTypeDescriptor> getEntityDescriptorClass(EntityMapping bootMapping);
 
 	/**
 	 * Returns the collection persister class for a given collection role or null
@@ -69,7 +69,7 @@ public interface RuntimeModelDescriptorClassResolver extends Service {
 	 * Returns the collection persister class for a given collection role or null
 	 * if the collection persister class should be the default.
 	 *
-	 * @param bootMapping The embedded mapping metadata
+	 * @param bootValueMapping The embedded mapping metadata
 	 *
 	 * @return The persister class to use
 	 *

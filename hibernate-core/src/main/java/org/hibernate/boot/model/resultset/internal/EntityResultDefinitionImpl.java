@@ -11,7 +11,7 @@ import org.hibernate.LockMode;
 import org.hibernate.Metamodel;
 import org.hibernate.boot.model.resultset.spi.ResultSetMappingDefinition;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.sql.spi.QueryResultBuilder;
 import org.hibernate.query.sql.spi.QueryResultBuilderRootEntity;
 
@@ -51,7 +51,7 @@ public class EntityResultDefinitionImpl implements ResultSetMappingDefinition.En
 
 	@Override
 	public QueryResultBuilder generateQueryResultBuilder(Metamodel metamodel) {
-		final EntityDescriptor entityDescriptor;
+		final EntityTypeDescriptor entityDescriptor;
 		if ( StringHelper.isNotEmpty( entityName ) ) {
 			entityDescriptor = metamodel.findEntityDescriptor( entityName );
 		}

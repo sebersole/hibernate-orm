@@ -36,18 +36,18 @@ import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cfg.annotations.NamedEntityGraphDefinition;
 import org.hibernate.collection.spi.CollectionSemanticsResolver;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.graph.internal.AbstractAttributeNodeContainer;
-import org.hibernate.graph.internal.AttributeNodeImpl;
-import org.hibernate.graph.internal.EntityGraphImpl;
-import org.hibernate.graph.internal.SubgraphImpl;
+import org.hibernate.graph.internal.RootGraphImpl;
+import org.hibernate.graph.spi.AttributeNodeImplementor;
+import org.hibernate.graph.spi.GraphImplementor;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
@@ -85,8 +85,8 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 
 	private final RuntimeModelDescriptorFactory descriptorFactory;
 
-	private final Map<EntityMappingHierarchy,IdentifiableTypeDescriptor> runtimeRootByBootHierarchy = new HashMap<>();
-	private final Map<EntityMappingHierarchy,EntityDescriptor> runtimeRootEntityByBootHierarchy = new HashMap<>();
+	private final Map<EntityMappingHierarchy,IdentifiableTypeDescriptor> runtimeRootByBootHierarchy = new LinkedHashMap<>();
+	private final Map<EntityMappingHierarchy, EntityTypeDescriptor> runtimeRootEntityByBootHierarchy = new LinkedHashMap<>();
 
 	private final Map<IdentifiableTypeMappingImplementor,IdentifiableTypeDescriptor> runtimeByBoot = new LinkedHashMap<>();
 	private final Map<IdentifiableTypeDescriptor,IdentifiableTypeMappingImplementor> bootByRuntime = new LinkedHashMap<>();
@@ -147,7 +147,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 //		resolveForeignKeys( mappingMetadata, creationContext );
 
 		for ( EntityMappingHierarchy bootHierarchy : mappingMetadata.getEntityHierarchies() ) {
-			final EntityDescriptor<?> rootEntityDescriptor = (EntityDescriptor<?>) createIdentifiableType(
+			final EntityTypeDescriptor<?> rootEntityDescriptor = (EntityTypeDescriptor<?>) createIdentifiableType(
 					bootHierarchy.getRootType(),
 					null,
 					creationContext
@@ -197,7 +197,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		//		have to walk down here as opposed to above with `#walkSupers` and `#walkSubs`
 
 		for ( Map.Entry<EntityMappingHierarchy, IdentifiableTypeDescriptor> entry : runtimeRootByBootHierarchy.entrySet() ) {
-			final EntityDescriptor runtimeRootEntity = runtimeRootEntityByBootHierarchy.get( entry.getKey() );
+			final EntityTypeDescriptor runtimeRootEntity = runtimeRootEntityByBootHierarchy.get( entry.getKey() );
 			final IdentifiableTypeDescriptor runtimeRootRoot = entry.getValue();
 			final RootClass bootRootEntity = (RootClass) bootByRuntime.get( runtimeRootEntity );
 
@@ -326,8 +326,8 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		assert runtimeHierarchy != null;
 		assert runtimeMapping != null;
 
-		if ( runtimeMapping instanceof EntityDescriptor ) {
-			creationContext.registerEntityDescriptor( (EntityDescriptor) runtimeMapping, (EntityMapping) bootMapping );
+		if ( runtimeMapping instanceof EntityTypeDescriptor ) {
+			creationContext.registerEntityDescriptor( (EntityTypeDescriptor) runtimeMapping, (EntityMapping) bootMapping );
 		}
 
 		if ( bootMapping.getSuperTypeMapping() == null ) {
@@ -384,8 +384,8 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		bootByRuntime.put( runtimeType, bootMapping );
 		runtimeByBoot.put( bootMapping, runtimeType );
 
-		if ( runtimeType instanceof EntityDescriptor ) {
-			creationContext.registerEntityDescriptor( (EntityDescriptor) runtimeType, (EntityMapping) bootMapping );
+		if ( runtimeType instanceof EntityTypeDescriptor ) {
+			creationContext.registerEntityDescriptor( (EntityTypeDescriptor) runtimeType, (EntityMapping) bootMapping );
 		}
 		else if ( runtimeType instanceof MappedSuperclassDescriptor ) {
 			creationContext.registerMappedSuperclassDescriptor(
@@ -423,7 +423,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 				definition.getJpaEntityName()
 		);
 
-		final EntityDescriptor<Object> entityDescriptor = inFlightRuntimeModel.findEntityDescriptor( definition.getEntityName() );
+		final EntityTypeDescriptor<Object> entityDescriptor = inFlightRuntimeModel.findEntityDescriptor( definition.getEntityName() );
 		if ( entityDescriptor == null ) {
 			throw new IllegalArgumentException(
 					"Attempted to register named entity graph [" + definition.getRegisteredName()
@@ -432,7 +432,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 			);
 		}
 
-		final EntityGraphImpl<?> entityGraph = new EntityGraphImpl<>(
+		final RootGraphImpl<?> entityGraph = new RootGraphImpl<>(
 				definition.getRegisteredName(),
 				entityDescriptor,
 				sessionFactory
@@ -450,18 +450,18 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 			applyNamedAttributeNodes( namedEntityGraph.attributeNodes(), namedEntityGraph, entityGraph );
 		}
 
-		inFlightRuntimeModel.addEntityNamedGraph( definition.getRegisteredName(), entityGraph );
+		inFlightRuntimeModel.addNamedRootGraph( definition.getRegisteredName(), entityGraph );
 	}
 
 	private void applyNamedAttributeNodes(
 			NamedAttributeNode[] namedAttributeNodes,
 			NamedEntityGraph namedEntityGraph,
-			AbstractAttributeNodeContainer graphNode) {
+			GraphImplementor graphNode) {
 		for ( NamedAttributeNode namedAttributeNode : namedAttributeNodes ) {
 			final String value = namedAttributeNode.value();
-			AttributeNodeImpl attributeNode = graphNode.addAttribute( value );
+			AttributeNodeImplementor attributeNode = graphNode.addAttributeNode( value );
 			if ( StringHelper.isNotEmpty( namedAttributeNode.subgraph() ) ) {
-				final SubgraphImpl subgraph = attributeNode.makeSubgraph();
+				final SubGraphImplementor subgraph = attributeNode.makeSubGraph();
 				applyNamedSubgraphs(
 						namedEntityGraph,
 						namedAttributeNode.subgraph(),
@@ -469,7 +469,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 				);
 			}
 			if ( StringHelper.isNotEmpty( namedAttributeNode.keySubgraph() ) ) {
-				final SubgraphImpl subgraph = attributeNode.makeKeySubgraph();
+				final SubGraphImplementor subgraph = attributeNode.makeKeySubGraph();
 
 				applyNamedSubgraphs(
 						namedEntityGraph,
@@ -480,7 +480,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 	}
 
-	private void applyNamedSubgraphs(NamedEntityGraph namedEntityGraph, String subgraphName, SubgraphImpl subgraph) {
+	private void applyNamedSubgraphs(NamedEntityGraph namedEntityGraph, String subgraphName, SubGraphImplementor subgraph) {
 		for ( NamedSubgraph namedSubgraph : namedEntityGraph.subgraphs() ) {
 			if ( subgraphName.equals( namedSubgraph.name() ) ) {
 				applyNamedAttributeNodes(
@@ -572,7 +572,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public void registerEntityDescriptor(EntityDescriptor runtimeDescriptor, EntityMapping bootDescriptor) {
+		public void registerEntityDescriptor(EntityTypeDescriptor runtimeDescriptor, EntityMapping bootDescriptor) {
 			inFlightRuntimeModel.addEntityDescriptor( runtimeDescriptor );
 
 			if ( RootClass.class.isInstance( bootDescriptor ) ) {
@@ -591,7 +591,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 
 		private void addEntityCachingConfig(
-				EntityDescriptor runtimeDescriptor,
+				EntityTypeDescriptor runtimeDescriptor,
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder  builder = locateBuilder( bootDescriptor.getCacheRegionName() );
@@ -606,7 +606,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 
 		private void addNaturalIdCachingConfig(
-				EntityDescriptor runtimeDescriptor,
+				EntityTypeDescriptor runtimeDescriptor,
 				RootClass bootDescriptor,
 				AccessType accessType) {
 			final DomainDataRegionConfigImpl.Builder configBuilder = locateBuilder( bootDescriptor.getCacheRegionName() );

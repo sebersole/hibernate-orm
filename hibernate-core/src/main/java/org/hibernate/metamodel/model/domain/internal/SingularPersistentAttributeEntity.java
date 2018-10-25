@@ -41,16 +41,17 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.DomainModelHelper;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.Helper;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.internal.ColumnMappingImpl;
@@ -128,7 +129,7 @@ public class SingularPersistentAttributeEntity<O, J>
 	private final boolean constrained;
 	private final NavigableRole navigableRole;
 	private final String sqlAliasStem;
-	private final EntityDescriptor<J> entityDescriptor;
+	private final EntityTypeDescriptor<J> entityDescriptor;
 	private final String referencedUkAttributeName;
 	private final FetchStrategy fetchStrategy;
 
@@ -207,7 +208,7 @@ public class SingularPersistentAttributeEntity<O, J>
 
 		instantiationComplete( bootModelAttribute, context );
 
-		this.fetchStrategy = Helper.determineFetchStrategy(
+		this.fetchStrategy = DomainModelHelper.determineFetchStrategy(
 				bootModelAttribute,
 				runtimeModelContainer,
 				entityDescriptor
@@ -335,13 +336,13 @@ public class SingularPersistentAttributeEntity<O, J>
 	}
 
 	@Override
-	public EntityDescriptor<J> getEntityDescriptor() {
+	public EntityTypeDescriptor<J> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
 	@Override
-	public EntityValuedExpressableType<J> getType() {
-		return (EntityValuedExpressableType<J>) super.getType();
+	public EntityTypeDescriptor<J> getType() {
+		return getEntityDescriptor();
 	}
 
 	@Override
@@ -369,7 +370,7 @@ public class SingularPersistentAttributeEntity<O, J>
 		return true;
 	}
 
-	public EntityDescriptor getAssociatedEntityDescriptor() {
+	public EntityTypeDescriptor getAssociatedEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -485,8 +486,8 @@ public class SingularPersistentAttributeEntity<O, J>
 
 		if ( fetchTiming == FetchTiming.DELAYED ) {
 			// todo (6.0) : need general laziness metadata - currently only done for entity
-			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityDescriptor<?>
-					&& ( (EntityDescriptor) getContainer() ).getBytecodeEnhancementMetadata()
+			final boolean isContainerEnhancedForLazy = getContainer() instanceof EntityTypeDescriptor<?>
+					&& ( (EntityTypeDescriptor) getContainer() ).getBytecodeEnhancementMetadata()
 					.isEnhancedForLazyLoading();
 
 			final boolean cannotBeLazy = ( getAttributeTypeClassification() == ONE_TO_ONE && isOptional() ) || isContainerEnhancedForLazy;
@@ -802,6 +803,16 @@ public class SingularPersistentAttributeEntity<O, J>
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getValueGraphType() {
+		return getEntityDescriptor();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return entityDescriptor.getIdentifierDescriptor().getNavigableType();
 	}
 
 	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {

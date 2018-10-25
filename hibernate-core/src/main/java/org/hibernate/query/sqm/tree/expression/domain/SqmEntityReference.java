@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.expression.domain;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.SemanticException;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
@@ -32,13 +32,13 @@ public class SqmEntityReference extends AbstractSqmNavigableReference
 		implements SqmNavigableReference, SqmNavigableContainerReference, SqmEntityTypedReference {
 	private static final Logger log = Logger.getLogger( SqmEntityReference.class );
 
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 	private final SqmFrom exportedFromElement;
 
 	private final NavigablePath propertyPath;
 
 	public SqmEntityReference(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SqmFrom sqmFrom,
 			SqmCreationContext creationContext) {
 		this.entityDescriptor = entityDescriptor;
@@ -46,7 +46,7 @@ public class SqmEntityReference extends AbstractSqmNavigableReference
 		this.propertyPath = new NavigablePath( null, this.entityDescriptor.getEntityName() + '(' + sqmFrom.getIdentificationVariable() + ')' );
 	}
 
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -112,7 +112,7 @@ public class SqmEntityReference extends AbstractSqmNavigableReference
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 		return exportedFromElement.getIntrinsicSubclassEntityMetadata();
 	}
 

@@ -16,7 +16,7 @@ package org.hibernate.metamodel.model.domain.spi;
  * @author Steve Ebersole
  * @since 3.2
  */
-public interface Lockable<T> extends EntityDescriptor<T> {
+public interface Lockable<T> extends EntityTypeDescriptor<T> {
 	/**
 	 * Locks are always applied to the "root table".
 	 *

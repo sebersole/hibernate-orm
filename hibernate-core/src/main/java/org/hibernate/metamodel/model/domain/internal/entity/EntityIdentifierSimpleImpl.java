@@ -17,9 +17,11 @@ import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.sql.ast.Clause;
@@ -71,6 +73,18 @@ public class EntityIdentifierSimpleImpl<O,J>
 	}
 
 	@Override
+	public BasicTypeDescriptor<J> getNavigableType() {
+		return getBasicType();
+	}
+
+	@Override
+	public BasicTypeDescriptor<J> getAttributeType() {
+		return (BasicTypeDescriptor<J>) super.getAttributeType();
+	}
+
+
+
+	@Override
 	public boolean hasSingleIdAttribute() {
 		return true;
 	}
@@ -104,6 +118,11 @@ public class EntityIdentifierSimpleImpl<O,J>
 	@Override
 	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
 		return (BasicJavaDescriptor<J>) super.getJavaTypeDescriptor();
+	}
+
+	@Override
+	public BasicTypeDescriptor<J> getType() {
+		return getAttributeType();
 	}
 
 	@Override
@@ -166,6 +185,16 @@ public class EntityIdentifierSimpleImpl<O,J>
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public BasicTypeDescriptor<?> getValueGraphType() {
+		return getAttributeType();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return null;
 	}
 
 	@Override

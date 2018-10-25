@@ -17,7 +17,7 @@ import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.sqm.consume.multitable.internal.PersistentTableSessionUidSupport;
 import org.hibernate.query.sqm.consume.multitable.internal.StandardIdTableSupport;
@@ -113,7 +113,7 @@ public class PersistentTableStrategy
 
 	@Override
 	protected IdTable generateIdTableDefinition(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SessionFactoryOptions sessionFactoryOptions,
 			JdbcConnectionAccess connectionAccess) {
 		final IdTable idTable = super.generateIdTableDefinition(

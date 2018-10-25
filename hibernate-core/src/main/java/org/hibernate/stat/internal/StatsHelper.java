@@ -7,7 +7,7 @@
 package org.hibernate.stat.internal;
 
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Utilities useful when dealing with stats.
@@ -20,7 +20,7 @@ public class StatsHelper {
 	 */
 	public static final StatsHelper INSTANCE = new StatsHelper();
 
-	public NavigableRole getRootEntityRole(EntityDescriptor entityDescriptor) {
+	public NavigableRole getRootEntityRole(EntityTypeDescriptor entityDescriptor) {
 		return entityDescriptor.getHierarchy().getRootEntityType().getNavigableRole();
 	}
 

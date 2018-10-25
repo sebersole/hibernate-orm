@@ -34,7 +34,7 @@ import org.hibernate.event.spi.MergeEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -147,7 +147,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 				// entity to be merged...
 				EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 				if ( entry == null ) {
-					EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+					EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 					Object id = entityDescriptor.getIdentifier( entity, source );
 					if ( id != null ) {
 						final EntityKey key = source.generateEntityKey( id, entityDescriptor );
@@ -198,7 +198,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
-		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+		final EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 
 		( (MergeContext) copyCache ).put( entity, entity, true );  //before cascade!
 
@@ -216,7 +216,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final EventSource source = event.getSession();
 
 		final String entityName = event.getEntityName();
-		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
+		final EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
 
 		final Object id = EntityIdentifierSimple.class.isInstance( entityDescriptor.getHierarchy().getIdentifierDescriptor() ) ?
 				entityDescriptor.getIdentifier( entity, source ) :
@@ -269,7 +269,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		final Object entity = event.getEntity();
 		final EventSource source = event.getSession();
 
-		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+		final EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 		final String entityName = entityDescriptor.getEntityName();
 
 		Object id = event.getRequestedId();
@@ -345,7 +345,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 
 	}
 
-	private void markInterceptorDirty(final Object entity, final Object target, EntityDescriptor entityDescriptor) {
+	private void markInterceptorDirty(final Object entity, final Object target, EntityTypeDescriptor entityDescriptor) {
 		// for enhanced entities, copy over the dirty attributes
 		if ( entity instanceof SelfDirtinessTracker && target instanceof SelfDirtinessTracker ) {
 			// clear, because setting the embedded attributes dirties them
@@ -357,7 +357,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		}
 	}
 
-	private boolean isVersionChanged(Object entity, EventSource source, EntityDescriptor entityDescriptor, Object target) {
+	private boolean isVersionChanged(Object entity, EventSource source, EntityTypeDescriptor entityDescriptor, Object target) {
 		if ( entityDescriptor.getHierarchy().getVersionDescriptor() == null ) {
 			// not versioned, obviously the version did not change :)
 			return false;
@@ -383,7 +383,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 		return changed && existsInDatabase( target, source, entityDescriptor );
 	}
 
-	private boolean existsInDatabase(Object entity, EventSource source, EntityDescriptor entityDescriptor) {
+	private boolean existsInDatabase(Object entity, EventSource source, EntityTypeDescriptor entityDescriptor) {
 		EntityEntry entry = source.getPersistenceContext().getEntry( entity );
 		if ( entry == null ) {
 			Object id = entityDescriptor.getIdentifier( entity, source );
@@ -398,7 +398,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	}
 
 	protected void copyValues(
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final Object entity,
 			final Object target,
 			final SessionImplementor source,
@@ -416,7 +416,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	}
 
 	protected void copyValues(
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final Object entity,
 			final Object target,
 			final SessionImplementor source,
@@ -464,7 +464,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 */
 	protected void cascadeOnMerge(
 			final EventSource source,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final Object entity,
 			final Map copyCache
 	) {
@@ -499,7 +499,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeAfterSave(EventSource source, EntityDescriptor descriptor, Object entity, Object anything)
+	protected void cascadeAfterSave(EventSource source, EntityTypeDescriptor descriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 
@@ -507,7 +507,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 	 * Cascade behavior is redefined by this subclass, disable superclass behavior
 	 */
 	@Override
-	protected void cascadeBeforeSave(EventSource source, EntityDescriptor descriptor, Object entity, Object anything)
+	protected void cascadeBeforeSave(EventSource source, EntityTypeDescriptor descriptor, Object entity, Object anything)
 			throws HibernateException {
 	}
 }

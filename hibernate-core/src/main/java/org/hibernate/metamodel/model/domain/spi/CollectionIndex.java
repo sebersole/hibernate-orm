@@ -18,6 +18,8 @@ public interface CollectionIndex<J> extends Navigable<J>, TableReferenceContribu
 
 	String NAVIGABLE_NAME = "{index}";
 
+	SimpleTypeDescriptor<?> getDomainTypeDescriptor();
+
 	enum IndexClassification {
 		BASIC,
 		EMBEDDABLE,

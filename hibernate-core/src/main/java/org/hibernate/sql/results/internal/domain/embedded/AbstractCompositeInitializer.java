@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.NullValueAssembler;
@@ -87,22 +88,9 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 	public void resolveKey(RowProcessingState rowProcessingState) {
 		// todo (6.0) : register "parent resolution listener" if the composite is defined for `@Parent`
 		//		something like:
-//		final PersistentAttribute parentInjectionTarget = getEmbeddedDescriptor().getParentInjectionTarget();
-//
-//		if ( parentInjectionTarget != null ) {
-//			fetchParentAccess.registerResolutionListener(
-//					owner -> {
-//						if ( compositeInstance == null ) {
-//							return;
-//						}
-//						parentInjectionTarget.getPropertyAccess().getSetter().set(
-//								compositeInstance,
-//								owner,
-//								rowProcessingState.getSession().getFactory()
-//						);
-//					}
-//			);
-//		}
+
+		//final PersistentAttribute parentInjectionTarget = getEmbeddedDescriptor().getParentInjectionTarget();
+		final PersistentAttributeDescriptor parentInjectionTarget = null;
 
 		if ( parentInjectionTarget != null ) {
 			getFetchParentAccess().findFirstEntityDescriptorAccess().registerResolutionListener(

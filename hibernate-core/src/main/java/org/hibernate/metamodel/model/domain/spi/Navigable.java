@@ -20,10 +20,10 @@ import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
+import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.spi.DomainResult;
-import org.hibernate.sql.ast.produce.spi.SqlAstCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -62,6 +62,10 @@ public interface Navigable<T> extends DomainTypeDescriptor<T> {
 
 	default String getNavigableName() {
 		return getNavigableRole().getNavigableName();
+	}
+
+	default DomainTypeDescriptor<T> getNavigableType() {
+		return this;
 	}
 
 	/**

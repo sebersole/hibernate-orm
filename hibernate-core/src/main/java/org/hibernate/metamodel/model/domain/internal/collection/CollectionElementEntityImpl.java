@@ -18,7 +18,7 @@ import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.CollectionElementEntity;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -44,6 +44,9 @@ import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
@@ -55,7 +58,7 @@ public class CollectionElementEntityImpl<J>
 	private static final Logger log = Logger.getLogger( CollectionElementEntityImpl.class );
 
 	private final ElementClassification elementClassification;
-	private final EntityDescriptor<J> entityDescriptor;
+	private final EntityTypeDescriptor<J> entityDescriptor;
 
 	private boolean fullyInitialized;
 	private ForeignKey foreignKey;
@@ -75,7 +78,7 @@ public class CollectionElementEntityImpl<J>
 		creationContext.registerNavigable( this, bootDescriptor );
 	}
 
-	private EntityDescriptor<J> resolveEntityDescriptor(
+	private EntityTypeDescriptor<J> resolveEntityDescriptor(
 			ElementClassification elementClassification,
 			Collection mappingBinding,
 			RuntimeModelCreationContext creationContext) {
@@ -138,7 +141,7 @@ public class CollectionElementEntityImpl<J>
 	}
 
 	@Override
-	public EntityDescriptor<J> getEntityDescriptor() {
+	public EntityTypeDescriptor<J> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 

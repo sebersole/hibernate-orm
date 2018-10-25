@@ -22,7 +22,7 @@ import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -51,13 +51,13 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	 * collection regions for any collection in which those entity
 	 * persisters participate as elements/keys/etc.
 	 */
-	public BulkOperationCleanupAction(SharedSessionContractImplementor session, List<EntityDescriptor> affectedEntities) {
+	public BulkOperationCleanupAction(SharedSessionContractImplementor session, List<EntityTypeDescriptor> affectedEntities) {
 		final SessionFactoryImplementor factory = session.getFactory();
 		final LinkedHashSet<String> spacesList = new LinkedHashSet<>();
-		for ( EntityDescriptor entityDescriptor : affectedEntities ) {
+		for ( EntityTypeDescriptor entityDescriptor : affectedEntities ) {
 			spacesList.addAll( entityDescriptor.getAffectedTableNames() );
 
-			final EntityDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
+			final EntityTypeDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
 			spacesList.addAll(  rootEntityDescriptor.getAffectedTableNames() );
 
 			if ( entityDescriptor.canWriteToCache() ) {
@@ -95,7 +95,7 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 	 * {@link BulkOperationCleanupAction#BulkOperationCleanupAction(org.hibernate.engine.spi.SharedSessionContractImplementor, java.util.List)}
 	 * in that here we have the affected <strong>table names</strong>.  From those
 	 * we deduce the entity persisters which are affected based on the defined
-	 * {@link EntityDescriptor#getAffectedTableNames()}; and from there, we
+	 * {@link EntityTypeDescriptor#getAffectedTableNames()}; and from there, we
 	 * determine the affected collection regions based on any collections
 	 * in which those entity persisters participate as elements/keys/etc.
 	 *
@@ -111,7 +111,7 @@ public class BulkOperationCleanupAction implements Executable, Serializable {
 
 		factory.getMetamodel().visitEntityHierarchies(
 				entityHierarchy -> {
-					final EntityDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
+					final EntityTypeDescriptor rootEntityDescriptor = entityHierarchy.getRootEntityType();
 					final Set<String> affectedTableNames = rootEntityDescriptor.getAffectedTableNames();
 					if ( affectedEntity( tableSpaces, affectedTableNames ) ) {
 						spacesList.addAll( affectedTableNames );

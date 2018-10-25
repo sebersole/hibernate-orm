@@ -22,6 +22,8 @@ import org.hibernate.boot.model.domain.IdentifiableTypeMapping;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
+import org.hibernate.graph.internal.SubGraphImpl;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -291,8 +293,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	}
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
-	protected <R extends PersistentAttribute> void collectDeclaredAttributes(Collection<R> collection, Class<R> restrictionType) {
-		for ( PersistentAttribute<J, ?> declaredAttribute : declaredAttributes ) {
+	protected <R extends PersistentAttributeDescriptor> void collectDeclaredAttributes(Collection<R> collection, Class<R> restrictionType) {
+		for ( PersistentAttributeDescriptor<J, ?> declaredAttribute : declaredAttributes ) {
 			if ( restrictionType.isInstance( declaredAttribute ) ) {
 				collection.add( (R) declaredAttribute );
 			}
@@ -300,8 +302,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	}
 
 	@SuppressWarnings({"unchecked", "WeakerAccess"})
-	protected <R extends PersistentAttribute> void collectAttributes(Collection<R> collection, Class<R> restrictionType) {
-		for ( PersistentAttribute<J, ?> attribute : attributes ) {
+	protected <R extends PersistentAttributeDescriptor> void collectAttributes(Collection<R> collection, Class<R> restrictionType) {
+		for ( PersistentAttributeDescriptor<J, ?> attribute : attributes ) {
 			if ( restrictionType == null || restrictionType.isInstance( attribute ) ) {
 				collection.add( (R) attribute );
 			}
@@ -382,18 +384,18 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	public void visitDeclaredNavigables(NavigableVisitationStrategy visitor) {
-		for ( PersistentAttribute persistentAttribute : declaredAttributesByName.values() ) {
+		for ( PersistentAttributeDescriptor persistentAttribute : declaredAttributesByName.values() ) {
 			persistentAttribute.visitNavigable( visitor );
 		}
 	}
 
 	@Override
-	public PersistentAttribute<? super J, ?> getAttribute(String name) {
+	public PersistentAttributeDescriptor<? super J, ?> getAttribute(String name) {
 		return getAttribute( name, null );
 	}
 
-	protected PersistentAttribute<? super J, ?> getAttribute(String name, Class resultType) {
-		PersistentAttribute<? super J, ?> persistentAttribute = findDeclaredPersistentAttribute( name, resultType );
+	protected PersistentAttributeDescriptor<? super J, ?> getAttribute(String name, Class resultType) {
+		PersistentAttributeDescriptor<? super J, ?> persistentAttribute = findDeclaredPersistentAttribute( name, resultType );
 		if ( persistentAttribute == null && getSuperclassType() != null ) {
 			persistentAttribute = getSuperclassType().findDeclaredPersistentAttribute( name, resultType );
 		}
@@ -487,62 +489,62 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeCollection getCollection(String name) {
+	public BagPersistentAttribute getCollection(String name) {
 		return getCollection( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeCollection getCollection(String name, Class elementType) {
-		return (PluralAttributeCollection) getAttribute( name, elementType );
+	public BagPersistentAttribute getCollection(String name, Class elementType) {
+		return (BagPersistentAttribute) getAttribute( name, elementType );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeCollection getDeclaredCollection(String name) {
+	public BagPersistentAttribute getDeclaredCollection(String name) {
 		return getDeclaredCollection( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeCollection getDeclaredCollection(String name, Class elementType) {
-		return (PluralAttributeCollection) getDeclaredAttribute( name, elementType );
+	public BagPersistentAttribute getDeclaredCollection(String name, Class elementType) {
+		return (BagPersistentAttribute) getDeclaredAttribute( name, elementType );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeList getList(String name) {
+	public ListPersistentAttribute getList(String name) {
 		return getList( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeList getList(String name, Class elementType) {
-		return (PluralAttributeList) getAttribute( name, elementType );
+	public ListPersistentAttribute getList(String name, Class elementType) {
+		return (ListPersistentAttribute) getAttribute( name, elementType );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeList getDeclaredList(String name) {
+	public ListPersistentAttribute getDeclaredList(String name) {
 		return getDeclaredList( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeList getDeclaredList(String name, Class elementType) {
-		return (PluralAttributeList) getDeclaredAttribute( name, elementType );
+	public ListPersistentAttribute getDeclaredList(String name, Class elementType) {
+		return (ListPersistentAttribute) getDeclaredAttribute( name, elementType );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeMap getMap(String name) {
+	public MapPersistentAttribute getMap(String name) {
 		return getMap( name, null, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeMap getMap(String name, Class keyType, Class valueType) {
-		final PluralAttributeMap mapAttribute = (PluralAttributeMap) getAttribute( name, valueType );
+	public MapPersistentAttribute getMap(String name, Class keyType, Class valueType) {
+		final MapPersistentAttribute mapAttribute = (MapPersistentAttribute) getAttribute( name, valueType );
 		if ( mapAttribute == null ) {
 			return null;
 		}
@@ -559,14 +561,14 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeMap getDeclaredMap(String name) {
+	public MapPersistentAttribute getDeclaredMap(String name) {
 		return getDeclaredMap( name, null, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeMap getDeclaredMap(String name, Class keyType, Class valueType) {
-		final PluralAttributeMap mapAttribute = (PluralAttributeMap) getDeclaredAttribute( name, valueType );
+	public MapPersistentAttribute getDeclaredMap(String name, Class keyType, Class valueType) {
+		final MapPersistentAttribute mapAttribute = (MapPersistentAttribute) getDeclaredAttribute( name, valueType );
 		if ( mapAttribute == null ) {
 			return null;
 		}
@@ -578,26 +580,26 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeSet getSet(String name) {
+	public SetPersistentAttribute getSet(String name) {
 		return getSet( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeSet getSet(String name, Class elementType) {
-		return (PluralAttributeSet) getAttribute( name, elementType );
+	public SetPersistentAttribute getSet(String name, Class elementType) {
+		return (SetPersistentAttribute) getAttribute( name, elementType );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeSet getDeclaredSet(String name) {
+	public SetPersistentAttribute getDeclaredSet(String name) {
 		return getDeclaredSet( name, null );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public PluralAttributeSet getDeclaredSet(String name, Class elementType) {
-		return (PluralAttributeSet) getDeclaredAttribute( name, elementType );
+	public SetPersistentAttribute getDeclaredSet(String name, Class elementType) {
+		return (SetPersistentAttribute) getDeclaredAttribute( name, elementType );
 	}
 
 	@Override
@@ -638,7 +640,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			ManagedTypeMapping bootContainer,
 			RuntimeModelCreationContext creationContext,
 			Consumer<NonIdPersistentAttribute<J, ?>> collector) {
-		PersistentAttribute<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
+		PersistentAttributeDescriptor<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
 				this,
 				bootContainer,
 				SingularPersistentAttribute.Disposition.NORMAL,
@@ -657,6 +659,21 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		}
 
 		collector.accept( (NonIdPersistentAttribute<J, ?>) attribute );
+	}
+
+	@Override
+	public SubGraphImplementor<J> makeSubGraph() {
+		return new SubGraphImpl<>( this, true, typeConfiguration.getSessionFactory() );
+	}
+
+	@Override
+	public <S extends J> ManagedTypeDescriptor<S> findSubType(String subTypeName) {
+		return DomainModelHelper.resolveSubType( this, subTypeName, typeConfiguration.getSessionFactory() );
+	}
+
+	@Override
+	public <S extends J> ManagedTypeDescriptor<S> findSubType(Class<S> subType) {
+		return DomainModelHelper.resolveSubType( this, subType, typeConfiguration.getSessionFactory() );
 	}
 
 }

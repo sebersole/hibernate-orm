@@ -17,6 +17,7 @@ import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.metamodel.model.relational.spi.Column;
@@ -176,5 +177,15 @@ public class VersionDescriptorImpl<O,J>
 				),
 				getBoundColumn().getExpressableType()
 		);
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getValueGraphType() {
+		return getAttributeType();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return null;
 	}
 }

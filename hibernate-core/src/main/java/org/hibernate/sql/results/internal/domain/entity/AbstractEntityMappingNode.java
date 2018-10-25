@@ -7,7 +7,7 @@
 package org.hibernate.sql.results.internal.domain.entity;
 
 import org.hibernate.LockMode;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.query.NavigablePath;
@@ -37,7 +37,7 @@ public abstract class AbstractEntityMappingNode extends AbstractFetchParent impl
 		this.entityValuedNavigable = entityValuedNavigable;
 		this.lockMode = lockMode;
 
-		final EntityDescriptor entityDescriptor = entityValuedNavigable.getEntityDescriptor();
+		final EntityTypeDescriptor entityDescriptor = entityValuedNavigable.getEntityDescriptor();
 
 		identifierResult = entityDescriptor.getIdentifierDescriptor().createDomainResult(
 				null,

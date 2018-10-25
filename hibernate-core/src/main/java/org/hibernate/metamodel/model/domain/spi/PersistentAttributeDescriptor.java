@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.spi;
 import java.lang.reflect.Member;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.metamodel.model.domain.PersistentAttribute;
 import org.hibernate.property.access.spi.PropertyAccess;
 
 /**
@@ -16,7 +17,7 @@ import org.hibernate.property.access.spi.PropertyAccess;
  *
  * @author Steve Ebersole
  */
-public interface PersistentAttribute<O, J> extends Navigable<J>, javax.persistence.metamodel.Attribute<O, J> {
+public interface PersistentAttributeDescriptor<O, J> extends Navigable<J>, PersistentAttribute<O, J> {
 	/**
 	 * Get the attribute's position within the ManagedType hierarchy.  The
 	 * position follows a pre-defined algorithm based on alphabetical order,
@@ -51,6 +52,9 @@ public interface PersistentAttribute<O, J> extends Navigable<J>, javax.persisten
 	default ManagedTypeDescriptor<O> getDeclaringType() {
 		return getContainer();
 	}
+
+	SimpleTypeDescriptor<?> getValueGraphType();
+	SimpleTypeDescriptor<?> getKeyGraphType();
 
 	@Override
 	@SuppressWarnings("unchecked")

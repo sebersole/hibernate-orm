@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -160,7 +160,7 @@ public class LegacyResultSetMappingDescriptor implements ResultSetMappingDescrip
 	}
 
 	public interface RootNodeEntity extends ResultRootNode, FetchParentNode, NativeQuery.RootReturn {
-		EntityDescriptor<?> getEntityDescriptor();
+		EntityTypeDescriptor<?> getEntityDescriptor();
 
 		@Override
 		default EntityJavaDescriptor<?> getJavaTypeDescriptor() {

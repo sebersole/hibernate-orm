@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.from;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Models information about a downcast (TREAT AS).
@@ -14,19 +14,19 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  */
 public class SqmDowncast {
-	private final EntityDescriptor downcastTarget;
+	private final EntityTypeDescriptor downcastTarget;
 	private boolean intrinsic;
 
-	public SqmDowncast(EntityDescriptor downcastTarget) {
+	public SqmDowncast(EntityTypeDescriptor downcastTarget) {
 		this( downcastTarget, false );
 	}
 
-	public SqmDowncast(EntityDescriptor downcastTarget, boolean intrinsic) {
+	public SqmDowncast(EntityTypeDescriptor downcastTarget, boolean intrinsic) {
 		this.downcastTarget = downcastTarget;
 		this.intrinsic = intrinsic;
 	}
 
-	public EntityDescriptor getTargetType() {
+	public EntityTypeDescriptor getTargetType() {
 		return downcastTarget;
 	}
 

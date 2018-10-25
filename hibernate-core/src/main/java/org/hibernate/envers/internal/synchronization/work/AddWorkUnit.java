@@ -14,7 +14,7 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.tools.ArraysTools;
 import org.hibernate.envers.internal.tools.EntityTools;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -29,7 +29,7 @@ public class AddWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			SessionImplementor sessionImplementor,
 			String entityName,
 			AuditService auditService,
-			Object id, EntityDescriptor entityDescriptor, Object[] state) {
+			Object id, EntityTypeDescriptor entityDescriptor, Object[] state) {
 		super( sessionImplementor, entityName, auditService, id, RevisionType.ADD );
 
 		this.data = new HashMap<>();
@@ -52,7 +52,7 @@ public class AddWorkUnit extends AbstractAuditWorkUnit implements AuditWorkUnit 
 			Map<String, Object> data) {
 		super( sessionImplementor, entityName, enversMetadataService, id, RevisionType.ADD );
 
-		final EntityDescriptor entityDescriptor = sessionImplementor.getFactory()
+		final EntityTypeDescriptor entityDescriptor = sessionImplementor.getFactory()
 				.getMetamodel()
 				.findEntityDescriptor( getEntityName() );
 

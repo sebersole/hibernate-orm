@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.hibernate.LockOptions;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sqm.consume.spi.BaseSqmToSqlAstConverter;
@@ -34,7 +34,7 @@ import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
 public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConverter {
 
 	private final QuerySpec idTableSelect;
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 	private final EntityTableGroup entityTableGroup;
 	private final NonSelectSqlExpressionResolver expressionResolver;
 
@@ -88,7 +88,7 @@ public class SqmDeleteToSqlAstConverterMultiTable extends BaseSqmToSqlAstConvert
 					}
 
 					@Override
-					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+					public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 						return sqmStatement.getEntityFromElement().getIntrinsicSubclassEntityMetadata();
 					}
 

@@ -8,14 +8,16 @@ package org.hibernate.metamodel.model.domain.spi;
 
 import javax.persistence.metamodel.IdentifiableType;
 
+import org.hibernate.metamodel.model.domain.IdentifiableDomainType;
+
 /**
  * Hibernate extension SPI for working with {@link IdentifiableType} implementations, which includes
  * both mapped-superclasses {@link MappedSuperclassDescriptor}
- * and {@link EntityDescriptor}
+ * and {@link EntityTypeDescriptor}
  *
  * @author Steve Ebersole
  */
-public interface IdentifiableTypeDescriptor<T> extends InheritanceCapable<T>, IdentifiableType<T> {
+public interface IdentifiableTypeDescriptor<T> extends InheritanceCapable<T>, IdentifiableDomainType<T> {
 	@Override
 	default IdentifiableTypeDescriptor<? super T> getSupertype() {
 		return getSuperclassType();
@@ -23,6 +25,9 @@ public interface IdentifiableTypeDescriptor<T> extends InheritanceCapable<T>, Id
 
 	@Override
 	IdentifiableTypeDescriptor<? super T> getSuperclassType();
+
+	@Override
+	SimpleTypeDescriptor<?> getIdType();
 
 	EntityHierarchy getHierarchy();
 }

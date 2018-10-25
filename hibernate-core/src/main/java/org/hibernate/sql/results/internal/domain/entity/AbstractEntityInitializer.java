@@ -30,7 +30,7 @@ import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.event.spi.PreLoadEvent;
 import org.hibernate.event.spi.PreLoadEventListener;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.query.NavigablePath;
@@ -62,7 +62,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	//		the EntityDescriptor here to avoid chicken/egg issues in the creation of
 	// 		these
 
-	private final EntityDescriptor<?> entityDescriptor;
+	private final EntityTypeDescriptor<?> entityDescriptor;
 	private final NavigablePath navigablePath;
 	private final LockMode lockMode;
 
@@ -75,7 +75,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	private final Map<StateArrayContributor, DomainResultAssembler> assemblerMap = new HashMap<>();
 
 	// per-row state
-	private EntityDescriptor <?> concreteDescriptor;
+	private EntityTypeDescriptor<?> concreteDescriptor;
 	private EntityKey entityKey;
 	private Object entityInstance;
 	private boolean missing;
@@ -174,7 +174,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	protected abstract boolean isEntityReturn();
 
 	@Override
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -245,7 +245,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		}
 	}
 
-	private EntityDescriptor determineConcreteEntityDescriptor(
+	private EntityTypeDescriptor determineConcreteEntityDescriptor(
 			RowProcessingState rowProcessingState,
 			SharedSessionContractImplementor persistenceContext) throws WrongClassException {
 		if ( discriminatorAssembler == null ) {

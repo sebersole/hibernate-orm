@@ -26,7 +26,7 @@ import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.loader.spi.AfterLoadAction;
 import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
@@ -332,7 +332,7 @@ public class MetamodelSelectBuilderProcess
 					}
 
 					@Override
-					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+					public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 						return null;
 					}
 

@@ -12,7 +12,7 @@ import java.util.Map;
 import org.hibernate.HibernateException;
 import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.RowIdDescriptor;
@@ -33,13 +33,13 @@ import org.hibernate.sql.results.spi.SqlSelectionGroupNode;
 public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup implements EntitySqlSelectionGroup {
 
 	public static EntitySqlSelectionGroup buildSqlSelectionGroup(
-			EntityDescriptor<?> entityDescriptor,
+			EntityTypeDescriptor<?> entityDescriptor,
 			ColumnReferenceQualifier qualifier,
 			SqlAstCreationContext resolutionContext) {
 		return new Builder( entityDescriptor ).create( qualifier, resolutionContext );
 	}
 
-	private final EntityDescriptor<?> entityDescriptor;
+	private final EntityTypeDescriptor<?> entityDescriptor;
 
 	private final SqlSelectionGroupNode idSqlSelectionGroup;
 	private final SqlSelectionGroupNode discriminatorSqlSelection;
@@ -47,7 +47,7 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 	private final SqlSelectionGroupNode rowIdSqlSelection;
 
 	private EntitySqlSelectionGroupImpl(
-			EntityDescriptor<?> entityDescriptor,
+			EntityTypeDescriptor<?> entityDescriptor,
 			SqlSelectionGroupNode idSqlSelectionGroup,
 			SqlSelectionGroupNode discriminatorSqlSelection,
 			SqlSelectionGroupNode tenantDiscriminatorSqlSelection,
@@ -88,7 +88,7 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 
 	@SuppressWarnings({"UnusedReturnValue", "unchecked", "WeakerAccess"})
 	public static class Builder {
-		private final EntityDescriptor<?> entityDescriptor;
+		private final EntityTypeDescriptor<?> entityDescriptor;
 
 		private SqlSelectionGroupNode idSqlSelections;
 		private SqlSelectionGroupNode discriminatorSqlSelection;
@@ -96,11 +96,11 @@ public class EntitySqlSelectionGroupImpl extends AbstractSqlSelectionGroup imple
 		private SqlSelectionGroupNode rowIdSqlSelection;
 		private Map<StateArrayContributor<?>, SqlSelectionGroupNode> sqlSelectionsByContributor;
 
-		public Builder(EntityDescriptor<?> entityDescriptor) {
+		public Builder(EntityTypeDescriptor<?> entityDescriptor) {
 			this.entityDescriptor = entityDescriptor;
 		}
 
-		public EntityDescriptor<?> getEntityDescriptor() {
+		public EntityTypeDescriptor<?> getEntityDescriptor() {
 			return entityDescriptor;
 		}
 

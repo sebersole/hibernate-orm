@@ -38,6 +38,7 @@ import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassResolver;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
+import org.hibernate.metamodel.model.domain.EntityDomainType;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.produce.metamodel.spi.TableGroupInfo;
@@ -65,8 +66,8 @@ import org.hibernate.type.descriptor.java.spi.EntityJavaDescriptor;
  * @since 6.0
  */
 @Incubating
-public interface EntityDescriptor<T>
-		extends EntityValuedNavigable<T>, NavigableContainer<T>, EmbeddedContainer<T>,
+public interface EntityTypeDescriptor<T>
+		extends EntityValuedNavigable<T>, EntityDomainType<T>, NavigableContainer<T>, EmbeddedContainer<T>,
 				RootTableGroupProducer, IdentifiableTypeDescriptor<T>, EntityType<T>, Filterable {
 
 	/**
@@ -99,6 +100,7 @@ public interface EntityDescriptor<T>
 	 * The entity name which this descriptor maps.
 	 */
 	String getEntityName();
+
 
 	EntityJavaDescriptor<T> getJavaTypeDescriptor();
 
@@ -603,9 +605,9 @@ public interface EntityDescriptor<T>
 	 * @deprecated use {@link #getSubclassEntityDescriptor(Object, SessionFactoryImplementor)} instead
 	 */
 	@Deprecated
-	EntityDescriptor getSubclassEntityPersister(Object instance, SessionFactoryImplementor factory);
+	EntityTypeDescriptor getSubclassEntityPersister(Object instance, SessionFactoryImplementor factory);
 
-	default EntityDescriptor getSubclassEntityDescriptor(Object instance, SessionFactoryImplementor factory){
+	default EntityTypeDescriptor getSubclassEntityDescriptor(Object instance, SessionFactoryImplementor factory){
 		return getSubclassEntityPersister( instance, factory );
 	}
 

@@ -17,7 +17,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 
 /**
@@ -120,7 +120,7 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 				session = s;
 				if ( readOnlyBeforeAttachedToSession == null ) {
 					// use the default read-only/modifiable setting
-					final EntityDescriptor entityDescriptor = s.getFactory().getEntityPersister( entityName );
+					final EntityTypeDescriptor entityDescriptor = s.getFactory().getEntityPersister( entityName );
 					MutabilityPlan mutabilityPlan = entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan();
 					if ( mutabilityPlan == null ) {
 						mutabilityPlan = entityDescriptor.getHierarchy().getMutabilityPlan();
@@ -327,7 +327,7 @@ public abstract class AbstractLazyInitializer implements LazyInitializer {
 		errorIfReadOnlySettingNotAvailable();
 		// only update if readOnly is different from current setting
 		if ( this.readOnly != readOnly ) {
-			final EntityDescriptor entityDescriptor = session.getFactory().getEntityPersister( entityName );
+			final EntityTypeDescriptor entityDescriptor = session.getFactory().getEntityPersister( entityName );
 			if ( !entityDescriptor.getJavaTypeDescriptor().getMutabilityPlan().isMutable() && !readOnly ) {
 				throw new IllegalStateException( "cannot make proxies [" + entityName + "#" + id + "] for immutable entities modifiable" );
 			}

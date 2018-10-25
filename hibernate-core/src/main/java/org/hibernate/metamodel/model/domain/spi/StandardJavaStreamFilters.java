@@ -17,7 +17,7 @@ public class StandardJavaStreamFilters {
 	/**
 	 * Functional predicate for filtering a stream of attributes, removing plural attributes
 	 */
-	public static final Predicate<PersistentAttribute<?,?>> NON_PLURAL_ATTRIBUTES
+	public static final Predicate<PersistentAttributeDescriptor<?,?>> NON_PLURAL_ATTRIBUTES
 			= persistentAttribute -> !PluralPersistentAttribute.class.isInstance( persistentAttribute );
 
 

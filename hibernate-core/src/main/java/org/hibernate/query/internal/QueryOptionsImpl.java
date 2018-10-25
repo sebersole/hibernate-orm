@@ -14,7 +14,9 @@ import java.util.List;
 import org.hibernate.CacheMode;
 import org.hibernate.FlushMode;
 import org.hibernate.LockOptions;
-import org.hibernate.query.spi.EntityGraphQueryHint;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.spi.AppliedGraph;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.query.Limit;
 import org.hibernate.query.ResultListTransformer;
 import org.hibernate.query.TupleTransformer;
@@ -30,7 +32,7 @@ import org.hibernate.query.spi.MutableQueryOptions;
  *
  * @author Steve Ebersole
  */
-public class QueryOptionsImpl implements MutableQueryOptions {
+public class QueryOptionsImpl implements MutableQueryOptions, AppliedGraph {
 
 	// todo (6.0) - handle `MutableQueryOptions` responsibility as a builder
 
@@ -51,7 +53,8 @@ public class QueryOptionsImpl implements MutableQueryOptions {
 	private TupleTransformer tupleTransformer;
 	private ResultListTransformer resultListTransformer;
 
-	private EntityGraphQueryHint entityGraphQueryHint;
+	private RootGraphImplementor<?> rootGraph;
+	private GraphSemantic graphSemantic;
 
 	@Override
 	public Integer getTimeout() {
@@ -179,12 +182,23 @@ public class QueryOptionsImpl implements MutableQueryOptions {
 		return readOnlyEnabled;
 	}
 
-	@Override
-	public EntityGraphQueryHint getEntityGraphQueryHint() {
-		return entityGraphQueryHint;
+	public void applyGraph(RootGraphImplementor<?> rootGraph, GraphSemantic graphSemantic) {
+		this.rootGraph = rootGraph;
+		this.graphSemantic = graphSemantic;
 	}
 
-	public void setEntityGraphQueryHint(EntityGraphQueryHint entityGraphQueryHint) {
-		this.entityGraphQueryHint = entityGraphQueryHint;
+	@Override
+	public AppliedGraph getAppliedGraph() {
+		return this;
+	}
+
+	@Override
+	public RootGraphImplementor<?> getGraph() {
+		return rootGraph;
+	}
+
+	@Override
+	public GraphSemantic getSemantic() {
+		return graphSemantic;
 	}
 }

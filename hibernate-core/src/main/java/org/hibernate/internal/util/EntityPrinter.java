@@ -17,7 +17,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.type.Type;
 
 /**
@@ -43,7 +43,7 @@ public final class EntityPrinter {
 			String entityName,
 			Object entity,
 			SharedSessionContractImplementor session) throws HibernateException {
-		EntityDescriptor entityDescriptor = factory.getEntityPersister( entityName );
+		EntityTypeDescriptor entityDescriptor = factory.getEntityPersister( entityName );
 
 		if ( entityDescriptor == null ) {
 			return entity.getClass().getName();

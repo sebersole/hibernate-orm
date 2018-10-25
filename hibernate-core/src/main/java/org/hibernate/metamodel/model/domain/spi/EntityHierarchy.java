@@ -34,7 +34,7 @@ public interface EntityHierarchy {
 	 *
 	 * @return The root entity for this hierarchy.
 	 */
-	<J> EntityDescriptor<J> getRootEntityType();
+	<J> EntityTypeDescriptor<J> getRootEntityType();
 
 	/**
 	 * Retrieve the descriptor for the hierarchy's identifier.

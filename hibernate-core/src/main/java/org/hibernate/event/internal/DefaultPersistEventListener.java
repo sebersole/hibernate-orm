@@ -24,7 +24,7 @@ import org.hibernate.id.ForeignGenerator;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -107,7 +107,7 @@ public class DefaultPersistEventListener extends AbstractSaveEventListener imple
 			// entity state again.
 
 			// NOTE: entityEntry must be null to get here, so we cannot use any of its values
-			EntityDescriptor descriptor = source.getFactory().getEntityPersister( entityName );
+			EntityTypeDescriptor descriptor = source.getFactory().getEntityPersister( entityName );
 			if ( ForeignGenerator.class.isInstance( descriptor.getHierarchy().getIdentifierDescriptor().getIdentifierValueGenerator() ) ) {
 				if ( LOG.isDebugEnabled() && descriptor.getIdentifier( entity, source ) != null ) {
 					LOG.debug( "Resetting entity id attribute to null for foreign generator" );
@@ -158,7 +158,7 @@ public class DefaultPersistEventListener extends AbstractSaveEventListener imple
 		//TODO: check that entry.getIdentifier().equals(requestedId)
 
 		final Object entity = source.getPersistenceContext().unproxy( event.getObject() );
-		final EntityDescriptor descriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+		final EntityTypeDescriptor descriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 
 		if ( createCache.put( entity, entity ) == null ) {
 			justCascade( createCache, source, entity, descriptor );
@@ -166,7 +166,7 @@ public class DefaultPersistEventListener extends AbstractSaveEventListener imple
 		}
 	}
 
-	private void justCascade(Map createCache, EventSource source, Object entity, EntityDescriptor descriptor) {
+	private void justCascade(Map createCache, EventSource source, Object entity, EntityTypeDescriptor descriptor) {
 		//TODO: merge into one method!
 		cascadeBeforeSave( source, descriptor, entity, createCache );
 		cascadeAfterSave( source, descriptor, entity, createCache );
@@ -195,7 +195,7 @@ public class DefaultPersistEventListener extends AbstractSaveEventListener imple
 		final EventSource source = event.getSession();
 
 		final Object entity = source.getPersistenceContext().unproxy( event.getObject() );
-		final EntityDescriptor descriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+		final EntityTypeDescriptor descriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 
 		LOG.tracef(
 				"un-scheduling entity deletion [%s]",

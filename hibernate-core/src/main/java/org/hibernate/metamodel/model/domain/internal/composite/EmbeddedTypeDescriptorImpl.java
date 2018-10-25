@@ -20,6 +20,8 @@ import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.graph.internal.SubGraphImpl;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -29,6 +31,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
 import org.hibernate.metamodel.model.domain.spi.Instantiator;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
@@ -174,6 +177,27 @@ public class EmbeddedTypeDescriptorImpl<J>
 	@Override
 	public NavigableRole getNavigableRole() {
 		return navigableRole;
+	}
+
+	@Override
+	public SubGraphImplementor<J> makeSubGraph() {
+		return makeSubGraph( getJavaType() );
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <S extends J> SubGraphImplementor<S> makeSubGraph(Class<S> subType) {
+		return new SubGraphImpl( this, true, getTypeConfiguration().getSessionFactory() );
+	}
+
+	@Override
+	public <S extends J> ManagedTypeDescriptor<S> findSubType(String subTypeName) {
+		return null;
+	}
+
+	@Override
+	public <S extends J> ManagedTypeDescriptor<S> findSubType(Class<S> type) {
+		return null;
 	}
 
 	@Override

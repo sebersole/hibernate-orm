@@ -7,7 +7,7 @@
 package org.hibernate.query.sqm.tree.expression.domain;
 
 import org.hibernate.collection.spi.CollectionClassification;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
@@ -101,7 +101,7 @@ public abstract class AbstractSqmCollectionIndexReference
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 		// for most index classifications, there is none
 		return null;
 	}

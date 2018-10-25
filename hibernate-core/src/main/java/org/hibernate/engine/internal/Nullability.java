@@ -18,10 +18,10 @@ import org.hibernate.metamodel.model.domain.spi.CollectionElement;
 import org.hibernate.metamodel.model.domain.spi.CollectionElementEmbedded;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.BagPersistentAttribute;
 
 /**
  * Implements the algorithm for validating property values for illegal null values
@@ -53,7 +53,7 @@ public final class Nullability {
 	 */
 	public void checkNullability(
 			final Object[] values,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final boolean isUpdate) {
 		checkNullability( values, entityDescriptor, isUpdate ? NullabilityCheckType.UPDATE : NullabilityCheckType.CREATE );
 	}
@@ -66,7 +66,7 @@ public final class Nullability {
 
 	public void checkNullability(
 			final Object[] values,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final NullabilityCheckType checkType) {
 		/*
 		 * Typically when Bean Validation is on, we don't want to validate null values
@@ -187,8 +187,8 @@ public final class Nullability {
 					collector
 			);
 		}
-		else if ( navigable instanceof PluralAttributeCollection ) {
-			final PluralAttributeCollection collection = (PluralAttributeCollection) navigable;
+		else if ( navigable instanceof BagPersistentAttribute ) {
+			final BagPersistentAttribute collection = (BagPersistentAttribute) navigable;
 			final CollectionElement elementDescriptor = collection.getPersistentCollectionDescriptor()
 					.getElementDescriptor();
 			if ( elementDescriptor instanceof CollectionElementEmbedded ) {

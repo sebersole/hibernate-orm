@@ -25,6 +25,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeAggrega
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
@@ -131,6 +132,11 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	}
 
 	@Override
+	public SimpleTypeDescriptor<J> getNavigableType() {
+		return getEmbeddedDescriptor();
+	}
+
+	@Override
 	public boolean hasSingleIdAttribute() {
 		return true;
 	}
@@ -169,6 +175,11 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 	@Override
 	public int getNumberOfJdbcParametersNeeded() {
 		return getColumns().size();
+	}
+
+	@Override
+	public boolean canContainSubGraphs() {
+		return false;
 	}
 
 	@Override
@@ -252,5 +263,25 @@ public class EntityIdentifierCompositeAggregatedImpl<O,J>
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		return new CompositeResultImpl( resultVariable, getEmbeddedDescriptor(), creationState );
+	}
+
+	@Override
+	public EmbeddedTypeDescriptor<J> getType() {
+		return getAttributeType();
+	}
+
+	@Override
+	public EmbeddedTypeDescriptor<J> getAttributeType() {
+		return getEmbeddedDescriptor();
+	}
+
+	@Override
+	public EmbeddedTypeDescriptor<?> getValueGraphType() {
+		return getAttributeType();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return null;
 	}
 }

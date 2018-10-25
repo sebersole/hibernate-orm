@@ -12,7 +12,7 @@ import javax.persistence.EntityNotFoundException;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleEntityLoader;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
@@ -57,7 +57,7 @@ public abstract class AbstractImmediateEntityFetchInitializer extends AbstractFe
 	}
 
 	@Override
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return fetchedNavigable.getEntityDescriptor();
 	}
 

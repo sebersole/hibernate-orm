@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Occurs after an an entity instance is fully loaded.
@@ -16,7 +16,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public class PostLoadEvent extends AbstractEvent {
 	private Object entity;
 	private Object id;
-	private EntityDescriptor descriptor;
+	private EntityTypeDescriptor descriptor;
 
 	public PostLoadEvent(EventSource session) {
 		super(session);
@@ -37,11 +37,11 @@ public class PostLoadEvent extends AbstractEvent {
 	 * @deprecated use {@link #getDescriptor()}
 	 */
 	@Deprecated
-	public EntityDescriptor getPersister() {
+	public EntityTypeDescriptor getPersister() {
 		return descriptor;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return descriptor;
 	}
 	
@@ -61,15 +61,15 @@ public class PostLoadEvent extends AbstractEvent {
 
 	/**
 	 *
-	 * @deprecated use {@link #setDescriptor(EntityDescriptor)}
+	 * @deprecated use {@link #setDescriptor(EntityTypeDescriptor)}
 	 */
 	@Deprecated
-	public PostLoadEvent setPersister(EntityDescriptor persister) {
+	public PostLoadEvent setPersister(EntityTypeDescriptor persister) {
 		this.descriptor = persister;
 		return this;
 	}
 
-	public PostLoadEvent setDescriptor(EntityDescriptor descriptor){
+	public PostLoadEvent setDescriptor(EntityTypeDescriptor descriptor){
 		this.descriptor = descriptor;
 		return this;
 	}

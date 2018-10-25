@@ -9,7 +9,7 @@ package org.hibernate.envers.internal.entities.mapper.relation;
 import org.hibernate.envers.internal.entities.PropertyData;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.query.AuditEntity;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.service.ServiceRegistry;
 
 /**
@@ -64,7 +64,7 @@ public class OneToOnePrimaryKeyJoinColumnMapper extends AbstractOneToOneMapper {
 			Class<?> entityClass,
 			String entityName,
 			Object primaryKey) {
-		final EntityDescriptor entityDescriptor = versionsReader.getSessionImplementor()
+		final EntityTypeDescriptor entityDescriptor = versionsReader.getSessionImplementor()
 				.getFactory()
 				.getMetamodel()
 				.findEntityDescriptor( entityName );

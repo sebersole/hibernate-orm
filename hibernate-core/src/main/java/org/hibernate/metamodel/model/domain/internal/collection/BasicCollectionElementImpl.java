@@ -16,6 +16,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionElement;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -84,6 +85,11 @@ public class BasicCollectionElementImpl<J>
 	@Override
 	public ElementClassification getClassification() {
 		return ElementClassification.BASIC;
+	}
+
+	@Override
+	public SimpleTypeDescriptor getDomainTypeDescriptor() {
+		return getBasicType();
 	}
 
 	@Override

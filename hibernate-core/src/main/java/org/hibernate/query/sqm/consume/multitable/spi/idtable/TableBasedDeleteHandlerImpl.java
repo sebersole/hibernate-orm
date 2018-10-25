@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
 import org.hibernate.metamodel.model.relational.spi.PhysicalColumn;
 import org.hibernate.metamodel.model.relational.spi.Table;
@@ -35,7 +35,7 @@ public class TableBasedDeleteHandlerImpl
 
 	private TableBasedDeleteHandlerImpl(
 			SqmDeleteStatement sqmDeleteStatement,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			IdTable idTableInfo,
 			IdTableSupport idTableSupport,
 			SessionUidSupport sessionUidSupport,
@@ -139,7 +139,7 @@ public class TableBasedDeleteHandlerImpl
 
 	public static class Builder {
 		private final SqmDeleteStatement sqmStatement;
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private final IdTable idTableInfo;
 		private final IdTableSupport idTableSupport;
 
@@ -150,7 +150,7 @@ public class TableBasedDeleteHandlerImpl
 
 		public Builder(
 				SqmDeleteStatement sqmStatement,
-				EntityDescriptor entityDescriptor,
+				EntityTypeDescriptor entityDescriptor,
 				IdTable idTableInfo,
 				IdTableSupport idTableSupport) {
 			this.sqmStatement = sqmStatement;

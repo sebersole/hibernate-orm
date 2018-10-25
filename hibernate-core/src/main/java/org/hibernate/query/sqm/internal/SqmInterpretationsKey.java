@@ -42,7 +42,7 @@ public class SqmInterpretationsKey implements QueryPlanCache.Key {
 
 	@SuppressWarnings("RedundantIfStatement")
 	private static boolean isCacheable(QuerySqmImpl<?> query) {
-		if ( query.getEntityGraphHint() != null ) {
+		if ( query.getQueryOptions().getAppliedGraph() != null ) {
 			// At the moment we cannot cache query plan if there is an
 			// EntityGraph involved.
 			return false;

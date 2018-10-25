@@ -7,7 +7,7 @@
 package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 
 import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.naming.Identifier;
 import org.hibernate.tool.schema.spi.Exporter;
 
@@ -24,7 +24,7 @@ public interface IdTableSupport {
 	/**
 	 * Determine the name to use for the id-table.
 	 */
-	Identifier determineIdTableName(EntityDescriptor entityDescriptor, SessionFactoryOptions sessionFactoryOptions);
+	Identifier determineIdTableName(EntityTypeDescriptor entityDescriptor, SessionFactoryOptions sessionFactoryOptions);
 
 	Exporter<IdTable> getIdTableExporter();
 

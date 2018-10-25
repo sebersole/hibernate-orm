@@ -8,7 +8,7 @@ package org.hibernate.event.spi;
 
 import java.io.Serializable;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author Andrea Boriero
@@ -21,6 +21,6 @@ public interface PostActionEventListener extends Serializable {
 	 *
 	 * @return {@code true} if after transaction callbacks should be added.
 	 */
-	boolean requiresPostCommitHandling(EntityDescriptor descriptor);
+	boolean requiresPostCommitHandling(EntityTypeDescriptor descriptor);
 }
 

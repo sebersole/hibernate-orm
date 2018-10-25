@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.expression.domain;
 
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.from.SqmFromExporter;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
@@ -16,7 +16,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractSqmAttributeReference<A extends PersistentAttribute>
+public abstract class AbstractSqmAttributeReference<A extends PersistentAttributeDescriptor>
 		extends AbstractSqmNavigableReference
 		implements SqmAttributeReference, SqmFromExporter {
 

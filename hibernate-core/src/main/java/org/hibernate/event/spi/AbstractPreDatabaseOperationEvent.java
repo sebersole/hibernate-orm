@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.secure.spi.PermissionCheckEntityInformation;
 
 /**
@@ -20,7 +20,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 
 	private final Object entity;
 	private final Object id;
-	private final EntityDescriptor descriptor;
+	private final EntityTypeDescriptor descriptor;
 
 	/**
 	 * Constructs an event containing the pertinent information.
@@ -33,7 +33,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 			EventSource source,
 			Object entity,
 			Object id,
-			EntityDescriptor descriptor) {
+			EntityTypeDescriptor descriptor) {
 		super( source );
 		this.entity = entity;
 		this.id = id;
@@ -64,7 +64,7 @@ public abstract class AbstractPreDatabaseOperationEvent
 	 *
 	 * @return The entity descriptor.
 	 */
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return descriptor;
 	}
 

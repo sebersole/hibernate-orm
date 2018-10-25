@@ -12,7 +12,7 @@ import java.util.Map;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor.NaturalIdAttributeInfo;
 
@@ -25,7 +25,7 @@ import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor.NaturalIdAtt
 public class ResolveNaturalIdEvent extends AbstractEvent {
 	public static final LockMode DEFAULT_LOCK_MODE = LockMode.NONE;
 
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 	private final Map<String, Object> naturalIdValues;
 	private final Object[] orderedNaturalIdValues;
 	private final LockOptions lockOptions;
@@ -34,14 +34,14 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 
 	public ResolveNaturalIdEvent(
 			Map<String, Object> naturalIdValues,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			EventSource source) {
 		this( naturalIdValues, entityDescriptor, new LockOptions(), source );
 	}
 
 	public ResolveNaturalIdEvent(
 			Map<String, Object> naturalIdValues,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			LockOptions lockOptions,
 			EventSource source) {
 		super( source );
@@ -108,7 +108,7 @@ public class ResolveNaturalIdEvent extends AbstractEvent {
 		return orderedNaturalIdValues;
 	}
 
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return entityDescriptor;
 	}
 

@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Occurs after deleting an item from the datastore
@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostDeleteEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor entityDescriptor;
+	private EntityTypeDescriptor entityDescriptor;
 	private Object id;
 	private Object[] deletedState;
 	
@@ -23,7 +23,7 @@ public class PostDeleteEvent extends AbstractEvent {
 			Object entity,
 			Object id,
 			Object[] deletedState,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			EventSource source
 	) {
 		super(source);
@@ -37,7 +37,7 @@ public class PostDeleteEvent extends AbstractEvent {
 		return id;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return entityDescriptor;
 	}
 

@@ -47,10 +47,11 @@ import org.hibernate.engine.jdbc.LobCreator;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.jdbc.ReturningWork;
 import org.hibernate.jdbc.Work;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
@@ -128,7 +129,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Object id, EntityDescriptor descriptor) {
+	public EntityKey generateEntityKey(Object id, EntityTypeDescriptor descriptor) {
 		return delegate.generateEntityKey( id, descriptor );
 	}
 
@@ -172,7 +173,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public EntityDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException {
+	public EntityTypeDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException {
 		return delegate.getEntityDescriptor( entityName, object );
 	}
 
@@ -437,12 +438,12 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public <T> EntityGraph<T> createEntityGraph(Class<T> rootType) {
+	public <T> RootGraphImplementor<T> createEntityGraph(Class<T> rootType) {
 		return delegate.createEntityGraph( rootType );
 	}
 
 	@Override
-	public EntityGraph<?> createEntityGraph(String graphName) {
+	public RootGraphImplementor<?> createEntityGraph(String graphName) {
 		return delegate.createEntityGraph( graphName );
 	}
 
@@ -1016,7 +1017,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
-	public Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException {
+	public Object instantiate(EntityTypeDescriptor entityDescriptor, Object id) throws HibernateException {
 		return delegate.instantiate( entityDescriptor, id );
 	}
 

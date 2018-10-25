@@ -337,12 +337,15 @@ class Antlr4Plugin implements Plugin<Project> {
 class Antlr4GenerationTask extends DefaultTask {
     static final String HQL_PCKG = 'org.hibernate.query.sqm.produce.internal.hql.grammar'
     static final String IMPORT_SQL_PCKG = 'org.hibernate.tool.hbm2ddl.grammar'
+    static final String GRAPH_PCKG = 'org.hibernate.graph.internal.parse'
 
     List<GrammarDescriptor> grammarDescriptors = [
             new GrammarDescriptor( HQL_PCKG, 'HqlLexer' ),
             new GrammarDescriptor( HQL_PCKG, 'HqlParser' ),
             new GrammarDescriptor( IMPORT_SQL_PCKG, 'SqlStatementLexer' ),
-            new GrammarDescriptor( IMPORT_SQL_PCKG, 'SqlStatementParser' )
+            new GrammarDescriptor( IMPORT_SQL_PCKG, 'SqlStatementParser' ),
+            new GrammarDescriptor( GRAPH_PCKG, 'GraphLanguageLexer' ),
+            new GrammarDescriptor( GRAPH_PCKG, 'GraphLanguageParser' )
     ]
 
     @InputFiles

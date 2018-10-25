@@ -8,7 +8,7 @@ package org.hibernate.sql.results.internal.domain.entity;
 
 import java.util.function.Consumer;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
@@ -47,7 +47,7 @@ public class DelayedEntityFetchInitializer extends AbstractFetchParentAccess imp
 	}
 
 	@Override
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return fetchedNavigable.getEntityDescriptor();
 	}
 

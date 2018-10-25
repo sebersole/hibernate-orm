@@ -30,8 +30,8 @@ import org.hibernate.event.spi.RefreshEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
@@ -79,7 +79,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		}
 
 		final EntityEntry e = source.getPersistenceContext().getEntry( object );
-		final EntityDescriptor entityDescriptor;
+		final EntityTypeDescriptor entityDescriptor;
 		final Object id;
 
 		if ( e == null ) {
@@ -228,14 +228,14 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 		UnresolvableObjectException.throwIfNull( result, id, entityDescriptor.getEntityName() );
 	}
 
-	private void evictCachedCollections(EntityDescriptor entityDescriptor, Object id, EventSource source) {
+	private void evictCachedCollections(EntityTypeDescriptor entityDescriptor, Object id, EventSource source) {
 		evictCachedCollections( entityDescriptor.getPersistentAttributes(), id, source );
 	}
 
 	@SuppressWarnings("unchecked")
-	private void evictCachedCollections(List<PersistentAttribute> persistentAttributes, Object id, EventSource source)
+	private void evictCachedCollections(List<PersistentAttributeDescriptor> persistentAttributes, Object id, EventSource source)
 			throws HibernateException {
-		for ( PersistentAttribute attribute : persistentAttributes ) {
+		for ( PersistentAttributeDescriptor attribute : persistentAttributes ) {
 			if ( PluralPersistentAttribute.class.isInstance( attribute ) ) {
 				final PersistentCollectionDescriptor collectionDescriptor = ( (PluralPersistentAttribute) attribute ).getPersistentCollectionDescriptor();
 

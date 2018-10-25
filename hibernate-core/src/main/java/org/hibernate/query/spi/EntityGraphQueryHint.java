@@ -16,6 +16,8 @@ import org.hibernate.graph.spi.RootGraphImplementor;
  * once our AST is improved and this "hack" is no longer needed.
  *
  * @author Brett Meyer
+ *
+ * @deprecated (6.0) - use {@link AppliedGraph} instead
  */
 @Deprecated
 public class EntityGraphQueryHint implements AppliedGraph {
@@ -34,125 +36,4 @@ public class EntityGraphQueryHint implements AppliedGraph {
 	public RootGraphImplementor<?> getGraph() {
 		return delegate.getGraph();
 	}
-
-
-
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// The plan is to add these as part of the SQM -> SQL conversion.  In fact
-	// those hooks are already in place, see SqmSelectToSqlAstConverter.applyFetchesAndEntityGraph
-
-//	public List<FromElement> toFromElements(FromClause fromClause, HqlSqlWalker walker) {
-//		// If a role already has an explicit fetch in the query, skip it in the graph.
-//		Map<String, FromElement> explicitFetches = new HashMap<String, FromElement>();
-//		for ( Object o : fromClause.getFromElements() ) {
-//			final FromElement fromElement = (FromElement) o;
-//			if ( fromElement.getRole() != null  && ! (fromElement instanceof ImpliedFromElement) ) {
-//				explicitFetches.put( fromElement.getRole(), fromElement );
-//			}
-//		}
-//
-//		return getFromElements(
-//				fromClause.getLevel() == FromClause.ROOT_LEVEL ? hintedGraph.getAttributeNodes():
-//					Collections.emptyList(),
-//				fromClause.getFromElement(),
-//				fromClause,
-//				walker,
-//				explicitFetches
-//		);
-//	}
-//
-//	private List<FromElement> getFromElements(
-//			List attributeNodes,
-//			FromElement origin,
-//			FromClause fromClause,
-//			HqlSqlWalker walker,
-//			Map<String, FromElement> explicitFetches) {
-//		final List<FromElement> fromElements = new ArrayList<FromElement>();
-//
-//		for ( Object obj : attributeNodes ) {
-//			final AttributeNode<?> attributeNode = (AttributeNode<?>) obj;
-//
-//			final String attributeName = attributeNode.getAttributeName();
-//			final String className = origin.getClassName();
-//			// TODO: This is ignored by collection types and probably wrong for entity types.  Presumably it screws
-//			// with inheritance.
-//			final String role = className + "." + attributeName;
-//			final String classAlias = origin.getClassAlias();
-//			final String originTableAlias = origin.getTableAlias();
-//			final Type propertyType = origin.getPropertyType( attributeName, attributeName );
-//
-//			try {
-//				FromElement fromElement = explicitFetches.get( role );
-//				boolean explicitFromElement = false;
-//				if ( fromElement == null ) {
-//					if ( propertyType.getClassification().equals( Type.Classification.ENTITY ) ) {
-//						final EntityType entityType = (EntityType) propertyType;
-//
-//						final String[] columns = origin.toColumns( originTableAlias, attributeName, false );
-//						final String tableAlias = walker.getAliasGenerator().createName(
-//								entityType.getAssociatedEntityName()
-//						);
-//
-//						final FromElementFactory fromElementFactory = new FromElementFactory(
-//								fromClause, origin,
-//								attributeName, classAlias, columns, false
-//						);
-//						final JoinSequence joinSequence = walker.getSessionFactoryHelper().createJoinSequence(
-//								false, entityType, tableAlias, JoinType.LEFT_OUTER_JOIN, columns
-//						);
-//						fromElement = fromElementFactory.createEntityJoin(
-//								entityType.getAssociatedEntityName(),
-//								tableAlias,
-//								joinSequence,
-//								true,
-//								walker.isInFrom(),
-//								entityType,
-//								role,
-//								null
-//						);
-//					}
-//					else if ( propertyType.getClassification().equals( Type.Classification.COLLECTION ) ) {
-//						CollectionType collectionType = (CollectionType) propertyType;
-//						final String[] columns = origin.toColumns( originTableAlias, attributeName, false );
-//
-//						final FromElementFactory fromElementFactory = new FromElementFactory(
-//								fromClause, origin,
-//								attributeName, classAlias, columns, false
-//						);
-//						final QueryableCollection queryableCollection = walker.getSessionFactoryHelper()
-//								.requireQueryableCollection( collectionType.getRole() );
-//						fromElement = fromElementFactory.createCollection(
-//								queryableCollection, collectionType.getRole(), JoinType.LEFT_OUTER_JOIN, true, false
-//						);
-//					}
-//				}
-//				else {
-//					explicitFromElement = true;
-//					fromElement.setInProjectionList( true );
-//					fromElement.setFetch( true );
-//				}
-//
-//				if ( fromElement != null ) {
-//					if( !explicitFromElement ){
-//						fromElements.add( fromElement );
-//					}
-//
-//					// recurse into subgraphs
-//					for ( Subgraph<?> subgraph : attributeNode.getSubgraphs().values() ) {
-//						fromElements.addAll(
-//								getFromElements(
-//										subgraph.getAttributeNodes(), fromElement,
-//										fromClause, walker, explicitFetches
-//								)
-//						);
-//					}
-//				}
-//			}
-//			catch (Exception e) {
-//				throw new QueryException( "Could not apply the EntityGraph to the Query!", e );
-//			}
-//		}
-//
-//		return fromElements;
-//	}
 }
