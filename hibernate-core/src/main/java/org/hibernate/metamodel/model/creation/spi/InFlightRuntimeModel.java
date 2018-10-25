@@ -92,8 +92,8 @@ public class InFlightRuntimeModel extends AbstractRuntimeModel {
 		}
 	}
 
-	public void addEntityNamedGraph(String name, EntityGraphImplementor entityGraph) {
-		final EntityGraph<?> previous = getEntityGraphMap().put( name, entityGraph );
+	public void addNamedRootGraph(String name, RootGraphImplementor rootGraph) {
+		final EntityGraph<?> previous = getRootGraphMap().put( name, rootGraph );
 
 		if ( previous != null ) {
 			log.debugf( "Adding EntityGraph [%s -> %s] replaced existing registration [%s]", name, entityGraph, previous );

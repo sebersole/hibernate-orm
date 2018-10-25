@@ -61,7 +61,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
-import org.hibernate.metamodel.model.domain.internal.StandardManagedTypeRepresentationResolver;
+import org.hibernate.metamodel.model.domain.internal.mode.StandardManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.relational.spi.PhysicalNamingStrategy;
 import org.hibernate.query.sqm.produce.function.SqmFunctionTemplate;

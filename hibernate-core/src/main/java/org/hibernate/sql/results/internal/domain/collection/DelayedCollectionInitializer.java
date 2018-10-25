@@ -8,6 +8,7 @@ package org.hibernate.sql.results.internal.domain.collection;
 
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.collection.spi.PersistentCollection;
+import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -75,6 +76,8 @@ public class DelayedCollectionInitializer extends AbstractCollectionInitializer 
 			);
 
 			persistenceContext.addUninitializedCollection( collectionDescriptor, collectionInstance, collectionKey.getKey() );
+			final CollectionEntry collectionEntry = persistenceContext.getCollectionEntry( collectionInstance );
+			collectionEntry.setCurrentKey( collectionKey.getKey() );
 
 			if ( getCollectionDescriptor().getSemantics().getCollectionClassification() == CollectionClassification.ARRAY ) {
 				session.getPersistenceContext().addCollectionHolder( collectionInstance );

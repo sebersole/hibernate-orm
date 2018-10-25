@@ -161,9 +161,7 @@ public final class Collections {
 		final SessionFactoryImplementor factory = session.getFactory();
 		ce.setCurrentDescriptor( collectionAttribute.getCollectionDescriptor() );
 
-		// todo (6.0) : is there a reason we can't just use the the incoming PersistentCollection's key?
-		//ce.setCurrentKey( collectionAttribute.getCollectionDescriptor().getKeyOfOwner( entity, session ) );
-		ce.setCurrentKey( collection.getKey() );
+		ce.setCurrentKey( collectionAttribute.getCollectionDescriptor().getKeyOfOwner( entity, session ) );
 
 		final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor( collectionAttribute.getCollectionDescriptor(), factory );
 		final boolean isBytecodeEnhanced = ownerEntityDescriptor.getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();

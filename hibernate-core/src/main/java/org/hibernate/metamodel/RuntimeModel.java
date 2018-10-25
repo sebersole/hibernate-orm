@@ -52,10 +52,10 @@ public interface RuntimeModel {
 	<O,C,E> PersistentCollectionDescriptor<O,C,E> findCollectionDescriptor(String name);
 	void visitCollectionDescriptors(Consumer<PersistentCollectionDescriptor<?,?,?>> action);
 
-	<T> EntityGraphImplementor<? super T> findEntityGraph(String name);
-	<T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType);
-	<T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName);
-	void visitEntityGraphs(Consumer<EntityGraph<?>> action);
+	<T> RootGraph<? super T> findRootGraph(String name);
+	<T> List<RootGraph<? super T>> findRootGraphsForType(Class<T> baseType);
+	<T> List<RootGraph<? super T>> findRootGraphsForType(String baseTypeName);
+	void visitRootGraphs(Consumer<RootGraph<?>> action);
 
 	// todo (6.0) : default-for-type as well?
 	//		aka:

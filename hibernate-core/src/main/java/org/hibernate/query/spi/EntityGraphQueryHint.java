@@ -6,7 +6,9 @@
  */
 package org.hibernate.query.spi;
 
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.spi.AppliedGraph;
+import org.hibernate.graph.spi.RootGraphImplementor;
 
 /**
  * Encapsulates a JPA EntityGraph provided through a JPQL query hint.  Converts the fetches into a list of AST
@@ -15,77 +17,22 @@ import org.hibernate.graph.spi.EntityGraphImplementor;
  *
  * @author Brett Meyer
  */
-public class EntityGraphQueryHint {
-	public enum Type {
-		/**
-		 * Indicates a "fetch graph" EntityGraph.  Attributes explicitly specified
-		 * as AttributeNodes are treated as FetchType.EAGER (via join fetch or
-		 * subsequent select).
-		 * <p/>
-		 * Note: Currently, attributes that are not specified are treated as
-		 * FetchType.LAZY or FetchType.EAGER depending on the attribute's definition
-		 * in metadata, rather than forcing FetchType.LAZY.
-		 */
-		FETCH( "javax.persistence.fetchgraph" ),
+@Deprecated
+public class EntityGraphQueryHint implements AppliedGraph {
+	private final AppliedGraph delegate;
 
-		/**
-		 * Indicates a "load graph" EntityGraph.  Attributes explicitly specified
-		 * as AttributeNodes are treated as FetchType.EAGER (via join fetch or
-		 * subsequent select).  Attributes that are not specified are treated as
-		 * FetchType.LAZY or FetchType.EAGER depending on the attribute's definition
-		 * in metadata
-		 */
-		LOAD( "javax.persistence.loadgraph" ),
-
-		NONE( null );
-
-		private final String jpaHintName;
-
-		Type(String jpaHintName) {
-			this.jpaHintName = jpaHintName;
-		}
-
-		public String getJpaHintName() {
-			return jpaHintName;
-		}
-
-		public static Type fromJpaHintName(String hintName) {
-			assert hintName != null;
-
-			if ( FETCH.getJpaHintName().equals( hintName ) ) {
-				return FETCH;
-			}
-
-			if ( LOAD.getJpaHintName().equalsIgnoreCase( hintName ) ) {
-				return LOAD;
-			}
-
-			throw new IllegalArgumentException( "Unknown EntityGraph hint type name [" + hintName + "]" );
-		}
+	public EntityGraphQueryHint(AppliedGraph delegate) {
+		this.delegate = delegate;
 	}
 
-	private final Type type;
-	private final EntityGraphImplementor<?> hintedGraph;
-
-	public EntityGraphQueryHint(String hintName, EntityGraphImplementor<?> hintedGraph) {
-		this( Type.fromJpaHintName( hintName ), hintedGraph );
+	@Override
+	public GraphSemantic getSemantic() {
+		return delegate.getSemantic();
 	}
 
-	public EntityGraphQueryHint(Type type, EntityGraphImplementor<?> hintedGraph) {
-		this.type = type;
-		this.hintedGraph = hintedGraph;
-	}
-
-	public Type getType() {
-		return type;
-	}
-
-	public String getHintName() {
-		return getType().getJpaHintName();
-	}
-
-	public EntityGraphImplementor<?> getHintedGraph() {
-		return hintedGraph;
+	@Override
+	public RootGraphImplementor<?> getGraph() {
+		return delegate.getGraph();
 	}
 
 

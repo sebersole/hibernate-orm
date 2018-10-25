@@ -7,12 +7,9 @@
 package org.hibernate.metamodel.model.domain.internal;
 
 import java.lang.reflect.Array;
-import java.util.Map;
 
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.collection.internal.StandardArraySemantics;
-import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
@@ -21,7 +18,6 @@ import org.hibernate.sql.results.internal.domain.collection.CollectionInitialize
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -35,31 +31,31 @@ public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollec
 		super( pluralProperty, runtimeContainer, creationContext );
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	protected CollectionJavaDescriptor resolveCollectionJtd(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		Class componentType = getElementDescriptor().getJavaTypeDescriptor().getJavaType();
-		if ( componentType == null ) {
-			// MAP entity mode?
-			// todo (6.0) : verify this
-			componentType = Map.class;
-		}
-
-		// The only way I know to handle this is by instantiating an array...
-		// todo (6.0) : better way?
-		final Class arrayType = Array.newInstance( componentType, 0 ).getClass();
-		assert arrayType.isArray();
-
-		final CollectionJavaDescriptor javaDescriptor = new CollectionJavaDescriptor(
-				arrayType,
-				StandardArraySemantics.INSTANCE
-		);
-		creationContext.getTypeConfiguration().getJavaTypeDescriptorRegistry().addDescriptor( javaDescriptor );
-
-		return javaDescriptor;
-	}
+//	@Override
+//	@SuppressWarnings("unchecked")
+//	protected CollectionJavaDescriptor resolveCollectionJtd(
+//			Collection collectionBinding,
+//			RuntimeModelCreationContext creationContext) {
+//		Class componentType = getElementDescriptor().getJavaTypeDescriptor().getJavaType();
+//		if ( componentType == null ) {
+//			// MAP entity mode?
+//			// todo (6.0) : verify this
+//			componentType = Map.class;
+//		}
+//
+//		// The only way I know to handle this is by instantiating an array...
+//		// todo (6.0) : better way?
+//		final Class arrayType = Array.newInstance( componentType, 0 ).getClass();
+//		assert arrayType.isArray();
+//
+//		final CollectionJavaDescriptor javaDescriptor = new CollectionJavaDescriptor(
+//				arrayType,
+//				StandardArraySemantics.INSTANCE
+//		);
+//		creationContext.getTypeConfiguration().getJavaTypeDescriptorRegistry().addDescriptor( javaDescriptor );
+//
+//		return javaDescriptor;
+//	}
 
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(

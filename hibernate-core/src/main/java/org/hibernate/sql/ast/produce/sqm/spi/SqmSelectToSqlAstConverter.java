@@ -47,6 +47,8 @@ import org.hibernate.sql.ast.tree.spi.QuerySpec;
 import org.hibernate.sql.ast.tree.spi.SelectStatement;
 import org.hibernate.sql.ast.tree.spi.expression.Expression;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiation;
 import org.hibernate.sql.ast.tree.spi.expression.instantiation.DynamicInstantiationNature;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
@@ -225,8 +227,6 @@ public class SqmSelectToSqlAstConverter
 
 	@Override
 	public List<Fetch> visitFetches(FetchParent fetchParent) {
-		final NavigableContainerReference parentNavigableReference = (NavigableContainerReference) getNavigableReferenceStack().getCurrent();
-
 		final List<Fetch> fetches = new ArrayList();
 
 		final Consumer<Fetchable> fetchableConsumer = fetchable -> {
@@ -265,6 +265,9 @@ public class SqmSelectToSqlAstConverter
 				alias = fetchedJoin.getIdentificationVariable();
 			}
 			else {
+				// todo (6.0) : account for EntityGraph
+
+
 				// Note that legacy Hibernate behavior for HQL processing was to stop here
 				// in terms of defining immediate join fetches - they had to be
 				// explicitly defined in the query (although we did add some support for

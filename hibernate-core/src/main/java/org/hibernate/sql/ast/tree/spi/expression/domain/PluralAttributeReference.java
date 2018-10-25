@@ -6,6 +6,8 @@
  */
 package org.hibernate.sql.ast.tree.spi.expression.domain;
 
+import org.hibernate.LockMode;
+import org.hibernate.metamodel.model.domain.spi.CollectionValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
@@ -13,15 +15,17 @@ import org.hibernate.sql.ast.produce.spi.ColumnReferenceQualifier;
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeReference extends AbstractNavigableReference {
+public class PluralAttributeReference extends AbstractNavigableContainerReference implements NavigableContainerReference {
+
 	/**
 	 * Ctor for a collection domain result
 	 */
 	public PluralAttributeReference(
-			PluralPersistentAttribute referencedAttribute,
+			CollectionValuedNavigable navigable,
+			NavigablePath navigablePath,
 			ColumnReferenceQualifier columnReferenceQualifier,
-			NavigablePath navigablePath) {
-		super( null, referencedAttribute, navigablePath, columnReferenceQualifier );
+			LockMode lockMode) {
+		this( null, navigable, navigablePath, columnReferenceQualifier, lockMode );
 	}
 
 	/**
@@ -30,15 +34,26 @@ public class PluralAttributeReference extends AbstractNavigableReference {
 	 */
 	public PluralAttributeReference(
 			NavigableContainerReference containerReference,
-			PluralPersistentAttribute referencedAttribute,
+			CollectionValuedNavigable navigable,
+			NavigablePath navigablePath,
 			ColumnReferenceQualifier valuesQualifier,
-			NavigablePath navigablePath) {
-		super( containerReference, referencedAttribute, navigablePath, valuesQualifier );
+			LockMode lockMode) {
+		super( containerReference, navigable, navigablePath, valuesQualifier, lockMode );
 	}
 
 	@Override
 	public PluralPersistentAttribute getNavigable() {
 		return (PluralPersistentAttribute) super.getNavigable();
+	}
+
+	@Override
+	public NavigableReference findNavigableReference(String navigableName) {
+		return null;
+	}
+
+	@Override
+	public void addNavigableReference(NavigableReference reference) {
+
 	}
 
 	public ColumnReferenceQualifier getContainerQualifier() {

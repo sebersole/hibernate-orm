@@ -152,11 +152,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 			}
 
 			if ( ! isSelected() ) {
-				persistenceContext.addUninitializedCollection(
-						getCollectionDescriptor(),
-						collectionInstance,
-						collectionKey.getKey()
-				);
+				persistenceContext.addUninitializedCollection( getCollectionDescriptor(), collectionInstance, collectionKey.getKey() );
 
 				// note : this call adds the collection to the PC, so we will find it
 				// next time (`existing`) and not attempt to load values
@@ -188,7 +184,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 				);
 			}
 
-			persistenceContext.addUninitializedCollection( getCollectionDescriptor(), collectionInstance, collectionKey );
+			persistenceContext.addUninitializedCollection( getCollectionDescriptor(), collectionInstance, collectionKey.getKey() );
 
 			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingCollection(
 					collectionKey,

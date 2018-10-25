@@ -238,13 +238,6 @@ public class QuerySqmImpl<R>
 		);
 	}
 
-	@Override
-	protected void applyEntityGraphQueryHint(String hintName, EntityGraphImplementor entityGraph) {
-		queryOptions.setEntityGraphQueryHint(
-				new EntityGraphQueryHint( hintName, entityGraph )
-		);
-	}
-
 
 	@Override
 	protected void collectHints(Map<String, Object> hints) {

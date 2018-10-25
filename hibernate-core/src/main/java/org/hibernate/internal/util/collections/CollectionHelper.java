@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Various help for handling collections.
@@ -56,6 +57,26 @@ public final class CollectionHelper {
 	 */
 	public static <K, V> Map<K, V> mapOfSize(int size) {
 		return size < 1 ? new HashMap<>() : new HashMap<>( determineProperSizing( size ), LOAD_FACTOR );
+	}
+
+	public static <K, V> HashMap<K, V> makeCopy(
+			Map<K, V> original,
+			Function<K, K> keyTransformer,
+			Function<V, V> valueTransformer) {
+		if ( original == null ) {
+			return null;
+		}
+
+		final HashMap<K, V> copy = new HashMap<>( determineProperSizing( original ) );
+
+		original.forEach(
+				(key, value) -> copy.put(
+						keyTransformer.apply( key ),
+						valueTransformer.apply( value )
+				)
+		);
+
+		return copy;
 	}
 
 	/**

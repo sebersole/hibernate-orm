@@ -6,21 +6,24 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.metamodel.model.domain.CollectionDomainType;
+import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.produce.spi.TableReferenceContributor;
 
 /**
  * @author Steve Ebersole
  */
-public interface CollectionElement<J> extends Navigable<J>, TableReferenceContributor {
-
+public interface CollectionElement<J> extends Navigable<J>, CollectionDomainType.Element<J>, TableReferenceContributor {
 	String NAVIGABLE_NAME = "{element}";
+
+	boolean canContainSubGraphs();
 
 	enum ElementClassification {
 		BASIC,
 		EMBEDDABLE,
 		ANY,
 		ONE_TO_MANY,
-		MANY_TO_MANY
+		MANY_TO_MANY;
 	}
 
 	ElementClassification getClassification();

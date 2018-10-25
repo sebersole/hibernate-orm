@@ -34,11 +34,25 @@ import org.hibernate.type.spi.TypeConfiguration;
  *
  * @author Steve Ebersole
  */
-public interface Navigable<T> extends DomainType<T> {
+public interface Navigable<T> extends DomainTypeDescriptor<T> {
 	/**
 	 * The NavigableContainer which contains this Navigable.
 	 */
 	NavigableContainer<?> getContainer();
+
+	default EntityTypeDescriptor findFirstEntityDescriptor() {
+		if ( this instanceof EntityValuedNavigable ) {
+			return ( (EntityValuedNavigable) this ).getEntityDescriptor();
+		}
+
+		// do not read past collections
+		final NavigableContainer<?> container = getContainer();
+		if ( container != null ) {
+			return container.findFirstEntityDescriptor();
+		}
+
+		throw new IllegalStateException( "Could not locate first entity descriptor" );
+	}
 
 	/**
 	 * The role for this Navigable which is unique across all
@@ -69,12 +83,15 @@ public interface Navigable<T> extends DomainType<T> {
 	 *     <li>The list of navigables have some missing or cyclic dependency</li>
 	 * </ul>
 	 *
+	 * @param bootReference
 	 * @param creationContext The context in which the Navigable is being created and
 	 * finalized.
 	 *
 	 * @return true if initialization complete, false if not yet done.
 	 */
-	default boolean finishInitialization(RuntimeModelCreationContext creationContext) {
+	default boolean finishInitialization(
+			Object bootReference,
+			RuntimeModelCreationContext creationContext) {
 		return true;
 	}
 

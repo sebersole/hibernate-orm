@@ -87,7 +87,6 @@ public class WrapVisitor extends ProxyVisitor {
 				return null;
 			}
 			else {
-
 				PersistentCollection persistentCollection = collectionDescriptor.wrap( session, collection );
 				persistenceContext.addNewCollection( collectionDescriptor, persistentCollection );
 

@@ -11,6 +11,11 @@ package org.hibernate.metamodel.model.domain.spi;
  */
 public interface CollectionElementEntity<E> extends CollectionElement<E>, EntityValuedNavigable<E> {
 	@Override
+	default boolean canContainSubGraphs() {
+		return true;
+	}
+
+	@Override
 	default void visitNavigable(NavigableVisitationStrategy visitor) {
 		visitor.visitCollectionElementEntity( this );
 	}

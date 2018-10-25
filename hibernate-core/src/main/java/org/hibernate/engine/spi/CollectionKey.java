@@ -68,10 +68,10 @@ public final class CollectionKey implements Serializable {
 		return role.getFullPath();
 	}
 
-
 	public NavigableRole getNavigableRole(){
 		return role;
 	}
+
 
 	public Object getKey() {
 		return key;

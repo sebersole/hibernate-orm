@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
@@ -75,7 +74,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 			RuntimeModelCreationContext.class
 	};
 
-	void finishInitialization(Collection collectionBinding, RuntimeModelCreationContext creationContext);
+	boolean finishInitialization(Collection collectionBinding, RuntimeModelCreationContext creationContext);
 
 	default CollectionClassification getCollectionClassification() {
 		return getSemantics().getCollectionClassification();
@@ -222,6 +221,12 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	CollectionLoader getLoader();
 
 	Table getSeparateCollectionTable();
+
+	/**
+	 * Get the "space" that holds the persistent state
+	 */
+	Set<String> getCollectionSpaces();
+
 
 	boolean isInverse();
 
@@ -481,10 +486,6 @@ public interface PersistentCollectionDescriptor<O,C,E>
 //
 //	boolean hasManyToManyOrdering();
 //
-	/**
-	 * Get the "space" that holds the persistent state
-	 */
-	Set<String> getCollectionSpaces();
 
 	default boolean hasCache() {
 		return getCacheAccess() != null;
@@ -585,12 +586,12 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	 * As with all of these "owner"-related methods we need to come up with
 	 * a better plan for handling that stuff.
 	 */
-	default Serializable getKeyOfOwner(Object entity, SessionImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+	default Object getKeyOfOwner(Object owner, SessionImplementor session) {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default Iterator getElementsIterator(Object collection, SharedSessionContractImplementor session) {
-		throw new NotYetImplementedFor6Exception();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	default C instantiateRaw(int anticipatedSize) {

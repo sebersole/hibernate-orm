@@ -57,7 +57,7 @@ public class MappedSuperclassImpl<J>
 	}
 
 	@Override
-	public void finishInitialization(
+	public boolean finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception(  );

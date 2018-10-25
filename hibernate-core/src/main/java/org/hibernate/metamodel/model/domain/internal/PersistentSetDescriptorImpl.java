@@ -9,7 +9,6 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Set;
 
 import org.hibernate.LockMode;
-import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
@@ -20,7 +19,6 @@ import org.hibernate.sql.results.internal.domain.collection.SetInitializerProduc
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
-import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
 
 /**
  * Hibernate's standard PersistentCollectionDescriptor implementor
@@ -34,13 +32,6 @@ public class PersistentSetDescriptorImpl<O,E> extends AbstractPersistentCollecti
 			ManagedTypeDescriptor runtimeContainer,
 			RuntimeModelCreationContext context) {
 		super( bootProperty, runtimeContainer, context );
-	}
-
-	@Override
-	protected CollectionJavaDescriptor resolveCollectionJtd(
-			Collection collectionBinding,
-			RuntimeModelCreationContext creationContext) {
-		return findCollectionJtd( Set.class, creationContext );
 	}
 
 	@Override
@@ -66,5 +57,10 @@ public class PersistentSetDescriptorImpl<O,E> extends AbstractPersistentCollecti
 	@Override
 	public boolean contains(Object collection, Object childObject) {
 		return ( (Set) collection ).contains( childObject );
+	}
+
+	@Override
+	public String toString() {
+		return getNavigableRole().getFullPath();
 	}
 }

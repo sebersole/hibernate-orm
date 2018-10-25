@@ -122,4 +122,6 @@ public interface EntityIdentifier<O,J> extends Navigable<J>, AllowableOutputPara
 	}
 
 	boolean matchesNavigableName(String navigableName);
+
+	boolean canContainSubGraphs();
 }

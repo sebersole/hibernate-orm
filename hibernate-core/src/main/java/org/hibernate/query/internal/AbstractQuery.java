@@ -43,7 +43,7 @@ import org.hibernate.PropertyNotFoundException;
 import org.hibernate.ScrollMode;
 import org.hibernate.TypeMismatchException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.internal.EntityManagerMessageLogger;
 import org.hibernate.internal.HEMLogging;
 import org.hibernate.jpa.QueryHints;
@@ -473,8 +473,8 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 				}
 			}
 			else if ( HINT_FETCHGRAPH.equals( hintName ) || HINT_LOADGRAPH.equals( hintName ) ) {
-				if (value instanceof EntityGraphImplementor ) {
-					applyEntityGraphQueryHint( hintName, (EntityGraphImplementor) value );
+				if (value instanceof RootGraphImplementor ) {
+					applyEntityGraphQueryHint( hintName, (RootGraphImplementor) value );
 				}
 				else {
 					log.warnf( "The %s hint was set, but the value was not an EntityGraph!", hintName );
@@ -654,7 +654,7 @@ public abstract class AbstractQuery<R> implements QueryImplementor<R> {
 		getLockOptions().setAliasSpecificLockMode( alias, lockMode );
 	}
 
-	protected abstract void applyEntityGraphQueryHint(String hintName, EntityGraphImplementor entityGraph);
+	protected abstract void applyEntityGraphQueryHint(String hintName, RootGraphImplementor entityGraph);
 
 	/**
 	 * Apply the follow-on-locking hint.
