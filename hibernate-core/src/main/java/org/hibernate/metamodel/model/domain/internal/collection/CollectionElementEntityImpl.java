@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.OneToMany;
@@ -202,6 +203,29 @@ public class CollectionElementEntityImpl<J>
 			SqmNavigableContainerReference containerReference,
 			SqmCreationContext creationContext) {
 		return new SqmCollectionElementReferenceEntity( (SqmPluralAttributeReference) containerReference );
+	}
+
+	@Override
+	public void visitJdbcTypes(Consumer<SqlExpressableType> action, Clause clause, TypeConfiguration typeConfiguration) {
+		visitColumns(
+				(sqlExpressableType, column) -> action.accept( sqlExpressableType ),
+				clause,
+				typeConfiguration
+		);
+	}
+
+	@Override
+	public Object unresolve(Object value, SharedSessionContractImplementor session) {
+		return getEntityDescriptor().getIdentifier( value, session );
+	}
+
+	@Override
+	public void dehydrate(
+			Object value,
+			JdbcValueCollector jdbcValueCollector,
+			Clause clause,
+			SharedSessionContractImplementor session) {
+		getEntityDescriptor().getIdentifierDescriptor().dehydrate( value, jdbcValueCollector, clause, session );
 	}
 
 	@Override
