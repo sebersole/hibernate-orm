@@ -267,7 +267,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		}
 
 		for ( Map.Entry<EntityMappingHierarchy, IdentifiableTypeDescriptor> entry : runtimeRootByBootHierarchy.entrySet() ) {
-			final EntityDescriptor runtimeRootEntity = runtimeRootEntityByBootHierarchy.get( entry.getKey() );
+			final EntityTypeDescriptor runtimeRootEntity = runtimeRootEntityByBootHierarchy.get( entry.getKey() );
 			runtimeRootEntity.postInitialization( creationContext );
 		}
 

@@ -70,7 +70,6 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 		return embeddedTypeDescriptor;
 	}
 
-	@Override
 	public FetchParentAccess getFetchParentAccess() {
 		return fetchParentAccess;
 	}
@@ -152,5 +151,10 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 		resolvedValues = null;
 
 		clearParentResolutionListeners();
+	}
+
+	@Override
+	public FetchParentAccess findFirstEntityDescriptorAccess() {
+		return getFetchParentAccess().findFirstEntityDescriptorAccess();
 	}
 }
