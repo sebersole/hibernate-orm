@@ -8,7 +8,7 @@ package org.hibernate.boot.model.domain;
 
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.tuple.ValueGeneration;
 
@@ -62,7 +62,7 @@ public interface PersistentAttributeMapping extends MetaAttributable, ValueMappi
 	// todo (6.0) relatedly (^^), we ought to pass the PersistentAttributeMapping into the runtime ctor as we build it
 	// 		- the alternative is to pass many values to its ctor (which we have now)
 
-	<O,T> PersistentAttribute<O,T> makeRuntimeAttribute(
+	<O,T> PersistentAttributeDescriptor<O,T> makeRuntimeAttribute(
 			ManagedTypeDescriptor<O> runtimeContainer,
 			ManagedTypeMapping bootContainer,
 			SingularPersistentAttribute.Disposition singularAttributeDisposition,

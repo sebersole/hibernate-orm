@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import javax.persistence.metamodel.SingularAttribute;
-import javax.persistence.metamodel.Type;
 
 import org.hibernate.EntityNameResolver;
 import org.hibernate.HibernateException;
@@ -42,6 +41,8 @@ import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.graph.internal.SubGraphImpl;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
@@ -60,9 +61,9 @@ import org.hibernate.mapping.Subclass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
-import org.hibernate.metamodel.model.domain.internal.EntityHierarchyImpl;
-import org.hibernate.metamodel.model.domain.internal.EntityIdentifierCompositeAggregatedImpl;
-import org.hibernate.metamodel.model.domain.internal.EntityIdentifierSimpleImpl;
+import org.hibernate.metamodel.model.domain.internal.entity.EntityHierarchyImpl;
+import org.hibernate.metamodel.model.domain.internal.entity.EntityIdentifierCompositeAggregatedImpl;
+import org.hibernate.metamodel.model.domain.internal.entity.EntityIdentifierSimpleImpl;
 import org.hibernate.metamodel.model.domain.internal.SqlAliasStemHelper;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
@@ -94,10 +95,10 @@ import org.hibernate.type.descriptor.java.spi.IdentifiableJavaDescriptor;
 /**
  * @author Steve Ebersole
  */
-public abstract class AbstractEntityDescriptor<J>
+public abstract class AbstractEntityTypeDescriptor<J>
 		extends AbstractIdentifiableType<J>
 		implements Lockable<J> {
-	private static final CoreMessageLogger log = CoreLogging.messageLogger( AbstractEntityDescriptor.class );
+	private static final CoreMessageLogger log = CoreLogging.messageLogger( AbstractEntityTypeDescriptor.class );
 
 	private final SessionFactoryImplementor factory;
 	private final EntityHierarchy hierarchy;
@@ -125,7 +126,7 @@ public abstract class AbstractEntityDescriptor<J>
 	protected final ExecuteUpdateResultCheckStyle rootUpdateResultCheckStyle;
 
 	@SuppressWarnings("UnnecessaryBoxing")
-	public AbstractEntityDescriptor(
+	public AbstractEntityTypeDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor<? super J> superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
@@ -186,7 +187,7 @@ public abstract class AbstractEntityDescriptor<J>
 		this.hasProxy = bootMapping.hasProxy() && !bytecodeEnhancementMetadata.isEnhancedForLazyLoading();
 		proxyInterface = bootMapping.getProxyInterface();
 
-		creationContext.registerNavigable( this );
+		creationContext.registerNavigable( this, bootMapping );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -288,7 +289,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public void finishInitialization(
+	public boolean finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		super.finishInitialization( bootDescriptor, creationContext );
@@ -303,6 +304,8 @@ public abstract class AbstractEntityDescriptor<J>
 		if ( hasProxy ) {
 			this.proxyFactory = getRepresentationStrategy().generateProxyFactory( this, creationContext );
 		}
+
+		return true;
 	}
 
 	@Override
@@ -400,7 +403,7 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public EntityDescriptor<J> getEntityDescriptor() {
+	public EntityTypeDescriptor<J> getEntityDescriptor() {
 		return this;
 	}
 
@@ -453,8 +456,8 @@ public abstract class AbstractEntityDescriptor<J>
 	}
 
 	@Override
-	public Type<?> getIdType() {
-		return getHierarchy().getIdentifierDescriptor();
+	public SimpleTypeDescriptor<?> getIdType() {
+		return getHierarchy().getIdentifierDescriptor().getNavigableType();
 	}
 
 	@Override
@@ -501,6 +504,27 @@ public abstract class AbstractEntityDescriptor<J>
 	public boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers) {
 		return loadQueryInfluencers.getFetchGraph() != null
 				|| loadQueryInfluencers.getLoadGraph() != null;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <S extends J> SubGraphImplementor<S> makeSubGraph(Class<S> subType) {
+		if ( ! getBindableJavaType().isAssignableFrom( subType ) ) {
+			throw new IllegalArgumentException(
+					String.format(
+							"Entity type [%s] cannot be treated as requested sub-type [%s]",
+							getName(),
+							subType.getName()
+					)
+			);
+		}
+
+		return new SubGraphImpl( this, true, getTypeConfiguration().getSessionFactory() );
+	}
+
+	@Override
+	public SubGraphImplementor<J> makeSubGraph() {
+		return makeSubGraph( getBindableJavaType() );
 	}
 
 	@SuppressWarnings("WeakerAccess")

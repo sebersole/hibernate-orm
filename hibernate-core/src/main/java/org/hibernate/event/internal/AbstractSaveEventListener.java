@@ -34,9 +34,9 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.jpa.event.spi.CallbackRegistry;
 import org.hibernate.jpa.event.spi.CallbackRegistryConsumer;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.pretty.MessageHelper;
@@ -123,7 +123,7 @@ public abstract class AbstractSaveEventListener
 			( (SelfDirtinessTracker) entity ).$$_hibernate_clearDirtyAttributes();
 		}
 
-		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
+		final EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( entityName, entity );
 		final EntityIdentifier<Object, Object> identifierDescriptor = entityDescriptor.getHierarchy()
 				.getIdentifierDescriptor();
 		Object generatedId = identifierDescriptor
@@ -173,7 +173,7 @@ public abstract class AbstractSaveEventListener
 	protected Object performSave(
 			Object entity,
 			Object id,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			boolean useIdentityColumn,
 			Object anything,
 			EventSource source,
@@ -216,7 +216,7 @@ public abstract class AbstractSaveEventListener
 		);
 	}
 
-	protected boolean invokeSaveLifecycle(Object entity, EntityDescriptor descriptor, EventSource source) {
+	protected boolean invokeSaveLifecycle(Object entity, EntityTypeDescriptor descriptor, EventSource source) {
 		// Sub-insertions should occur before containing insertion so
 		// Try to do the callback now
 		if ( descriptor.implementsLifecycle() ) {
@@ -248,7 +248,7 @@ public abstract class AbstractSaveEventListener
 	protected Object performSaveOrReplicate(
 			Object entity,
 			EntityKey key,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			boolean useIdentityColumn,
 			Object anything,
 			EventSource source,
@@ -357,7 +357,7 @@ public abstract class AbstractSaveEventListener
 			Object[] values,
 			Object id,
 			Object entity,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			boolean useIdentityColumn,
 			EventSource source,
 			boolean shouldDelayIdentityInserts) {
@@ -397,7 +397,7 @@ public abstract class AbstractSaveEventListener
 			Object entity,
 			Object id,
 			Object[] values,
-			List<PersistentAttribute> attributes,
+			List<PersistentAttributeDescriptor> attributes,
 			EventSource source) {
 		WrapVisitor visitor = new WrapVisitor( source );
 		// substitutes into values by side-effect
@@ -422,7 +422,7 @@ public abstract class AbstractSaveEventListener
 			Object entity,
 			Object id,
 			Object[] values,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SessionImplementor source) {
 		boolean substitute = source.getInterceptor().onSave(
 				entity,
@@ -454,7 +454,7 @@ public abstract class AbstractSaveEventListener
 	 */
 	protected void cascadeBeforeSave(
 			EventSource source,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			Object entity,
 			Object anything) {
 
@@ -485,7 +485,7 @@ public abstract class AbstractSaveEventListener
 	 */
 	protected void cascadeAfterSave(
 			EventSource source,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			Object entity,
 			Object anything) {
 

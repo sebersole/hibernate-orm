@@ -12,6 +12,7 @@ import org.hibernate.query.sqm.produce.internal.hql.grammar.HqlParser;
 import org.jboss.logging.Logger;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 
@@ -28,7 +29,7 @@ public class HqlParseTreeBuilder {
 
 	public HqlParser parseHql(String hql) {
 		// Build the lexer
-		HqlLexer hqlLexer = new HqlLexer( new ANTLRInputStream( hql ) );
+		HqlLexer hqlLexer = new HqlLexer( CharStreams.fromString( hql ) );
 
 		// Build the parser...
 		return new HqlParser( new CommonTokenStream( hqlLexer ) ) {

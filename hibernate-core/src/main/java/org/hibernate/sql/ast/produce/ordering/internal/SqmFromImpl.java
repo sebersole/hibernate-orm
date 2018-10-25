@@ -8,7 +8,7 @@ package org.hibernate.sql.ast.produce.ordering.internal;
 
 import java.util.Locale;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
@@ -90,8 +90,8 @@ public class SqmFromImpl implements SqmFrom {
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
-		return (EntityDescriptor) getUsageDetails().getIntrinsicSubclassIndicator();
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
+		return (EntityTypeDescriptor) getUsageDetails().getIntrinsicSubclassIndicator();
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class SqmFromImpl implements SqmFrom {
 		}
 
 		@Override
-		public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+		public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 			return null;
 		}
 

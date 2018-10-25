@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Occurs after inserting an item in the datastore
@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostInsertEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor entityDescriptor;
+	private EntityTypeDescriptor entityDescriptor;
 	private Object[] state;
 	private Object id;
 	
@@ -23,7 +23,7 @@ public class PostInsertEvent extends AbstractEvent {
 			Object entity,
 			Object id,
 			Object[] state,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			EventSource source) {
 		super(source);
 		this.entity = entity;
@@ -40,7 +40,7 @@ public class PostInsertEvent extends AbstractEvent {
 		return id;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return entityDescriptor;
 	}
 

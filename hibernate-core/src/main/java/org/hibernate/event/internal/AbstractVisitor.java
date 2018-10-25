@@ -13,8 +13,8 @@ import org.hibernate.HibernateException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
@@ -40,9 +40,9 @@ public abstract class AbstractVisitor {
 	 * @param attributes
 	 * @throws HibernateException
 	 */
-	final void processValues(Object[] values, Collection<PersistentAttribute> attributes) throws HibernateException {
+	final void processValues(Object[] values, Collection<PersistentAttributeDescriptor> attributes) throws HibernateException {
 		int i = 0;
-		for ( PersistentAttribute attribute : attributes ) {
+		for ( PersistentAttributeDescriptor attribute : attributes ) {
 			if ( includeProperty( values, i ) ) {
 				processValue( i, values, attribute );
 			}
@@ -50,7 +50,7 @@ public abstract class AbstractVisitor {
 		}
 	}
 
-	void processValue(int i, Object[] values, PersistentAttribute attribute) throws HibernateException {
+	void processValue(int i, Object[] values, PersistentAttributeDescriptor attribute) throws HibernateException {
 		processValue( values[i], attribute );
 	}
 
@@ -61,7 +61,7 @@ public abstract class AbstractVisitor {
 	 * @param attributes
 	 * @throws HibernateException
 	 */
-	public void processEntityPropertyValues(Object[] values, List<PersistentAttribute> attributes) throws HibernateException {
+	public void processEntityPropertyValues(Object[] values, List<PersistentAttributeDescriptor> attributes) throws HibernateException {
 		for ( int i = 0; i < attributes.size(); i++ ) {
 			if ( includeEntityProperty( values, i ) ) {
 				processValue(i, values, attributes.get( i ) );
@@ -101,13 +101,13 @@ public abstract class AbstractVisitor {
 	 * @param attribute
 	 * @throws HibernateException
 	 */
-	final Object processValue(Object value, PersistentAttribute attribute) throws HibernateException {
+	final Object processValue(Object value, PersistentAttributeDescriptor attribute) throws HibernateException {
 
 		if ( attribute instanceof PluralPersistentAttribute ) {
 			return processCollection( value, (PluralPersistentAttribute) attribute );
 		}
-		if ( attribute instanceof EntityDescriptor ) {
-			return processEntity( value, (EntityDescriptor) attribute );
+		if ( attribute instanceof EntityTypeDescriptor ) {
+			return processEntity( value, (EntityTypeDescriptor) attribute );
 		}
 		else if ( attribute instanceof EmbeddedTypeDescriptor ) {
 			return processComponent( value, (EmbeddedTypeDescriptor) attribute );
@@ -124,7 +124,7 @@ public abstract class AbstractVisitor {
 	 * @param entityDescriptor
 	 * @throws HibernateException
 	 */
-	void process(Object object, EntityDescriptor entityDescriptor) throws HibernateException {
+	void process(Object object, EntityTypeDescriptor entityDescriptor) throws HibernateException {
 		processEntityPropertyValues(
 				entityDescriptor.getPropertyValues( object ),
 				entityDescriptor.getPersistentAttributes()
@@ -150,7 +150,7 @@ public abstract class AbstractVisitor {
 	 * @param descriptor
 	 * @throws HibernateException
 	 */
-	Object processEntity(Object value, EntityDescriptor descriptor) throws HibernateException {
+	Object processEntity(Object value, EntityTypeDescriptor descriptor) throws HibernateException {
 		return null;
 	}
 

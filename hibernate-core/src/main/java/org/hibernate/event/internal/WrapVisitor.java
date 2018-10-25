@@ -17,8 +17,8 @@ import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
@@ -103,7 +103,7 @@ public class WrapVisitor extends ProxyVisitor {
 	}
 
 	@Override
-	void processValue(int i, Object[] values, PersistentAttribute attribute) throws HibernateException{
+	void processValue(int i, Object[] values, PersistentAttributeDescriptor attribute) throws HibernateException{
 		Object result = processValue( values[i], attribute );
 		if ( result != null ) {
 			substitute = true;
@@ -115,10 +115,10 @@ public class WrapVisitor extends ProxyVisitor {
 	Object processComponent(Object component, EmbeddedTypeDescriptor descriptor) throws HibernateException {
 		if ( component != null ) {
 			Object[] values = descriptor.getPropertyValues( component );
-			final List<PersistentAttribute> persistentAttributes = descriptor.getPersistentAttributes();
+			final List<PersistentAttributeDescriptor> persistentAttributes = descriptor.getPersistentAttributes();
 			boolean substituteComponent = false;
 			int i = 0;
-			for(PersistentAttribute attribute : persistentAttributes){
+			for( PersistentAttributeDescriptor attribute : persistentAttributes){
 				Object result = processValue( values[i], attribute );
 				if ( result != null ) {
 					values[i] = result;
@@ -135,9 +135,9 @@ public class WrapVisitor extends ProxyVisitor {
 	}
 
 	@Override
-	void process(Object object, EntityDescriptor descriptor) throws HibernateException {
+	void process(Object object, EntityTypeDescriptor descriptor) throws HibernateException {
 		final Object[] values = descriptor.getPropertyValues( object );
-		final List<PersistentAttribute> persistentAttributes = descriptor.getPersistentAttributes();
+		final List<PersistentAttributeDescriptor> persistentAttributes = descriptor.getPersistentAttributes();
 		processEntityPropertyValues( values, persistentAttributes );
 		if ( isSubstitutionRequired() ) {
 			descriptor.setPropertyValues( object, values );

@@ -20,7 +20,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.service.Service;
 import org.hibernate.stat.spi.StatisticsImplementor;
 
@@ -424,7 +424,7 @@ public class StatisticsImpl implements StatisticsImplementor, Service {
 		return naturalIdQueryStatsMap.computeIfAbsent(
 				rootEntityName,
 				s -> {
-					final EntityDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
+					final EntityTypeDescriptor entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
 					if ( !entityDescriptor.hasNaturalIdentifier() ) {
 						throw new IllegalArgumentException( "Given entity [" + rootEntityName + "] does not define natural-id" );
 					}
@@ -523,7 +523,7 @@ public class StatisticsImpl implements StatisticsImplementor, Service {
 			naturalIdQueryExecutionMaxTimeEntity = rootEntityName;
 		}
 
-		final EntityDescriptor rootEntityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
+		final EntityTypeDescriptor rootEntityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( rootEntityName );
 
 		getNaturalIdStatistics( rootEntityName ).queryExecuted( time );
 

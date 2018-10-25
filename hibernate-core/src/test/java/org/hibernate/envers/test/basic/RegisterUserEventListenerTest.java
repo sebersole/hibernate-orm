@@ -12,7 +12,7 @@ import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.event.spi.PostInsertEvent;
 import org.hibernate.event.spi.PostInsertEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit5.dynamictests.DynamicTest;
@@ -62,7 +62,7 @@ public class RegisterUserEventListenerTest extends EnversSessionFactoryBasedFunc
 		}
 
 		@Override
-		public boolean requiresPostCommitHandling(EntityDescriptor persister) {
+		public boolean requiresPostCommitHandling(EntityTypeDescriptor persister) {
 			return true;
 		}
 

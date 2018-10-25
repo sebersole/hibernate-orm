@@ -19,7 +19,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute.SingularAttributeClassification;
@@ -231,7 +231,7 @@ public final class ForeignKeys<T> {
 		}
 
 		// let the descriptor inspect the instance to decide
-		final EntityDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
+		final EntityTypeDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
 		isUnsaved = descriptor.isTransient( entity, session );
 		if ( isUnsaved != null ) {
 			return isUnsaved;
@@ -325,7 +325,7 @@ public final class ForeignKeys<T> {
 
 		final NonNullableTransientDependencies nonNullableTransientEntities = new NonNullableTransientDependencies();
 		final Nullifier nullifier = new Nullifier( entity, false, isEarlyInsert, session );
-		final EntityDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
+		final EntityTypeDescriptor descriptor = session.getEntityDescriptor( entityName, entity );
 
 		// todo (6.0) : this is a good example of potential performance trade off - evaluate
 //		specifically, because the method below *could be* (and partially is) a non-polymorphic call site

@@ -13,7 +13,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.MultiIdEntityLoader;
 import org.hibernate.loader.spi.MultiIdLoaderSelectors;
 import org.hibernate.loader.spi.MultiLoadOptions;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
 import org.hibernate.sql.SqlExpressableType;
@@ -38,16 +38,16 @@ import org.hibernate.sql.exec.spi.ParameterBindingContext;
  */
 public class StandardMultiIdEntityLoader<J>
 		implements MultiIdEntityLoader<J> {
-	private final EntityDescriptor<J> entityDescriptor;
+	private final EntityTypeDescriptor<J> entityDescriptor;
 	private final MultiIdLoaderSelectors selectors;
 
-	public StandardMultiIdEntityLoader(EntityDescriptor entityDescriptor, MultiIdLoaderSelectors selectors) {
+	public StandardMultiIdEntityLoader(EntityTypeDescriptor entityDescriptor, MultiIdLoaderSelectors selectors) {
 		this.entityDescriptor = entityDescriptor;
 		this.selectors = selectors;
 	}
 
 	@Override
-	public EntityDescriptor<J> getEntityDescriptor() {
+	public EntityTypeDescriptor<J> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 
@@ -142,7 +142,7 @@ public class StandardMultiIdEntityLoader<J>
 	}
 
 	@Override
-	public EntityDescriptor<J> getLoadedNavigable() {
+	public EntityTypeDescriptor<J> getLoadedNavigable() {
 		return entityDescriptor;
 	}
 }

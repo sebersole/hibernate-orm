@@ -11,7 +11,7 @@ import java.util.Date;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfComposites;
@@ -50,7 +50,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 				theString
 		);
 
-		final EntityDescriptor<SimpleEntity> simpleEntityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( SimpleEntity.class );
+		final EntityTypeDescriptor<SimpleEntity> simpleEntityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( SimpleEntity.class );
 
 		sessionFactoryScope().inSession(
 				session -> {
@@ -110,7 +110,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 				componentInstance
 		);
 
-		final EntityDescriptor<EntityOfComposites> entityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( EntityOfComposites.class );
+		final EntityTypeDescriptor<EntityOfComposites> entityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( EntityOfComposites.class );
 
 		sessionFactoryScope().inSession(
 				session -> {
@@ -164,7 +164,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 				subEntityInteger
 		);
 
-		final EntityDescriptor<EntityWithManyToOneSelfReference> entityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( EntityWithManyToOneSelfReference.class );
+		final EntityTypeDescriptor<EntityWithManyToOneSelfReference> entityDescriptor = sessionFactory().getMetamodel().getEntityDescriptor( EntityWithManyToOneSelfReference.class );
 
 		sessionFactoryScope().inSession(
 				session -> {
@@ -213,7 +213,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 	// todo (6.0) : Need to decide how to best handle the "state array" versus the "shaped array", if anything
 
 	private Object[] extractStateArray(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object entityInstance,
 			SharedSessionContractImplementor session) {
 		// just to  make sure it works
@@ -260,7 +260,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	private void injectStateArray(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object entityInstance,
 			Object[] stateArray,
 			SharedSessionContractImplementor session) {
@@ -274,7 +274,7 @@ public class StateArrayShapingTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	private void injectStateArray(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object entityInstance,
 			final Object[] stateArray,
 			ExecutionContext executionContext,

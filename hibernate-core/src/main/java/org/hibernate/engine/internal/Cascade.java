@@ -29,10 +29,10 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.spi.CollectionElement;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.JoinablePersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
@@ -65,7 +65,7 @@ public final class Cascade {
 	 */
 	public static void cascade(
 			final CascadingAction action, final CascadePoint cascadePoint,
-			final EventSource eventSource, final EntityDescriptor descriptor, final Object parent)
+			final EventSource eventSource, final EntityTypeDescriptor descriptor, final Object parent)
 			throws HibernateException {
 		cascade( action, cascadePoint, eventSource, descriptor, parent, null );
 	}
@@ -83,7 +83,7 @@ public final class Cascade {
 			final CascadingAction action,
 			final CascadePoint cascadePoint,
 			final EventSource eventSource,
-			final EntityDescriptor descriptor,
+			final EntityTypeDescriptor descriptor,
 			final Object parent,
 			final Object anything) throws HibernateException {
 
@@ -194,7 +194,7 @@ public final class Cascade {
 			final int componentPathStackDepth,
 			final Object parent,
 			final Object child,
-			final PersistentAttribute attribute,
+			final PersistentAttributeDescriptor attribute,
 			final CascadeStyle style,
 			final String propertyName,
 			final Object anything,
@@ -248,7 +248,7 @@ public final class Cascade {
 			final int componentPathStackDepth,
 			final Object parent,
 			final Object child,
-			final PersistentAttribute attribute,
+			final PersistentAttributeDescriptor attribute,
 			final CascadeStyle style,
 			final String propertyName,
 			final boolean isCascadeDeleteEnabled) throws HibernateException {
@@ -344,7 +344,7 @@ public final class Cascade {
 	 *
 	 * @return True if the attribute represents a logical one to one association
 	 */
-	private static boolean isLogicalOneToOne(PersistentAttribute attribute) {
+	private static boolean isLogicalOneToOne(PersistentAttributeDescriptor attribute) {
 		return attribute.getPersistentAttributeType() == Attribute.PersistentAttributeType.ONE_TO_ONE;
 	}
 
@@ -364,9 +364,9 @@ public final class Cascade {
 
 		Object[] children = null;
 		final EmbeddedTypeDescriptor embeddedDescriptor = attribute.getEmbeddedDescriptor();
-		final List<PersistentAttribute> attributes = embeddedDescriptor.getPersistentAttributes();
+		final List<PersistentAttributeDescriptor> attributes = embeddedDescriptor.getPersistentAttributes();
 		for ( int i = 0; i < attributes.size(); i++ ) {
-			final PersistentAttribute subattribute = attributes.get( i );
+			final PersistentAttributeDescriptor subattribute = attributes.get( i );
 			final CascadeStyle componentPropertyStyle = embeddedDescriptor.getCascadeStyle( i );
 			final String subPropertyName = subattribute.getName();
 			if ( componentPropertyStyle.doCascade( action ) ) {
@@ -398,7 +398,7 @@ public final class Cascade {
 			final int componentPathStackDepth,
 			final Object parent,
 			final Object child,
-			final PersistentAttribute attribute,
+			final PersistentAttributeDescriptor attribute,
 			final CascadeStyle style,
 			final Object anything,
 			final boolean isCascadeDeleteEnabled) {
@@ -470,7 +470,7 @@ public final class Cascade {
 			final EventSource eventSource,
 			final Object parent,
 			final Object child,
-			final PersistentAttribute persistentAttribute,
+			final PersistentAttributeDescriptor persistentAttribute,
 			final CascadeStyle style,
 			final Object anything,
 			final boolean isCascadeDeleteEnabled) {

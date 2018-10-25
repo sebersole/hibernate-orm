@@ -8,7 +8,7 @@ package org.hibernate.engine.internal;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 
@@ -105,7 +105,7 @@ public final class Versioning {
 	 * @param version The optimistic locking value
 	 * @param descriptor The entity descriptor
 	 */
-	public static void setVersion(Object[] fields, Object version, EntityDescriptor descriptor) {
+	public static void setVersion(Object[] fields, Object version, EntityTypeDescriptor descriptor) {
 		final VersionDescriptor<Object, Object> versionDescriptor = descriptor.getHierarchy().getVersionDescriptor();
 		if ( versionDescriptor == null ) {
 			return;
@@ -123,7 +123,7 @@ public final class Versioning {
 	 * @param descriptor The entity descriptor
 	 * @return The extracted optimistic locking value
 	 */
-	public static Object getVersion(Object[] fields, EntityDescriptor descriptor) {
+	public static Object getVersion(Object[] fields, EntityTypeDescriptor descriptor) {
 		final VersionDescriptor<Object, Object> versionDescriptor = descriptor.getHierarchy().getVersionDescriptor();
 		if ( versionDescriptor == null ) {
 			return null;

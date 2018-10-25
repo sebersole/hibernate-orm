@@ -19,10 +19,10 @@ import org.hibernate.envers.internal.entities.RelationType;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.query.criteria.AuditId;
 import org.hibernate.envers.query.internal.property.PropertyNameGetter;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeNonAggregated;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -112,14 +112,14 @@ public abstract class CriteriaTools {
 			// Single id.
 			return Arrays.asList( identifierPropertyName );
 		}
-		final EntityDescriptor<?> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
+		final EntityTypeDescriptor<?> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
 		final EntityIdentifier entityIdentifier = entityDescriptor.getIdentifierDescriptor();
 
 		if ( entityIdentifier instanceof EntityIdentifierCompositeNonAggregated ) {
 			// Multiple ids.
 			final EntityIdentifierCompositeNonAggregated<?,?> embeddedId = EntityIdentifierCompositeNonAggregated.class.cast( entityIdentifier );
 			final ArrayList<String> result = new ArrayList<>();
-			for ( PersistentAttribute<?, ?> attribute : embeddedId.getEmbeddedDescriptor().getPersistentAttributes() ) {
+			for ( PersistentAttributeDescriptor<?, ?> attribute : embeddedId.getEmbeddedDescriptor().getPersistentAttributes() ) {
 				result.add( attribute.getAttributeName() );
 			}
 			return result;

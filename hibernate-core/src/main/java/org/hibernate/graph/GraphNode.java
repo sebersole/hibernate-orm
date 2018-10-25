@@ -4,13 +4,16 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.metamodel.model.domain.spi;
-
-import java.util.Map;
+package org.hibernate.graph;
 
 /**
+ * Commonality between {@link AttributeNode} and
+ * {@link Graph}.
+ *
  * @author Steve Ebersole
  */
-public interface PluralAttributeMap<O,K,E> extends PluralPersistentAttribute<O,Map<K,E>,E>,
-		javax.persistence.metamodel.MapAttribute<O,K,E> {
+public interface GraphNode<J> {
+	boolean isMutable();
+
+	GraphNode<J> makeCopy(boolean mutable);
 }

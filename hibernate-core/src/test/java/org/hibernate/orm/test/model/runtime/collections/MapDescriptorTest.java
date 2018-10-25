@@ -9,7 +9,7 @@ package org.hibernate.orm.test.model.runtime.collections;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.metamodel.model.domain.spi.CollectionElement;
 import org.hibernate.metamodel.model.domain.spi.CollectionIndex;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class MapDescriptorTest extends SessionFactoryBasedFunctionalTest {
-	private EntityDescriptor entityDescriptor;
+	private EntityTypeDescriptor entityDescriptor;
 
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {

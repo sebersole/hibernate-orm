@@ -7,7 +7,7 @@
 package org.hibernate.query.sqm.tree.expression.domain;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.SemanticException;
@@ -101,7 +101,7 @@ public class SqmEntityIdentifierReferenceSimple
 	}
 
 	@Override
-	public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+	public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 		throw new NotYetImplementedFor6Exception(  );
 	}
 

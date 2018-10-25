@@ -25,7 +25,7 @@ import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
@@ -68,7 +68,7 @@ public class CollectionCacheInvalidator
 	}
 
 	@Override
-	public boolean requiresPostCommitHandling(EntityDescriptor descriptor) {
+	public boolean requiresPostCommitHandling(EntityTypeDescriptor descriptor) {
 		return true;
 	}
 
@@ -97,7 +97,7 @@ public class CollectionCacheInvalidator
 		eventListenerRegistry.appendListeners( EventType.POST_UPDATE, this );
 	}
 
-	private void evictCache(Object entity, EntityDescriptor entityDescriptor, EventSource session, Object[] oldState) {
+	private void evictCache(Object entity, EntityTypeDescriptor entityDescriptor, EventSource session, Object[] oldState) {
 		try {
 			SessionFactoryImplementor factory = entityDescriptor.getFactory();
 

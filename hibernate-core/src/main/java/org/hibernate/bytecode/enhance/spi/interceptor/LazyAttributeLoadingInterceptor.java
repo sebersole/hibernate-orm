@@ -22,7 +22,7 @@ import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SelfDirtinessTracker;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -77,7 +77,7 @@ public class LazyAttributeLoadingInterceptor
 				new LazyInitializationWork() {
 					@Override
 					public Object doWork(SharedSessionContractImplementor session, boolean isTemporarySession) {
-						final EntityDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( getEntityName() );
+						final EntityTypeDescriptor entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( getEntityName() );
 
 						if ( isTemporarySession ) {
 							final Object id = entityDescriptor.getIdentifier( target, null );

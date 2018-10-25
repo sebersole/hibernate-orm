@@ -10,14 +10,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.persistence.EntityGraph;
-
 import org.hibernate.EntityNameResolver;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.RootGraph;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
@@ -27,12 +25,12 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 public interface RuntimeModel {
 	void visitEntityHierarchies(Consumer<EntityHierarchy> action);
 
-	<T> EntityDescriptor<T> getEntityDescriptor(NavigableRole name) throws NotNavigableException;
-	<T> EntityDescriptor<T> getEntityDescriptor(Class<T> javaType) throws NotNavigableException;
-	<T> EntityDescriptor<T> getEntityDescriptor(String name) throws NotNavigableException;
-	<T> EntityDescriptor<T> findEntityDescriptor(Class<T> javaType);
-	<T> EntityDescriptor<T> findEntityDescriptor(String name);
-	void visitEntityDescriptors(Consumer<EntityDescriptor<?>> action);
+	<T> EntityTypeDescriptor<T> getEntityDescriptor(NavigableRole name) throws NotNavigableException;
+	<T> EntityTypeDescriptor<T> getEntityDescriptor(Class<T> javaType) throws NotNavigableException;
+	<T> EntityTypeDescriptor<T> getEntityDescriptor(String name) throws NotNavigableException;
+	<T> EntityTypeDescriptor<T> findEntityDescriptor(Class<T> javaType);
+	<T> EntityTypeDescriptor<T> findEntityDescriptor(String name);
+	void visitEntityDescriptors(Consumer<EntityTypeDescriptor<?>> action);
 
 	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(NavigableRole name) throws NotNavigableException;
 	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException;

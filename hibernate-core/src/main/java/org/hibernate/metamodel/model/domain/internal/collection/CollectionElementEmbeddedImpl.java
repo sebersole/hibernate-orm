@@ -141,4 +141,9 @@ public class CollectionElementEmbeddedImpl<J>
 				}
 		);
 	}
+
+	@Override
+	public EmbeddedTypeDescriptor<J> getDomainTypeDescriptor() {
+		return getEmbeddedDescriptor();
+	}
 }

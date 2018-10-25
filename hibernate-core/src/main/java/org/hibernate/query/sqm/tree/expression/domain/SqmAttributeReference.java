@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.tree.expression.domain;
 
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 
 /**
  * Models the binding of a persistent attribute of the domain model.
@@ -15,5 +15,5 @@ import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
  */
 public interface SqmAttributeReference extends SqmNavigableReference {
 	@Override
-	PersistentAttribute getReferencedNavigable();
+	PersistentAttributeDescriptor getReferencedNavigable();
 }

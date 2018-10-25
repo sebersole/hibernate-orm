@@ -39,7 +39,7 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.exception.spi.SQLExceptionConverter;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
@@ -166,7 +166,7 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public EntityDescriptor getEntityPersister(String entityName) throws MappingException {
+	public EntityTypeDescriptor getEntityPersister(String entityName) throws MappingException {
 		return delegate.getEntityPersister( entityName );
 	}
 
@@ -281,12 +281,12 @@ public class SessionFactoryDelegatingImpl implements SessionFactoryImplementor, 
 	}
 
 	@Override
-	public EntityDescriptor locateEntityPersister(Class byClass) {
+	public EntityTypeDescriptor locateEntityPersister(Class byClass) {
 		return delegate.locateEntityPersister( byClass );
 	}
 
 	@Override
-	public EntityDescriptor locateEntityPersister(String byName) {
+	public EntityTypeDescriptor locateEntityPersister(String byName) {
 		return delegate.locateEntityPersister( byName );
 	}
 

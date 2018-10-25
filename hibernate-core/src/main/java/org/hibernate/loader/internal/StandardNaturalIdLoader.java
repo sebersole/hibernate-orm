@@ -16,7 +16,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.NaturalIdLoader;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NaturalIdDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.spi.QueryParameterBindings;
@@ -45,12 +45,12 @@ import org.jboss.logging.Logger;
 public class StandardNaturalIdLoader implements NaturalIdLoader {
 	private static final Logger log = Logger.getLogger( StandardNaturalIdLoader.class );
 
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 
 	private Boolean simple;
 	private JdbcSelect xrefSelect;
 
-	public StandardNaturalIdLoader(EntityDescriptor entityDescriptor) {
+	public StandardNaturalIdLoader(EntityTypeDescriptor entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 	}
 
@@ -217,7 +217,7 @@ public class StandardNaturalIdLoader implements NaturalIdLoader {
 	}
 
 	@Override
-	public EntityDescriptor getLoadedNavigable() {
+	public EntityTypeDescriptor getLoadedNavigable() {
 		return entityDescriptor;
 	}
 

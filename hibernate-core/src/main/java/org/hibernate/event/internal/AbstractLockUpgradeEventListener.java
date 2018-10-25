@@ -14,7 +14,7 @@ import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
 import org.jboss.logging.Logger;
@@ -50,7 +50,7 @@ public abstract class AbstractLockUpgradeEventListener extends AbstractReassocia
 				);
 			}
 
-			final EntityDescriptor entityDescriptor = entry.getDescriptor();
+			final EntityTypeDescriptor entityDescriptor = entry.getDescriptor();
 
 			if ( log.isTraceEnabled() ) {
 				log.tracev(

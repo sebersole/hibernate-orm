@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.secure.spi.PermissionCheckEntityInformation;
 
 
@@ -35,7 +35,7 @@ public class PreDeleteEvent
 			Object entity,
 			Object id,
 			Object[] deletedState,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			EventSource source) {
 		super( source, entity, id, descriptor );
 		this.deletedState = deletedState;

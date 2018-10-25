@@ -39,11 +39,11 @@ import org.hibernate.event.spi.LoadEventListener;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierComposite;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierCompositeNonAggregated;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -73,7 +73,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final LoadEvent event,
 			final LoadEventListener.LoadType loadType) {
 
-		final EntityDescriptor entityDescriptor = getDescriptor( event );
+		final EntityTypeDescriptor entityDescriptor = getDescriptor( event );
 
 		if ( entityDescriptor == null ) {
 			throw new HibernateException( "Unable to locate entityDescriptor: " + event.getEntityClassName() );
@@ -87,7 +87,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 		doOnLoad( entityDescriptor, event, loadType );
 	}
 
-	private EntityDescriptor getDescriptor(final LoadEvent event ) {
+	private EntityTypeDescriptor getDescriptor(final LoadEvent event ) {
 		if ( event.getInstanceToLoad() != null ) {
 			//the load() which takes an entity does not pass an entityName
 			event.setEntityClassName( event.getInstanceToLoad().getClass().getName() );
@@ -102,7 +102,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	}
 
 	private void doOnLoad(
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final LoadEvent event,
 			final LoadEventListener.LoadType loadType) {
 
@@ -130,7 +130,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	}
 
 	private void checkIdClass(
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final LoadEvent event,
 			final LoadEventListener.LoadType loadType,
 			final Class idClass) {
@@ -141,7 +141,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 			final EntityIdentifierCompositeNonAggregated dependantIdDescriptor = (EntityIdentifierCompositeNonAggregated) entityDescriptor.getHierarchy().getIdentifierDescriptor();
 			final Set attributes = dependantIdDescriptor.getEmbeddedDescriptor().getAttributes();
 			if ( attributes.size() == 1 ) {
-				final PersistentAttribute attribute = (PersistentAttribute) attributes.iterator().next();
+				final PersistentAttributeDescriptor attribute = (PersistentAttributeDescriptor) attributes.iterator().next();
 				if ( attribute instanceof EntityValuedNavigable ) {
 					if ( attribute.getJavaTypeDescriptor().getJavaType().isInstance( event.getEntityId() ) ) {
 						// yep that's what we have...
@@ -166,9 +166,9 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	private void loadByDerivedIdentitySimplePkValue(
 			LoadEvent event,
 			LoadEventListener.LoadType options,
-			EntityDescriptor dependentDescriptor,
+			EntityTypeDescriptor dependentDescriptor,
 			EntityIdentifierComposite dependentIdType,
-			EntityDescriptor parentDescriptor) {
+			EntityTypeDescriptor parentDescriptor) {
 				throw new NotYetImplementedFor6Exception(  );
 //		final EntityKey parentEntityKey = event.getSession().generateEntityKey( event.getEntityId(), parentDescriptor );
 //		final Object parent = doLoad( event, parentDescriptor, parentEntityKey, options );
@@ -195,7 +195,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object load(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options) {
 
@@ -248,7 +248,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object proxyOrLoad(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options) {
 
@@ -295,7 +295,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object returnNarrowedProxy(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options,
 			final PersistenceContext persistenceContext,
@@ -335,7 +335,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object createProxyIfNecessary(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options,
 			final PersistenceContext persistenceContext) {
@@ -380,7 +380,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object lockAndLoad(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options,
 			final SessionImplementor source) {
@@ -429,7 +429,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object doLoad(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey keyToLoad,
 			final LoadEventListener.LoadType options) {
 
@@ -506,7 +506,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object loadFromDatasource(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor) {
+			final EntityTypeDescriptor entityDescriptor) {
 		Object entity = entityDescriptor.getSingleIdLoader()
 				.load( event.getEntityId(), event.getLockOptions(), event.getSession() );
 
@@ -554,7 +554,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 				}
 			}
 			if ( options.isAllowNulls() ) {
-				final EntityDescriptor entityDescriptor = event.getSession()
+				final EntityTypeDescriptor entityDescriptor = event.getSession()
 						.getFactory()
 						.getEntityPersister( keyToLoad.getEntityName() );
 				if ( !entityDescriptor.isInstance( old ) ) {
@@ -577,7 +577,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	 */
 	private Object loadFromSecondLevelCache(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final EntityKey entityKey) {
 
 		final SessionImplementor source = event.getSession();
@@ -604,7 +604,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 
 	private Object processCachedEntry(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final Object ce,
 			final SessionImplementor source,
 			final EntityKey entityKey) {
@@ -638,7 +638,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 
 	private Object getFromSharedCache(
 			final LoadEvent event,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			SessionImplementor source) {
 		final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 		final Object ck = cacheAccess.generateCacheKey(
@@ -712,7 +712,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	private Object convertCacheEntryToEntity(
 			CacheEntry entry,
 			Object entityId,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			LoadEvent event,
 			EntityKey entityKey) {
 		throw new NotYetImplementedFor6Exception(  );
@@ -810,7 +810,7 @@ public class DefaultLoadEventListener extends AbstractLockUpgradeEventListener i
 	private Object assembleCacheEntry(
 			final StandardCacheEntryImpl entry,
 			final Serializable id,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final LoadEvent event) throws HibernateException {
 		throw new NotYetImplementedFor6Exception(  );
 //

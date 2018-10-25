@@ -12,7 +12,7 @@ import org.hibernate.metamodel.valuegen.ValueGenerationStrategy;
 /**
  * @author Steve Ebersole
  */
-public interface NonIdPersistentAttribute<O,J> extends PersistentAttribute<O,J>, StateArrayContributor<J> {
+public interface NonIdPersistentAttribute<O,J> extends PersistentAttributeDescriptor<O,J>, StateArrayContributor<J> {
 	@Override
 	default Class<J> getJavaType() {
 		return getJavaTypeDescriptor().getJavaType();

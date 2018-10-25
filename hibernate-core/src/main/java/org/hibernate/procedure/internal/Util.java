@@ -16,7 +16,7 @@ import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.procedure.UnknownSqlResultSetMappingException;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.ResultSetMappingDescriptor;
@@ -160,7 +160,7 @@ public class Util {
 			);
 		}
 		else if ( resultTypeDescriptor instanceof EntityJavaDescriptor ) {
-			final EntityDescriptor entityDescriptor = sessionFactory.getMetamodel().getEntityDescriptor( resultType.getName() );
+			final EntityTypeDescriptor entityDescriptor = sessionFactory.getMetamodel().getEntityDescriptor( resultType.getName() );
 			querySpacesConsumer.accept( entityDescriptor.getAffectedTableNames() );
 			resultConsumer.accept(
 					new EntityResultImpl(

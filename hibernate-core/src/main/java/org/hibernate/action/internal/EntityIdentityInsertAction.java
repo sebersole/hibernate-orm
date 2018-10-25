@@ -17,7 +17,7 @@ import org.hibernate.event.spi.PostInsertEvent;
 import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PreInsertEvent;
 import org.hibernate.event.spi.PreInsertEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * The action for performing entity insertions when entity is using IDENTITY column identifier generation
@@ -46,7 +46,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 	public EntityIdentityInsertAction(
 			Object[] state,
 			Object instance,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			boolean isVersionIncrementDisabled,
 			SharedSessionContractImplementor session,
 			boolean isDelayed) {
@@ -66,7 +66,7 @@ public final class EntityIdentityInsertAction extends AbstractEntityInsertAction
 	public void execute() throws HibernateException {
 		nullifyTransientReferencesIfNotAlready();
 
-		final EntityDescriptor descriptor = getEntityDescriptor();
+		final EntityTypeDescriptor descriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();
 

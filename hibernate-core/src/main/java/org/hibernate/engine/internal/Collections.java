@@ -17,7 +17,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
@@ -67,7 +67,7 @@ public final class Collections {
 		// do a check
 		final boolean hasOrphanDelete = loadedDescriptor != null && loadedDescriptor.hasOrphanDelete();
 		if ( hasOrphanDelete ) {
-			final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor(
+			final EntityTypeDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor(
 					loadedDescriptor,
 					session.getSessionFactory()
 			);
@@ -163,7 +163,7 @@ public final class Collections {
 
 		ce.setCurrentKey( collectionAttribute.getCollectionDescriptor().getKeyOfOwner( entity, session ) );
 
-		final EntityDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor( collectionAttribute.getCollectionDescriptor(), factory );
+		final EntityTypeDescriptor ownerEntityDescriptor = getOwnerEntityDescriptor( collectionAttribute.getCollectionDescriptor(), factory );
 		final boolean isBytecodeEnhanced = ownerEntityDescriptor.getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
 		if ( isBytecodeEnhanced && !collection.wasInitialized() ) {
 			// skip it
@@ -226,7 +226,7 @@ public final class Collections {
 		}
 	}
 
-	private static EntityDescriptor getOwnerEntityDescriptor(
+	private static EntityTypeDescriptor getOwnerEntityDescriptor(
 			PersistentCollectionDescriptor descriptor,
 			SessionFactoryImplementor factory) {
 		return factory.getMetamodel().findEntityDescriptor(  descriptor.getContainer().getNavigableName() );

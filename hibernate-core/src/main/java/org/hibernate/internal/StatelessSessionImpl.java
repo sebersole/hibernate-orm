@@ -28,7 +28,7 @@ import org.hibernate.engine.spi.PersistenceContext;
 import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.id.IdentifierGeneratorHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.pretty.MessageHelper;
@@ -78,7 +78,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	public Object insert(String entityName, Object entity) {
 		checkOpen();
 
-		EntityDescriptor descriptor = getEntityDescriptor( entityName, entity );
+		EntityTypeDescriptor descriptor = getEntityDescriptor( entityName, entity );
 		Object id = descriptor.getIdentifierDescriptor().getIdentifierValueGenerator().generate( this, entity );
 		Object[] state = descriptor.getPropertyValues( entity );
 
@@ -115,7 +115,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public void delete(String entityName, Object entity) {
 		checkOpen();
-		EntityDescriptor descriptor = getEntityDescriptor( entityName, entity );
+		EntityTypeDescriptor descriptor = getEntityDescriptor( entityName, entity );
 		Object id = descriptor.getIdentifier( entity, this );
 		Object version = descriptor.getVersion( entity );
 		descriptor.delete( id, version, entity, this );
@@ -133,7 +133,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	@Override
 	public void update(String entityName, Object entity) {
 		checkOpen();
-		EntityDescriptor entityDescriptor = getEntityDescriptor( entityName, entity );
+		EntityTypeDescriptor entityDescriptor = getEntityDescriptor( entityName, entity );
 		Object id = entityDescriptor.getHierarchy().getIdentifierDescriptor().extractIdentifier( entity, this );
 		Object[] state = entityDescriptor.getPropertyValues( entity );
 		Object oldVersion;
@@ -204,7 +204,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 	@Override
 	public void refresh(String entityName, Object entity, LockMode lockMode) {
-		final EntityDescriptor entityDescriptor = this.getEntityDescriptor( entityName, entity );
+		final EntityTypeDescriptor entityDescriptor = this.getEntityDescriptor( entityName, entity );
 		final Object id = entityDescriptor.getIdentifier( entity, this );
 		if ( LOG.isTraceEnabled() ) {
 			LOG.tracev( "Refreshing transient {0}", MessageHelper.infoString( entityDescriptor, id, this.getFactory() ) );
@@ -274,7 +274,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 			boolean eager,
 			boolean nullable) throws HibernateException {
 		checkOpen();
-		EntityDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
+		EntityTypeDescriptor descriptor = getFactory().getMetamodel().findEntityDescriptor( entityName );
 		// first, try to load it from the temp PC associated to this SS
 		Object loaded = temporaryPersistenceContext.getEntity( generateEntityKey( id, descriptor ) );
 		if ( loaded != null ) {
@@ -385,7 +385,7 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 	}
 
 	@Override
-	public EntityDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException {
+	public EntityTypeDescriptor getEntityDescriptor(String entityName, Object object) throws HibernateException {
 		checkOpen();
 		if ( entityName == null ) {
 			return getFactory().getMetamodel().findEntityDescriptor( guessEntityName( object ) );

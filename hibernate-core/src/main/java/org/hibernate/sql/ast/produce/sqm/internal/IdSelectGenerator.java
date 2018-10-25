@@ -18,7 +18,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.SingletonStack;
 import org.hibernate.internal.util.collections.Stack;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
@@ -58,7 +58,7 @@ import org.hibernate.sql.results.spi.FetchParent;
 public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 
 	public static QuerySpec generateEntityIdSelect(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SqmDeleteOrUpdateStatement sourceSqmStatement,
 			QueryOptions queryOptions,
 			LoadQueryInfluencers loadQueryInfluencers,
@@ -84,7 +84,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 					}
 
 					@Override
-					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+					public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 						return entityDescriptor;
 					}
 
@@ -238,7 +238,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 	}
 
 	private static void applyQueryRestrictions(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			QuerySpec entityIdSelection,
 			TableSpace entityIdSelectionTableSpace,
 			SqmDeleteOrUpdateStatement sourceSqmStatement,
@@ -278,7 +278,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 	}
 
 
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 
 	private final QuerySpec idSelectQuerySpec;
 	private final TableSpace idSelectTableSpace;
@@ -289,7 +289,7 @@ public class IdSelectGenerator extends SqmSelectToSqlAstConverter {
 	private final SessionFactoryImplementor sessionFactory;
 
 	private IdSelectGenerator(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			QuerySpec idSelectQuerySpec,
 			TableSpace idSelectTableSpace,
 			SqmDeleteOrUpdateStatement sourceSqmStatement,

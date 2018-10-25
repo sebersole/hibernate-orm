@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.internal.util.compare.EqualsHelper;
+import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
@@ -30,7 +31,7 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  */
 @Incubating( since = "6.0" )
 public interface BasicType<T>
-		extends Type<T>, BasicValuedExpressableType<T>, javax.persistence.metamodel.BasicType<T> {
+		extends Type<T>, BasicValuedExpressableType<T>, BasicTypeDescriptor<T> {
 	@Override
 	BasicJavaDescriptor<T> getJavaTypeDescriptor();
 

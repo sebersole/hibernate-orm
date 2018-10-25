@@ -9,7 +9,7 @@ package org.hibernate.envers.internal.entities.mapper.relation;
 import org.hibernate.envers.boot.AuditService;
 import org.hibernate.envers.internal.entities.mapper.relation.lazy.ToOneDelegateSessionImplementor;
 import org.hibernate.envers.internal.reader.AuditReaderImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author Lukasz Antoniak (lukasz dot antoniak at gmail dot com)
@@ -53,7 +53,7 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
+		final EntityTypeDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
 		return entityDescriptor.createProxy(
 				entityId,
 				new ToOneDelegateSessionImplementor( versionsReader, entityClass, entityId, revision, removed )
@@ -71,14 +71,14 @@ public final class ToOneEntityLoader {
 			Object entityId,
 			Number revision,
 			boolean removed) {
-		final EntityDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
+		final EntityTypeDescriptor entityDescriptor = resolveEntityDescriptorByName( versionsReader, entityName );
 		if ( entityDescriptor.hasProxy() ) {
 			return createProxy( versionsReader, entityClass, entityName, entityId, revision, removed );
 		}
 		return loadImmediate( versionsReader, entityClass, entityName, entityId, revision, removed );
 	}
 
-	private static EntityDescriptor resolveEntityDescriptorByName(
+	private static EntityTypeDescriptor resolveEntityDescriptorByName(
 			AuditReaderImplementor versionsReader,
 			String entityName) {
 		return versionsReader.getSessionImplementor()

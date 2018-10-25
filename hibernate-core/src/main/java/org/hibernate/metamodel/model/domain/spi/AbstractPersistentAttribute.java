@@ -16,7 +16,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractPersistentAttribute<O,J> implements PersistentAttribute<O,J> {
+public abstract class AbstractPersistentAttribute<O,J> implements PersistentAttributeDescriptor<O,J> {
 	private final ManagedTypeDescriptor<O> container;
 	private final JavaTypeDescriptor<J> javaTypeDescriptor;
 	private final PropertyAccess access;

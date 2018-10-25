@@ -15,16 +15,15 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PreLoadEvent;
-import org.hibernate.graph.spi.AttributeNodeContainer;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.spi.AppliedGraph;
 import org.hibernate.graph.spi.AttributeNodeImplementor;
-import org.hibernate.graph.spi.EntityGraphImplementor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
-import org.hibernate.query.NavigablePath;
-import org.hibernate.query.spi.EntityGraphQueryHint;
+import org.hibernate.graph.spi.GraphImplementor;
+import org.hibernate.graph.spi.RootGraphImplementor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
 import org.hibernate.sql.exec.spi.ExecutionContext;
-import org.hibernate.sql.results.spi.Initializer;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
@@ -60,18 +59,12 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 		preLoadEvent  = new PreLoadEvent( (EventSource) executionContext.getSession() );
 		postLoadEvent  = new PostLoadEvent( (EventSource) executionContext.getSession() );
 
-		fetchContext = resolveFetchContext( executionContext.getQueryOptions().getEntityGraphQueryHint() );
+		fetchContext = resolveFetchContext( executionContext.getQueryOptions().getAppliedGraph() );
 	}
 
-	private FetchContext resolveFetchContext(EntityGraphQueryHint hint) {
-		if ( hint != null ) {
-			switch ( hint.getType() ) {
-				case LOAD:
-				case FETCH: {
-					// todo (6.0) : have a FetchContext impl per type?
-					return new FetchContextImpl( hint );
-				}
-			}
+	private FetchContext resolveFetchContext(AppliedGraph appliedGraph) {
+		if ( appliedGraph != null ) {
+			return new FetchContextImpl( appliedGraph );
 		}
 
 		return null;
@@ -103,7 +96,7 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	@Override
-	public boolean fetching(PersistentAttribute attribute) {
+	public boolean fetching(PersistentAttributeDescriptor attribute) {
 		if ( fetchContext == null ) {
 			return true;
 		}
@@ -111,25 +104,25 @@ public class JdbcValuesSourceProcessingStateStandardImpl implements JdbcValuesSo
 	}
 
 	public interface FetchContext {
-		boolean fetching(PersistentAttribute attribute);
+		boolean fetching(PersistentAttributeDescriptor attribute);
 	}
 
 	private class FetchContextImpl implements FetchContext {
-		private final EntityGraphQueryHint.Type graphType;
+		private final GraphSemantic graphSemantic;
 
-		private AttributeNodeContainer currentContainer;
+		private GraphImplementor currentContainer;
 
-		public FetchContextImpl(EntityGraphQueryHint entityGraphHint) {
-			this( entityGraphHint.getHintedGraph(), entityGraphHint.getType() );
+		public FetchContextImpl(AppliedGraph appliedGraph) {
+			this( appliedGraph.getGraph(), appliedGraph.getSemantic() );
 		}
 
-		public FetchContextImpl(EntityGraphImplementor<?> hintedGraph, EntityGraphQueryHint.Type type) {
-			currentContainer = hintedGraph;
-			graphType = type;
+		public FetchContextImpl(RootGraphImplementor<?> appliedGraph, GraphSemantic graphSemantic) {
+			currentContainer = appliedGraph;
+			this.graphSemantic = graphSemantic;
 		}
 
 		@Override
-		public boolean fetching(PersistentAttribute attribute) {
+		public boolean fetching(PersistentAttributeDescriptor attribute) {
 			if ( ! Fetchable.class.isInstance( attribute ) ) {
 				// basic attributes are always fetched for now - that matches behavior of
 				// Hibernate prior to 6.  Eventually though we want to hook this in with

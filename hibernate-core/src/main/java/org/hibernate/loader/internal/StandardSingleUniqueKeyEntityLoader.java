@@ -17,7 +17,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.sql.SqlExpressableType;
@@ -55,7 +55,7 @@ public class StandardSingleUniqueKeyEntityLoader<T> implements SingleUniqueKeyEn
 	}
 
 	@Override
-	public EntityDescriptor getLoadedNavigable() {
+	public EntityTypeDescriptor getLoadedNavigable() {
 		return attribute.getAssociatedEntityDescriptor();
 	}
 

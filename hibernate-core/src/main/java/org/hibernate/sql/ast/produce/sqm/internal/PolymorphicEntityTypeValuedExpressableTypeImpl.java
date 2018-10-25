@@ -36,6 +36,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
+import org.hibernate.graph.spi.SubGraphImplementor;
 import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.loader.spi.EntityLocker;
 import org.hibernate.loader.spi.MultiIdEntityLoader;
@@ -45,14 +46,16 @@ import org.hibernate.loader.spi.SingleIdEntityLoader;
 import org.hibernate.loader.spi.SingleUniqueKeyEntityLoader;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableContainer;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.JoinedTableBinding;
@@ -82,14 +85,14 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Steve Ebersole
  */
 @SuppressWarnings("unchecked")
-public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDescriptor<T>, PolymorphicEntityValuedExpressableType<T> {
+public class PolymorphicEntityTypeValuedExpressableTypeImpl<T> implements EntityTypeDescriptor<T>, PolymorphicEntityValuedExpressableType<T> {
 	private final EntityJavaDescriptor<T> javaDescriptor;
-	private final Set<EntityDescriptor<?>> implementors;
+	private final Set<EntityTypeDescriptor<?>> implementors;
 	private final NavigableRole navigableRole;
 
-	public PolymorphicEntityValuedExpressableTypeImpl(
+	public PolymorphicEntityTypeValuedExpressableTypeImpl(
 			JavaTypeDescriptor<T> javaTypeDescriptor,
-			Set<EntityDescriptor<?>> implementors) {
+			Set<EntityTypeDescriptor<?>> implementors) {
 		this.javaDescriptor = resolveEntityJavaTypeDescriptor( javaTypeDescriptor );
 		this.implementors = implementors;
 		this.navigableRole = new NavigableRole( asLoggableText() );
@@ -112,7 +115,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public Set<EntityDescriptor<?>> getImplementors() {
+	public Set<EntityTypeDescriptor<?>> getImplementors() {
 		return new HashSet<>( implementors );
 	}
 
@@ -143,7 +146,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public EntityDescriptor<T> getEntityDescriptor() {
+	public EntityTypeDescriptor<T> getEntityDescriptor() {
 		return this;
 	}
 	@Override
@@ -200,7 +203,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	public Navigable findNavigable(String navigableName) {
 		// only return navigables that all of the implementors define
 		Navigable navigable = null;
-		for ( EntityDescriptor implementor : implementors ) {
+		for ( EntityTypeDescriptor implementor : implementors ) {
 			final Navigable current = implementor.findNavigable( navigableName );
 			if ( current == null ) {
 				return null;
@@ -225,7 +228,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public boolean isSubclassTypeName(String name) {
-		for ( EntityDescriptor<?> implementor : implementors ) {
+		for ( EntityTypeDescriptor<?> implementor : implementors ) {
 			final EntityJavaDescriptor<?> implementorJtd = implementor.getJavaTypeDescriptor();
 			if ( implementorJtd.getEntityName().equals( name )
 					|| implementorJtd.getJpaEntityName().equals( name )
@@ -241,10 +244,11 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public void finishInitialization(
+	public boolean finishInitialization(
 			ManagedTypeMappingImplementor bootDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		// nothing to do here
+		return true;
 	}
 
 
@@ -336,6 +340,28 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public List<NonIdPersistentAttribute> getDeclaredPersistentAttributes() {
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public SubGraphImplementor<T> makeSubGraph() {
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public <S extends T> SubGraphImplementor<S> makeSubGraph(Class<S> subType) {
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public <S extends T> ManagedTypeDescriptor<S> findSubType(String subTypeName) {
+		// technically we could support this
+		throw new UnsupportedOperationException(  );
+	}
+
+	@Override
+	public <S extends T> ManagedTypeDescriptor<S> findSubType(Class<S> type) {
+		// technically we could support this
 		throw new UnsupportedOperationException(  );
 	}
 
@@ -811,13 +837,13 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public javax.persistence.metamodel.Type<?> getIdType() {
+	public SimpleTypeDescriptor getIdType() {
 		throw new UnsupportedOperationException(  );
 	}
 
 	@Override
 	public boolean isAffectedByEnabledFilters(LoadQueryInfluencers loadQueryInfluencers) {
-		for ( EntityDescriptor<?> implementor : implementors ) {
+		for ( EntityTypeDescriptor<?> implementor : implementors ) {
 			if ( implementor.isAffectedByEnabledFilters( loadQueryInfluencers ) ) {
 				return true;
 			}
@@ -828,7 +854,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public boolean isAffectedByEnabledFetchProfiles(LoadQueryInfluencers loadQueryInfluencers) {
-		for ( EntityDescriptor<?> implementor : implementors ) {
+		for ( EntityTypeDescriptor<?> implementor : implementors ) {
 			if ( implementor.isAffectedByEnabledFetchProfiles( loadQueryInfluencers ) ) {
 				return true;
 			}
@@ -839,7 +865,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 
 	@Override
 	public boolean isAffectedByEntityGraph(LoadQueryInfluencers loadQueryInfluencers) {
-		for ( EntityDescriptor<?> implementor : implementors ) {
+		for ( EntityTypeDescriptor<?> implementor : implementors ) {
 			if ( implementor.isAffectedByEntityGraph( loadQueryInfluencers ) ) {
 				return true;
 			}
@@ -1008,7 +1034,7 @@ public class PolymorphicEntityValuedExpressableTypeImpl<T> implements EntityDesc
 	}
 
 	@Override
-	public EntityDescriptor getSubclassEntityPersister(
+	public EntityTypeDescriptor getSubclassEntityPersister(
 			Object instance,
 			SessionFactoryImplementor factory) {
 		throw new UnsupportedOperationException(  );

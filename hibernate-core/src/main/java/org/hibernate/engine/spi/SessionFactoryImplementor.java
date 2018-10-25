@@ -29,7 +29,7 @@ import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.exception.spi.SQLExceptionConverter;
 import org.hibernate.id.IdentifierGenerator;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
@@ -278,7 +278,7 @@ public interface SessionFactoryImplementor
 	 * instead
 	 */
 	@Deprecated
-	default EntityDescriptor getEntityPersister(String entityName) throws MappingException {
+	default EntityTypeDescriptor getEntityPersister(String entityName) throws MappingException {
 		return getMetamodel().getEntityDescriptor( entityName );
 	}
 
@@ -311,7 +311,7 @@ public interface SessionFactoryImplementor
 	 * instead
 	 */
 	@Deprecated
-	default EntityDescriptor locateEntityPersister(Class byClass) {
+	default EntityTypeDescriptor locateEntityPersister(Class byClass) {
 		return getMetamodel().getEntityDescriptor( byClass );
 	}
 
@@ -321,7 +321,7 @@ public interface SessionFactoryImplementor
 	 * instead
 	 */
 	@Deprecated
-	default EntityDescriptor locateEntityPersister(String byName) {
+	default EntityTypeDescriptor locateEntityPersister(String byName) {
 		return getMetamodel().findEntityDescriptor( byName );
 	}
 

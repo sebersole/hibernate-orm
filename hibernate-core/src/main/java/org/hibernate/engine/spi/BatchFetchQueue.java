@@ -19,7 +19,7 @@ import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.internal.CacheHelper;
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 import org.jboss.logging.Logger;
@@ -176,7 +176,7 @@ public class BatchFetchQueue {
 	 */
 	@SuppressWarnings("unchecked")
 	public Object[] getEntityBatch(
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final Object id,
 			final int batchSize,
 			final EntityMode entityMode) {
@@ -214,7 +214,7 @@ public class BatchFetchQueue {
 		return ids; //we ran out of ids to try
 	}
 
-	private boolean isCached(EntityKey entityKey, EntityDescriptor entityDescriptor) {
+	private boolean isCached(EntityKey entityKey, EntityTypeDescriptor entityDescriptor) {
 		final SharedSessionContractImplementor session = context.getSession();
 
 		if ( ! session.getCacheMode().isGetEnabled() ) {

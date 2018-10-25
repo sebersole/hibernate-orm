@@ -9,6 +9,7 @@ package org.hibernate.engine.spi;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.EntityGraph;
 import javax.persistence.LockModeType;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
@@ -17,7 +18,8 @@ import javax.persistence.criteria.CriteriaUpdate;
 import org.hibernate.HibernateException;
 import org.hibernate.LockOptions;
 import org.hibernate.Session;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.graph.spi.RootGraphImplementor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
@@ -28,7 +30,7 @@ import org.hibernate.type.descriptor.spi.WrapperOptions;
 
 /**
  * Defines the "internal contract" for {@link Session} and other parts of Hibernate such as
- * {@link Type}, {@link EntityDescriptor}
+ * {@link Type}, {@link EntityTypeDescriptor}
  * and {@link PersistentCollectionDescriptor} implementations.
  *
  * A Session, through this interface and SharedSessionContractImplementor, implements:<ul>
@@ -62,13 +64,13 @@ public interface SessionImplementor extends Session, SharedSessionContractImplem
 
 	ActionQueue getActionQueue();
 
-	Object instantiate(EntityDescriptor entityDescriptor, Object id) throws HibernateException;
+	Object instantiate(EntityTypeDescriptor entityDescriptor, Object id) throws HibernateException;
 
 	/**
-	 * @deprecated Use {@link #instantiate(EntityDescriptor, Object)}
+	 * @deprecated Use {@link #instantiate(EntityTypeDescriptor, Object)}
 	 */
 	@Deprecated
-	default Object instantiate(EntityDescriptor entityDescriptor, Serializable id) throws HibernateException {
+	default Object instantiate(EntityTypeDescriptor entityDescriptor, Serializable id) throws HibernateException {
 		return instantiate( entityDescriptor, (Object) id );
 	}
 
@@ -98,6 +100,12 @@ public interface SessionImplementor extends Session, SharedSessionContractImplem
 	 * Used to mark a transaction for rollback only (when that is the JPA spec defined behavior).
 	 */
 	void markForRollbackOnly();
+
+	@Override
+	<T> RootGraphImplementor<T> createEntityGraph(Class<T> rootType);
+
+	@Override
+	RootGraphImplementor<?> createEntityGraph(String graphName);
 
 	@Override
 	QueryImplementor createQuery(String queryString);

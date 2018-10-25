@@ -26,7 +26,7 @@ import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.event.spi.PreUpdateEvent;
 import org.hibernate.event.spi.PreUpdateEventListener;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.type.internal.TypeHelper;
 
@@ -69,7 +69,7 @@ public final class EntityUpdateAction extends EntityAction {
 			final Object nextVersion,
 			final Object instance,
 			final Object rowId,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final SharedSessionContractImplementor session) {
 		super( session, id, instance, entityDescriptor );
 		this.state = state;
@@ -91,7 +91,7 @@ public final class EntityUpdateAction extends EntityAction {
 	}
 
 	private Object[] determinePreviousNaturalIdValues(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			Object[] previousState,
 			SharedSessionContractImplementor session,
 			Object id) {
@@ -109,7 +109,7 @@ public final class EntityUpdateAction extends EntityAction {
 	@Override
 	public void execute() throws HibernateException {
 		final Object id = getId();
-		final EntityDescriptor entityDescriptor = getEntityDescriptor();
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor();
 		final SharedSessionContractImplementor session = getSession();
 		final Object instance = getInstance();
 
@@ -217,11 +217,11 @@ public final class EntityUpdateAction extends EntityAction {
 		}
 	}
 
-	private boolean cacheUpdate(EntityDescriptor entityDescriptor, Object previousVersion, Object ck) {
+	private boolean cacheUpdate(EntityTypeDescriptor entityDescriptor, Object previousVersion, Object ck) {
 		final SharedSessionContractImplementor session = getSession();
 		try {
 			session.getEventListenerManager().cachePutStart();
-			final EntityDescriptor rootDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
+			final EntityTypeDescriptor rootDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
 			return session.getFactory().getCache().getEntityRegionAccess( rootDescriptor.getNavigableRole() ).update(
 					session,
 					ck,
@@ -319,7 +319,7 @@ public final class EntityUpdateAction extends EntityAction {
 	@Override
 	public void doAfterTransactionCompletion(boolean success, SharedSessionContractImplementor session) throws CacheException {
 		final SessionFactoryImplementor factory = session.getFactory();
-		final EntityDescriptor entityDescriptor = getEntityDescriptor();
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor();
 		if ( entityDescriptor.canWriteToCache() ) {
 			final EntityDataAccess cacheAccess = entityDescriptor.getHierarchy().getEntityCacheAccess();
 			final Object ck = cacheAccess.generateCacheKey(

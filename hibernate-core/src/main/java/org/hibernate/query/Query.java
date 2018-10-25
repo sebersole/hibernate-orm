@@ -35,6 +35,8 @@ import org.hibernate.ScrollMode;
 import org.hibernate.ScrollableResults;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.RootGraph;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.transform.ResultTransformer;
@@ -69,6 +71,36 @@ public interface Query<R> extends TypedQuery<R>, CommonQueryContract {
 	 * @return the query string.
 	 */
 	String getQueryString();
+
+	/**
+	 * Apply the given graph using the given semantic
+	 *
+	 * @param graph The graph the apply.
+	 * @param semantic The semantic to use when applying the graph
+	 *
+	 * @return this - for method chaining
+	 */
+	Query<R> applyGraph(RootGraph<?> graph, GraphSemantic semantic);
+
+	/**
+	 * Apply the given graph using {@linkplain GraphSemantic#FETCH fetch semantics}
+	 *
+	 * @apiNote This method calls {@link #applyGraph(RootGraph, GraphSemantic)} using
+	 * {@link GraphSemantic#FETCH} as the semantic
+	 */
+	default Query<R> applyFetchGraph(RootGraph graph) {
+		return applyGraph( graph, GraphSemantic.FETCH );
+	}
+
+	/**
+	 * Apply the given graph using {@linkplain GraphSemantic#LOAD load semantics}
+	 *
+	 * @apiNote This method calls {@link #applyGraph(RootGraph, GraphSemantic)} using
+	 * {@link GraphSemantic#LOAD} as the semantic
+	 */
+	default Query<R> applyLoadGraph(RootGraph graph) {
+		return applyGraph( graph, GraphSemantic.LOAD );
+	}
 
 	/**
 	 * Return the query results as an <tt>Iterator</tt>. If the query

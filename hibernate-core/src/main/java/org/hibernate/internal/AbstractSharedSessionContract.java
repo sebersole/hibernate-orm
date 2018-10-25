@@ -51,7 +51,7 @@ import org.hibernate.id.uuid.StandardRandomStrategy;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.query.Query;
@@ -511,7 +511,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@Override
-	public EntityKey generateEntityKey(Object id, EntityDescriptor descriptor) {
+	public EntityKey generateEntityKey(Object id, EntityTypeDescriptor descriptor) {
 		return new EntityKey( id, descriptor );
 	}
 

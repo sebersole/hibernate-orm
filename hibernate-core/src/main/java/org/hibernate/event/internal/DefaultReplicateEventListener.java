@@ -25,9 +25,9 @@ import org.hibernate.event.spi.ReplicateEventListener;
 import org.hibernate.id.PostInsertIdentifierGenerator;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
@@ -62,7 +62,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 			return;
 		}
 
-		final EntityDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
+		final EntityTypeDescriptor entityDescriptor = source.getEntityDescriptor( event.getEntityName(), entity );
 		final EntityIdentifier idDescriptor = entityDescriptor.getHierarchy().getIdentifierDescriptor();
 		final VersionDescriptor versionDescriptor = entityDescriptor.getHierarchy().getVersionDescriptor();
 
@@ -153,7 +153,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 			Object entity,
 			Object id,
 			Object[] values,
-			List<PersistentAttribute> navigables,
+			List<PersistentAttributeDescriptor> navigables,
 			EventSource source) {
 		//TODO: we use two visitors here, inefficient!
 		OnReplicateVisitor visitor = new OnReplicateVisitor( source, id, entity, false );
@@ -166,7 +166,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 			Object entity,
 			Object id,
 			Object[] values,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SessionImplementor source) {
 		return false;
 	}
@@ -180,7 +180,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 			Object entity,
 			Object id,
 			Object version,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			ReplicationMode replicationMode,
 			EventSource source) throws HibernateException {
 
@@ -207,7 +207,7 @@ public class DefaultReplicateEventListener extends AbstractSaveEventListener imp
 
 	private void cascadeAfterReplicate(
 			Object entity,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			ReplicationMode replicationMode,
 			EventSource source) {
 		source.getPersistenceContext().incrementCascadeLevel();

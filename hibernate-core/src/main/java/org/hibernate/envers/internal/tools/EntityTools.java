@@ -14,7 +14,7 @@ import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.proxy.HibernateProxy;
 
 /**
@@ -93,12 +93,12 @@ public abstract class EntityTools {
 	}
 
 	/**
-	 * Introduce legacy behavior of fetching property names from an {@link EntityDescriptor}.
+	 * Introduce legacy behavior of fetching property names from an {@link EntityTypeDescriptor}.
 	 *
 	 * @param entityDescriptor The entity descriptor.
 	 * @return A string array of property names.
 	 */
-	public static String[] getPropertyNames(EntityDescriptor entityDescriptor) {
+	public static String[] getPropertyNames(EntityTypeDescriptor entityDescriptor) {
 		final List<String> attributes = new ArrayList<>();
 		entityDescriptor.visitStateArrayContributors(
 				contributor -> {

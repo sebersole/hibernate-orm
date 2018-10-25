@@ -10,8 +10,8 @@ import java.util.Iterator;
 
 import org.hibernate.HibernateException;
 import org.hibernate.event.spi.EventSource;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -79,7 +79,7 @@ public interface CascadingAction {
 	 * @param attribute The attribute
 	 * @param propertyIndex The index of the property within the owner.
 	 */
-	void noCascade(EventSource session, Object parent, EntityDescriptor entityDescriptor, PersistentAttribute attribute, int propertyIndex);
+	void noCascade(EventSource session, Object parent, EntityTypeDescriptor entityDescriptor, PersistentAttributeDescriptor attribute, int propertyIndex);
 
 	/**
 	 * Should this action be performed (or noCascade consulted) in the case of lazy properties.

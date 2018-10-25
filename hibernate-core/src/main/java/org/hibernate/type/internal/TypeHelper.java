@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
@@ -141,7 +141,7 @@ public class TypeHelper {
 	}
 	@SuppressWarnings("unchecked")
 	public static Object[] replace(
-			EntityDescriptor<?> entityDescriptor,
+			EntityTypeDescriptor<?> entityDescriptor,
 			Object originalEntity,
 			Object targetEntity,
 			Map copyCache,
@@ -192,7 +192,7 @@ public class TypeHelper {
 
 	@SuppressWarnings("unchecked")
 	public static Object[] replace(
-			EntityDescriptor<?> entityDescriptor,
+			EntityTypeDescriptor<?> entityDescriptor,
 			Object originalEntity,
 			Object targetEntity,
 			Map copyCache,

@@ -25,7 +25,7 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.internal.JpaStaticMetaModelPopulationSetting;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
@@ -89,7 +89,7 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 			EntityMappingHierarchy bootHierarchy);
 
 	void registerEntityDescriptor(
-			EntityDescriptor runtimeDescriptor,
+			EntityTypeDescriptor runtimeDescriptor,
 			EntityMapping bootDescriptor);
 
 	void registerMappedSuperclassDescriptor(

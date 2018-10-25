@@ -20,7 +20,7 @@ import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.event.spi.EventType;
 import org.hibernate.internal.util.StringHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 
 import org.jboss.logging.Logger;
@@ -40,7 +40,7 @@ public abstract class EntityAction
 
 	private transient Object instance;
 	private transient SharedSessionContractImplementor session;
-	private transient EntityDescriptor entityDescriptor;
+	private transient EntityTypeDescriptor entityDescriptor;
 
 	private transient boolean veto;
 
@@ -51,7 +51,7 @@ public abstract class EntityAction
 	 * @param instance The entity instance
 	 * @param entityDescriptor The entity entityDescriptor
 	 */
-	protected EntityAction(SharedSessionContractImplementor session, Object id, Object instance, EntityDescriptor entityDescriptor) {
+	protected EntityAction(SharedSessionContractImplementor session, Object id, Object instance, EntityTypeDescriptor entityDescriptor) {
 		this.entityName = entityDescriptor.getEntityName();
 		this.id = id;
 		this.instance = instance;
@@ -148,7 +148,7 @@ public abstract class EntityAction
 	 *
 	 * @return The entity EntityDescriptor
 	 */
-	public final EntityDescriptor<?> getEntityDescriptor() {
+	public final EntityTypeDescriptor<?> getEntityDescriptor() {
 		return entityDescriptor;
 	}
 

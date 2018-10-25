@@ -22,14 +22,14 @@ import org.hibernate.mapping.SingleTableSubclass;
 import org.hibernate.mapping.UnionSubclass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassResolver;
 import org.hibernate.metamodel.model.domain.NavigableResolutionException;
-import org.hibernate.metamodel.model.domain.internal.JoinedEntityDescriptor;
+import org.hibernate.metamodel.model.domain.internal.entity.JoinedEntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.internal.PersistentArrayDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.PersistentBagDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.PersistentListDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.PersistentMapDescriptorImpl;
 import org.hibernate.metamodel.model.domain.internal.PersistentSetDescriptorImpl;
-import org.hibernate.metamodel.model.domain.internal.SingleTableEntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.internal.entity.SingleTableEntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -37,7 +37,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public class StandardRuntimeModelDescriptorClassResolver implements RuntimeModelDescriptorClassResolver {
 	@Override
-	public Class<? extends EntityDescriptor> getEntityDescriptorClass(EntityMapping bootMapping) {
+	public Class<? extends EntityTypeDescriptor> getEntityDescriptorClass(EntityMapping bootMapping) {
 		if ( RootClass.class.isInstance( bootMapping ) ) {
 			if ( bootMapping.getSubTypeMappings().isEmpty() ) {
 				return singleTableEntityDescriptor();
@@ -63,15 +63,15 @@ public class StandardRuntimeModelDescriptorClassResolver implements RuntimeModel
 		}
 	}
 
-	public Class<? extends EntityDescriptor> singleTableEntityDescriptor() {
-		return SingleTableEntityDescriptor.class;
+	public Class<? extends EntityTypeDescriptor> singleTableEntityDescriptor() {
+		return SingleTableEntityTypeDescriptor.class;
 	}
 
-	public Class<? extends EntityDescriptor> joinedSubclassEntityDescriptor() {
-		return JoinedEntityDescriptor.class;
+	public Class<? extends EntityTypeDescriptor> joinedSubclassEntityDescriptor() {
+		return JoinedEntityTypeDescriptor.class;
 	}
 
-	public Class<? extends EntityDescriptor> unionSubclassEntityDescriptor() {
+	public Class<? extends EntityTypeDescriptor> unionSubclassEntityDescriptor() {
 		throw new NotYetImplementedException(  );
 //		return UnionSubclassEntityPersister.class;
 	}

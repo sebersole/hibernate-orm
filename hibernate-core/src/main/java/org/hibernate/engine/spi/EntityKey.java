@@ -13,7 +13,7 @@ import java.io.Serializable;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
@@ -34,7 +34,7 @@ public final class EntityKey implements EntityKeyCommon, Serializable {
 
 	private final Object identifier;
 	private final int hashCode;
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 
 	/**
 	 * Construct a unique identifier for an entity class instance.
@@ -46,7 +46,7 @@ public final class EntityKey implements EntityKeyCommon, Serializable {
 	 * @param id The entity id
 	 * @param entityDescriptor The entity entityDescriptor
 	 */
-	public EntityKey(Object id, EntityDescriptor entityDescriptor) {
+	public EntityKey(Object id, EntityTypeDescriptor entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 		if ( id == null ) {
 			throw new AssertionFailure( "null identifier" );
@@ -161,7 +161,7 @@ public final class EntityKey implements EntityKeyCommon, Serializable {
 			throws IOException, ClassNotFoundException {
 		final Serializable id = (Serializable) ois.readObject();
 		final String entityName = (String) ois.readObject();
-		final EntityDescriptor entityDescriptor = sessionFactory.getEntityPersister( entityName );
+		final EntityTypeDescriptor entityDescriptor = sessionFactory.getEntityPersister( entityName );
 		return new EntityKey( id, entityDescriptor );
 	}
 }

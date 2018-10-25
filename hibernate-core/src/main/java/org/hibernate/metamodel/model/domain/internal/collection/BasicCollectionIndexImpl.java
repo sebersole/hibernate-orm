@@ -17,6 +17,7 @@ import org.hibernate.metamodel.model.domain.spi.AbstractCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.BasicCollectionIndex;
 import org.hibernate.metamodel.model.domain.spi.ConvertibleNavigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.TableReferenceJoinCollector;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -81,6 +82,11 @@ public class BasicCollectionIndexImpl<J>
 	@Override
 	public Column getBoundColumn() {
 		return column;
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getDomainTypeDescriptor() {
+		return getBasicType();
 	}
 
 	@Override

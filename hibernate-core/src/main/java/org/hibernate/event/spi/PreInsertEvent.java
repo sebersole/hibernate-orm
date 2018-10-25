@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Represents a <tt>pre-insert</tt> event, which occurs just prior to
@@ -30,7 +30,7 @@ public class PreInsertEvent extends AbstractPreDatabaseOperationEvent {
 			Object entity,
 			Object id,
 			Object[] state,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			EventSource source) {
 		super( source, entity, id, descriptor );
 		this.state = state;

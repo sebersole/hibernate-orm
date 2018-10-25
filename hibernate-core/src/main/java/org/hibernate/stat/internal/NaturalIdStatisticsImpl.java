@@ -12,7 +12,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.stat.NaturalIdStatistics;
 
 /**
@@ -31,7 +31,7 @@ public class NaturalIdStatisticsImpl extends AbstractCacheableDataStatistics imp
 	private final Lock readLock;
 	private final Lock writeLock;
 
-	NaturalIdStatisticsImpl(EntityDescriptor rootEntityDescriptor) {
+	NaturalIdStatisticsImpl(EntityTypeDescriptor rootEntityDescriptor) {
 		super(
 				() -> rootEntityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess() != null
 						? rootEntityDescriptor.getHierarchy().getNaturalIdDescriptor().getCacheAccess().getRegion()

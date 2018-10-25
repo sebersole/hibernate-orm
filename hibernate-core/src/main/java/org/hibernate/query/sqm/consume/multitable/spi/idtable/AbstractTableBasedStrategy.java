@@ -13,7 +13,7 @@ import java.util.Map;
 import org.hibernate.Metamodel;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.naming.Identifier;
 import org.hibernate.naming.QualifiedTableName;
@@ -28,7 +28,7 @@ import org.hibernate.query.sqm.tree.SqmUpdateStatement;
  * @author Steve Ebersole
  */
 public abstract class AbstractTableBasedStrategy implements IdTableStrategy {
-	private final Map<EntityDescriptor,IdTable> idTableInfoMap = new HashMap<>();
+	private final Map<EntityTypeDescriptor,IdTable> idTableInfoMap = new HashMap<>();
 
 	protected abstract IdTableSupport getIdTableSupport();
 
@@ -46,12 +46,12 @@ public abstract class AbstractTableBasedStrategy implements IdTableStrategy {
 		);
 	}
 
-	protected IdTable getIdTableInfo(EntityDescriptor entityDescriptor) {
+	protected IdTable getIdTableInfo(EntityTypeDescriptor entityDescriptor) {
 		return idTableInfoMap.get( entityDescriptor );
 	}
 
 	protected IdTable generateIdTableDefinition(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SessionFactoryOptions sessionFactoryOptions,
 			JdbcConnectionAccess connectionAccess) {
 		final IdTable idTable = new IdTable(
@@ -71,7 +71,7 @@ public abstract class AbstractTableBasedStrategy implements IdTableStrategy {
 	}
 
 	protected QualifiedTableName determineIdTableName(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			SessionFactoryOptions sessionFactoryOptions) {
 
 		final Identifier entityTableCatalog = entityDescriptor.getPrimaryTable() instanceof PhysicalTable
@@ -178,7 +178,7 @@ public abstract class AbstractTableBasedStrategy implements IdTableStrategy {
 
 	@Override
 	public UpdateHandler buildUpdateHandler(SqmUpdateStatement sqmUpdateStatement, HandlerCreationContext creationContext) {
-		final EntityDescriptor entityDescriptor = sqmUpdateStatement.getEntityFromElement()
+		final EntityTypeDescriptor entityDescriptor = sqmUpdateStatement.getEntityFromElement()
 				.getNavigableReference()
 				.getReferencedNavigable()
 				.getEntityDescriptor();
@@ -212,7 +212,7 @@ public abstract class AbstractTableBasedStrategy implements IdTableStrategy {
 
 	@Override
 	public DeleteHandler buildDeleteHandler(SqmDeleteStatement sqmDeleteStatement, HandlerCreationContext creationContext) {
-		final EntityDescriptor entityDescriptor = sqmDeleteStatement.getEntityFromElement()
+		final EntityTypeDescriptor entityDescriptor = sqmDeleteStatement.getEntityFromElement()
 				.getNavigableReference()
 				.getReferencedNavigable()
 				.getEntityDescriptor();

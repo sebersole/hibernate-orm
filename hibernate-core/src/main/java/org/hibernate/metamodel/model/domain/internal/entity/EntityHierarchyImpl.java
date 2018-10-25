@@ -23,7 +23,7 @@ import org.hibernate.mapping.UnionSubclass;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
@@ -43,7 +43,7 @@ import org.jboss.logging.Logger;
 public class EntityHierarchyImpl implements EntityHierarchy {
 	private static final Logger log = Logger.getLogger( EntityHierarchyImpl.class );
 
-	private final EntityDescriptor<?> rootEntityDescriptor;
+	private final EntityTypeDescriptor<?> rootEntityDescriptor;
 
 	private final InheritanceStrategy inheritanceStrategy;
 	private final OptimisticLockStyle optimisticLockStyle;
@@ -65,7 +65,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	private final String whereFragment;
 
 	public EntityHierarchyImpl(
-			EntityDescriptor rootRuntimeDescriptor,
+			EntityTypeDescriptor rootRuntimeDescriptor,
 			RootClass rootBootDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		log.debugf( "Creating EntityHierarchy root EntityPersister : %s", rootRuntimeDescriptor );
@@ -122,7 +122,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 
 	private static RepresentationMode determineRepresentationMode(
 			RootClass rootEntityBinding,
-			EntityDescriptor rootEntityDescriptor,
+			EntityTypeDescriptor rootEntityDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		// see if a specific one was requested specific to this hierarchy
 		if ( rootEntityBinding.getExplicitRepresentationMode() != null ) {
@@ -163,7 +163,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	private static EntityIdentifier interpretIdentifierDescriptor(
 			EntityHierarchyImpl runtimeModelHierarchy,
 			RootClass bootModelRootEntity,
-			EntityDescriptor runtimeModelRootEntity,
+			EntityTypeDescriptor runtimeModelRootEntity,
 			RuntimeModelCreationContext creationContext) {
 		if ( bootModelRootEntity.getEntityMappingHierarchy().getIdentifierEmbeddedValueMapping() != null ) {
 
@@ -302,7 +302,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public EntityDescriptor getRootEntityType() {
+	public EntityTypeDescriptor getRootEntityType() {
 		return rootEntityDescriptor;
 	}
 

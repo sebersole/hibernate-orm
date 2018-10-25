@@ -53,7 +53,7 @@ public interface ManagedTypeRepresentationStrategy {
 			BytecodeProvider bytecodeProvider);
 
 	<J> ProxyFactory generateProxyFactory(
-			AbstractEntityDescriptor<J> runtimeDescriptor,
+			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext);
 
 	/**

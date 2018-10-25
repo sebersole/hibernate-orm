@@ -6,7 +6,7 @@
  */
 package org.hibernate.query.sqm.produce.path.internal;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.sqm.produce.SqmProductionException;
 import org.hibernate.query.sqm.produce.path.spi.SemanticPathPart;
 import org.hibernate.query.sqm.produce.spi.SqmCreationContext;
@@ -19,13 +19,13 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmRestrictedCollectionEle
  * @author Steve Ebersole
  */
 public class SemanticPathPartNamedEntity implements SemanticPathPart {
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 
-	public SemanticPathPartNamedEntity(EntityDescriptor entityDescriptor) {
+	public SemanticPathPartNamedEntity(EntityTypeDescriptor entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 	}
 
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return entityDescriptor;
 	}
 

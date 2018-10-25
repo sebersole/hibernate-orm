@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.metamodel.model.domain.internal;
+package org.hibernate.metamodel.model.domain.internal.entity;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -39,9 +39,9 @@ import org.hibernate.jdbc.Expectations;
 import org.hibernate.jdbc.TooManyRowsAffectedException;
 import org.hibernate.loader.internal.TemplateParameterBindingContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractEntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
@@ -85,11 +85,11 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 /**
  * @author Steve Ebersole
  */
-public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> {
+public class SingleTableEntityTypeDescriptor<T> extends AbstractEntityTypeDescriptor<T> {
 	private Boolean hasCollections;
 	private final boolean isJpaCacheComplianceEnabled;
 
-	public SingleTableEntityDescriptor(
+	public SingleTableEntityTypeDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor<? super T> superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
@@ -1043,7 +1043,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 	}
 
 	@Override
-	public EntityDescriptor getSubclassEntityPersister(
+	public EntityTypeDescriptor getSubclassEntityPersister(
 			Object instance, SessionFactoryImplementor factory) {
 		if ( getSubclassTypes().isEmpty() ) {
 			return this;
@@ -1098,7 +1098,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 		private final boolean isNullableTable;
 		private final Expectation expectation;
 		private final SessionFactoryImplementor factory;
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 
 		private boolean isRowToUpdate;
 
@@ -1107,7 +1107,7 @@ public class SingleTableEntityDescriptor<T> extends AbstractEntityDescriptor<T> 
 				boolean isNullableTable,
 				Expectation expectation,
 				SessionFactoryImplementor factory,
-				EntityDescriptor entityDescriptor) {
+				EntityTypeDescriptor entityDescriptor) {
 			this.id = id;
 			this.isNullableTable = isNullableTable;
 			this.expectation = expectation;

@@ -7,13 +7,14 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.List;
-import javax.persistence.metamodel.EmbeddableType;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.domain.spi.EmbeddedValueMappingImplementor;
+import org.hibernate.boot.model.domain.spi.ManagedTypeMappingImplementor;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
+import org.hibernate.metamodel.model.domain.EmbeddedDomainType;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
 
@@ -29,7 +30,8 @@ import org.hibernate.type.descriptor.java.spi.EmbeddableJavaDescriptor;
  * @author Steve Ebersole
  */
 public interface EmbeddedTypeDescriptor<T>
-		extends InheritanceCapable<T>, EmbeddedContainer<T>, EmbeddableType<T>,	EmbeddedValuedNavigable<T> {
+		extends InheritanceCapable<T>, EmbeddedContainer<T>, EmbeddedDomainType<T>,
+		SimpleTypeDescriptor<T>, EmbeddedValuedNavigable<T> {
 
 	Class[] STANDARD_CTOR_SIGNATURE = new Class[] {
 			EmbeddedValueMappingImplementor.class,

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.sql.results.internal.JdbcValuesSourceProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.RowProcessingStateStandardImpl;
 import org.hibernate.sql.results.internal.values.JdbcValues;
@@ -46,7 +46,7 @@ public class ListResultsConsumer<R> implements ResultsConsumer<List<R>, R> {
 			boolean uniqueRows = false;
 			final Class<R> resultJavaType = rowReader.getResultJavaType();
 			if ( resultJavaType != null && ! resultJavaType.isArray() ) {
-				final EntityDescriptor<R> entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( resultJavaType );
+				final EntityTypeDescriptor<R> entityDescriptor = session.getFactory().getMetamodel().findEntityDescriptor( resultJavaType );
 				if ( entityDescriptor != null ) {
 					uniqueRows = true;
 				}

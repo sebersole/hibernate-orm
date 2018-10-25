@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.metamodel.model.domain.DomainType;
+
 /**
  * Binding of the discriminator in a entity hierarchy
  *

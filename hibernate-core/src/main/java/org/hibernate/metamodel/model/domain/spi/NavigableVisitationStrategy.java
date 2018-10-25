@@ -42,7 +42,7 @@ public interface NavigableVisitationStrategy {
 	/**
 	 * Visit an entity
 	 */
-	default void visitEntity(EntityDescriptor entity) {
+	default void visitEntity(EntityTypeDescriptor entity) {
 	}
 
 	/**

@@ -27,7 +27,7 @@ import org.hibernate.event.spi.PreUpdateEvent;
 import org.hibernate.event.spi.PreUpdateEventListener;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -47,7 +47,7 @@ public class BeanValidationEventListener
 	);
 
 	private ValidatorFactory factory;
-	private ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityDescriptor = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<EntityTypeDescriptor, Set<String>> associationsPerEntityDescriptor = new ConcurrentHashMap<>();
 	private GroupsPerOperation groupsPerOperation;
 	boolean initialized;
 
@@ -103,7 +103,7 @@ public class BeanValidationEventListener
 	private <T> void validate(
 			T object,
 			RepresentationMode representation,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			GroupsPerOperation.Operation operation) {
 		if ( object == null || representation != RepresentationMode.POJO ) {
 			return;

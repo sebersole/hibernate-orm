@@ -7,11 +7,12 @@
 package org.hibernate;
 
 import java.util.List;
-import javax.persistence.EntityGraph;
-import javax.persistence.metamodel.EntityType;
 
+import org.hibernate.graph.RootGraph;
 import org.hibernate.metamodel.RuntimeModel;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.EntityDomainType;
+import org.hibernate.metamodel.model.domain.ManagedDomainType;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -31,8 +32,8 @@ public interface Metamodel extends javax.persistence.metamodel.Metamodel, Runtim
 
 	@Override
 	@SuppressWarnings("unchecked")
-	default <X> EntityType<X> entity(Class<X> cls) {
-		final EntityDescriptor<X> descriptor = getEntityDescriptor( cls );
+	default <X> EntityDomainType<X> entity(Class<X> cls) {
+		final EntityTypeDescriptor<X> descriptor = getEntityDescriptor( cls );
 		if ( descriptor == null ) {
 			// per JPA, this condition needs to be an (illegal argument) exception
 			throw new IllegalArgumentException( "Not an entity: " + cls );
@@ -47,8 +48,8 @@ public interface Metamodel extends javax.persistence.metamodel.Metamodel, Runtim
 	 *
 	 * @return The entity descriptor
 	 */
-	default <X> EntityType<X> entity(String entityName) {
-		final EntityDescriptor<X> descriptor = findEntityDescriptor( entityName );
+	default <X> EntityDomainType<X> entity(String entityName) {
+		final EntityTypeDescriptor<X> descriptor = findEntityDescriptor( entityName );
 		if ( descriptor == null ) {
 			// consistent with the JPA requirement above
 			throw new IllegalArgumentException( "Not an entity: " + entityName );
@@ -56,15 +57,13 @@ public interface Metamodel extends javax.persistence.metamodel.Metamodel, Runtim
 		return descriptor;
 	}
 
-	<T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph);
+	@Override
+	<X> ManagedDomainType<X> managedType(Class<X> cls);
+
+	<T> void addNamedRootGraph(String graphName, RootGraph<T> entityGraph);
 
 	@SuppressWarnings("unchecked")
-	default <T> EntityGraph<T> findEntityGraphByName(String name) {
-		return (EntityGraph) this.findEntityGraph( name );
-	}
-
-	@SuppressWarnings("unchecked")
-	default <T> List<EntityGraph<T>> findEntityGraphsByType(Class<T> entityClass) {
-		return (List) findEntityGraphForType( entityClass );
+	default <T> List<RootGraph<T>> findRootGraphsByType(Class<T> entityClass) {
+		return (List) findRootGraphsForType( entityClass );
 	}
 }

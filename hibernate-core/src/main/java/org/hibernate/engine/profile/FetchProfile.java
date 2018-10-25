@@ -12,7 +12,7 @@ import java.util.Map;
 import org.hibernate.collection.spi.CollectionClassification;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
@@ -71,7 +71,7 @@ public class FetchProfile {
 	 */
 	public void addFetch(final Fetch fetch) {
 		final String fetchAssociactionRole = fetch.getAssociation().getRole();
-		final PersistentAttribute attribute = fetch.getAssociation().getOwner().findPersistentAttribute( fetchAssociactionRole );
+		final PersistentAttributeDescriptor attribute = fetch.getAssociation().getOwner().findPersistentAttribute( fetchAssociactionRole );
 		if ( PluralPersistentAttribute.class.isInstance( attribute ) ) {
 			LOG.tracev( "Handling request to add collection fetch [{0}]", fetchAssociactionRole );
 			final CollectionClassification collectionClassification = ( (PluralPersistentAttribute) attribute ).getPersistentCollectionDescriptor()

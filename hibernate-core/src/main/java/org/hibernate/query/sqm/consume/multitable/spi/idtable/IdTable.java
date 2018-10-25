@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import org.hibernate.dialect.Dialect;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
@@ -21,10 +21,10 @@ import org.hibernate.naming.QualifiedTableName;
  * @author Steve Ebersole
  */
 public class IdTable extends PhysicalTable {
-	private final EntityDescriptor entityDescriptor;
+	private final EntityTypeDescriptor entityDescriptor;
 
 	public IdTable(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			QualifiedTableName physicalQualifiedName) {
 		super(
 				UUID.randomUUID(),
@@ -35,7 +35,7 @@ public class IdTable extends PhysicalTable {
 		this.entityDescriptor = entityDescriptor;
 	}
 
-	public EntityDescriptor getEntityDescriptor() {
+	public EntityTypeDescriptor getEntityDescriptor() {
 		return entityDescriptor;
 	}
 

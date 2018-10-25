@@ -30,12 +30,12 @@ import org.hibernate.envers.internal.synchronization.SessionCacheCleaner;
 import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.envers.internal.tools.query.QueryBuilder;
 import org.hibernate.event.spi.EventSource;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceStrategy;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PluralAttributeCollection;
+import org.hibernate.metamodel.model.domain.spi.BagPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.property.access.spi.Getter;
@@ -209,11 +209,11 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		}
 
 		final SessionFactoryImplementor sessionFactory = ( (SessionImplementor) session ).getFactory();
-		final EntityDescriptor<Object> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
+		final EntityTypeDescriptor<Object> entityDescriptor = sessionFactory.getMetamodel().findEntityDescriptor( entityName );
 		entityDescriptor.visitAttributes(
 				attribute -> {
 					if ( attribute.getName().equals( propertyName )
-							&& PluralAttributeCollection.class.isInstance( attribute ) ) {
+							&& BagPersistentAttribute.class.isInstance( attribute ) ) {
 						// Handling collection of components.
 						if ( ( (PluralPersistentAttribute) attribute ).getElementType() instanceof javax.persistence.metamodel.EmbeddableType ) {
 							// Adding restrictions to compare data outside of primary key.
@@ -434,10 +434,10 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 		final SessionFactoryImplementor sessionFactory = session.getSessionFactory();
 
-		final EntityDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
-		final EntityDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
-		final EntityDescriptor auditedEntityDescriptor = getEntityDescriptor( auditedEntityName, session );
-		final EntityDescriptor rootAuditedEntityDescriptor = auditedEntityDescriptor.getHierarchy().getRootEntityType();
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
+		final EntityTypeDescriptor rootEntityDescriptor = entityDescriptor.getHierarchy().getRootEntityType();
+		final EntityTypeDescriptor auditedEntityDescriptor = getEntityDescriptor( auditedEntityName, session );
+		final EntityTypeDescriptor rootAuditedEntityDescriptor = auditedEntityDescriptor.getHierarchy().getRootEntityType();
 
 		final AuditServiceOptions options = auditService.getOptions();
 
@@ -555,8 +555,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		final SessionFactoryImplementor sessionFactory = session.getSessionFactory();
 		final AuditServiceOptions options = auditService.getOptions();
 
-		final EntityDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
-		final EntityDescriptor auditedEntityDescriptor = getEntityDescriptor( auditedEntityName, session );
+		final EntityTypeDescriptor entityDescriptor = getEntityDescriptor( entityName, session );
+		final EntityTypeDescriptor auditedEntityDescriptor = getEntityDescriptor( auditedEntityName, session );
 
 		final TableReference tableReference = getUpdateTableReference(
 				entityDescriptor,
@@ -617,8 +617,8 @@ public class ValidityAuditStrategy implements AuditStrategy {
 
 	private void applyUpdateWhereCommon(
 			UpdateStatement.UpdateStatementBuilder builder,
-			EntityDescriptor entityDescriptor,
-			EntityDescriptor auditedEntityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
+			EntityTypeDescriptor auditedEntityDescriptor,
 			AuditServiceOptions options,
 			SessionImplementor session,
 			Object id,
@@ -678,14 +678,14 @@ public class ValidityAuditStrategy implements AuditStrategy {
 		);
 	}
 
-	private EntityDescriptor getEntityDescriptor(String entityName, SessionImplementor sessionImplementor) {
+	private EntityTypeDescriptor getEntityDescriptor(String entityName, SessionImplementor sessionImplementor) {
 		return sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 	}
 
 	private TableReference getUpdateTableReference(
-			EntityDescriptor rootEntityDescriptor,
-			EntityDescriptor rootAuditedEntityDescriptor,
-			EntityDescriptor auditedEntityDescriptor) {
+			EntityTypeDescriptor rootEntityDescriptor,
+			EntityTypeDescriptor rootAuditedEntityDescriptor,
+			EntityTypeDescriptor auditedEntityDescriptor) {
 		if ( rootEntityDescriptor.getHierarchy().getInheritanceStrategy().equals( InheritanceStrategy.UNION ) ) {
 			// this is the condition causing all the problems in terms of the generated SQL UPDATE
 			// the problem being that we currently try to update the in-line view made up of the union query

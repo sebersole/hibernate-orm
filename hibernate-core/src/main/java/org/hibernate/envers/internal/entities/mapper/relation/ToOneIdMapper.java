@@ -17,7 +17,7 @@ import org.hibernate.envers.internal.reader.AuditReaderImplementor;
 import org.hibernate.envers.internal.tools.EntityTools;
 import org.hibernate.envers.internal.tools.query.Parameters;
 import org.hibernate.internal.util.compare.EqualsHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -101,7 +101,7 @@ public class ToOneIdMapper extends AbstractToOneMapper {
 		// therefore resolve the identifier from the entity directly prior to simply then
 		// doing the identifier comparison.
 
-		final EntityDescriptor entityDescriptor = session.getFactory()
+		final EntityTypeDescriptor entityDescriptor = session.getFactory()
 				.getMetamodel()
 				.findEntityDescriptor( referencedEntityName );
 

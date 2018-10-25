@@ -7,7 +7,7 @@
 package org.hibernate.action.internal;
 
 import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 public final class OrphanRemovalAction extends EntityDeleteAction {
 
@@ -16,7 +16,7 @@ public final class OrphanRemovalAction extends EntityDeleteAction {
 			Object[] state,
 			Object version,
 			Object instance,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			boolean isCascadeDeleteEnabled,
 			SessionImplementor session) {
 		super( id, state, version, instance, descriptor, isCascadeDeleteEnabled, session );

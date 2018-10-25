@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.model.domain.spi;
 
 import java.lang.reflect.Member;
-import javax.persistence.metamodel.Type;
 
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 
@@ -80,7 +79,7 @@ public interface VersionDescriptor<O,J>
 	}
 
 	@Override
-	default Type<J> getType() {
+	default SimpleTypeDescriptor<J> getType() {
 		return getBasicType();
 	}
 

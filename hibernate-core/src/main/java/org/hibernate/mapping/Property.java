@@ -42,7 +42,7 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
@@ -449,7 +449,7 @@ public class Property implements Serializable, PersistentAttributeMapping {
 	}
 
 	@Override
-	public <O,T> PersistentAttribute<O,T> makeRuntimeAttribute(
+	public <O,T> PersistentAttributeDescriptor<O,T> makeRuntimeAttribute(
 			ManagedTypeDescriptor<O> runtimeContainer,
 			ManagedTypeMapping bootContainer,
 			SingularPersistentAttribute.Disposition singularAttributeDisposition,

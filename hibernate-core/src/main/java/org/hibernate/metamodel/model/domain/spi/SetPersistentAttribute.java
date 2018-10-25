@@ -11,6 +11,6 @@ import java.util.Set;
 /**
  * @author Steve Ebersole
  */
-public interface PluralAttributeSet<O,E> extends PluralPersistentAttribute<O,Set<E>,E>,
+public interface SetPersistentAttribute<O,E> extends PluralPersistentAttribute<O,Set<E>,E>,
 		javax.persistence.metamodel.SetAttribute<O,E> {
 }

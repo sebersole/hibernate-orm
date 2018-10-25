@@ -9,7 +9,7 @@ package org.hibernate.query.sqm.consume.multitable.internal;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.sqm.consume.multitable.spi.idtable.IdTable;
@@ -34,7 +34,7 @@ public class StandardIdTableSupport implements IdTableSupport {
 	}
 
 	@Override
-	public Identifier determineIdTableName(EntityDescriptor entityDescriptor, SessionFactoryOptions sessionFactoryOptions) {
+	public Identifier determineIdTableName(EntityTypeDescriptor entityDescriptor, SessionFactoryOptions sessionFactoryOptions) {
 		return determineIdTableName(
 				entityDescriptor,
 				sessionFactoryOptions.getServiceRegistry().getService( JdbcServices.class ).getJdbcEnvironment()
@@ -42,7 +42,7 @@ public class StandardIdTableSupport implements IdTableSupport {
 	}
 
 	protected Identifier determineIdTableName(
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			JdbcEnvironment jdbcEnvironment) {
 		final String idTableNameBase = determineIdTableNameBase( entityDescriptor, jdbcEnvironment );
 		final String idTableName = determineIdTableName( idTableNameBase );
@@ -50,7 +50,7 @@ public class StandardIdTableSupport implements IdTableSupport {
 		return jdbcEnvironment.getIdentifierHelper().toIdentifier( idTableName );
 	}
 
-	private String determineIdTableNameBase(EntityDescriptor entityDescriptor, JdbcEnvironment jdbcEnvironment) {
+	private String determineIdTableNameBase(EntityTypeDescriptor entityDescriptor, JdbcEnvironment jdbcEnvironment) {
 		if ( entityDescriptor.getPrimaryTable() instanceof PhysicalTable ) {
 			return ( (PhysicalTable) entityDescriptor.getPrimaryTable() ).getTableName().render( jdbcEnvironment.getDialect() );
 		}

@@ -6,6 +6,8 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
+import org.hibernate.metamodel.model.domain.DomainType;
+
 /**
  * A unification of anything in the runtime domain metamodel that exposes
  * the domain type it represents

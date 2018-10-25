@@ -86,6 +86,11 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	}
 
 	@Override
+	public boolean canContainSubGraphs() {
+		return false;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public SingularPersistentAttribute asAttribute(Class javaType) {
 		// todo (6.0) : see not on super.
@@ -108,6 +113,11 @@ public class EntityIdentifierCompositeNonAggregatedImpl<O,J>
 	@Override
 	public void visitFetchables(Consumer<Fetchable> fetchableConsumer) {
 		getEmbeddedDescriptor().visitFetchables( fetchableConsumer );
+	}
+
+	@Override
+	public EmbeddedTypeDescriptor<J> getNavigableType() {
+		return getEmbeddedDescriptor();
 	}
 
 	@Override

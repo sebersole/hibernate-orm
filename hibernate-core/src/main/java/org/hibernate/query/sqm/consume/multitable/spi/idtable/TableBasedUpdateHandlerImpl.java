@@ -9,7 +9,7 @@ package org.hibernate.query.sqm.consume.multitable.spi.idtable;
 import java.sql.Connection;
 import java.util.List;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerCreationContext;
 import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.consume.multitable.spi.UpdateHandler;
@@ -29,7 +29,7 @@ public class TableBasedUpdateHandlerImpl
 		implements UpdateHandler {
 	private TableBasedUpdateHandlerImpl(
 			SqmDeleteOrUpdateStatement sqmDeleteOrUpdateStatement,
-			EntityDescriptor entityDescriptor,
+			EntityTypeDescriptor entityDescriptor,
 			IdTable idTableInfo,
 			IdTableSupport idTableSupport,
 			SessionUidSupport sessionUidSupport,
@@ -94,7 +94,7 @@ public class TableBasedUpdateHandlerImpl
 
 	public static class Builder {
 		private final SqmDeleteOrUpdateStatement sqmStatement;
-		private final EntityDescriptor entityDescriptor;
+		private final EntityTypeDescriptor entityDescriptor;
 		private final IdTable idTableInfo;
 		private final IdTableSupport idTableSupport;
 
@@ -105,7 +105,7 @@ public class TableBasedUpdateHandlerImpl
 
 		public Builder(
 				SqmUpdateStatement sqmStatement,
-				EntityDescriptor entityDescriptor,
+				EntityTypeDescriptor entityDescriptor,
 				IdTable idTableInfo,
 				IdTableSupport idTableSupport) {
 			this.sqmStatement = sqmStatement;

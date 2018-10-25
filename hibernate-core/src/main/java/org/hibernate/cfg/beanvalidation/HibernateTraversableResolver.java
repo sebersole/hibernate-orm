@@ -17,9 +17,9 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.common.AssertionFailure;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEntity;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 
 /**
@@ -34,8 +34,8 @@ public class HibernateTraversableResolver implements TraversableResolver {
 	private Set<String> associations;
 
 	public HibernateTraversableResolver(
-			EntityDescriptor entityDescriptor,
-			ConcurrentHashMap<EntityDescriptor, Set<String>> associationsPerEntityDescriptor) {
+			EntityTypeDescriptor entityDescriptor,
+			ConcurrentHashMap<EntityTypeDescriptor, Set<String>> associationsPerEntityDescriptor) {
 		this.associations = associationsPerEntityDescriptor.get( entityDescriptor );
 		if (this.associations == null) {
 			this.associations = new HashSet<>();
@@ -45,12 +45,12 @@ public class HibernateTraversableResolver implements TraversableResolver {
 	}
 
 	private void addAssociationsToTheSetForAllProperties(ManagedTypeDescriptor<?> managedTypeDescriptor) {
-		for ( PersistentAttribute<?, ?> attribute : managedTypeDescriptor.getPersistentAttributes() ) {
+		for ( PersistentAttributeDescriptor<?, ?> attribute : managedTypeDescriptor.getPersistentAttributes() ) {
 			addAssociationsToTheSetForOneProperty( attribute );
 		}
 	}
 
-	private void addAssociationsToTheSetForOneProperty(PersistentAttribute attribute) {
+	private void addAssociationsToTheSetForOneProperty(PersistentAttributeDescriptor attribute) {
 		if ( attribute instanceof PluralPersistentAttribute
 				|| attribute instanceof SingularPersistentAttributeEntity ) {
 			associations.add( attribute.getNavigableRole().getFullPath() );

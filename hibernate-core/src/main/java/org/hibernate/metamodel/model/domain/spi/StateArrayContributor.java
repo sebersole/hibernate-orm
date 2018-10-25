@@ -35,7 +35,7 @@ public interface StateArrayContributor<J> extends Navigable<J>, ExpressableType<
 	/**
 	 * Defines this contributor's position within the state array.
 	 *
-	 * @apiNote Much like {@link PersistentAttribute#getAttributePosition()}, this
+	 * @apiNote Much like {@link PersistentAttributeDescriptor#getAttributePosition()}, this
 	 * position follows a pre-defined algorithm based on alphabetical order, super
 	 * types first.  Note however, that this ordering is only important internally
 	 * as Hibernate builds the container's "state array" as part of EntityEntry,

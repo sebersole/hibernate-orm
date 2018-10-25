@@ -6,7 +6,7 @@
  */
 package org.hibernate.event.spi;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Occurs after the datastore is updated
@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  */
 public class PostUpdateEvent extends AbstractEvent {
 	private Object entity;
-	private EntityDescriptor entityDescriptor;
+	private EntityTypeDescriptor entityDescriptor;
 	private Object[] state;
 	private Object[] oldState;
 	private Object id;
@@ -28,7 +28,7 @@ public class PostUpdateEvent extends AbstractEvent {
 			Object[] state,
 			Object[] oldState,
 			int[] dirtyProperties,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			EventSource source
 	) {
 		super(source);
@@ -52,7 +52,7 @@ public class PostUpdateEvent extends AbstractEvent {
 		return oldState;
 	}
 
-	public EntityDescriptor getDescriptor() {
+	public EntityTypeDescriptor getDescriptor() {
 		return entityDescriptor;
 	}
 

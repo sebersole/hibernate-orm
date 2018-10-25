@@ -6,7 +6,7 @@
  */
 package org.hibernate.engine.profile;
 
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * Models the association of a given fetch.
@@ -14,7 +14,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
  * @author Steve Ebersole
  */
 public class Association {
-	private final EntityDescriptor owner;
+	private final EntityTypeDescriptor owner;
 	private final String associationPath;
 	private final String role;
 
@@ -24,13 +24,13 @@ public class Association {
 	 * @param owner The entity owning the association
 	 * @param associationPath The path of the association, from the entity
 	 */
-	public Association(EntityDescriptor owner, String associationPath) {
+	public Association(EntityTypeDescriptor owner, String associationPath) {
 		this.owner = owner;
 		this.associationPath = associationPath;
 		this.role = owner.getEntityName() + '.' + associationPath;
 	}
 
-	public EntityDescriptor getOwner() {
+	public EntityTypeDescriptor getOwner() {
 		return owner;
 	}
 

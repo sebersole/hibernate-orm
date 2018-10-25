@@ -25,7 +25,7 @@ import org.hibernate.event.spi.EventType;
 import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 import org.jboss.logging.Logger;
 
@@ -68,7 +68,7 @@ public final class TwoPhaseLoad {
 	 * @param session The Session
 	 */
 	public static void postHydrate(
-			final EntityDescriptor descriptor,
+			final EntityTypeDescriptor descriptor,
 			final Serializable id,
 			final Object[] values,
 			final Object rowId,
@@ -412,7 +412,7 @@ public final class TwoPhaseLoad {
 	public static void addUninitializedEntity(
 			final EntityKey key,
 			final Object object,
-			final EntityDescriptor descriptor,
+			final EntityTypeDescriptor descriptor,
 			final LockMode lockMode,
 			final SharedSessionContractImplementor session) {
 		session.getPersistenceContext().addEntity(
@@ -441,7 +441,7 @@ public final class TwoPhaseLoad {
 	public static void addUninitializedCachedEntity(
 			final EntityKey key,
 			final Object object,
-			final EntityDescriptor descriptor,
+			final EntityTypeDescriptor descriptor,
 			final LockMode lockMode,
 			final Object version,
 			final SharedSessionContractImplementor session) {

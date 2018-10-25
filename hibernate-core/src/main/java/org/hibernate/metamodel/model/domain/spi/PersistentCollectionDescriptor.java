@@ -24,6 +24,7 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
+import org.hibernate.metamodel.model.domain.CollectionDomainType;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -63,7 +64,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface PersistentCollectionDescriptor<O,C,E>
-		extends  CollectionValuedNavigable<C>, RootTableGroupProducer, TableGroupJoinProducer,
+		extends CollectionDomainType<C,E>, CollectionValuedNavigable<C>, RootTableGroupProducer, TableGroupJoinProducer,
 		TableReferenceContributor, EmbeddedContainer<C>, Filterable, Fetchable<C> {
 
 	Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
@@ -573,7 +574,7 @@ public interface PersistentCollectionDescriptor<O,C,E>
 	//
 	//		todo (6.0) : rethink all of these...
 
-	EntityDescriptor findEntityOwnerDescriptor();
+	EntityTypeDescriptor findEntityOwnerDescriptor();
 
 	/**
 	 * @return the name of the property this collection is mapped by

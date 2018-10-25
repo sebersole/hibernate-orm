@@ -34,6 +34,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
+import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.procedure.ParameterMisuseException;
@@ -100,6 +101,16 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	}
 
 	@Override
+	public SimpleTypeDescriptor<?> getValueGraphType() {
+		return getEmbeddedDescriptor();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<?> getKeyGraphType() {
+		return null;
+	}
+
+	@Override
 	public EmbeddedTypeDescriptor<J> getEmbeddedDescriptor() {
 		return embeddedDescriptor;
 	}
@@ -107,6 +118,11 @@ public class SingularPersistentAttributeEmbedded<O,J>
 	@Override
 	public EmbeddableJavaDescriptor<J> getJavaTypeDescriptor() {
 		return (EmbeddableJavaDescriptor<J>) super.getJavaTypeDescriptor();
+	}
+
+	@Override
+	public SimpleTypeDescriptor<J> getType() {
+		return getEmbeddedDescriptor();
 	}
 
 	@Override

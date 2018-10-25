@@ -25,7 +25,7 @@ import org.hibernate.engine.spi.SelfDirtinessTracker;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.NonIdPersistentAttribute;
 import org.hibernate.pretty.MessageHelper;
 
@@ -41,7 +41,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 	protected final Object id;
 	protected Object[] loadedState;
 	protected Object version;
-	protected final EntityDescriptor descriptor; // permanent but we only need the entityName state in a non transient way
+	protected final EntityTypeDescriptor descriptor; // permanent but we only need the entityName state in a non transient way
 	protected transient EntityKey cachedEntityKey; // cached EntityKey (lazy-initialized)
 	protected final transient Object rowId;
 	protected final transient PersistenceContext persistenceContext;
@@ -82,7 +82,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 			final Object version,
 			final LockMode lockMode,
 			final boolean existsInDatabase,
-			final EntityDescriptor entityDescriptor,
+			final EntityTypeDescriptor entityDescriptor,
 			final boolean disableVersionIncrement,
 			final PersistenceContext persistenceContext) {
 		setCompressedValue( EnumState.STATUS, status );
@@ -213,7 +213,7 @@ public abstract class AbstractEntityEntry implements Serializable, EntityEntry {
 	}
 
 	@Override
-	public EntityDescriptor getPersister() {
+	public EntityTypeDescriptor getPersister() {
 		return descriptor;
 	}
 

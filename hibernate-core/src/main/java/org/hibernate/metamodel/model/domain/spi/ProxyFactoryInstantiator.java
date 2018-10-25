@@ -14,6 +14,6 @@ import org.hibernate.proxy.ProxyFactory;
  */
 public interface ProxyFactoryInstantiator<J> {
 	ProxyFactory instantiate(
-			AbstractEntityDescriptor<J> runtimeDescriptor,
+			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext);
 }

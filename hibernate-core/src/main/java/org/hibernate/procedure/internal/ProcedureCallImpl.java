@@ -39,7 +39,7 @@ import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.procedure.NoSuchParameterException;
 import org.hibernate.procedure.ParameterMisuseException;
 import org.hibernate.procedure.ParameterStrategyException;
@@ -51,6 +51,7 @@ import org.hibernate.procedure.spi.ProcedureCallImplementor;
 import org.hibernate.procedure.spi.ProcedureParamBindings;
 import org.hibernate.procedure.spi.ProcedureParameterImplementor;
 import org.hibernate.procedure.spi.ProcedureParameterMetadata;
+import org.hibernate.query.Query;
 import org.hibernate.query.QueryParameter;
 import org.hibernate.query.internal.AbstractQuery;
 import org.hibernate.query.internal.QueryOptionsImpl;
@@ -410,6 +411,12 @@ public class ProcedureCallImpl<R>
 		return getProcedureName() + "(...)";
 	}
 
+	@Override
+	public Query<R> applyGraph(RootGraph<?> graph, GraphSemantic semantic) {
+		queryOptions.applyGraph( (RootGraphImplementor<?>) graph, semantic );
+		return this;
+	}
+
 	/**
 	 * Use this form instead of {@link #getSynchronizedQuerySpaces()} when you want to make sure the
 	 * underlying Set is instantiated (aka, on add)
@@ -445,7 +452,7 @@ public class ProcedureCallImpl<R>
 	}
 
 	@SuppressWarnings("WeakerAccess")
-	protected void addSynchronizedQuerySpaces(EntityDescriptor<?> descriptor) {
+	protected void addSynchronizedQuerySpaces(EntityTypeDescriptor<?> descriptor) {
 		synchronizedQuerySpaces().addAll( descriptor.getAffectedTableNames() );
 	}
 
@@ -678,7 +685,7 @@ public class ProcedureCallImpl<R>
 	}
 
 	@Override
-	protected void applyEntityGraphQueryHint(String hintName, EntityGraphImplementor entityGraph) {
+	protected void applyEntityGraphQueryHint(String hintName, RootGraphImplementor entityGraph) {
 		throw new IllegalStateException( "EntityGraph hints are not supported for ProcedureCall/StoredProcedureQuery" );
 	}
 

@@ -12,7 +12,7 @@ import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.event.spi.SaveOrUpdateEvent;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * An event handler for update() events
@@ -44,7 +44,7 @@ public class DefaultUpdateEventListener extends DefaultSaveOrUpdateEventListener
 	 */
 	protected Object getUpdateId(
 			Object entity,
-			EntityDescriptor descriptor,
+			EntityTypeDescriptor descriptor,
 			Object requestedId,
 			SessionImplementor session) throws HibernateException {
 		if ( requestedId == null ) {

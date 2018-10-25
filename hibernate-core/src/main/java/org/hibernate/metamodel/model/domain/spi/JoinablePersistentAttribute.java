@@ -13,7 +13,7 @@ import org.hibernate.sql.ast.produce.metamodel.spi.Joinable;
  *
  * @author Steve Ebersole
  */
-public interface JoinablePersistentAttribute<O,T> extends PersistentAttribute<O,T>, Joinable<T> {
+public interface JoinablePersistentAttribute<O,T> extends PersistentAttributeDescriptor<O,T>, Joinable<T> {
 //	// todo : possibly a JoinMetadata contract encapsulating:
 //	//		1) "join direction" (ala ForeignKeyDirection
 //	//		2) JoinColumnMappings (relative to direction)

@@ -81,6 +81,7 @@ import org.hibernate.envers.internal.reader.AuditReaderImpl;
 import org.hibernate.event.service.spi.EventListenerGroup;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
+import org.hibernate.graph.RootGraph;
 import org.hibernate.id.IdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.id.factory.spi.MutableIdentifierGeneratorFactory;
@@ -94,7 +95,7 @@ import org.hibernate.jpa.internal.ManagedFlushCheckerLegacyJpaImpl;
 import org.hibernate.jpa.internal.PersistenceUnitUtilImpl;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.procedure.spi.ProcedureCallImplementor;
 import org.hibernate.proxy.EntityNotFoundDelegate;
@@ -318,7 +319,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 				final FetchProfile fetchProfile = new FetchProfile( mappingProfile.getName() );
 				for ( org.hibernate.mapping.FetchProfile.Fetch mappingFetch : mappingProfile.getFetches() ) {
 					// resolve the persister owning the fetch
-					final EntityDescriptor owner = metamodel.findEntityDescriptor( mappingFetch.getEntity() );
+					final EntityTypeDescriptor owner = metamodel.findEntityDescriptor( mappingFetch.getEntity() );
 					if ( owner == null ) {
 						throw new HibernateException(
 								"Unable to resolve entity reference [" + mappingFetch.getEntity()
@@ -553,8 +554,9 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> List<EntityGraph<? super T>> findEntityGraphsByType(Class<T> entityClass) {
-		return getMetamodel().findEntityGraphForType( entityClass );
+		return (List) getMetamodel().findRootGraphsForType( entityClass );
 	}
 
 	// todo : (5.2) review synchronizationType, persistenceContextType, transactionType usage
@@ -645,7 +647,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public EntityGraph findEntityGraphByName(String name) {
-		return getMetamodel().findEntityGraphByName( name );
+		return getMetamodel().findRootGraph( name );
 	}
 	@Override
 	public SessionFactoryOptions getSessionFactoryOptions() {
@@ -837,7 +839,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 	@Override
 	public <T> void addNamedEntityGraph(String graphName, EntityGraph<T> entityGraph) {
-		getMetamodel().addNamedEntityGraph( graphName, entityGraph );
+		getMetamodel().addNamedRootGraph( graphName, (RootGraph<T>) entityGraph );
 	}
 
 	public boolean isClosed() {

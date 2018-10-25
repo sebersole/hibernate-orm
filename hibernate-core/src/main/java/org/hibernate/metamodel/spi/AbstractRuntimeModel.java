@@ -13,17 +13,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import javax.persistence.EntityGraph;
 
 import org.hibernate.EntityNameResolver;
-import org.hibernate.graph.spi.EntityGraphImplementor;
+import org.hibernate.graph.RootGraph;
+import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.metamodel.NotNavigableException;
 import org.hibernate.metamodel.RuntimeModel;
 import org.hibernate.metamodel.model.creation.spi.InFlightRuntimeModel;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
@@ -32,7 +32,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
  */
 public abstract class AbstractRuntimeModel implements RuntimeModel {
 	private final Set<EntityHierarchy> entityHierarchySet;
-	private final Map<String,EntityDescriptor<?>> entityDescriptorMap;
+	private final Map<String, EntityTypeDescriptor<?>> entityDescriptorMap;
 	private final Map<String,MappedSuperclassDescriptor<?>> mappedSuperclassDescriptorMap;
 	private final Map<String,EmbeddedTypeDescriptor<?>> embeddedDescriptorMap;
 	private final Map<String,PersistentCollectionDescriptor<?,?,?>> collectionDescriptorMap;
@@ -62,13 +62,13 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 				inFlightModel.getCollectionDescriptorMap(),
 				inFlightModel.getEntityNameResolvers(),
 				inFlightModel.getNameImportMap(),
-				inFlightModel.getEntityGraphMap()
+				inFlightModel.getRootGraphMap()
 		);
 	}
 
 	private AbstractRuntimeModel(
 			Set<EntityHierarchy> entityHierarchySet,
-			Map<String, EntityDescriptor<?>> entityDescriptorMap,
+			Map<String, EntityTypeDescriptor<?>> entityDescriptorMap,
 			Map<String, MappedSuperclassDescriptor<?>> mappedSuperclassDescriptorMap,
 			Map<String, EmbeddedTypeDescriptor<?>> embeddedDescriptorMap,
 			Map<String, PersistentCollectionDescriptor<?, ?, ?>> collectionDescriptorMap,
@@ -106,24 +106,24 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// EntityDescriptor
 
-	protected Map<String, EntityDescriptor<?>> getEntityDescriptorMap() {
+	protected Map<String, EntityTypeDescriptor<?>> getEntityDescriptorMap() {
 		return entityDescriptorMap;
 	}
 
 	@Override
-	public <T> EntityDescriptor<T> getEntityDescriptor(Class<T> javaType) {
+	public <T> EntityTypeDescriptor<T> getEntityDescriptor(Class<T> javaType) {
 		return getEntityDescriptor( javaType.getName() );
 	}
 
 	@Override
-	public <T> EntityDescriptor<T> getEntityDescriptor(NavigableRole name) {
+	public <T> EntityTypeDescriptor<T> getEntityDescriptor(NavigableRole name) {
 		return getEntityDescriptor( name.getFullPath() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityDescriptor<T> getEntityDescriptor(String entityName) throws NotNavigableException {
-		final EntityDescriptor<T> descriptor = (EntityDescriptor<T>) entityDescriptorMap.get( entityName );
+	public <T> EntityTypeDescriptor<T> getEntityDescriptor(String entityName) throws NotNavigableException {
+		final EntityTypeDescriptor<T> descriptor = (EntityTypeDescriptor<T>) entityDescriptorMap.get( entityName );
 
 		if ( descriptor == null ) {
 			throw new NotNavigableException( entityName );
@@ -134,19 +134,19 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityDescriptor<T> findEntityDescriptor(Class<T> javaType) {
-		return (EntityDescriptor<T>) entityDescriptorMap.get( javaType.getName() );
+	public <T> EntityTypeDescriptor<T> findEntityDescriptor(Class<T> javaType) {
+		return (EntityTypeDescriptor<T>) entityDescriptorMap.get( javaType.getName() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> EntityDescriptor<T> findEntityDescriptor(String entityName) {
+	public <T> EntityTypeDescriptor<T> findEntityDescriptor(String entityName) {
 		entityName = getImportedName( entityName );
-		return (EntityDescriptor<T>) entityDescriptorMap.get( entityName );
+		return (EntityTypeDescriptor<T>) entityDescriptorMap.get( entityName );
 	}
 
 	@Override
-	public void visitEntityDescriptors(Consumer<EntityDescriptor<?>> action) {
+	public void visitEntityDescriptors(Consumer<EntityTypeDescriptor<?>> action) {
 		entityDescriptorMap.values().forEach( action );
 	}
 
@@ -284,18 +284,19 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphForType(Class<T> baseType) {
-		return findEntityGraphForType( baseType.getName() );
+	public <T> List<RootGraph<? super T>> findRootGraphsForType(Class<T> baseType) {
+		return findRootGraphsForType( baseType.getName() );
 	}
 
 	@Override
-	public <T> List<EntityGraph<? super T>> findEntityGraphForType(String baseTypeName) {
-		final EntityDescriptor<? extends T> entityDescriptor = findEntityDescriptor( baseTypeName );
+	@SuppressWarnings("unchecked")
+	public <T> List<RootGraph<? super T>> findRootGraphsForType(String baseTypeName) {
+		final EntityTypeDescriptor<? extends T> entityDescriptor = findEntityDescriptor( baseTypeName );
 		if ( entityDescriptor == null ) {
 			throw new IllegalArgumentException( "Not an entity : " + baseTypeName );
 		}
 
-		final List<EntityGraph<? super T>> results = new ArrayList<>();
+		final List<RootGraph<? super T>> results = new ArrayList<>();
 
 		for ( RootGraphImplementor rootGraph : entityGraphMap.values() ) {
 			if ( rootGraph.appliesTo( entityDescriptor ) ) {
@@ -307,7 +308,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	}
 
 	@Override
-	public void visitEntityGraphs(Consumer<EntityGraph<?>> action) {
+	public void visitRootGraphs(Consumer<RootGraph<?>> action) {
 		entityGraphMap.values().forEach( action );
 	}
 

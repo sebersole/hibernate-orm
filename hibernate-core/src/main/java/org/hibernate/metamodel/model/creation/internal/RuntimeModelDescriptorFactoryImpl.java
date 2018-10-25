@@ -21,7 +21,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorClassRes
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelDescriptorFactory;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedContainer;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
@@ -47,7 +47,7 @@ public final class RuntimeModelDescriptorFactoryImpl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <J> EntityDescriptor<J> createEntityDescriptor(
+	public <J> EntityTypeDescriptor<J> createEntityDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
@@ -59,12 +59,12 @@ public final class RuntimeModelDescriptorFactoryImpl
 	}
 
 	@SuppressWarnings("unchecked")
-	private EntityDescriptor instantiateEntityDescriptor(
+	private EntityTypeDescriptor instantiateEntityDescriptor(
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		// If the metadata for the entity specified an explicit persister class, use it...
-		Class<? extends EntityDescriptor> entityDescriptorClass = bootMapping.getRuntimeEntityDescriptorClass();
+		Class<? extends EntityTypeDescriptor> entityDescriptorClass = bootMapping.getRuntimeEntityDescriptorClass();
 		if ( entityDescriptorClass == null ) {
 			// Otherwise, use the persister class indicated by the PersisterClassResolver service
 			entityDescriptorClass = descriptorClassResolver.getEntityDescriptorClass( bootMapping );
@@ -79,14 +79,14 @@ public final class RuntimeModelDescriptorFactoryImpl
 	}
 
 	@SuppressWarnings( {"unchecked"})
-	private EntityDescriptor instantiateEntityDescriptor(
-			Class<? extends EntityDescriptor> persisterClass,
+	private EntityTypeDescriptor instantiateEntityDescriptor(
+			Class<? extends EntityTypeDescriptor> persisterClass,
 			EntityMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 
 		try {
-			final Constructor<? extends EntityDescriptor> constructor = persisterClass.getConstructor( EntityDescriptor.STANDARD_CONSTRUCTOR_SIG );
+			final Constructor<? extends EntityTypeDescriptor> constructor = persisterClass.getConstructor( EntityTypeDescriptor.STANDARD_CONSTRUCTOR_SIG );
 			try {
 				return constructor.newInstance(
 						bootMapping,
@@ -303,10 +303,10 @@ public final class RuntimeModelDescriptorFactoryImpl
 	// Deprecations
 
 	/**
-	 * @deprecated Use {@link EntityDescriptor#STANDARD_CONSTRUCTOR_SIG} instead.
+	 * @deprecated Use {@link EntityTypeDescriptor#STANDARD_CONSTRUCTOR_SIG} instead.
 	 */
 	@Deprecated
-	public static final Class[] ENTITY_PERSISTER_CONSTRUCTOR_ARGS = EntityDescriptor.STANDARD_CONSTRUCTOR_SIG;
+	public static final Class[] ENTITY_PERSISTER_CONSTRUCTOR_ARGS = EntityTypeDescriptor.STANDARD_CONSTRUCTOR_SIG;
 
 	/**
 	 * @deprecated Use {@link PersistentCollectionDescriptor#CONSTRUCTOR_SIGNATURE} instead

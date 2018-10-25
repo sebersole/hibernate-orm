@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.Status;
 import org.hibernate.event.spi.AbstractEvent;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.internal.CoreLogging;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.type.internal.TypeHelper;
@@ -47,7 +47,7 @@ public abstract class AbstractReassociateEventListener implements Serializable {
 			AbstractEvent event,
 			Object object,
 			Object id,
-			EntityDescriptor entityDescriptor) {
+			EntityTypeDescriptor entityDescriptor) {
 
 		if ( log.isTraceEnabled() ) {
 			log.tracev(

@@ -7,7 +7,7 @@
 package org.hibernate.sql.ast.produce.metamodel.internal;
 
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
 public class SelectByEntityIdentifierBuilder extends AbstractMetamodelSelectBuilder{
 	public SelectByEntityIdentifierBuilder(
 			SessionFactoryImplementor sessionFactory,
-			EntityDescriptor entityDescriptor) {
+			EntityTypeDescriptor entityDescriptor) {
 		super( sessionFactory, entityDescriptor, entityDescriptor.getHierarchy().getIdentifierDescriptor() );
 	}
 }

@@ -14,8 +14,8 @@ import org.hibernate.TransientObjectException;
 import org.hibernate.engine.internal.ForeignKeys;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.CoreMessageLogger;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
-import org.hibernate.metamodel.model.domain.spi.PersistentAttribute;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
@@ -84,7 +84,7 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		// needs to be a Session for the #save and #contains calls below...
 		final Session session = ( Session ) sessionImplementor;
 
-		final EntityDescriptor descriptor = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
+		final EntityTypeDescriptor descriptor = sessionImplementor.getFactory().getMetamodel().findEntityDescriptor( entityName );
 		Object associatedObject = descriptor.getPropertyValue( object, propertyName );
 		if ( associatedObject == null ) {
 			throw new IdentifierGenerationException(
@@ -120,9 +120,9 @@ public class ForeignGenerator implements IdentifierGenerator, Configurable {
 		return id;
 	}
 
-	private String retrieveEntityName(EntityDescriptor descriptor) {
+	private String retrieveEntityName(EntityTypeDescriptor descriptor) {
 		String entityName;
-		final PersistentAttribute attribute = descriptor.findPersistentAttribute( propertyName );
+		final PersistentAttributeDescriptor attribute = descriptor.findPersistentAttribute( propertyName );
 		if ( attribute.getPersistenceType() == javax.persistence.metamodel.Type.PersistenceType.ENTITY ) {
 			// the normal case
 			entityName = attribute.getContainer().getNavigableName();

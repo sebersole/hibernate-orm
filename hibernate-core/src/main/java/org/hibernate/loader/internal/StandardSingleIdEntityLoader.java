@@ -18,7 +18,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers.InternalFetchProfileType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.spi.SingleIdEntityLoader;
-import org.hibernate.metamodel.model.domain.spi.EntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.query.NavigablePath;
@@ -69,7 +69,7 @@ import org.hibernate.sql.results.spi.SqlSelection;
  * @author Steve Ebersole
  */
 public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> {
-	private final EntityDescriptor<T> entityDescriptor;
+	private final EntityTypeDescriptor<T> entityDescriptor;
 
 	private final SqlAstSelectDescriptor databaseSnapshotSelectAst;
 	private LoadIdParameter idParameter;
@@ -77,7 +77,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 	private EnumMap<LockMode,JdbcSelect> selectByLockMode = new EnumMap<>( LockMode.class );
 	private EnumMap<InternalFetchProfileType,JdbcSelect> selectByInternalCascadeProfile;
 
-	public StandardSingleIdEntityLoader(EntityDescriptor<T> entityDescriptor) {
+	public StandardSingleIdEntityLoader(EntityTypeDescriptor<T> entityDescriptor) {
 		this.entityDescriptor = entityDescriptor;
 
 		this.databaseSnapshotSelectAst = generateDatabaseSnapshotSelect( entityDescriptor );
@@ -91,7 +91,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 	}
 
 	@Override
-	public EntityDescriptor<T> getLoadedNavigable() {
+	public EntityTypeDescriptor<T> getLoadedNavigable() {
 		return entityDescriptor;
 	}
 
@@ -346,7 +346,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 		};
 	}
 
-	private SqlAstSelectDescriptor generateDatabaseSnapshotSelect(EntityDescriptor<?> entityDescriptor) {
+	private SqlAstSelectDescriptor generateDatabaseSnapshotSelect(EntityTypeDescriptor<?> entityDescriptor) {
 		final QuerySpec rootQuerySpec = new QuerySpec( true );
 		final SelectStatement selectStatement = new SelectStatement( rootQuerySpec );
 		final SelectClause selectClause = selectStatement.getQuerySpec().getSelectClause();
@@ -370,7 +370,7 @@ public class StandardSingleIdEntityLoader<T> implements SingleIdEntityLoader<T> 
 					}
 
 					@Override
-					public EntityDescriptor getIntrinsicSubclassEntityMetadata() {
+					public EntityTypeDescriptor getIntrinsicSubclassEntityMetadata() {
 						return entityDescriptor;
 					}
 

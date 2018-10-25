@@ -18,7 +18,7 @@ import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.domain.spi.AbstractEntityDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractEntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
@@ -41,7 +41,7 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 
 	@Override
 	public ProxyFactory instantiate(
-			AbstractEntityDescriptor<J> runtimeDescriptor,
+			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		final EntityIdentifier identifierDescriptor = runtimeDescriptor.getHierarchy().getIdentifierDescriptor();
 
@@ -61,7 +61,7 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 
 		Collection<InheritanceCapable<? extends J>> subclassTypes = runtimeDescriptor.getSubclassTypes();
 		subclassTypes.forEach( inheritanceCapable -> {
-			if ( AbstractEntityDescriptor.class.isInstance( inheritanceCapable ) ) {
+			if ( AbstractEntityTypeDescriptor.class.isInstance( inheritanceCapable ) ) {
 				addProxyInterfaces( runtimeDescriptor, proxyInterfaces );
 			}
 		} );
@@ -126,7 +126,7 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 				.buildProxyFactory( sessionFactory );
 	}
 
-	private void addProxyInterfaces(AbstractEntityDescriptor runtimeDescriptor, Set<Class> proxyInterfaces){
+	private void addProxyInterfaces(AbstractEntityTypeDescriptor runtimeDescriptor, Set<Class> proxyInterfaces){
 		final Class javaClass = runtimeDescriptor.getJavaTypeDescriptor().getJavaType();
 		final Class proxyInterface = runtimeDescriptor.getProxyInterface();
 		if ( proxyInterface != null && !javaClass.equals( proxyInterface ) ) {
