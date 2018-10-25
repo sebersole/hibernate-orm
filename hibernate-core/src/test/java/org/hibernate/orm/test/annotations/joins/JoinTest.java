@@ -19,6 +19,7 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.query.Query;
 import org.hibernate.query.spi.QueryImplementor;
 
+import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -186,13 +187,10 @@ public class JoinTest extends SessionFactoryBasedFunctionalTest {
 	public void testReferenceColumnWithBacktics() {
 		sessionFactoryScope().inTransaction(
 				session -> {
-					SysGroupsOrm g = new SysGroupsOrm();
 					SysUserOrm u = new SysUserOrm();
-					u.setGroups( new ArrayList<>() );
-					u.getGroups().add( g );
-					session.save( g );
 					session.save( u );
-				} );
+				}
+		);
 	}
 
 	@Test

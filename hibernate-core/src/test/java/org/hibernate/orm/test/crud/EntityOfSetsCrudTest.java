@@ -6,9 +6,7 @@
  */
 package org.hibernate.orm.test.crud;
 
-import java.sql.PreparedStatement;
 import java.util.Collection;
-import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.hibernate.boot.MetadataSources;
@@ -23,6 +21,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Steve Ebersole
  */
+@SuppressWarnings("WeakerAccess")
 public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 	@Override
 	protected void applyMetadataSources(MetadataSources metadataSources) {
@@ -35,9 +34,8 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		return true;
 	}
 
-
 	@Test
-	@FailureExpected( "EXTRA_LAZY handling not yet implemented" )
+	@FailureExpected( "subsequent-select fetching of collections not yet implemented" )
 	public void testOperations() {
 		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
 
@@ -67,23 +65,25 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 					assert value == 1;
 				}
 		);
-		sessionFactoryScope().inSession(
-				session -> {
-					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
-					assert loaded != null;
-					checkExpectedSize( loaded.getSetOfBasics(), 2 );
-				}
-		);
-		sessionFactoryScope().inSession(
-				session -> {
-					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
-							.multiLoad( 1, 2 );
-					assert list.size() == 1;
-					final EntityOfSets loaded = list.get( 0 );
-					assert loaded != null;
-					checkExpectedSize( loaded.getSetOfBasics(), 2 );
-				}
-		);
+
+//		sessionFactoryScope().inSession(
+//				session -> {
+//					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
+//					assert loaded != null;
+//					checkExpectedSize( loaded.getSetOfBasics(), 2 );
+//				}
+//		);
+
+//		sessionFactoryScope().inSession(
+//				session -> {
+//					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
+//							.multiLoad( 1, 2 );
+//					assert list.size() == 1;
+//					final EntityOfSets loaded = list.get( 0 );
+//					assert loaded != null;
+//					checkExpectedSize( loaded.getSetOfBasics(), 2 );
+//				}
+//		);
 	}
 
 	private void checkExpectedSize(Collection collection, int expectedSize) {
@@ -129,26 +129,6 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
 
-//		sessionFactoryScope().inTransaction(
-//				session -> session.doWork(
-//						connection -> {
-//							final PreparedStatement statement = connection.prepareStatement(
-//									"insert into EntityOfSets_setOfBasics (EntityOfSets_id, setOfBasics) values (?,?)"
-//							);
-//							statement.setInt( 1, 1 );
-//							statement.setString( 2, "first string" );
-//							statement.addBatch();
-//							statement.setInt( 1, 1 );
-//							statement.setString( 2, "second string" );
-//							statement.addBatch();
-//							statement.executeBatch();
-//						}
-//				)
-//		);
-//
-//		sessionFactoryScope().inTransaction( session -> session.save( entity ) );
-		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 		sessionFactoryScope().inTransaction(
 				session -> {
 					final Integer value = session.createQuery( "select e.id from EntityOfSets e", Integer.class ).uniqueResult();
@@ -189,6 +169,7 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 		sessionFactoryScope().inSession(
 				session -> {
+					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e inner join fetch e.setOfComponents", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfComponents(), 1 );
@@ -197,11 +178,13 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 //		sessionFactoryScope().inTransaction(
 //				session -> {
+//					session.setDefaultReadOnly( true );
 //					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
 //					assert loaded != null;
 //					checkExpectedSize( loaded.getSetOfBasics(), 2 );
 //				}
 //		);
+
 //		sessionFactoryScope().inTransaction(
 //				session -> {
 //					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
