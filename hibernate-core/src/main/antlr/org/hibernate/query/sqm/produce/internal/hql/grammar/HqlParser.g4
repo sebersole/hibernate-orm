@@ -269,12 +269,12 @@ jpaCollectionJoin
 
 qualifiedJoin
 //	: ( INNER | ((LEFT|RIGHT|FULL)? OUTER) )? JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
-	: (joinTypeQualifier)? JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
+	: joinTypeQualifier JOIN FETCH? qualifiedJoinRhs (qualifiedJoinPredicate)?
 	;
 
 joinTypeQualifier
-	: INNER
-	| ( (LEFT|RIGHT|FULL)? OUTER? )
+	: INNER?
+	| (LEFT|RIGHT|FULL)? OUTER?
 	;
 
 qualifiedJoinRhs
