@@ -50,14 +50,11 @@ public class SessionFactoryServiceRegistryImpl
 
 		for ( SessionFactoryServiceInitiator initiator : initiators ) {
 			createServiceBinding( initiator );
-			initiateService( initiator );
 		}
 
 		for ( ProvidedService providedService : providedServices ) {
 			createServiceBinding( providedService );
 		}
-
-		bootstrapContext = null;
 	}
 
 	@Override
