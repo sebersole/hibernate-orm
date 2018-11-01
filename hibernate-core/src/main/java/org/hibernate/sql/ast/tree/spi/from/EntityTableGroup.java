@@ -27,6 +27,8 @@ import org.hibernate.sql.results.spi.Selectable;
  * @author Steve Ebersole
  */
 public class EntityTableGroup extends AbstractTableGroup implements Selectable {
+	// todo (6.0) : move to org.hibernate.metamodel.model.domain.internal.entity
+
 	private final TableReference primaryTableReference;
 	private final List<TableReferenceJoin> tableReferenceJoins;
 

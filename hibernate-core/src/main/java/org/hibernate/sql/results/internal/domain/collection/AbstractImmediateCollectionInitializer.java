@@ -16,7 +16,7 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
+import org.hibernate.internal.log.LoggingHelper;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
@@ -123,32 +123,53 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 			if ( existing != null ) {
 				collectionInstance = existing;
 
-				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
-					CollectionLoadingLogger.INSTANCE.debugf(
-							"(%s) Found existing collection instance [%s] in Session; skipping processing - [%s]",
-							StringHelper.collapse( this.getClass().getName() ),
-							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-							LoggingHelper.toLoggableString( collectionInstance )
-					);
-				}
+				// we found the corresponding collection instance on the Session.  If
+				// it is already initialized we have nothing to do
 
-				// EARLY EXIT!!!
-				return;
+				if ( collectionInstance.wasInitialized() ) {
+					if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+						CollectionLoadingLogger.INSTANCE.debugf(
+								"(%s) Found existing collection instance [%s] in Session; skipping processing - [%s]",
+								StringHelper.collapse( this.getClass().getName() ),
+								LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+								LoggingHelper.toLoggableString( collectionInstance )
+						);
+					}
+
+					// EARLY EXIT!!!
+					return;
+				}
+				else {
+					assert isSelected();
+					takeResponsibility( rowProcessingState, collectionKey );
+				}
 			}
+			else {
+				final PersistentCollection existingUnowned = persistenceContext.useUnownedCollection( collectionKey );
+				if ( existingUnowned != null ) {
+					collectionInstance = existingUnowned;
 
-			collectionInstance = persistenceContext.useUnownedCollection( collectionKey );
-			if ( collectionInstance != null ) {
-				if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
-					CollectionLoadingLogger.INSTANCE.debugf(
-							"(%s) Found existing unowned collection instance [%s] in Session; skipping processing - [%s]",
-							StringHelper.collapse( this.getClass().getName() ),
-							LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
-							LoggingHelper.toLoggableString( collectionInstance )
-					);
+					// we found the corresponding collection instance as unowned on the Session.  If
+					// it is already initialized we have nothing to do
+
+					if ( collectionInstance.wasInitialized() ) {
+						if ( CollectionLoadingLogger.DEBUG_ENABLED ) {
+							CollectionLoadingLogger.INSTANCE.debugf(
+									"(%s) Found existing unowned collection instance [%s] in Session; skipping processing - [%s]",
+									StringHelper.collapse( this.getClass().getName() ),
+									LoggingHelper.toLoggableString( getNavigablePath(), collectionKey.getKey() ),
+									LoggingHelper.toLoggableString( collectionInstance )
+							);
+						}
+
+						// EARLY EXIT!!!
+						return;
+					}
+					else {
+						assert isSelected();
+						takeResponsibility( rowProcessingState, collectionKey );
+					}
 				}
-
-				// EARLY EXIT!!!
-				return;
 			}
 
 			if ( ! isSelected() ) {
@@ -186,16 +207,7 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 
 			persistenceContext.addUninitializedCollection( getCollectionDescriptor(), collectionInstance, collectionKey.getKey() );
 
-			rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingCollection(
-					collectionKey,
-					new LoadingCollectionEntry(
-							getCollectionDescriptor(),
-							this,
-							collectionKey.getKey(),
-							collectionInstance
-					)
-			);
-			responsible = true;
+			takeResponsibility( rowProcessingState, collectionKey );
 		}
 
 		if ( responsible ) {
@@ -208,14 +220,29 @@ public abstract class AbstractImmediateCollectionInitializer extends AbstractCol
 				);
 			}
 
-			getParentAccess().registerResolutionListener(
-					owner -> collectionInstance.setOwner( owner )
-			);
+			if ( getParentAccess() != null ) {
+				getParentAccess().registerResolutionListener(
+						owner -> collectionInstance.setOwner( owner )
+				);
+			}
 
 			if ( getCollectionDescriptor().getSemantics().getCollectionClassification() == CollectionClassification.ARRAY ) {
 				persistenceContext.addCollectionHolder( collectionInstance );
 			}
 		}
+	}
+
+	protected void takeResponsibility(RowProcessingState rowProcessingState, CollectionKey collectionKey) {
+		rowProcessingState.getJdbcValuesSourceProcessingState().registerLoadingCollection(
+				collectionKey,
+				new LoadingCollectionEntry(
+						getCollectionDescriptor(),
+						this,
+						collectionKey.getKey(),
+						collectionInstance
+				)
+		);
+		responsible = true;
 	}
 
 	@Override

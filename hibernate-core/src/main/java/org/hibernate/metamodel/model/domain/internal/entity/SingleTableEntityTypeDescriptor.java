@@ -493,7 +493,7 @@ public class SingleTableEntityTypeDescriptor<T> extends AbstractEntityTypeDescri
 			Junction identifierJunction) {
 		final DeleteStatement deleteStatement = new DeleteStatement( tableReference, identifierJunction );
 
-		JdbcMutation delete = SqlDeleteToJdbcDeleteConverter.interpret(
+		final JdbcMutation delete = SqlDeleteToJdbcDeleteConverter.interpret(
 				new SqlAstDeleteDescriptor() {
 					@Override
 					public DeleteStatement getSqlAstStatement() {
@@ -509,6 +509,7 @@ public class SingleTableEntityTypeDescriptor<T> extends AbstractEntityTypeDescri
 				},
 				executionContext.getSession().getSessionFactory()
 		);
+
 		executeOperation( executionContext, delete , (rows, prepareStatement) -> {} );
 	}
 

@@ -24,16 +24,16 @@ import org.hibernate.sql.results.spi.Initializer;
  */
 public class SetInitializerProducer implements CollectionInitializerProducer {
 	private final PersistentCollectionDescriptor setDescriptor;
-	private final boolean isJoined;
+	private final boolean isSelected;
 	private final DomainResult elementResult;
 
 	public SetInitializerProducer(
 			PersistentCollectionDescriptor setDescriptor,
-			boolean isJoined,
+			boolean isSelected,
 			DomainResult elementResult) {
 		this.setDescriptor = setDescriptor;
 		this.elementResult = elementResult;
-		this.isJoined = isJoined;
+		this.isSelected = isSelected;
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 				setDescriptor,
 				parentAccess,
 				navigablePath,
-				isJoined,
+				isSelected,
 				lockMode,
 				keyContainerAssembler,
 				keyCollectionAssembler,

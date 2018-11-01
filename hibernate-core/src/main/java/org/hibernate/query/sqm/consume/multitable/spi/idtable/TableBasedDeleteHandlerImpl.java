@@ -22,6 +22,7 @@ import org.hibernate.query.sqm.consume.multitable.spi.HandlerExecutionContext;
 import org.hibernate.query.sqm.tree.SqmDeleteStatement;
 import org.hibernate.sql.ast.consume.spi.SqlAstSelectToJdbcSelectConverter;
 import org.hibernate.sql.ast.tree.spi.QuerySpec;
+import org.hibernate.sql.exec.spi.JdbcDelete;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
@@ -116,7 +117,7 @@ public class TableBasedDeleteHandlerImpl
 		final String deleteStatement = sqlBuffer.toString();
 
 		JdbcMutationExecutor.NO_AFTER_STATEMENT_CALL.execute(
-				new JdbcMutation() {
+				new JdbcDelete() {
 					@Override
 					public String getSql() {
 						return deleteStatement;

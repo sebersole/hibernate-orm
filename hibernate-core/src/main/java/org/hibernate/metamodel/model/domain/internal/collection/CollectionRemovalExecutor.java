@@ -6,15 +6,21 @@
  */
 package org.hibernate.metamodel.model.domain.internal.collection;
 
-import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
+ * Delegate for removing a collection by key.
+ *
  * @author Steve Ebersole
  */
-public class NoOpCreationExecutor implements CollectionCreationExecutor {
-	@Override
-	public void create(PersistentCollection collection, Object key, SharedSessionContractImplementor session) {
-		// no-op
-	}
+public interface CollectionRemovalExecutor {
+	/**
+	 * A no-op instance
+	 */
+	CollectionRemovalExecutor NO_OP = (key, session) -> {};
+
+	/**
+	 * Remove (delete) the collection indicated by key
+	 */
+	void remove(Object key, SharedSessionContractImplementor session);
 }

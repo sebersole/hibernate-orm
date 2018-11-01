@@ -34,6 +34,7 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference
  */
 public class CollectionTableGroup extends AbstractTableGroup {
 	// todo (6.0) : should implement Selectable as well
+	// todo (6.0) : move to org.hibernate.metamodel.model.domain.internal.collection
 
 	private final PersistentCollectionDescriptor descriptor;
 

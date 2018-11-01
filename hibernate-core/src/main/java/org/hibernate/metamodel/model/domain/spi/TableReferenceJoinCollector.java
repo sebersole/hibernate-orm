@@ -13,6 +13,6 @@ import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
  * @author Steve Ebersole
  */
 public interface TableReferenceJoinCollector {
-	void addRoot(TableReference root);
-	void collectTableReferenceJoin(TableReferenceJoin tableReferenceJoin);
+	void addPrimaryReference(TableReference root);
+	void addSecondaryReference(TableReferenceJoin tableReferenceJoin);
 }

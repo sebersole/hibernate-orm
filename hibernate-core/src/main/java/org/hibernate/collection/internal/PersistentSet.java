@@ -460,6 +460,7 @@ public class PersistentSet<E> extends AbstractPersistentCollection<E> implements
 		return set==collection;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void load(E element) {
 		assert isInitializing();
 		tempList.add( element );

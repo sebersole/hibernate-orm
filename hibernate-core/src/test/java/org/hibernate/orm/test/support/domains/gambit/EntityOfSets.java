@@ -8,8 +8,10 @@ package org.hibernate.orm.test.support.domains.gambit;
 
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
@@ -50,7 +52,9 @@ public class EntityOfSets {
 		this.id = id;
 	}
 
-	@ElementCollection
+	@ElementCollection()
+//	@ElementCollection( fetch = FetchType.EAGER )
+	@CollectionTable( name = "EntityOfSet_basics")
 	public Set<String> getSetOfBasics() {
 		return setOfBasics;
 	}
@@ -60,6 +64,7 @@ public class EntityOfSets {
 	}
 
 	@ElementCollection
+	@CollectionTable( name = "EntityOfSet_components")
 	public Set<Component> getSetOfComponents() {
 		return setOfComponents;
 	}
@@ -70,6 +75,7 @@ public class EntityOfSets {
 
 	@ElementCollection
 	@LazyCollection( LazyCollectionOption.EXTRA )
+	@CollectionTable( name = "EntityOfSet_extraLazyComponents")
 	public Set<Component> getSetOfExtraLazyComponents() {
 		return setOfExtraLazyComponents;
 	}
@@ -79,6 +85,7 @@ public class EntityOfSets {
 	}
 
 	@OneToMany
+	@CollectionTable( name = "EntityOfSet_oneToMany")
 	public Set<EntityOfSets> getSetOfOneToMany() {
 		return setOfOneToMany;
 	}
@@ -88,6 +95,7 @@ public class EntityOfSets {
 	}
 
 	@ManyToMany
+	@CollectionTable( name = "EntityOfSet_manyToMany")
 	public Set<EntityOfSets> getSetOfManyToMany() {
 		return setOfManyToMany;
 	}

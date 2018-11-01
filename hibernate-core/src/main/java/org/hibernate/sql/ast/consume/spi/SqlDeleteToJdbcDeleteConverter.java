@@ -13,6 +13,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.model.relational.spi.PhysicalTable;
 import org.hibernate.sql.ast.produce.spi.SqlAstDeleteDescriptor;
 import org.hibernate.sql.ast.tree.spi.DeleteStatement;
+import org.hibernate.sql.exec.spi.JdbcDelete;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 
@@ -24,13 +25,19 @@ public class SqlDeleteToJdbcDeleteConverter
 		implements SqlMutationToJdbcMutationConverter {
 
 	public static JdbcMutation interpret(
-			SqlAstDeleteDescriptor sqlAst,
+			SqlAstDeleteDescriptor sqlAstDescriptor,
+			SessionFactoryImplementor sessionFactory) {
+		return interpret( sqlAstDescriptor.getSqlAstStatement(), sessionFactory );
+	}
+
+	public static JdbcDelete interpret(
+			DeleteStatement sqlAst,
 			SessionFactoryImplementor sessionFactory) {
 		final SqlDeleteToJdbcDeleteConverter walker = new SqlDeleteToJdbcDeleteConverter( sessionFactory );
 
-		walker.processDeleteStatement( sqlAst.getSqlAstStatement() );
+		walker.processDeleteStatement( sqlAst );
 
-		return new JdbcMutation() {
+		return new JdbcDelete() {
 			@Override
 			public String getSql() {
 				return walker.getSql();
