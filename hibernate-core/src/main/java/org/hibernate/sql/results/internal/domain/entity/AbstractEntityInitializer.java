@@ -48,7 +48,7 @@ import org.hibernate.sql.results.spi.LoadingEntityEntry;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.type.internal.TypeHelper;
 
-import static org.hibernate.sql.results.internal.domain.LoggingHelper.toLoggableString;
+import static org.hibernate.internal.log.LoggingHelper.toLoggableString;
 
 /**
  * @author Steve Ebersole

@@ -7,6 +7,7 @@
 package org.hibernate.orm.test.crud;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.hibernate.boot.MetadataSources;
@@ -14,8 +15,8 @@ import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
 import org.hibernate.orm.test.support.domains.gambit.Component;
 import org.hibernate.orm.test.support.domains.gambit.EntityOfSets;
 
-import org.hibernate.testing.junit5.FailureExpected;
 import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,11 +35,21 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 		return true;
 	}
 
-	@Test
-	@FailureExpected( "subsequent-select fetching of collections not yet implemented" )
-	public void testOperations() {
-		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
+	@BeforeEach
+	public void cleanUpTestData() {
+		sessionFactoryScope().inTransaction(
+				session -> {
+					// select-and-delete to cascade deletes
+					final List<EntityOfSets> results = session.createQuery( "select e from EntityOfSets e", EntityOfSets.class ).list();
+					for ( EntityOfSets result : results ) {
+						session.delete( result );
+					}
+				}
+		);
+	}
 
+	@Test
+	public void testOperations() {
 		final EntityOfSets entity = new EntityOfSets( 1 );
 
 		entity.getSetOfBasics().add( "first string" );
@@ -87,9 +98,12 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 	}
 
 	private void checkExpectedSize(Collection collection, int expectedSize) {
-		// todo (6.0) : loading collections not yet implemented
-		//		skip for now
+		if ( ! Hibernate.isInitialized( collection ) ) {
+			Hibernate.initialize( collection );
+		}
+
 		assert Hibernate.isInitialized( collection );
+
 		if ( collection.size() != expectedSize ) {
 			Assert.fail(
 					"Expecting Collection of size `" + expectedSize +
@@ -101,16 +115,9 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 
 	@Test
-//	@FailureExpected( "Problem flushing the Session with initialized collection(s).  Flush tries to remove them (luckily its remove support is not yet implemented)" )
 	public void testEagerOperations() {
-		sessionFactoryScope().inTransaction( session -> session.createQuery( "delete EntityOfSets" ).executeUpdate() );
-
 		final EntityOfSets entity = new EntityOfSets( 1 );
 
-
-		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// Cascading is not yet implemented, so for now manually create the
-		// collection rows
 		entity.getSetOfBasics().add( "first string" );
 		entity.getSetOfBasics().add( "second string" );
 
@@ -136,14 +143,8 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 				}
 		);
 
-		// the generated queries are fine, however:
-		// 		- for the inner join case, the collections are never created and so no result is returned
-		//		- for the outer join case, run into a problem with not all of PersistentCollectionDescriptor
-		//			used by PersistentCollection are done (specifically reading size)
-
 		sessionFactoryScope().inTransaction(
 				session -> {
-					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e left join fetch e.setOfBasics", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfBasics(), 2 );
@@ -160,40 +161,37 @@ public class EntityOfSetsCrudTest extends SessionFactoryBasedFunctionalTest {
 
 		sessionFactoryScope().inTransaction(
 				session -> {
-					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e left join fetch e.setOfComponents", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfComponents(), 1 );
 				}
 		);
 
-		sessionFactoryScope().inSession(
+		sessionFactoryScope().inTransaction(
 				session -> {
-					session.setDefaultReadOnly( true );
 					final EntityOfSets loaded = session.createQuery( "select e from EntityOfSets e inner join fetch e.setOfComponents", EntityOfSets.class ).uniqueResult();
 					assert loaded != null;
 					checkExpectedSize( loaded.getSetOfComponents(), 1 );
 				}
 		);
 
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					session.setDefaultReadOnly( true );
-//					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
-//					assert loaded != null;
-//					checkExpectedSize( loaded.getSetOfBasics(), 2 );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final EntityOfSets loaded = session.get( EntityOfSets.class, 1 );
+					assert loaded != null;
+					checkExpectedSize( loaded.getSetOfBasics(), 2 );
+				}
+		);
 
-//		sessionFactoryScope().inTransaction(
-//				session -> {
-//					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
-//							.multiLoad( 1, 2 );
-//					assert list.size() == 1;
-//					final EntityOfSets loaded = list.get( 0 );
-//					assert loaded != null;
-//					checkExpectedSize( loaded.getSetOfBasics(), 2 );
-//				}
-//		);
+		sessionFactoryScope().inTransaction(
+				session -> {
+					final List<EntityOfSets> list = session.byMultipleIds( EntityOfSets.class )
+							.multiLoad( 1, 2 );
+					assert list.size() == 1;
+					final EntityOfSets loaded = list.get( 0 );
+					assert loaded != null;
+					checkExpectedSize( loaded.getSetOfBasics(), 2 );
+				}
+		);
 	}
 }

@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.sql.results.internal.domain;
+package org.hibernate.internal.log;
 
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionKey;
@@ -14,7 +14,7 @@ import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.query.NavigablePath;
 
 /**
- * Helper for logging specific to results processing.  Uses path collapsing
+ * Helper for logging collection, entity and embeddable information.  Uses path collapsing
  * for readability
  *
  * @author Steve Ebersole

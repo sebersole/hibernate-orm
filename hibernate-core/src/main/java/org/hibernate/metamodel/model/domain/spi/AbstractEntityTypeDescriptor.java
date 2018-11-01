@@ -692,8 +692,8 @@ public abstract class AbstractEntityTypeDescriptor<J>
 			SqlAliasBase sqlAliasBase,
 			TableReferenceJoinCollector joinCollector) {
 		final TableReference root = resolvePrimaryTableReference( sqlAliasBase );
-		joinCollector.addRoot( root );
-		resolveTableReferenceJoins( root, sqlAliasBase, joinType, joinCollector::collectTableReferenceJoin );
+		joinCollector.addPrimaryReference( root );
+		resolveTableReferenceJoins( root, sqlAliasBase, joinType, joinCollector::addSecondaryReference );
 	}
 
 	@Override

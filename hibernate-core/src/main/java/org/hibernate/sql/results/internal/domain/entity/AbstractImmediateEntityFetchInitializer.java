@@ -22,7 +22,7 @@ import org.hibernate.sql.results.spi.FetchParentAccess;
 import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingOptions;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
-import static org.hibernate.sql.results.internal.domain.LoggingHelper.toLoggableString;
+import static org.hibernate.internal.log.LoggingHelper.toLoggableString;
 
 /**
  * @author Steve Ebersole

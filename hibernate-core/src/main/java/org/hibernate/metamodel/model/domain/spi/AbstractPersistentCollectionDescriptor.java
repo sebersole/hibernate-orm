@@ -6,9 +6,7 @@
  */
 package org.hibernate.metamodel.model.domain.spi;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -42,6 +40,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
+import org.hibernate.internal.log.LoggingHelper;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.loader.internal.CollectionLoaderImpl;
@@ -66,11 +65,14 @@ import org.hibernate.metamodel.model.domain.internal.collection.CollectionElemen
 import org.hibernate.metamodel.model.domain.internal.collection.CollectionElementEntityImpl;
 import org.hibernate.metamodel.model.domain.internal.collection.CollectionIndexEmbeddedImpl;
 import org.hibernate.metamodel.model.domain.internal.collection.CollectionIndexEntityImpl;
+import org.hibernate.metamodel.model.domain.internal.collection.CollectionRemovalExecutor;
+import org.hibernate.metamodel.model.domain.internal.collection.FetchedTableReferenceCollectorImpl;
 import org.hibernate.metamodel.model.domain.internal.collection.JoinTableCreationExecutor;
-import org.hibernate.metamodel.model.domain.internal.collection.NoOpCreationExecutor;
+import org.hibernate.metamodel.model.domain.internal.collection.JoinTableRemovalExecutor;
 import org.hibernate.metamodel.model.domain.internal.collection.OneToManyCreationExecutor;
+import org.hibernate.metamodel.model.domain.internal.collection.OneToManyRemovalExecutor;
+import org.hibernate.metamodel.model.domain.internal.collection.RootTableReferenceCollectorImpl;
 import org.hibernate.metamodel.model.relational.spi.Column;
-import org.hibernate.metamodel.model.relational.spi.ForeignKey;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.naming.Identifier;
 import org.hibernate.query.NavigablePath;
@@ -83,19 +85,12 @@ import org.hibernate.sql.ast.produce.spi.JoinedTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.RootTableGroupContext;
 import org.hibernate.sql.ast.produce.spi.SqlAliasBase;
 import org.hibernate.sql.ast.produce.spi.SqlExpressionResolver;
-import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.ast.tree.spi.from.CollectionTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableReference;
-import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
-import org.hibernate.sql.ast.tree.spi.predicate.Junction;
-import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
 import org.hibernate.sql.results.internal.domain.collection.CollectionFetchImpl;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
 import org.hibernate.sql.results.internal.domain.collection.CollectionResultImpl;
@@ -107,6 +102,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.internal.CollectionJavaDescriptor;
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 
 import org.jboss.logging.Logger;
@@ -138,6 +134,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private CollectionLoader collectionLoader;
 	private CollectionCreationExecutor collectionCreationExecutor;
+	private CollectionRemovalExecutor collectionRemovalExecutor;
 
 
 	// todo (6.0) - rework this (and friends) per todo item...
@@ -150,7 +147,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private final String sqlAliasStem;
 
-	private final org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor keyJavaTypeDescriptor;
+	private final JavaTypeDescriptor keyJavaTypeDescriptor;
 
 	private final Set<String> spaces;
 
@@ -490,7 +487,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	@Override
-	public org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor getKeyJavaTypeDescriptor() {
+	public JavaTypeDescriptor getKeyJavaTypeDescriptor() {
 		return keyJavaTypeDescriptor;
 	}
 
@@ -525,11 +522,10 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 				getSqlAliasStem()
 		);
 
-		RootTableGroupTableReferenceCollector collector = new RootTableGroupTableReferenceCollector(
+		RootTableReferenceCollectorImpl collector = new RootTableReferenceCollectorImpl(
 				tableGroupContext.getTableSpace(),
 				this,
 				tableGroupInfo.getNavigablePath(),
-				tableGroupContext.getTableReferenceJoinType(),
 				tableGroupInfo.getUniqueIdentifier(),
 				tableGroupContext.getLockOptions().getEffectiveLockMode( tableGroupInfo.getIdentificationVariable() )
 		);
@@ -566,108 +562,6 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	//				UKs defined on link table restricting cardinality
 	//		2) no separate collection table - @OneToMany w/o join table
 
-	private static class RootTableGroupTableReferenceCollector implements TableReferenceJoinCollector {
-		private final TableSpace tableSpace;
-		private final AbstractPersistentCollectionDescriptor collectionDescriptor;
-		private final NavigablePath navigablePath;
-		private final JoinType joinType;
-		private final String uniqueIdentifier;
-		private final LockMode effectiveLockMode;
-
-		private TableReference primaryTableReference;
-		private List<TableReferenceJoin> tableReferenceJoins;
-		private Predicate predicate;
-
-		public RootTableGroupTableReferenceCollector(
-				TableSpace tableSpace,
-				AbstractPersistentCollectionDescriptor collectionDescriptor,
-				NavigablePath navigablePath,
-				JoinType joinType,
-				String uniqueIdentifier,
-				LockMode effectiveLockMode) {
-			this.tableSpace = tableSpace;
-			this.collectionDescriptor = collectionDescriptor;
-			this.navigablePath = navigablePath;
-			this.joinType = joinType;
-			this.uniqueIdentifier = uniqueIdentifier;
-			this.effectiveLockMode = effectiveLockMode;
-		}
-
-		@Override
-		public void addRoot(TableReference root) {
-			if ( primaryTableReference != null ) {
-				throw new IllegalStateException( "adding root, but root already defined" );
-			}
-
-			primaryTableReference = root;
-
-//			predicate = makePredicate( primaryTableReference, primaryTableReference );
-		}
-
-		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
-			return new TableReferenceJoin(
-					JoinType.LEFT,
-					rootTableReference,
-					makePredicate( lhs, rootTableReference )
-			);
-		}
-
-		private Predicate makePredicate(ColumnReferenceQualifier lhs, TableReference rhs) {
-			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
-
-			final CollectionKey collectionKeyDescriptor = collectionDescriptor.getCollectionKeyDescriptor();
-			final ForeignKey joinForeignKey = collectionKeyDescriptor.getJoinForeignKey();
-			final ForeignKey.ColumnMappings joinFkColumnMappings = joinForeignKey.getColumnMappings();
-
-			for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping: joinFkColumnMappings.getColumnMappings() ) {
-				final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
-				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
-
-				// todo (6.0) : we need some kind of validation here that the column references are properly defined
-
-				// todo (6.0) : we could also handle this using SQL row-value syntax, e.g.:
-				//		`... where ... [ (rCol1, rCol2, ...) = (tCol1, tCol2, ...) ] ...`
-
-				conjunction.add(
-						new RelationalPredicate(
-								RelationalPredicate.Operator.EQUAL,
-								referringColumnReference,
-								targetColumnReference
-						)
-				);
-			}
-
-			return conjunction;
-		}
-
-		@Override
-		public void collectTableReferenceJoin(TableReferenceJoin tableReferenceJoin) {
-			if ( tableReferenceJoins == null ) {
-				tableReferenceJoins = new ArrayList<>();
-			}
-			tableReferenceJoins.add( tableReferenceJoin );
-		}
-
-		@SuppressWarnings("WeakerAccess")
-		public TableGroupJoin generateTableGroupJoin() {
-			final CollectionTableGroup collectionTableGroup = generateTableGroup();
-			return new TableGroupJoin( joinType, collectionTableGroup, predicate );
-		}
-
-		@SuppressWarnings("WeakerAccess")
-		public CollectionTableGroup generateTableGroup() {
-			return new CollectionTableGroup(
-					uniqueIdentifier,
-					tableSpace,
-					collectionDescriptor,
-					effectiveLockMode,
-					navigablePath,
-					primaryTableReference,
-					tableReferenceJoins
-			);
-		}
-	}
-
 	@Override
 	public TableGroupJoin createTableGroupJoin(
 			TableGroupInfo tableGroupInfoSource,
@@ -697,7 +591,8 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			TableSpace tableSpace) {
 		final SqlAliasBase sqlAliasBase = sqlAliasBaseGenerator.createSqlAliasBase( getSqlAliasStem() );
 
-		final TableReferenceJoinCollectorImpl joinCollector = new TableReferenceJoinCollectorImpl(
+		final FetchedTableReferenceCollectorImpl joinCollector = new FetchedTableReferenceCollectorImpl(
+				this,
 				tableSpace,
 				lhs,
 				sqlExpressionResolver,
@@ -1059,7 +954,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			TableReferenceJoinCollector joinCollector) {
 
 		if ( separateCollectionTable != null ) {
-			joinCollector.addRoot( new TableReference(
+			joinCollector.addPrimaryReference( new TableReference(
 					separateCollectionTable,
 					sqlAliasBase.generateNewAlias(),
 					false
@@ -1074,125 +969,22 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 
-	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
-		private final TableSpace tableSpace;
-		private final NavigableContainerReference lhs;
-		private final SqlExpressionResolver sqlExpressionResolver;
-		private final NavigablePath navigablePath;
-		private final LockMode lockMode;
-
-		private TableReference rootTableReference;
-		private List<TableReferenceJoin> tableReferenceJoins;
-		private Predicate predicate;
-
-		@SuppressWarnings("WeakerAccess")
-		public TableReferenceJoinCollectorImpl(
-				TableSpace tableSpace,
-				NavigableContainerReference lhs,
-				SqlExpressionResolver sqlExpressionResolver,
-				NavigablePath navigablePath,
-				LockMode lockMode) {
-			this.tableSpace = tableSpace;
-			this.lhs = lhs;
-			this.sqlExpressionResolver = sqlExpressionResolver;
-			this.navigablePath = navigablePath;
-			this.lockMode = lockMode;
-		}
-
-		@Override
-		public void addRoot(TableReference root) {
-			if ( rootTableReference == null ) {
-				rootTableReference = root;
-			}
-			else {
-				if ( lhs != null ) {
-					collectTableReferenceJoin( makeJoin( lhs.getColumnReferenceQualifier(), rootTableReference ) );
-				}
-			}
-
-			if ( lhs != null ) {
-				predicate = makePredicate( lhs.getColumnReferenceQualifier(), rootTableReference );
-			}
-		}
-
-		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
-			return new TableReferenceJoin(
-					JoinType.LEFT,
-					rootTableReference,
-					makePredicate( lhs, rootTableReference )
-			);
-		}
-
-		private Predicate makePredicate(ColumnReferenceQualifier lhs, TableReference rhs) {
-			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
-
-			final ForeignKey joinForeignKey = getCollectionKeyDescriptor().getJoinForeignKey();
-			final List<ForeignKey.ColumnMappings.ColumnMapping> columnMappings = joinForeignKey.getColumnMappings().getColumnMappings();
-
-			for ( ForeignKey.ColumnMappings.ColumnMapping columnMapping: columnMappings ) {
-				final ColumnReference keyContainerColumnReference = lhs.resolveColumnReference( columnMapping.getTargetColumn() );;
-				final ColumnReference keyCollectionColumnReference = rhs.resolveColumnReference( columnMapping.getReferringColumn() );
-
-				// todo (6.0) : we need some kind of validation here that the column references are properly defined
-
-				// todo (6.0) : could also implement this using SQL row-value syntax, e.g
-				//		`where ... [(rCol1, rCol2, ...) = (tCol1, tCol2, ...)] ...`
-				//
-				// 		we know whether Dialects support it
-
-				conjunction.add(
-						new RelationalPredicate(
-								RelationalPredicate.Operator.EQUAL,
-								keyContainerColumnReference,
-								keyCollectionColumnReference
-						)
-				);
-			}
-
-			return conjunction;
-		}
-
-		@Override
-		public void collectTableReferenceJoin(TableReferenceJoin tableReferenceJoin) {
-			if ( tableReferenceJoins == null ) {
-				tableReferenceJoins = new ArrayList<>();
-			}
-			tableReferenceJoins.add( tableReferenceJoin );
-		}
-
-		@SuppressWarnings("WeakerAccess")
-		public TableGroupJoin generateTableGroup(JoinType joinType, String uid) {
-			final CollectionTableGroup joinedTableGroup = new CollectionTableGroup(
-					uid,
-					tableSpace,
-					lhs,
-					AbstractPersistentCollectionDescriptor.this,
-					lockMode,
-					navigablePath,
-					rootTableReference,
-					tableReferenceJoins
-			);
-			return new TableGroupJoin( joinType, joinedTableGroup, predicate );
-		}
-	}
-
-
 	@Override
 	public void recreate(
 			PersistentCollection collection,
 			Object key,
 			SharedSessionContractImplementor session) {
-
-		if ( isInverse() ) {
-			// EARLY EXIT!!
-			return;
-		}
-
-		if ( !isRowInsertEnabled() ) {
-			// EARLY EXIT!!
-			return;
-		}
-
+//
+//		if ( isInverse() ) {
+//			// EARLY EXIT!!
+//			return;
+//		}
+//
+//		if ( !isRowInsertEnabled() ) {
+//			// EARLY EXIT!!
+//			return;
+//		}
+//
 		if ( collectionCreationExecutor == null ) {
 			collectionCreationExecutor = generateCollectionCreationExecutor();
 		}
@@ -1206,7 +998,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 	private CollectionCreationExecutor generateCollectionCreationExecutor() {
 		if ( isInverse() || ! isRowInsertEnabled() ) {
-			return new NoOpCreationExecutor();
+			return CollectionCreationExecutor.NO_OP;
 		}
 		else if ( getSeparateCollectionTable() != null ) {
 			return new JoinTableCreationExecutor( this, dmlTargetTable, getSessionFactory() );
@@ -1218,6 +1010,51 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	}
 
 	protected boolean isRowInsertEnabled() {
+		return true;
+	}
+
+	@Override
+	public void remove(Object key, SharedSessionContractImplementor session) {
+		log.tracef( "Starting #remove(%s)", key );
+
+//		if ( isInverse() ) {
+//			// EARLY EXIT!!
+//			log.tracef( "Skipping remove for inverse collection" );
+//			return;
+//		}
+//
+//		if ( ! isRowDeleteEnabled() ) {
+//			// EARLY EXIT!!
+//			log.tracef( "Skipping remove for collection - row deletion disabled" );
+//			return;
+//		}
+
+		if ( collectionRemovalExecutor == null ) {
+			collectionRemovalExecutor = generateCollectionRemovalExecutor();
+		}
+
+		if ( log.isDebugEnabled() ) {
+			log.debug( "Deleting collection: " + LoggingHelper.toLoggableString( getNavigableRole(), key ) );
+		}
+
+		collectionRemovalExecutor.remove( key, session );
+
+	}
+
+	private CollectionRemovalExecutor generateCollectionRemovalExecutor() {
+		if ( isInverse() || ! isRowDeleteEnabled() ) {
+			return CollectionRemovalExecutor.NO_OP;
+		}
+		else if ( getSeparateCollectionTable() != null ) {
+			return new JoinTableRemovalExecutor( this, sessionFactory );
+		}
+		else {
+			assert getElementDescriptor().getClassification() == ONE_TO_MANY;
+			return new OneToManyRemovalExecutor( this, sessionFactory );
+		}
+	}
+
+	protected boolean isRowDeleteEnabled() {
 		return true;
 	}
 

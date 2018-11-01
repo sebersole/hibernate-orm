@@ -39,6 +39,7 @@ import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.internal.entity.ToOneJoinCollectorImpl;
 import org.hibernate.metamodel.model.domain.spi.AbstractNonIdSingularPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.DomainModelHelper;
@@ -82,14 +83,8 @@ import org.hibernate.sql.ast.produce.spi.TableGroupJoinProducer;
 import org.hibernate.sql.ast.tree.spi.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
-import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.TableGroupJoin;
-import org.hibernate.sql.ast.tree.spi.from.TableReference;
-import org.hibernate.sql.ast.tree.spi.from.TableReferenceJoin;
 import org.hibernate.sql.ast.tree.spi.from.TableSpace;
-import org.hibernate.sql.ast.tree.spi.predicate.Junction;
-import org.hibernate.sql.ast.tree.spi.predicate.Predicate;
-import org.hibernate.sql.ast.tree.spi.predicate.RelationalPredicate;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.results.internal.domain.entity.DelayedEntityFetch;
 import org.hibernate.sql.results.internal.domain.entity.EntityFetchImpl;
@@ -694,7 +689,8 @@ public class SingularPersistentAttributeEntity<O, J>
 			LockMode lockMode,
 			TableSpace tableSpace) {
 		final SqlAliasBase sqlAliasBase = sqlAliasBaseGenerator.createSqlAliasBase( getSqlAliasStem() );
-		final TableReferenceJoinCollectorImpl joinCollector = new TableReferenceJoinCollectorImpl(
+		final ToOneJoinCollectorImpl joinCollector = new ToOneJoinCollectorImpl(
+				this,
 				tableSpace,
 				lhs,
 				navigablePath,
@@ -812,104 +808,6 @@ public class SingularPersistentAttributeEntity<O, J>
 	@Override
 	public SimpleTypeDescriptor<?> getKeyGraphType() {
 		return entityDescriptor.getIdentifierDescriptor().getNavigableType();
-	}
-
-	private class TableReferenceJoinCollectorImpl implements TableReferenceJoinCollector {
-		private final TableSpace tableSpace;
-		private final NavigableContainerReference lhs;
-		private final NavigablePath navigablePath;
-		private final String identificationVariable;
-		private final LockMode lockMode;
-
-		private TableReference rootTableReference;
-		private List<TableReferenceJoin> tableReferenceJoins;
-		private Predicate predicate;
-
-		@SuppressWarnings("WeakerAccess")
-		public TableReferenceJoinCollectorImpl(
-				TableSpace tableSpace,
-				NavigableContainerReference lhs,
-				NavigablePath navigablePath,
-				String identificationVariable,
-				LockMode lockMode) {
-			this.tableSpace = tableSpace;
-			this.lhs = lhs;
-			this.navigablePath = navigablePath;
-			this.identificationVariable = identificationVariable;
-			this.lockMode = lockMode;
-		}
-
-		@Override
-		public void addRoot(TableReference root) {
-			if ( rootTableReference == null ) {
-				rootTableReference = root;
-			}
-			else {
-				if ( lhs != null ) {
-					collectTableReferenceJoin( makeJoin( lhs.getColumnReferenceQualifier(), rootTableReference ) );
-				}
-			}
-
-			if ( lhs != null ) {
-				predicate = makePredicate( lhs.getColumnReferenceQualifier(), rootTableReference );
-			}
-		}
-
-		private TableReferenceJoin makeJoin(ColumnReferenceQualifier lhs, TableReference rootTableReference) {
-			return new TableReferenceJoin(
-					JoinType.LEFT,
-					rootTableReference,
-					makePredicate( lhs, rootTableReference )
-			);
-		}
-
-		private Predicate makePredicate(ColumnReferenceQualifier lhs, TableReference rhs) {
-			final Junction conjunction = new Junction( Junction.Nature.CONJUNCTION );
-
-			for ( ColumnMappings.ColumnMapping columnMapping : foreignKey.getColumnMappings().getColumnMappings() ) {
-				final ColumnReference referringColumnReference = lhs.resolveColumnReference( columnMapping.getReferringColumn() );
-				final ColumnReference targetColumnReference = rhs.resolveColumnReference( columnMapping.getTargetColumn() );
-
-				// todo (6.0) : we need some kind of validation here that the column references are properly defined
-
-				// todo (6.0) : we could also handle this using SQL row-value syntax, e.g.:
-				//		`... where ... [ (rCol1, rCol2, ...) = (tCol1, tCol2, ...) ] ...`
-
-				conjunction.add(
-						new RelationalPredicate(
-								RelationalPredicate.Operator.EQUAL,
-								referringColumnReference,
-								targetColumnReference
-						)
-				);
-			}
-
-			return conjunction;
-		}
-
-		@Override
-		public void collectTableReferenceJoin(TableReferenceJoin tableReferenceJoin) {
-			if ( tableReferenceJoins == null ) {
-				tableReferenceJoins = new ArrayList<>();
-			}
-			tableReferenceJoins.add( tableReferenceJoin );
-		}
-
-		@SuppressWarnings("WeakerAccess")
-		public TableGroupJoin generateTableGroup(JoinType joinType, String uid) {
-			final EntityTableGroup joinedTableGroup = new EntityTableGroup(
-					uid,
-					tableSpace,
-					lhs,
-					SingularPersistentAttributeEntity.this,
-					lockMode,
-					navigablePath,
-					rootTableReference,
-					tableReferenceJoins,
-					lhs.getColumnReferenceQualifier()
-			);
-			return new TableGroupJoin( joinType, joinedTableGroup, predicate );
-		}
 	}
 
 	@Override

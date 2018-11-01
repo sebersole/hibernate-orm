@@ -15,7 +15,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.StateArrayContributor;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.NullValueAssembler;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
+import org.hibernate.internal.log.LoggingHelper;
 import org.hibernate.sql.results.spi.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;

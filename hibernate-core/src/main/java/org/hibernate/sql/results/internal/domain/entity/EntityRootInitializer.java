@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
+import org.hibernate.internal.log.LoggingHelper;
 import org.hibernate.sql.results.spi.AssemblerCreationContext;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResult;

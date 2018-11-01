@@ -28,7 +28,7 @@ import org.hibernate.sql.exec.spi.BasicExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcMutation;
 import org.hibernate.sql.exec.spi.JdbcMutationExecutor;
 import org.hibernate.sql.exec.spi.JdbcParameter;
-import org.hibernate.sql.results.internal.domain.LoggingHelper;
+import org.hibernate.internal.log.LoggingHelper;
 
 /**
  * @author Steve Ebersole
@@ -78,7 +78,6 @@ public abstract class AbstractCreationExecutor implements CollectionCreationExec
 		assert key != null;
 
 		final JdbcParameterBindingsImpl jdbcParameterBindings = new JdbcParameterBindingsImpl();
-
 		final BasicExecutionContext executionContext = new BasicExecutionContext( session, jdbcParameterBindings );
 
 		final Iterator entries = collection.entries( collectionDescriptor );
