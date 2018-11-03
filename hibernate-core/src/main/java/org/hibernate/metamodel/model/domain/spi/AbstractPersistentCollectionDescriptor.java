@@ -16,6 +16,7 @@ import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.annotations.Remove;
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.boot.model.domain.EmbeddedValueMapping;
 import org.hibernate.boot.model.relational.Database;
@@ -792,6 +793,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 	 */
 	@Override
 	@Deprecated
+	@Remove
 	public CollectionSemantics getTuplizer() {
 		throw new UnsupportedOperationException();
 	}

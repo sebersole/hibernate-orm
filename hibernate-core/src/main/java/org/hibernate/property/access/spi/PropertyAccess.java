@@ -12,16 +12,15 @@ package org.hibernate.property.access.spi;
  * <p/>
  * Instances are obtained from {@link PropertyAccessStrategy}
  *
+ * @apiNote Think of this as the low-level api for directly accessing the underlying
+ * getter/setter.  Specifically, any "higher-level requirements" should have already
+ * been applied - meaning that things like "MappedIdentifierValueMarshaller" or
+ * "AttributeConverter" have already been performed.
+ *
  * @author Steve Ebersole
  * @author Gavin King
  */
 public interface PropertyAccess {
-
-	// todo (6.0) think of this as the low-level api for directly accessing the underlying Getter/Setter
-	//		specifically in regards to higher-level requirements already having been
-	//		applied - meaning that things like `MappedIdentifierValueMarshaller` or
-	//		`AttributeConverter` have already been performed.
-
 	/**
 	 * Access to the PropertyAccessStrategy that created this PropertyAccess
 	 *

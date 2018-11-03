@@ -83,7 +83,8 @@ public class PropertyAccessMapImpl implements PropertyAccess {
 
 		@Override
 		public Member getMember() {
-			return null;
+			// todo (6.0) : either we should return the virtual member here, or not build it in the ctor
+			return virtualMember;
 		}
 
 		@Override

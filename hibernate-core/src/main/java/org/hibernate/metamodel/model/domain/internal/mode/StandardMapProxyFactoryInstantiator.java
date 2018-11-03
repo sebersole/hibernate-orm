@@ -10,7 +10,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.metamodel.model.domain.spi.AbstractEntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ProxyFactoryInstantiator;
 import org.hibernate.proxy.ProxyFactory;
 import org.hibernate.proxy.map.MapProxyFactory;
@@ -27,7 +27,7 @@ public class StandardMapProxyFactoryInstantiator<J> implements ProxyFactoryInsta
 
 	@Override
 	public ProxyFactory instantiate(
-			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
+			EntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 
 		ProxyFactory pf = new MapProxyFactory();
