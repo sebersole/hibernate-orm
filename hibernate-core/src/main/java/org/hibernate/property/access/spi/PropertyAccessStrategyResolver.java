@@ -7,13 +7,12 @@
 package org.hibernate.property.access.spi;
 
 import org.hibernate.EntityMode;
+import org.hibernate.annotations.Remove;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationStrategy;
 import org.hibernate.service.Service;
 
 /**
  * Contract for resolving the PropertyAccessStrategy to use.
- * <p/>
- * todo (6.0) : remove this
  *
  * @author Steve Ebersole
  *
@@ -21,6 +20,7 @@ import org.hibernate.service.Service;
  * instead
  */
 @Deprecated
+@Remove
 public interface PropertyAccessStrategyResolver extends Service {
 	/**
 	 * Resolve the PropertyAccessStrategy to use

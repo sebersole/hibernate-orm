@@ -9,10 +9,12 @@ package org.hibernate.metamodel.model.domain.spi;
 import org.hibernate.boot.model.domain.ManagedTypeMapping;
 import org.hibernate.boot.model.domain.PersistentAttributeMapping;
 import org.hibernate.bytecode.spi.BytecodeProvider;
+import org.hibernate.bytecode.spi.ReflectionOptimizer;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.RepresentationMode;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.proxy.ProxyFactory;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * Defines a singular extension point for capabilities pertaining to
@@ -36,31 +38,31 @@ public interface ManagedTypeRepresentationStrategy {
 	RepresentationMode getMode();
 
 	/**
-	 * todo : do we want these to be entity/component-specific?  Comes down to
-	 * whether we want to retain the ability to instantiation an entity passing in
-	 * its id-value.  Note however that as currently implemented, even prior top 6.0,
-	 * this is completely unnecessary as it is done in 2 steps - first instantiating the
-	 * object and then injecting its id value.
-	 * <p>
-	 * And even if we do want to keep that ability, keep in mind that the JTD being passed
-	 * in knows whether the thing is an entity or composite - so the return can already be
-	 * entity/composite specific by casting.  E.g., in EntityDescriptor we could simply do:
-	 * `EntityInstantiator instantiator = (EntityInstantiator) getRepresentationStrategy().generateInstantiator( getJavaTypeDescriptor() );`
+	 * Create a delegate capable of instantiating instances of the specified
+	 * managed type.
+	 *
+	 * @param bootDescriptor The boot-model descriptor of the type top be instantiated
+	 * @param runtimeDescriptor The (in-flight) runtime-model descriptor of the type top be instantiated
+	 * @param bytecodeProvider The effective BytecodeProvider - can integrate with the
+	 * {@link org.hibernate.bytecode.spi.ReflectionOptimizer.InstantiationOptimizer} provided by the
+	 * provider's {@linkplain BytecodeProvider#getReflectionOptimizer ReflectionOptimizer}
 	 */
 	<J> Instantiator<J> resolveInstantiator(
 			ManagedTypeMapping bootDescriptor,
 			ManagedTypeDescriptor runtimeDescriptor,
 			BytecodeProvider bytecodeProvider);
 
+	/**
+	 * Create the delegate capable of producing proxies for the given entity
+	 */
 	<J> ProxyFactory generateProxyFactory(
 			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext);
 
 	/**
-	 * note: moving/integrating this with such a representation-specific contract helps to
-	 * alleviate some of the awkwardness in `PropertyAccessStrategy` / `PropertyAccessStrategyResolver`
-	 *
-	 * todo (6.0) : Should we instead be passing in PersistentAttributeMapping?
+	 * @apiNote Moving/integrating this with such a representation-specific contract
+	 * helps to alleviate some of the awkwardness in `PropertyAccessStrategy` /
+	 * `PropertyAccessStrategyResolver`
 	 */
 	PropertyAccess generatePropertyAccess(
 			ManagedTypeMapping bootDescriptor,

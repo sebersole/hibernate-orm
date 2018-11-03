@@ -21,6 +21,7 @@ import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractEntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.InheritanceCapable;
 import org.hibernate.metamodel.model.domain.spi.ProxyFactoryInstantiator;
 import org.hibernate.property.access.spi.Getter;
@@ -41,7 +42,7 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 
 	@Override
 	public ProxyFactory instantiate(
-			AbstractEntityTypeDescriptor<J> runtimeDescriptor,
+			EntityTypeDescriptor<J> runtimeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		final EntityIdentifier identifierDescriptor = runtimeDescriptor.getHierarchy().getIdentifierDescriptor();
 
@@ -50,9 +51,9 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 				.getPropertyAccess();
 		final Getter idGetter = propertyAccess.getGetter();
 		final Setter idSetter = propertyAccess.getSetter();
-		Set<Class> proxyInterfaces = new java.util.LinkedHashSet<>();
+		final Set<Class> proxyInterfaces = new java.util.LinkedHashSet<>();
 
-		Class mappedClass = runtimeDescriptor.getJavaTypeDescriptor().getJavaType();
+		final Class mappedClass = runtimeDescriptor.getJavaTypeDescriptor().getJavaType();
 		addProxyInterfaces( runtimeDescriptor, proxyInterfaces );
 
 		if ( mappedClass.isInterface() ) {
@@ -60,42 +61,44 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 		}
 
 		Collection<InheritanceCapable<? extends J>> subclassTypes = runtimeDescriptor.getSubclassTypes();
-		subclassTypes.forEach( inheritanceCapable -> {
-			if ( AbstractEntityTypeDescriptor.class.isInstance( inheritanceCapable ) ) {
-				addProxyInterfaces( runtimeDescriptor, proxyInterfaces );
-			}
-		} );
+		subclassTypes.forEach(
+				inheritanceCapable -> {
+					if ( inheritanceCapable instanceof AbstractEntityTypeDescriptor ) {
+						addProxyInterfaces( runtimeDescriptor, proxyInterfaces );
+					}
+				}
+		);
 
 		proxyInterfaces.add( HibernateProxy.class );
-		runtimeDescriptor.visitAttributes( attribute -> {
-			PropertyAccess attributePropertyAccess = attribute.getPropertyAccess();
-			Method method = attributePropertyAccess.getGetter().getMethod();
-			if ( method != null && Modifier.isFinal( method.getModifiers() ) ) {
-				LOG.gettersOfLazyClassesCannotBeFinal( runtimeDescriptor.getEntityName(), attribute.getAttributeName() );
-			}
-			method = attributePropertyAccess.getSetter().getMethod();
-			if ( method != null && Modifier.isFinal( method.getModifiers() ) ) {
-				LOG.settersOfLazyClassesCannotBeFinal( runtimeDescriptor.getEntityName(), attribute.getAttributeName() );
-			}
-		} );
+		runtimeDescriptor.visitAttributes(
+				attribute -> {
+					final PropertyAccess attributePropertyAccess = attribute.getPropertyAccess();
+					final Method getterMethod = attributePropertyAccess.getGetter().getMethod();
+					if ( getterMethod != null && Modifier.isFinal( getterMethod.getModifiers() ) ) {
+						LOG.gettersOfLazyClassesCannotBeFinal( runtimeDescriptor.getEntityName(), attribute.getAttributeName() );
+					}
 
-		Method idGetterMethod = idGetter == null ? null : idGetter.getMethod();
-		Method idSetterMethod = idSetter == null ? null : idSetter.getMethod();
+					final Method setterMethod = attributePropertyAccess.getSetter().getMethod();
+					if ( setterMethod != null && Modifier.isFinal( setterMethod.getModifiers() ) ) {
+						LOG.settersOfLazyClassesCannotBeFinal( runtimeDescriptor.getEntityName(), attribute.getAttributeName() );
+					}
+				}
+		);
 
-		final Class proxyInterface = runtimeDescriptor.getProxyInterface();
+		final Method idGetterMethod = idGetter == null ? null : idGetter.getMethod();
+		final Method idSetterMethod = idSetter == null ? null : idSetter.getMethod();
 
-		Method proxyGetIdentifierMethod = idGetterMethod == null || proxyInterface == null ?
+		final Class proxyInterface = runtimeDescriptor.getConcreteProxyClass();
+
+		final Method proxyGetIdentifierMethod = idGetterMethod == null || proxyInterface == null ?
 				null :
 				ReflectHelper.getMethod( proxyInterface, idGetterMethod );
-		Method proxySetIdentifierMethod = idSetterMethod == null || proxyInterface == null ?
+		final Method proxySetIdentifierMethod = idSetterMethod == null || proxyInterface == null ?
 				null :
 				ReflectHelper.getMethod( proxyInterface, idSetterMethod );
 
-		ProxyFactory pf = buildProxyFactoryInternal( idGetter, idSetter, creationContext );
-		EmbeddedTypeDescriptor embeddedIdTypeDescritor = null;
-		if ( EmbeddedTypeDescriptor.class.isInstance( embeddedIdTypeDescritor ) ) {
-			embeddedIdTypeDescritor = (EmbeddedTypeDescriptor) identifierDescriptor;
-		}
+		final ProxyFactory pf = buildProxyFactoryInternal( idGetter, idSetter, creationContext );
+
 		try {
 			pf.postInstantiate(
 					runtimeDescriptor.getEntityName(),
@@ -103,12 +106,13 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 					proxyInterfaces,
 					proxyGetIdentifierMethod,
 					proxySetIdentifierMethod,
-					embeddedIdTypeDescritor
+					identifierDescriptor instanceof EmbeddedTypeDescriptor
+							? (EmbeddedTypeDescriptor) identifierDescriptor
+							: null
 			);
 		}
 		catch ( HibernateException he) {
 			LOG.unableToCreateProxyFactory( runtimeDescriptor.getEntityName(), he );
-			pf = null;
 		}
 		return pf;
 	}
@@ -117,7 +121,6 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 			Getter idGetter,
 			Setter idSetter,
 			RuntimeModelCreationContext creationContext) {
-		// TODO : YUCK!!!  fix after HHH-1907 is complete
 		final SessionFactoryImplementor sessionFactory = creationContext.getSessionFactory();
 
 		return sessionFactory.getSessionFactoryOptions()
@@ -126,9 +129,9 @@ public class StandardPojoProxyFactoryInstantiator<J> implements ProxyFactoryInst
 				.buildProxyFactory( sessionFactory );
 	}
 
-	private void addProxyInterfaces(AbstractEntityTypeDescriptor runtimeDescriptor, Set<Class> proxyInterfaces){
+	private void addProxyInterfaces(EntityTypeDescriptor runtimeDescriptor, Set<Class> proxyInterfaces){
 		final Class javaClass = runtimeDescriptor.getJavaTypeDescriptor().getJavaType();
-		final Class proxyInterface = runtimeDescriptor.getProxyInterface();
+		final Class proxyInterface = runtimeDescriptor.getConcreteProxyClass();
 		if ( proxyInterface != null && !javaClass.equals( proxyInterface ) ) {
 			if ( !proxyInterface.isInterface() ) {
 				throw new MappingException(
