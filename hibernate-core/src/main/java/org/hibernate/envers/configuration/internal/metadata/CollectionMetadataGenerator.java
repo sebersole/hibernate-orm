@@ -229,7 +229,8 @@ public final class CollectionMetadataGenerator {
 				referencedEntityName,
 				propertyAuditingData.getPropertyData(),
 				referencingIdData,
-				queryGenerator
+				queryGenerator,
+				propertyValue.getRole()
 		);
 
 		PropertyMapper fakeBidirectionalRelationMapper;
@@ -475,7 +476,8 @@ public final class CollectionMetadataGenerator {
 				auditMiddleEntityName,
 				propertyAuditingData.getPropertyData(),
 				referencingIdData,
-				queryGenerator
+				queryGenerator,
+				propertyValue.getRole()
 		);
 
 		// Checking the type of the collection and adding an appropriate mapper.

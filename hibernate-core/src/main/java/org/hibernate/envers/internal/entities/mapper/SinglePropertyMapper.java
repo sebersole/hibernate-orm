@@ -75,6 +75,7 @@ public class SinglePropertyMapper extends AbstractPropertyMapper implements Simp
 			Map<String, Object> data,
 			Object newObj,
 			Object oldObj) {
+		// Synthetic properties are not subject to withModifiedFlag analysis
 		if ( propertyData.isUsingModifiedFlag() && !propertyData.isSynthetic() ) {
 			data.put( propertyData.getModifiedFlagPropertyName(), !areEqual( newObj, oldObj ) );
 		}
@@ -104,25 +105,30 @@ public class SinglePropertyMapper extends AbstractPropertyMapper implements Simp
 			map.put( propertyData.getBeanName(), value );
 		}
 		else {
-			AccessController.doPrivileged(
-					new PrivilegedAction<Object>() {
-						@Override
-						public Object run() {
-							final Setter setter = ReflectionTools.getSetter(
-									obj.getClass(),
-									propertyData,
-									versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
-							);
+			final PrivilegedAction<Object> delegatedAction = new PrivilegedAction<Object>() {
+				@Override
+				public Object run() {
+					final Setter setter = ReflectionTools.getSetter(
+							obj.getClass(),
+							propertyData,
+							versionsReader.getSessionImplementor().getSessionFactory().getServiceRegistry()
+					);
 
-							// We only set a null value if the field is not primitive. Otherwise, we leave it intact.
-							if ( value != null || !isPrimitive( setter, propertyData, obj.getClass() ) ) {
-								setter.set( obj, value, null );
-							}
-
-							return null;
-						}
+					// We only set a null value if the field is not primitive. Otherwise, we leave it intact.
+					if ( value != null || !isPrimitive( setter, propertyData, obj.getClass() ) ) {
+						setter.set( obj, value, null );
 					}
-			);
+
+					return null;
+				}
+			};
+
+			if ( System.getSecurityManager() != null ) {
+				AccessController.doPrivileged( delegatedAction );
+			}
+			else {
+				delegatedAction.run();
+			}
 		}
 	}
 
