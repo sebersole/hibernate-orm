@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
+import javax.persistence.PrimaryKeyJoinColumn;
 import java.util.Optional;
 
 import org.hibernate.AnnotationException;
@@ -77,7 +78,7 @@ public class OneToOneSecondPass implements SecondPass {
 	}
 
 	//TODO refactor this code, there is a lot of duplication in this method
-	public void doSecondPass(Map persistentClasses) throws MappingException {
+	public void doSecondPass(Map<String,PersistentClass> persistentClasses) throws MappingException {
 		org.hibernate.mapping.OneToOne value = new org.hibernate.mapping.OneToOne(
 				buildingContext,
 				propertyHolder.getMappedTable(),
@@ -106,20 +107,13 @@ public class OneToOneSecondPass implements SecondPass {
 			);
 		}
 
-		// todo (6.0) - Do we need to consider PrimaryKeyJoinColumn logic in this method?
-		/*
-		PrimaryKeyJoinColumn primaryKeyJoinColumn = inferredData.getProperty()
-					.getAnnotation( PrimaryKeyJoinColumn.class );
-			if ( primaryKeyJoinColumn != null ) {
-				final PersistentClass otherSide = (PersistentClass) persistentClasses.get( value.getReferencedEntityName() );
+		PrimaryKeyJoinColumn primaryKeyJoinColumn = inferredData.getProperty().getAnnotation( PrimaryKeyJoinColumn.class );
+		if ( primaryKeyJoinColumn != null ) {
+			value.setConstrained( true );
+			final PersistentClass otherSide = persistentClasses.get( value.getReferencedEntityName() );
+			value.setReferencedPropertyName( otherSide.getRootClass().getIdentifierAttributeMapping().getName() );
+		}
 
-				value.setConstrained( true );
-
-				value.setReferencedPropertyName( otherSide.getRootClass().getIdentifierAttributeMapping().getName() );
-				value.setForeignKeyName( null );
-				value.setForeignKeyDefinition( null );
-			}
-		 */
 		AnnotationBinder.bindForeignKeyNameAndDefinition(
 				value,
 				inferredData.getProperty(),
@@ -170,7 +164,7 @@ public class OneToOneSecondPass implements SecondPass {
 			}
 		}
 		else {
-			final PersistentClass otherSide = (PersistentClass) persistentClasses.get( value.getReferencedEntityName() );
+			final PersistentClass otherSide = persistentClasses.get( value.getReferencedEntityName() );
 			Property otherSideProperty;
 			try {
 				if ( otherSide == null ) {
@@ -203,7 +197,7 @@ public class OneToOneSecondPass implements SecondPass {
 				if ( otherSideJoin.isPresent() ) {
 					//@OneToOne @JoinTable
 					Join mappedByJoin = buildJoinFromMappedBySide(
-							(PersistentClass) persistentClasses.get( ownerEntity ),
+							persistentClasses.get( ownerEntity ),
 							otherSideProperty,
 							otherSideJoin.get()
 					);

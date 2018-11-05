@@ -49,8 +49,8 @@ public class CopyIdentifierComponentSecondPass implements SecondPass {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public void doSecondPass(Map persistentClasses) throws MappingException {
-		final PersistentClass referencedPersistentClass = (PersistentClass) persistentClasses.get( referencedEntityName );
+	public void doSecondPass(Map<String, PersistentClass> persistentClasses) throws MappingException {
+		final PersistentClass referencedPersistentClass = persistentClasses.get( referencedEntityName );
 		// TODO better error names
 		if ( referencedPersistentClass == null ) {
 			throw new AnnotationException( "Unknown entity name: " + referencedEntityName );

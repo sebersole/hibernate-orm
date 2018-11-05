@@ -6,8 +6,6 @@
  */
 package org.hibernate.tool.schema.extract.internal;
 
-import java.sql.SQLException;
-
 /**
  * @author Vlad Mihalcea
  */

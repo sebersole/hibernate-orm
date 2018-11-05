@@ -3015,7 +3015,7 @@ public class ModelBinder {
 		}
 
 		@Override
-		public void doSecondPass(Map persistentClasses) throws org.hibernate.MappingException {
+		public void doSecondPass(Map<String, PersistentClass> persistentClasses) throws org.hibernate.MappingException {
 			bindCollectionTable();
 
 			bindCollectionKey();
