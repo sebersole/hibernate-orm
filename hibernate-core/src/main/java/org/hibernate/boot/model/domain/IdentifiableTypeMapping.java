@@ -19,11 +19,6 @@ public interface IdentifiableTypeMapping extends ManagedTypeMapping {
 	@Override
 	IdentifiableJavaTypeMapping getJavaTypeMapping();
 
-	/**
-	 * @todo (6.0) Should we order these?
-	 * 		I'm just not sure there is a clear benefit here (beyond root first), so at the moment
-	 * 		I'd lean towards no.
-	 */
 	Collection<IdentifiableTypeMapping> getSubTypeMappings();
 
 	/**
@@ -35,12 +30,16 @@ public interface IdentifiableTypeMapping extends ManagedTypeMapping {
 	/**
 	 * Get the attribute that represents a single identifier or an embedded id.
 	 */
-	PersistentAttributeMapping getIdentifierAttributeMapping();
+	default PersistentAttributeMapping getIdentifierAttributeMapping() {
+		return getEntityMappingHierarchy().getIdentifierAttributeMapping();
+	}
 
 	/**
 	 * Get the mapping associated to multiple-id or {@link javax.persistence.IdClass}.
 	 */
-	EmbeddedValueMapping getEmbeddedIdentifierAttributeMapping();
+	default EmbeddedValueMapping getEmbeddedIdentifierAttributeMapping() {
+		return getEntityMappingHierarchy().getIdentifierEmbeddedValueMapping();
+	}
 
 	/**
 	 * Get the declared mapping associated to multiple-id or {@link javax.persistence.IdClass}.
@@ -50,7 +49,9 @@ public interface IdentifiableTypeMapping extends ManagedTypeMapping {
 	/**
 	 * Get the version attribute.
 	 */
-	PersistentAttributeMapping getVersionAttributeMapping();
+	default PersistentAttributeMapping getVersionAttributeMapping() {
+		return getEntityMappingHierarchy().getVersionAttributeMapping();
+	}
 
 	/**
 	 * Get the locally declared attribute that represents a single identifier
@@ -66,10 +67,14 @@ public interface IdentifiableTypeMapping extends ManagedTypeMapping {
 	/**
 	 * Checks whether a version attribute mapping has been specified.
 	 */
-	boolean hasVersionAttributeMapping();
+	default boolean hasVersionAttributeMapping() {
+		return getEntityMappingHierarchy().hasVersionAttributeMapping();
+	}
 
 	/**
 	 * Checks whether the identifier attribute represents a single id or embedded id.
 	 */
-	boolean hasSingleIdentifierAttributeMapping();
+	default boolean hasSingleIdentifierAttributeMapping() {
+		return getEntityMappingHierarchy().hasIdentifierAttributeMapping();
+	}
 }

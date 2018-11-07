@@ -619,8 +619,7 @@ public class ModelBinder {
 
 		// KEY
 		final DependantValue keyBinding = new DependantValue(
-				// todo (6.0) - isnt MappingDocument also a MetadataBuildingContext?
-				mappingDocument.getMetadataCollector().getTypeConfiguration().getMetadataBuildingContext(),
+				mappingDocument,
 				primaryTable,
 				entityDescriptor.getIdentifier()
 		);

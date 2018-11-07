@@ -27,7 +27,6 @@ import org.hibernate.LockMode;
 import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.SessionException;
 import org.hibernate.Transaction;
-import org.hibernate.cache.spi.CacheTransactionContext;
 import org.hibernate.cache.spi.CacheTransactionSynchronization;
 import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
@@ -124,7 +123,6 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	private transient EntityNameResolver entityNameResolver;
 
 	private transient SessionEventListenerManagerImpl sessionEventsManager = new SessionEventListenerManagerImpl();
-	private transient CacheTransactionContext cacheTransactionContext;
 	protected transient ExceptionConverter exceptionConverter;
 
 	private transient Boolean useStreamForLobBinding;
