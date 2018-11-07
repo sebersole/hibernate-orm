@@ -8,21 +8,16 @@ package org.hibernate.envers.internal.entities.mapper.relation;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.hibernate.collection.internal.PersistentMap;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -149,32 +144,6 @@ public abstract class AbstractCollectionMapper<T> extends AbstractPropertyMapper
 		if ( !collectionPropertyData.getName().equals( referencingPropertyName ) ) {
 			return null;
 		}
-
-//		// HHH-11063
-//		final CollectionEntry collectionEntry = session.getPersistenceContext().getCollectionEntry( newColl );
-//		if ( collectionEntry != null ) {
-//			// This next block delegates only to the descriptor-based collection change code if
-//			// the following are true:
-//			//	1. New collection is not a PersistentMap.
-//			//	2. The collection has a collection descriptor.
-//			//	3. The collection is not indexed, e.g. @IndexColumn
-//			//
-//			// In the case of 1 and 3, the collection is transformed into a set of Pair<> elements where the
-//			// pair's left element is either the map key or the index.  In these cases, the key/index do
-//			// affect the change code; hence why they're skipped here and handled at the end.
-//			//
-//			// For all others, the descriptor based method uses the collection's ElementType#isSame to calculate
-//			// equality between the newColl and oldColl.  This enforces the same equality check that core uses
-//			// for element types such as @Entity in cases where the hash code does not use the id field but has
-//			// the same value in both collections.  Using #isSame, these will be seen as differing elements and
-//			// changes to the collection will be returned.
-//			if ( !( newColl instanceof PersistentMap ) ) {
-//				final PersistentCollectionDescriptor collectionDescriptor = collectionEntry.getCurrentDescriptor();
-//				if ( collectionDescriptor != null && collectionDescriptor.getIndexDescriptor() != null ) {
-//					return mapCollectionChanges( session, newColl, oldColl, id, collectionDescriptor );
-//				}
-//			}
-//		}
 
 		return mapCollectionChanges( session, newColl, oldColl, id );
 	}
@@ -374,88 +343,6 @@ public abstract class AbstractCollectionMapper<T> extends AbstractPropertyMapper
 			Serializable oldColl,
 			Object id
 	);
-//		final List<PersistentCollectionChangeData> collectionChanges = new ArrayList<>();
-//
-//		// Comparing new and old collection content.
-//		final Collection newCollection = getNewCollectionContent( newColl );
-//		final Collection oldCollection = getOldCollectionContent( oldColl );
-//
-//		final Set<Object> added = buildCollectionChangeSet( newColl, newCollection );
-//		// Re-hashing the old collection as the hash codes of the elements there may have changed, and the
-//		// removeAll in AbstractSet has an implementation that is hashcode-change sensitive (as opposed to addAll).
-//		if ( oldColl != null ) {
-//			added.removeAll( new HashSet( oldCollection ) );
-//		}
-//		addCollectionChanges( session, collectionChanges, added, RevisionType.ADD, id );
-//
-//		final Set<Object> deleted = buildCollectionChangeSet( oldColl, oldCollection );
-//		// The same as above - re-hashing new collection.
-//		if ( newColl != null ) {
-//			deleted.removeAll( new HashSet( newCollection ) );
-//		}
-//		addCollectionChanges( session, collectionChanges, deleted, RevisionType.DEL, id );
-//
-//		return collectionChanges;
-//	}
-
-//	/**
-//	 * Map collection changes using the collection element type equality functionality.
-//	 *
-//	 * @param session The session.
-//	 * @param newColl The new persistent collection.
-//	 * @param oldColl The old collection.
-//	 * @param id The owning entity identifier.
-//	 * @param collectionDescriptor The collection persister.
-//	 * @return the persistent collection changes.
-//	 */
-//	@SuppressWarnings("unchecked")
-//	private List<PersistentCollectionChangeData> mapCollectionChanges(
-//			SessionImplementor session,
-//			PersistentCollection newColl,
-//			Serializable oldColl,
-//			Object id,
-//			PersistentCollectionDescriptor collectionDescriptor) {
-//
-//		final List<PersistentCollectionChangeData> collectionChanges = new ArrayList<>();
-//
-//		// Comparing new and old collection content.
-//		final Collection newCollection = getNewCollectionContent( newColl );
-//		final Collection oldCollection = getOldCollectionContent( oldColl );
-//
-//		// take the new collection and remove any that exist in the old collection.
-//		// take the resulting Set<> and generate ADD changes.
-//		final Set<Object> added = buildCollectionChangeSet( newColl, newCollection );
-//		if ( oldColl != null && collectionDescriptor != null ) {
-//			for ( Object object : oldCollection ) {
-//				for ( Iterator addedIt = added.iterator(); addedIt.hasNext(); ) {
-//					Object object2 = addedIt.next();
-//					if ( collectionDescriptor.getElementDescriptor().getJavaTypeDescriptor().areEqual( object, object2 ) ) {
-//						addedIt.remove();
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		addCollectionChanges( session, collectionChanges, added, RevisionType.ADD, id );
-//
-//		// take the old collection and remove any that exist in the new collection.
-//		// take the resulting Set<> and generate DEL changes.
-//		final Set<Object> deleted = buildCollectionChangeSet( oldColl, oldCollection );
-//		if ( newColl != null && collectionDescriptor != null ) {
-//			for ( Object object : newCollection ) {
-//				for ( Iterator deletedIt = deleted.iterator(); deletedIt.hasNext(); ) {
-//					Object object2 = deletedIt.next();
-//					if ( collectionDescriptor.getElementDescriptor().getJavaTypeDescriptor().areEqual( object, object2 ) ) {
-//						deletedIt.remove();
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		addCollectionChanges( session, collectionChanges, deleted, RevisionType.DEL, id );
-//
-//		return collectionChanges;
-//	}
 
 	@Override
 	public boolean hasPropertiesWithModifiedFlag() {
