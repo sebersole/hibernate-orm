@@ -7,6 +7,7 @@
 package org.hibernate.integrator.spi;
 
 import org.hibernate.boot.Metadata;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 
@@ -22,16 +23,40 @@ import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 public interface Integrator {
 
 	/**
-	 * Perform integration.
+	 * Perform integration (deprecated).
 	 *
-	 * @param metadata The "compiled" representation of the mapping information
+	 * @param metadata The boot-time representation of the mapping information
 	 * @param sessionFactory The session factory being created
 	 * @param serviceRegistry The session factory's service registry
+	 *
+	 * @deprecated (since 6.0) Use {@link #integrate(Metadata, BootstrapContext, SessionFactoryImplementor, SessionFactoryServiceRegistry)}
+	 * instead
 	 */
-	public void integrate(
+	@Deprecated
+	void integrate(
 			Metadata metadata,
 			SessionFactoryImplementor sessionFactory,
 			SessionFactoryServiceRegistry serviceRegistry);
+
+	/**
+	 * Perform integration.
+	 *
+	 * @param metadata The boot-time representation of the mapping information
+	 * @param bootstrapContext The BootstrapContext for the
+	 * @param sessionFactory The session factory being created
+	 * @param serviceRegistry The session factory's service registry
+	 *
+	 * @since 6.0
+	 */
+	@SuppressWarnings("unused")
+	default void integrate(
+			Metadata metadata,
+			BootstrapContext bootstrapContext,
+			SessionFactoryImplementor sessionFactory,
+			SessionFactoryServiceRegistry serviceRegistry) {
+		// simply call the legacy one, keeping implementors bytecode compatible.
+		integrate( metadata, sessionFactory, serviceRegistry );
+	}
 
 	/**
 	 * Tongue-in-cheek name for a shutdown callback.
@@ -39,6 +64,6 @@ public interface Integrator {
 	 * @param sessionFactory The session factory being closed.
 	 * @param serviceRegistry That session factory's service registry
 	 */
-	public void disintegrate(SessionFactoryImplementor sessionFactory, SessionFactoryServiceRegistry serviceRegistry);
+	void disintegrate(SessionFactoryImplementor sessionFactory, SessionFactoryServiceRegistry serviceRegistry);
 
 }
