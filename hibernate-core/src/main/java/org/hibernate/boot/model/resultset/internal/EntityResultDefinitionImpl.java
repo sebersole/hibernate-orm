@@ -59,7 +59,6 @@ public class EntityResultDefinitionImpl implements ResultSetMappingDefinition.En
 			entityDescriptor = metamodel.findEntityDescriptor( entityClassName );
 		}
 
-		// todo (6.0) : pass along lockMode, etc
 		return new QueryResultBuilderRootEntity( tableAlias, entityDescriptor );
 	}
 

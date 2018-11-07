@@ -41,6 +41,4 @@ public interface MappedForeignKey extends MappedConstraint {
 	void alignColumns();
 
 	List<MappedColumn> getTargetColumns();
-
-	// todo (6.0) - Are there any others to pull up?
 }

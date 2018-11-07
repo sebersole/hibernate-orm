@@ -99,18 +99,8 @@ public abstract class AbstractIdentifiableTypeMapping
 	}
 
 	@Override
-	public PersistentAttributeMapping getIdentifierAttributeMapping() {
-		return getEntityMappingHierarchy().getIdentifierAttributeMapping();
-	}
-
-	@Override
 	public EmbeddedValueMapping getDeclaredEmbeddedIdentifierAttributeMapping() {
 		return declaredIdentifierEmbeddedValueMapping;
-	}
-
-	@Override
-	public EmbeddedValueMapping getEmbeddedIdentifierAttributeMapping() {
-		return getEntityMappingHierarchy().getIdentifierEmbeddedValueMapping();
 	}
 
 	@Override
@@ -128,21 +118,6 @@ public abstract class AbstractIdentifiableTypeMapping
 	@Override
 	public PersistentAttributeMapping getDeclaredVersionAttributeMapping() {
 		return declaredVersionAttributeMapping;
-	}
-
-	@Override
-	public PersistentAttributeMapping getVersionAttributeMapping() {
-		return getEntityMappingHierarchy().getVersionAttributeMapping();
-	}
-
-	@Override
-	public boolean hasVersionAttributeMapping() {
-		return getEntityMappingHierarchy().hasVersionAttributeMapping();
-	}
-
-	@Override
-	public boolean hasSingleIdentifierAttributeMapping() {
-		return getEntityMappingHierarchy().hasIdentifierAttributeMapping();
 	}
 
 	@Override

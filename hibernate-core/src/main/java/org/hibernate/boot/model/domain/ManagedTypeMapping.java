@@ -41,8 +41,6 @@ public interface ManagedTypeMapping {
 	/**
 	 * The ordering here is defined by the alphabetical ordering of the
 	 * attributes' names
-	 *
-	 * todo (6.0) : is this what we want?
 	 */
 	List<PersistentAttributeMapping> getDeclaredPersistentAttributes();
 

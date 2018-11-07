@@ -16,9 +16,6 @@ import org.hibernate.metamodel.model.domain.RepresentationMode;
 public interface EntityMappingHierarchy {
 	IdentifiableTypeMappingImplementor getRootType();
 
-	// todo (6.0) id, version, etc here
-	//		have existing "root" info methods delegate here - allows tools to keep working.
-
 	/**
 	 * Get the identifier persistent attribute mapping.
 	 */

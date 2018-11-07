@@ -429,9 +429,20 @@ literal
 	| timeLiteral
 	;
 
-// todo (6.0) : expand temporal literal support to include:
-//		* Instant -> {instant }
+// todo (6.0) : expand temporal literal support to Java 8 temporal types
+//		* Instant 			-> {instant '...'}
+//		* LocalDate 		-> {localDate '...'}
+//		* LocalDateTime 	-> {localDateTime '...'}
+//		* OffsetDateTime 	-> {offsetDateTime '...'}
+//		* OffsetTime 		-> {offsetTime '...'}
+//		* ZonedDateTime 	-> {localDate '...'}
 //		* ...
+//
+// Few things:
+//		1) the markers above are just initial thoughts.  They are obviously verbose.  Maybe acronyms or shortened forms would be better
+//		2) we may want to stay away from all of the timezone headaches by not supporting local, zoned and offset forms
+
+
 
 timestampLiteral
 	: TIMESTAMP_ESCAPE_START dateTimeLiteralText RIGHT_BRACE

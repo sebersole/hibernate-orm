@@ -53,8 +53,6 @@ public interface MappedTable<T extends MappedColumn> extends Loggable {
 	 */
 	Set<T> getMappedColumns();
 
-	// todo (6.0) : others as deemed appropriate - see o.h.mapping.Table
-
 	void setName(String name);
 
 	/**

@@ -48,6 +48,8 @@ public abstract class ResultSetMappingBinder {
 	// todo (6.0) : we need to delay the building of the QueryResultBuilder instances until after the SessionFactory is available
 	//		something like a `QueryResultBuilderDescriptor` against which we can call
 	//		`#resolve(SessionFactoryImplementor factory)` or similar (what ags?)
+	//
+	// See https://hibernate.atlassian.net/browse/HHH-13082
 
 	/**
 	 * Build a ResultSetMappingDefinition given a containing element for the "return-XXX" elements.

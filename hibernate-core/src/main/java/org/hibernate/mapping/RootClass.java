@@ -87,10 +87,6 @@ public class RootClass extends PersistentClass implements TableOwner {
 		return table;
 	}
 
-	public PersistentAttributeMapping getIdentifierAttributeMapping() {
-		return getEntityMappingHierarchy().getIdentifierAttributeMapping();
-	}
-
 	/**
 	 * @deprecated since 6.0 use {@link #getIdentifierAttributeMapping()}.
 	 */

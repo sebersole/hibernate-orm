@@ -522,7 +522,6 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			implements MetadataBuildingOptions, JpaOrmXmlPersistenceUnitDefaultAware {
 		private final StandardServiceRegistry serviceRegistry;
 		private final MappingDefaultsImpl mappingDefaults;
-		// todo (6.0) : remove bootstrapContext property along with the deprecated methods
 
 		private ImplicitNamingStrategy implicitNamingStrategy;
 		private PhysicalNamingStrategy physicalNamingStrategy;
