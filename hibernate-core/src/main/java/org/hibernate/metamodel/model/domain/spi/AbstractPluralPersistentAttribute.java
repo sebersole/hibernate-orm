@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html
  */
-package org.hibernate.metamodel.model.domain.internal;
+package org.hibernate.metamodel.model.domain.spi;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,21 +27,6 @@ import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.DomainType;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.spi.AbstractPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.BagPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.CollectionMutabilityPlan;
-import org.hibernate.metamodel.model.domain.spi.DomainModelHelper;
-import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
-import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.ListPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.Navigable;
-import org.hibernate.metamodel.model.domain.spi.NavigableVisitationStrategy;
-import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MapPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.SetPersistentAttribute;
-import org.hibernate.metamodel.model.domain.spi.SimpleTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
@@ -74,8 +59,8 @@ import org.jboss.logging.Logger;
  *
  * @author Steve Ebersole
  */
-public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute implements PluralPersistentAttribute {
-	private static final Logger log = Logger.getLogger( PluralPersistentAttributeImpl.class );
+public class AbstractPluralPersistentAttribute<O,C,E> extends AbstractPersistentAttribute<O,C> implements PluralPersistentAttribute<O,C,E> {
+	private static final Logger log = Logger.getLogger( AbstractPluralPersistentAttribute.class );
 
 	private static final Object NOT_NULL_COLLECTION = new MarkerObject( "NOT NULL COLLECTION" );
 
@@ -85,7 +70,7 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 	private int stateArrayPosition;
 
 	@SuppressWarnings("unchecked")
-	public PluralPersistentAttributeImpl(
+	public AbstractPluralPersistentAttribute(
 			PersistentCollectionDescriptor collectionDescriptor,
 			Property bootProperty,
 			PropertyAccess propertyAccess,
@@ -157,17 +142,18 @@ public class PluralPersistentAttributeImpl extends AbstractPersistentAttribute i
 
 	@Override
 	public PersistentAttributeType getPersistentAttributeType() {
-		return null;
+		throw new NotYetImplementedFor6Exception();
 	}
 
 	@Override
 	public boolean isAssociation() {
-		return false;
+		return getPersistentAttributeType() == PersistentAttributeType.ONE_TO_MANY
+				|| getPersistentAttributeType() == PersistentAttributeType.MANY_TO_MANY;
 	}
 
 	@Override
 	public boolean isCollection() {
-		return false;
+		return true;
 	}
 
 	@Override

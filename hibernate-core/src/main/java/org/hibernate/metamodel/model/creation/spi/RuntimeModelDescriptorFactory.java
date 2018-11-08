@@ -16,7 +16,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.service.Service;
@@ -48,7 +48,7 @@ public interface RuntimeModelDescriptorFactory extends Service {
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException;
 
-	<J> MappedSuperclassDescriptor<J> createMappedSuperclassDescriptor(
+	<J> MappedSuperclassTypeDescriptor<J> createMappedSuperclassDescriptor(
 			MappedSuperclassMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException;

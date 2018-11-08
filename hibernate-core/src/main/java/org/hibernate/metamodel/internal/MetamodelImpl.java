@@ -37,7 +37,7 @@ import org.hibernate.metamodel.model.domain.spi.CollectionIndexEntity;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.AbstractRuntimeModel;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -189,7 +189,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 			return embeddedDescriptor;
 		}
 
-		final MappedSuperclassDescriptor msDescriptor = findMappedSuperclassDescriptor( cls );
+		final MappedSuperclassTypeDescriptor msDescriptor = findMappedSuperclassDescriptor( cls );
 		if ( msDescriptor != null ) {
 			return msDescriptor;
 		}
@@ -276,7 +276,7 @@ public class MetamodelImpl extends AbstractRuntimeModel implements MetamodelImpl
 		}
 
 		{
-			final MappedSuperclassDescriptor descriptor = findMappedSuperclassDescriptor( name );
+			final MappedSuperclassTypeDescriptor descriptor = findMappedSuperclassDescriptor( name );
 			if ( descriptor != null ) {
 				// todo (6.0) : a better option is to have MappedSuperclassDescriptor extend EntityValuedExpressableType
 				//		but that currently causes some conflicts regarding `#getJavaTypeDescriptor`

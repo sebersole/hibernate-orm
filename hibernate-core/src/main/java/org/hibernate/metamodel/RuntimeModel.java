@@ -16,7 +16,7 @@ import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -32,12 +32,12 @@ public interface RuntimeModel {
 	<T> EntityTypeDescriptor<T> findEntityDescriptor(String name);
 	void visitEntityDescriptors(Consumer<EntityTypeDescriptor<?>> action);
 
-	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(NavigableRole name) throws NotNavigableException;
-	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException;
-	<T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException;
-	<T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType);
-	<T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(String name);
-	void visitMappedSuperclassDescriptors(Consumer<MappedSuperclassDescriptor<?>> action);
+	<T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(NavigableRole name) throws NotNavigableException;
+	<T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException;
+	<T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException;
+	<T> MappedSuperclassTypeDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType);
+	<T> MappedSuperclassTypeDescriptor<T> findMappedSuperclassDescriptor(String name);
+	void visitMappedSuperclassDescriptors(Consumer<MappedSuperclassTypeDescriptor<?>> action);
 
 	<T> EmbeddedTypeDescriptor<T> findEmbeddedDescriptor(Class<T> javaType);
 	<T> EmbeddedTypeDescriptor<T> findEmbeddedDescriptor(NavigableRole name);

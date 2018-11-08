@@ -12,7 +12,7 @@ import org.hibernate.metamodel.model.domain.IdentifiableDomainType;
 
 /**
  * Hibernate extension SPI for working with {@link IdentifiableType} implementations, which includes
- * both mapped-superclasses {@link MappedSuperclassDescriptor}
+ * both mapped-superclasses {@link MappedSuperclassTypeDescriptor}
  * and {@link EntityTypeDescriptor}
  *
  * @author Steve Ebersole

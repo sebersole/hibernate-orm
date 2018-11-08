@@ -28,7 +28,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
@@ -93,7 +93,7 @@ public interface RuntimeModelCreationContext extends JpaAttributeConverterCreati
 			EntityMapping bootDescriptor);
 
 	void registerMappedSuperclassDescriptor(
-			MappedSuperclassDescriptor runtimeType,
+			MappedSuperclassTypeDescriptor runtimeType,
 			MappedSuperclassMapping bootMapping);
 
 	void registerCollectionDescriptor(

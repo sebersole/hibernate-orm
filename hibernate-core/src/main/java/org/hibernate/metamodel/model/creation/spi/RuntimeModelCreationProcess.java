@@ -50,7 +50,7 @@ import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeRepresentationResolver;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.Navigable;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.relational.spi.DatabaseModel;
@@ -387,9 +387,9 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		if ( runtimeType instanceof EntityTypeDescriptor ) {
 			creationContext.registerEntityDescriptor( (EntityTypeDescriptor) runtimeType, (EntityMapping) bootMapping );
 		}
-		else if ( runtimeType instanceof MappedSuperclassDescriptor ) {
+		else if ( runtimeType instanceof MappedSuperclassTypeDescriptor ) {
 			creationContext.registerMappedSuperclassDescriptor(
-					(MappedSuperclassDescriptor) runtimeType,
+					(MappedSuperclassTypeDescriptor) runtimeType,
 					(MappedSuperclassMapping) bootMapping
 			);
 		}
@@ -616,7 +616,7 @@ public class RuntimeModelCreationProcess implements ResolutionContext {
 		@Override
 		@SuppressWarnings("unchecked")
 		public void registerMappedSuperclassDescriptor(
-				MappedSuperclassDescriptor runtimeType,
+				MappedSuperclassTypeDescriptor runtimeType,
 				MappedSuperclassMapping bootMapping) {
 			inFlightRuntimeModel.addMappedSuperclassDescriptor( runtimeType );
 		}

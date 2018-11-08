@@ -11,10 +11,10 @@ import org.hibernate.boot.model.domain.EntityMapping;
 import org.hibernate.boot.model.domain.MappedSuperclassMapping;
 import org.hibernate.mapping.Collection;
 import org.hibernate.metamodel.model.domain.internal.composite.EmbeddedTypeDescriptorImpl;
-import org.hibernate.metamodel.model.domain.internal.MappedSuperclassImpl;
+import org.hibernate.metamodel.model.domain.internal.MappedSuperclassTypeImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.service.Service;
 
@@ -51,8 +51,8 @@ public interface RuntimeModelDescriptorClassResolver extends Service {
 	 *
 	 * @since 6.0
 	 */
-	default Class<? extends MappedSuperclassDescriptor> getMappedSuperclassDescriptorClass(MappedSuperclassMapping bootMapping) {
-		return MappedSuperclassImpl.class;
+	default Class<? extends MappedSuperclassTypeDescriptor> getMappedSuperclassDescriptorClass(MappedSuperclassMapping bootMapping) {
+		return MappedSuperclassTypeImpl.class;
 	}
 
 	/**

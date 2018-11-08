@@ -57,7 +57,6 @@ import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.metamodel.model.domain.internal.PluralPersistentAttributeImpl;
 import org.hibernate.metamodel.model.domain.internal.SqlAliasStemHelper;
 import org.hibernate.metamodel.model.domain.internal.collection.BasicCollectionElementImpl;
 import org.hibernate.metamodel.model.domain.internal.collection.BasicCollectionIndexImpl;
@@ -76,6 +75,7 @@ import org.hibernate.metamodel.model.domain.internal.collection.RootTableReferen
 import org.hibernate.metamodel.model.relational.spi.Column;
 import org.hibernate.metamodel.model.relational.spi.Table;
 import org.hibernate.naming.Identifier;
+import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.produce.metamodel.spi.Fetchable;
@@ -177,8 +177,7 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 
 		this.mutabilityPlan = determineMutabilityPlan( pluralProperty, creationContext );
 
-		this.attribute = new PluralPersistentAttributeImpl(
-				this,
+		this.attribute = createAttribute(
 				pluralProperty,
 				runtimeContainer.getRepresentationStrategy().generatePropertyAccess(
 						pluralProperty.getPersistentClass(),
@@ -188,6 +187,18 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 				),
 				creationContext
 		);
+
+//		this.attribute = new PluralPersistentAttributeImpl(
+//				this,
+//				pluralProperty,
+//				runtimeContainer.getRepresentationStrategy().generatePropertyAccess(
+//						pluralProperty.getPersistentClass(),
+//						pluralProperty,
+//						runtimeContainer,
+//						sessionFactory.getSessionFactoryOptions().getBytecodeProvider()
+//				),
+//				creationContext
+//		);
 
 		this.foreignKeyDescriptor = new CollectionKey( this, collectionBinding, creationContext );
 
@@ -661,6 +672,11 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 			LockMode lockMode,
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext);
+
+	protected abstract AbstractPluralPersistentAttribute createAttribute(
+			Property pluralProperty,
+			PropertyAccess propertyAccess,
+			RuntimeModelCreationContext creationContext);
 
 	@Override
 	public FetchStrategy getMappedFetchStrategy() {

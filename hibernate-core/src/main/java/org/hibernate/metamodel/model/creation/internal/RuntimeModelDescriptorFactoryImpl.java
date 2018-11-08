@@ -24,7 +24,7 @@ import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.IdentifiableTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.model.domain.spi.SingularPersistentAttribute;
 import org.hibernate.service.spi.ServiceRegistryAwareService;
@@ -120,7 +120,7 @@ public final class RuntimeModelDescriptorFactoryImpl
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <J> MappedSuperclassDescriptor<J> createMappedSuperclassDescriptor(
+	public <J> MappedSuperclassTypeDescriptor<J> createMappedSuperclassDescriptor(
 			MappedSuperclassMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) throws HibernateException {
@@ -132,13 +132,13 @@ public final class RuntimeModelDescriptorFactoryImpl
 	}
 
 	@SuppressWarnings("unchecked")
-	private MappedSuperclassDescriptor instantiateMappedSuperclassDescriptor(
+	private MappedSuperclassTypeDescriptor instantiateMappedSuperclassDescriptor(
 			MappedSuperclassMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		// currently we do not allow user to explicitly name a descriptor class to use on the mapping.
 		// so just look to the resolver
-		final Class<? extends MappedSuperclassDescriptor> runtimeDescriptorClass =
+		final Class<? extends MappedSuperclassTypeDescriptor> runtimeDescriptorClass =
 				descriptorClassResolver.getMappedSuperclassDescriptorClass( bootMapping );
 
 		return instantiateMappedSuperclassDescriptor(
@@ -150,15 +150,15 @@ public final class RuntimeModelDescriptorFactoryImpl
 	}
 
 	@SuppressWarnings( {"unchecked"})
-	private MappedSuperclassDescriptor instantiateMappedSuperclassDescriptor(
-			Class<? extends MappedSuperclassDescriptor> descriptorClass,
+	private MappedSuperclassTypeDescriptor instantiateMappedSuperclassDescriptor(
+			Class<? extends MappedSuperclassTypeDescriptor> descriptorClass,
 			MappedSuperclassMapping bootMapping,
 			IdentifiableTypeDescriptor superTypeDescriptor,
 			RuntimeModelCreationContext creationContext) {
 		try {
-			final Constructor<? extends MappedSuperclassDescriptor> constructor = descriptorClass.getConstructor( MappedSuperclassDescriptor.STANDARD_CONSTRUCTOR_SIG );
+			final Constructor<? extends MappedSuperclassTypeDescriptor> constructor = descriptorClass.getConstructor( MappedSuperclassTypeDescriptor.STANDARD_CONSTRUCTOR_SIG );
 			try {
-				final MappedSuperclassDescriptor descriptor = constructor.newInstance(
+				final MappedSuperclassTypeDescriptor descriptor = constructor.newInstance(
 						bootMapping,
 						superTypeDescriptor,
 						creationContext

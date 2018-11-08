@@ -311,6 +311,10 @@ public interface PersistentCollectionDescriptor<O,C,E>
 		return getIndexDescriptor() == null ? null : getIndexDescriptor().getJavaTypeDescriptor();
 	}
 
+	default SimpleTypeDescriptor getKeyDomainTypeDescriptor() {
+		return getIndexDescriptor() == null ? null : getIndexDescriptor().getDomainTypeDescriptor();
+	}
+
 	// consider whether we want to keep any of this legacy stuff
 
 //	/**

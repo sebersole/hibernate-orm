@@ -12,7 +12,9 @@ import org.hibernate.LockMode;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractPluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.domain.collection.BagInitializerProducer;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
@@ -66,6 +68,14 @@ public class PersistentBagDescriptorImpl<O,E> extends AbstractPersistentCollecti
 				collectionIdResult,
 				elementResult
 		);
+	}
+
+	@Override
+	protected AbstractPluralPersistentAttribute createAttribute(
+			Property pluralProperty,
+			PropertyAccess propertyAccess,
+			RuntimeModelCreationContext creationContext) {
+		return new BagAttributeImpl<>( this, pluralProperty, propertyAccess, creationContext );
 	}
 
 	@Override

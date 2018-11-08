@@ -24,7 +24,7 @@ import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 
 /**
@@ -33,7 +33,7 @@ import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 public abstract class AbstractRuntimeModel implements RuntimeModel {
 	private final Set<EntityHierarchy> entityHierarchySet;
 	private final Map<String, EntityTypeDescriptor<?>> entityDescriptorMap;
-	private final Map<String,MappedSuperclassDescriptor<?>> mappedSuperclassDescriptorMap;
+	private final Map<String, MappedSuperclassTypeDescriptor<?>> mappedSuperclassDescriptorMap;
 	private final Map<String,EmbeddedTypeDescriptor<?>> embeddedDescriptorMap;
 	private final Map<String,PersistentCollectionDescriptor<?,?,?>> collectionDescriptorMap;
 
@@ -69,7 +69,7 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	private AbstractRuntimeModel(
 			Set<EntityHierarchy> entityHierarchySet,
 			Map<String, EntityTypeDescriptor<?>> entityDescriptorMap,
-			Map<String, MappedSuperclassDescriptor<?>> mappedSuperclassDescriptorMap,
+			Map<String, MappedSuperclassTypeDescriptor<?>> mappedSuperclassDescriptorMap,
 			Map<String, EmbeddedTypeDescriptor<?>> embeddedDescriptorMap,
 			Map<String, PersistentCollectionDescriptor<?, ?, ?>> collectionDescriptorMap,
 			Set<EntityNameResolver> entityNameResolvers,
@@ -155,24 +155,24 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 	// MappedSuperclassDescriptor
 
 
-	protected Map<String, MappedSuperclassDescriptor<?>> getMappedSuperclassDescriptorMap() {
+	protected Map<String, MappedSuperclassTypeDescriptor<?>> getMappedSuperclassDescriptorMap() {
 		return mappedSuperclassDescriptorMap;
 	}
 
 	@Override
-	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(NavigableRole role) throws NotNavigableException {
+	public <T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(NavigableRole role) throws NotNavigableException {
 		return getMappedSuperclassDescriptor( role.getFullPath() );
 	}
 
 	@Override
-	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException {
+	public <T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(Class<T> javaType) throws NotNavigableException {
 		return getMappedSuperclassDescriptor( javaType.getName() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> MappedSuperclassDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException {
-		final MappedSuperclassDescriptor<T> descriptor = (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
+	public <T> MappedSuperclassTypeDescriptor<T> getMappedSuperclassDescriptor(String name) throws NotNavigableException {
+		final MappedSuperclassTypeDescriptor<T> descriptor = (MappedSuperclassTypeDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
 
 		if ( descriptor == null ) {
 			throw new NotNavigableException( name );
@@ -183,19 +183,19 @@ public abstract class AbstractRuntimeModel implements RuntimeModel {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType) {
-		return (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( javaType.getName() );
+	public <T> MappedSuperclassTypeDescriptor<T> findMappedSuperclassDescriptor(Class<T> javaType) {
+		return (MappedSuperclassTypeDescriptor<T>) mappedSuperclassDescriptorMap.get( javaType.getName() );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> MappedSuperclassDescriptor<T> findMappedSuperclassDescriptor(String name) {
+	public <T> MappedSuperclassTypeDescriptor<T> findMappedSuperclassDescriptor(String name) {
 		name = getImportedName( name );
-		return (MappedSuperclassDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
+		return (MappedSuperclassTypeDescriptor<T>) mappedSuperclassDescriptorMap.get( name );
 	}
 
 	@Override
-	public void visitMappedSuperclassDescriptors(Consumer<MappedSuperclassDescriptor<?>> action) {
+	public void visitMappedSuperclassDescriptors(Consumer<MappedSuperclassTypeDescriptor<?>> action) {
 		mappedSuperclassDescriptorMap.values().forEach( action );
 	}
 

@@ -16,7 +16,9 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractPluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
 import org.hibernate.sql.results.internal.domain.collection.MapInitializerProducer;
@@ -90,6 +92,11 @@ public class PersistentMapDescriptorImpl<O,K,E>
 		);
 	}
 
-
-
+	@Override
+	protected AbstractPluralPersistentAttribute createAttribute(
+			Property pluralProperty,
+			PropertyAccess propertyAccess,
+			RuntimeModelCreationContext creationContext) {
+		return new MapAttributeImpl<>( this, pluralProperty, propertyAccess, creationContext );
+	}
 }

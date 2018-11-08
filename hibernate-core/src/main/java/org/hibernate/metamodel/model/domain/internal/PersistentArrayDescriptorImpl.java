@@ -13,7 +13,9 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDescriptor;
+import org.hibernate.metamodel.model.domain.spi.AbstractPluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
+import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -66,6 +68,14 @@ public class PersistentArrayDescriptorImpl<O,E> extends AbstractPersistentCollec
 			DomainResultCreationState creationState,
 			DomainResultCreationContext creationContext) {
 		throw new NotYetImplementedFor6Exception();
+	}
+
+	@Override
+	protected AbstractPluralPersistentAttribute createAttribute(
+			Property pluralProperty,
+			PropertyAccess propertyAccess,
+			RuntimeModelCreationContext creationContext) {
+		return new ListAttributeImpl<>( this, pluralProperty, propertyAccess, creationContext );
 	}
 
 	@Override

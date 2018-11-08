@@ -16,7 +16,7 @@ import org.hibernate.metamodel.internal.MetamodelImpl;
 import org.hibernate.metamodel.model.domain.spi.EmbeddedTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.MappedSuperclassDescriptor;
+import org.hibernate.metamodel.model.domain.spi.MappedSuperclassTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentCollectionDescriptor;
 import org.hibernate.metamodel.spi.AbstractRuntimeModel;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -59,8 +59,8 @@ public class InFlightRuntimeModel extends AbstractRuntimeModel {
 		}
 	}
 
-	public <T> void addMappedSuperclassDescriptor(MappedSuperclassDescriptor<T> descriptor) {
-		final MappedSuperclassDescriptor previous = getMappedSuperclassDescriptorMap().put(
+	public <T> void addMappedSuperclassDescriptor(MappedSuperclassTypeDescriptor<T> descriptor) {
+		final MappedSuperclassTypeDescriptor previous = getMappedSuperclassDescriptorMap().put(
 				descriptor.getNavigableRole().getFullPath(),
 				descriptor
 		);
