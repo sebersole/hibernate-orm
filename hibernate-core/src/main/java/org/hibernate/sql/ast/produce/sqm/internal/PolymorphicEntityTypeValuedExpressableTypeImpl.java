@@ -1039,4 +1039,9 @@ public class PolymorphicEntityTypeValuedExpressableTypeImpl<T> implements Entity
 			SessionFactoryImplementor factory) {
 		throw new UnsupportedOperationException(  );
 	}
+
+	@Override
+	public InFlightAccess<T> getInFlightAccess() {
+		throw new UnsupportedOperationException(  );
+	}
 }

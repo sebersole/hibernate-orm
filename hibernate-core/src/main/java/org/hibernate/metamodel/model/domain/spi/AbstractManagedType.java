@@ -126,6 +126,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		if ( bootDescriptor instanceof IdentifiableTypeMapping ) {
 			addJoinDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext );
 		}
+
+		inFlightAccess.finishUp();
 	}
 
 	public void addSubclassDescriptor(InheritanceCapable<? extends J> subclassType) {
