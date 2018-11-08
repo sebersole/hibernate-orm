@@ -53,7 +53,8 @@ public abstract class AbstractSingularPersistentAttribute<O,J>
 
 	@Override
 	public boolean isAssociation() {
-		return false;
+		return getPersistentAttributeType() == PersistentAttributeType.MANY_TO_ONE
+				|| getPersistentAttributeType() == PersistentAttributeType.ONE_TO_ONE;
 	}
 
 	@Override

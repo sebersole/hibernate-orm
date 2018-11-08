@@ -188,18 +188,6 @@ public abstract class AbstractPersistentCollectionDescriptor<O,C,E> implements P
 				creationContext
 		);
 
-//		this.attribute = new PluralPersistentAttributeImpl(
-//				this,
-//				pluralProperty,
-//				runtimeContainer.getRepresentationStrategy().generatePropertyAccess(
-//						pluralProperty.getPersistentClass(),
-//						pluralProperty,
-//						runtimeContainer,
-//						sessionFactory.getSessionFactoryOptions().getBytecodeProvider()
-//				),
-//				creationContext
-//		);
-
 		this.foreignKeyDescriptor = new CollectionKey( this, collectionBinding, creationContext );
 
 		if ( sessionFactory.getSessionFactoryOptions().isStructuredCacheEntriesEnabled() ) {

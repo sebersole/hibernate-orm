@@ -30,4 +30,10 @@ public interface IdentifiableTypeDescriptor<T> extends InheritanceCapable<T>, Id
 	SimpleTypeDescriptor<?> getIdType();
 
 	EntityHierarchy getHierarchy();
+
+	interface InFlightAccess<X> extends ManagedTypeDescriptor.InFlightAccess<X> {
+	}
+
+	@Override
+	InFlightAccess<T> getInFlightAccess();
 }

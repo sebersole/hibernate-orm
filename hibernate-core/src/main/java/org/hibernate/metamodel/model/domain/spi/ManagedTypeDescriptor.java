@@ -214,4 +214,21 @@ public interface ManagedTypeDescriptor<T>
 
 	<S extends T> ManagedTypeDescriptor<S> findSubType(Class<S> type);
 
+	/**
+	 * In-flight access to the managed type.  Used to add attributes, etc.
+	 * Valid only during boot.
+	 */
+	InFlightAccess<T> getInFlightAccess();
+
+	/**
+	 * Used during creation of the managed type object to add its attributes
+	 */
+	interface InFlightAccess<T> {
+		void addAttribute(PersistentAttributeDescriptor<T, ?> attribute);
+
+		/**
+		 * Called when configuration of the managed-type is complete
+		 */
+		void finishUp();
+	}
 }

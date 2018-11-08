@@ -59,6 +59,8 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	// a cache to more easily find the PersistentAttribute by name
 	private Map<String,NonIdPersistentAttribute> declaredAttributesByName;
 
+	private transient InFlightAccess<J> inFlightAccess;
+
 	@SuppressWarnings("WeakerAccess")
 	public AbstractManagedType(
 			ManagedTypeMapping bootDescriptor,
@@ -74,6 +76,12 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 		this.representationStrategy = creationContext.getRepresentationStrategySelector()
 				.resolveStrategy( bootDescriptor, this, creationContext );
+
+		this.inFlightAccess = createInFlightAccess();
+	}
+
+	protected InFlightAccess<J> createInFlightAccess() {
+		return new InFlightAccessImpl();
 	}
 
 	private boolean fullyInitialized;
@@ -113,23 +121,10 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			attributes = CollectionHelper.arrayList( declaredAttributeCount );
 		}
 
-
-		final List<NonIdPersistentAttribute> collectedAttributes = new ArrayList<>();
-
-		createAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes(), collectedAttributes::add );
+		createAttributes( bootDescriptor, creationContext, bootDescriptor.getDeclaredPersistentAttributes() );
 
 		if ( bootDescriptor instanceof IdentifiableTypeMapping ) {
-			addJoinDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext, collectedAttributes::add );
-		}
-
-		collectedAttributes.sort( Comparator.comparing( NonIdPersistentAttribute::getName ) );
-
-		for ( NonIdPersistentAttribute attribute : collectedAttributes ) {
-			attribute.setStateArrayPosition( getStateArrayContributors().size() );
-			this.attributes.add( attribute );
-			this.declaredAttributes.add( attribute );
-			this.declaredAttributesByName.putIfAbsent( attribute.getName(), attribute );
-			this.stateArrayContributors.add( attribute );
+			addJoinDeclaredAttributes( (IdentifiableTypeMapping) bootDescriptor, creationContext );
 		}
 	}
 
@@ -609,28 +604,25 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 
 	private void addJoinDeclaredAttributes(
 			IdentifiableTypeMapping bootDescriptor,
-			RuntimeModelCreationContext creationContext,
-			Consumer<NonIdPersistentAttribute<J,?>> collector) {
+			RuntimeModelCreationContext creationContext) {
 		final List<PersistentAttributeMapping> declaredPersistentAttributes = new ArrayList<>();
 
 		bootDescriptor.getMappedJoins().forEach(
 				tableJoin -> declaredPersistentAttributes.addAll( tableJoin.getDeclaredPersistentAttributes() )
 		);
 
-		createAttributes( bootDescriptor, creationContext, declaredPersistentAttributes, collector );
+		createAttributes( bootDescriptor, creationContext, declaredPersistentAttributes );
 	}
 
 	private void createAttributes(
 			ManagedTypeMapping bootContainer,
 			RuntimeModelCreationContext creationContext,
-			List<PersistentAttributeMapping> attributes,
-			Consumer<NonIdPersistentAttribute<J,?>> collector) {
+			List<PersistentAttributeMapping> attributes) {
 		attributes.forEach(
 				attributeMapping -> createAttribute(
 						attributeMapping,
 						bootContainer,
-						creationContext,
-						collector
+						creationContext
 				)
 		);
 	}
@@ -638,8 +630,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 	private void createAttribute(
 			PersistentAttributeMapping attributeMapping,
 			ManagedTypeMapping bootContainer,
-			RuntimeModelCreationContext creationContext,
-			Consumer<NonIdPersistentAttribute<J, ?>> collector) {
+			RuntimeModelCreationContext creationContext) {
 		PersistentAttributeDescriptor<J, Object> attribute = attributeMapping.makeRuntimeAttribute(
 				this,
 				bootContainer,
@@ -658,7 +649,7 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 			);
 		}
 
-		collector.accept( (NonIdPersistentAttribute<J, ?>) attribute );
+		getInFlightAccess().addAttribute( attribute );
 	}
 
 	@Override
@@ -676,4 +667,38 @@ public abstract class AbstractManagedType<J> implements InheritanceCapable<J> {
 		return DomainModelHelper.resolveSubType( this, subType, typeConfiguration.getSessionFactory() );
 	}
 
+	@Override
+	public InFlightAccess<J> getInFlightAccess() {
+		if ( inFlightAccess == null ) {
+			throw new IllegalStateException( "Type has been locked" );
+		}
+
+		return inFlightAccess;
+	}
+
+	protected class InFlightAccessImpl implements InFlightAccess<J> {
+
+		final List<NonIdPersistentAttribute> collectedAttributes = new ArrayList<>();
+
+		@Override
+		public void addAttribute(PersistentAttributeDescriptor<J, ?> attribute) {
+			collectedAttributes.add( (NonIdPersistentAttribute) attribute );
+		}
+
+		@Override
+		public void finishUp() {
+
+			collectedAttributes.sort( Comparator.comparing( NonIdPersistentAttribute::getName ) );
+
+			for ( NonIdPersistentAttribute attribute : collectedAttributes ) {
+				attribute.setStateArrayPosition( getStateArrayContributors().size() );
+				attributes.add( attribute );
+				declaredAttributes.add( attribute );
+				declaredAttributesByName.putIfAbsent( attribute.getName(), attribute );
+				stateArrayContributors.add( attribute );
+			}
+
+			inFlightAccess = null;
+		}
+	}
 }

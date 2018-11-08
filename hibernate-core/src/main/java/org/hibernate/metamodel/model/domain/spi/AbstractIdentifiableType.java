@@ -26,6 +26,16 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 	}
 
 	@Override
+	protected ManagedTypeDescriptor.InFlightAccess<T> createInFlightAccess() {
+		return new InFlightAccessImpl( super.getInFlightAccess() );
+	}
+
+	@Override
+	public IdentifiableTypeDescriptor.InFlightAccess<T> getInFlightAccess() {
+		return (IdentifiableTypeDescriptor.InFlightAccess<T>) super.getInFlightAccess();
+	}
+
+	@Override
 	public IdentifiableJavaDescriptor<T> getJavaTypeDescriptor() {
 		return (IdentifiableJavaDescriptor<T>) super.getJavaTypeDescriptor();
 	}
@@ -95,5 +105,24 @@ public abstract class AbstractIdentifiableType<T> extends AbstractManagedType<T>
 		}
 
 		return navigable;
+	}
+
+	private class InFlightAccessImpl implements IdentifiableTypeDescriptor.InFlightAccess<T> {
+		private final AbstractManagedType.InFlightAccess managedTypeAccess;
+
+		private InFlightAccessImpl(ManagedTypeDescriptor.InFlightAccess managedTypeAccess) {
+			this.managedTypeAccess = managedTypeAccess;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public void addAttribute(PersistentAttributeDescriptor attribute) {
+			managedTypeAccess.addAttribute( attribute );
+		}
+
+		@Override
+		public void finishUp() {
+			managedTypeAccess.finishUp();
+		}
 	}
 }
