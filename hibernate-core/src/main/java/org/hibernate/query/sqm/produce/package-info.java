@@ -40,10 +40,13 @@
  * == Exceptions
  *
  * Generally, the interpretation will throw exceptions as one of 3 types:
+ *
  *  * {@link org.hibernate.query.sqm.QueryException} and derivatives represent problems with the
  *  		query itself.
  *  * {@link org.hibernate.query.sqm.ParsingException} and derivatives represent errors (potential
  *  		bugs) during parsing.
  *  * {@link org.hibernate.query.sqm.InterpretationException} represents an unexpected problem
+ *
+ * @asciidoclet
  */
 package org.hibernate.query.sqm.produce;

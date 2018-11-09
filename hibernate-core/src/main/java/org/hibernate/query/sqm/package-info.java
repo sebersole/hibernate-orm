@@ -17,7 +17,9 @@
  *         walking.  See {@link org.hibernate.query.sqm.produce}.
  * * Walking (or generally consuming) SQM trees.  See {@link org.hibernate.query.sqm.consume}.
  *
- * Note that this entire package is considered incubating
+ * Note that this entire package is considered incubating.
+ *
+ * @asciidoclet
  */
 @org.hibernate.Incubating
 package org.hibernate.query.sqm;

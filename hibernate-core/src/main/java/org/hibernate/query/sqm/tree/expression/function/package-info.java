@@ -55,5 +55,7 @@
  * <p/>
  * Support for non-standard functions uses {@link org.hibernate.query.sqm.tree.expression.function.SqmGenericFunction}
  * and {@link org.hibernate.sql.ast.tree.spi.expression.NonStandardFunction} instead.
+ *
+ * @asciidoclet
  */
 package org.hibernate.query.sqm.tree.expression.function;

@@ -101,6 +101,9 @@ javadoc {
 				'http://docs.jboss.org/cdi/api/2.0/',
 				'https://docs.oracle.com/javaee/7/api/'
 		]
+		// by default, exclude the files from Asciidoclet processing
+		// add the @asciidoclet tag to enable Asciidoclet on a particular file
+		options.addStringOption( '-exclude', '**' )
 
 		if ( JavaVersion.current().isJava8Compatible() ) {
 			options.addStringOption( 'Xdoclint:none', '-quiet' )
