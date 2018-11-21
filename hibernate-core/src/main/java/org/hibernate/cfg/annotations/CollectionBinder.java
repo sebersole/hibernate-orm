@@ -1224,7 +1224,7 @@ public abstract class CollectionBinder {
 			}
 		}
 
-		key.getJavaTypeMapping().getJavaTypeDescriptor();
+//		key.getJavaTypeMapping().getJavaTypeDescriptor();
 
 		return key;
 	}

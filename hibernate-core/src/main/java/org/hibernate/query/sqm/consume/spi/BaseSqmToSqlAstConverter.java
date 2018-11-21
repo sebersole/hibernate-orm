@@ -26,10 +26,12 @@ import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
-import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
+import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierComposite;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
+import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PersistentAttributeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.PluralPersistentAttribute;
 import org.hibernate.query.NavigablePath;
@@ -171,11 +173,11 @@ import org.hibernate.sql.ast.tree.spi.expression.domain.AnyValuedNavigableRefere
 import org.hibernate.sql.ast.tree.spi.expression.domain.BasicValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.CompositeIdentifierReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EmbeddableValuedNavigableReference;
-import org.hibernate.sql.ast.tree.spi.expression.domain.SimpleIdentifierReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.EntityValuedNavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableContainerReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.ast.tree.spi.expression.domain.PluralAttributeReference;
+import org.hibernate.sql.ast.tree.spi.expression.domain.SimpleIdentifierReference;
 import org.hibernate.sql.ast.tree.spi.from.EntityTableGroup;
 import org.hibernate.sql.ast.tree.spi.from.FromClause;
 import org.hibernate.sql.ast.tree.spi.from.TableGroup;
@@ -199,7 +201,8 @@ import org.hibernate.sql.exec.spi.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameters;
 import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
-import org.hibernate.type.spi.StandardSpiBasicTypes;
+import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.StandardBasicTypes.StandardBasicType;
 
 import org.jboss.logging.Logger;
 
@@ -870,30 +873,60 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralStringExpression(SqmLiteralString expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.STRING ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.STRING ),
 				getCurrentClauseStack().getCurrent()
 		);
+	}
+
+	protected SqlExpressableType resolveJdbcTypeMapper(BasicValuedExpressableType expressionType, BasicTypeDescriptor fallback) {
+		return resolveBasicValueMapper( (BasicTypeDescriptor) expressionType, StandardBasicTypes.STRING ).getSqlExpressableType();
+	}
+
+	protected SqlExpressableType resolveJdbcTypeMapper(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
+		return resolveBasicValueMapper( expressionType, StandardBasicTypes.STRING ).getSqlExpressableType();
+	}
+
+	@SuppressWarnings("unchecked")
+	protected BasicValueMapper resolveBasicValueMapper(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
+		final BasicTypeDescriptor resolved = resolveDomainType( expressionType, fallback );
+
+		if ( resolved instanceof BasicValueMapper ) {
+			return (BasicValueMapper) resolved;
+		}
+		else if ( resolved instanceof StandardBasicType ) {
+			return producerContext.getSessionFactory()
+					.getTypeConfiguration()
+					.resolveStandardBasicType( (StandardBasicType) resolved );
+		}
+
+		throw new IllegalArgumentException(
+				"Could not resolve incoming BasicTypeDescriptor [" + resolved + "] to BasicValueMapper"
+		);
+	}
+
+	protected BasicTypeDescriptor resolveDomainType(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
+		return expressionType == null
+				? fallback
+				: expressionType;
 	}
 
 	protected SqlExpressableType resolveSqlExpressableType(
 			BasicValuedExpressableType expressionType,
 			BasicValuedExpressableType defaultType) {
-		return resolveType( expressionType, defaultType ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() );
+		return resolveType( expressionType, defaultType ).getSqlExpressableType();
 	}
 
 	protected BasicValuedExpressableType resolveType(
 			BasicValuedExpressableType expressionType,
 			BasicValuedExpressableType defaultType) {
-		return expressionType != null
-				? expressionType
-				: defaultType;
+		return expressionType != null ? expressionType : defaultType;
 	}
 
 	@Override
 	public QueryLiteral visitLiteralCharacterExpression(SqmLiteralCharacter expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.CHARACTER ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.CHARACTER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -902,7 +935,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralDoubleExpression(SqmLiteralDouble expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.DOUBLE ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.DOUBLE ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -911,7 +944,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralIntegerExpression(SqmLiteralInteger expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.INTEGER ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.INTEGER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -920,7 +953,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralBigIntegerExpression(SqmLiteralBigInteger expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_INTEGER ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BIG_INTEGER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -929,7 +962,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralBigDecimalExpression(SqmLiteralBigDecimal expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.BIG_DECIMAL ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BIG_DECIMAL ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -938,7 +971,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralFloatExpression(SqmLiteralFloat expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.FLOAT ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.FLOAT ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -947,7 +980,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralLongExpression(SqmLiteralLong expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.LONG ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.LONG ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -956,7 +989,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralTrueExpression(SqmLiteralTrue expression) {
 		return new QueryLiteral(
 				Boolean.TRUE,
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -965,7 +998,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralFalseExpression(SqmLiteralFalse expression) {
 		return new QueryLiteral(
 				Boolean.FALSE,
-				resolveSqlExpressableType( expression.getExpressableType(), StandardSpiBasicTypes.BOOLEAN ),
+				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -974,7 +1007,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralNullExpression(SqmLiteralNull expression) {
 		return new QueryLiteral(
 				null,
-				expression.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				expression.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -983,7 +1016,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralTimestampExpression(SqmLiteralTimestamp literal) {
 		return new QueryLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				literal.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -992,7 +1025,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralDateExpression(SqmLiteralDate literal) {
 		return new QueryLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				literal.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -1001,7 +1034,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralTimeExpression(SqmLiteralTime literal) {
 		return new QueryLiteral(
 				literal.getLiteralValue(),
-				literal.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				literal.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -1010,7 +1043,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public Object visitConstantEnumExpression(SqmConstantEnum expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				expression.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				expression.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -1019,7 +1052,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public Object visitConstantFieldReference(SqmConstantFieldReference expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				expression.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				expression.getExpressableType().getSqlExpressableType(),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -1168,7 +1201,7 @@ public abstract class BaseSqmToSqlAstConverter
 		try {
 			return new NonStandardFunction(
 					expression.getFunctionName(),
-					( (BasicValuedExpressableType) expression.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+					( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType(),
 					visitArguments( expression.getArguments() )
 			);
 		}
@@ -1225,7 +1258,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new AvgFunction(
 					(Expression) expression.getArgument().accept( this ),
 					expression.isDistinct(),
-					expression.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					expression.getExpressableType().getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1240,7 +1273,7 @@ public abstract class BaseSqmToSqlAstConverter
 		try {
 			return new BitLengthFunction(
 					(Expression) function.getArgument().accept( this ),
-					( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1255,7 +1288,7 @@ public abstract class BaseSqmToSqlAstConverter
 		try {
 			return new CastFunction(
 					(Expression) expression.getExpressionToCast().accept( this ),
-					( (BasicValuedExpressableType) expression.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+					( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType(),
 					expression.getExplicitSqlCastTarget()
 			);
 		}
@@ -1326,24 +1359,21 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public CurrentDateFunction visitCurrentDateFunction(SqmCurrentDateFunction function) {
 		return new CurrentDateFunction(
-				( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType()
-						.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 		);
 	}
 
 	@Override
 	public CurrentTimeFunction visitCurrentTimeFunction(SqmCurrentTimeFunction function) {
 		return new CurrentTimeFunction(
-				( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType()
-						.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 		);
 	}
 
 	@Override
 	public CurrentTimestampFunction visitCurrentTimestampFunction(SqmCurrentTimestampFunction function) {
 		return new CurrentTimestampFunction(
-				( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType()
-						.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 		);
 	}
 
@@ -1355,7 +1385,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new ExtractFunction(
 					(Expression) function.getUnitToExtract().accept( this ),
 					(Expression) function.getExtractionSource().accept( this ),
-					( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1425,7 +1455,7 @@ public abstract class BaseSqmToSqlAstConverter
 		try {
 			return new LowerFunction(
 					(Expression) function.getArgument().accept( this ),
-					( (BasicValuedExpressableType) function.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1441,9 +1471,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new MaxFunction(
 					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
-					expression.getExpressableType()
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					expression.getExpressableType().getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1459,9 +1487,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new MinFunction(
 					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
-					expression.getExpressableType()
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					expression.getExpressableType().getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1479,9 +1505,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new ModFunction(
 					dividend,
 					divisor,
-					( (BasicValuedExpressableType) function.getExpressableType() )
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					( (BasicValuedExpressableType) function.getExpressableType() ).getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1497,9 +1521,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new SumFunction(
 					toExpression( expression.getArgument().accept( this ) ),
 					expression.isDistinct(),
-					expression.getExpressableType()
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					expression.getExpressableType().getSqlExpressableType()
 
 			);
 		}
@@ -1516,9 +1538,7 @@ public abstract class BaseSqmToSqlAstConverter
 			return new UnaryOperation(
 					interpret( expression.getOperation() ),
 					(Expression) expression.getOperand().accept( this ),
-					expression.getExpressableType()
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					expression.getExpressableType().getSqlExpressableType()
 
 			);
 		}
@@ -1557,9 +1577,7 @@ public abstract class BaseSqmToSqlAstConverter
 					interpret( expression.getOperation() ),
 					(Expression) expression.getLeftHandOperand().accept( this ),
 					(Expression) expression.getRightHandOperand().accept( this ),
-					( (BasicValuedExpressableType) expression.getExpressableType() )
-							.getBasicType()
-							.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+					( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType()
 			);
 		}
 		finally {
@@ -1602,9 +1620,7 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public CaseSimpleExpression visitSimpleCaseExpression(SqmCaseSimple expression) {
 		final CaseSimpleExpression result = new CaseSimpleExpression(
-				( (BasicValuedExpressableType) expression.getExpressableType() )
-						.getBasicType()
-						.getSqlExpressableType( getSessionFactory().getTypeConfiguration() ),
+				( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType(),
 				(Expression) expression.getFixture().accept( this )
 		);
 
@@ -1623,9 +1639,7 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public CaseSearchedExpression visitSearchedCaseExpression(SqmCaseSearched expression) {
 		final CaseSearchedExpression result = new CaseSearchedExpression(
-				( (BasicValuedExpressableType) expression.getExpressableType() )
-						.getBasicType()
-						.getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType()
 		);
 
 		for ( SqmCaseSearched.WhenFragment whenFragment : expression.getWhenFragments() ) {
@@ -1645,7 +1659,7 @@ public abstract class BaseSqmToSqlAstConverter
 		return new NullifFunction(
 				(Expression) expression.getFirstArgument().accept( this ),
 				(Expression) expression.getSecondArgument().accept( this ),
-				( (BasicValuedExpressableType) expression.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) expression.getExpressableType() ).getSqlExpressableType()
 		);
 	}
 
@@ -1663,7 +1677,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public Object visitUpperFunction(SqmUpperFunction sqmFunction) {
 		return new UpperFunction(
 				(Expression) sqmFunction.getArgument().accept( this ),
-				( (BasicValuedExpressableType) sqmFunction.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				( (BasicValuedExpressableType) sqmFunction.getExpressableType() ).getSqlExpressableType()
 		);
 
 	}
@@ -1675,7 +1689,7 @@ public abstract class BaseSqmToSqlAstConverter
 						(Expression)expression.getLeftHandOperand().accept( this ),
 						(Expression) expression.getRightHandOperand().accept( this )
 				),
-				expression.getExpressableType().getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() )
+				expression.getExpressableType().getSqlExpressableType()
 		);
 	}
 
@@ -1770,7 +1784,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 			SqlExpressableType subQueryType = null;
 			if ( sqmSubQuery.getExpressableType() instanceof BasicValuedExpressableType ) {
-				subQueryType = ( (BasicValuedExpressableType) sqmSubQuery.getExpressableType() ).getBasicType().getSqlExpressableType( getSessionFactory().getTypeConfiguration() );
+				subQueryType = ( (BasicValuedExpressableType) sqmSubQuery.getExpressableType() ).getSqlExpressableType();
 			}
 
 			return new SubQuery( subQuerySpec, subQueryType );

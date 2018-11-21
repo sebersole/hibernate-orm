@@ -8,6 +8,7 @@ package org.hibernate.query.sqm.tree.expression;
 
 import org.hibernate.HibernateException;
 import org.hibernate.query.sqm.consume.spi.SemanticQueryWalker;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -56,7 +57,7 @@ public class SqmLiteralNull implements SqmLiteral<Void> {
 		}
 
 		@Override
-		public BasicType getBasicType() {
+		public SqlExpressableType getSqlExpressableType() {
 			return null;
 		}
 

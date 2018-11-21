@@ -13,12 +13,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.model.domain.ResolutionContext;
 import org.hibernate.boot.model.type.spi.BasicTypeResolver;
 import org.hibernate.boot.model.type.spi.TypeResolverTemplate;
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.mapping.BasicValue;
+import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
+import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
+import org.hibernate.resource.beans.spi.ManagedBean;
+import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 import org.hibernate.type.Type;
+import org.hibernate.type.descriptor.java.MutabilityPlan;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.BasicType;
 import org.hibernate.type.spi.ParameterizedType;
 import org.hibernate.type.spi.TypeConfiguration;
@@ -38,7 +49,6 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 	private final Class typeImplementorClass;
 	private final String[] registrationKeys;
 	private final Map<String, String> parameters;
-	private final TypeConfiguration typeConfiguration;
 
 	private BasicTypeResolver typeResolver;
 
@@ -54,7 +64,6 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 		this.parameters = parameters == null
 				? Collections.<String, String>emptyMap()
 				: Collections.unmodifiableMap( parameters );
-		this.typeConfiguration = typeConfiguration;
 	}
 
 	public TypeDefinition(
@@ -69,7 +78,6 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 		this.parameters = parameters == null
 				? Collections.emptyMap()
 				: extractStrings( parameters );
-		this.typeConfiguration = typeConfiguration;
 	}
 
 	private Map<String, String> extractStrings(Properties properties) {
@@ -109,6 +117,52 @@ public class TypeDefinition implements TypeResolverTemplate, Serializable {
 		properties.putAll( parameters );
 		return properties;
 	}
+
+	@SuppressWarnings("unchecked")
+	public BasicValueMapper resolve(
+			BasicJavaDescriptor explicitJtd,
+			SqlTypeDescriptor explicitStd,
+			Map localConfigParameters,
+			Supplier<BasicValueConverter> converterSupplier,
+			MutabilityPlan explicitMutabilityPlan,
+			MetadataBuildingContext context) {
+		final ManagedBean typeBean = context.getBootstrapContext()
+				.getServiceRegistry()
+				.getService( ManagedBeanRegistry.class )
+				.getBean( typeImplementorClass );
+
+		final Object typeInstance = typeBean.getBeanInstance();
+
+		injectParameters(
+				typeInstance,
+				() -> {
+					final Map<String, String> mergedParameters = new HashMap<>( parameters );
+					if ( localConfigParameters != null && ! localConfigParameters.isEmpty() ) {
+						mergedParameters.putAll( localConfigParameters );
+					}
+
+					return mergedParameters;
+				}
+		);
+
+		return BasicValue.toValueMapper(
+				name,
+				typeInstance,
+				explicitJtd,
+				explicitStd,
+				converterSupplier,
+				explicitMutabilityPlan,
+				context
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void injectParameters(Object customType, Supplier<Map> parameterSupplier) {
+		if ( customType instanceof ParameterizedType ) {
+			( (ParameterizedType) customType ).setParameters( parameterSupplier.get() );
+		}
+	}
+
 
 	@Override
 	public BasicTypeResolver resolveTypeResolver(Map<String, String> localConfigParameters) {

@@ -7,21 +7,22 @@
 
 package org.hibernate.metamodel.model.domain.internal.entity;
 
-import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorDescriptor;
 import org.hibernate.metamodel.model.domain.spi.DiscriminatorMappings;
 import org.hibernate.metamodel.model.domain.spi.EntityHierarchy;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.metamodel.model.relational.spi.Column;
+import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
 import org.hibernate.sql.results.internal.domain.basic.BasicResultImpl;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * @author Steve Ebersole
@@ -30,7 +31,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	public static final String NAVIGABLE_NAME = "{discriminator}";
 
 	private final EntityHierarchy hierarchy;
-	private final BasicType<J> basicType;
+	private final BasicValueMapper<J> valueMapper;
 	private final Column column;
 
 	private final NavigableRole navigableRole;
@@ -38,11 +39,11 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	@SuppressWarnings("WeakerAccess")
 	public DiscriminatorDescriptorImpl(
 			EntityHierarchy hierarchy,
-			BasicValueMapping<J> valueMapping,
+			org.hibernate.boot.model.domain.BasicValueMapping<J> valueMapping,
 			RuntimeModelCreationContext creationContext) {
 		this.hierarchy = hierarchy;
 
-		this.basicType = valueMapping.resolveType();
+		this.valueMapper = valueMapping.getResolution();
 		this.column = creationContext.getDatabaseObjectResolver().resolveColumn( valueMapping.getMappedColumn() );
 
 		this.navigableRole = hierarchy.getRootEntityType().getNavigableRole().append( NAVIGABLE_NAME );
@@ -61,6 +62,11 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	@Override
 	public String getNavigableName() {
 		return NAVIGABLE_NAME;
+	}
+
+	@Override
+	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
+		return getValueMapper().getDomainJtd();
 	}
 
 	@Override
@@ -85,8 +91,13 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	}
 
 	@Override
-	public BasicType<J> getBasicType() {
-		return basicType;
+	public BasicValueMapper<J> getValueMapper() {
+		return valueMapper;
+	}
+
+	@Override
+	public SqlExpressableType getSqlExpressableType() {
+		return valueMapper.getSqlExpressableType();
 	}
 
 	@Override

@@ -26,17 +26,20 @@ import org.hibernate.id.uuid.LocalObjectUuidHelper;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.SessionFactoryRegistry;
 import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationProcess;
+import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
-import org.hibernate.service.ServiceRegistry;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmLiteral;
+import org.hibernate.service.ServiceRegistry;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.type.StandardBasicTypes;
+import org.hibernate.type.StandardBasicTypes.StandardBasicType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptorRegistry;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptorRegistry;
+import org.hibernate.type.internal.StandardBasicValueMapper;
 import org.hibernate.type.internal.TypeConfigurationRegistry;
 
 import static org.hibernate.internal.CoreLogging.messageLogger;
@@ -66,6 +69,7 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	private final String uuid = LocalObjectUuidHelper.generateLocalObjectUuid();
 
 	private final Scope scope;
+
 	private boolean initialized;
 
 	// things available during both boot and runtime ("active") lifecycle phases
@@ -74,14 +78,24 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 	private final transient BasicTypeRegistry basicTypeRegistry;
 
 	private final transient Map<SqlTypeDescriptor,Map<BasicJavaDescriptor, SqlExpressableType>> jdbcValueMapperCache = new ConcurrentHashMap<>();
+	/**
+	 * todo (6.0) : register TypeDefinitions here?  Specifically the BasicValueMapper they resolve to
+	 */
+	private final Map<String, BasicValueMapper> namedMappers = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<StandardBasicType<?>,BasicValueMapper<?>> standardBasicTypeResolutionCache = new ConcurrentHashMap<>();
+
 
 	public TypeConfiguration() {
-		this.scope = new Scope();
+		log.debugf( "Instantiating TypeConfiguration : %s", uuid );
+
+		this.scope = new Scope( this );
 
 		this.javaTypeDescriptorRegistry = new JavaTypeDescriptorRegistry( this );
 		this.sqlTypeDescriptorRegistry = new SqlTypeDescriptorRegistry( this );
 
+		// todo (6.0) : `NamedValueMapperRegistry`
 		this.basicTypeRegistry = new BasicTypeRegistry( this );
+
 		StandardBasicTypes.prime( this );
 
 		this.initialized = true;
@@ -107,11 +121,39 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 		return sqlTypeDescriptorRegistry;
 	}
 
+	/**
+	 * Resolve the BasicValueMapper related with the StandardBasicType in relation to
+	 * this TypeConfiguration.
+	 *
+	 * StandardBasicType references exist statically.  This call acts as a cacheable lookup
+	 * for the related BasicValueMapper scoped to this TypeConfiguration
+	 */
+	@SuppressWarnings("unchecked")
+	public <J> BasicValueMapper<J> resolveStandardBasicType(StandardBasicType<J> standardBasicType) {
+		return (BasicValueMapper<J>) standardBasicTypeResolutionCache.computeIfAbsent(
+				standardBasicType,
+				key -> new StandardBasicValueMapper<>(
+						standardBasicType.getDomainJavaTypeDescriptor(),
+						standardBasicType.getRelationalSqlTypeDescriptor().getSqlExpressableType(
+								standardBasicType.getRelationalJavaTypeDescriptor(),
+								this
+						),
+						standardBasicType.getValueConverter(),
+						standardBasicType.getMutabilityPlan()
+				)
+		);
+	}
+
 	public BasicTypeRegistry getBasicTypeRegistry() {
 		return basicTypeRegistry;
 	}
 
-	public SqlExpressableType resolveJdbcValueMapper(
+	/**
+	 * Resolve the SqlExpressableType for a SqlTypeDescriptor and
+	 * BasicJavaDescriptor combo.  This form creates one if not already
+	 * cached using the passed `creator`
+	 */
+	public SqlExpressableType resolveSqlExpressableType(
 			SqlTypeDescriptor sqlTypeDescriptor,
 			BasicJavaDescriptor javaDescriptor,
 			java.util.function.Function<BasicJavaDescriptor, SqlExpressableType> creator) {
@@ -121,6 +163,30 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 		);
 
 		return cacheForSqlType.computeIfAbsent( javaDescriptor, x -> creator.apply( javaDescriptor ) );
+	}
+
+	/**
+	 * Resolve the SqlExpressableType for a SqlTypeDescriptor and
+	 * BasicJavaDescriptor combo.  This form throws an exception if
+	 * not already cached.
+	 */
+	public SqlExpressableType resolveSqlExpressableType(
+			SqlTypeDescriptor sqlTypeDescriptor,
+			BasicJavaDescriptor javaDescriptor) {
+		final Map<BasicJavaDescriptor, SqlExpressableType> cacheForSqlType = jdbcValueMapperCache.computeIfAbsent(
+				sqlTypeDescriptor,
+				x -> new ConcurrentHashMap<>()
+		);
+
+		final SqlExpressableType sqlExpressableType = cacheForSqlType.get( javaDescriptor );
+		if ( sqlExpressableType == null ) {
+			throw new IllegalArgumentException(
+					"No SqlExpressableType cached for [" + sqlTypeDescriptor + "] and ["
+							+ javaDescriptor + "] combination"
+			);
+		}
+
+		return sqlExpressableType;
 	}
 
 
@@ -207,6 +273,17 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 		//		release Database, descriptor Maps, etc... things that are only
 		// 		valid while the TypeConfiguration is scoped to SessionFactory
 	}
+
+	public void registerBasicValueMapper(BasicValueMapper valueMapper, String... registrationKeys) {
+		for ( String registrationKey : registrationKeys ) {
+			namedMappers.put( registrationKey, valueMapper );
+		}
+	}
+
+	public BasicValueMapper getNamedBasicValueMapper(String name) {
+		return namedMappers.get( name );
+	}
+
 
 	// todo (6.0) - have this algorithm be extendable by users.
 	// 		I have received at least one user request for this, and I can completely see the
@@ -395,6 +472,9 @@ public class TypeConfiguration implements SessionFactoryObserver, Serializable {
 
 		private String sessionFactoryName;
 		private String sessionFactoryUuid;
+
+		public Scope(TypeConfiguration typeConfiguration) {
+		}
 
 		public MetadataBuildingContext getMetadataBuildingContext() {
 			if ( metadataBuildingContext == null ) {

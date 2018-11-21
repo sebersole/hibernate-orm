@@ -11,11 +11,16 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 /**
  * Polymorphically represents any  "type" which can occur as an expression
- * in a "domain query" (e.g. an SQM tree).
+ * in a domain query (e.g. an SQM tree).
+ *
+ * todo (6.0) : fold into DomainType.  Any DomainType is expressable in the sense this contract tries to model
  *
  * @author Steve Ebersole
  */
 public interface ExpressableType<T> extends javax.persistence.metamodel.Type<T>, Writeable {
+
+	// todo (6.0) : also consider changing from extending Writeable to instead asking for the Writeable
+	//		probably passing in TypeConfiguration
 
 	/**
 	 * The "java type" descriptor

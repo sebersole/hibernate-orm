@@ -103,11 +103,15 @@ import org.hibernate.type.internal.BooleanBasicTypeImpl;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public final class StandardSpiBasicTypes {
+	/**
+	 * Disallow instantiation
+	 */
 	private StandardSpiBasicTypes() {
 	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// boolean data
+
 
 	/**
 	 * The standard Hibernate type for mapping {@link Boolean} to JDBC {@link java.sql.Types#BIT BIT}.

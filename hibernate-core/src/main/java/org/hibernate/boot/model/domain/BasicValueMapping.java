@@ -10,12 +10,9 @@ import java.util.List;
 
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.Origin;
-import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.relational.MappedColumn;
 import org.hibernate.boot.model.source.spi.LocalMetadataBuildingContext;
-import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
-import org.hibernate.metamodel.model.creation.spi.RuntimeModelCreationContext;
-import org.hibernate.type.spi.BasicType;
+import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
 
 /**
  * A ValueMapping extension for basic-valued mappings
@@ -40,17 +37,9 @@ public interface BasicValueMapping<J> extends ValueMapping<J> {
 				? ( (LocalMetadataBuildingContext) getMetadataBuildingContext() ).getOrigin()
 				: null;
 
-		throw new MappingException(
-				"Basic valued mappping cannot define more than 1 column",
-				origin
-		);
+		throw new MappingException( "Basic valued mapping cannot define more than 1 column", origin );
 	}
 
-	BasicType<J> resolveType();
+	BasicValueMapper<J> getResolution() throws NotYetResolvedException;
 
-	ConverterDescriptor getAttributeConverterDescriptor();
-
-	BasicValueConverter resolveValueConverter(
-			RuntimeModelCreationContext creationContext,
-			BasicType basicType);
 }

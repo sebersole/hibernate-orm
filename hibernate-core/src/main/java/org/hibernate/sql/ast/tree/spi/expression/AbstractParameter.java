@@ -148,7 +148,7 @@ public abstract class AbstractParameter
 				jdbcPosition,
 				valuesArrayPosition,
 				this,
-				( (BasicValuedExpressableType) getType() ).getBasicType().getSqlExpressableType( typeConfiguration )
+				( (BasicValuedExpressableType) getType() ).getSqlExpressableType()
 		);
 	}
 }

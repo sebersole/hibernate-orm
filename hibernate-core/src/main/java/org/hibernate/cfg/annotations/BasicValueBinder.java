@@ -41,7 +41,7 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Table;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.spi.JdbcRecommendedSqlTypeMappingContext;
+import org.hibernate.type.descriptor.spi.SqlTypeDescriptorIndicators;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -50,7 +50,7 @@ import org.jboss.logging.Logger;
 /**
  * @author Emmanuel Bernard
  */
-public class BasicValueBinder<T> implements JdbcRecommendedSqlTypeMappingContext {
+public class BasicValueBinder<T> implements SqlTypeDescriptorIndicators {
 
 	// todo (6.0) : In light of how we want to build Types (specifically BasicTypes) moving forward this Class should undergo major changes
 	//		see the comments in #setType
@@ -116,8 +116,7 @@ public class BasicValueBinder<T> implements JdbcRecommendedSqlTypeMappingContext
 		return enumType;
 	}
 
-	@Override
-	public SqlTypeDescriptor getExplicitSqlTypeDescriptor() {
+	public SqlTypeDescriptor getSqlTypeDescriptor() {
 		return sqlTypeDescriptor;
 	}
 
@@ -127,7 +126,7 @@ public class BasicValueBinder<T> implements JdbcRecommendedSqlTypeMappingContext
 	}
 
 	@Override
-	public TemporalType getTemporalType() {
+	public TemporalType getTemporalPrecision() {
 		return temporalPrecision;
 	}
 

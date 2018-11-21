@@ -15,7 +15,6 @@ import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.VersionSupport;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
-import org.hibernate.sql.results.spi.SqlSelectionReader;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -39,19 +38,6 @@ public interface BasicType<T>
 	 * The descriptor of the SQL type part of this basic-type
 	 */
 	SqlTypeDescriptor getSqlTypeDescriptor();
-
-	/**
-	 * Get the SqlSelectionReader that can be used to read values of this type
-	 * from JDBC ResultSets
-	 */
-	SqlSelectionReader<T> getSqlSelectionReader();
-
-	default SqlExpressableType getSqlExpressableType(TypeConfiguration typeConfiguration) {
-		return getSqlTypeDescriptor().getSqlExpressableType(
-				getJavaTypeDescriptor(),
-				typeConfiguration
-		);
-	}
 
 	@Override
 	default PersistenceType getPersistenceType() {

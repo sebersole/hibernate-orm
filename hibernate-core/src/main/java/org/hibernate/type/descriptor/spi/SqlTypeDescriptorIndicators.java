@@ -10,8 +10,8 @@ import java.sql.Types;
 import javax.persistence.EnumType;
 import javax.persistence.TemporalType;
 
+import org.hibernate.Incubating;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
-import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
@@ -19,10 +19,12 @@ import org.hibernate.type.spi.TypeConfiguration;
  * by the JDBC spec (explicitly or implicitly) for a given Java type.
  *
  * @see BasicJavaDescriptor#getJdbcRecommendedSqlType
+ * @see org.hibernate.type.spi.BasicTypeRegistry#resolve
  *
  * @author Steve Ebersole
  */
-public interface JdbcRecommendedSqlTypeMappingContext {
+@Incubating
+public interface SqlTypeDescriptorIndicators {
 	/**
 	 * Was nationalized character datatype requested for the given Java type?
 	 *
@@ -50,11 +52,7 @@ public interface JdbcRecommendedSqlTypeMappingContext {
 		return EnumType.ORDINAL;
 	}
 
-	default TemporalType getTemporalType() {
-		return null;
-	}
-
-	default SqlTypeDescriptor getExplicitSqlTypeDescriptor() {
+	default TemporalType getTemporalPrecision() {
 		return null;
 	}
 
