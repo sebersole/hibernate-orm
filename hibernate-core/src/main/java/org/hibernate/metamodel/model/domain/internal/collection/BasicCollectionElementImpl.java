@@ -63,7 +63,7 @@ public class BasicCollectionElementImpl<J>
 
 		this.column = creationContext.getDatabaseObjectResolver().resolveColumn( simpleElementValueMapping.getMappedColumn() );
 
-		this.valueMapper = ( (BasicValueMapping) bootCollectionMapping.getElement() ).getResolution();
+		this.valueMapper = ( (BasicValueMapping) bootCollectionMapping.getElement() ).getResolution().getValueMapper();
 
 		if ( valueMapper.getValueConverter() != null ) {
 			log.debugf(
@@ -76,7 +76,7 @@ public class BasicCollectionElementImpl<J>
 
 	@Override
 	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
-		return valueMapper.getDomainJtd();
+		return valueMapper.getDomainJavaDescriptor();
 	}
 
 	@Override

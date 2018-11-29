@@ -19,18 +19,10 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 /**
  * Custom type mapping between a java-type and a sql-type.
  *
- * @implSpec While deprecated also, support for these UserTypes has been
- * limited to just basic type mappings; specifically, support for multi-column
+ * @implSpec In additional to being deprecated, support for these UserTypes has
+ * been limited to just basic type mappings; specifically, support for multi-column
  * mappings via UserType has been removed - use {@link javax.persistence.Embeddable}
  * instead
- *
- * This contract is considered deprecated - its functionality can be  achieved using
- * a combination of: <ul>
- *     <li>{@link org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor}</li>
- *     <li>{@link org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor}</li>
- *     <li>{@link org.hibernate.type.descriptor.java.MutabilityPlan}</li>
- *     <li>{@link javax.persistence.AttributeConverter}</li>
- * </ul>
  *
  * @see org.hibernate.annotations.SqlType
  * @see org.hibernate.annotations.SqlTypeDescriptor
@@ -48,8 +40,8 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  *
  * @deprecated This package is considered deprecated.  This
  * can all be achieved through some combination of: <ul>
- *     <li>{@link org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor} - custom or standard</li>
- *     <li>{@link org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor} - custom or standard</li>
+ *     <li>{@link org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor}</li>
+ *     <li>{@link org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor}</li>
  *     <li>{@link javax.persistence.AttributeConverter}</li>
  * </ul>
  */

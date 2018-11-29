@@ -31,19 +31,28 @@ public class BasicTypeImpl<T> implements BasicType<T> {
 
 	private final BasicJavaDescriptor javaDescriptor;
 	private final SqlTypeDescriptor sqlTypeDescriptor;
-
-	/**
-	 * todo (6.0) : is this "static reference"-safe?
-	 * 		- in other words, will this work with
-	 */
-	private SqlExpressableType sqlExpressableType;
+	private final SqlExpressableType sqlExpressableType;
 
 	@SuppressWarnings("unchecked")
 	public BasicTypeImpl(
 			BasicJavaDescriptor javaDescriptor,
-			SqlTypeDescriptor sqlTypeDescriptor) {
+			SqlTypeDescriptor sqlTypeDescriptor,
+			TypeConfiguration typeConfiguration) {
+		this(
+				javaDescriptor,
+				sqlTypeDescriptor,
+				sqlTypeDescriptor.getSqlExpressableType( javaDescriptor, typeConfiguration )
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	public BasicTypeImpl(
+			BasicJavaDescriptor javaDescriptor,
+			SqlTypeDescriptor sqlTypeDescriptor,
+			SqlExpressableType sqlExpressableType) {
 		this.javaDescriptor = javaDescriptor;
 		this.sqlTypeDescriptor = sqlTypeDescriptor;
+		this.sqlExpressableType = sqlExpressableType;
 	}
 
 	@Override
@@ -57,21 +66,8 @@ public class BasicTypeImpl<T> implements BasicType<T> {
 		return sqlTypeDescriptor;
 	}
 
-//	@Override
-//	public Optional<VersionSupport<T>> getVersionSupport() {
-//		return Optional.ofNullable( versionSupport );
-//	}
-
 	@Override
 	public SqlExpressableType getSqlExpressableType() {
-		return sqlExpressableType;
-	}
-
-	private SqlExpressableType resolveJdbcValueMapper(TypeConfiguration typeConfiguration) {
-		if ( sqlExpressableType == null ) {
-			sqlExpressableType = getSqlTypeDescriptor().getSqlExpressableType( getJavaTypeDescriptor(), typeConfiguration );
-		}
-
 		return sqlExpressableType;
 	}
 
@@ -80,7 +76,7 @@ public class BasicTypeImpl<T> implements BasicType<T> {
 			Consumer<SqlExpressableType> action,
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
-		action.accept( resolveJdbcValueMapper( typeConfiguration ) );
+		action.accept( getSqlExpressableType() );
 	}
 
 	@Override

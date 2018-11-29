@@ -29,6 +29,8 @@ public interface JavaTypeDescriptor<T> extends org.hibernate.type.descriptor.jav
 	 * @param context Contextual information
 	 *
 	 * @return The recommended SQL type descriptor
+	 *
+	 * todo (6.0) : ? - rename `#getImplicitSqlTypeDescriptor` ?
 	 */
 	SqlTypeDescriptor getJdbcRecommendedSqlType(SqlTypeDescriptorIndicators context);
 

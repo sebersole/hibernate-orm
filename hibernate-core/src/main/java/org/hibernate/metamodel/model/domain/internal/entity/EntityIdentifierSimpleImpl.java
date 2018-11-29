@@ -69,7 +69,7 @@ public class EntityIdentifierSimpleImpl<O,J>
 
 		final BasicValueMapping<J> basicValueMapping = (BasicValueMapping<J>) bootModelRootEntity.getIdentifierAttributeMapping().getValueMapping();
 		this.column = creationContext.getDatabaseObjectResolver().resolveColumn( basicValueMapping.getMappedColumn() );
-		this.valueMapper = basicValueMapping.getResolution();
+		this.valueMapper = basicValueMapping.getResolution().getValueMapper();
 		this.identifierGenerator = creationContext.getSessionFactory().getIdentifierGenerator( bootModelRootEntity.getEntityName() );
 	}
 

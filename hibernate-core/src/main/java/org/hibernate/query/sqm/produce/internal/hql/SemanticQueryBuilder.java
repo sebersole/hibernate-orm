@@ -185,9 +185,11 @@ import org.hibernate.sql.ast.produce.metamodel.spi.EntityValuedExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.ExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.PolymorphicEntityValuedExpressableType;
 import org.hibernate.sql.ast.tree.spi.TrimSpecification;
+import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -2001,7 +2003,7 @@ public class SemanticQueryBuilder
 	private SqmLiteral stringLiteral(String text) {
 		return new SqmLiteralString(
 				text,
-				resolveExpressableTypeBasic( String.class )
+				getSessionFactory().getTypeConfiguration().resolveStandardBasicType( StandardBasicTypes.STRING )
 		);
 	}
 
@@ -2115,8 +2117,9 @@ public class SemanticQueryBuilder
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private <J> BasicValuedExpressableType<J> resolveExpressableTypeBasic(Class<J> javaType) {
-		return getSessionFactory().getTypeConfiguration().getBasicTypeRegistry().getBasicType( javaType );
+		return getSessionFactory().getTypeConfiguration().standardExpressableTypeForJavaType( javaType );
 	}
 
 	@Override

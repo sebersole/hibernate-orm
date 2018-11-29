@@ -18,14 +18,14 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Describes a
+ * Describes a SqlTypeDescriptor to be
  * @author Steve Ebersole
  */
 @java.lang.annotation.Target({METHOD, FIELD, ANNOTATION_TYPE})
 @Inherited
 @Retention(RUNTIME)
-@Repeatable( SqlTypeDefs.class )
-public @interface SqlTypeDef {
+@Repeatable( SqlTypeRegistrations.class )
+public @interface SqlTypeRegistration {
 	/**
 	 * The code to use within the
 	 * {@link org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptorRegistry}
@@ -36,8 +36,4 @@ public @interface SqlTypeDef {
 	 * The descriptor to use
 	 */
 	Class<? extends SqlTypeDescriptor> descriptorClass();
-
-	// todo (6.0) : ? add some notion of auto-apply / local?
-	//		-in other words, is this def local to its scope or is it
-	// 		registered with the SqlTypeDescriptorRegistry?
 }

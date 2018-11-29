@@ -7,13 +7,10 @@
 package org.hibernate.type.spi;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
-import org.hibernate.metamodel.model.domain.spi.VersionSupport;
-import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.sql.ast.produce.metamodel.spi.BasicValuedExpressableType;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
@@ -54,7 +51,4 @@ public interface BasicType<T>
 		return getJavaTypeDescriptor().getJavaType();
 	}
 
-	default Optional<VersionSupport<T>> getVersionSupport() {
-		return Optional.empty();
-	}
 }

@@ -31,7 +31,7 @@ public interface BasicValuedNavigable<J> extends BasicValuedExpressableType<J>, 
 
 	@Override
 	default BasicJavaDescriptor<J> getJavaTypeDescriptor() {
-		return getValueMapper().getDomainJtd();
+		return getValueMapper().getDomainJavaDescriptor();
 	}
 
 	@Override

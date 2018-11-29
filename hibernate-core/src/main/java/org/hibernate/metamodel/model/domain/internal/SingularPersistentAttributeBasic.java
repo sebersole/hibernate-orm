@@ -86,7 +86,7 @@ public class SingularPersistentAttributeBasic<O, J>
 		final BasicValueMapping bootMapping = (BasicValueMapping) bootAttribute.getValueMapping();
 
 		this.boundColumn = context.getDatabaseObjectResolver().resolveColumn( bootMapping.getMappedColumn() );
-		this.valueMapper = bootMapping.getResolution();
+		this.valueMapper = bootMapping.getResolution().getValueMapper();
 
 		if ( valueMapper.getValueConverter() != null ) {
 			log.debugf(
@@ -116,7 +116,7 @@ public class SingularPersistentAttributeBasic<O, J>
 
 	@Override
 	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
-		return valueMapper.getDomainJtd();
+		return valueMapper.getDomainJavaDescriptor();
 	}
 
 	@Override
@@ -224,7 +224,7 @@ public class SingularPersistentAttributeBasic<O, J>
 			Clause clause,
 			SharedSessionContractImplementor session) {
 		if ( clause.getInclusionChecker().test( this ) ) {
-			jdbcValueCollector.collect( value, getBoundColumn().getExpressableType(), getBoundColumn() );
+			jdbcValueCollector.collect( value, valueMapper.getSqlExpressableType(), getBoundColumn() );
 		}
 	}
 

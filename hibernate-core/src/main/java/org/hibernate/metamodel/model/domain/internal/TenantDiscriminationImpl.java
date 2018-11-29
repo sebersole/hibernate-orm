@@ -61,7 +61,7 @@ public class TenantDiscriminationImpl implements TenantDiscrimination {
 
 	@Override
 	public BasicJavaDescriptor<String> getJavaTypeDescriptor() {
-		return valueMapper.getDomainJtd();
+		return valueMapper.getDomainJavaDescriptor();
 	}
 
 	@Override

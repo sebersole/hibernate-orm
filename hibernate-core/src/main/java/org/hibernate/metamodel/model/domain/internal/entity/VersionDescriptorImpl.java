@@ -65,13 +65,13 @@ public class VersionDescriptorImpl<O,J>
 		final BasicValueMapping<J> basicValueMapping = (BasicValueMapping<J>) bootModelRootEntity.getVersionAttributeMapping().getValueMapping();
 
 		this.column = creationContext.getDatabaseObjectResolver().resolveColumn( basicValueMapping.getMappedColumn() );
-		this.valueMapper = basicValueMapping.getResolution();
+		this.valueMapper = basicValueMapping.getResolution().getValueMapper();
 		this.unsavedValue =( (KeyValue) basicValueMapping ).getNullValue();
 
-		this.versionSupport = valueMapper.getDomainJtd().getVersionSupport();
+		this.versionSupport = valueMapper.getDomainJavaDescriptor().getVersionSupport();
 		if ( versionSupport == null ) {
 			throw new HibernateException(
-					"JavaTypeDescriptor [" + valueMapper.getDomainJtd() + "] associated with VersionDescriptor [" +
+					"JavaTypeDescriptor [" + valueMapper.getDomainJavaDescriptor() + "] associated with VersionDescriptor [" +
 							runtimeModelHierarchy.getRootEntityType().getEntityName() +
 							"] did not define VersionSupport"
 			);

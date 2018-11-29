@@ -6,9 +6,8 @@
  */
 package org.hibernate.type.internal;
 
+import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
-import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
-import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -17,16 +16,16 @@ import org.hibernate.type.spi.TypeConfiguration;
 /**
  * @author Steve Ebersole
  */
-public class InferredMappingBuilder<J> {
+public class InferredBasicValueResolver<J> {
 	private final TypeConfiguration typeConfiguration;
 
 	private BasicJavaDescriptor<J> domainJtd;
 	private BasicJavaDescriptor<?> relationalJtd;
 	private SqlTypeDescriptor relationalStd;
 	private BasicValueConverter valueConverter;
-	private MutabilityPlan mutabilityPlan;
+	private MutabilityPlan<J> mutabilityPlan;
 
-	public InferredMappingBuilder(
+	public InferredBasicValueResolver(
 			BasicJavaDescriptor<J> explicitJtd,
 			SqlTypeDescriptor explicitStd,
 			TypeConfiguration typeConfiguration) {
@@ -36,18 +35,14 @@ public class InferredMappingBuilder<J> {
 		this.relationalStd = explicitStd;
 	}
 
-	public BasicValueMapper<J> build() {
-		final SqlExpressableType sqlExpressableType = relationalStd.getSqlExpressableType(
-				relationalJtd ,
-				typeConfiguration
+	public BasicValueMapping.Resolution<J> build() {
+		final BasicTypeImpl<J> basicType = new BasicTypeImpl<>(
+				relationalJtd,
+				relationalStd,
+				relationalStd.getSqlExpressableType( relationalJtd, typeConfiguration )
 		);
 
-		return new StandardBasicValueMapper<>(
-				domainJtd,
-				sqlExpressableType,
-				valueConverter,
-				mutabilityPlan
-		);
+		return new InferredBasicValueResolution<>( basicType, domainJtd, valueConverter, mutabilityPlan );
 	}
 
 	public TypeConfiguration getTypeConfiguration() {
@@ -91,6 +86,7 @@ public class InferredMappingBuilder<J> {
 		return mutabilityPlan;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void setMutabilityPlan(MutabilityPlan mutabilityPlan) {
 		this.mutabilityPlan = mutabilityPlan;
 	}

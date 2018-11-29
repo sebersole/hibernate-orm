@@ -26,7 +26,7 @@ public class ColumnBasedMapper<J> implements BasicValueMapper<J> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public BasicJavaDescriptor<J> getDomainJtd() {
+	public BasicJavaDescriptor<J> getDomainJavaDescriptor() {
 		return column.getJavaTypeDescriptor();
 	}
 

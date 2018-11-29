@@ -12,7 +12,7 @@ import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
- * Descriptor for the mapping of a basic type as part of the application domain
+ * Descriptor for the mapping of a basic value as part of the application domain
  * model.
  *
  * @author Steve Ebersole
@@ -21,7 +21,7 @@ public interface BasicValueMapper<J> {
 	/**
 	 * The JTD for the value as part of the domain model
 	 */
-	BasicJavaDescriptor<J> getDomainJtd();
+	BasicJavaDescriptor<J> getDomainJavaDescriptor();
 
 	/**
 	 * The BasicJavaDescriptor / SqlTypeDescriptor combo, along

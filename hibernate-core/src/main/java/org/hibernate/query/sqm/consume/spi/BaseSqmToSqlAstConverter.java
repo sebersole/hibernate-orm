@@ -24,6 +24,7 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.internal.util.collections.StandardStack;
+import org.hibernate.metamodel.model.domain.BasicDomainType;
 import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttributeEmbedded;
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
@@ -203,6 +204,8 @@ import org.hibernate.sql.results.spi.DomainResultProducer;
 import org.hibernate.sql.results.spi.SqlSelection;
 import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.StandardBasicTypes.StandardBasicType;
+import org.hibernate.type.spi.StandardSpiBasicTypes;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -873,60 +876,34 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralStringExpression(SqmLiteralString expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.STRING ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.STRING ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
 
-	protected SqlExpressableType resolveJdbcTypeMapper(BasicValuedExpressableType expressionType, BasicTypeDescriptor fallback) {
-		return resolveBasicValueMapper( (BasicTypeDescriptor) expressionType, StandardBasicTypes.STRING ).getSqlExpressableType();
+	private SqlExpressableType determineSqlTypeInfo(
+			SqmExpression expression,
+			StandardSpiBasicTypes.StandardBasicType fallbackType) {
+		return determineSqlTypeInfo( (BasicValuedExpressableType) expression.getExpressableType(), fallbackType );
 	}
 
-	protected SqlExpressableType resolveJdbcTypeMapper(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
-		return resolveBasicValueMapper( expressionType, StandardBasicTypes.STRING ).getSqlExpressableType();
-	}
-
-	@SuppressWarnings("unchecked")
-	protected BasicValueMapper resolveBasicValueMapper(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
-		final BasicTypeDescriptor resolved = resolveDomainType( expressionType, fallback );
-
-		if ( resolved instanceof BasicValueMapper ) {
-			return (BasicValueMapper) resolved;
-		}
-		else if ( resolved instanceof StandardBasicType ) {
-			return producerContext.getSessionFactory()
-					.getTypeConfiguration()
-					.resolveStandardBasicType( (StandardBasicType) resolved );
-		}
-
-		throw new IllegalArgumentException(
-				"Could not resolve incoming BasicTypeDescriptor [" + resolved + "] to BasicValueMapper"
-		);
-	}
-
-	protected BasicTypeDescriptor resolveDomainType(BasicTypeDescriptor expressionType, BasicTypeDescriptor fallback) {
-		return expressionType == null
-				? fallback
-				: expressionType;
-	}
-
-	protected SqlExpressableType resolveSqlExpressableType(
+	private SqlExpressableType determineSqlTypeInfo(
 			BasicValuedExpressableType expressionType,
-			BasicValuedExpressableType defaultType) {
-		return resolveType( expressionType, defaultType ).getSqlExpressableType();
-	}
-
-	protected BasicValuedExpressableType resolveType(
-			BasicValuedExpressableType expressionType,
-			BasicValuedExpressableType defaultType) {
-		return expressionType != null ? expressionType : defaultType;
+			StandardSpiBasicTypes.StandardBasicType fallbackType) {
+		if ( expressionType != null ) {
+			return expressionType.getSqlExpressableType();
+		}
+		else {
+			final TypeConfiguration typeConfiguration = producerContext.getSessionFactory().getTypeConfiguration();
+			return typeConfiguration.resolveStandardBasicType( fallbackType ).getSqlExpressableType( typeConfiguration );
+		}
 	}
 
 	@Override
 	public QueryLiteral visitLiteralCharacterExpression(SqmLiteralCharacter expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.CHARACTER ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.CHARACTER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -935,7 +912,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralDoubleExpression(SqmLiteralDouble expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.DOUBLE ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.DOUBLE ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -944,7 +921,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralIntegerExpression(SqmLiteralInteger expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.INTEGER ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.INTEGER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -953,7 +930,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralBigIntegerExpression(SqmLiteralBigInteger expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BIG_INTEGER ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.BIG_INTEGER ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -962,7 +939,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralBigDecimalExpression(SqmLiteralBigDecimal expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BIG_DECIMAL ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.BIG_DECIMAL ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -971,7 +948,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralFloatExpression(SqmLiteralFloat expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.FLOAT ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.FLOAT ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -980,7 +957,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralLongExpression(SqmLiteralLong expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.LONG ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.LONG ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -989,7 +966,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralTrueExpression(SqmLiteralTrue expression) {
 		return new QueryLiteral(
 				Boolean.TRUE,
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BOOLEAN ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}
@@ -998,7 +975,7 @@ public abstract class BaseSqmToSqlAstConverter
 	public QueryLiteral visitLiteralFalseExpression(SqmLiteralFalse expression) {
 		return new QueryLiteral(
 				Boolean.FALSE,
-				resolveJdbcTypeMapper( expression.getExpressableType(), StandardBasicTypes.BOOLEAN ),
+				determineSqlTypeInfo( expression, StandardSpiBasicTypes.BOOLEAN ),
 				getCurrentClauseStack().getCurrent()
 		);
 	}

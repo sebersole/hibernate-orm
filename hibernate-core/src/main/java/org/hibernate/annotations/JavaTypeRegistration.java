@@ -7,7 +7,10 @@
 package org.hibernate.annotations;
 
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
+
+import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
@@ -20,6 +23,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @java.lang.annotation.Target({METHOD, FIELD, ANNOTATION_TYPE})
 @Inherited
 @Retention(RUNTIME)
-public @interface JavaTypeDefs {
-	JavaTypeDef[] value();
+@Repeatable( JavaTypeRegistrations.class )
+public @interface JavaTypeRegistration {
+	Class javaType();
+
+	/**
+	 * todo (6.0) : limit to BasicJavaDescriptor?
+	 */
+	Class<? extends JavaTypeDescriptor> descriptorClass();
 }

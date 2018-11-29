@@ -15,8 +15,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public abstract class AbstractSqmLiteral<T> implements SqmLiteral<T> {
-	private final T value;
-
+	private T value;
 	private BasicValuedExpressableType type;
 
 	public AbstractSqmLiteral(T value) {
@@ -47,10 +46,20 @@ public abstract class AbstractSqmLiteral<T> implements SqmLiteral<T> {
 	@SuppressWarnings("unchecked")
 	public void impliedType(ExpressableType type) {
 		if ( type != null ) {
-			if ( !BasicValuedExpressableType.class.isInstance( type ) ) {
-				throw new SemanticException( "Inferrable type for literal was found to be a non-basic value : " + type );
+			if ( ! (type instanceof BasicValuedExpressableType) ) {
+				throw new SemanticException( "Implied type for literal was found to be a non-basic value : " + type );
 			}
+
+			// NOTE: the `#wrap` call is to account for cases where the
+			// implied type is a different Java type.  E.g., consider this HQL"
+			//		"select a.b || ':' || a.c ..."
+			// The initial type for `':'` would be a Character-based type.  However, its use
+			// in relation to a String-based type causes an "implicit conversion".  Not
+			// only does this affect the type - it also means we need to convert the Character
+			// value (`':'`) to its String representation (`":"`).
+
 			this.type = (BasicValuedExpressableType) type;
+			this.value = (T) this.type.getJavaTypeDescriptor().wrap( this.value, null );
 		}
 	}
 

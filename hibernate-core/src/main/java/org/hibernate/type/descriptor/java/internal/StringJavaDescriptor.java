@@ -62,18 +62,27 @@ public class StringJavaDescriptor extends AbstractBasicJavaDescriptor<String> {
 		if ( value == null ) {
 			return null;
 		}
+
 		if ( String.class.isAssignableFrom( type ) ) {
 			return (X) value;
 		}
+
+		if ( Character.class.isAssignableFrom( type ) ) {
+			return (X) (Character) value.charAt( 0 );
+		}
+
 		if ( Reader.class.isAssignableFrom( type ) ) {
 			return (X) new StringReader( value );
 		}
+
 		if ( CharacterStream.class.isAssignableFrom( type ) ) {
 			return (X) new CharacterStreamImpl( value );
 		}
+
 		if ( Clob.class.isAssignableFrom( type ) ) {
 			return (X) session.getLobCreator().createClob( value );
 		}
+
 		if ( LobStreamDataHelper.isNClob( type ) ) {
 			return (X) session.getLobCreator().createNClob( value );
 		}
@@ -85,13 +94,20 @@ public class StringJavaDescriptor extends AbstractBasicJavaDescriptor<String> {
 		if ( value == null ) {
 			return null;
 		}
-		if ( String.class.isInstance( value ) ) {
+
+		if ( value instanceof String ) {
 			return (String) value;
 		}
-		if ( Reader.class.isInstance( value ) ) {
+
+		if ( value instanceof Character ) {
+			return value.toString();
+		}
+
+		if ( value instanceof Reader ) {
 			return LobStreamDataHelper.extractString( (Reader) value );
 		}
-		if ( Clob.class.isInstance( value ) ) {
+
+		if ( value instanceof Clob ) {
 			return LobStreamDataHelper.extractString( (Clob) value );
 		}
 

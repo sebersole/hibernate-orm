@@ -20,13 +20,11 @@ import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public class EnumJavaDescriptor<T extends Enum> extends AbstractBasicJavaDescriptor<T> {
-
-	// The recommended Jdbc type code used for EnumType.ORDINAL
-	public final static int ORDINAL_JDBC_TYPE_CODE = Types.INTEGER;
+public class EnumJavaDescriptor<E extends Enum> extends AbstractBasicJavaDescriptor<E>
+		implements org.hibernate.type.descriptor.java.spi.EnumJavaDescriptor<E> {
 
 	@SuppressWarnings("unchecked")
-	public EnumJavaDescriptor(Class<T> type) {
+	public EnumJavaDescriptor(Class<E> type) {
 		super( type, ImmutableMutabilityPlan.INSTANCE );
 	}
 
@@ -38,57 +36,61 @@ public class EnumJavaDescriptor<T extends Enum> extends AbstractBasicJavaDescrip
 					: context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.VARCHAR );
 		}
 		else {
-			return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( ORDINAL_JDBC_TYPE_CODE );
+			return context.getTypeConfiguration().getSqlTypeDescriptorRegistry().getDescriptor( Types.INTEGER );
 		}
 	}
 
 	@Override
-	public String toString(T value) {
+	public String toString(E value) {
 		return value == null ? "<null>" : value.name();
 	}
 
 	@Override
 	@SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
-	public T fromString(String string) {
-		return string == null ? null : (T) Enum.valueOf( getJavaType(), string );
+	public E fromString(String string) {
+		return string == null ? null : (E) Enum.valueOf( getJavaType(), string );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> X unwrap(T value, Class<X> type, SharedSessionContractImplementor session) {
+	public <X> X unwrap(E value, Class<X> type, SharedSessionContractImplementor session) {
 		return (X) value;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <X> T wrap(X value, SharedSessionContractImplementor session) {
-		return (T) value;
+	public <X> E wrap(X value, SharedSessionContractImplementor session) {
+		return (E) value;
 	}
 
-	public <E extends Enum> Integer toOrdinal(E domainForm) {
+	@Override
+	public Integer toOrdinal(E domainForm) {
 		if ( domainForm == null ) {
 			return null;
 		}
 		return domainForm.ordinal();
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public <E extends Enum> E fromOrdinal(Integer relationalForm) {
+	public E fromOrdinal(Integer relationalForm) {
 		if ( relationalForm == null ) {
 			return null;
 		}
 		return (E) getJavaType().getEnumConstants()[ relationalForm ];
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	public T fromName(String relationalForm) {
+	public E fromName(String relationalForm) {
 		if ( relationalForm == null ) {
 			return null;
 		}
-		return (T) Enum.valueOf( getJavaType(), relationalForm );
+		return (E) Enum.valueOf( getJavaType(), relationalForm );
 	}
 
-	public String toName(T domainForm) {
+	@Override
+	public String toName(E domainForm) {
 		if ( domainForm == null ) {
 			return null;
 		}

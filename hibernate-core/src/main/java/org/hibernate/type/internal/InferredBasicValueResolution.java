@@ -6,30 +6,47 @@
  */
 package org.hibernate.type.internal;
 
+import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
 import org.hibernate.sql.SqlExpressableType;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
+import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
  */
-public class SimpleBasicValueMapper<J> implements BasicValueMapper<J> {
-	private final BasicJavaDescriptor<J> domainJtd;
-	private final SqlExpressableType jdbcType;
-	private final BasicValueConverter valueConverter;
-	private final MutabilityPlan<J> mutabilityPlan;
+public class InferredBasicValueResolution<J> implements BasicValueMapping.Resolution<J>, BasicValueMapper<J> {
+	private final BasicType<J> basicType;
 
-	public SimpleBasicValueMapper(
+	private BasicJavaDescriptor<J> domainJtd;
+
+	private BasicValueConverter valueConverter;
+	private MutabilityPlan mutabilityPlan;
+
+	public InferredBasicValueResolution(
+			BasicTypeImpl<J> basicType,
 			BasicJavaDescriptor<J> domainJtd,
-			SqlExpressableType jdbcType,
 			BasicValueConverter valueConverter,
-			MutabilityPlan<J> mutabilityPlan) {
+			MutabilityPlan mutabilityPlan) {
+		this.basicType = basicType;
 		this.domainJtd = domainJtd;
-		this.jdbcType = jdbcType;
 		this.valueConverter = valueConverter;
 		this.mutabilityPlan = mutabilityPlan;
+	}
+
+
+	@Override
+	public BasicType getBasicType() {
+		return basicType;
+	}
+
+	@Override
+	public BasicValueMapper<J> getValueMapper() {
+		return this;
 	}
 
 	@Override
@@ -39,7 +56,17 @@ public class SimpleBasicValueMapper<J> implements BasicValueMapper<J> {
 
 	@Override
 	public SqlExpressableType getSqlExpressableType() {
-		return jdbcType;
+		return basicType.getSqlExpressableType();
+	}
+
+	@Override
+	public BasicJavaDescriptor<?> getRelationalJavaDescriptor() {
+		return getSqlExpressableType().getJavaTypeDescriptor();
+	}
+
+	@Override
+	public SqlTypeDescriptor getRelationalSqlTypeDescriptor() {
+		return getSqlExpressableType().getSqlTypeDescriptor();
 	}
 
 	@Override

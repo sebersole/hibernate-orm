@@ -6,11 +6,11 @@
  */
 package org.hibernate.envers.internal.entities;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.envers.RevisionType;
 import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
+import org.hibernate.type.descriptor.java.internal.IntegerJavaDescriptor;
 import org.hibernate.type.descriptor.sql.spi.IntegerSqlDescriptor;
-import org.hibernate.type.internal.BasicTypeImpl;
+import org.hibernate.type.internal.StandardBasicTypeImpl;
 
 /**
  * A hibernate type for the {@link RevisionType} enum.
@@ -18,24 +18,18 @@ import org.hibernate.type.internal.BasicTypeImpl;
  * @author Adam Warski (adam at warski dot org)
  * @author Chris Cranford
  */
-public class RevisionTypeType extends BasicTypeImpl<RevisionType> {
+public class RevisionTypeType extends StandardBasicTypeImpl<RevisionType> {
 	public static final RevisionTypeType INSTANCE = new RevisionTypeType();
 
-	private OrdinalEnumValueConverter converter;
-
 	public RevisionTypeType() {
-		super( RevisionTypeJavaDescriptor.INSTANCE, IntegerSqlDescriptor.INSTANCE );
-	}
-
-	@Override
-	public Object unresolve(Object value, SharedSessionContractImplementor session) {
-		if ( converter == null ) {
-			converter = new OrdinalEnumValueConverter(
-					RevisionTypeJavaDescriptor.INSTANCE,
-					session.getFactory().getTypeConfiguration()
-			);
-		}
-
-		return converter.toRelationalValue( (RevisionType) value, session );
+		super(
+				RevisionTypeJavaDescriptor.INSTANCE,
+				IntegerJavaDescriptor.INSTANCE,
+				IntegerSqlDescriptor.INSTANCE,
+				new OrdinalEnumValueConverter(
+						RevisionTypeJavaDescriptor.INSTANCE,
+						IntegerJavaDescriptor.INSTANCE
+				)
+		);
 	}
 }

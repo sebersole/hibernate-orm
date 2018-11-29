@@ -20,6 +20,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @java.lang.annotation.Target({METHOD, FIELD, ANNOTATION_TYPE})
 @Inherited
 @Retention(RUNTIME)
-public @interface SqlTypeDefs {
-	SqlTypeDef[] value();
+public @interface SqlTypeRegistrations {
+	SqlTypeRegistration[] value();
 }

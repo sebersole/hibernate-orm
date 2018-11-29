@@ -60,7 +60,7 @@ public class BasicCollectionIndexImpl<J>
 
 		final BasicValueMapping valueMapping = (BasicValueMapping) bootCollectionMapping.getIndex();
 		this.column  = creationContext.getDatabaseObjectResolver().resolveColumn( valueMapping.getMappedColumn() );
-		this.valueMapper = valueMapping.getResolution();
+		this.valueMapper = valueMapping.getResolution().getValueMapper();
 
 		if ( valueMapper.getValueConverter() != null ) {
 			log.debugf(
@@ -74,7 +74,7 @@ public class BasicCollectionIndexImpl<J>
 
 	@Override
 	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
-		return valueMapper.getDomainJtd();
+		return valueMapper.getDomainJavaDescriptor();
 	}
 
 	@Override

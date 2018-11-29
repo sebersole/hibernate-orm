@@ -13,13 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
-import org.hibernate.type.StandardBasicTypes.StandardBasicType;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
-import org.hibernate.type.descriptor.spi.SqlTypeDescriptorIndicators;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.internal.BasicTypeImpl;
-import org.hibernate.type.internal.StandardBasicValueMapper;
 
 import org.jboss.logging.Logger;
 
@@ -40,42 +37,48 @@ public class BasicTypeRegistry {
 	private static final Logger log = Logger.getLogger( BasicTypeRegistry.class );
 
 	private final TypeConfiguration typeConfiguration;
+	private final Map<SqlTypeDescriptor,Map<BasicJavaDescriptor,BasicType>> registryValues = new ConcurrentHashMap<>();
 
-	// HQL
-	// ... where cast(c.name as uuid) ...
+	/**
+	 * HQL: ... where cast(c.name as uuid) ...
+	 *
+	 * The target type (uuid, e.g.) is
+	 */
 
-	private final Map<String,BasicType> typesByNameRegistry = new ConcurrentHashMap<>();
+	//
+	private final Map<String,BasicType> typesByName = new ConcurrentHashMap<>();
 
-	private Map<SqlTypeDescriptor,Map<BasicJavaDescriptor,BasicType>> registryValues = new ConcurrentHashMap<>();
+	// todo (6.0) : ? Map<o.h.t.BasicType,o.h.t.spi.BasicType>
+	//		similar in concept to what I was trying to achieve with:
+	//
+	//		class TypeConfiguration ... {
+	//			...
+	//			private final ConcurrentHashMap<StandardBasicType<?>,BasicValueMapper<?>> standardBasicTypeResolutionCache = new ConcurrentHashMap<>();
+	//			...
+	//		}
+	//
+	// ^^ essentially it is the scoped[1], and therefore "resolved"[2], form of one of the static `o.h.type.StandardBasicTypes` references.
+	//		1) The scoping is relative to the TypeConfiguration ("for this TypeConfiguration, this is the SPI BasicType to use for a given API BasicType")
+	//		2) the "resolution" is the scoped SPI BasicType form
+	//
+	//		The idea is to avoid having to link the 2 contracts via extension.  The gain is that it lets us
+	// 		interpret the specific JavaTypeDescriptor and SqlTypeDescriptor to use via the registries as opposed
+	// 		to having to use the ones statically defined on the BasicTypeImpl.  E.g.,
+	// 		`StandardBasicTypes#STRING` statically says to use `StringJavaDescriptor#INSTANCE` and
+	//		`VarcharSqlDescriptor#INSTANCE` - so it will use those regardless whether:
+	//				1) Something (user, Dialect, integration, ..) registered an override for either the JTD or STD
+	//				2) nationalization was globally requested (NVARCHAR versus VARCHAR)
+	//				3) LOBs were globally requested (aka "materialized" LOBs)
+	//				...
 
-	private final SqlTypeDescriptorIndicators baseSqlTypeDescriptorIndicators;
+
 
 	public BasicTypeRegistry(TypeConfiguration typeConfiguration) {
 		this.typeConfiguration = typeConfiguration;
-		this.baseSqlTypeDescriptorIndicators = new SqlTypeDescriptorIndicators() {
-			@Override
-			public boolean isNationalized() {
-				return false;
-			}
-
-			@Override
-			public boolean isLob() {
-				return false;
-			}
-
-			@Override
-			public TypeConfiguration getTypeConfiguration() {
-				return typeConfiguration;
-			}
-		};
 	}
 
 	public TypeConfiguration getTypeConfiguration() {
 		return typeConfiguration;
-	}
-
-	public SqlTypeDescriptorIndicators getBaseSqlTypeDescriptorIndicators() {
-		return baseSqlTypeDescriptorIndicators;
 	}
 
 
@@ -91,15 +94,19 @@ public class BasicTypeRegistry {
 
 		return mappingsForStdToUse.computeIfAbsent(
 				jtdToUse,
-				javaDescriptor -> new BasicTypeImpl( javaDescriptor, stdToUse )
+				javaDescriptor -> new BasicTypeImpl(
+						javaDescriptor,
+						stdToUse,
+						stdToUse.getSqlExpressableType( jtdToUse, typeConfiguration )
+				)
 		);
 	}
 
-	// todo (6.0) : we want to consolidate many of these methods below based on typesByNameRegistry vs. registryValues lookups
+	// todo (6.0) : we want to consolidate many of these methods below based on typesByName vs. registryValues lookups
 
 
 	public BasicType getBasicTypeByName(String key) {
-		return typesByNameRegistry.get( key );
+		return typesByName.get( key );
 	}
 
 	/**
@@ -117,14 +124,14 @@ public class BasicTypeRegistry {
 			throw new HibernateException(
 					String.format(
 							Locale.ROOT,
-							"Previously registered non-basic JavaTypeDescriptor [%s] found for class [%s]; cannot create BasicType",
+							"Previously registered non-basic JavaTypeDescriptor [%s] found for Class [%s]; cannot create BasicType",
 							jtd,
 							javaType.getName()
 					)
 			);
 		}
 
-		final SqlTypeDescriptor recommendedStd = jtd.getJdbcRecommendedSqlType( getBaseSqlTypeDescriptorIndicators() );
+		final SqlTypeDescriptor recommendedStd = jtd.getJdbcRecommendedSqlType( typeConfiguration.getCurrentBaseSqlTypeIndicators() );
 
 		return (BasicType) resolve( (BasicJavaDescriptor) jtd, recommendedStd );
 	}
@@ -259,16 +266,16 @@ public class BasicTypeRegistry {
 //	}
 
 	public void register(BasicType type) {
-		typesByNameRegistry.put( type.getJavaTypeDescriptor().getJavaType().getName(), type );
+		typesByName.put( type.getJavaTypeDescriptor().getJavaType().getName(), type );
 	}
 
 	public void register(BasicType type, String key) {
-		typesByNameRegistry.put( key, type );
+		typesByName.put( key, type );
 	}
 
 	public void register(BasicType type, String... keys) {
 		for ( String key : keys ) {
-			typesByNameRegistry.put( key, type );
+			typesByName.put( key, type );
 		}
 	}
 

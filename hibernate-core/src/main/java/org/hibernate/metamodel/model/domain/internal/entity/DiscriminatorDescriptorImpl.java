@@ -23,6 +23,7 @@ import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
+import org.hibernate.type.spi.BasicType;
 
 /**
  * @author Steve Ebersole
@@ -31,6 +32,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 	public static final String NAVIGABLE_NAME = "{discriminator}";
 
 	private final EntityHierarchy hierarchy;
+	private final BasicType basicType;
 	private final BasicValueMapper<J> valueMapper;
 	private final Column column;
 
@@ -43,7 +45,9 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 			RuntimeModelCreationContext creationContext) {
 		this.hierarchy = hierarchy;
 
-		this.valueMapper = valueMapping.getResolution();
+		this.basicType = valueMapping.getResolution().getBasicType();
+		this.valueMapper = valueMapping.getResolution().getValueMapper();
+
 		this.column = creationContext.getDatabaseObjectResolver().resolveColumn( valueMapping.getMappedColumn() );
 
 		this.navigableRole = hierarchy.getRootEntityType().getNavigableRole().append( NAVIGABLE_NAME );
@@ -66,7 +70,7 @@ public class DiscriminatorDescriptorImpl<O,J> implements DiscriminatorDescriptor
 
 	@Override
 	public BasicJavaDescriptor<J> getJavaTypeDescriptor() {
-		return getValueMapper().getDomainJtd();
+		return getValueMapper().getDomainJavaDescriptor();
 	}
 
 	@Override
