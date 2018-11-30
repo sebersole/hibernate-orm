@@ -11,15 +11,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.persistence.criteria.JoinType;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.envers.RevisionType;
-import org.hibernate.envers.internal.entities.RevisionTypeType;
 import org.hibernate.envers.internal.tools.MutableInteger;
 import org.hibernate.envers.internal.tools.StringTools;
 import org.hibernate.envers.internal.tools.Triple;
-import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.query.Query;
 
@@ -259,17 +257,7 @@ public class QueryBuilder {
 		final Query query = session.createQuery( hql );
 
 		for ( Map.Entry<String, Object> paramValue : queryParamValues.entrySet() ) {
-			if ( paramValue.getValue() instanceof RevisionType ) {
-				// this is needed when the ClassicQueryTranslatorFactory is used
-				query.setParameter(
-						paramValue.getKey(),
-						paramValue.getValue(),
-						(AllowableParameterType) RevisionTypeType.INSTANCE
-				);
-			}
-			else {
-				query.setParameter( paramValue.getKey(), paramValue.getValue() );
-			}
+			query.setParameter( paramValue.getKey(), paramValue.getValue() );
 		}
 		return query;
 	}
