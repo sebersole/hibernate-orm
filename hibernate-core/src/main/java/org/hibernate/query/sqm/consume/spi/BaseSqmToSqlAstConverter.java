@@ -29,6 +29,7 @@ import org.hibernate.metamodel.model.domain.internal.SingularPersistentAttribute
 import org.hibernate.metamodel.model.domain.spi.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.spi.BasicTypeDescriptor;
 import org.hibernate.metamodel.model.domain.spi.BasicValueMapper;
+import org.hibernate.metamodel.model.domain.spi.BasicValuedNavigable;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifier;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierComposite;
 import org.hibernate.metamodel.model.domain.spi.EntityIdentifierSimple;
@@ -1017,7 +1018,7 @@ public abstract class BaseSqmToSqlAstConverter
 	}
 
 	@Override
-	public Object visitConstantEnumExpression(SqmConstantEnum expression) {
+	public QueryLiteral visitConstantEnumExpression(SqmConstantEnum expression) {
 		return new QueryLiteral(
 				expression.getLiteralValue(),
 				expression.getExpressableType().getSqlExpressableType(),
@@ -1070,8 +1071,13 @@ public abstract class BaseSqmToSqlAstConverter
 	public Expression visitNamedParameterExpression(SqmNamedParameter expression) {
 		final List<JdbcParameter> jdbcParameterList;
 
+		// todo (6.0) : see note on `SqmExpression#getExpressableType` regarding the role of `#getExpressableType` and possibly adding a separate method triggering the "resolution"
+		//		here is where we would use that new one... as we walk that SQM - we know all inferences have been set
 		List<JdbcParameter> existing = this.jdbcParamsBySqmParam.get( expression );
+
 		AllowableParameterType expressableType = expression.getExpressableType();
+
+
 		if ( existing != null ) {
 			if ( expressableType != null ) {
 				final int number = expressableType.getNumberOfJdbcParametersNeeded();

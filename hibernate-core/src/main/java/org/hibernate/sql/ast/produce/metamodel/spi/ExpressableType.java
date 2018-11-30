@@ -13,7 +13,7 @@ import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
  * Polymorphically represents any  "type" which can occur as an expression
  * in a domain query (e.g. an SQM tree).
  *
- * todo (6.0) : fold into DomainType.  Any DomainType is expressable in the sense this contract tries to model
+ * todo (6.0) : why is this in the `org.hibernate.**sql**.ast.produce` package?  Why not `org.hibernate.query.sqm`?
  *
  * @author Steve Ebersole
  */

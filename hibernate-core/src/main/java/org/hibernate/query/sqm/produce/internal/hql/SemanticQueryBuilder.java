@@ -68,7 +68,7 @@ import org.hibernate.query.sqm.tree.SqmQuerySpec;
 import org.hibernate.query.sqm.tree.SqmSelectStatement;
 import org.hibernate.query.sqm.tree.SqmStatement;
 import org.hibernate.query.sqm.tree.SqmUpdateStatement;
-import org.hibernate.query.sqm.tree.expression.ImpliedTypeSqmExpression;
+import org.hibernate.query.sqm.tree.expression.InferableTypeSqmExpression;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSearched;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSimple;
@@ -104,7 +104,10 @@ import org.hibernate.query.sqm.tree.expression.domain.SqmEmbeddableTypedReferenc
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityTypeExpression;
 import org.hibernate.query.sqm.tree.expression.domain.SqmEntityTypedReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmMapEntryBinding;
+import org.hibernate.query.sqm.tree.expression.domain.SqmMaxElementReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmMaxElementReferenceBasic;
+import org.hibernate.query.sqm.tree.expression.domain.SqmMaxElementReferenceEmbedded;
+import org.hibernate.query.sqm.tree.expression.domain.SqmMaxElementReferenceEntity;
 import org.hibernate.query.sqm.tree.expression.domain.SqmMaxIndexReference;
 import org.hibernate.query.sqm.tree.expression.domain.SqmMaxIndexReferenceBasic;
 import org.hibernate.query.sqm.tree.expression.domain.SqmMaxIndexReferenceEmbedded;
@@ -189,7 +192,7 @@ import org.hibernate.type.StandardBasicTypes;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor;
 import org.hibernate.type.spi.StandardSpiBasicTypes;
-import org.hibernate.type.spi.TypeConfiguration;
+import org.hibernate.type.spi.StandardSpiBasicTypes.StandardBasicType;
 
 import org.jboss.logging.Logger;
 
@@ -751,20 +754,21 @@ public class SemanticQueryBuilder
 	@Override
 	public SqmExpression visitLimitClause(HqlParser.LimitClauseContext ctx) {
 		SqmExpression sqmExpression = (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
-		addImpliedTypeIdNecessary( sqmExpression, StandardSpiBasicTypes.INTEGER);
+		applyImpliedType( sqmExpression, StandardSpiBasicTypes.INTEGER );
 		return sqmExpression;
 	}
 
 	@Override
 	public SqmExpression visitOffsetClause(HqlParser.OffsetClauseContext ctx) {
 		SqmExpression sqmExpression = (SqmExpression) ctx.parameterOrNumberLiteral().accept( this );
-		addImpliedTypeIdNecessary( sqmExpression, StandardSpiBasicTypes.INTEGER );
+		applyImpliedType( sqmExpression, StandardSpiBasicTypes.INTEGER );
 		return sqmExpression;
 	}
 
-	private void addImpliedTypeIdNecessary(SqmExpression sqmExpression, ExpressableType impliedType) {
-		if ( ImpliedTypeSqmExpression.class.isInstance( sqmExpression ) && sqmExpression.getInferableType() == null ) {
-			( (ImpliedTypeSqmExpression) sqmExpression ).impliedType( impliedType );
+	@SuppressWarnings("SameParameterValue")
+	private void applyImpliedType(SqmExpression sqmExpression, StandardBasicType impliedType) {
+		if ( sqmExpression instanceof InferableTypeSqmExpression ) {
+			( (InferableTypeSqmExpression) sqmExpression ).impliedType( () -> impliedType );
 		}
 	}
 
@@ -1241,14 +1245,14 @@ public class SemanticQueryBuilder
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
 		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
+			if ( rhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
 			}
 		}
 
 		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
+			if ( lhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
 			}
 		}
 
@@ -1260,18 +1264,6 @@ public class SemanticQueryBuilder
 		final SqmExpression lhs = (SqmExpression) ctx.expression().get( 0 ).accept( this );
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
-		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
-			}
-		}
-
-		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
-			}
-		}
-
 		return new RelationalSqmPredicate( RelationalPredicateOperator.NOT_EQUAL, lhs, rhs );
 	}
 
@@ -1281,14 +1273,14 @@ public class SemanticQueryBuilder
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
 		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
+			if ( rhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
 			}
 		}
 
 		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
+			if ( lhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
 			}
 		}
 
@@ -1301,14 +1293,14 @@ public class SemanticQueryBuilder
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
 		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
+			if ( rhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
 			}
 		}
 
 		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
+			if ( lhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
 			}
 		}
 
@@ -1321,14 +1313,14 @@ public class SemanticQueryBuilder
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
 		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
+			if ( rhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
 			}
 		}
 
 		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
+			if ( lhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
 			}
 		}
 
@@ -1341,14 +1333,14 @@ public class SemanticQueryBuilder
 		final SqmExpression rhs = (SqmExpression) ctx.expression().get( 1 ).accept( this );
 
 		if ( lhs.getInferableType() != null ) {
-			if ( rhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
+			if ( rhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) rhs ).impliedType( lhs.getInferableType() );
 			}
 		}
 
 		if ( rhs.getInferableType() != null ) {
-			if ( lhs instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
+			if ( lhs instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lhs ).impliedType( rhs.getInferableType() );
 			}
 		}
 
@@ -1362,27 +1354,27 @@ public class SemanticQueryBuilder
 		final SqmExpression upperBound = (SqmExpression) ctx.expression().get( 2 ).accept( this );
 
 		if ( expression.getInferableType() != null ) {
-			if ( lowerBound instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lowerBound ).impliedType( expression.getInferableType() );
+			if ( lowerBound instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lowerBound ).impliedType( expression.getInferableType() );
 			}
-			if ( upperBound instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) upperBound ).impliedType( expression.getInferableType() );
+			if ( upperBound instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) upperBound ).impliedType( expression.getInferableType() );
 			}
 		}
 		else if ( lowerBound.getInferableType() != null ) {
-			if ( expression instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) expression ).impliedType( lowerBound.getInferableType() );
+			if ( expression instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) expression ).impliedType( lowerBound.getInferableType() );
 			}
-			if ( upperBound instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) upperBound ).impliedType( lowerBound.getInferableType() );
+			if ( upperBound instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) upperBound ).impliedType( lowerBound.getInferableType() );
 			}
 		}
 		else if ( upperBound.getInferableType() != null ) {
-			if ( expression instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) expression ).impliedType( upperBound.getInferableType() );
+			if ( expression instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) expression ).impliedType( upperBound.getInferableType() );
 			}
-			if ( lowerBound instanceof ImpliedTypeSqmExpression ) {
-				( (ImpliedTypeSqmExpression) lowerBound ).impliedType( upperBound.getInferableType() );
+			if ( lowerBound instanceof InferableTypeSqmExpression ) {
+				( (InferableTypeSqmExpression) lowerBound ).impliedType( upperBound.getInferableType() );
 			}
 		}
 
@@ -1439,8 +1431,8 @@ public class SemanticQueryBuilder
 					final SqmExpression listItemExpression = (SqmExpression) expressionContext.accept( this );
 
 					if ( testExpression.getInferableType() != null ) {
-						if ( listItemExpression instanceof ImpliedTypeSqmExpression ) {
-							( (ImpliedTypeSqmExpression) listItemExpression ).impliedType( testExpression.getInferableType() );
+						if ( listItemExpression instanceof InferableTypeSqmExpression ) {
+							( (InferableTypeSqmExpression) listItemExpression ).impliedType( testExpression.getInferableType() );
 						}
 					}
 
@@ -2577,12 +2569,28 @@ public class SemanticQueryBuilder
 	}
 
 	@Override
-	public SqmMaxElementReferenceBasic visitMaxElementFunction(HqlParser.MaxElementFunctionContext ctx) {
+	public SqmMaxElementReference visitMaxElementFunction(HqlParser.MaxElementFunctionContext ctx) {
 		if ( getSessionFactory().getSessionFactoryOptions().isStrictJpaQueryLanguageCompliance() ) {
 			throw new StrictJpaComplianceViolation( StrictJpaComplianceViolation.Type.HQL_COLLECTION_FUNCTION );
 		}
 
-		return new SqmMaxElementReferenceBasic( asPluralAttribute( (SqmNavigableReference) ctx.path().accept( this ) ) );
+		final SqmPluralAttributeReference pluralAttributeBinding = asPluralAttribute( (SqmNavigableReference) ctx.path().accept( this ) );
+		switch ( pluralAttributeBinding.getReferencedNavigable().getPersistentCollectionDescriptor().getElementDescriptor().getClassification() ) {
+			case BASIC: {
+				return new SqmMaxElementReferenceBasic( pluralAttributeBinding );
+			}
+			case EMBEDDABLE: {
+				return new SqmMaxElementReferenceEmbedded( pluralAttributeBinding );
+			}
+			case ONE_TO_MANY:
+			case MANY_TO_MANY: {
+				return new SqmMaxElementReferenceEntity( pluralAttributeBinding );
+			}
+			default: {
+				throw new NotYetImplementedException( "min-element function not yet supported for ANY elements" );
+			}
+		}
+
 	}
 
 	@Override

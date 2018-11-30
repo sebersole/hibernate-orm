@@ -210,7 +210,7 @@ public class BasicValue
 
 					@Override
 					public JavaTypeDescriptor getJavaTypeDescriptor() throws NotYetResolvedException {
-						return resolution.getDomainJavaDescriptor();
+						return resolution.getRelationalJavaDescriptor();
 					}
 				}
 		);
