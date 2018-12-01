@@ -359,8 +359,8 @@ public class BasicValue
 
 		if ( attributeConverterDescriptor != null ) {
 			// we have an attribute converter, use that to either:
-			//		1) validate the BasicJavaDescriptor/SqlTypeDescriptor defined on parameters
-			//		2) use the converter param types as hints to the missing BasicJavaDescriptor/SqlTypeDescriptor
+			//		1) validate the explicit BasicJavaDescriptor/SqlTypeDescriptor
+			//		2) use the converter Class parameters to infer the BasicJavaDescriptor/SqlTypeDescriptor
 
 			final Class<?> converterDomainJavaType = attributeConverterDescriptor.getDomainValueResolvedType()
 					.getErasedType();

@@ -13,7 +13,8 @@ import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 
 /**
  * Descriptor for the mapping of a basic value as part of the application domain
- * model.
+ * model.  Acts as a composite of everything needed to read/write basic values
+ * including any conversions and specialized mutability-plans
  *
  * @author Steve Ebersole
  */

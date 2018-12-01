@@ -13,14 +13,14 @@ import org.hibernate.envers.RevisionType;
 /**
  * @author Chris Cranford
  */
-public class RevisionTypeConverter implements AttributeConverter<RevisionType, Integer> {
+public class RevisionTypeConverter implements AttributeConverter<RevisionType, Byte> {
 	@Override
-	public Integer convertToDatabaseColumn(RevisionType attribute) {
-		return attribute == null ? null : attribute.getRepresentation().intValue();
+	public Byte convertToDatabaseColumn(RevisionType attribute) {
+		return attribute == null ? null : attribute.getRepresentation();
 	}
 
 	@Override
-	public RevisionType convertToEntityAttribute(Integer dbData) {
-		return RevisionType.fromRepresentation( dbData == null ? null : dbData.byteValue() );
+	public RevisionType convertToEntityAttribute(Byte dbData) {
+		return RevisionType.fromRepresentation( dbData );
 	}
 }
