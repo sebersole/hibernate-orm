@@ -6,13 +6,10 @@
  */
 package org.hibernate.orm.test.conversions;
 
-import javax.persistence.Parameter;
-
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.SessionFactoryBasedFunctionalTest;
-import org.hibernate.orm.test.support.domains.converters.Account;
-import org.hibernate.orm.test.support.domains.converters.Status;
-import org.hibernate.query.spi.QueryImplementor;
+import org.hibernate.orm.test.support.domains.helpdesk.Account;
+import org.hibernate.orm.test.support.domains.helpdesk.Status;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,6 +99,7 @@ public class BasicConversionsTest extends SessionFactoryBasedFunctionalTest {
 							.setParameter( "status", Status.INACTIVE )
 							.uniqueResult();
 
+					assertThat( loaded, notNullValue() );
 
 					loaded = session.createQuery( "from Account a where a.loginStatus <= :status", Account.class )
 							.setParameter( "status", Status.INACTIVE )

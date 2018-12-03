@@ -6,6 +6,8 @@
  */
 package org.hibernate.type.internal;
 
+import java.util.function.Function;
+
 import org.hibernate.boot.model.domain.BasicValueMapping;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -26,13 +28,13 @@ public class InferredBasicValueResolver<J> {
 	private MutabilityPlan<J> mutabilityPlan;
 
 	public InferredBasicValueResolver(
-			BasicJavaDescriptor<J> explicitJtd,
-			SqlTypeDescriptor explicitStd,
+			Function<TypeConfiguration,BasicJavaDescriptor<J>> explicitJtdAccess,
+			Function<TypeConfiguration,SqlTypeDescriptor> explicitStdAccess,
 			TypeConfiguration typeConfiguration) {
 		this.typeConfiguration = typeConfiguration;
 
-		this.domainJtd = explicitJtd;
-		this.relationalStd = explicitStd;
+		this.domainJtd = explicitJtdAccess != null ? explicitJtdAccess.apply( typeConfiguration ) : null;
+		this.relationalStd = explicitStdAccess != null ? explicitStdAccess.apply( typeConfiguration ) : null;
 	}
 
 	public BasicValueMapping.Resolution<J> build() {

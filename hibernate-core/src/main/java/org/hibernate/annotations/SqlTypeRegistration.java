@@ -15,25 +15,20 @@ import org.hibernate.type.descriptor.sql.SqlTypeDescriptor;
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Describes a SqlTypeDescriptor to be
  * @author Steve Ebersole
  */
-@java.lang.annotation.Target({METHOD, FIELD, ANNOTATION_TYPE})
+@java.lang.annotation.Target({TYPE, METHOD, FIELD, ANNOTATION_TYPE})
 @Inherited
 @Retention(RUNTIME)
 @Repeatable( SqlTypeRegistrations.class )
 public @interface SqlTypeRegistration {
 	/**
-	 * The code to use within the
-	 * {@link org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptorRegistry}
-	 */
-	int typeCode();
-
-	/**
 	 * The descriptor to use
 	 */
-	Class<? extends SqlTypeDescriptor> descriptorClass();
+	Class<? extends SqlTypeDescriptor> value();
 }

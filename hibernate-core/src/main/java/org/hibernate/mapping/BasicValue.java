@@ -9,6 +9,7 @@ package org.hibernate.mapping;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.persistence.AttributeConverter;
 import javax.persistence.EnumType;
@@ -68,8 +69,10 @@ public class BasicValue
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// incoming "configuration" values
 
-	private BasicJavaDescriptor explicitJtd;
-	private SqlTypeDescriptor explicitStd;
+
+	private Function<TypeConfiguration,BasicJavaDescriptor<?>> explicitJavaTypeAccess;
+	private Function<TypeConfiguration,SqlTypeDescriptor> explicitSqlTypeAccess;
+
 	private MutabilityPlan explicitMutabilityPlan;
 
 	private boolean isNationalized;
@@ -149,8 +152,8 @@ public class BasicValue
 		if ( name != null ) {
 			resolution = interpretExplicitlyNamedType(
 					name,
-					explicitJtd,
-					sqlTypeDescriptor,
+					explicitJavaTypeAccess,
+					explicitSqlTypeAccess,
 					attributeConverterDescriptor,
 					explicitMutabilityPlan,
 					explicitLocalTypeParams,
@@ -165,8 +168,8 @@ public class BasicValue
 			final ClassLoaderService classLoaderService = serviceRegistry.getService( ClassLoaderService.class );
 
 			resolution = implicitlyResolveBasicType(
-					explicitJtd,
-					sqlTypeDescriptor,
+					explicitJavaTypeAccess,
+					explicitSqlTypeAccess,
 					attributeConverterDescriptor,
 					this,
 					() -> {
@@ -224,8 +227,8 @@ public class BasicValue
 	@SuppressWarnings("unchecked")
 	private static Resolution interpretExplicitlyNamedType(
 			String name,
-			BasicJavaDescriptor explicitJtd,
-			SqlTypeDescriptor explicitStd,
+			Function<TypeConfiguration,BasicJavaDescriptor<?>> explicitJtdAccess,
+			Function<TypeConfiguration,SqlTypeDescriptor> explicitStdAccess,
 			ConverterDescriptor converterDescriptor,
 			MutabilityPlan explicitMutabilityPlan,
 			Map localTypeParams,
@@ -259,8 +262,8 @@ public class BasicValue
 			// atm this should never happen due to impl of `#setExplicitTypeName`
 			return NamedConverterResolution.from(
 					name,
-					explicitJtd,
-					explicitStd,
+					explicitJtdAccess,
+					explicitStdAccess,
 					converterCreationContext,
 					explicitMutabilityPlan,
 					stdIndicators,
@@ -295,8 +298,8 @@ public class BasicValue
 		final TypeDefinition typeDefinition = resolutionContext.getMetadataBuildingContext().resolveTypeDefinition( name );
 		if ( typeDefinition != null ) {
 			return typeDefinition.resolve(
-					explicitJtd,
-					explicitStd,
+					explicitJtdAccess.apply( typeConfiguration ),
+					explicitStdAccess.apply( typeConfiguration ),
 					localTypeParams,
 					explicitMutabilityPlan,
 					resolutionContext.getMetadataBuildingContext()
@@ -321,8 +324,8 @@ public class BasicValue
 				);
 				resolutionContext.getMetadataBuildingContext().addTypeDefinition( implicitDefinition );
 				return implicitDefinition.resolve(
-						explicitJtd,
-						explicitStd,
+						explicitJtdAccess.apply( typeConfiguration ),
+						explicitStdAccess.apply( typeConfiguration ),
 						Collections.emptyMap(),
 						explicitMutabilityPlan,
 						resolutionContext.getMetadataBuildingContext()
@@ -332,8 +335,8 @@ public class BasicValue
 			return TypeDefinition.createLocalResolution(
 					name,
 					typeNamedClass,
-					explicitJtd,
-					explicitStd,
+					explicitJtdAccess.apply( typeConfiguration ),
+					explicitStdAccess.apply( typeConfiguration ),
 					explicitMutabilityPlan,
 					localTypeParams,
 					resolutionContext
@@ -348,14 +351,14 @@ public class BasicValue
 
 	@SuppressWarnings("unchecked")
 	private static Resolution implicitlyResolveBasicType(
-			BasicJavaDescriptor explicitJtd,
-			SqlTypeDescriptor explicitStd,
+			Function<TypeConfiguration,BasicJavaDescriptor<?>> explicitJtdAccess,
+			Function<TypeConfiguration,SqlTypeDescriptor> explicitStdAccess,
 			ConverterDescriptor attributeConverterDescriptor,
 			SqlTypeDescriptorIndicators stdIndicators,
 			Supplier<BasicJavaDescriptor> reflectedJtdResolver,
 			TypeConfiguration typeConfiguration) {
 
-		final InferredBasicValueResolver resolution = new InferredBasicValueResolver( explicitJtd, explicitStd, typeConfiguration );
+		final InferredBasicValueResolver resolution = new InferredBasicValueResolver( explicitJtdAccess, explicitStdAccess, typeConfiguration );
 
 		if ( attributeConverterDescriptor != null ) {
 			// we have an attribute converter, use that to either:
@@ -534,8 +537,8 @@ public class BasicValue
 		this.temporalPrecision = temporalPrecision;
 	}
 
-	public void setSqlType(SqlTypeDescriptor sqlTypeDescriptor) {
-		this.explicitStd = sqlTypeDescriptor;
+	public void setExplicitSqlTypeAccess(Function<TypeConfiguration, SqlTypeDescriptor> sqlTypeAccess) {
+		this.explicitSqlTypeAccess = sqlTypeAccess;
 	}
 
 	public void setExplicitMutabilityPlan(MutabilityPlan explicitMutabilityPlan) {
@@ -608,6 +611,10 @@ public class BasicValue
 		this.javaTypeDescriptor = javaDescriptor;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T> void setExplicitJavaTypeAccess(Function<TypeConfiguration,BasicJavaDescriptor<T>> access) {
+		this.explicitJavaTypeAccess = (Function) access;
+	}
 
 	class ValueConverterCollector implements Consumer<BasicValueConverter> {
 		private BasicValueConverter basicValueConverter;

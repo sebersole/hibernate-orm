@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.model.domain.internal;
 
+import java.util.function.Function;
 import javax.persistence.AttributeConverter;
 
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
@@ -25,6 +26,7 @@ import org.hibernate.type.descriptor.spi.SqlTypeDescriptorIndicators;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
 import org.hibernate.type.internal.BasicTypeImpl;
 import org.hibernate.type.spi.BasicType;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -33,8 +35,8 @@ public class NamedConverterResolution<J> implements BasicValueMapping.Resolution
 
 	public static NamedConverterResolution from(
 			String name,
-			BasicJavaDescriptor explicitJtd,
-			SqlTypeDescriptor explicitStd,
+			Function<TypeConfiguration,BasicJavaDescriptor<?>> explicitJtdAccess,
+			Function<TypeConfiguration,SqlTypeDescriptor> explicitStdAccess,
 			JpaAttributeConverterCreationContext converterCreationContext,
 			MutabilityPlan explicitMutabilityPlan,
 			SqlTypeDescriptorIndicators sqlTypeIndicators,
@@ -52,10 +54,16 @@ public class NamedConverterResolution<J> implements BasicValueMapping.Resolution
 		);
 		final JpaAttributeConverter converter = converterDescriptor.createJpaAttributeConverter( converterCreationContext );
 
-		final BasicJavaDescriptor domainJtd = explicitJtd != null
+		final BasicJavaDescriptor explicitJtd = explicitJtdAccess != null
+				? explicitJtdAccess.apply( resolutionContext.getBootstrapContext().getTypeConfiguration() )
+				: null;
+		final BasicJavaDescriptor domainJtd = explicitJtdAccess != null
 				? explicitJtd
 				: converter.getDomainJavaDescriptor();
 
+		final SqlTypeDescriptor explicitStd = explicitStdAccess != null
+				? explicitStdAccess.apply( resolutionContext.getBootstrapContext().getTypeConfiguration() )
+				: null;
 		final BasicJavaDescriptor relationalJtd = converter.getRelationalJavaDescriptor();
 		final SqlTypeDescriptor relationalStd = explicitStd != null
 				? explicitStd

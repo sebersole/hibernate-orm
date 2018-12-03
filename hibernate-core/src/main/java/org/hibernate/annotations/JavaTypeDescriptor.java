@@ -22,7 +22,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface JavaTypeDescriptor {
 	/**
-	 * The {@link org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor} to use
+	 * The JavaTypeDescriptor to use
 	 */
-	Class<? extends org.hibernate.type.descriptor.java.spi.JavaTypeDescriptor> value();
+	Class<? extends org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor> value();
 }

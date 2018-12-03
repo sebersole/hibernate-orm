@@ -7,12 +7,15 @@
 package org.hibernate.orm.test.support.domains.contacts;
 
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.orm.test.support.domains.DomainModel;
 
 /**
  * @author Steve Ebersole
  */
-public class ModelClasses {
-	public static final Class[] CLASSES = new Class[] {
+public class ContactsDomainModel implements DomainModel {
+	public static ContactsDomainModel INSTANCE = new ContactsDomainModel();
+
+	private static final Class[] CLASSES = new Class[] {
 			Address.class,
 			PhoneNumber.class,
 			Contact.class
@@ -22,5 +25,13 @@ public class ModelClasses {
 		for ( Class domainClass : CLASSES ) {
 			sources.addAnnotatedClass( domainClass );
 		}
+	}
+
+	private ContactsDomainModel() {
+	}
+
+	@Override
+	public void applyDomainModel(MetadataSources sources) {
+		applyContactsModel( sources );
 	}
 }

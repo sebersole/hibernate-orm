@@ -7,19 +7,33 @@
 package org.hibernate.orm.test.support.domains.retail;
 
 import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * @author Steve Ebersole
  */
 @Entity
-public class CardPayment extends Payment {
-	Integer transactionId;
+@Table( name = "ASSOCIATE")
+public class SalesAssociate {
+	private Integer id;
 
-	public Integer getTransactionId() {
-		return transactionId;
+	private Name name;
+
+	@Id
+	public Integer getId() {
+		return id;
 	}
 
-	public void setTransactionId(Integer transactionId) {
-		this.transactionId = transactionId;
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public Name getName() {
+		return name;
+	}
+
+	public void setName(Name name) {
+		this.name = name;
 	}
 }

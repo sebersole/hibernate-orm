@@ -8,14 +8,17 @@ package org.hibernate.orm.test.support.domains.retail;
 
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.orm.test.support.MonetaryAmountConverter;
+import org.hibernate.orm.test.support.domains.DomainModel;
 
 /**
  * @author Steve Ebersole
  */
-public class ModelClasses {
+public class RetailDomainModel implements DomainModel {
+	public static final RetailDomainModel INSTANCE = new RetailDomainModel();
+
 	private static final Class[] CLASSES = new Class[] {
 			MonetaryAmountConverter.class,
-			Customer.class,
+			SalesAssociate.class,
 			Vendor.class,
 			Product.class,
 			Order.class,
@@ -29,5 +32,13 @@ public class ModelClasses {
 		for ( Class domainClass : CLASSES ) {
 			sources.addAnnotatedClass( domainClass );
 		}
+	}
+
+	private RetailDomainModel() {
+	}
+
+	@Override
+	public void applyDomainModel(MetadataSources sources) {
+		applyRetailModel( sources );
 	}
 }

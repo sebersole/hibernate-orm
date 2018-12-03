@@ -45,5 +45,5 @@ public @interface SqlType {
 	 * This ultimately decides which {@link org.hibernate.type.descriptor.sql.SqlTypeDescriptor}
 	 * is used to "understand" the described SQL data type
 	 */
-	int sqlTypeCode();
+	int value();
 }

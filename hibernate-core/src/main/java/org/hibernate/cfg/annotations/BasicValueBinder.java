@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
@@ -22,9 +23,11 @@ import javax.persistence.Version;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.annotations.JavaTypeDescriptor;
 import org.hibernate.annotations.MapKeyType;
 import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.Parameter;
+import org.hibernate.annotations.SqlType;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.XProperty;
@@ -40,6 +43,7 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Table;
+import org.hibernate.resource.beans.spi.ManagedBeanRegistry;
 import org.hibernate.type.descriptor.java.spi.BasicJavaDescriptor;
 import org.hibernate.type.descriptor.spi.SqlTypeDescriptorIndicators;
 import org.hibernate.type.descriptor.sql.spi.SqlTypeDescriptor;
@@ -73,6 +77,9 @@ public class BasicValueBinder<T> implements SqlTypeDescriptorIndicators {
 
 	private String explicitBasicTypeName;
 	private Map explicitLocalTypeParams;
+
+	private Function<TypeConfiguration,SqlTypeDescriptor> explicitSqlTypeAccess;
+	private Function<TypeConfiguration, BasicJavaDescriptor> explicitJavaTypeAccess;
 
 	private BasicJavaDescriptor<T> javaDescriptor;
 	private SqlTypeDescriptor sqlTypeDescriptor;
@@ -337,7 +344,9 @@ public class BasicValueBinder<T> implements SqlTypeDescriptorIndicators {
 				.getJavaTypeDescriptorRegistry()
 				.getOrMakeJavaDescriptor( Integer.class );
 
-		basicValue.setSqlType( javaDescriptor.getJdbcRecommendedSqlType( this ) );
+		basicValue.setExplicitSqlTypeAccess(
+				typeConfiguration -> javaDescriptor.getJdbcRecommendedSqlType( this )
+		);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -438,6 +447,42 @@ public class BasicValueBinder<T> implements SqlTypeDescriptorIndicators {
 		else {
 			this.enumType = null;
 		}
+
+		explicitSqlTypeAccess = typeConfiguration -> {
+			final SqlType sqlTypeAnn = attributeDescriptor.getAnnotation( SqlType.class );
+			final org.hibernate.annotations.SqlTypeDescriptor sqlTypeDescriptorAnn = attributeDescriptor.getAnnotation( org.hibernate.annotations.SqlTypeDescriptor.class );
+
+			if ( sqlTypeAnn != null ) {
+				// warn if `sqlTypeDescriptorAnn != null`?
+				final SqlTypeDescriptor descriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
+						.getDescriptor( sqlTypeAnn.value() );
+				if ( descriptor == null ) {
+					// todo (6.0) : error?  or warning?
+				}
+
+				return descriptor;
+			}
+
+			if ( sqlTypeDescriptorAnn != null ) {
+				return typeConfiguration.getServiceRegistry().getService( ManagedBeanRegistry.class )
+						.getBean( sqlTypeDescriptorAnn.value() )
+						.getBeanInstance();
+			}
+
+			return null;
+		};
+
+		explicitJavaTypeAccess = typeConfiguration -> {
+			final JavaTypeDescriptor jtdAnn = attributeDescriptor.getAnnotation( JavaTypeDescriptor.class );
+
+			if ( jtdAnn == null ) {
+				return null;
+			}
+
+			return typeConfiguration.getServiceRegistry().getService( ManagedBeanRegistry.class )
+					.getBean( jtdAnn.value() )
+					.getBeanInstance();
+		};
 
 		normalSupplementalDetails( attributeDescriptor, buildingContext );
 	}
@@ -631,7 +676,7 @@ public class BasicValueBinder<T> implements SqlTypeDescriptorIndicators {
 		if ( isNationalized ) {
 			basicValue.makeNationalized();
 		}
-		basicValue.setSqlType( sqlTypeDescriptor );
+		basicValue.setExplicitSqlTypeAccess( explicitSqlTypeAccess );
 		basicValue.setJavaTypeDescriptor( javaDescriptor );
 		basicValue.setTypeUsingReflection( persistentClassName, propertyName );
 		basicValue.setJpaAttributeConverterDescriptor( converterDescriptor );
