@@ -9,7 +9,6 @@ package org.hibernate.metamodel.model.domain.internal;
 import java.util.Set;
 
 import org.hibernate.LockMode;
-import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Property;
@@ -18,10 +17,9 @@ import org.hibernate.metamodel.model.domain.spi.AbstractPersistentCollectionDesc
 import org.hibernate.metamodel.model.domain.spi.AbstractPluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.spi.ManagedTypeDescriptor;
 import org.hibernate.property.access.spi.PropertyAccess;
-import org.hibernate.sql.ast.tree.spi.expression.domain.NavigableReference;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.domain.collection.CollectionInitializerProducer;
 import org.hibernate.sql.results.internal.domain.collection.SetInitializerProducer;
-import org.hibernate.sql.results.spi.DomainResultCreationContext;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.FetchParent;
 
@@ -41,20 +39,19 @@ public class PersistentSetDescriptorImpl<O,E> extends AbstractPersistentCollecti
 
 	@Override
 	protected CollectionInitializerProducer createInitializerProducer(
+			NavigablePath navigablePath,
 			FetchParent fetchParent,
 			boolean selected,
 			String resultVariable,
 			LockMode lockMode,
-			DomainResultCreationState creationState,
-			DomainResultCreationContext creationContext) {
-		final NavigableReference navigableReference = creationState.getNavigableReferenceStack().getCurrent();
+			DomainResultCreationState creationState) {
 		return new SetInitializerProducer(
 				this,
 				selected,
 				getElementDescriptor().createDomainResult(
-						navigableReference,
+						navigablePath,
 						null,
-						creationState, creationContext
+						creationState
 				)
 		);
 	}
