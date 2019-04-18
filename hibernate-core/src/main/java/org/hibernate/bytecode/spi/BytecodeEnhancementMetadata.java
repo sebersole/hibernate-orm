@@ -6,8 +6,12 @@
  */
 package org.hibernate.bytecode.spi;
 
+import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
+import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
+import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -47,6 +51,11 @@ public interface BytecodeEnhancementMetadata {
 			Object entity,
 			SharedSessionContractImplementor session) throws NotInstrumentedException;
 
+	void injectEnhancedEntityAsProxyInterceptor(
+			Object entity,
+			EntityKey entityKey,
+			SharedSessionContractImplementor session);
+
 	/**
 	 * Extract the field interceptor instance from the enhanced entity.
 	 *
@@ -57,6 +66,8 @@ public interface BytecodeEnhancementMetadata {
 	 * @throws NotInstrumentedException Thrown if {@link #isEnhancedForLazyLoading()} returns {@code false}
 	 */
 	LazyAttributeLoadingInterceptor extractInterceptor(Object entity) throws NotInstrumentedException;
+
+	BytecodeLazyAttributeInterceptor extractLazyInterceptor(Object entity) throws NotInstrumentedException;
 
 	boolean hasUnFetchedAttributes(Object entity);
 

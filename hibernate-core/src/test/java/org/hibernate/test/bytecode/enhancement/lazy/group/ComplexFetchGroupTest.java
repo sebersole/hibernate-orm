@@ -28,7 +28,6 @@ import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.stat.SessionStatistics;
 import org.hibernate.stat.spi.StatisticsImplementor;
 
-import org.hibernate.testing.FailureExpected;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.bytecode.enhancement.BytecodeEnhancerRunner;
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
@@ -39,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -47,54 +47,144 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @TestForIssue( jiraKey = "HHH-11223" )
 @RunWith( BytecodeEnhancerRunner.class )
 @CustomEnhancementContext( EnhancerTestContext.class )
-@FailureExpected( jiraKey = "HHH-11223" )
+//@FailureExpected( jiraKey = "HHH-11223" )
 public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
-	public void testNonOwningOneToOneAccess() {
+	public void testLoadNonOwningOneToOne() {
+		// Test loading D and accessing E
+		// 		E is the owner of the FK, not D.  When `D#e` is accessed we
+		//		need to actually load E because its table has the FK value, not
+		//		D's table
+
 		final StatisticsImplementor stats = sessionFactory().getStatistics();
 		stats.clear();
 
+		assert sessionFactory().getMetamodel().entityPersister( DEntity.class ).getInstrumentationMetadata().isEnhancedForLazyLoading();
+
 		inSession(
 				session -> {
-					final SessionStatistics sessionStats = session.getStatistics();
-
-
 					final DEntity entityD = session.load( DEntity.class, 1L );
-					// todo : really this should be 0
-					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
-
-					entityD.getC();
-					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
-					entityD.getC();
-					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
+					assert !Hibernate.isPropertyInitialized( entityD, "a" );
+					assert !Hibernate.isPropertyInitialized( entityD, "c" );
+					assert !Hibernate.isPropertyInitialized( entityD, "e" );
 
 					final EEntity e1 = entityD.getE();
-					assertThat( stats.getPrepareStatementCount(), is( 3L ) );
-
-					final EEntity e2 = entityD.getE();
-					assertThat( stats.getPrepareStatementCount(), is( 3L ) );
+					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+					assert Hibernate.isPropertyInitialized( entityD, "a" );
+					assert !Hibernate.isInitialized( entityD.getA() );
+					assert Hibernate.isPropertyInitialized( entityD, "c" );
+					assert !Hibernate.isInitialized( entityD.getC() );
+					assert Hibernate.isPropertyInitialized( entityD, "e" );
+					assert Hibernate.isInitialized( entityD.getE() );
 				}
 		);
 	}
 
 	@Test
-	public void testOwningOneToOneAccess() {
+	public void testLoadOwningOneToOne() {
+		// switch it around
+
 		final StatisticsImplementor stats = sessionFactory().getStatistics();
 		stats.clear();
 
+		assert sessionFactory().getMetamodel().entityPersister( DEntity.class ).getInstrumentationMetadata().isEnhancedForLazyLoading();
+
 		inSession(
 				session -> {
-					final SessionStatistics sessionStats = session.getStatistics();
-
 					final EEntity entityE = session.load( EEntity.class, 17L );
-					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
+					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
+					assert !Hibernate.isPropertyInitialized( entityE, "d" );
 
-//					final DEntity d1 = entityE.getD();
-//					assertThat( stats.getPrepareStatementCount(), is( 1 ) );
-//
-//					final DEntity d2 = entityE.getD();
-//					assertThat( stats.getPrepareStatementCount(), is( 1 ) );
+					final DEntity entityD = entityE.getD();
+					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
+					assert ! Hibernate.isPropertyInitialized( entityD, "a" );
+					assert ! Hibernate.isPropertyInitialized( entityD, "c" );
+					assert ! Hibernate.isPropertyInitialized( entityD, "e" );
+				}
+		);
+	}
+
+
+	@Test
+	public void testRandomAccess() {
+		final StatisticsImplementor stats = sessionFactory().getStatistics();
+		stats.clear();
+
+		assert sessionFactory().getMetamodel().entityPersister( DEntity.class ).getInstrumentationMetadata().isEnhancedForLazyLoading();
+
+		inSession(
+				session -> {
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// Load a D
+
+					final DEntity entityD = session.load( DEntity.class, 1L );
+
+					// Because D is enhanced we should not have executed any SQL
+					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
+
+					assert ! Hibernate.isPropertyInitialized( entityD, "a" );
+					assert ! Hibernate.isPropertyInitialized( entityD, "c" );
+					assert ! Hibernate.isPropertyInitialized( entityD, "e" );
+
+
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// Access C
+
+					final CEntity c = entityD.getC();
+
+					// make sure interception happened
+					assertThat( c, notNullValue() );
+
+					// See `#testLoadNonOwningOneToOne`
+					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+
+					// The fields themselves are initialized - set to the
+					// enhanced entity "proxy" instance
+					assert Hibernate.isPropertyInitialized( entityD, "a" );
+					assert Hibernate.isPropertyInitialized( entityD, "c" );
+					assert Hibernate.isPropertyInitialized( entityD, "e" );
+
+					assert ! Hibernate.isInitialized( entityD.getA() );
+					assert ! Hibernate.isInitialized( entityD.getC() );
+					assert Hibernate.isInitialized( entityD.getE() );
+
+
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// Access C again
+
+					entityD.getC();
+					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+
+
+
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// Access E
+
+					final EEntity e1 = entityD.getE();
+					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+					assert Hibernate.isInitialized( e1 );
+
+
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// Access E again
+
+					entityD.getE();
+					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+
+
+					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					// now lets access the attribute "proxies"
+
+					// this will load the table C data
+					entityD.getC().getC1();
+					assertThat( stats.getPrepareStatementCount(), is( 3L ) );
+					assert Hibernate.isInitialized( entityD.getC() );
+
+					// this should not - it was already loaded above
+					entityD.getE().getE1();
+					assertThat( stats.getPrepareStatementCount(), is( 3L ) );
 				}
 		);
 	}
@@ -294,12 +384,14 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		private String d;
 		// ****** Relations *****************
 		@OneToOne(fetch = FetchType.LAZY)
+//		@LazyToOne(LazyToOneOption.PROXY)
 		@LazyToOne(LazyToOneOption.NO_PROXY)
 		@LazyGroup("a")
 		public AEntity a;
 
 		@OneToOne(fetch = FetchType.LAZY)
 		@LazyToOne(LazyToOneOption.NO_PROXY)
+//		@LazyToOne(LazyToOneOption.PROXY)
 		@LazyGroup("c")
 		public CEntity c;
 		@OneToMany(targetEntity = BEntity.class)

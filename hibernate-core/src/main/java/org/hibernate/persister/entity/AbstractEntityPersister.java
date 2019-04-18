@@ -38,10 +38,13 @@ import org.hibernate.Session;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
+import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
+import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeDescriptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
+import org.hibernate.bytecode.spi.NotInstrumentedException;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
@@ -104,6 +107,7 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.Subclass;
 import org.hibernate.mapping.Table;
+import org.hibernate.mapping.ToOne;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.collection.CollectionPersister;
@@ -4277,6 +4281,43 @@ public abstract class AbstractEntityPersister
 
 		final UniqueEntityLoader loader = getAppropriateLoader( lockOptions, session );
 		return loader.load( id, optionalObject, session, lockOptions );
+	}
+
+	@Override
+	public Object initializeEnhancedEntityUsedAsProxy(
+			Object entity,
+			String nameOfAttributeBeingAccessed,
+			SharedSessionContractImplementor session) {
+		final BytecodeEnhancementMetadata enhancementMetadata = getEntityMetamodel().getBytecodeEnhancementMetadata();
+		final BytecodeLazyAttributeInterceptor currentInterceptor = enhancementMetadata.extractLazyInterceptor( entity );
+		if ( currentInterceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
+			final EnhancementAsProxyLazinessInterceptor proxyInterceptor = (EnhancementAsProxyLazinessInterceptor) currentInterceptor;
+
+			readLockLoader.load(
+					proxyInterceptor.getEntityKey().getIdentifier(),
+					entity,
+					session,
+					LockOptions.READ
+			);
+
+			final LazyAttributeLoadingInterceptor interceptor = enhancementMetadata.injectInterceptor( entity, session );
+
+			final Object value;
+			if ( interceptor.isAttributeLoaded( nameOfAttributeBeingAccessed ) ) {
+				value = getEntityTuplizer().getPropertyValue( entity, nameOfAttributeBeingAccessed );
+			}
+			else {
+				value = ( (LazyPropertyInitializer) this ).initializeLazyProperty( nameOfAttributeBeingAccessed, entity, session );
+			}
+
+			return interceptor.readObject(
+					entity,
+					nameOfAttributeBeingAccessed,
+					value
+			);
+		}
+
+		throw new IllegalStateException(  );
 	}
 
 	@Override
