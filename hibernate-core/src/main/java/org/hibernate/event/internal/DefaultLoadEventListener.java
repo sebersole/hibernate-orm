@@ -241,21 +241,49 @@ public class DefaultLoadEventListener implements LoadEventListener {
 			);
 		}
 
-		// this class has no proxies (so do a shortcut)
-		if ( !persister.hasProxy() ) {
-			return load( event, persister, keyToLoad, options );
-		}
-
 		final PersistenceContext persistenceContext = event.getSession().getPersistenceContext();
 
-		// look for a proxy
-		Object proxy = persistenceContext.getProxy( keyToLoad );
-		if ( proxy != null ) {
-			return returnNarrowedProxy( event, persister, keyToLoad, options, persistenceContext, proxy );
-		}
+		// check for the case where we can use the entity itself as a proxy - it must be bytecode
+		// 		enhanced for laziness and not be versioned (versioned would require loading the
+		// 		version column from the table)
+		if ( persister.getEntityMetamodel().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
+			if ( ! persister.isVersioned() ) {
+				// create the (uninitialized) entity instance - has only id set
+				final Object entity = persister.getEntityTuplizer().instantiate(
+						keyToLoad.getIdentifier(),
+						event.getSession()
+				);
 
-		if ( options.isAllowProxyCreation() ) {
-			return createProxyIfNecessary( event, persister, keyToLoad, options, persistenceContext );
+				// add the entity instance to the persistence context
+				persistenceContext.addEntity(
+						entity,
+						Status.MANAGED,
+						new Object[persister.getPropertyTypes().length],
+						keyToLoad,
+						LockMode.NONE,
+						null,
+						true,
+						persister,
+						true
+				);
+
+				persister.getEntityMetamodel()
+						.getBytecodeEnhancementMetadata()
+						.injectEnhancedEntityAsProxyInterceptor( entity, keyToLoad, event.getSession() );
+
+				return entity;
+			}
+		}
+		else if ( persister.hasProxy() ) {
+			// look for a proxy
+			Object proxy = persistenceContext.getProxy( keyToLoad );
+			if ( proxy != null ) {
+				return returnNarrowedProxy( event, persister, keyToLoad, options, persistenceContext, proxy );
+			}
+
+			if ( options.isAllowProxyCreation() ) {
+				return createProxyIfNecessary( event, persister, keyToLoad, options, persistenceContext );
+			}
 		}
 
 		// return a newly loaded object

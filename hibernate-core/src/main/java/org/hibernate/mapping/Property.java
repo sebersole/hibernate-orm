@@ -253,8 +253,10 @@ public class Property implements Serializable, MetaAttributable {
 			// groupings.  If that assertion changes then this check
 			// needs to change as well.  Partially, this is an issue with
 			// the overloading of the term "lazy" here...
-			ToOne toOneValue = ( ToOne ) value;
-			return toOneValue.isLazy() && toOneValue.isUnwrapProxy();
+//			ToOne toOneValue = ( ToOne ) value;
+//			return toOneValue.isLazy() && toOneValue.isUnwrapProxy();
+
+			return false;
 		}
 		return lazy;
 	}

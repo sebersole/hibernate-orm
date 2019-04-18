@@ -6,10 +6,12 @@
  */
 package org.hibernate.tuple.entity;
 
+import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.bytecode.spi.NotInstrumentedException;
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -49,7 +51,20 @@ public class BytecodeEnhancementMetadataNonPojoImpl implements BytecodeEnhanceme
 	}
 
 	@Override
+	public void injectEnhancedEntityAsProxyInterceptor(
+			Object entity,
+			EntityKey entityKey,
+			SharedSessionContractImplementor session) {
+		throw new NotInstrumentedException( errorMsg );
+	}
+
+	@Override
 	public LazyAttributeLoadingInterceptor extractInterceptor(Object entity) throws NotInstrumentedException {
+		throw new NotInstrumentedException( errorMsg );
+	}
+
+	@Override
+	public BytecodeLazyAttributeInterceptor extractLazyInterceptor(Object entity) throws NotInstrumentedException {
 		throw new NotInstrumentedException( errorMsg );
 	}
 

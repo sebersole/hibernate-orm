@@ -6,14 +6,22 @@
  */
 package org.hibernate.tuple.entity;
 
+import java.io.Serializable;
+
+import org.hibernate.LockMode;
+import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
+import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.bytecode.spi.NotInstrumentedException;
+import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.PersistentAttributeInterceptable;
 import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.Status;
 import org.hibernate.mapping.PersistentClass;
+import org.hibernate.persister.entity.EntityPersister;
 
 /**
  * @author Steve Ebersole
@@ -67,38 +75,39 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 
 	@Override
 	public boolean hasUnFetchedAttributes(Object entity) {
-		LazyAttributeLoadingInterceptor interceptor = enhancedForLazyLoading ? extractInterceptor( entity ) : null;
-		return interceptor != null && interceptor.hasAnyUninitializedAttributes();
+		if ( ! enhancedForLazyLoading ) {
+			return false;
+		}
+
+		final BytecodeLazyAttributeInterceptor interceptor = extractLazyInterceptor( entity );
+		if ( interceptor instanceof LazyAttributeLoadingInterceptor ) {
+			return ( (LazyAttributeLoadingInterceptor) interceptor ).hasAnyUninitializedAttributes();
+		}
+
+		if ( interceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
 	public boolean isAttributeLoaded(Object entity, String attributeName) {
-		LazyAttributeLoadingInterceptor interceptor = enhancedForLazyLoading ? extractInterceptor( entity ) : null;
-		return interceptor == null || interceptor.isAttributeLoaded( attributeName );
+		if ( ! enhancedForLazyLoading ) {
+			return true;
+		}
+
+		final BytecodeLazyAttributeInterceptor interceptor = extractLazyInterceptor( entity );
+		if ( interceptor instanceof LazyAttributeLoadingInterceptor ) {
+			return ( (LazyAttributeLoadingInterceptor) interceptor ).isAttributeLoaded( attributeName );
+		}
+
+		return false;
 	}
 
 	@Override
 	public LazyAttributeLoadingInterceptor extractInterceptor(Object entity) throws NotInstrumentedException {
-		if ( !enhancedForLazyLoading ) {
-			throw new NotInstrumentedException( "Entity class [" + entityClass.getName() + "] is not enhanced for lazy loading" );
-		}
-
-		if ( !entityClass.isInstance( entity ) ) {
-			throw new IllegalArgumentException(
-					String.format(
-							"Passed entity instance [%s] is not of expected type [%s]",
-							entity,
-							getEntityName()
-					)
-			);
-		}
-
-		final PersistentAttributeInterceptor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
-		if ( interceptor == null ) {
-			return null;
-		}
-
-		return (LazyAttributeLoadingInterceptor) interceptor;
+		return (LazyAttributeLoadingInterceptor) extractLazyInterceptor( entity );
 	}
 
 	@Override
@@ -125,4 +134,49 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 		( (PersistentAttributeInterceptable) entity ).$$_hibernate_setInterceptor( interceptor );
 		return interceptor;
 	}
+
+	@Override
+	public void injectEnhancedEntityAsProxyInterceptor(
+			Object entity,
+			EntityKey entityKey,
+			SharedSessionContractImplementor session) {
+		if ( !entityClass.isInstance( entity ) ) {
+			throw new IllegalArgumentException(
+					String.format(
+							"Passed entity instance [%s] is not of expected type [%s]",
+							entity,
+							getEntityName()
+					)
+			);
+		}
+
+		( (PersistentAttributeInterceptable) entity ).$$_hibernate_setInterceptor(
+				new EnhancementAsProxyLazinessInterceptor( entityName, entityKey, session )
+		);
+	}
+
+	@Override
+	public BytecodeLazyAttributeInterceptor extractLazyInterceptor(Object entity) throws NotInstrumentedException {
+		if ( !enhancedForLazyLoading ) {
+			throw new NotInstrumentedException( "Entity class [" + entityClass.getName() + "] is not enhanced for lazy loading" );
+		}
+
+		if ( !entityClass.isInstance( entity ) ) {
+			throw new IllegalArgumentException(
+					String.format(
+							"Passed entity instance [%s] is not of expected type [%s]",
+							entity,
+							getEntityName()
+					)
+			);
+		}
+
+		final PersistentAttributeInterceptor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
+		if ( interceptor == null ) {
+			return null;
+		}
+
+		return (BytecodeLazyAttributeInterceptor) interceptor;
+	}
+
 }

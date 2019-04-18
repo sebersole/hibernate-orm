@@ -44,6 +44,7 @@ public class LazyAttributesMetadata implements Serializable {
 		while ( itr.hasNext() ) {
 			i++;
 			final Property property = (Property) itr.next();
+			// here we want to know lazy just in terms of Property's local `#lazy` marker
 			if ( property.isLazy() ) {
 				final LazyAttributeDescriptor lazyAttributeDescriptor = LazyAttributeDescriptor.from( property, i, x++ );
 				lazyAttributeDescriptorMap.put( lazyAttributeDescriptor.getName(), lazyAttributeDescriptor );
