@@ -15,6 +15,7 @@ import org.hibernate.bytecode.BytecodeLogger;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.SessionFactoryRegistry;
+import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
@@ -49,10 +50,14 @@ public class Helper {
 			final ToOne toOne = (ToOne) value;
 			if ( toOne.isLazy() ) {
 				if ( toOne.isUnwrapProxy() ) {
+					if ( toOne instanceof OneToOne ) {
+						return false;
+					}
 					// include it in the base fetch group so long as the config allows
 					// using the FK to create an "enhancement proxy"
 					return allowEnhancementAsProxy;
 				}
+
 			}
 
 			return true;
