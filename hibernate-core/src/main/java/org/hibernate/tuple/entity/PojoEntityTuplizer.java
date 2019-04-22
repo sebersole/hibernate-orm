@@ -18,7 +18,6 @@ import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
 import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
-import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.spi.ReflectionOptimizer;
 import org.hibernate.cfg.Environment;
 import org.hibernate.classic.Lifecycle;
@@ -273,7 +272,11 @@ public class PojoEntityTuplizer extends AbstractEntityTuplizer {
 		if ( entity instanceof PersistentAttributeInterceptable ) {
 			final BytecodeLazyAttributeInterceptor interceptor = getEntityMetamodel().getBytecodeEnhancementMetadata().extractLazyInterceptor( entity );
 			if ( interceptor == null || interceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
-				getEntityMetamodel().getBytecodeEnhancementMetadata().injectInterceptor( entity, session );
+				getEntityMetamodel().getBytecodeEnhancementMetadata().injectInterceptor(
+						entity,
+						getIdentifier( entity, session ),
+						session
+				);
 			}
 			else {
 				if ( interceptor.getLinkedSession() == null ) {

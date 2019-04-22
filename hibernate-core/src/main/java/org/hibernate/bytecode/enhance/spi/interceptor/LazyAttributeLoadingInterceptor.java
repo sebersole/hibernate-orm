@@ -28,15 +28,23 @@ import org.hibernate.persister.entity.EntityPersister;
  * @author Steve Ebersole
  */
 public class LazyAttributeLoadingInterceptor extends AbstractLazyLoadInterceptor {
+	private final Object identifier;
 	private final Set<String> lazyFields;
 	private Set<String> initializedLazyFields;
 
 	public LazyAttributeLoadingInterceptor(
 			String entityName,
+			Object identifier,
 			Set<String> lazyFields,
 			SharedSessionContractImplementor session) {
 		super( entityName, session );
+		this.identifier = identifier;
 		this.lazyFields = lazyFields;
+	}
+
+	@Override
+	public Object getIdentifier() {
+		return identifier;
 	}
 
 	@Override
@@ -66,7 +74,8 @@ public class LazyAttributeLoadingInterceptor extends AbstractLazyLoadInterceptor
 	}
 
 	protected Object loadAttribute(final Object target, final String attributeName) {
-		return new Helper( this ).performWork(
+		return Helper.performWork(
+				this,
 				(session, isTemporarySession) -> {
 					final EntityPersister persister = session.getFactory().getMetamodel().entityPersister( getEntityName() );
 

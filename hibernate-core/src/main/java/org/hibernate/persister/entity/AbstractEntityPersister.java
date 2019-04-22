@@ -40,11 +40,11 @@ import org.hibernate.StaleStateException;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer;
 import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
+import org.hibernate.bytecode.enhance.spi.interceptor.Helper;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeDescriptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
-import org.hibernate.bytecode.spi.NotInstrumentedException;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.entry.CacheEntry;
@@ -107,7 +107,6 @@ import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.Subclass;
 import org.hibernate.mapping.Table;
-import org.hibernate.mapping.ToOne;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.collection.CollectionPersister;
@@ -690,7 +689,12 @@ public abstract class AbstractEntityPersister
 			propertyColumnWriters[i] = colWriters;
 			propertyColumnAliases[i] = colAliases;
 
-			if ( lazyAvailable && prop.isLazy() ) {
+			final boolean lazy = ! Helper.includeInBaseFetchGroup(
+					prop,
+					entityMetamodel.isInstrumented(),
+					creationContext.getSessionFactory().getSessionFactoryOptions().isEnhancementAsProxyEnabled()
+			);
+			if ( lazy ) {
 				lazyNames.add( prop.getName() );
 				lazyNumbers.add( i );
 				lazyTypes.add( prop.getValue().getType() );
@@ -760,7 +764,11 @@ public abstract class AbstractEntityPersister
 			int[] colnos = new int[prop.getColumnSpan()];
 			int[] formnos = new int[prop.getColumnSpan()];
 			int l = 0;
-			Boolean lazy = Boolean.valueOf( prop.isLazy() && lazyAvailable );
+			final boolean lazy = ! Helper.includeInBaseFetchGroup(
+					prop,
+					entityMetamodel.isInstrumented(),
+					creationContext.getSessionFactory().getSessionFactoryOptions().isEnhancementAsProxyEnabled()
+			);
 			while ( colIter.hasNext() ) {
 				Selectable thing = (Selectable) colIter.next();
 				if ( thing.isFormula() ) {
@@ -4300,7 +4308,11 @@ public abstract class AbstractEntityPersister
 					LockOptions.READ
 			);
 
-			final LazyAttributeLoadingInterceptor interceptor = enhancementMetadata.injectInterceptor( entity, session );
+			final LazyAttributeLoadingInterceptor interceptor = enhancementMetadata.injectInterceptor(
+					entity,
+					proxyInterceptor.getEntityKey().getIdentifier(),
+					session
+			);
 
 			final Object value;
 			if ( interceptor.isAttributeLoaded( nameOfAttributeBeingAccessed ) ) {
@@ -4628,9 +4640,14 @@ public abstract class AbstractEntityPersister
 
 	public void afterReassociate(Object entity, SharedSessionContractImplementor session) {
 		if ( getEntityMetamodel().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
-			LazyAttributeLoadingInterceptor interceptor = getEntityMetamodel().getBytecodeEnhancementMetadata().extractInterceptor( entity );
+			final BytecodeLazyAttributeInterceptor interceptor = getEntityMetamodel().getBytecodeEnhancementMetadata()
+					.extractLazyInterceptor( entity );
 			if ( interceptor == null ) {
-				getEntityMetamodel().getBytecodeEnhancementMetadata().injectInterceptor( entity, session );
+				getEntityMetamodel().getBytecodeEnhancementMetadata().injectInterceptor(
+						entity,
+						getIdentifier( entity, session ),
+						session
+				);
 			}
 			else {
 				interceptor.setSession( session );

@@ -11,34 +11,58 @@ import java.util.function.BiFunction;
 
 import org.hibernate.FlushMode;
 import org.hibernate.LazyInitializationException;
+import org.hibernate.bytecode.BytecodeLogger;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.SessionFactoryRegistry;
-
-import org.jboss.logging.Logger;
+import org.hibernate.mapping.Property;
+import org.hibernate.mapping.ToOne;
+import org.hibernate.mapping.Value;
 
 /**
  * @author Steve Ebersole
  */
 public class Helper {
-	private static final Logger log = Logger.getLogger( Helper.class );
+	/**
+	 * Should the given property be included in the owner's base fetch group?
+	 */
+	public static boolean includeInBaseFetchGroup(
+			Property bootMapping,
+			boolean isEnhanced,
+			boolean allowEnhancementAsProxy) {
+		final Value value = bootMapping.getValue();
 
-	interface LazyInitializationWork<T> {
-		T doWork(SharedSessionContractImplementor session, boolean isTemporarySession);
+		if ( ! isEnhanced ) {
+			if ( value instanceof ToOne ) {
+				if ( ( (ToOne) value ).isUnwrapProxy() ) {
+					BytecodeLogger.LOGGER.debugf(
+							"To-one property `%s#%s` was mapped with LAZY + NO_PROXY but the class was not enhanced",
+							bootMapping.getPersistentClass().getEntityName(),
+							bootMapping.getName()
+					);
+				}
+			}
+			return true;
+		}
 
-		// informational details
-		String getEntityName();
-		String getAttributeName();
+		if ( value instanceof ToOne ) {
+			final ToOne toOne = (ToOne) value;
+			if ( toOne.isLazy() ) {
+				if ( toOne.isUnwrapProxy() ) {
+					// include it in the base fetch group so long as the config allows
+					// using the FK to create an "enhancement proxy"
+					return allowEnhancementAsProxy;
+				}
+			}
+
+			return true;
+		}
+
+		return ! bootMapping.isLazy();
 	}
 
-
-	private final BytecodeLazyAttributeInterceptor interceptor;
-
-	public Helper(BytecodeLazyAttributeInterceptor interceptor) {
-		this.interceptor = interceptor;
-	}
-
-	public <T> T performWork(
+	public static <T> T performWork(
+			BytecodeLazyAttributeInterceptor interceptor,
 			BiFunction<SharedSessionContractImplementor, Boolean, T> work,
 			String entityName,
 			String attributeName) {
@@ -50,7 +74,7 @@ public class Helper {
 		// first figure out which Session to use
 		if ( session == null ) {
 			if ( interceptor.allowLoadOutsideTransaction() ) {
-				session = openTemporarySessionForLoading( entityName, attributeName );
+				session = openTemporarySessionForLoading( interceptor, entityName, attributeName );
 				isTempSession = true;
 			}
 			else {
@@ -59,7 +83,7 @@ public class Helper {
 		}
 		else if ( !session.isOpen() ) {
 			if ( interceptor.allowLoadOutsideTransaction() ) {
-				session = openTemporarySessionForLoading( entityName, attributeName );
+				session = openTemporarySessionForLoading( interceptor, entityName, attributeName );
 				isTempSession = true;
 			}
 			else {
@@ -68,7 +92,7 @@ public class Helper {
 		}
 		else if ( !session.isConnected() ) {
 			if ( interceptor.allowLoadOutsideTransaction() ) {
-				session = openTemporarySessionForLoading( entityName, attributeName );
+				session = openTemporarySessionForLoading( interceptor, entityName, attributeName );
 				isTempSession = true;
 			}
 			else {
@@ -78,6 +102,8 @@ public class Helper {
 
 		// If we are using a temporary Session, begin a transaction if necessary
 		if ( isTempSession ) {
+			BytecodeLogger.LOGGER.debug( "Enhancement interception Helper#performWork started temporary Session" );
+
 			isJta = session.getTransactionCoordinator().getTransactionCoordinatorBuilder().isJta();
 
 			if ( !isJta ) {
@@ -86,6 +112,7 @@ public class Helper {
 				// be created even if a current session and transaction are
 				// open (ex: session.clear() was used).  We must prevent
 				// multiple transactions.
+				BytecodeLogger.LOGGER.debug( "Enhancement interception Helper#performWork starting transaction on temporary Session" );
 				session.beginTransaction();
 			}
 		}
@@ -99,11 +126,12 @@ public class Helper {
 				try {
 					// Commit the JDBC transaction is we started one.
 					if ( !isJta ) {
+						BytecodeLogger.LOGGER.debug( "Enhancement interception Helper#performWork committing transaction on temporary Session" );
 						session.getTransaction().commit();
 					}
 				}
 				catch (Exception e) {
-					log.warn(
+					BytecodeLogger.LOGGER.warn(
 							"Unable to commit JDBC transaction on temporary session used to load lazy " +
 									"collection associated to no session"
 					);
@@ -111,10 +139,11 @@ public class Helper {
 
 				// Close the just opened temp Session
 				try {
+					BytecodeLogger.LOGGER.debug( "Enhancement interception Helper#performWork closing temporary Session" );
 					session.close();
 				}
 				catch (Exception e) {
-					log.warn( "Unable to close temporary session used to load lazy collection associated to no session" );
+					BytecodeLogger.LOGGER.warn( "Unable to close temporary session used to load lazy collection associated to no session" );
 				}
 			}
 		}
@@ -127,7 +156,7 @@ public class Helper {
 		NO_SF_UUID
 	}
 
-	private void throwLazyInitializationException(Cause cause, String entityName, String attributeName) {
+	private static void throwLazyInitializationException(Cause cause, String entityName, String attributeName) {
 		final String reason;
 		switch ( cause ) {
 			case NO_SESSION: {
@@ -162,7 +191,10 @@ public class Helper {
 		throw new LazyInitializationException( message );
 	}
 
-	private SharedSessionContractImplementor openTemporarySessionForLoading(String entityName, String attributeName) {
+	private static SharedSessionContractImplementor openTemporarySessionForLoading(
+			BytecodeLazyAttributeInterceptor interceptor,
+			String entityName,
+			String attributeName) {
 		if ( interceptor.getSessionFactoryUuid() == null ) {
 			throwLazyInitializationException( Cause.NO_SF_UUID, entityName, attributeName );
 		}

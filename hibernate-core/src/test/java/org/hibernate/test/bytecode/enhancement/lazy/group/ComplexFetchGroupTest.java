@@ -25,6 +25,8 @@ import org.hibernate.annotations.LazyToOne;
 import org.hibernate.annotations.LazyToOneOption;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.SessionFactoryBuilder;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.stat.SessionStatistics;
 import org.hibernate.stat.spi.StatisticsImplementor;
 
@@ -33,6 +35,7 @@ import org.hibernate.testing.bytecode.enhancement.BytecodeEnhancerRunner;
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
 import org.hibernate.testing.bytecode.enhancement.EnhancerTestContext;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -189,6 +192,11 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		);
 	}
 
+	@Override
+	protected void configureStandardServiceRegistryBuilder(StandardServiceRegistryBuilder ssrb) {
+		super.configureStandardServiceRegistryBuilder( ssrb );
+		ssrb.applySetting( AvailableSettings.ALLOW_ENHANCEMENT_AS_PPROXY, "true" );
+	}
 
 	@Override
 	protected void configureSessionFactoryBuilder(SessionFactoryBuilder sfb) {
@@ -261,6 +269,19 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					session.save(c);
 					session.save(d);
 					session.save(e);
+				}
+		);
+	}
+
+	@After
+	public void cleanUpTestData() {
+		inTransaction(
+				session -> {
+					session.createQuery( "delete from E" ).executeUpdate();
+					session.createQuery( "delete from D" ).executeUpdate();
+					session.createQuery( "delete from C" ).executeUpdate();
+					session.createQuery( "delete from B" ).executeUpdate();
+					session.createQuery( "delete from A" ).executeUpdate();
 				}
 		);
 	}

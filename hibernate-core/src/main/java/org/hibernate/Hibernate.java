@@ -64,6 +64,18 @@ public final class Hibernate {
 		else if ( proxy instanceof PersistentCollection ) {
 			( (PersistentCollection) proxy ).forceInitialization();
 		}
+
+		// todo : consider bytecode enhancement handling
+//		else if ( proxy instanceof PersistentAttributeInterceptable ) {
+//			final PersistentAttributeInterceptable interceptable = (PersistentAttributeInterceptable) proxy;
+//			final PersistentAttributeInterceptor interceptor = interceptable.$$_hibernate_getInterceptor();
+//			if ( interceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
+//				( (EnhancementAsProxyLazinessInterceptor) interceptor ).forceInitialize( proxy, null );
+//			}
+//			else if ( interceptor instanceof LazyAttributeLoadingInterceptor ) {
+//				( (LazyAttributeLoadingInterceptor) interceptor ).fetchAttribute()
+//			}
+//		}
 	}
 
 	/**
