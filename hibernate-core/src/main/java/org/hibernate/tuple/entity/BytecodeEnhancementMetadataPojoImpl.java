@@ -6,9 +6,6 @@
  */
 package org.hibernate.tuple.entity;
 
-import java.io.Serializable;
-
-import org.hibernate.LockMode;
 import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
@@ -19,19 +16,22 @@ import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.PersistentAttributeInterceptable;
 import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.engine.spi.Status;
 import org.hibernate.mapping.PersistentClass;
-import org.hibernate.persister.entity.EntityPersister;
 
 /**
  * @author Steve Ebersole
  */
 public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementMetadata {
-	public static BytecodeEnhancementMetadata from(PersistentClass persistentClass) {
+	/**
+	 * Static constructor
+	 */
+	public static BytecodeEnhancementMetadata from(
+			PersistentClass persistentClass,
+			boolean allowEnhancementAsProxy) {
 		final Class mappedClass = persistentClass.getMappedClass();
 		final boolean enhancedForLazyLoading = PersistentAttributeInterceptable.class.isAssignableFrom( mappedClass );
 		final LazyAttributesMetadata lazyAttributesMetadata = enhancedForLazyLoading
-				? LazyAttributesMetadata.from( persistentClass )
+				? LazyAttributesMetadata.from( persistentClass, true, allowEnhancementAsProxy )
 				: LazyAttributesMetadata.nonEnhanced( persistentClass.getEntityName() );
 
 		return new BytecodeEnhancementMetadataPojoImpl(
@@ -47,7 +47,8 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 	private final boolean enhancedForLazyLoading;
 	private final LazyAttributesMetadata lazyAttributesMetadata;
 
-	public BytecodeEnhancementMetadataPojoImpl(
+	@SuppressWarnings("WeakerAccess")
+	protected BytecodeEnhancementMetadataPojoImpl(
 			String entityName,
 			Class entityClass,
 			boolean enhancedForLazyLoading,
@@ -102,7 +103,8 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 			return ( (LazyAttributeLoadingInterceptor) interceptor ).isAttributeLoaded( attributeName );
 		}
 
-		return false;
+		return true;
+//		return false;
 	}
 
 	@Override
@@ -111,7 +113,48 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 	}
 
 	@Override
-	public LazyAttributeLoadingInterceptor injectInterceptor(Object entity, SharedSessionContractImplementor session) {
+	public LazyAttributeLoadingInterceptor injectInterceptor(
+			Object entity,
+			Object identifier,
+			SharedSessionContractImplementor session) {
+		if ( !enhancedForLazyLoading ) {
+			throw new NotInstrumentedException( "Entity class [" + entityClass.getName() + "] is not enhanced for lazy loading" );
+		}
+
+		if ( !entityClass.isInstance( entity ) ) {
+			throw new IllegalArgumentException(
+					String.format(
+							"Passed entity instance [%s] is not of expected type [%s]",
+							entity,
+							getEntityName()
+					)
+			);
+		}
+		final LazyAttributeLoadingInterceptor interceptor = new LazyAttributeLoadingInterceptor(
+				getEntityName(),
+				identifier,
+				lazyAttributesMetadata.getLazyAttributeNames(),
+				session
+		);
+
+		injectInterceptor( entity, interceptor, session );
+
+		return interceptor;
+	}
+
+	@Override
+	public void injectEnhancedEntityAsProxyInterceptor(
+			Object entity,
+			EntityKey entityKey,
+			SharedSessionContractImplementor session) {
+		injectInterceptor( entity, new EnhancementAsProxyLazinessInterceptor( entityName, entityKey, session ), session );
+	}
+
+	@Override
+	public void injectInterceptor(
+			Object entity,
+			PersistentAttributeInterceptor interceptor,
+			SharedSessionContractImplementor session) {
 		if ( !enhancedForLazyLoading ) {
 			throw new NotInstrumentedException( "Entity class [" + entityClass.getName() + "] is not enhanced for lazy loading" );
 		}
@@ -126,33 +169,7 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 			);
 		}
 
-		final LazyAttributeLoadingInterceptor interceptor = new LazyAttributeLoadingInterceptor(
-				getEntityName(),
-				lazyAttributesMetadata.getLazyAttributeNames(),
-				session
-		);
 		( (PersistentAttributeInterceptable) entity ).$$_hibernate_setInterceptor( interceptor );
-		return interceptor;
-	}
-
-	@Override
-	public void injectEnhancedEntityAsProxyInterceptor(
-			Object entity,
-			EntityKey entityKey,
-			SharedSessionContractImplementor session) {
-		if ( !entityClass.isInstance( entity ) ) {
-			throw new IllegalArgumentException(
-					String.format(
-							"Passed entity instance [%s] is not of expected type [%s]",
-							entity,
-							getEntityName()
-					)
-			);
-		}
-
-		( (PersistentAttributeInterceptable) entity ).$$_hibernate_setInterceptor(
-				new EnhancementAsProxyLazinessInterceptor( entityName, entityKey, session )
-		);
 	}
 
 	@Override

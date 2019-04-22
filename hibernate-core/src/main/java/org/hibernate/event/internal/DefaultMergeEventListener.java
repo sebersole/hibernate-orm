@@ -14,12 +14,15 @@ import org.hibernate.HibernateException;
 import org.hibernate.ObjectDeletedException;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.WrongClassException;
+import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.engine.internal.Cascade;
 import org.hibernate.engine.internal.CascadePoint;
 import org.hibernate.engine.spi.CascadingAction;
 import org.hibernate.engine.spi.CascadingActions;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.PersistentAttributeInterceptable;
+import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SelfDirtinessTracker;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -98,12 +101,27 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 				if ( li.isUninitialized() ) {
 					LOG.trace( "Ignoring uninitialized proxy" );
 					event.setResult( source.load( li.getEntityName(), li.getIdentifier() ) );
-					return; //EARLY EXIT!
+					//EARLY EXIT!
+					return;
 				}
 				else {
 					entity = li.getImplementation();
 				}
 			}
+//			else if ( original instanceof PersistentAttributeInterceptable ) {
+//				final PersistentAttributeInterceptable interceptable = (PersistentAttributeInterceptable) original;
+//				final PersistentAttributeInterceptor interceptor = interceptable.$$_hibernate_getInterceptor();
+//				if ( interceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
+//					final EnhancementAsProxyLazinessInterceptor proxyInterceptor = (EnhancementAsProxyLazinessInterceptor) interceptor;
+//					LOG.trace( "Ignoring uninitialized proxy" );
+//					event.setResult( source.load( proxyInterceptor.getEntityName(), (Serializable) proxyInterceptor.getIdentifier() ) );
+//					//EARLY EXIT!
+//					return;
+//				}
+//				else {
+//					entity = original;
+//				}
+//			}
 			else {
 				entity = original;
 			}
@@ -208,6 +226,7 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 			//before cascade!
 			( (MergeContext) copyCache ).put( entity, copy, true );
 		}
+
 		final Object copy = copyCache.get( entity );
 
 		// cascade first, so that all unsaved objects get their

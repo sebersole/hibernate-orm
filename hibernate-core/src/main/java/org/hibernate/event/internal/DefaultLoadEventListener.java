@@ -246,7 +246,23 @@ public class DefaultLoadEventListener implements LoadEventListener {
 		// check for the case where we can use the entity itself as a proxy - it must be bytecode
 		// 		enhanced for laziness and not be versioned (versioned would require loading the
 		// 		version column from the table)
-		if ( persister.getEntityMetamodel().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
+		if ( options.isAllowProxyCreation()
+				&& persister.getEntityMetamodel().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading()
+				&& event.getSession().getFactory().getSessionFactoryOptions().isEnhancementAsProxyEnabled() ) {
+			// in this logic branch, if there is already a managed entity instance
+			// associated with the PC, return it
+			final Object managed = persistenceContext.getEntity( keyToLoad );
+			if ( managed != null ) {
+				return managed;
+			}
+
+			// we won't create proxies, but if there is already one associated with
+			// the PC we should use it
+			final Object proxy = persistenceContext.getProxy( keyToLoad );
+			if ( proxy != null ) {
+				return proxy;
+			}
+
 			if ( ! persister.isVersioned() ) {
 				// create the (uninitialized) entity instance - has only id set
 				final Object entity = persister.getEntityTuplizer().instantiate(
@@ -260,8 +276,8 @@ public class DefaultLoadEventListener implements LoadEventListener {
 						Status.MANAGED,
 						new Object[persister.getPropertyTypes().length],
 						keyToLoad,
-						LockMode.NONE,
 						null,
+						LockMode.NONE,
 						true,
 						persister,
 						true
@@ -274,7 +290,9 @@ public class DefaultLoadEventListener implements LoadEventListener {
 				return entity;
 			}
 		}
-		else if ( persister.hasProxy() ) {
+
+
+		if ( persister.hasProxy() ) {
 			// look for a proxy
 			Object proxy = persistenceContext.getProxy( keyToLoad );
 			if ( proxy != null ) {

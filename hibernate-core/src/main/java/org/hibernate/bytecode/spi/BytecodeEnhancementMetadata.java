@@ -7,7 +7,6 @@
 package org.hibernate.bytecode.spi;
 
 import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
-import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.engine.spi.EntityKey;
@@ -41,6 +40,7 @@ public interface BytecodeEnhancementMetadata {
 	 * Build and inject an interceptor instance into the enhanced entity.
 	 *
 	 * @param entity The entity into which built interceptor should be injected
+	 * @param identifier
 	 * @param session The session to which the entity instance belongs.
 	 *
 	 * @return The built and injected interceptor
@@ -49,7 +49,13 @@ public interface BytecodeEnhancementMetadata {
 	 */
 	LazyAttributeLoadingInterceptor injectInterceptor(
 			Object entity,
+			Object identifier,
 			SharedSessionContractImplementor session) throws NotInstrumentedException;
+
+	void injectInterceptor(
+			Object entity,
+			PersistentAttributeInterceptor interceptor,
+			SharedSessionContractImplementor session);
 
 	void injectEnhancedEntityAsProxyInterceptor(
 			Object entity,

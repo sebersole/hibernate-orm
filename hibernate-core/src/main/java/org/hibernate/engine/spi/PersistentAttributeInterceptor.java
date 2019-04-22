@@ -6,13 +6,14 @@
  */
 package org.hibernate.engine.spi;
 
+import org.hibernate.Incubating;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer.InterceptorImplementor;
 
 /**
  * @author Steve Ebersole
  */
+@Incubating
 public interface PersistentAttributeInterceptor extends InterceptorImplementor {
-
 	public boolean readBoolean(Object obj, String name, boolean oldValue);
 
 	public boolean writeBoolean(Object obj, String name, boolean oldValue, boolean newValue);

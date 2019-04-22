@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.hibernate.LockMode;
+import org.hibernate.bytecode.BytecodeLogger;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
@@ -49,8 +50,16 @@ public class EnhancementAsProxyLazinessInterceptor extends AbstractLazyLoadInter
 		}
 	}
 
-	protected Object forceInitialize(Object target, String attributeName) {
-		return new Helper( this ).performWork(
+	public Object forceInitialize(Object target, String attributeName) {
+		BytecodeLogger.LOGGER.tracef(
+				"EnhancementAsProxyLazinessInterceptor#forceInitialize : %s#%s -> %s )",
+				entityKey.getEntityName(),
+				entityKey.getIdentifier(),
+				attributeName
+		);
+
+		return Helper.performWork(
+				this,
 				(session, isTemporarySession) -> {
 					final EntityPersister persister = session.getFactory()
 							.getMetamodel()
@@ -113,5 +122,10 @@ public class EnhancementAsProxyLazinessInterceptor extends AbstractLazyLoadInter
 		if ( initialized ) {
 			throw new UnsupportedOperationException( "Expected call to EnhancementAsProxyLazinessInterceptor#attributeInitialized" );
 		}
+	}
+
+	@Override
+	public Object getIdentifier() {
+		return entityKey.getIdentifier();
 	}
 }

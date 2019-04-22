@@ -12,6 +12,7 @@ import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributesMetadata;
 import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.bytecode.spi.NotInstrumentedException;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -46,7 +47,16 @@ public class BytecodeEnhancementMetadataNonPojoImpl implements BytecodeEnhanceme
 	@Override
 	public LazyAttributeLoadingInterceptor injectInterceptor(
 			Object entity,
+			Object identifier,
 			SharedSessionContractImplementor session) throws NotInstrumentedException {
+		throw new NotInstrumentedException( errorMsg );
+	}
+
+	@Override
+	public void injectInterceptor(
+			Object entity,
+			PersistentAttributeInterceptor interceptor,
+			SharedSessionContractImplementor session) {
 		throw new NotInstrumentedException( errorMsg );
 	}
 
