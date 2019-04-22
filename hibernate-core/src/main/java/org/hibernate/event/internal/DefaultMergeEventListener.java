@@ -203,7 +203,10 @@ public class DefaultMergeEventListener extends AbstractSaveEventListener impleme
 			persister.setIdentifier( copyCache.get( entity ), id, source );
 		}
 		else {
-			( (MergeContext) copyCache ).put( entity, source.instantiate( persister, id ), true ); //before cascade!
+			final Object copy = source.instantiate( persister, id );
+
+			//before cascade!
+			( (MergeContext) copyCache ).put( entity, copy, true );
 		}
 		final Object copy = copyCache.get( entity );
 
