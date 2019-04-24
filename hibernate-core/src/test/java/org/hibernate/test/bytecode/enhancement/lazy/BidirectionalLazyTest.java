@@ -84,7 +84,7 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 					session.remove( employer );
 
 					for ( Employee employee : employer.getEmployees() ) {
-						assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
+						assertFalse( Hibernate.isPropertyInitialized( employee, "employer" ) );
 						session.remove( employee );
 						// Should be initialized because at least one entity was deleted beforehand
 						assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
@@ -190,13 +190,17 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 		doInHibernate(
 				this::sessionFactory, session -> {
 					Employee employee = session.get( Employee.class, "Jack" );
-					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
+					assertFalse( Hibernate.isPropertyInitialized( employee, "employer" ) );
 
 					// Get and delete an Employer that is not associated with employee
 					Employer employer = session.get( Employer.class, "RedHat" );
 					session.remove( employer );
 
-					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
+					// employee.employer is uninitialized. Since the column for employee.employer
+					// is a foreign key, and there is an Employer that has already been removed,
+					// employee.employer will need to be iniitialized to determine if
+					// employee.employer is nullifiable.
+					assertFalse( Hibernate.isPropertyInitialized( employee, "employer" ) );
 					session.remove( employee );
 					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
 				}
@@ -222,13 +226,17 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 		inTransaction(
 				session -> {
 					Employee employee = session.get( Employee.class, "Jack" );
-					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
+					assertFalse( Hibernate.isPropertyInitialized( employee, "employer" ) );
 
 					// Get and delete an Employer that is not associated with employee
 					Employer employer = session.get( Employer.class, "RedHat" );
 					session.remove( employer );
 
-					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
+					// employee.employer is uninitialized. Since the column for employee.employer
+					// is a foreign key, and there is an Employer that has already been removed,
+					// employee.employer will need to be iniitialized to determine if
+					// employee.employer is nullifiable.
+					assertFalse( Hibernate.isPropertyInitialized( employee, "employer" ) );
 					session.remove( employee );
 					assertTrue( Hibernate.isPropertyInitialized( employee, "employer" ) );
 				}
@@ -302,6 +310,8 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 
 	@Entity(name = "Employee")
 	public static class Employee {
+		private long id;
+
 		private String name;
 
 		private Employer employer;
@@ -309,6 +319,10 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 		public Employee(String name) {
 			this();
 			setName( name );
+		}
+
+		public long getId() {
+			return id;
 		}
 
 		@Id
@@ -325,6 +339,10 @@ public class BidirectionalLazyTest extends BaseCoreFunctionalTestCase {
 
 		protected Employee() {
 			// this form used by Hibernate
+		}
+
+		protected void setId(long id) {
+			this.id = id;
 		}
 
 		protected void setName(String name) {
