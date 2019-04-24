@@ -6,48 +6,76 @@
  */
 package org.hibernate.engine.spi;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.hibernate.Incubating;
 import org.hibernate.bytecode.enhance.spi.LazyPropertyInitializer.InterceptorImplementor;
+import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 
 /**
+ * The base contract for interceptors that can be injected into
+ * enhanced entities for the purpose of intercepting attribute access
+ *
  * @author Steve Ebersole
+ *
+ * @see PersistentAttributeInterceptable
  */
 @Incubating
+@SuppressWarnings("unused")
 public interface PersistentAttributeInterceptor extends InterceptorImplementor {
-	public boolean readBoolean(Object obj, String name, boolean oldValue);
+	boolean readBoolean(Object obj, String name, boolean oldValue);
 
-	public boolean writeBoolean(Object obj, String name, boolean oldValue, boolean newValue);
+	boolean writeBoolean(Object obj, String name, boolean oldValue, boolean newValue);
 
-	public byte readByte(Object obj, String name, byte oldValue);
+	byte readByte(Object obj, String name, byte oldValue);
 
-	public byte writeByte(Object obj, String name, byte oldValue, byte newValue);
+	byte writeByte(Object obj, String name, byte oldValue, byte newValue);
 
-	public char readChar(Object obj, String name, char oldValue);
+	char readChar(Object obj, String name, char oldValue);
 
-	public char writeChar(Object obj, String name, char oldValue, char newValue);
+	char writeChar(Object obj, String name, char oldValue, char newValue);
 
-	public short readShort(Object obj, String name, short oldValue);
+	short readShort(Object obj, String name, short oldValue);
 
-	public short writeShort(Object obj, String name, short oldValue, short newValue);
+	short writeShort(Object obj, String name, short oldValue, short newValue);
 
-	public int readInt(Object obj, String name, int oldValue);
+	int readInt(Object obj, String name, int oldValue);
 
-	public int writeInt(Object obj, String name, int oldValue, int newValue);
+	int writeInt(Object obj, String name, int oldValue, int newValue);
 
-	public float readFloat(Object obj, String name, float oldValue);
+	float readFloat(Object obj, String name, float oldValue);
 
-	public float writeFloat(Object obj, String name, float oldValue, float newValue);
+	float writeFloat(Object obj, String name, float oldValue, float newValue);
 
-	public double readDouble(Object obj, String name, double oldValue);
+	double readDouble(Object obj, String name, double oldValue);
 
-	public double writeDouble(Object obj, String name, double oldValue, double newValue);
+	double writeDouble(Object obj, String name, double oldValue, double newValue);
 
-	public long readLong(Object obj, String name, long oldValue);
+	long readLong(Object obj, String name, long oldValue);
 
-	public long writeLong(Object obj, String name, long oldValue, long newValue);
+	long writeLong(Object obj, String name, long oldValue, long newValue);
 
-	public Object readObject(Object obj, String name, Object oldValue);
+	Object readObject(Object obj, String name, Object oldValue);
 
-	public Object writeObject(Object obj, String name, Object oldValue, Object newValue);
+	Object writeObject(Object obj, String name, Object oldValue, Object newValue);
 
+	/**
+	 * @deprecated Just as the method it overrides.  Interceptors that deal with
+	 * lazy state should implement {@link BytecodeLazyAttributeInterceptor}
+	 */
+	@Deprecated
+	@Override
+	default Set<String> getInitializedLazyAttributeNames() {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * @deprecated Just as the method it overrides.  Interceptors that deal with
+	 * lazy state should implement {@link BytecodeLazyAttributeInterceptor}
+	 */
+	@Override
+	@Deprecated
+	default void attributeInitialized(String name) {
+	}
 }

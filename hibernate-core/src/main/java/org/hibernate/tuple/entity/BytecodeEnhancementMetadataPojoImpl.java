@@ -85,6 +85,7 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 			return ( (LazyAttributeLoadingInterceptor) interceptor ).hasAnyUninitializedAttributes();
 		}
 
+		//noinspection RedundantIfStatement
 		if ( interceptor instanceof EnhancementAsProxyLazinessInterceptor ) {
 			return true;
 		}
@@ -104,7 +105,6 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 		}
 
 		return true;
-//		return false;
 	}
 
 	@Override

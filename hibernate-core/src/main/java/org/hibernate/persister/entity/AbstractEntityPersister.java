@@ -77,6 +77,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.Mapping;
 import org.hibernate.engine.spi.PersistenceContext.NaturalIdHelper;
 import org.hibernate.engine.spi.PersistentAttributeInterceptable;
+import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.ValueInclusion;
@@ -1039,7 +1040,7 @@ public abstract class AbstractEntityPersister
 
 	public Object initializeLazyProperty(String fieldName, Object entity, SharedSessionContractImplementor session) {
 		final EntityEntry entry = session.getPersistenceContext().getEntry( entity );
-		final InterceptorImplementor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
+		final PersistentAttributeInterceptor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
 		assert interceptor != null : "Expecting bytecode interceptor to be non-null";
 
 		if ( hasCollections() ) {
@@ -1160,7 +1161,7 @@ public abstract class AbstractEntityPersister
 			throw new AssertionFailure( "no lazy properties" );
 		}
 
-		final InterceptorImplementor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
+		final PersistentAttributeInterceptor interceptor = ( (PersistentAttributeInterceptable) entity ).$$_hibernate_getInterceptor();
 		assert interceptor != null : "Expecting bytecode interceptor to be non-null";
 
 		LOG.trace( "Initializing lazy properties from datastore" );

@@ -6,27 +6,36 @@
  */
 package org.hibernate.bytecode.enhance.spi.interceptor;
 
+import java.util.Set;
+
 import org.hibernate.Incubating;
 import org.hibernate.engine.spi.PersistentAttributeInterceptor;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
  * @author Steve Ebersole
  */
 @Incubating
-public interface BytecodeLazyAttributeInterceptor extends PersistentAttributeInterceptor {
-
+public interface BytecodeLazyAttributeInterceptor extends PersistentAttributeInterceptor, SessionAssociableInterceptor {
+	/**
+	 * The name of the entity this interceptor is meant to intercept
+	 */
 	String getEntityName();
 
+	/**
+	 * The id of the entity instance this interceptor is associated with
+	 */
 	Object getIdentifier();
 
-	SharedSessionContractImplementor getLinkedSession();
+	/**
+	 * The names of all lazy attributes which have been initialized
+	 */
+	@Override
+	Set<String> getInitializedLazyAttributeNames();
 
-	void setSession(SharedSessionContractImplementor session);
+	/**
+	 * Callback from the enhanced class that an attribute has been read or written
+	 */
+	void attributeInitialized(String name);
 
-	void unsetSession();
 
-	boolean allowLoadOutsideTransaction();
-
-	String getSessionFactoryUuid();
 }
