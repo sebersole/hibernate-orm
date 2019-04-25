@@ -27,6 +27,8 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.engine.spi.PersistentAttributeInterceptable;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.stat.SessionStatistics;
 import org.hibernate.stat.spi.StatisticsImplementor;
@@ -36,6 +38,7 @@ import org.hibernate.testing.bytecode.enhancement.BytecodeEnhancerRunner;
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
 import org.hibernate.testing.bytecode.enhancement.EnhancerTestContext;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
+import org.hibernate.test.annotations.cascade.multicircle.jpa.identity.EntityD;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,10 +51,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author Steve Ebersole
  */
-@TestForIssue(jiraKey = "HHH-11223")
+@TestForIssue(jiraKey = "HHH-11147")
 @RunWith(BytecodeEnhancerRunner.class)
 @CustomEnhancementContext(EnhancerTestContext.class)
-//@FailureExpected( jiraKey = "HHH-11223" )
 public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
@@ -122,10 +124,8 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		final StatisticsImplementor stats = sessionFactory().getStatistics();
 		stats.clear();
 
-		assert sessionFactory().getMetamodel()
-				.entityPersister( DEntity.class )
-				.getInstrumentationMetadata()
-				.isEnhancedForLazyLoading();
+		final EntityPersister persister = sessionFactory().getMetamodel().entityPersister( DEntity.class );
+		assert persister.getInstrumentationMetadata().isEnhancedForLazyLoading();
 
 		inSession(
 				session -> {
@@ -135,6 +135,17 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					final DEntity entityD = session.load( DEntity.class, 1L );
 
 					assertThat( entityD instanceof HibernateProxy, is(false) );
+					assertThat( entityD instanceof PersistentAttributeInterceptable, is(true) );
+					assertThat( Hibernate.isInitialized( entityD ), is(false) );
+					// Because D is enhanced we should not have executed any SQL
+					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
+
+					// access the id.
+					// 		-since entityD is a "enhanced proxy", this should not trigger loading
+					assertThat( entityD.getOid(), is(1L) );
+					assertThat( Hibernate.isInitialized( entityD ), is(false) );
+					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
+
 
 					// Because D is enhanced we should not have executed any SQL
 					assertThat( stats.getPrepareStatementCount(), is( 0L ) );

@@ -6,6 +6,8 @@
  */
 package org.hibernate.tuple.entity;
 
+import java.util.Set;
+
 import org.hibernate.bytecode.enhance.spi.interceptor.BytecodeLazyAttributeInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.EnhancementAsProxyLazinessInterceptor;
 import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterceptor;
@@ -17,6 +19,7 @@ import org.hibernate.engine.spi.PersistentAttributeInterceptable;
 import org.hibernate.engine.spi.PersistentAttributeInterceptor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.PersistentClass;
+import org.hibernate.type.CompositeType;
 
 /**
  * @author Steve Ebersole
@@ -27,6 +30,8 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 	 */
 	public static BytecodeEnhancementMetadata from(
 			PersistentClass persistentClass,
+			Set<String> identifierAttributeNames,
+			CompositeType nonAggregatedCidMapper,
 			boolean allowEnhancementAsProxy) {
 		final Class mappedClass = persistentClass.getMappedClass();
 		final boolean enhancedForLazyLoading = PersistentAttributeInterceptable.class.isAssignableFrom( mappedClass );
@@ -37,6 +42,8 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 		return new BytecodeEnhancementMetadataPojoImpl(
 				persistentClass.getEntityName(),
 				mappedClass,
+				identifierAttributeNames,
+				nonAggregatedCidMapper,
 				enhancedForLazyLoading,
 				lazyAttributesMetadata
 		);
@@ -44,6 +51,8 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 
 	private final String entityName;
 	private final Class entityClass;
+	private final Set<String> identifierAttributeNames;
+	private final CompositeType nonAggregatedCidMapper;
 	private final boolean enhancedForLazyLoading;
 	private final LazyAttributesMetadata lazyAttributesMetadata;
 
@@ -51,10 +60,17 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 	protected BytecodeEnhancementMetadataPojoImpl(
 			String entityName,
 			Class entityClass,
+			Set<String> identifierAttributeNames,
+			CompositeType nonAggregatedCidMapper,
 			boolean enhancedForLazyLoading,
 			LazyAttributesMetadata lazyAttributesMetadata) {
+		this.nonAggregatedCidMapper = nonAggregatedCidMapper;
+		assert identifierAttributeNames != null;
+		assert !identifierAttributeNames.isEmpty();
+
 		this.entityName = entityName;
 		this.entityClass = entityClass;
+		this.identifierAttributeNames = identifierAttributeNames;
 		this.enhancedForLazyLoading = enhancedForLazyLoading;
 		this.lazyAttributesMetadata = lazyAttributesMetadata;
 	}
@@ -147,7 +163,17 @@ public class BytecodeEnhancementMetadataPojoImpl implements BytecodeEnhancementM
 			Object entity,
 			EntityKey entityKey,
 			SharedSessionContractImplementor session) {
-		injectInterceptor( entity, new EnhancementAsProxyLazinessInterceptor( entityName, entityKey, session ), session );
+		injectInterceptor(
+				entity,
+				new EnhancementAsProxyLazinessInterceptor(
+						entityName,
+						identifierAttributeNames,
+						nonAggregatedCidMapper,
+						entityKey,
+						session
+				),
+				session
+		);
 	}
 
 	@Override

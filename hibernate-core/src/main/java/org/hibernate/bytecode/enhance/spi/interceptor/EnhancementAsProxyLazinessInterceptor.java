@@ -15,20 +15,33 @@ import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
 import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.type.CompositeType;
 
 /**
  * @author Steve Ebersole
  */
 public class EnhancementAsProxyLazinessInterceptor extends AbstractLazyLoadInterceptor {
+	private final Set<String> identifierAttributeNames;
+	private final CompositeType nonAggregatedCidMapper;
+
 	private final EntityKey entityKey;
 
 	private boolean initialized;
 
 	public EnhancementAsProxyLazinessInterceptor(
 			String entityName,
+			Set<String> identifierAttributeNames,
+			CompositeType nonAggregatedCidMapper,
 			EntityKey entityKey,
 			SharedSessionContractImplementor session) {
 		super( entityName, session );
+
+		this.identifierAttributeNames = identifierAttributeNames;
+		assert identifierAttributeNames != null;
+
+		this.nonAggregatedCidMapper = nonAggregatedCidMapper;
+		assert nonAggregatedCidMapper != null || identifierAttributeNames.size() == 1;
+
 		this.entityKey = entityKey;
 	}
 
@@ -40,6 +53,20 @@ public class EnhancementAsProxyLazinessInterceptor extends AbstractLazyLoadInter
 	protected Object handleRead(Object target, String attributeName, Object value) {
 		if ( initialized ) {
 			throw new IllegalStateException( "EnhancementAsProxyLazinessInterceptor interception on an initialized instance" );
+		}
+
+		if ( identifierAttributeNames.contains( attributeName ) ) {
+			// access to the id or part of it for non-aggregated cid
+			if ( nonAggregatedCidMapper == null ) {
+				return getIdentifier();
+			}
+			else {
+				return nonAggregatedCidMapper.getPropertyValue(
+						target,
+						nonAggregatedCidMapper.getPropertyIndex( attributeName ),
+						getLinkedSession()
+				);
+			}
 		}
 
 		try {

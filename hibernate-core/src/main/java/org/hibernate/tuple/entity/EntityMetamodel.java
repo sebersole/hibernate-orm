@@ -8,6 +8,7 @@ package org.hibernate.tuple.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,7 +25,6 @@ import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadeStyles;
-import org.hibernate.engine.spi.PersistentAttributeInterceptable;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.util.ReflectHelper;
@@ -141,8 +141,28 @@ public class EntityMetamodel implements Serializable {
 		versioned = persistentClass.isVersioned();
 
 		if ( persistentClass.hasPojoRepresentation() ) {
+			final Component identifierMapperComponent = persistentClass.getIdentifierMapper();
+			final CompositeType nonAggregatedCidMapper;
+			final Set<String> idAttributeNames;
+
+			if ( identifierMapperComponent != null ) {
+				nonAggregatedCidMapper = (CompositeType) identifierMapperComponent.getType();
+				idAttributeNames = new HashSet<>( );
+				//noinspection unchecked
+				final Iterator<String> propertyItr = identifierMapperComponent.getPropertyIterator();
+				while ( propertyItr.hasNext() ) {
+					idAttributeNames.add( propertyItr.next() );
+				}
+			}
+			else {
+				nonAggregatedCidMapper = null;
+				idAttributeNames = Collections.singleton( identifierAttribute.getName() );
+			}
+
 			bytecodeEnhancementMetadata = BytecodeEnhancementMetadataPojoImpl.from(
 					persistentClass,
+					idAttributeNames,
+					nonAggregatedCidMapper,
 					sessionFactory.getSessionFactoryOptions().isEnhancementAsProxyEnabled()
 			);
 		}
