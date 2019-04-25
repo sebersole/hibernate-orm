@@ -8,13 +8,16 @@ package org.hibernate.test.bytecode.enhancement.lazy.group;
 
 import java.sql.Blob;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -38,7 +41,6 @@ import org.hibernate.testing.bytecode.enhancement.BytecodeEnhancerRunner;
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
 import org.hibernate.testing.bytecode.enhancement.EnhancerTestContext;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
-import org.hibernate.test.annotations.cascade.multicircle.jpa.identity.EntityD;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,9 +53,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author Steve Ebersole
  */
-@TestForIssue(jiraKey = "HHH-11147")
-@RunWith(BytecodeEnhancerRunner.class)
-@CustomEnhancementContext(EnhancerTestContext.class)
+@TestForIssue( jiraKey = "HHH-11147" )
+@RunWith( BytecodeEnhancerRunner.class )
+@CustomEnhancementContext( EnhancerTestContext.class )
 public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
@@ -225,6 +227,30 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		);
 	}
 
+	@Test
+	public void testNullManyToOneHql() {
+		final StatisticsImplementor stats = sessionFactory().getStatistics();
+		stats.clear();
+
+		inTransaction(
+				session -> {
+					final String qry = "select e from Activity e";
+					final List<Activity> activities = session.createQuery( qry, Activity.class ).list();
+
+					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
+
+					for ( Activity activity : activities ) {
+						if ( activity.getInstruction() == null ) {
+							// do something special
+						}
+
+						// but regardless there should not be an additional query
+						assertThat( stats.getPrepareStatementCount(), is( 1L ) );
+					}
+				}
+		);
+	}
+
 	@Override
 	protected void configureStandardServiceRegistryBuilder(StandardServiceRegistryBuilder ssrb) {
 		super.configureStandardServiceRegistryBuilder( ssrb );
@@ -247,6 +273,9 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		sources.addAnnotatedClass( CEntity.class );
 		sources.addAnnotatedClass( DEntity.class );
 		sources.addAnnotatedClass( EEntity.class );
+
+		sources.addAnnotatedClass( Activity.class );
+		sources.addAnnotatedClass( Instruction.class );
 	}
 
 	@Before
@@ -302,6 +331,24 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					session.save( c );
 					session.save( d );
 					session.save( e );
+
+
+					// create a slew of Activity objects, some with Instruction reference
+					// some without.
+
+					for ( int i = 0; i < 30; i++ ) {
+						final Instruction instr;
+						if ( i % 2 == 0 ) {
+							instr = new Instruction( i, "Instruction #" + i );
+							session.save( instr );
+						}
+						else {
+							instr = null;
+						}
+
+						final Activity activity = new Activity( i, "Activity #" + i, instr );
+						session.save( activity );
+					}
 				}
 		);
 	}
@@ -315,6 +362,9 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					session.createQuery( "delete from C" ).executeUpdate();
 					session.createQuery( "delete from B" ).executeUpdate();
 					session.createQuery( "delete from A" ).executeUpdate();
+
+					session.createQuery( "delete from Activity" ).executeUpdate();
+					session.createQuery( "delete from Instruction" ).executeUpdate();
 				}
 		);
 	}
@@ -569,6 +619,85 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 		public void setD(DEntity d) {
 			this.d = d;
+		}
+	}
+
+	@Entity(name="Activity")
+	@Table(name="Activity")
+	public static class Activity {
+		private Integer id;
+		private String description;
+		private Instruction instruction;
+
+		public Activity() {
+		}
+
+		public Activity(Integer id, String description, Instruction instruction) {
+			this.id = id;
+			this.description = description;
+			this.instruction = instruction;
+		}
+
+		@Id
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		@ManyToOne(fetch=FetchType.LAZY)
+//		@LazyToOne(LazyToOneOption.NO_PROXY)
+		@LazyToOne(LazyToOneOption.PROXY)
+		@LazyGroup("Instruction")
+		@JoinColumn(name="Instruction_Id")
+		public Instruction getInstruction() {
+			return instruction;
+		}
+
+		public void setInstruction(Instruction instruction) {
+			this.instruction = instruction;
+		}
+	}
+
+	@Entity(name="Instruction")
+	@Table(name="Instruction")
+	public static class Instruction {
+		private Integer id;
+		private String summary;
+
+		public Instruction() {
+		}
+
+		public Instruction(Integer id, String summary) {
+			this.id = id;
+			this.summary = summary;
+		}
+
+		@Id
+		public Integer getId() {
+			return id;
+		}
+
+		public void setId(Integer id) {
+			this.id = id;
+		}
+
+		public String getSummary() {
+			return summary;
+		}
+
+		public void setSummary(String summary) {
+			this.summary = summary;
 		}
 	}
 }
