@@ -43,7 +43,7 @@ public class SpecializedEntity implements Serializable {
 	String value;
 
 	@ManyToOne(fetch=FetchType.LAZY)
-	@LazyToOne(LazyToOneOption.NO_PROXY)
+	@LazyToOne(LazyToOneOption.PROXY)
 	@LazyGroup("SpecializedKey")
 	@JoinColumn
 	protected SpecializedKey specializedKey = null;

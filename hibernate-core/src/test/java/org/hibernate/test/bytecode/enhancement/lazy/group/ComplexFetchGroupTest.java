@@ -6,19 +6,25 @@
  */
 package org.hibernate.test.bytecode.enhancement.lazy.group;
 
+import java.io.Serializable;
 import java.sql.Blob;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -53,9 +59,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author Steve Ebersole
  */
-@TestForIssue( jiraKey = "HHH-11147" )
-@RunWith( BytecodeEnhancerRunner.class )
-@CustomEnhancementContext( EnhancerTestContext.class )
+@TestForIssue(jiraKey = "HHH-11147")
+@RunWith(BytecodeEnhancerRunner.class)
+@CustomEnhancementContext(EnhancerTestContext.class)
 public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 	@Test
@@ -136,16 +142,16 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 
 					final DEntity entityD = session.load( DEntity.class, 1L );
 
-					assertThat( entityD instanceof HibernateProxy, is(false) );
-					assertThat( entityD instanceof PersistentAttributeInterceptable, is(true) );
-					assertThat( Hibernate.isInitialized( entityD ), is(false) );
+					assertThat( entityD instanceof HibernateProxy, is( false ) );
+					assertThat( entityD instanceof PersistentAttributeInterceptable, is( true ) );
+					assertThat( Hibernate.isInitialized( entityD ), is( false ) );
 					// Because D is enhanced we should not have executed any SQL
 					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
 
 					// access the id.
 					// 		-since entityD is a "enhanced proxy", this should not trigger loading
-					assertThat( entityD.getOid(), is(1L) );
-					assertThat( Hibernate.isInitialized( entityD ), is(false) );
+					assertThat( entityD.getOid(), is( 1L ) );
+					assertThat( Hibernate.isInitialized( entityD ), is( false ) );
 					assertThat( stats.getPrepareStatementCount(), is( 0L ) );
 
 
@@ -155,6 +161,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					assert !Hibernate.isPropertyInitialized( entityD, "a" );
 					assert !Hibernate.isPropertyInitialized( entityD, "c" );
 					assert !Hibernate.isPropertyInitialized( entityD, "e" );
+					assert !Hibernate.isPropertyInitialized( entityD, "g" );
 
 
 					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,7 +198,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					final EEntity e1 = entityD.getE();
 					assert Hibernate.isPropertyInitialized( entityD, "e" );
 
-					assertThat( entityD instanceof HibernateProxy, is(false) );
+					assertThat( entityD instanceof HibernateProxy, is( false ) );
 
 					assert Hibernate.isInitialized( entityD.getE() );
 
@@ -205,7 +212,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					entityD.getE();
 					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
 
-					assertThat( entityD.getE().getOid(), is(17L) );
+					assertThat( entityD.getE().getOid(), is( 17L ) );
 
 
 					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -223,8 +230,13 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					Set<BEntity> bs = entityD.getBs();
 					assertThat( stats.getPrepareStatementCount(), is( 4L ) );
 					assertThat( bs.size(), is( 2 ) );
+
+					entityD.getG().getOid();
+					assertThat( stats.getPrepareStatementCount(), is( 4L ) );
+
 				}
 		);
+
 	}
 
 	@Test
@@ -261,16 +273,22 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					final String qry = "select e from RoleEntity e";
 					final List<RoleEntity> keyRolleEntitys = session.createQuery( qry, RoleEntity.class ).list();
 
-					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
 
 					for ( RoleEntity keyRolleEntity : keyRolleEntitys ) {
-						Set<SpecializedEntity> specializedEntities = ( (SpecializedKey) keyRolleEntity.getKey() )
+						Object key = Hibernate.unproxy( keyRolleEntity.getKey() );
+						assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+
+						Set<SpecializedEntity> specializedEntities = ( (SpecializedKey) key )
 								.getSpecializedEntities();
+
 						assertThat( stats.getPrepareStatementCount(), is( 3L ) );
 
 						Iterator<SpecializedEntity> iterator = specializedEntities.iterator();
 						while ( iterator.hasNext() ) {
-							iterator.next().getId();
+							SpecializedEntity specializedEntity = iterator.next();
+							assertThat( specializedEntity.getId(), notNullValue() );
+							specializedEntity.getValue();
 						}
 
 						// but regardless there should not be an additional query
@@ -290,12 +308,16 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					final String qry = "select e from RoleEntity e";
 					final List<RoleEntity> keyRolleEntitys = session.createQuery( qry, RoleEntity.class ).list();
 
-					assertThat( stats.getPrepareStatementCount(), is( 2L ) );
+					assertThat( stats.getPrepareStatementCount(), is( 1L ) );
 
 					assertThat( keyRolleEntitys.size(), is( 1 ) );
-					assertThat( keyRolleEntitys.get( 0 ).getKey().getClass().getName(), is( SpecializedKey.class.getName() ) );
+					RoleEntity roleEntity = keyRolleEntitys.get( 0 );
 					assertThat(
-							keyRolleEntitys.get( 0 ).getSpecializedKey().getClass().getName(),
+							Hibernate.unproxy( roleEntity.getKey() ).getClass().getName(),
+							is( SpecializedKey.class.getName() )
+					);
+					assertThat(
+							Hibernate.unproxy( roleEntity.getSpecializedKey() ).getClass().getName(),
 							is( MoreSpecializedKey.class.getName() )
 					);
 				}
@@ -306,6 +328,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 	protected void configureStandardServiceRegistryBuilder(StandardServiceRegistryBuilder ssrb) {
 		super.configureStandardServiceRegistryBuilder( ssrb );
 		ssrb.applySetting( AvailableSettings.ALLOW_ENHANCEMENT_AS_PPROXY, "true" );
+		ssrb.applySetting( AvailableSettings.FORMAT_SQL, "false" );
 	}
 
 	@Override
@@ -324,6 +347,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		sources.addAnnotatedClass( CEntity.class );
 		sources.addAnnotatedClass( DEntity.class );
 		sources.addAnnotatedClass( EEntity.class );
+		sources.addAnnotatedClass( GEntity.class );
 
 		sources.addAnnotatedClass( Activity.class );
 		sources.addAnnotatedClass( Instruction.class );
@@ -383,13 +407,19 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					c.setC3( "yxcv" );
 					d.setC( c );
 
+					GEntity g = new GEntity();
+					g.setOid( 1 );
+					g.getdEntities().add( d );
+					d.setG( g );
+
 					session.save( b1 );
 					session.save( b2 );
 					session.save( a );
 					session.save( c );
+					session.save( g );
+
 					session.save( d );
 					session.save( e );
-
 
 					// create a slew of Activity objects, some with Instruction reference
 					// some without.
@@ -412,7 +442,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					roleEntity.setOid( 1L );
 
 					SpecializedKey specializedKey = new SpecializedKey();
-					specializedKey.setOid(1L);
+					specializedKey.setOid( 1L );
 
 					MoreSpecializedKey moreSpecializedKey = new MoreSpecializedKey();
 					moreSpecializedKey.setOid( 3L );
@@ -420,7 +450,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					SpecializedEntity specializedEntity = new SpecializedEntity();
 					specializedEntity.setId( 2L );
 					specializedKey.addSpecializedEntity( specializedEntity );
-					specializedEntity.setSpecializedKey( specializedKey);
+					specializedEntity.setSpecializedKey( specializedKey );
 
 					specializedKey.addRole( roleEntity );
 					roleEntity.setKey( specializedKey );
@@ -443,6 +473,7 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 					session.createQuery( "delete from C" ).executeUpdate();
 					session.createQuery( "delete from B" ).executeUpdate();
 					session.createQuery( "delete from A" ).executeUpdate();
+					session.createQuery( "delete from G" ).executeUpdate();
 
 					session.createQuery( "delete from Activity" ).executeUpdate();
 					session.createQuery( "delete from Instruction" ).executeUpdate();
@@ -457,12 +488,93 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		);
 	}
 
+	@MappedSuperclass
+	public static class MapEntity {
+		@Id
+		private long oid;
+
+		private short version;
+
+		public long getOid() {
+			return oid;
+		}
+
+		public void setOid(long oid) {
+			this.oid = oid;
+		}
+
+		public short getVersion() {
+			return version;
+		}
+
+		public void setVersion(short version) {
+			this.version = version;
+		}
+	}
+
+	@Entity(name="ActivityDefinitionEntity")
+	@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+	@Table(name="FE_ActivityDefinition")
+	public static class ActivityDefinitionEntity extends ModelEntity
+			implements Serializable
+	{
+
+		public ActivityDefinitionEntity() {
+		}
+
+		@ManyToOne(fetch=FetchType.LAZY)
+		@LazyToOne(LazyToOneOption.NO_PROXY)
+		@LazyGroup("WebApplication")
+		@JoinColumn(name="WebApp_WebApp_Id")
+		protected WebApplicationEntity WebApplication = null;
+
+		public WebApplicationEntity getWebApplication() {
+			return WebApplication;
+		}
+
+		public void setWebApplication(WebApplicationEntity webApplication) {
+			WebApplication = webApplication;
+		}
+	}
+
+	@Entity(name="WebApplicationEntity")
+	@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+	@Table(name="FE_WebApplication")
+	public static class WebApplicationEntity extends ModelEntity
+			implements Serializable
+	{
+
+		public String field;
+		public WebApplicationEntity() {
+		}
+
+		@OneToMany(targetEntity=ActivityDefinitionEntity.class, mappedBy="WebApplication", fetch=FetchType.LAZY)
+		@LazyToOne(LazyToOneOption.NO_PROXY)
+		@LazyGroup("ActDef")
+//		@CollectionType(type="baseutil.technology.hibernate.IskvLinkedSetCollectionType")
+		protected Set<ActivityDefinitionEntity> ActDef = new LinkedHashSet<>(  );
+
+		public Set<ActivityDefinitionEntity> getActDef() {
+			return ActDef;
+		}
+
+		public void setActDef(Set<ActivityDefinitionEntity> actDef) {
+			ActDef = actDef;
+		}
+
+		public String getField() {
+			return field;
+		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+	}
+
 
 	@Entity(name = "A")
 	@Table(name = "A")
-	public static class AEntity {
-		@Id
-		private long oid;
+	public static class AEntity extends MapEntity {
 
 		@Column(name = "A")
 		private String a;
@@ -475,21 +587,11 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 			this.a = a;
 		}
 
-		public long getOid() {
-			return oid;
-		}
-
-		public void setOid(long oid) {
-			this.oid = oid;
-		}
 	}
-
 
 	@Entity(name = "B")
 	@Table(name = "B")
-	public static class BEntity {
-		@Id
-		public long oid;
+	public static class BEntity extends MapEntity {
 		private Integer b1;
 		private String b2;
 
@@ -508,23 +610,13 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		public void setB2(String b2) {
 			this.b2 = b2;
 		}
-
-		public long getOid() {
-			return oid;
-		}
-
-		public void setOid(long oid) {
-			this.oid = oid;
-		}
 	}
 
 
 	@Entity(name = "C")
 	@Table(name = "C")
-	public static class CEntity {
+	public static class CEntity extends MapEntity {
 
-		@Id
-		private long oid;
 		private String c1;
 		private String c2;
 		private String c3;
@@ -563,22 +655,13 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 			this.c4 = c4;
 		}
 
-		public long getOid() {
-			return oid;
-		}
-
-		public void setOid(long oid) {
-			this.oid = oid;
-		}
 	}
 
 	@Entity(name = "D")
 	@Table(name = "D")
-	public static class DEntity {
+	public static class DEntity extends MapEntity {
 
 		// ****** ID *****************
-		@Id
-		private long oid;
 		private String d;
 		// ****** Relations *****************
 		@OneToOne(fetch = FetchType.LAZY)
@@ -601,6 +684,11 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		@LazyGroup("e")
 		private EEntity e;
 
+		@ManyToOne(fetch = FetchType.LAZY)
+		@JoinColumn()
+		@LazyGroup("g")
+		public GEntity g;
+
 		@Lob
 		@Basic(fetch = FetchType.LAZY)
 		@LazyGroup("blob")
@@ -613,17 +701,6 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		public void setD(String d) {
 			this.d = d;
 		}
-
-
-		// ****** ID *****************
-		public long getOid() {
-			return oid;
-		}
-
-		public void setOid(long oid) {
-			this.oid = oid;
-		}
-
 
 		public AEntity getA() {
 			return a;
@@ -664,26 +741,40 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		public void setE(EEntity e) {
 			this.e = e;
 		}
+
+		public GEntity getG() {
+			return g;
+		}
+
+		public void setG(GEntity g) {
+			this.g = g;
+		}
+	}
+
+	@Entity(name = "G")
+	@Table(name = "G")
+	public static class GEntity extends MapEntity {
+
+		@OneToMany(mappedBy = "g")
+		public Set<DEntity> dEntities = new HashSet<>();
+
+		public Set<DEntity> getdEntities() {
+			return dEntities;
+		}
+
+		public void setdEntities(Set<DEntity> dEntities) {
+			this.dEntities = dEntities;
+		}
 	}
 
 	@Entity(name = "E")
 	@Table(name = "E")
-	public static class EEntity {
-		@Id
-		private long oid;
+	public static class EEntity extends MapEntity {
 		private String e1;
 		private String e2;
 
 		@OneToOne(fetch = FetchType.LAZY)
 		private DEntity d;
-
-		public long getOid() {
-			return oid;
-		}
-
-		public void setOid(long oid) {
-			this.oid = oid;
-		}
 
 		public String getE1() {
 			return e1;
@@ -710,8 +801,8 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		}
 	}
 
-	@Entity(name="Activity")
-	@Table(name="Activity")
+	@Entity(name = "Activity")
+	@Table(name = "Activity")
 	public static class Activity {
 		private Integer id;
 		private String description;
@@ -743,11 +834,11 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 			this.description = description;
 		}
 
-		@ManyToOne(fetch=FetchType.LAZY)
+		@ManyToOne(fetch = FetchType.LAZY)
 //		@LazyToOne(LazyToOneOption.NO_PROXY)
 		@LazyToOne(LazyToOneOption.PROXY)
 		@LazyGroup("Instruction")
-		@JoinColumn(name="Instruction_Id")
+		@JoinColumn(name = "Instruction_Id")
 		public Instruction getInstruction() {
 			return instruction;
 		}
@@ -757,8 +848,8 @@ public class ComplexFetchGroupTest extends BaseNonConfigCoreFunctionalTestCase {
 		}
 	}
 
-	@Entity(name="Instruction")
-	@Table(name="Instruction")
+	@Entity(name = "Instruction")
+	@Table(name = "Instruction")
 	public static class Instruction {
 		private Integer id;
 		private String summary;

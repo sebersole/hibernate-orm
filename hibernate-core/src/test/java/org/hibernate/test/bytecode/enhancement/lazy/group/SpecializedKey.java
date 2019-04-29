@@ -27,7 +27,6 @@ public class SpecializedKey extends GenericKey implements Serializable
 {
 
 	@OneToMany(targetEntity= SpecializedEntity.class, mappedBy="specializedKey", fetch=FetchType.LAZY)
-	@LazyToOne(LazyToOneOption.NO_PROXY)
 	@LazyGroup("PZ")
 	protected Set<SpecializedEntity> specializedEntities = new LinkedHashSet();
 

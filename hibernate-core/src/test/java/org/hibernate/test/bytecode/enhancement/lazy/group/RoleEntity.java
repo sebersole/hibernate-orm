@@ -31,13 +31,13 @@ public class RoleEntity extends ModelEntity implements Serializable {
 	Short value;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@LazyToOne(LazyToOneOption.NO_PROXY)
+	@LazyToOne(LazyToOneOption.PROXY)
 	@LazyGroup("Key")
 	@JoinColumn
 	protected AbstractKey key = null;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@LazyToOne(LazyToOneOption.NO_PROXY)
+	@LazyToOne(LazyToOneOption.PROXY)
 	@LazyGroup("Key")
 	@JoinColumn
 	protected SpecializedKey specializedKey = null;
