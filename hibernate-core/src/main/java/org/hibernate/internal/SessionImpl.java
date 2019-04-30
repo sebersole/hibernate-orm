@@ -1129,11 +1129,18 @@ public final class SessionImpl
 	}
 
 	@Override
+	public final Object internalLoad(String entityName, Serializable id, boolean eager, boolean nullable)
+			throws HibernateException {
+		return internalLoad( entityName, id, eager, nullable, null );
+	}
+
+	@Override
 	public final Object internalLoad(
 			String entityName,
 			Serializable id,
 			boolean eager,
-			boolean nullable) throws HibernateException {
+			boolean nullable,
+			Boolean unwrapProxy) throws HibernateException {
 
 		final EffectiveEntityGraph effectiveEntityGraph = getLoadQueryInfluencers().getEffectiveEntityGraph();
 		final GraphSemantic semantic = effectiveEntityGraph.getSemantic();
@@ -1157,6 +1164,8 @@ public final class SessionImpl
 						? LoadEventListener.INTERNAL_LOAD_EAGER
 						: LoadEventListener.INTERNAL_LOAD_LAZY;
 			}
+
+			type.setUnwrapProxy( unwrapProxy );
 
 			LoadEvent event = loadEvent;
 			loadEvent = null;

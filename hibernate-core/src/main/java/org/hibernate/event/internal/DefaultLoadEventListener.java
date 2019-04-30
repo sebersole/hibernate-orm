@@ -263,7 +263,7 @@ public class DefaultLoadEventListener implements LoadEventListener {
 				return proxy;
 			}
 
-			if ( ! persister.isVersioned() ) {
+			if ( !persister.isVersioned() && !persister.getEntityMetamodel().hasSubclasses() ) {
 				// create the (uninitialized) entity instance - has only id set
 				final Object entity = persister.getEntityTuplizer().instantiate(
 						keyToLoad.getIdentifier(),
@@ -288,6 +288,16 @@ public class DefaultLoadEventListener implements LoadEventListener {
 						.injectEnhancedEntityAsProxyInterceptor( entity, keyToLoad, event.getSession() );
 
 				return entity;
+			}else {
+				if ( proxy != null ) {
+					return returnNarrowedProxy( event, persister, keyToLoad, options, persistenceContext, proxy );
+				}
+
+				if ( options.isAllowProxyCreation()
+						&& !options.isUnwrapProxy()
+				) {
+					return createProxyIfNecessary( event, persister, keyToLoad, options, persistenceContext );
+				}
 			}
 		}
 

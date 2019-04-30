@@ -75,6 +75,7 @@ public interface LoadEventListener extends Serializable {
 		private boolean allowNulls;
 		private boolean checkDeleted;
 		private boolean allowProxyCreation;
+		private Boolean isUnwrapProxy;
 
 		private LoadType(String name) {
 			this.name = name;
@@ -123,6 +124,17 @@ public interface LoadEventListener extends Serializable {
 		@Override
 		public String toString() {
 			return name;
+		}
+
+		public boolean isUnwrapProxy() {
+			if ( isUnwrapProxy == null ) {
+				return !isAllowProxyCreation();
+			}
+			return isUnwrapProxy;
+		}
+
+		public void setUnwrapProxy(Boolean unwrapProxy) {
+			isUnwrapProxy = unwrapProxy;
 		}
 	}
 }
