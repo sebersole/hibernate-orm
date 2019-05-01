@@ -68,6 +68,27 @@ public interface LoadEventListener extends Serializable {
 			.setCheckDeleted( false )
 			.setNakedEntityReturned( false );
 
+	LoadType INTERNAL_LOAD_EAGER_UNWRAP_PROXY = new LoadType( "INTERNAL_LOAD_EAGER" )
+			.setAllowNulls( false )
+			.setAllowProxyCreation( false )
+			.setCheckDeleted( false )
+			.setNakedEntityReturned( false )
+			.setUnwrapProxy( true );
+
+	LoadType INTERNAL_LOAD_LAZY_UNWRAP_PROXY = new LoadType( "INTERNAL_LOAD_LAZY" )
+			.setAllowNulls( false )
+			.setAllowProxyCreation( true )
+			.setCheckDeleted( false )
+			.setNakedEntityReturned( false )
+			.setUnwrapProxy( true );
+
+	LoadType INTERNAL_LOAD_NULLABLE_UNWRAP_PROXY = new LoadType( "INTERNAL_LOAD_NULLABLE" )
+			.setAllowNulls( true )
+			.setAllowProxyCreation( false )
+			.setCheckDeleted( false )
+			.setNakedEntityReturned( false )
+			.setUnwrapProxy( true );
+
 	public static final class LoadType {
 		private String name;
 
@@ -133,8 +154,9 @@ public interface LoadEventListener extends Serializable {
 			return isUnwrapProxy;
 		}
 
-		public void setUnwrapProxy(Boolean unwrapProxy) {
+		public LoadType setUnwrapProxy(Boolean unwrapProxy) {
 			isUnwrapProxy = unwrapProxy;
+			return this;
 		}
 	}
 }

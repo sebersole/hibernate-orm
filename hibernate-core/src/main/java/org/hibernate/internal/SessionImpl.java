@@ -1157,12 +1157,25 @@ public final class SessionImpl
 		try {
 			final LoadEventListener.LoadType type;
 			if ( nullable ) {
-				type = LoadEventListener.INTERNAL_LOAD_NULLABLE;
+				if ( unwrapProxy ) {
+					type = LoadEventListener.INTERNAL_LOAD_NULLABLE_UNWRAP_PROXY;
+
+				}
+				else {
+					type = LoadEventListener.INTERNAL_LOAD_NULLABLE;
+				}
 			}
 			else {
-				type = eager
-						? LoadEventListener.INTERNAL_LOAD_EAGER
-						: LoadEventListener.INTERNAL_LOAD_LAZY;
+				if ( unwrapProxy ) {
+					type = eager
+							? LoadEventListener.INTERNAL_LOAD_EAGER_UNWRAP_PROXY
+							: LoadEventListener.INTERNAL_LOAD_LAZY_UNWRAP_PROXY;
+				}
+				else {
+					type = eager
+							? LoadEventListener.INTERNAL_LOAD_EAGER
+							: LoadEventListener.INTERNAL_LOAD_LAZY;
+				}
 			}
 
 			type.setUnwrapProxy( unwrapProxy );
