@@ -99,7 +99,7 @@ import org.hibernate.jpa.internal.PersistenceUnitUtilImpl;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.metadata.CollectionMetadata;
-import org.hibernate.metamodel.internal.MetamodelImpl;
+import org.hibernate.metamodel.internal.DomainMetamodelImpl;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.Loadable;
@@ -291,7 +291,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 			LOG.debug( "Instantiated session factory" );
 
 			this.metamodel = metadata.getTypeConfiguration().scope( this );
-			( (MetamodelImpl) this.metamodel ).initialize(
+			( (DomainMetamodelImpl) this.metamodel ).initialize(
 					metadata,
 					determineJpaMetaModelPopulationSetting( properties )
 			);
