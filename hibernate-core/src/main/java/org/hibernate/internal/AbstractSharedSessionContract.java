@@ -35,7 +35,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.cache.spi.CacheTransactionSynchronization;
 import org.hibernate.cfg.Environment;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.engine.ResultSetMappingDefinition;
+import org.hibernate.query.sql.spi.ResultSetMappingDescriptor;
 import org.hibernate.engine.internal.SessionEventListenerManagerImpl;
 import org.hibernate.engine.jdbc.LobCreationContext;
 import org.hibernate.engine.jdbc.LobCreator;
@@ -53,8 +53,8 @@ import org.hibernate.engine.query.spi.sql.NativeSQLQueryRootReturn;
 import org.hibernate.engine.query.spi.sql.NativeSQLQuerySpecification;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.ExceptionConverter;
-import org.hibernate.engine.spi.NamedQueryDefinition;
-import org.hibernate.engine.spi.NamedSQLQueryDefinition;
+import org.hibernate.query.hql.internal.NamedHqlQueryMementoImpl;
+import org.hibernate.query.sql.internal.NamedSQLQueryDefinition;
 import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SessionEventListenerManager;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -67,11 +67,11 @@ import org.hibernate.jpa.spi.NativeQueryTupleTransformer;
 import org.hibernate.jpa.spi.TupleBuilderTransformer;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.procedure.ProcedureCall;
-import org.hibernate.procedure.ProcedureCallMemento;
+import org.hibernate.procedure.NamedCallableQueryMemento;
 import org.hibernate.procedure.internal.ProcedureCallImpl;
 import org.hibernate.query.ParameterMetadata;
 import org.hibernate.query.Query;
-import org.hibernate.query.internal.NativeQueryImpl;
+import org.hibernate.query.sql.internal.NativeQueryImpl;
 import org.hibernate.query.internal.QueryImpl;
 import org.hibernate.query.spi.NativeQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
@@ -622,7 +622,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		delayedAfterCompletion();
 
 		// look as HQL/JPQL first
-		final NamedQueryDefinition queryDefinition = factory.getNamedQueryRepository().getNamedQueryDefinition( name );
+		final NamedHqlQueryMementoImpl queryDefinition = factory.getNamedQueryRepository().getNamedQueryDefinition( name );
 		if ( queryDefinition != null ) {
 			return createQuery( queryDefinition );
 		}
@@ -636,7 +636,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		throw exceptionConverter.convert( new IllegalArgumentException( "No query defined for that name [" + name + "]" ) );
 	}
 
-	protected QueryImplementor createQuery(NamedQueryDefinition queryDefinition) {
+	protected QueryImplementor createQuery(NamedHqlQueryMementoImpl queryDefinition) {
 		String queryString = queryDefinition.getQueryString();
 		final QueryImpl query = new QueryImpl(
 				this,
@@ -679,7 +679,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		return query;
 	}
 
-	protected void initQueryFromNamedDefinition(Query query, NamedQueryDefinition nqd) {
+	protected void initQueryFromNamedDefinition(Query query, NamedHqlQueryMementoImpl nqd) {
 		// todo : cacheable and readonly should be Boolean rather than boolean...
 		query.setCacheable( nqd.isCacheable() );
 		query.setCacheRegion( nqd.getCacheRegion() );
@@ -815,7 +815,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 
 			// todo : apply stored setting at the JPA Query level too
 
-			final NamedQueryDefinition namedQueryDefinition = getFactory().getNamedQueryRepository().getNamedQueryDefinition( name );
+			final NamedHqlQueryMementoImpl namedQueryDefinition = getFactory().getNamedQueryRepository().getNamedQueryDefinition( name );
 			if ( namedQueryDefinition != null ) {
 				return createQuery( namedQueryDefinition, resultType );
 			}
@@ -833,7 +833,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	}
 
 	@SuppressWarnings({"WeakerAccess", "unchecked"})
-	protected <T> QueryImplementor<T> createQuery(NamedQueryDefinition namedQueryDefinition, Class<T> resultType) {
+	protected <T> QueryImplementor<T> createQuery(NamedHqlQueryMementoImpl namedQueryDefinition, Class<T> resultType) {
 		final QueryImplementor query = createQuery( namedQueryDefinition );
 		if ( resultType != null ) {
 			resultClassChecking( resultType, query );
@@ -874,7 +874,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 			queryReturns = namedQueryDefinition.getQueryReturns();
 		}
 		else if ( namedQueryDefinition.getResultSetRef() != null ) {
-			final ResultSetMappingDefinition rsMapping = getFactory().getNamedQueryRepository().getResultSetMappingDefinition( namedQueryDefinition.getResultSetRef() );
+			final ResultSetMappingDescriptor rsMapping = getFactory().getNamedQueryRepository().getResultSetMappingDefinition( namedQueryDefinition.getResultSetRef() );
 			queryReturns = rsMapping.getQueryReturns();
 		}
 		else {
@@ -1024,7 +1024,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	public ProcedureCall getNamedProcedureCall(String name) {
 		checkOpen();
 
-		final ProcedureCallMemento memento = factory.getNamedQueryRepository().getNamedProcedureCallMemento( name );
+		final NamedCallableQueryMemento memento = factory.getNamedQueryRepository().getNamedProcedureCallMemento( name );
 		if ( memento == null ) {
 			throw new IllegalArgumentException(
 					"Could not find named stored procedure call with that registration name : " + name

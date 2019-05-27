@@ -28,7 +28,6 @@ import javax.persistence.PersistenceException;
 import javax.persistence.PersistenceUnitUtil;
 import javax.persistence.Query;
 import javax.persistence.SynchronizationType;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 
 import org.hibernate.ConnectionAcquisitionMode;
@@ -74,9 +73,8 @@ import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.query.spi.QueryPlanCache;
 import org.hibernate.engine.query.spi.ReturnMetadata;
 import org.hibernate.engine.spi.FilterDefinition;
-import org.hibernate.engine.spi.NamedQueryDefinition;
+import org.hibernate.query.hql.internal.NamedHqlQueryMementoImpl;
 import org.hibernate.engine.spi.NamedQueryDefinitionBuilder;
-import org.hibernate.engine.spi.NamedSQLQueryDefinition;
 import org.hibernate.engine.spi.NamedSQLQueryDefinitionBuilder;
 import org.hibernate.engine.spi.SessionBuilderImplementor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -106,7 +104,8 @@ import org.hibernate.persister.entity.Loadable;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.proxy.EntityNotFoundDelegate;
 import org.hibernate.proxy.HibernateProxyHelper;
-import org.hibernate.query.criteria.internal.CriteriaBuilderImpl;
+import org.hibernate.query.sqm.NodeBuilder;
+import org.hibernate.query.sqm.internal.SqmCriteriaNodeBuilder;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.hibernate.resource.transaction.backend.jta.internal.synchronization.AfterCompletionAction;
@@ -173,7 +172,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	// todo : org.hibernate.jpa.boot.spi.PersistenceUnitDescriptor too?
 
 	private final transient MetamodelImplementor metamodel;
-	private final transient CriteriaBuilderImpl criteriaBuilder;
+	private final transient NodeBuilder criteriaBuilder;
 	private final PersistenceUnitUtil jpaPersistenceUnitUtil;
 	private final transient CacheImplementor cacheAccess;
 	private final transient org.hibernate.query.spi.NamedQueryRepository namedQueryRepository;
@@ -236,7 +235,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 
 		this.sqlFunctionRegistry = new SQLFunctionRegistry( jdbcServices.getJdbcEnvironment().getDialect(), options.getCustomSqlFunctionMap() );
 		this.cacheAccess = this.serviceRegistry.getService( CacheImplementor.class );
-		this.criteriaBuilder = new CriteriaBuilderImpl( this );
+		this.criteriaBuilder = new SqmCriteriaNodeBuilder.create( this );
 		this.jpaPersistenceUnitUtil = new PersistenceUnitUtilImpl( this );
 
 		for ( SessionFactoryObserver sessionFactoryObserver : options.getSessionFactoryObservers() ) {
@@ -665,7 +664,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 	}
 
 	@Override
-	public CriteriaBuilder getCriteriaBuilder() {
+	public NodeBuilder getCriteriaBuilder() {
 		validateNotClosed();
 		return criteriaBuilder;
 	}
@@ -903,7 +902,7 @@ public final class SessionFactoryImpl implements SessionFactoryImplementor {
 		return builder.createNamedQueryDefinition();
 	}
 
-	private NamedQueryDefinition extractHqlQueryDefinition(org.hibernate.query.Query hqlQuery, String name) {
+	private NamedHqlQueryMementoImpl extractHqlQueryDefinition(org.hibernate.query.Query hqlQuery, String name) {
 		final NamedQueryDefinitionBuilder builder = new NamedQueryDefinitionBuilder( name );
 		fillInNamedQueryBuilder( builder, hqlQuery );
 		// LockOptions only valid for HQL/JPQL queries...
