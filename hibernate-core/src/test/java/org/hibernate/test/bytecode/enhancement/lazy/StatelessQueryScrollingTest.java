@@ -184,7 +184,6 @@ public class StatelessQueryScrollingTest extends BaseNonConfigCoreFunctionalTest
 		private Set<Product> products = new HashSet<>();
 
 		public Producer() {
-			System.out.println( "creating" );
 		}
 
 		public Producer(Integer id, String name) {
