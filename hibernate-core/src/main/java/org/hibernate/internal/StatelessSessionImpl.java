@@ -65,13 +65,15 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 		}
 	};
 
-	private PersistenceContext temporaryPersistenceContext = new StatefulPersistenceContext( this );
+	private final PersistenceContext temporaryPersistenceContext = new StatefulPersistenceContext( this );
 
-	private boolean connectionProvided;
+	private final boolean connectionProvided;
+	private final boolean allowBytecodeProxy;
 
 	StatelessSessionImpl(SessionFactoryImpl factory, SessionCreationOptions options) {
 		super( factory, options );
 		connectionProvided = options.getConnection() != null;
+		allowBytecodeProxy = getFactory().getSessionFactoryOptions().isEnhancementAsProxyEnabled();
 	}
 
 	@Override
@@ -296,7 +298,6 @@ public class StatelessSessionImpl extends AbstractSharedSessionContract implemen
 
 			// first, check to see if we can use "bytecode proxies"
 
-			final boolean allowBytecodeProxy = getFactory().getSessionFactoryOptions().isEnhancementAsProxyEnabled();
 			if ( allowBytecodeProxy
 					&& persister.getEntityMetamodel().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading() ) {
 
