@@ -1813,7 +1813,7 @@ public final class SessionImpl
 			if ( roleAfterFlush == null ) {
 				throw new QueryException( "The collection was unreferenced" );
 			}
-			plan = getFactory().getQueryPlanCache().getFilterQueryPlan(
+			plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
 					filter,
 					roleAfterFlush.getRole(),
 					shallow,
@@ -1823,7 +1823,7 @@ public final class SessionImpl
 		else {
 			// otherwise, we only need to flush if there are in-memory changes
 			// to the queried tables
-			plan = getFactory().getQueryPlanCache().getFilterQueryPlan(
+			plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
 					filter,
 					roleBeforeFlush.getRole(),
 					shallow,
@@ -1838,7 +1838,7 @@ public final class SessionImpl
 					if ( roleAfterFlush == null ) {
 						throw new QueryException( "The collection was dereferenced" );
 					}
-					plan = getFactory().getQueryPlanCache().getFilterQueryPlan(
+					plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
 							filter,
 							roleAfterFlush.getRole(),
 							shallow,
@@ -2228,7 +2228,7 @@ public final class SessionImpl
 			log.tracev( "Scroll SQL query: {0}", customQuery.getSQL() );
 		}
 
-		CustomLoader loader = getFactory().getQueryPlanCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
+		CustomLoader loader = getFactory().getQueryInterpretationCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
 
 		autoFlushIfRequired( loader.getQuerySpaces() );
 
@@ -2252,7 +2252,7 @@ public final class SessionImpl
 			log.tracev( "SQL query: {0}", customQuery.getSQL() );
 		}
 
-		CustomLoader loader = getFactory().getQueryPlanCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
+		CustomLoader loader = getFactory().getQueryInterpretationCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
 
 		autoFlushIfRequired( loader.getQuerySpaces() );
 
