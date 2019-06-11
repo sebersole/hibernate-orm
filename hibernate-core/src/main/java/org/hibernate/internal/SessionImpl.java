@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +29,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import javax.persistence.CacheRetrieveMode;
 import javax.persistence.CacheStoreMode;
+import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.FlushModeType;
@@ -39,15 +38,12 @@ import javax.persistence.PersistenceException;
 import javax.persistence.PessimisticLockScope;
 import javax.persistence.StoredProcedureQuery;
 import javax.persistence.TransactionRequiredException;
-import javax.persistence.Tuple;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Selection;
 
 import org.hibernate.CacheMode;
-import org.hibernate.Criteria;
 import org.hibernate.Filter;
 import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
@@ -61,9 +57,7 @@ import org.hibernate.MultiIdentifierLoadAccess;
 import org.hibernate.NaturalIdLoadAccess;
 import org.hibernate.ObjectDeletedException;
 import org.hibernate.ObjectNotFoundException;
-import org.hibernate.QueryException;
 import org.hibernate.ReplicationMode;
-import org.hibernate.ScrollMode;
 import org.hibernate.Session;
 import org.hibernate.SessionEventListener;
 import org.hibernate.SessionException;
@@ -76,30 +70,24 @@ import org.hibernate.TypeMismatchException;
 import org.hibernate.UnknownProfileException;
 import org.hibernate.UnresolvableObjectException;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.criterion.NaturalIdentifier;
 import org.hibernate.engine.internal.StatefulPersistenceContext;
 import org.hibernate.engine.jdbc.LobCreator;
 import org.hibernate.engine.jdbc.NonContextualLobCreator;
 import org.hibernate.engine.jdbc.spi.JdbcCoordinator;
-import org.hibernate.engine.query.spi.FilterQueryPlan;
 import org.hibernate.engine.query.spi.HQLQueryPlan;
 import org.hibernate.engine.query.spi.NativeSQLQueryPlan;
 import org.hibernate.engine.query.spi.sql.NativeSQLQuerySpecification;
 import org.hibernate.engine.spi.ActionQueue;
-import org.hibernate.engine.spi.CollectionEntry;
 import org.hibernate.engine.spi.EffectiveEntityGraph;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
-import org.hibernate.query.hql.internal.NamedHqlQueryMementoImpl;
 import org.hibernate.engine.spi.PersistenceContext;
-import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SessionOwner;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.Status;
-import org.hibernate.engine.spi.TypedValue;
 import org.hibernate.engine.transaction.spi.TransactionImplementor;
 import org.hibernate.engine.transaction.spi.TransactionObserver;
 import org.hibernate.event.service.spi.EventListenerGroup;
@@ -141,9 +129,6 @@ import org.hibernate.graph.GraphSemantic;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.graph.internal.RootGraphImpl;
 import org.hibernate.graph.spi.RootGraphImplementor;
-import org.hibernate.hql.spi.QueryTranslator;
-import org.hibernate.internal.CriteriaImpl.CriterionEntry;
-import org.hibernate.internal.log.DeprecationLogger;
 import org.hibernate.jdbc.ReturningWork;
 import org.hibernate.jdbc.Work;
 import org.hibernate.jdbc.WorkExecutor;
@@ -154,30 +139,26 @@ import org.hibernate.jpa.internal.util.CacheModeHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.jpa.internal.util.FlushModeTypeHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
-import org.hibernate.jpa.spi.CriteriaQueryTupleTransformer;
 import org.hibernate.jpa.spi.HibernateEntityManagerImplementor;
-import org.hibernate.loader.criteria.CriteriaLoader;
 import org.hibernate.loader.custom.CustomLoader;
 import org.hibernate.loader.custom.CustomQuery;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
-import org.hibernate.param.CollectionFilterKeyParameterSpecification;
-import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.MultiLoadOptions;
-import org.hibernate.persister.entity.OuterJoinLoadable;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.procedure.spi.NamedCallableQueryMemento;
-import org.hibernate.query.UnknownSqlResultSetMappingException;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.hibernate.query.ImmutableEntityUpdateQueryHandlingMode;
 import org.hibernate.query.Query;
-import org.hibernate.query.criteria.internal.compile.CompilableCriteria;
-import org.hibernate.query.criteria.internal.compile.CriteriaCompiler;
-import org.hibernate.query.criteria.internal.expression.CompoundSelectionImpl;
+import org.hibernate.query.UnknownSqlResultSetMappingException;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.spi.ScrollableResultsImplementor;
+import org.hibernate.query.sqm.internal.QuerySqmImpl;
+import org.hibernate.query.sqm.tree.SqmStatement;
+import org.hibernate.query.sqm.tree.delete.SqmDeleteStatement;
+import org.hibernate.query.sqm.tree.update.SqmUpdateStatement;
 import org.hibernate.resource.transaction.TransactionRequiredForJoinException;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.synchronization.AfterCompletionAction;
@@ -1517,35 +1498,6 @@ public final class SessionImpl
 	}
 
 	@Override
-	public List list(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-		queryParameters.validateParameters();
-
-		HQLQueryPlan plan = queryParameters.getQueryPlan();
-		if ( plan == null ) {
-			plan = getQueryPlan( query, false );
-		}
-
-		autoFlushIfRequired( plan.getQuerySpaces() );
-
-		List results = Collections.EMPTY_LIST;
-		boolean success = false;
-
-		dontFlushFromFind++;   //stops flush being called multiple times if this method is recursively called
-		try {
-			results = plan.performList( queryParameters, this );
-			success = true;
-		}
-		finally {
-			dontFlushFromFind--;
-			afterOperation( success );
-			delayedAfterCompletion();
-		}
-		return results;
-	}
-
-	@Override
 	public int executeUpdate(String query, QueryParameters queryParameters) throws HibernateException {
 		checkOpenOrWaitingForAutoClose();
 		checkTransactionSynchStatus();
@@ -1637,66 +1589,6 @@ public final class SessionImpl
 			delayedAfterCompletion();
 		}
 		return result;
-	}
-
-	@Override
-	public Iterator iterate(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-		queryParameters.validateParameters();
-
-		HQLQueryPlan plan = queryParameters.getQueryPlan();
-		if ( plan == null ) {
-			plan = getQueryPlan( query, true );
-		}
-
-		autoFlushIfRequired( plan.getQuerySpaces() );
-
-		dontFlushFromFind++; //stops flush being called multiple times if this method is recursively called
-		try {
-			return plan.performIterate( queryParameters, this );
-		}
-		finally {
-			delayedAfterCompletion();
-			dontFlushFromFind--;
-		}
-	}
-
-	@Override
-	public ScrollableResultsImplementor scroll(String query, QueryParameters queryParameters) throws HibernateException {
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-
-		HQLQueryPlan plan = queryParameters.getQueryPlan();
-		if ( plan == null ) {
-			plan = getQueryPlan( query, false );
-		}
-
-		autoFlushIfRequired( plan.getQuerySpaces() );
-
-		dontFlushFromFind++;
-		try {
-			return plan.performScroll( queryParameters, this );
-		}
-		finally {
-			delayedAfterCompletion();
-			dontFlushFromFind--;
-		}
-	}
-
-	@Override
-	public org.hibernate.query.Query createFilter(Object collection, String queryString) {
-		checkOpen();
-		checkTransactionSynchStatus();
-		CollectionFilterImpl filter = new CollectionFilterImpl(
-				queryString,
-				collection,
-				this,
-				getFilterQueryPlan( collection, queryString, null, false ).getParameterMetadata()
-		);
-		filter.setComment( queryString );
-		delayedAfterCompletion();
-		return filter;
 	}
 
 
@@ -1791,295 +1683,6 @@ public final class SessionImpl
 		return ( (HibernateProxy) proxy ).getHibernateLazyInitializer().getIdentifier();
 	}
 
-	private FilterQueryPlan getFilterQueryPlan(
-			Object collection,
-			String filter,
-			QueryParameters parameters,
-			boolean shallow) throws HibernateException {
-		if ( collection == null ) {
-			throw new NullPointerException( "null collection passed to filter" );
-		}
-
-		CollectionEntry entry = persistenceContext.getCollectionEntryOrNull( collection );
-		final CollectionPersister roleBeforeFlush = ( entry == null ) ? null : entry.getLoadedPersister();
-
-		FilterQueryPlan plan = null;
-		if ( roleBeforeFlush == null ) {
-			// if it was previously unreferenced, we need to flush in order to
-			// get its state into the database in order to execute query
-			flush();
-			entry = persistenceContext.getCollectionEntryOrNull( collection );
-			CollectionPersister roleAfterFlush = ( entry == null ) ? null : entry.getLoadedPersister();
-			if ( roleAfterFlush == null ) {
-				throw new QueryException( "The collection was unreferenced" );
-			}
-			plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
-					filter,
-					roleAfterFlush.getRole(),
-					shallow,
-					getLoadQueryInfluencers().getEnabledFilters()
-			);
-		}
-		else {
-			// otherwise, we only need to flush if there are in-memory changes
-			// to the queried tables
-			plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
-					filter,
-					roleBeforeFlush.getRole(),
-					shallow,
-					getLoadQueryInfluencers().getEnabledFilters()
-			);
-			if ( autoFlushIfRequired( plan.getQuerySpaces() ) ) {
-				// might need to run a different filter entirely after the flush
-				// because the collection role may have changed
-				entry = persistenceContext.getCollectionEntryOrNull( collection );
-				CollectionPersister roleAfterFlush = ( entry == null ) ? null : entry.getLoadedPersister();
-				if ( roleBeforeFlush != roleAfterFlush ) {
-					if ( roleAfterFlush == null ) {
-						throw new QueryException( "The collection was dereferenced" );
-					}
-					plan = getFactory().getQueryInterpretationCache().getFilterQueryPlan(
-							filter,
-							roleAfterFlush.getRole(),
-							shallow,
-							getLoadQueryInfluencers().getEnabledFilters()
-					);
-				}
-			}
-		}
-
-		if ( parameters != null ) {
-			parameters.getNamedParameters().put(
-					CollectionFilterKeyParameterSpecification.PARAM_KEY,
-					new TypedValue(
-							entry.getLoadedPersister().getKeyType(),
-							entry.getLoadedKey()
-					)
-			);
-		}
-
-		return plan;
-	}
-
-	@Override
-	public List listFilter(Object collection, String filter, QueryParameters queryParameters) {
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-		FilterQueryPlan plan = getFilterQueryPlan( collection, filter, queryParameters, false );
-		List results = Collections.EMPTY_LIST;
-
-		boolean success = false;
-		dontFlushFromFind++;   //stops flush being called multiple times if this method is recursively called
-		try {
-			results = plan.performList( queryParameters, this );
-			success = true;
-		}
-		finally {
-			dontFlushFromFind--;
-			afterOperation( success );
-			delayedAfterCompletion();
-		}
-		return results;
-	}
-
-	@Override
-	public Iterator iterateFilter(Object collection, String filter, QueryParameters queryParameters) {
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-		FilterQueryPlan plan = getFilterQueryPlan( collection, filter, queryParameters, true );
-		Iterator itr = plan.performIterate( queryParameters, this );
-		delayedAfterCompletion();
-		return itr;
-	}
-
-	@Override
-	public Criteria createCriteria(Class persistentClass, String alias) {
-		DeprecationLogger.DEPRECATION_LOGGER.deprecatedLegacyCriteria();
-		checkOpen();
-		checkTransactionSynchStatus();
-		return new CriteriaImpl( persistentClass.getName(), alias, this );
-	}
-
-	@Override
-	public Criteria createCriteria(String entityName, String alias) {
-		DeprecationLogger.DEPRECATION_LOGGER.deprecatedLegacyCriteria();
-		checkOpen();
-		checkTransactionSynchStatus();
-		return new CriteriaImpl( entityName, alias, this );
-	}
-
-	@Override
-	public Criteria createCriteria(Class persistentClass) {
-		DeprecationLogger.DEPRECATION_LOGGER.deprecatedLegacyCriteria();
-		checkOpen();
-		checkTransactionSynchStatus();
-		return new CriteriaImpl( persistentClass.getName(), this );
-	}
-
-	@Override
-	public Criteria createCriteria(String entityName) {
-		DeprecationLogger.DEPRECATION_LOGGER.deprecatedLegacyCriteria();
-		checkOpen();
-		checkTransactionSynchStatus();
-		return new CriteriaImpl( entityName, this );
-	}
-
-	@Override
-	public ScrollableResultsImplementor scroll(Criteria criteria, ScrollMode scrollMode) {
-		// TODO: Is this guaranteed to always be CriteriaImpl?
-		CriteriaImpl criteriaImpl = (CriteriaImpl) criteria;
-
-		checkOpenOrWaitingForAutoClose();
-		checkTransactionSynchStatus();
-
-		String entityName = criteriaImpl.getEntityOrClassName();
-		CriteriaLoader loader = new CriteriaLoader(
-				getOuterJoinLoadable( entityName ),
-				getFactory(),
-				criteriaImpl,
-				entityName,
-				getLoadQueryInfluencers()
-		);
-		autoFlushIfRequired( loader.getQuerySpaces() );
-		dontFlushFromFind++;
-		try {
-			return loader.scroll( this, scrollMode );
-		}
-		finally {
-			delayedAfterCompletion();
-			dontFlushFromFind--;
-		}
-	}
-
-	@Override
-	public List list(Criteria criteria) throws HibernateException {
-		// TODO: Is this guaranteed to always be CriteriaImpl?
-		CriteriaImpl criteriaImpl = (CriteriaImpl) criteria;
-		if ( criteriaImpl.getMaxResults() != null && criteriaImpl.getMaxResults() == 0 ) {
-			return Collections.EMPTY_LIST;
-		}
-
-		final NaturalIdLoadAccess naturalIdLoadAccess = this.tryNaturalIdLoadAccess( criteriaImpl );
-		if ( naturalIdLoadAccess != null ) {
-			// EARLY EXIT!
-			return Arrays.asList( naturalIdLoadAccess.load() );
-		}
-
-
-		checkOpenOrWaitingForAutoClose();
-//		checkTransactionSynchStatus();
-
-		String[] implementors = getFactory().getMetamodel().getImplementors( criteriaImpl.getEntityOrClassName() );
-		int size = implementors.length;
-
-		CriteriaLoader[] loaders = new CriteriaLoader[size];
-		Set spaces = new HashSet();
-		for ( int i = 0; i < size; i++ ) {
-
-			loaders[i] = new CriteriaLoader(
-					getOuterJoinLoadable( implementors[i] ),
-					getFactory(),
-					criteriaImpl,
-					implementors[i],
-					getLoadQueryInfluencers()
-			);
-
-			spaces.addAll( loaders[i].getQuerySpaces() );
-
-		}
-
-		autoFlushIfRequired( spaces );
-
-		List results = Collections.EMPTY_LIST;
-		dontFlushFromFind++;
-		boolean success = false;
-		try {
-			for ( int i = 0; i < size; i++ ) {
-				final List currentResults = loaders[i].list( this );
-				currentResults.addAll( results );
-				results = currentResults;
-			}
-			success = true;
-		}
-		finally {
-			dontFlushFromFind--;
-			afterOperation( success );
-			delayedAfterCompletion();
-		}
-
-		return results;
-	}
-
-	/**
-	 * Checks to see if the CriteriaImpl is a naturalId lookup that can be done via
-	 * NaturalIdLoadAccess
-	 *
-	 * @param criteria The criteria to check as a complete natural identifier lookup.
-	 *
-	 * @return A fully configured NaturalIdLoadAccess or null, if null is returned the standard CriteriaImpl execution
-	 * should be performed
-	 */
-	private NaturalIdLoadAccess tryNaturalIdLoadAccess(CriteriaImpl criteria) {
-		// See if the criteria lookup is by naturalId
-		if ( !criteria.isLookupByNaturalKey() ) {
-			return null;
-		}
-
-		final String entityName = criteria.getEntityOrClassName();
-		final EntityPersister entityPersister = getFactory().getMetamodel().entityPersister( entityName );
-
-		// Verify the entity actually has a natural id, needed for legacy support as NaturalIdentifier criteria
-		// queries did no natural id validation
-		if ( !entityPersister.hasNaturalIdentifier() ) {
-			return null;
-		}
-
-		// Since isLookupByNaturalKey is true there can be only one CriterionEntry and getCriterion() will
-		// return an instanceof NaturalIdentifier
-		final CriterionEntry criterionEntry = criteria.iterateExpressionEntries().next();
-		final NaturalIdentifier naturalIdentifier = (NaturalIdentifier) criterionEntry.getCriterion();
-
-		final Map<String, Object> naturalIdValues = naturalIdentifier.getNaturalIdValues();
-		final int[] naturalIdentifierProperties = entityPersister.getNaturalIdentifierProperties();
-
-		// Verify the NaturalIdentifier criterion includes all naturalId properties, first check that the property counts match
-		if ( naturalIdentifierProperties.length != naturalIdValues.size() ) {
-			return null;
-		}
-
-		final String[] propertyNames = entityPersister.getPropertyNames();
-		final NaturalIdLoadAccess naturalIdLoader = this.byNaturalId( entityName );
-
-		// Build NaturalIdLoadAccess and in the process verify all naturalId properties were specified
-		for ( int naturalIdentifierProperty : naturalIdentifierProperties ) {
-			final String naturalIdProperty = propertyNames[naturalIdentifierProperty];
-			final Object naturalIdValue = naturalIdValues.get( naturalIdProperty );
-
-			if ( naturalIdValue == null ) {
-				// A NaturalId property is missing from the critera query, can't use NaturalIdLoadAccess
-				return null;
-			}
-
-			naturalIdLoader.using( naturalIdProperty, naturalIdValue );
-		}
-
-		// Criteria query contains a valid naturalId, use the new API
-		log.warn(
-				"Session.byNaturalId(" + entityName
-						+ ") should be used for naturalId queries instead of Restrictions.naturalId() from a Criteria"
-		);
-
-		return naturalIdLoader;
-	}
-
-	private OuterJoinLoadable getOuterJoinLoadable(String entityName) throws MappingException {
-		EntityPersister persister = getFactory().getMetamodel().entityPersister( entityName );
-		if ( !( persister instanceof OuterJoinLoadable ) ) {
-			throw new MappingException( "class persister is not OuterJoinLoadable: " + entityName );
-		}
-		return (OuterJoinLoadable) persister;
-	}
-
 	@Override
 	public boolean contains(Object object) {
 		checkOpen();
@@ -2154,6 +1757,7 @@ public final class SessionImpl
 		}
 
 		try {
+			//noinspection RedundantClassCall
 			if ( !HibernateProxy.class.isInstance( object ) && persistenceContext.getEntry( object ) == null ) {
 				// check if it is an entity -> if not throw an exception (per JPA)
 				try {
@@ -3460,39 +3064,6 @@ public final class SessionImpl
 		}
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> QueryImplementor<T> createQuery(
-			String jpaqlString,
-			Class<T> resultClass,
-			Selection selection,
-			QueryOptions queryOptions) {
-		try {
-			final QueryImplementor query = createQuery( jpaqlString );
-
-			if ( queryOptions.getValueHandlers() == null ) {
-				if ( queryOptions.getResultMetadataValidator() != null ) {
-					queryOptions.getResultMetadataValidator().validate( query.getReturnTypes() );
-				}
-			}
-
-			// determine if we need a result transformer
-			List tupleElements = Tuple.class.equals( resultClass )
-					? ( (CompoundSelectionImpl<Tuple>) selection ).getCompoundSelectionItems()
-					: null;
-			if ( queryOptions.getValueHandlers() != null || tupleElements != null ) {
-				query.setResultTransformer(
-						new CriteriaQueryTupleTransformer( queryOptions.getValueHandlers(), tupleElements )
-				);
-			}
-
-			return query;
-		}
-		catch ( RuntimeException e ) {
-			throw exceptionConverter.convert( e );
-		}
-	}
-
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// EntityManager impl
@@ -3749,22 +3320,18 @@ public final class SessionImpl
 		return Collections.unmodifiableMap( properties );
 	}
 
-	private CriteriaCompiler criteriaCompiler;
-
-	@SuppressWarnings("WeakerAccess")
-	protected CriteriaCompiler criteriaCompiler() {
-		if ( criteriaCompiler == null ) {
-			criteriaCompiler = new CriteriaCompiler( this );
-		}
-		return criteriaCompiler;
-	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> QueryImplementor<T> createQuery(CriteriaQuery<T> criteriaQuery) {
 		checkOpen();
+
 		try {
-			return (QueryImplementor<T>) criteriaCompiler().compile( (CompilableCriteria) criteriaQuery );
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmStatement) criteriaQuery,
+					criteriaQuery.getResultType(),
+					this
+			);
 		}
 		catch ( RuntimeException e ) {
 			throw exceptionConverter.convert( e );
@@ -3775,7 +3342,12 @@ public final class SessionImpl
 	public QueryImplementor createQuery(CriteriaUpdate criteriaUpdate) {
 		checkOpen();
 		try {
-			return criteriaCompiler().compile( (CompilableCriteria) criteriaUpdate );
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmUpdateStatement) criteriaUpdate,
+					null,
+					this
+			);
 		}
 		catch ( RuntimeException e ) {
 			throw exceptionConverter.convert( e );
@@ -3786,7 +3358,12 @@ public final class SessionImpl
 	public QueryImplementor createQuery(CriteriaDelete criteriaDelete) {
 		checkOpen();
 		try {
-			return criteriaCompiler().compile( (CompilableCriteria) criteriaDelete );
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmDeleteStatement) criteriaDelete,
+					null,
+					this
+			);
 		}
 		catch ( RuntimeException e ) {
 			throw exceptionConverter.convert( e );
@@ -3794,23 +3371,12 @@ public final class SessionImpl
 	}
 
 	@Override
-	protected void initQueryFromNamedDefinition(Query query, NamedHqlQueryMementoImpl namedQueryDefinition) {
-		super.initQueryFromNamedDefinition( query, namedQueryDefinition );
-
-		if ( namedQueryDefinition.getLockOptions() != null ) {
-			if ( namedQueryDefinition.getLockOptions().getLockMode() != null ) {
-				query.setLockMode(
-						LockModeTypeHelper.getLockModeType( namedQueryDefinition.getLockOptions().getLockMode() )
-				);
-			}
-		}
-	}
-
-	@Override
 	public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
 		checkOpen();
 		try {
-			final NamedCallableQueryMemento memento = getFactory().getNamedQueryRepository().getNamedProcedureCallMemento( name );
+			final NamedCallableQueryMemento memento = getFactory().getQueryEngine()
+					.getNamedQueryRepository()
+					.getCallableQueryMemento( name );
 			if ( memento == null ) {
 				throw new IllegalArgumentException( "No @NamedStoredProcedureQuery was found with that name : " + name );
 			}
@@ -3936,21 +3502,20 @@ public final class SessionImpl
 	@Override
 	public <T> RootGraphImplementor<T> createEntityGraph(Class<T> rootType) {
 		checkOpen();
-		return new RootGraphImpl<T>( null, getMetamodel().entity( rootType ), getEntityManagerFactory() );
+		return new RootGraphImpl<T>( null, getMetamodel().entity( rootType ), getEntityManagerFactory().getJpaMetamodel() );
 	}
 
 	@Override
 	public RootGraphImplementor<?> createEntityGraph(String graphName) {
 		checkOpen();
 		final RootGraphImplementor named = getEntityManagerFactory().findEntityGraphByName( graphName );
-		if ( named != null ) {
-			return named.makeRootGraph( graphName, true );
+		if ( named == null ) {
+			return null;
 		}
-		return named;
+		return named.makeRootGraph( graphName, true );
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public RootGraphImplementor<?> getEntityGraph(String graphName) {
 		checkOpen();
 		final RootGraphImplementor named = getEntityManagerFactory().findEntityGraphByName( graphName );
@@ -3961,7 +3526,7 @@ public final class SessionImpl
 	}
 
 	@Override
-	public List getEntityGraphs(Class entityClass) {
+	public <T> List<EntityGraph<? super T>> getEntityGraphs(Class<T> entityClass) {
 		checkOpen();
 		return getEntityManagerFactory().findEntityGraphsByType( entityClass );
 	}
