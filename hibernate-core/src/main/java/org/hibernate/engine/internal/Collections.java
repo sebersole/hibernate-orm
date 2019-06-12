@@ -167,10 +167,12 @@ public final class Collections {
 		final boolean isBytecodeEnhanced = persister.getOwnerEntityPersister().getBytecodeEnhancementMetadata().isEnhancedForLazyLoading();
 		if ( isBytecodeEnhanced && !collection.wasInitialized() ) {
 			// skip it
-			LOG.debugf(
+			if ( LOG.isDebugEnabled() ) {
+				LOG.debugf(
 					"Skipping uninitialized bytecode-lazy collection: %s",
-					MessageHelper.collectionInfoString( persister, collection, ce.getCurrentKey(), session )
-			);
+					MessageHelper.collectionInfoString(persister, collection, ce.getCurrentKey(), session)
+				);
+			}
 			ce.setReached( true );
 			ce.setProcessed( true );
 		}
