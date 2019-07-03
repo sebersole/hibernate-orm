@@ -43,14 +43,14 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 	}
 
 	@Override
-	public J extract(ResultSet rs, String name, WrapperOptions options) throws SQLException {
-		final J value = doExtract( rs, name, options );
+	public J extract(ResultSet rs, int paramIndex, WrapperOptions options) throws SQLException {
+		final J value = doExtract( rs, paramIndex, options );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || rs.wasNull() ) {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted value ([%s] : [%s]) - [null]",
-						name,
+						paramIndex,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getSqlType() )
 				);
 			}
@@ -60,7 +60,7 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted value ([%s] : [%s]) - [%s]",
-						name,
+						paramIndex,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getSqlType() ),
 						getJavaDescriptor().extractLoggableRepresentation( value )
 				);
@@ -75,25 +75,21 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 	 * Called from {@link #extract}.  Null checking of the value (as well as consulting {@link ResultSet#wasNull}) is
 	 * done there.
 	 *
-	 * @param rs The result set
-	 * @param name The value name in the result set
-	 * @param options The binding options
-	 *
 	 * @return The extracted value.
 	 *
 	 * @throws SQLException Indicates a problem access the result set
 	 */
-	protected abstract J doExtract(ResultSet rs, String name, WrapperOptions options) throws SQLException;
+	protected abstract J doExtract(ResultSet rs, int paramIndex, WrapperOptions options) throws SQLException;
 
 	@Override
-	public J extract(CallableStatement statement, int index, WrapperOptions options) throws SQLException {
-		final J value = doExtract( statement, index, options );
+	public J extract(CallableStatement statement, int paramIndex, WrapperOptions options) throws SQLException {
+		final J value = doExtract( statement, paramIndex, options );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || statement.wasNull() ) {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted procedure output  parameter ([%s] : [%s]) - [null]",
-						index,
+						paramIndex,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getSqlType() )
 				);
 			}
@@ -103,7 +99,7 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 			if ( traceEnabled ) {
 				log.tracef(
 						"extracted procedure output  parameter ([%s] : [%s]) - [%s]",
-						index,
+						paramIndex,
 						JdbcTypeNameMapper.getTypeName( getSqlDescriptor().getSqlType() ),
 						getJavaDescriptor().extractLoggableRepresentation( value )
 				);
@@ -118,10 +114,6 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 	 * Called from {@link #extract}.  Null checking of the value (as well as consulting {@link ResultSet#wasNull}) is
 	 * done there.
 	 *
-	 * @param statement The callable statement containing the output parameter
-	 * @param index The index (position) of the output parameter
-	 * @param options The binding options
-	 *
 	 * @return The extracted value.
 	 *
 	 * @throws SQLException Indicates a problem accessing the parameter value
@@ -129,11 +121,7 @@ public abstract class BasicExtractor<J> implements ValueExtractor<J> {
 	protected abstract J doExtract(CallableStatement statement, int index, WrapperOptions options) throws SQLException;
 
 	@Override
-	public J extract(CallableStatement statement, String[] paramNames, WrapperOptions options) throws SQLException {
-		if ( paramNames.length > 1 ) {
-			throw new IllegalArgumentException( "Basic value extraction cannot handle multiple output parameters" );
-		}
-		final String paramName = paramNames[0];
+	public J extract(CallableStatement statement, String paramName, WrapperOptions options) throws SQLException {
 		final J value = doExtract( statement, paramName, options );
 		final boolean traceEnabled = log.isTraceEnabled();
 		if ( value == null || statement.wasNull() ) {

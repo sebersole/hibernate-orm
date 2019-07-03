@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.hql.internal.HolderInstantiator;
 import org.hibernate.loader.Loader;
