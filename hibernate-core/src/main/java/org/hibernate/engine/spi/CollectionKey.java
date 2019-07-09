@@ -23,13 +23,13 @@ import org.hibernate.type.Type;
  */
 public final class CollectionKey implements Serializable {
 	private final String role;
-	private final Serializable key;
+	private final Object key;
 	private final Type keyType;
 	private final SessionFactoryImplementor factory;
 	private final int hashCode;
 	private EntityMode entityMode;
 
-	public CollectionKey(CollectionPersister persister, Serializable key) {
+	public CollectionKey(CollectionPersister persister, Object key) {
 		this(
 				persister.getRole(),
 				key,
@@ -39,13 +39,13 @@ public final class CollectionKey implements Serializable {
 		);
 	}
 
-	public CollectionKey(CollectionPersister persister, Serializable key, EntityMode em) {
+	public CollectionKey(CollectionPersister persister, Object key, EntityMode em) {
 		this( persister.getRole(), key, persister.getKeyType(), em, persister.getFactory() );
 	}
 
 	private CollectionKey(
 			String role,
-			Serializable key,
+			Object key,
 			Type keyType,
 			EntityMode entityMode,
 			SessionFactoryImplementor factory) {
@@ -70,7 +70,7 @@ public final class CollectionKey implements Serializable {
 		return role;
 	}
 
-	public Serializable getKey() {
+	public Object getKey() {
 		return key;
 	}
 

@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.hibernate.LockMode;
 import org.hibernate.engine.spi.EntityKey;
+import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.engine.spi.SubselectFetch;
 import org.hibernate.internal.CoreLogging;

@@ -35,7 +35,6 @@ import org.hibernate.bytecode.enhance.spi.interceptor.LazyAttributeLoadingInterc
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.loading.internal.LoadContexts;
 import org.hibernate.engine.spi.AssociationKey;
 import org.hibernate.engine.spi.BatchFetchQueue;
 import org.hibernate.engine.spi.CachedNaturalIdValueSource;
@@ -61,6 +60,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
+import org.hibernate.sql.results.spi.LoadContexts;
 import org.hibernate.stat.internal.StatsHelper;
 import org.hibernate.type.CollectionType;
 
@@ -892,7 +892,7 @@ public class StatefulPersistenceContext implements PersistenceContext {
 	}
 
 	@Override
-	public CollectionEntry addInitializedCollection(CollectionPersister persister, PersistentCollection collection, Serializable id)
+	public CollectionEntry addInitializedCollection(CollectionPersister persister, PersistentCollection collection, Object id)
 			throws HibernateException {
 		final CollectionEntry ce = new CollectionEntry( collection, persister, id, flushing );
 		ce.postInitialize( collection );

@@ -16,7 +16,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.NaturalId;
-import org.hibernate.engine.query.spi.HQLQueryPlan;
 import org.hibernate.hql.spi.QueryTranslator;
 
 import org.hibernate.testing.TestForIssue;

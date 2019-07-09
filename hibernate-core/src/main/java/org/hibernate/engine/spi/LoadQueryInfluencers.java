@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.persistence.EntityGraph;
 
@@ -19,6 +20,7 @@ import org.hibernate.UnknownProfileException;
 import org.hibernate.graph.GraphSemantic;
 import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.internal.FilterImpl;
+import org.hibernate.loader.spi.InternalFetchProfile;
 import org.hibernate.type.Type;
 
 /**
@@ -41,7 +43,7 @@ public class LoadQueryInfluencers implements Serializable {
 
 	private final SessionFactoryImplementor sessionFactory;
 
-	private String internalFetchProfile;
+	private InternalFetchProfile enabledInternalFetchProfile;
 	private final Set<String> enabledFetchProfileNames;
 
 	private final Map<String,Filter> enabledFilters;
@@ -69,17 +71,57 @@ public class LoadQueryInfluencers implements Serializable {
 
 	// internal fetch profile support ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	public String getInternalFetchProfile() {
-		return internalFetchProfile;
+	public void withInternalFetchProfile(InternalFetchProfile profile, InternalFetchProfileAction action) {
+		final InternalFetchProfile previous = this.enabledInternalFetchProfile;
+		this.enabledInternalFetchProfile = profile;
+		action.performAction();
+		this.enabledInternalFetchProfile = previous;
 	}
 
-	public void setInternalFetchProfile(String internalFetchProfile) {
+	public <T> T fromInternalFetchProfile(InternalFetchProfile profile, Supplier<T> supplier) {
+		final InternalFetchProfile previous = this.enabledInternalFetchProfile;
+		this.enabledInternalFetchProfile = profile;
+		try {
+			return supplier.get();
+		}
+		finally {
+			this.enabledInternalFetchProfile = previous;
+		}
+	}
+
+	@FunctionalInterface
+	public interface InternalFetchProfileAction {
+		void performAction();
+	}
+
+	public InternalFetchProfile getEnabledInternalFetchProfile() {
+		return enabledInternalFetchProfile;
+	}
+
+	public void setEnabledInternalFetchProfile(InternalFetchProfile enabledInternalFetchProfile) {
 		if ( sessionFactory == null ) {
 			// thats the signal that this is the immutable, context-less
 			// variety
 			throw new IllegalStateException( "Cannot modify context-less LoadQueryInfluencers" );
 		}
-		this.internalFetchProfile = internalFetchProfile;
+
+		this.enabledInternalFetchProfile = enabledInternalFetchProfile;
+	}
+
+	/**
+	 * @deprecated Use {@link #getEnabledInternalFetchProfile} instead
+	 */
+	@Deprecated
+	public String getInternalFetchProfile() {
+		return getEnabledInternalFetchProfile().getLegacyName();
+	}
+
+	/**
+	 * @deprecated Use {@link #setEnabledInternalFetchProfile} instead
+	 */
+	@Deprecated
+	public void setInternalFetchProfile(String internalFetchProfile) {
+		setEnabledInternalFetchProfile( InternalFetchProfile.fromLegacyName( internalFetchProfile ) );
 	}
 
 

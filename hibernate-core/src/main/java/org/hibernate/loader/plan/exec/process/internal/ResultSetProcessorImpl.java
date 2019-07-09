@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.hibernate.cfg.NotYetImplementedException;
 import org.hibernate.dialect.pagination.LimitHelper;
+import org.hibernate.engine.spi.CollectionKey;
+import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.RowSelection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.plan.exec.process.spi.ResultSetProcessor;
@@ -164,8 +166,7 @@ public class ResultSetProcessorImpl implements ResultSetProcessor {
 			}
 			session.getPersistenceContext()
 					.getLoadContexts()
-					.getCollectionLoadContext( resultSet )
-					.getLoadingCollection( persister, key );
+					.findLoadingCollectionEntry( new CollectionKey( persister, key ) ).getCollectionInstance();
 		}
 	}
 

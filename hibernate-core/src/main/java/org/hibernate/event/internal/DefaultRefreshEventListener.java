@@ -28,6 +28,7 @@ import org.hibernate.event.spi.RefreshEvent;
 import org.hibernate.event.spi.RefreshEventListener;
 import org.hibernate.internal.CoreLogging;
 import org.hibernate.internal.CoreMessageLogger;
+import org.hibernate.loader.spi.InternalFetchProfile;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.pretty.MessageHelper;
@@ -166,9 +167,22 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 
 		evictCachedCollections( persister, id, source );
 
-		String previousFetchProfile = source.getLoadQueryInfluencers().getInternalFetchProfile();
-		source.getLoadQueryInfluencers().setInternalFetchProfile( "refresh" );
+		final Object result = source.getLoadQueryInfluencers().fromInternalFetchProfile(
+				InternalFetchProfile.REFRESH,
+				() -> doRefresh( event, source, object, e, persister, id )
+		);
 
+		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
+
+	}
+
+	private Object doRefresh(
+			RefreshEvent event,
+			EventSource source,
+			Object object,
+			EntityEntry e,
+			EntityPersister persister,
+			Serializable id) {
 
 		// Handle the requested lock-mode (if one) in relation to the entry's (if one) current lock-mode
 
@@ -225,10 +239,7 @@ public class DefaultRefreshEventListener implements RefreshEventListener {
 				source.setReadOnly( result, ( e == null ? source.isDefaultReadOnly() : e.isReadOnly() ) );
 			}
 		}
-		source.getLoadQueryInfluencers().setInternalFetchProfile( previousFetchProfile );
-
-		UnresolvableObjectException.throwIfNull( result, id, persister.getEntityName() );
-
+		return result;
 	}
 
 	private void evictCachedCollections(EntityPersister persister, Serializable id, EventSource source) {
