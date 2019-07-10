@@ -20,6 +20,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.FetchMode;
 import org.hibernate.HibernateException;
 import org.hibernate.MappingException;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.QueryException;
 import org.hibernate.TransientObjectException;
 import org.hibernate.boot.model.relational.Database;
@@ -123,10 +124,10 @@ public abstract class AbstractCollectionPersister
 	private final String sqlWhereStringTemplate;
 
 	private final boolean hasOrder;
-	private final OrderByTranslation orderByTranslation;
+//	private final OrderByTranslation orderByTranslation;
 
 	private final boolean hasManyToManyOrder;
-	private final OrderByTranslation manyToManyOrderByTranslation;
+//	private final OrderByTranslation manyToManyOrderByTranslation;
 
 	private final int baseIndex;
 
@@ -561,17 +562,18 @@ public abstract class AbstractCollectionPersister
 
 		hasOrder = collectionBinding.getOrderBy() != null;
 		if ( hasOrder ) {
-			LOG.debugf( "Translating order-by fragment [%s] for collection role : %s",  collectionBinding.getOrderBy(), getRole() );
-			orderByTranslation = Template.translateOrderBy(
-					collectionBinding.getOrderBy(),
-					new ColumnMapperImpl(),
-					factory,
-					dialect,
-					factory.getSqlFunctionRegistry()
-			);
+//			LOG.debugf( "Translating order-by fragment [%s] for collection role : %s",  collectionBinding.getOrderBy(), getRole() );
+//			orderByTranslation = Template.translateOrderBy(
+//					collectionBinding.getOrderBy(),
+//					new ColumnMapperImpl(),
+//					factory,
+//					dialect,
+//					factory.getSqlFunctionRegistry()
+//			);
+			throw new NotYetImplementedFor6Exception( getClass() );
 		}
 		else {
-			orderByTranslation = null;
+//			orderByTranslation = null;
 		}
 
 		// Handle any filters applied to this collectionBinding
@@ -589,16 +591,19 @@ public abstract class AbstractCollectionPersister
 		hasManyToManyOrder = collectionBinding.getManyToManyOrdering() != null;
 		if ( hasManyToManyOrder ) {
 			LOG.debugf( "Translating many-to-many order-by fragment [%s] for collection role : %s",  collectionBinding.getOrderBy(), getRole() );
-			manyToManyOrderByTranslation = Template.translateOrderBy(
-					collectionBinding.getManyToManyOrdering(),
-					new ColumnMapperImpl(),
-					factory,
-					dialect,
-					factory.getSqlFunctionRegistry()
-			);
+//			manyToManyOrderByTranslation = Template.translateOrderBy(
+//					collectionBinding.getManyToManyOrdering(),
+//					new ColumnMapperImpl(),
+//					factory,
+//					dialect,
+//					factory.getSqlFunctionRegistry()
+//			);
+			throw new NotYetImplementedFor6Exception( getClass() );
+
 		}
 		else {
-			manyToManyOrderByTranslation = null;
+//			manyToManyOrderByTranslation = null;
+
 		}
 
 		initCollectionPropertyMap();

@@ -42,30 +42,30 @@ public class FunctionReturnImpl implements FunctionReturnImplementor {
 	}
 
 
-	public JdbcCallFunctionReturn toJdbcFunctionReturn(SharedSessionContractImplementor persistenceContext) {
-		final AllowableParameterType ormType;
-		final JdbcCallRefCursorExtractorImpl refCursorExtractor;
-		final JdbcCallParameterExtractorImpl parameterExtractor;
-
-		if ( getJdbcTypeCode() == Types.REF_CURSOR ) {
-			refCursorExtractor = new JdbcCallRefCursorExtractorImpl( null, 0 );
-			ormType = null;
-			parameterExtractor = null;
-		}
-		else {
-
-			final TypeConfiguration typeConfiguration = persistenceContext.getFactory().getMetamodel().getTypeConfiguration();
-			final SqlTypeDescriptor sqlTypeDescriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
-					.getDescriptor( getJdbcTypeCode() );
-			final JavaTypeDescriptor javaTypeMapping = sqlTypeDescriptor
-					.getJdbcRecommendedJavaTypeMapping( typeConfiguration );
-			ormType = typeConfiguration.standardBasicTypeForJavaType( javaTypeMapping.getJavaType() );
-			parameterExtractor = new JdbcCallParameterExtractorImpl( procedureCall.getProcedureName(), null, 0, ormType );
-			refCursorExtractor = null;
-		}
-
-		return new JdbcCallFunctionReturnImpl( getJdbcTypeCode(), ormType, parameterExtractor, refCursorExtractor );
-	}
+//	public JdbcCallFunctionReturn toJdbcFunctionReturn(SharedSessionContractImplementor persistenceContext) {
+//		final AllowableParameterType ormType;
+//		final JdbcCallRefCursorExtractorImpl refCursorExtractor;
+//		final JdbcCallParameterExtractorImpl parameterExtractor;
+//
+//		if ( getJdbcTypeCode() == Types.REF_CURSOR ) {
+//			refCursorExtractor = new JdbcCallRefCursorExtractorImpl( null, 0 );
+//			ormType = null;
+//			parameterExtractor = null;
+//		}
+//		else {
+//
+//			final TypeConfiguration typeConfiguration = persistenceContext.getFactory().getMetamodel().getTypeConfiguration();
+//			final SqlTypeDescriptor sqlTypeDescriptor = typeConfiguration.getSqlTypeDescriptorRegistry()
+//					.getDescriptor( getJdbcTypeCode() );
+//			final JavaTypeDescriptor javaTypeMapping = sqlTypeDescriptor
+//					.getJdbcRecommendedJavaTypeMapping( typeConfiguration );
+//			ormType = typeConfiguration.standardBasicTypeForJavaType( javaTypeMapping.getJavaType() );
+//			parameterExtractor = new JdbcCallParameterExtractorImpl( procedureCall.getProcedureName(), null, 0, ormType );
+//			refCursorExtractor = null;
+//		}
+//
+//		return new JdbcCallFunctionReturnImpl( getJdbcTypeCode(), ormType, parameterExtractor, refCursorExtractor );
+//	}
 
 	@Override
 	public int getJdbcTypeCode() {

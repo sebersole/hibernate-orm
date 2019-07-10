@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.NotYetImplementedFor6Exception;
+import org.hibernate.dialect.Dialect;
+import org.hibernate.dialect.function.SQLFunctionRegistry;
+import org.hibernate.mapping.Selectable;
+import org.hibernate.mapping.Table;
 import org.hibernate.persister.SqlExpressableType;
 import org.hibernate.sql.ast.spi.SqlAstWalker;
 import org.hibernate.sql.ast.spi.SqlSelection;
@@ -101,6 +105,36 @@ public class CaseSimpleExpression implements Expression, Selectable, SqlExpressa
 
 	public void when(Expression test, Expression result) {
 		whenFragments.add( new WhenFragment( test, result ) );
+	}
+
+	@Override
+	public String getAlias(Dialect dialect) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@Override
+	public String getAlias(Dialect dialect, Table table) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@Override
+	public boolean isFormula() {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@Override
+	public String getTemplate(Dialect dialect, SQLFunctionRegistry functionRegistry) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@Override
+	public String getText(Dialect dialect) {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	@Override
+	public String getText() {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	public static class WhenFragment {
