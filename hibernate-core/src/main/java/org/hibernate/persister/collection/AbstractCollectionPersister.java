@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.hibernate.AssertionFailure;
 import org.hibernate.FetchMode;
@@ -62,6 +63,7 @@ import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.Table;
 import org.hibernate.metadata.CollectionMetadata;
 import org.hibernate.metamodel.model.domain.NavigableRole;
+import org.hibernate.metamodel.model.mapping.spi.ValueMapping;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.Loadable;
 import org.hibernate.persister.entity.PropertyMapping;
@@ -784,16 +786,18 @@ public abstract class AbstractCollectionPersister
 
 	@Override
 	public String getSQLOrderByString(String alias) {
-		return hasOrdering()
-				? orderByTranslation.injectAliases( new StandardOrderByAliasResolver( alias ) )
-				: "";
+//		return hasOrdering()
+//				? orderByTranslation.injectAliases( new StandardOrderByAliasResolver( alias ) )
+//				: "";
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Override
 	public String getManyToManyOrderByString(String alias) {
-		return hasManyToManyOrdering()
-				? manyToManyOrderByTranslation.injectAliases( new StandardOrderByAliasResolver( alias ) )
-				: "";
+//		return hasManyToManyOrdering()
+//				? manyToManyOrderByTranslation.injectAliases( new StandardOrderByAliasResolver( alias ) )
+//				: "";
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Override
@@ -1703,11 +1707,6 @@ public abstract class AbstractCollectionPersister
 	}
 
 	@Override
-	public Type getType() {
-		return elementPropertyMapping.getType(); // ==elementType ??
-	}
-
-	@Override
 	public String getName() {
 		return getRole();
 	}
@@ -2157,6 +2156,16 @@ public abstract class AbstractCollectionPersister
 				}
 				return new CompositeCollectionElementDefinition() {
 					@Override
+					public void visitValueMappings(Consumer consumer) {
+						throw new NotYetImplementedFor6Exception( getClass() );
+					}
+
+					@Override
+					public ValueMapping findValueMapping(String name) {
+						throw new NotYetImplementedFor6Exception( getClass() );
+					}
+
+					@Override
 					public String getName() {
 						return "index";
 					}
@@ -2238,6 +2247,16 @@ public abstract class AbstractCollectionPersister
 				}
 
 				return new CompositeCollectionElementDefinition() {
+					@Override
+					public void visitValueMappings(Consumer consumer) {
+						throw new NotYetImplementedFor6Exception( getClass() );
+					}
+
+					@Override
+					public ValueMapping findValueMapping(String name) {
+						throw new NotYetImplementedFor6Exception( getClass() );
+					}
+
 					@Override
 					public String getName() {
 						return "";
