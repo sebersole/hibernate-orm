@@ -78,19 +78,19 @@ public interface SqlAstWalker {
 
 	void visitBinaryArithmeticExpression(BinaryArithmeticExpression arithmeticExpression);
 
-	void visitCaseSearchedExpression(CaseSearchedExpression caseSearchedExpression);
-
-	void visitCaseSimpleExpression(CaseSimpleExpression caseSimpleExpression);
-
-	void visitNamedParameter(NamedParameter namedParameter);
-
-	void visitGenericParameter(GenericParameter parameter);
-
-	void visitPositionalParameter(PositionalParameter positionalParameter);
-
-	void visitQueryLiteral(QueryLiteral queryLiteral);
-
-	void visitUnaryOperationExpression(UnaryOperation unaryOperationExpression);
+//	void visitCaseSearchedExpression(CaseSearchedExpression caseSearchedExpression);
+//
+//	void visitCaseSimpleExpression(CaseSimpleExpression caseSimpleExpression);
+//
+//	void visitNamedParameter(NamedParameter namedParameter);
+//
+//	void visitGenericParameter(GenericParameter parameter);
+//
+//	void visitPositionalParameter(PositionalParameter positionalParameter);
+//
+//	void visitQueryLiteral(QueryLiteral queryLiteral);
+//
+//	void visitUnaryOperationExpression(UnaryOperation unaryOperationExpression);
 
 	void visitBetweenPredicate(BetweenPredicate betweenPredicate);
 
@@ -126,13 +126,13 @@ public interface SqlAstWalker {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// functions
 
-	void visitExtractUnit(ExtractUnit unit);
-
-	void visitCastTarget(CastTarget castTarget);
-
-	void visitTrimSpecification(TrimSpecification trimSpecification);
-
-	void visitStar(Star star);
-
-	void visitDistinct(Distinct distinct);
+//	void visitExtractUnit(ExtractUnit unit);
+//
+//	void visitCastTarget(CastTarget castTarget);
+//
+//	void visitTrimSpecification(TrimSpecification trimSpecification);
+//
+//	void visitStar(Star star);
+//
+//	void visitDistinct(Distinct distinct);
 }

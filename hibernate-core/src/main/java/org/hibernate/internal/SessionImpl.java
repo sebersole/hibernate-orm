@@ -1736,7 +1736,7 @@ public final class SessionImpl
 			log.tracev( "Scroll SQL query: {0}", customQuery.getSQL() );
 		}
 
-		CustomLoader loader = getFactory().getQueryInterpretationCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
+		CustomLoader loader = getFactory().getQueryPlanCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
 
 		autoFlushIfRequired( loader.getQuerySpaces() );
 
@@ -1760,7 +1760,7 @@ public final class SessionImpl
 			log.tracev( "SQL query: {0}", customQuery.getSQL() );
 		}
 
-		CustomLoader loader = getFactory().getQueryInterpretationCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
+		CustomLoader loader = getFactory().getQueryPlanCache().getNativeQueryInterpreter().createCustomLoader( customQuery, getFactory() );
 
 		autoFlushIfRequired( loader.getQuerySpaces() );
 
@@ -2913,16 +2913,16 @@ public final class SessionImpl
 	// HibernateEntityManagerImplementor impl
 
 
-	@Override
-	public LockOptions getLockRequest(LockModeType lockModeType, Map<String, Object> properties) {
-		LockOptions lockOptions = new LockOptions();
-		LockOptions.copy( this.lockOptions, lockOptions );
-		lockOptions.setLockMode( LockModeTypeHelper.getLockMode( lockModeType ) );
-		if ( properties != null ) {
-			setLockOptions( properties, lockOptions );
-		}
-		return lockOptions;
-	}
+//	@Override
+//	public LockOptions getLockRequest(LockModeType lockModeType, Map<String, Object> properties) {
+//		LockOptions lockOptions = new LockOptions();
+//		LockOptions.copy( this.lockOptions, lockOptions );
+//		lockOptions.setLockMode( LockModeTypeHelper.getLockMode( lockModeType ) );
+//		if ( properties != null ) {
+//			setLockOptions( properties, lockOptions );
+//		}
+//		return lockOptions;
+//	}
 
 	private void setLockOptions(Map<String, Object> props, LockOptions options) {
 		Object lockScope = props.get( JPA_LOCK_SCOPE );

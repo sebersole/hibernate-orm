@@ -115,35 +115,35 @@ public class TeradataDialect extends Dialect {
 		return "Add Column";
 	}
 
-	@Override
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
-		return new GlobalTemporaryTableBulkIdStrategy( this, AfterUseAction.CLEAN );
-	}
-
-	@Override
-	public String generateIdTableName(String baseName) {
-		return IdTableSupportStandardImpl.INSTANCE.generateIdTableName( baseName );
-	}
-
-	@Override
-	public String getCreateIdTableCommand() {
-		return "create global temporary table";
-	}
-
-	@Override
-	public String getCreateIdTableStatementOptions() {
-		return " on commit preserve rows";
-	}
-
-	@Override
-	public String getDropIdTableCommand() {
-		return "drop table";
-	}
-	
-	@Override
-	public String getTruncateIdTableCommand() {
-		return "delete from";
-	}
+//	@Override
+//	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
+//		return new GlobalTemporaryTableBulkIdStrategy( this, AfterUseAction.CLEAN );
+//	}
+//
+//	@Override
+//	public String generateIdTableName(String baseName) {
+//		return IdTableSupportStandardImpl.INSTANCE.generateIdTableName( baseName );
+//	}
+//
+//	@Override
+//	public String getCreateIdTableCommand() {
+//		return "create global temporary table";
+//	}
+//
+//	@Override
+//	public String getCreateIdTableStatementOptions() {
+//		return " on commit preserve rows";
+//	}
+//
+//	@Override
+//	public String getDropIdTableCommand() {
+//		return "drop table";
+//	}
+//
+//	@Override
+//	public String getTruncateIdTableCommand() {
+//		return "delete from";
+//	}
 
 	/**
 	 * Get the name of the database type associated with the given

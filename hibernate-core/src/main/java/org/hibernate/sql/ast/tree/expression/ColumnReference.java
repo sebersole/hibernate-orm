@@ -10,6 +10,7 @@ package org.hibernate.sql.ast.tree.expression;
 import java.util.Locale;
 import java.util.Objects;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.persister.SqlExpressableType;
 import org.hibernate.sql.ast.spi.SqlAstWalker;
@@ -30,25 +31,27 @@ public class ColumnReference implements Expression {
 
 	private String sqlFragment;
 
-	public ColumnReference(ColumnReferenceQualifier qualifier, Identifier columnName, SqlExpressableType sqlExpressableType) {
-		// the assumption with this assertion is that callers are expecting there
-		// to be a qualifier; otherwise, they would call the overload ctor form
-		// not accepting a qualifier
-		assert qualifier != null : "ColumnReferenceQualifier is null";
+//	public ColumnReference(ColumnReferenceQualifier qualifier, Identifier columnName, SqlExpressableType sqlExpressableType) {
+//		// the assumption with this assertion is that callers are expecting there
+//		// to be a qualifier; otherwise, they would call the overload ctor form
+//		// not accepting a qualifier
+//		assert qualifier != null : "ColumnReferenceQualifier is null";
+//
+//		this.columnName = columnName;
+//		this.sqlExpressableType = sqlExpressableType;
+//		this.sqlFragment = renderSqlFragment( qualifier, columnName );
+//	}
+//
+	private static String renderSqlFragment(Identifier qualifier, Identifier columnName) {
+//		if ( qualifier == null ) {
+//			return columnName.render();
+//		}
+//		else {
+//			final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
+//			return columnName.render( tableReference.getIdentificationVariable() );
+//		}
+		throw new NotYetImplementedFor6Exception(  );
 
-		this.columnName = columnName;
-		this.sqlExpressableType = sqlExpressableType;
-		this.sqlFragment = renderSqlFragment( qualifier, columnName );
-	}
-
-	private static String renderSqlFragment(ColumnReferenceQualifier qualifier, Identifier columnName) {
-		if ( qualifier == null ) {
-			return columnName.render();
-		}
-		else {
-			final TableReference tableReference = qualifier.locateTableReference( column.getSourceTable() );
-			return columnName.render( tableReference.getIdentificationVariable() );
-		}
 	}
 
 	public ColumnReference(Identifier columnName, SqlExpressableType sqlExpressableType) {

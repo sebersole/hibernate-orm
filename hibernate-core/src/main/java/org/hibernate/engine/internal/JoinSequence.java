@@ -12,7 +12,6 @@ import java.util.Collections;
 import org.hibernate.AssertionFailure;
 import org.hibernate.MappingException;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.hql.internal.ast.tree.ImpliedFromElement;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.persister.collection.QueryableCollection;
 import org.hibernate.persister.entity.AbstractEntityPersister;
@@ -160,10 +159,10 @@ public class JoinSequence {
 	 * @param fromElement The implied from element to embedd
 	 * @return The Join memento
 	 */
-	public JoinSequence addJoin(ImpliedFromElement fromElement) {
-		joins.addAll( fromElement.getJoinSequence().joins );
-		return this;
-	}
+//	public JoinSequence addJoin(ImpliedFromElement fromElement) {
+//		joins.addAll( fromElement.getJoinSequence().joins );
+//		return this;
+//	}
 
 	/**
 	 * Generate a JoinFragment

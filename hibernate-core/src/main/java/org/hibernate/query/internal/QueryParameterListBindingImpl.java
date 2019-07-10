@@ -35,14 +35,14 @@ public class QueryParameterListBindingImpl<T> implements QueryParameterListBindi
 		bindValue( bindValues );
 	}
 
-	@Override
-	public void setBindValues(Collection<T> values, Type clarifiedType) {
-		if ( isBindingValidationRequired ) {
-			validate( bindValues, clarifiedType );
-		}
-		bindValue( values );
-		this.bindType = clarifiedType;
-	}
+//	@Override
+//	public void setBindValues(Collection<T> values, Type clarifiedType) {
+//		if ( isBindingValidationRequired ) {
+//			validate( bindValues, clarifiedType );
+//		}
+//		bindValue( values );
+//		this.bindType = clarifiedType;
+//	}
 
 	@Override
 	public void setBindValues(Collection<T> values, TemporalType clarifiedTemporalType) {

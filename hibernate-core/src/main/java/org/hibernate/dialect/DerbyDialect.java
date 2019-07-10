@@ -585,23 +585,23 @@ public class DerbyDialect extends DB2Dialect {
 	 * see HHH-10238.
 	 * </p>
      */
-	@Override
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
-		return new LocalTemporaryTableBulkIdStrategy(new IdTableSupportStandardImpl() {
-			@Override
-			public String generateIdTableName(String baseName) {
-				return "session." + super.generateIdTableName( baseName );
-			}
-
-			@Override
-			public String getCreateIdTableCommand() {
-				return "declare global temporary table";
-			}
-
-			@Override
-			public String getCreateIdTableStatementOptions() {
-				return "not logged";
-			}
-		}, AfterUseAction.CLEAN, null);
-	}
+//	@Override
+//	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
+//		return new LocalTemporaryTableBulkIdStrategy(new IdTableSupportStandardImpl() {
+//			@Override
+//			public String generateIdTableName(String baseName) {
+//				return "session." + super.generateIdTableName( baseName );
+//			}
+//
+//			@Override
+//			public String getCreateIdTableCommand() {
+//				return "declare global temporary table";
+//			}
+//
+//			@Override
+//			public String getCreateIdTableStatementOptions() {
+//				return "not logged";
+//			}
+//		}, AfterUseAction.CLEAN, null);
+//	}
 }

@@ -15,6 +15,7 @@ import org.hibernate.EntityMode;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.Interceptor;
 import org.hibernate.MultiTenancyStrategy;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.NullPrecedence;
 import org.hibernate.SessionFactory;
 import org.hibernate.SessionFactoryObserver;
@@ -30,6 +31,7 @@ import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.loader.BatchFetchStyle;
 import org.hibernate.proxy.EntityNotFoundDelegate;
+import org.hibernate.query.sqm.mutation.spi.SqmMutationStrategy;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.hibernate.tuple.entity.EntityTuplizer;
@@ -201,10 +203,15 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	}
 
 	@Override
-	public SessionFactoryBuilder applyMultiTableBulkIdStrategy(MultiTableBulkIdStrategy strategy) {
-		this.optionsBuilder.applyMultiTableBulkIdStrategy( strategy );
-		return this;
+	public SessionFactoryBuilder applyMultiTableBulkIdStrategy(SqmMutationStrategy strategy) {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
+
+//	@Override
+//	public SessionFactoryBuilder applyMultiTableBulkIdStrategy(MultiTableBulkIdStrategy strategy) {
+//		this.optionsBuilder.applyMultiTableBulkIdStrategy( strategy );
+//		return this;
+//	}
 
 	@Override
 	public SessionFactoryBuilder applyTempTableDdlTransactionHandling(TempTableDdlTransactionHandling handling) {
@@ -433,6 +440,11 @@ public class SessionFactoryBuilderImpl implements SessionFactoryBuilderImplement
 	public SessionFactoryBuilder enableJpaClosedCompliance(boolean enabled) {
 		this.optionsBuilder.enableJpaClosedCompliance( enabled );
 		return this;
+	}
+
+	@Override
+	public SessionFactoryBuilder applyNonJpaNativeQueryOrdinalParameterBase(Integer base) {
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Override

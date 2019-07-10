@@ -71,8 +71,6 @@ import org.hibernate.exception.spi.ConversionContext;
 import org.hibernate.exception.spi.SQLExceptionConversionDelegate;
 import org.hibernate.exception.spi.SQLExceptionConverter;
 import org.hibernate.exception.spi.ViolatedConstraintNameExtracter;
-import org.hibernate.hql.spi.id.MultiTableBulkIdStrategy;
-import org.hibernate.hql.spi.id.persistent.PersistentTableBulkIdStrategy;
 import org.hibernate.id.IdentityGenerator;
 import org.hibernate.id.enhanced.SequenceStyleGenerator;
 import org.hibernate.internal.CoreLogging;
@@ -1496,9 +1494,9 @@ public abstract class Dialect implements ConversionContext {
 		return getCreateTableString();
 	}
 
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
-		return new PersistentTableBulkIdStrategy();
-	}
+//	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
+//		return new PersistentTableBulkIdStrategy();
+//	}
 
 	// callable statement support ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

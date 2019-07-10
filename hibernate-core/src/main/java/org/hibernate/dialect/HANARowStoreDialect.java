@@ -31,14 +31,14 @@ public class HANARowStoreDialect extends AbstractHANADialect {
 		return "create row table";
 	}
 
-	@Override
-	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
-		return new GlobalTemporaryTableBulkIdStrategy( new IdTableSupportStandardImpl() {
-
-			@Override
-			public String getCreateIdTableCommand() {
-				return "create global temporary row table";
-			}
-		}, AfterUseAction.CLEAN );
-	}
+//	@Override
+//	public MultiTableBulkIdStrategy getDefaultMultiTableBulkIdStrategy() {
+//		return new GlobalTemporaryTableBulkIdStrategy( new IdTableSupportStandardImpl() {
+//
+//			@Override
+//			public String getCreateIdTableCommand() {
+//				return "create global temporary row table";
+//			}
+//		}, AfterUseAction.CLEAN );
+//	}
 }
