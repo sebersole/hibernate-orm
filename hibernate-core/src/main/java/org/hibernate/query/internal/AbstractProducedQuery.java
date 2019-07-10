@@ -1310,43 +1310,43 @@ public abstract class AbstractProducedQuery<R> implements QueryImplementor<R> {
 //		throw new IllegalArgumentException( "Could not unwrap this [" + toString() + "] as requested Java type [" + cls.getName() + "]" );
 	}
 
-	protected QueryParameters makeQueryParametersForExecution(String hql) {
-		final HQLQueryPlan entityGraphHintedQueryPlan;
-		if ( entityGraphQueryHint == null) {
-			entityGraphHintedQueryPlan = null;
-		}
-		else {
-			entityGraphHintedQueryPlan = new HQLQueryPlan(
-					hql,
-					false,
-					getSession().getLoadQueryInfluencers().getEnabledFilters(),
-					getSession().getFactory(),
-					entityGraphQueryHint
-			);
-		}
-
-		final QueryParameters queryParameters = new QueryParameters(
-				getQueryParameterBindings(),
-				getLockOptions(),
-				queryOptions,
-				null,
-				optionalObject,
-				optionalEntityName,
-				optionalId,
-				resultTransformer
-		);
-		queryParameters.setQueryPlan( entityGraphHintedQueryPlan );
-		if ( passDistinctThrough != null ) {
-			queryParameters.setPassDistinctThrough( passDistinctThrough );
-		}
-		return queryParameters;
-	}
-
 	public QueryParameters getQueryParameters() {
 		throw new NotYetImplementedFor6Exception( getClass() );
 //		final String expandedQuery = getQueryParameterBindings().expandListValuedParameters( getQueryString(), getSession() );
 //		return makeQueryParametersForExecution( expandedQuery );
 	}
+
+//	protected QueryParameters makeQueryParametersForExecution(String hql) {
+//		final HQLQueryPlan entityGraphHintedQueryPlan;
+//		if ( entityGraphQueryHint == null) {
+//			entityGraphHintedQueryPlan = null;
+//		}
+//		else {
+//			entityGraphHintedQueryPlan = new HQLQueryPlan(
+//					hql,
+//					false,
+//					getSession().getLoadQueryInfluencers().getEnabledFilters(),
+//					getSession().getFactory(),
+//					entityGraphQueryHint
+//			);
+//		}
+//
+//		final QueryParameters queryParameters = new QueryParameters(
+//				getQueryParameterBindings(),
+//				getLockOptions(),
+//				queryOptions,
+//				null,
+//				optionalObject,
+//				optionalEntityName,
+//				optionalId,
+//				resultTransformer
+//		);
+//		queryParameters.setQueryPlan( entityGraphHintedQueryPlan );
+//		if ( passDistinctThrough != null ) {
+//			queryParameters.setPassDistinctThrough( passDistinctThrough );
+//		}
+//		return queryParameters;
+//	}
 
 	private FlushMode sessionFlushMode;
 	private CacheMode sessionCacheMode;
