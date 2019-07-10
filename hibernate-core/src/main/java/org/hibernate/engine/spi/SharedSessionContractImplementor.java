@@ -334,17 +334,6 @@ public interface SharedSessionContractImplementor
 
 	int getDontFlushFromFind();
 
-	/**
-	 * Execute a HQL update or delete query
-	 */
-	int executeUpdate(String query, QueryParameters queryParameters) throws HibernateException;
-
-	/**
-	 * Execute a native SQL update or delete query
-	 */
-	int executeNativeUpdate(NativeSQLQuerySpecification specification, QueryParameters queryParameters)
-			throws HibernateException;
-
 	boolean isDefaultReadOnly();
 
 	CacheMode getCacheMode();

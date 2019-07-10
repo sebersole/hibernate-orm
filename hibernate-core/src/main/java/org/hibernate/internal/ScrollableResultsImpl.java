@@ -12,44 +12,32 @@ import java.sql.SQLException;
 
 import org.hibernate.HibernateException;
 import org.hibernate.JDBCException;
-import org.hibernate.ScrollableResults;
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.QueryParameters;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.Loader;
-import org.hibernate.type.Type;
+import org.hibernate.sql.results.spi.RowReader;
 
 /**
  * Standard ScrollableResults implementation.
  *
  * @author Gavin King
  */
-public class ScrollableResultsImpl extends AbstractScrollableResults implements ScrollableResults {
-	private Object[] currentRow;
+public class ScrollableResultsImpl<R> extends AbstractScrollableResults<R> {
+	private R currentRow;
 
-	/**
-	 * Constructs a ScrollableResultsImpl using the specified information.
-	 *
-	 * @param rs The scrollable result set
-	 * @param ps The prepared statement used to obtain the result set
-	 * @param sess The originating session
-	 * @param loader The loader
-	 * @param queryParameters query parameters
-	 * @param types The result types
-	 * @param holderInstantiator Ugh
-	 */
 	public ScrollableResultsImpl(
 			ResultSet rs,
 			PreparedStatement ps,
 			SharedSessionContractImplementor sess,
 			Loader loader,
 			QueryParameters queryParameters,
-			Type[] types,
-			HolderInstantiator holderInstantiator) {
-		super( rs, ps, sess, loader, queryParameters, types, holderInstantiator );
+			RowReader<R> rowReader) {
+		super( rs, ps, sess, loader, queryParameters, rowReader );
 	}
 
 	@Override
-	protected Object[] getCurrentRow() {
+	protected R getCurrentRow() {
 		return currentRow;
 	}
 
@@ -184,29 +172,31 @@ public class ScrollableResultsImpl extends AbstractScrollableResults implements 
 	}
 
 	private void prepareCurrentRow(boolean underlyingScrollSuccessful) {
-		if ( !underlyingScrollSuccessful ) {
-			currentRow = null;
-			return;
-		}
+		throw new NotYetImplementedFor6Exception( getClass() );
 
-		final Object result = getLoader().loadSingleRow(
-				getResultSet(),
-				getSession(),
-				getQueryParameters(),
-				true
-		);
-		if ( result != null && result.getClass().isArray() ) {
-			currentRow = (Object[]) result;
-		}
-		else {
-			currentRow = new Object[] {result};
-		}
-
-		if ( getHolderInstantiator() != null ) {
-			currentRow = new Object[] {getHolderInstantiator().instantiate( currentRow )};
-		}
-
-		afterScrollOperation();
+//		if ( !underlyingScrollSuccessful ) {
+//			currentRow = null;
+//			return;
+//		}
+//
+//		final Object result = getLoader().loadSingleRow(
+//				getResultSet(),
+//				getSession(),
+//				getQueryParameters(),
+//				true
+//		);
+//		if ( result != null && result.getClass().isArray() ) {
+//			currentRow = (Object[]) result;
+//		}
+//		else {
+//			currentRow = new Object[] {result};
+//		}
+//
+//		if ( getHolderInstantiator() != null ) {
+//			currentRow = new Object[] {getHolderInstantiator().instantiate( currentRow )};
+//		}
+//
+//		afterScrollOperation();
 	}
 
 }
