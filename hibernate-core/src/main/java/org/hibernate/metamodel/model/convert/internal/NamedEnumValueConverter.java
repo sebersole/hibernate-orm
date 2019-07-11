@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Locale;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.model.convert.spi.EnumValueConverter;
 import org.hibernate.type.descriptor.ValueBinder;
@@ -78,7 +79,8 @@ public class NamedEnumValueConverter<E extends Enum> implements EnumValueConvert
 
 	@Override
 	public E readValue(ResultSet resultSet, String name, SharedSessionContractImplementor session) throws SQLException {
-		return toDomainValue( valueExtractor.extract( resultSet, name, session ) );
+//		return toDomainValue( valueExtractor.extract( resultSet, name, session ) );
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	@Override

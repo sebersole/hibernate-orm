@@ -19,6 +19,7 @@ import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.Type;
 
+import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.annotations.common.AssertionFailure;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.EntityManagerMessageLogger;
@@ -994,15 +995,16 @@ public class AttributeFactory {
 	private final MemberResolver embeddedMemberResolver = attributeContext -> {
 		final EmbeddableDomainType embeddableType = (EmbeddableDomainType<?>) attributeContext.getOwnerType();
 		final String attributeName = attributeContext.getPropertyMapping().getName();
-
-		final Component component = (Component) attributeContext.getPropertyMapping().getValue();
-
-		final Getter getter = embeddableType.getHibernateType()
-				.getComponentTuplizer()
-				.getGetter( embeddableType.getHibernateType().getPropertyIndex( attributeName ) );
-		return PropertyAccessMapImpl.GetterImpl.class.isInstance( getter )
-				? new MapMember( attributeName, attributeContext.getPropertyMapping().getType().getReturnedClass() )
-				: getter.getMember();
+//
+//		final Component component = (Component) attributeContext.getPropertyMapping().getValue();
+//
+//		final Getter getter = embeddableType.getHibernateType()
+//				.getComponentTuplizer()
+//				.getGetter( embeddableType.getHibernateType().getPropertyIndex( attributeName ) );
+//		return PropertyAccessMapImpl.GetterImpl.class.isInstance( getter )
+//				? new MapMember( attributeName, attributeContext.getPropertyMapping().getType().getReturnedClass() )
+//				: getter.getMember();
+		throw new NotYetImplementedFor6Exception( getClass() );
 	};
 
 
