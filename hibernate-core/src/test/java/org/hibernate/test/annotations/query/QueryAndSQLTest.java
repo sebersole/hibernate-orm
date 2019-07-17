@@ -30,6 +30,7 @@ import org.hibernate.dialect.SybaseDialect;
 import org.hibernate.dialect.function.SQLFunction;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.stat.Statistics;
+import org.hibernate.type.DateType;
 import org.hibernate.type.StandardBasicTypes;
 
 import org.hibernate.testing.FailureExpected;
@@ -308,10 +309,10 @@ public class QueryAndSQLTest extends BaseCoreFunctionalTestCase {
 		s = openSession();
 		tx = s.beginTransaction();
 		Query q = s.getNamedQuery( "night.moreRecentThan" );
-		q.setDate( "date", aMonthAgo );
+		q.setParameter( "date", aMonthAgo, DateType.INSTANCE  );
 		assertEquals( 1, q.list().size() );
 		q = s.getNamedQuery( "night.moreRecentThan" );
-		q.setDate( "date", inAMonth );
+		q.setParameter( "date", inAMonth, DateType.INSTANCE  );
 		assertEquals( 0, q.list().size() );
 		Statistics stats = sessionFactory().getStatistics();
 		stats.setStatisticsEnabled( true );
