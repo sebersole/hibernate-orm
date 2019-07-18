@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
 import javax.persistence.LockModeType;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 
 import org.hibernate.LockMode;
 import org.hibernate.LockOptions;
@@ -75,13 +77,17 @@ public class LockModeTest extends BaseCoreFunctionalTestCase {
 	}
 
 	@Test
-	public void testLegacyCriteria() {
+	public void testCriteria() {
 		// open a session, begin a transaction and lock row
 		doInHibernate( this::sessionFactory, session -> {
 
-			A it = (A) session.createCriteria( A.class )
-					.setLockMode( LockMode.PESSIMISTIC_WRITE )
-					.uniqueResult();
+			CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+			CriteriaQuery<A> criteria = criteriaBuilder.createQuery( A.class );
+			criteria.from( A.class );
+			A it = session.createQuery( criteria ).setLockMode( LockModeType.PESSIMISTIC_WRITE ).uniqueResult();
+//			A it = (A) session.createCriteria( A.class )
+//					.setLockMode( LockMode.PESSIMISTIC_WRITE )
+//					.uniqueResult();
 			// make sure we got it
 			assertNotNull( it );
 
@@ -92,12 +98,17 @@ public class LockModeTest extends BaseCoreFunctionalTestCase {
 	}
 
 	@Test
-	public void testLegacyCriteriaAliasSpecific() {
+	public void testCriteriaAliasSpecific() {
 		// open a session, begin a transaction and lock row
 		doInHibernate( this::sessionFactory, session -> {
-			A it = (A) session.createCriteria( A.class )
-					.setLockMode( "this", LockMode.PESSIMISTIC_WRITE )
-					.uniqueResult();
+			CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+			CriteriaQuery<A> criteria = criteriaBuilder.createQuery( A.class );
+			criteria.from( A.class );
+			A it = session.createQuery( criteria ).setLockMode("this",LockMode.PESSIMISTIC_WRITE ).uniqueResult();
+
+//			A it = (A) session.createCriteria( A.class )
+//					.setLockMode( "this", LockMode.PESSIMISTIC_WRITE )
+//					.uniqueResult();
 			// make sure we got it
 			assertNotNull( it );
 
