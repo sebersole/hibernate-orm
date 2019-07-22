@@ -3239,56 +3239,6 @@ public final class SessionImpl
 		return Collections.unmodifiableMap( properties );
 	}
 
-
-	@Override
-	public <T> QueryImplementor<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-		checkOpen();
-
-		try {
-			return new QuerySqmImpl<>(
-					"<criteria>",
-					(SqmStatement) criteriaQuery,
-					criteriaQuery.getResultType(),
-					this
-			);
-		}
-		catch ( RuntimeException e ) {
-			throw exceptionConverter.convert( e );
-		}
-	}
-
-	@Override
-	public QueryImplementor createQuery(CriteriaUpdate criteriaUpdate) {
-		checkOpen();
-		try {
-			return new QuerySqmImpl<>(
-					"<criteria>",
-					(SqmUpdateStatement) criteriaUpdate,
-					null,
-					this
-			);
-		}
-		catch ( RuntimeException e ) {
-			throw exceptionConverter.convert( e );
-		}
-	}
-
-	@Override
-	public QueryImplementor createQuery(CriteriaDelete criteriaDelete) {
-		checkOpen();
-		try {
-			return new QuerySqmImpl<>(
-					"<criteria>",
-					(SqmDeleteStatement) criteriaDelete,
-					null,
-					this
-			);
-		}
-		catch ( RuntimeException e ) {
-			throw exceptionConverter.convert( e );
-		}
-	}
-
 	@Override
 	public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
 		checkOpen();
@@ -3404,12 +3354,6 @@ public final class SessionImpl
 	public SessionFactoryImplementor getEntityManagerFactory() {
 		checkOpen();
 		return getFactory();
-	}
-
-	@Override
-	public CriteriaBuilder getCriteriaBuilder() {
-		checkOpen();
-		return getFactory().getCriteriaBuilder();
 	}
 
 	@Override
