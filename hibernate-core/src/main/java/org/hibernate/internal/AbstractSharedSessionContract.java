@@ -16,6 +16,10 @@ import java.util.TimeZone;
 import java.util.UUID;
 import javax.persistence.FlushModeType;
 import javax.persistence.TransactionRequiredException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
 
 import org.hibernate.CacheMode;
 import org.hibernate.EmptyInterceptor;
@@ -69,6 +73,8 @@ import org.hibernate.query.sql.spi.NativeQueryImplementor;
 import org.hibernate.query.sql.spi.ResultSetMappingDescriptor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 import org.hibernate.query.sqm.tree.SqmStatement;
+import org.hibernate.query.sqm.tree.delete.SqmDeleteStatement;
+import org.hibernate.query.sqm.tree.update.SqmUpdateStatement;
 import org.hibernate.resource.jdbc.spi.JdbcSessionContext;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorImpl;
@@ -869,6 +875,62 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 	public void setJdbcBatchSize(Integer jdbcBatchSize) {
 		this.jdbcBatchSize = jdbcBatchSize;
 	}
+
+	@Override
+	public CriteriaBuilder getCriteriaBuilder() {
+		checkOpen();
+		return getFactory().getCriteriaBuilder();
+	}
+
+	@Override
+	public <T> QueryImplementor<T> createQuery(CriteriaQuery<T> criteriaQuery) {
+		checkOpen();
+
+		try {
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmStatement) criteriaQuery,
+					criteriaQuery.getResultType(),
+					this
+			);
+		}
+		catch ( RuntimeException e ) {
+			throw exceptionConverter.convert( e );
+		}
+	}
+
+	@Override
+	public QueryImplementor createQuery(CriteriaUpdate criteriaUpdate) {
+		checkOpen();
+		try {
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmUpdateStatement) criteriaUpdate,
+					null,
+					this
+			);
+		}
+		catch ( RuntimeException e ) {
+			throw exceptionConverter.convert( e );
+		}
+	}
+
+	@Override
+	public QueryImplementor createQuery(CriteriaDelete criteriaDelete) {
+		checkOpen();
+		try {
+			return new QuerySqmImpl<>(
+					"<criteria>",
+					(SqmDeleteStatement) criteriaDelete,
+					null,
+					this
+			);
+		}
+		catch ( RuntimeException e ) {
+			throw exceptionConverter.convert( e );
+		}
+	}
+
 
 	@SuppressWarnings("unused")
 	private void writeObject(ObjectOutputStream oos) throws IOException {
