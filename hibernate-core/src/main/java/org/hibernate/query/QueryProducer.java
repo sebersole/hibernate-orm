@@ -131,4 +131,13 @@ public interface QueryProducer {
 	 * @return The NativeQuery instance for manipulation and execution
 	 */
 	NativeQuery getNamedNativeQuery(String name);
+
+	/**
+	 * Get a NativeQuery instance for a named native SQL query
+	 *
+	 * @param name The name of the pre-defined query
+	 *
+	 * @return The NativeQuery instance for manipulation and execution
+	 */
+	NativeQuery getNamedNativeQuery(String name, String resultSetMapping);
 }
