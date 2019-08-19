@@ -170,6 +170,7 @@ import org.hibernate.type.EntityType;
 import org.hibernate.type.Type;
 import org.hibernate.type.TypeHelper;
 import org.hibernate.type.VersionType;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
  * Basic functionality for persisting an entity via JDBC
@@ -1905,6 +1906,11 @@ public abstract class AbstractEntityPersister
 				.setOuterJoins( "", "" )
 				.setWhereClause( whereClause )
 				.toStatementString();
+	}
+
+	@Override
+	public JavaTypeDescriptor getExpressableJavaTypeDescriptor() {
+		return getEntityKeyDefinition().getExpressableJavaTypeDescriptor();
 	}
 
 	protected interface InclusionChecker {
