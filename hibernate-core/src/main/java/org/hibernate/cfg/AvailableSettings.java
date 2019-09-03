@@ -2052,4 +2052,12 @@ public interface AvailableSettings extends org.hibernate.jpa.AvailableSettings {
 	 * @since 5.4
 	 */
 	String SEQUENCE_INCREMENT_SIZE_MISMATCH_STRATEGY = "hibernate.id.sequence.increment_size_mismatch_strategy";
+
+	/**
+	 * Global setting identifying the preferred JDBC type code for storing
+	 * boolean values.  The fallback is to ask the Dialect
+	 *
+	 * @since 6.0
+	 */
+	String PREFERRED_BOOLEAN_JDBC_TYPE_CODE = "hibernate.type.perferred_boolean_jdbc_type_code";
 }

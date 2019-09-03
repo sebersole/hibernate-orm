@@ -11,12 +11,13 @@ import java.lang.reflect.Method;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.tuple.component.ComponentMetamodel;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Gavin King
  */
 public class EmbeddedComponentType extends ComponentType {
-	public EmbeddedComponentType(TypeFactory.TypeScope typeScope, ComponentMetamodel metamodel) {
+	public EmbeddedComponentType(TypeConfiguration typeScope, ComponentMetamodel metamodel) {
 		super( typeScope, metamodel );
 	}
 

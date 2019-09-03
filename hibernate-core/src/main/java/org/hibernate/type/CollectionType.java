@@ -47,6 +47,7 @@ import org.hibernate.pretty.MessageHelper;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.hibernate.sql.results.spi.LoadingCollectionEntry;
+import org.hibernate.type.spi.TypeConfiguration;
 
 import org.jboss.logging.Logger;
 
@@ -62,12 +63,12 @@ public abstract class CollectionType extends AbstractType implements Association
 	private static final Object NOT_NULL_COLLECTION = new MarkerObject( "NOT NULL COLLECTION" );
 	public static final Object UNFETCHED_COLLECTION = new MarkerObject( "UNFETCHED COLLECTION" );
 
-	private final TypeFactory.TypeScope typeScope;
+	private final TypeConfiguration typeConfiguration;
 	private final String role;
 	private final String foreignKeyPropertyName;
 
-	public CollectionType(TypeFactory.TypeScope typeScope, String role, String foreignKeyPropertyName) {
-		this.typeScope = typeScope;
+	public CollectionType(TypeConfiguration typeConfiguration, String role, String foreignKeyPropertyName) {
+		this.typeConfiguration = typeConfiguration;
 		this.role = role;
 		this.foreignKeyPropertyName = foreignKeyPropertyName;
 	}
