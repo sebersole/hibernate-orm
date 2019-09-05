@@ -6,7 +6,10 @@
  */
 package org.hibernate.orm.test.sql.ast;
 
+import java.util.List;
+
 import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.orm.test.metamodel.mapping.SmokeTests.SimpleEntity;
 import org.hibernate.query.hql.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
@@ -30,13 +33,15 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hibernate.orm.test.metamodel.mapping.SmokeTests.Gender.FEMALE;
+import static org.hibernate.orm.test.metamodel.mapping.SmokeTests.Gender.MALE;
 
 /**
  * @author Steve Ebersole
  */
 @SuppressWarnings("WeakerAccess")
 @DomainModel(
-		annotatedClasses = org.hibernate.orm.test.metamodel.mapping.SmokeTests.SimpleEntity.class
+		annotatedClasses = SimpleEntity.class
 )
 @ServiceRegistry(
 		settings = @ServiceRegistry.Setting(
@@ -50,7 +55,10 @@ public class SmokeTests {
 	public void testSimpleHql(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
-					final QueryImplementor<String> query = session.createQuery( "select e.name from SimpleEntity e", String.class );
+					final QueryImplementor<String> query = session.createQuery(
+							"select e.name from SimpleEntity e",
+							String.class
+					);
 					final HqlQueryImplementor<String> hqlQuery = (HqlQueryImplementor<String>) query;
 					//noinspection unchecked
 					final SqmSelectStatement<String> sqmStatement = (SqmSelectStatement<String>) hqlQuery.getSqmStatement();
@@ -73,16 +81,10 @@ public class SmokeTests {
 							session.getSessionFactory()
 					);
 
-					assertThat( jdbcSelectOperation.getSql(), is( "select s1_0.name from mapping_simple_entity as s1_0" ) );
-				}
-		);
-	}
-	@Test
-	public void testSimpleHqlExecution(SessionFactoryScope scope) {
-		scope.inTransaction(
-				session -> {
-					final QueryImplementor<String> query = session.createQuery( "select e.name from SimpleEntity e", String.class );
-					query.list();
+					assertThat(
+							jdbcSelectOperation.getSql(),
+							is( "select s1_0.name from mapping_simple_entity as s1_0" )
+					);
 				}
 		);
 	}
@@ -105,7 +107,7 @@ public class SmokeTests {
 		assertThat( rootTableGroup.getPrimaryTableReference().getIdentificationVariable(), is( "s1_0" ) );
 
 		final SelectClause selectClause = sqlAst.getQuerySpec().getSelectClause();
-		assertThat( selectClause.getSqlSelections().size(), is( 1 ) ) ;
+		assertThat( selectClause.getSqlSelections().size(), is( 1 ) );
 		final SqlSelection sqlSelection = selectClause.getSqlSelections().get( 0 );
 		assertThat( sqlSelection.getJdbcResultSetIndex(), is( 1 ) );
 		assertThat( sqlSelection.getValuesArrayPosition(), is( 0 ) );
