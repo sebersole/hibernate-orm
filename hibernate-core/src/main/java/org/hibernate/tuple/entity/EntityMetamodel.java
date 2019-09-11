@@ -126,8 +126,6 @@ public class EntityMetamodel implements Serializable {
 	private final Set subclassEntityNames = new HashSet();
 	private final Map entityNameByInheritenceClassMap = new HashMap();
 
-	private final EntityMode entityMode;
-	private final EntityTuplizer entityTuplizer;
 	private final BytecodeEnhancementMetadata bytecodeEnhancementMetadata;
 
 	public EntityMetamodel(
@@ -431,16 +429,6 @@ public class EntityMetamodel implements Serializable {
 				final PersistentClass pc = ( PersistentClass ) iter.next();
 				entityNameByInheritenceClassMap.put( pc.getMappedClass(), pc.getEntityName() );
 			}
-		}
-
-		entityMode = persistentClass.hasPojoRepresentation() ? EntityMode.POJO : EntityMode.MAP;
-		final EntityTuplizerFactory entityTuplizerFactory = sessionFactory.getSessionFactoryOptions().getEntityTuplizerFactory();
-		final String tuplizerClassName = persistentClass.getTuplizerImplClassName( entityMode );
-		if ( tuplizerClassName == null ) {
-			entityTuplizer = entityTuplizerFactory.constructDefaultTuplizer( entityMode, this, persistentClass );
-		}
-		else {
-			entityTuplizer = entityTuplizerFactory.constructTuplizer( tuplizerClassName, this, persistentClass );
 		}
 	}
 
@@ -790,10 +778,6 @@ public class EntityMetamodel implements Serializable {
 		}
 	}
 
-	public EntityTuplizer getTuplizer() {
-		return entityTuplizer;
-	}
-
 	public boolean isNaturalIdentifierInsertGenerated() {
 		// the intention is for this call to replace the usage of the old ValueInclusion stuff (as exposed from
 		// persister) in SelectGenerator to determine if it is safe to use the natural identifier to find the
@@ -1056,10 +1040,6 @@ public class EntityMetamodel implements Serializable {
 
 	public InDatabaseValueGenerationStrategy[] getInDatabaseValueGenerationStrategies() {
 		return inDatabaseValueGenerationStrategies;
-	}
-
-	public EntityMode getEntityMode() {
-		return entityMode;
 	}
 
 	/**
