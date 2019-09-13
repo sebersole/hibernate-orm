@@ -5464,12 +5464,12 @@ public abstract class AbstractEntityPersister
 
 	@Override
 	public Serializable getIdentifier(Object entity, SharedSessionContractImplementor session) {
-		return getEntityTuplizer().getIdentifier( entity, session );
+		return (Serializable) identifierMapping.getPropertyAccess().getGetter().get( entity );
 	}
 
 	@Override
 	public void setIdentifier(Object entity, Serializable id, SharedSessionContractImplementor session) {
-		getEntityTuplizer().setIdentifier( entity, id, session );
+		identifierMapping.getPropertyAccess().getSetter().set( entity, id, factory );
 	}
 
 	@Override
