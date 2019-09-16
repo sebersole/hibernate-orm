@@ -9,6 +9,8 @@ package org.hibernate.sql.results.spi;
 
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.results.internal.BiDirectionalFetchImpl;
+import org.hibernate.sql.results.internal.RootBiDirectionalFetchImpl;
 
 /**
  * Maintains state while processing a Fetch graph to be able to detect
@@ -53,10 +55,10 @@ public class CircularFetchDetector {
 
 					final NavigablePath fetchableNavigablePath = fetchParent.getNavigablePath().append( fetchable.getFetchableName() );
 
-//					return new BiDirectionalFetchImpl(
-//							parentFetchParent,
-//							fetchableNavigablePath
-//					);
+					return new BiDirectionalFetchImpl(
+							parentFetchParent,
+							fetchableNavigablePath
+					);
 				}
 				else {
 //					return new RootBiDirectionalFetchImpl(
@@ -64,12 +66,11 @@ public class CircularFetchDetector {
 //							fetchable.getJavaTypeDescriptor(),
 //							new NavigablePath( fetchable.getNavigableName() )
 //					);
+					throw new NotYetImplementedFor6Exception( getClass() );
 				}
 			}
 		}
 
-//		return null;
-
-		throw new NotYetImplementedFor6Exception( getClass() );
+		return null;
 	}
 }

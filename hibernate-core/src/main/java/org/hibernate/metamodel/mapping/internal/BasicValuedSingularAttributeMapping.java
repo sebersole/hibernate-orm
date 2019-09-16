@@ -8,7 +8,9 @@ package org.hibernate.metamodel.mapping.internal;
 
 import java.util.function.Consumer;
 
+import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
+import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.mapping.BasicValuedModelPart;
 import org.hibernate.metamodel.mapping.JdbcMapping;
@@ -24,8 +26,11 @@ import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.results.internal.ScalarDomainResultImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicFetch;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
+import org.hibernate.sql.results.spi.Fetch;
+import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -167,6 +172,18 @@ public class BasicValuedSingularAttributeMapping extends AbstractSingularAttribu
 			Clause clause,
 			TypeConfiguration typeConfiguration) {
 		action.accept( getJdbcMapping() );
+	}
+
+	@Override
+	public Fetch generateFetch(
+			FetchParent fetchParent,
+			FetchTiming fetchTiming,
+			boolean selected,
+			LockMode lockMode,
+			String resultVariable,
+			DomainResultCreationState creationState) {
+		return new BasicFetch( fetchParent, this, fetchTiming, creationState );
+
 	}
 
 	@Override

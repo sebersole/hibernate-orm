@@ -17,6 +17,7 @@ import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.from.TableGroup;
+import org.hibernate.sql.results.internal.domain.basic.BasicFetch;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
@@ -25,7 +26,7 @@ import org.hibernate.sql.results.spi.FetchParent;
 /**
  * @author Steve Ebersole
  */
-public class AbstractSingularAttributeMapping
+public abstract class AbstractSingularAttributeMapping
 		extends AbstractStateArrayContributorMapping
 		implements SingularAttributeMapping {
 
@@ -47,17 +48,6 @@ public class AbstractSingularAttributeMapping
 	public <T> DomainResult<T> createDomainResult(
 			NavigablePath navigablePath,
 			TableGroup tableGroup,
-			String resultVariable,
-			DomainResultCreationState creationState) {
-		throw new NotYetImplementedFor6Exception( getClass() );
-	}
-
-	@Override
-	public Fetch generateFetch(
-			FetchParent fetchParent,
-			FetchTiming fetchTiming,
-			boolean selected,
-			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState) {
 		throw new NotYetImplementedFor6Exception( getClass() );

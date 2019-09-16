@@ -52,7 +52,7 @@ public abstract class AbstractFetchParent implements FetchParent {
 	public Fetch findFetch(String fetchableName) {
 		if ( fetches != null ) {
 			for ( Fetch fetch : fetches ) {
-				if ( fetch.getFetchedMapping().getFetchableName().equals( fetchableName ) ) {
+				if ( fetch.getNavigablePath().getLocalName().equals( fetchableName ) ) {
 					return fetch;
 				}
 			}

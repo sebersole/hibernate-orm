@@ -453,7 +453,9 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 
 		resolvedEntityState = new Object[ assemblerMap.size() ];
 		assemblerMap.forEach(
-				(key, value) -> resolvedEntityState[ key.getStateArrayPosition() ] = value.assemble( rowProcessingState )
+				(key, value) -> {
+					Object assemble = value.assemble( rowProcessingState );
+					resolvedEntityState[ key.getStateArrayPosition() ] = assemble;}
 		);
 
 		entityDescriptor.setPropertyValues( entityInstance, resolvedEntityState );

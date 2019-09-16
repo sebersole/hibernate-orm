@@ -22,7 +22,7 @@ public interface AttributeMapping extends ModelPart, ValueMapping {
 
 	default boolean isDeclaredOnTypeOrSuperType(ManagedMappingType targetType) {
 		if ( getDeclaringType() instanceof EntityMappingType ) {
-			return ( (EntityMappingType) getDeclaringType() ).isTypeOrSuperType( targetType );
+			return getDeclaringType().isTypeOrSuperType( targetType );
 		}
 
 		return false;

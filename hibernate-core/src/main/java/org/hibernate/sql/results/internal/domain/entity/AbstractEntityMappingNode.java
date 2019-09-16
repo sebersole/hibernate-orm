@@ -112,6 +112,11 @@ public abstract class AbstractEntityMappingNode extends AbstractFetchParent impl
 	}
 
 	@Override
+	public EntityMappingType getMappingType(){
+		return getEntityValuedModelPart().getEntityMappingType();
+	}
+
+	@Override
 	public EntityValuedModelPart getEntityValuedModelPart() {
 		return referencedModelPart;
 	}

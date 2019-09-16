@@ -38,16 +38,18 @@ public interface Fetch {
 	FetchParent getFetchParent();
 
 	/**
-	 * The value mapping being fetched
-	 */
-	Fetchable getFetchedMapping();
-
-	/**
 	 * Get the property path to this fetch
 	 *
 	 * @return The property path
 	 */
 	NavigablePath getNavigablePath();
+
+	/**
+	 * Get the navigable name of the fetched navigable
+	 *
+	 * @return The navigable name
+	 */
+	String getFetchedNavigableName();
 
 	/**
 	 * Is this fetch nullable?  Meaning is it mapped as being optional?

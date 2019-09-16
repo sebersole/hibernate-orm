@@ -178,8 +178,8 @@ public class SqmSelectToSqlAstConverter
 // todo (6.0) : determine how to best handle TREAT
 //		fetchParent.getReferencedMappingContainer().visitKeyFetchables( fetchableConsumer, treatTargetType );
 //		fetchParent.getReferencedMappingContainer().visitFetchables( fetchableConsumer, treatTargetType );
-		fetchParent.getReferencedMappingContainer().visitKeyFetchables( fetchableConsumer, null );
-		fetchParent.getReferencedMappingContainer().visitFetchables( fetchableConsumer, null );
+		fetchParent.getReferencedMappingContainer().visitKeyFetchables( fetchableConsumer, fetchParent.getMappingType()  );
+		fetchParent.getReferencedMappingContainer().visitFetchables( fetchableConsumer, fetchParent.getMappingType() );
 
 		return fetches;
 	}
