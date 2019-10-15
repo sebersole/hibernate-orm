@@ -12,7 +12,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.hql.HqlLogger;
 import org.hibernate.query.hql.spi.SqmCreationProcessingState;
 import org.hibernate.query.hql.spi.SqmPathRegistry;
@@ -32,8 +31,8 @@ import org.hibernate.query.sqm.tree.select.SqmSelection;
 public class SqmPathRegistryImpl implements SqmPathRegistry {
 	private final SqmCreationProcessingState associatedProcessingState;
 
-	private final Map<NavigablePath, SqmPath> sqmPathByPath = new HashMap<>();
-	private final Map<NavigablePath, SqmFrom> sqmFromByPath = new HashMap<>();
+	private final Map<String, SqmPath> sqmPathByPath = new HashMap<>();
+	private final Map<String, SqmFrom> sqmFromByPath = new HashMap<>();
 
 	private final Map<String, SqmFrom> sqmFromByAlias = new HashMap<>();
 
@@ -45,7 +44,7 @@ public class SqmPathRegistryImpl implements SqmPathRegistry {
 
 	@Override
 	public void register(SqmPath sqmPath) {
-		SqmTreeCreationLogger.LOGGER.tracef( "SqmProcessingIndex#register(SqmPath) : %s", sqmPath.getNavigablePath().getFullPath() );
+		SqmTreeCreationLogger.LOGGER.tracef( "SqmProcessingIndex#register(SqmPath) : %s", sqmPath.getNavigablePath() );
 
 		// Generally we:
 		//		1) add the path to the path-by-path map
@@ -107,7 +106,7 @@ public class SqmPathRegistryImpl implements SqmPathRegistry {
 	}
 
 	@Override
-	public SqmPath findPath(NavigablePath path) {
+	public SqmPath findPath(String path) {
 		final SqmPath found = sqmPathByPath.get( path );
 		if ( found != null ) {
 			return found;
@@ -127,7 +126,7 @@ public class SqmPathRegistryImpl implements SqmPathRegistry {
 	}
 
 	@Override
-	public SqmFrom findFromByPath(NavigablePath navigablePath) {
+	public SqmFrom findFromByPath(String navigablePath) {
 		final SqmFrom found = sqmFromByPath.get( navigablePath );
 		if ( found != null ) {
 			return found;
@@ -190,7 +189,7 @@ public class SqmPathRegistryImpl implements SqmPathRegistry {
 	}
 
 	@Override
-	public SqmPath resolvePath(NavigablePath navigablePath, Function<NavigablePath, SqmPath> creator) {
+	public SqmPath resolvePath(String navigablePath, Function<String, SqmPath> creator) {
 		SqmTreeCreationLogger.LOGGER.tracef( "SqmProcessingIndex#resolvePath(NavigablePath) : %s", navigablePath );
 
 		final SqmPath existing = sqmPathByPath.get( navigablePath );

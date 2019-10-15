@@ -14,15 +14,14 @@ import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.orm.test.metamodel.mapping.SmokeTests.Gender;
 import org.hibernate.orm.test.metamodel.mapping.SmokeTests.SimpleEntity;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.hql.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
 import org.hibernate.query.sqm.sql.internal.SqmSelectInterpretation;
 import org.hibernate.query.sqm.sql.internal.StandardSqmSelectToSqlAstConverter;
 import org.hibernate.query.sqm.tree.select.SqmSelectStatement;
-import org.hibernate.sql.ast.spi.StandardSqlAstSelectTranslator;
 import org.hibernate.sql.ast.spi.SqlSelection;
+import org.hibernate.sql.ast.spi.StandardSqlAstSelectTranslator;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.ast.tree.expression.Expression;
 import org.hibernate.sql.ast.tree.from.FromClause;
@@ -30,9 +29,9 @@ import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.ast.tree.select.SelectClause;
 import org.hibernate.sql.ast.tree.select.SelectStatement;
 import org.hibernate.sql.exec.spi.JdbcSelect;
-import org.hibernate.sql.results.internal.domain.basic.BasicResultAssembler;
-import org.hibernate.sql.results.internal.domain.basic.BasicResult;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
+import org.hibernate.sql.results.internal.domain.basic.BasicResult;
+import org.hibernate.sql.results.internal.domain.basic.BasicResultAssembler;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.type.internal.StandardBasicTypeImpl;
@@ -44,7 +43,6 @@ import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -187,10 +185,7 @@ public class SmokeTests {
 					final BasicResultAssembler<?> assembler = (BasicResultAssembler) scalarDomainResult.getAssembler();
 					assertThat( assembler.getValueConverter(), notNullValue() );
 					assertThat( assembler.getValueConverter(), instanceOf( OrdinalEnumValueConverter.class ) );
-					final NavigablePath expectedSelectedPath = new NavigablePath(
-							org.hibernate.orm.test.metamodel.mapping.SmokeTests.SimpleEntity.class.getName(),
-							"e"
-					).append( "gender" );
+					final String expectedSelectedPath = org.hibernate.orm.test.metamodel.mapping.SmokeTests.SimpleEntity.class.getName() + "(e).gender";
 					assertThat( domainResult.getNavigablePath(), equalTo( expectedSelectedPath ) );
 					assertThat( domainResult, instanceOf( BasicResult.class ) );
 

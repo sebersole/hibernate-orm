@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -24,8 +23,9 @@ public interface ResultSetMappingNode {
 	/**
 	 * The NavigablePath for this node (if one!).  Certain nodes will not
 	 * have a NavigablePath, namely those not associated with a Navigable
+	 * @return
 	 */
-	default NavigablePath getNavigablePath() {
+	default String getNavigablePath() {
 		// by default these nodes would not have a path.  those that do explicitly
 		// override this already to return it
 		return null;

@@ -8,8 +8,6 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
-import org.hibernate.query.NavigablePath;
-
 /**
  * Serves as a link to a fetch's parent providing access to the parent
  * instance in relation to the current "row" being processed.
@@ -24,7 +22,7 @@ public interface FetchParentAccess {
 	 */
 	Object getFetchParentInstance();
 
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	void registerResolutionListener(Consumer<Object> resolvedParentConsumer);
 }

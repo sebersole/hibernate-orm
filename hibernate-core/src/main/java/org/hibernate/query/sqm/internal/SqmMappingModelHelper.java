@@ -25,6 +25,7 @@ import org.hibernate.metamodel.model.domain.internal.EmbeddedSqmPathSource;
 import org.hibernate.metamodel.model.domain.internal.EntitySqmPathSource;
 import org.hibernate.metamodel.spi.DomainMetamodel;
 import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.SqmExpressable;
 import org.hibernate.query.sqm.SqmPathSource;
 import org.hibernate.query.sqm.sql.SqlAstCreationState;
@@ -130,7 +131,10 @@ public class SqmMappingModelHelper {
 			final EntityDomainType treatTargetType = treatedPath.getTreatTarget();
 			final EntityPersister container = domainModel.findEntityDescriptor( treatTargetType.getHibernateEntityName() );
 
-			return container.findSubPart( sqmPath.getNavigablePath().getLocalName(), container );
+			return container.findSubPart(
+					NavigablePath.extractTerminalName( sqmPath.getNavigablePath() ),
+					container
+			);
 		}
 
 		final TableGroup lhsTableGroup = creationState.getFromClauseAccess().findTableGroup( sqmPath.getLhs().getNavigablePath() );

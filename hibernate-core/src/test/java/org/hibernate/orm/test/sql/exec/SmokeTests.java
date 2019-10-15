@@ -68,16 +68,6 @@ public class SmokeTests {
 						simpleEntity.setComponent( new Component( "a1", "a2" ) );
 						session.save( simpleEntity );
 					}
-
-					{
-						SimpleEntity simpleEntity = new SimpleEntity();
-						simpleEntity.setId( 2 );
-						simpleEntity.setGender( MALE );
-						simpleEntity.setName( "Andrea" );
-						simpleEntity.setGender2( FEMALE );
-						simpleEntity.setComponent( new Component( "b1", "b2" ) );
-						session.save( simpleEntity );
-					}
 				}
 		);
 	}
@@ -212,6 +202,19 @@ public class SmokeTests {
 
 	@Test
 	public void testHqlQueryReuseWithDiffParameterBinds(SessionFactoryScope scope) {
+		// first add a second row
+		scope.inTransaction(
+				session -> {
+					SimpleEntity simpleEntity = new SimpleEntity();
+					simpleEntity.setId( 2 );
+					simpleEntity.setGender( MALE );
+					simpleEntity.setName( "Andrea" );
+					simpleEntity.setGender2( FEMALE );
+					simpleEntity.setComponent( new Component( "b1", "b2" ) );
+					session.save( simpleEntity );
+				}
+		);
+
 		scope.inTransaction(
 				session -> {
 					final QueryImplementor<Component> query = session.createQuery(

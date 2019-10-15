@@ -9,7 +9,6 @@ package org.hibernate.metamodel.mapping;
 import java.util.function.Consumer;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.results.spi.DomainResult;
@@ -39,7 +38,7 @@ public interface EntityValuedModelPart extends FetchableContainer {
 
 	@Override
 	default <T> DomainResult<T> createDomainResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -49,7 +48,7 @@ public interface EntityValuedModelPart extends FetchableContainer {
 
 	@Override
 	default void applySqlSelections(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			DomainResultCreationState creationState) {
 		// todo (6.0) : this is really only valid for root entity returns, not really many-to-ones, etc..

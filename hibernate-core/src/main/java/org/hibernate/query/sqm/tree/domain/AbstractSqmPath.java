@@ -36,7 +36,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implements SqmPath<T> {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final SqmPath lhs;
 
 	/**
@@ -57,7 +57,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractSqmPath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath<?> lhs,
 			NodeBuilder nodeBuilder) {
@@ -80,8 +80,8 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 	protected AbstractSqmPath(SqmPathSource<T> referencedPathSource, SqmPath lhs, NodeBuilder nodeBuilder) {
 		this(
 				lhs == null
-						? new NavigablePath( referencedPathSource.getPathName() )
-						: lhs.getNavigablePath().append( referencedPathSource.getPathName() ),
+						? referencedPathSource.getPathName()
+						: NavigablePath.append( lhs.getNavigablePath(), referencedPathSource.getPathName() ),
 				referencedPathSource,
 				lhs,
 				nodeBuilder
@@ -89,7 +89,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 
@@ -122,7 +122,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 			implicitJoinPaths = new HashMap<>();
 		}
 
-		final String relativeName = path.getNavigablePath().getLocalName();
+		final String relativeName = NavigablePath.extractTerminalName( path.getNavigablePath() );
 
 		final SqmPath<?> previous = implicitJoinPaths.put( relativeName, path );
 		if ( previous != null && previous != path ) {
@@ -155,7 +155,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 	public SqmExpression<Class<? extends T>> type() {
 		if ( pathTypeExpression == null ) {
 			final String discriminatorPathName = "{type}";
-			final NavigablePath discriminatorNavigablePath = getNavigablePath().append( discriminatorPathName );
+			final String discriminatorNavigablePath = NavigablePath.append( getNavigablePath(), discriminatorPathName );
 
 			final DomainType sqmNodeType = getReferencedPathSource().getSqmPathType();
 
@@ -241,7 +241,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 
 	@SuppressWarnings("unchecked")
 	private SqmPath createSingularPath(SingularPersistentAttribute attribute) {
-		final NavigablePath subNavPath = getNavigablePath().append( attribute.getPathName() );
+		final String subNavPath = NavigablePath.append( getNavigablePath(), attribute.getPathName() );
 
 		switch ( attribute.getAttributeClassification() ) {
 			case BASIC: {
@@ -273,7 +273,7 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 
 	private SqmPath createPluralPath(PluralPersistentAttribute pluralAttribute) {
 		return new SqmPluralValuedSimplePath(
-				getNavigablePath().append( pluralAttribute.getPathName() ),
+				NavigablePath.append( getNavigablePath(), pluralAttribute.getPathName() ),
 				pluralAttribute,
 				this,
 				nodeBuilder()
@@ -328,6 +328,6 @@ public abstract class AbstractSqmPath<T> extends AbstractSqmExpression<T> implem
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "(" + navigablePath.getFullPath() + ")";
+		return getClass().getSimpleName() + "(" + navigablePath + ")";
 	}
 }

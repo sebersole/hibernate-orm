@@ -12,7 +12,6 @@ import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.BiDirectionalFetch;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -31,12 +30,12 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Andrea Boriero
  */
 public class RootBiDirectionalFetchImpl implements BiDirectionalFetch, Fetchable {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final FetchParent fetchParent;
 	private final EntityResult referencedRoot;
 
 	public RootBiDirectionalFetchImpl(
-			NavigablePath navigablePath,
+			String navigablePath,
 			FetchParent fetchParent,
 			EntityResult referencedRoot) {
 		this.fetchParent = fetchParent;
@@ -45,12 +44,12 @@ public class RootBiDirectionalFetchImpl implements BiDirectionalFetch, Fetchable
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 
 	@Override
-	public NavigablePath getReferencedPath() {
+	public String getReferencedPath() {
 		return referencedRoot.getNavigablePath();
 	}
 
@@ -99,7 +98,7 @@ public class RootBiDirectionalFetchImpl implements BiDirectionalFetch, Fetchable
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			NavigablePath fetchablePath,
+			String fetchablePath,
 			FetchTiming fetchTiming,
 			boolean selected,
 			LockMode lockMode,
@@ -109,11 +108,11 @@ public class RootBiDirectionalFetchImpl implements BiDirectionalFetch, Fetchable
 	}
 
 	private static class CircularFetchAssembler implements DomainResultAssembler {
-		private final NavigablePath circularPath;
+		private final String circularPath;
 		private final JavaTypeDescriptor javaTypeDescriptor;
 
 		public CircularFetchAssembler(
-				NavigablePath circularPath,
+				String circularPath,
 				JavaTypeDescriptor javaTypeDescriptor) {
 			this.circularPath = circularPath;
 			this.javaTypeDescriptor = javaTypeDescriptor;

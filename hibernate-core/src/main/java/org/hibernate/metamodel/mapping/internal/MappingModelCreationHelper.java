@@ -32,7 +32,6 @@ import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.property.access.spi.PropertyAccess;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.spi.SqlSelection;
@@ -116,7 +115,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public <T> DomainResult<T> createDomainResult(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					String resultVariable,
 					DomainResultCreationState creationState) {
@@ -148,7 +147,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public void applySqlSelections(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					DomainResultCreationState creationState) {
 				final SqlExpressionResolver expressionResolver = creationState.getSqlAstCreationState().getSqlExpressionResolver();
@@ -210,7 +209,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public <T> DomainResult<T> createDomainResult(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					String resultVariable,
 					DomainResultCreationState creationState) {
@@ -224,7 +223,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public void applySqlSelections(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					DomainResultCreationState creationState) {
 				( (ModelPart) entityPersister.getIdentifierType() ).applySqlSelections(
@@ -268,7 +267,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public <T> DomainResult<T> createDomainResult(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					String resultVariable,
 					DomainResultCreationState creationState) {
@@ -282,7 +281,7 @@ public class MappingModelCreationHelper {
 
 			@Override
 			public void applySqlSelections(
-					NavigablePath navigablePath,
+					String navigablePath,
 					TableGroup tableGroup,
 					DomainResultCreationState creationState) {
 				( (ModelPart) entityPersister.getIdentifierType() ).applySqlSelections(

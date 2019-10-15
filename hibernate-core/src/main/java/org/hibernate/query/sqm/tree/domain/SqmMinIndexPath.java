@@ -9,6 +9,7 @@ package org.hibernate.query.sqm.tree.domain;
 import org.hibernate.metamodel.model.domain.ListPersistentAttribute;
 import org.hibernate.metamodel.model.domain.MapPersistentAttribute;
 import org.hibernate.metamodel.model.domain.PluralPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.SqmPathSource;
 import org.hibernate.query.sqm.SemanticQueryWalker;
 import org.hibernate.query.hql.spi.SemanticPathPart;
@@ -25,7 +26,7 @@ public class SqmMinIndexPath<T> extends AbstractSqmSpecificPluralPartPath<T> {
 	public SqmMinIndexPath(SqmPath<?> pluralDomainPath) {
 		//noinspection unchecked
 		super(
-				pluralDomainPath.getNavigablePath().append( NAVIGABLE_NAME ),
+				NavigablePath.append( pluralDomainPath.getNavigablePath(), NAVIGABLE_NAME ),
 				pluralDomainPath,
 				(PluralPersistentAttribute<?, ?, T>) pluralDomainPath.getReferencedPathSource()
 		);

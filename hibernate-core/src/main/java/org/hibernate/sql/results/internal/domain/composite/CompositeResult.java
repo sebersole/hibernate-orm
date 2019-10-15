@@ -31,7 +31,7 @@ public class CompositeResult<T> extends AbstractFetchParent implements Composite
 	private final String resultVariable;
 
 	public CompositeResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			EmbeddableValuedModelPart modelPart,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -46,7 +46,7 @@ public class CompositeResult<T> extends AbstractFetchParent implements Composite
 					final EmbeddableValuedModelPart embeddedValueMapping = modelPart.getEmbeddableTypeDescriptor().getEmbeddedValueMapping();
 					final TableGroupJoin tableGroupJoin = embeddedValueMapping.createTableGroupJoin(
 							navigablePath,
-							fromClauseAccess.findTableGroup( navigablePath.getParent() ),
+							fromClauseAccess.findTableGroup( NavigablePath.extractParentPath( navigablePath ) ),
 							resultVariable,
 							JoinType.INNER,
 							LockMode.NONE,

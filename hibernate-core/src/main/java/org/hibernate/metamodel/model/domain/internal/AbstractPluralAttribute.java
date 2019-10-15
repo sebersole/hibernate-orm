@@ -128,10 +128,9 @@ public abstract class AbstractPluralAttribute<D,C,E>
 
 	@Override
 	public SqmPath<E> createSqmPath(SqmPath<?> lhs, SqmCreationState creationState) {
-		final NavigablePath navigablePath = lhs.getNavigablePath().append( getPathName() );
 		//noinspection unchecked
 		return new SqmPluralValuedSimplePath(
-				navigablePath,
+				NavigablePath.append( lhs.getNavigablePath(), getPathName() ),
 				this,
 				lhs,
 				creationState.getCreationContext().getNodeBuilder()

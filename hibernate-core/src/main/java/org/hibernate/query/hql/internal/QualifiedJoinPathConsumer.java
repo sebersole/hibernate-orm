@@ -11,11 +11,11 @@ import org.hibernate.query.NavigablePath;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.hql.spi.DotIdentifierConsumer;
 import org.hibernate.query.hql.spi.SemanticPathPart;
+import org.hibernate.query.hql.spi.SqmCreationProcessingState;
+import org.hibernate.query.hql.spi.SqmCreationState;
 import org.hibernate.query.hql.spi.SqmPathRegistry;
 import org.hibernate.query.sqm.SqmJoinable;
 import org.hibernate.query.sqm.SqmPathSource;
-import org.hibernate.query.hql.spi.SqmCreationProcessingState;
-import org.hibernate.query.hql.spi.SqmCreationState;
 import org.hibernate.query.sqm.tree.SqmJoinType;
 import org.hibernate.query.sqm.tree.domain.SqmPolymorphicRootDescriptor;
 import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
@@ -207,7 +207,7 @@ public class QualifiedJoinPathConsumer implements DotIdentifierConsumer {
 		private final boolean fetch;
 		private final String alias;
 
-		private NavigablePath path = new NavigablePath();
+		private String path = "";
 
 		private SqmEntityJoin<?> join;
 
@@ -230,14 +230,14 @@ public class QualifiedJoinPathConsumer implements DotIdentifierConsumer {
 
 		@Override
 		public void consumeIdentifier(String identifier, boolean isTerminal) {
-			path = path.append( identifier );
+			path = NavigablePath.append( path, identifier );
 
 			if ( isTerminal ) {
 				final EntityDomainType<?> joinedEntityType = creationState.getCreationContext()
 						.getJpaMetamodel()
-						.resolveHqlEntityReference( path.getFullPath() );
+						.resolveHqlEntityReference( path );
 				if ( joinedEntityType == null ) {
-					throw new SemanticException( "Could not resolve join path - " + path.getFullPath() );
+					throw new SemanticException( "Could not resolve join path - " + path );
 				}
 
 				assert ! ( joinedEntityType instanceof SqmPolymorphicRootDescriptor );

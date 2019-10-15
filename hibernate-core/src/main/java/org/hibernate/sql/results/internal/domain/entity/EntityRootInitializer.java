@@ -9,7 +9,6 @@ package org.hibernate.sql.results.internal.domain.entity;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.EntityResultNode;
@@ -23,7 +22,7 @@ import org.hibernate.sql.results.spi.Initializer;
 public class EntityRootInitializer extends AbstractEntityInitializer {
 	public EntityRootInitializer(
 			EntityResultNode resultDescriptor,
-			NavigablePath navigablePath,
+			String navigablePath,
 			LockMode lockMode,
 			DomainResult identifierResult,
 			DomainResult discriminatorResult,
@@ -49,6 +48,6 @@ public class EntityRootInitializer extends AbstractEntityInitializer {
 
 	@Override
 	public String toString() {
-		return "EntityRootInitializer(" + getNavigablePath().getFullPath() + ")";
+		return "EntityRootInitializer(" + getNavigablePath() + ")";
 	}
 }

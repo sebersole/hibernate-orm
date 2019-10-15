@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.spi.SqlAliasBase;
 import org.hibernate.sql.ast.spi.SqlAppender;
 import org.hibernate.sql.ast.spi.SqlAstWalker;
@@ -23,7 +22,7 @@ import org.hibernate.sql.ast.spi.SqlAstWalker;
  */
 public abstract class AbstractTableGroup extends AbstractColumnReferenceQualifier implements TableGroup {
 
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final TableGroupProducer producer;
 	private final LockMode lockMode;
 	private final SqlAliasBase sqlAliasBase;
@@ -34,7 +33,7 @@ public abstract class AbstractTableGroup extends AbstractColumnReferenceQualifie
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroupProducer producer,
 			LockMode lockMode,
 			SqlAliasBase sqlAliasBase,
@@ -44,7 +43,7 @@ public abstract class AbstractTableGroup extends AbstractColumnReferenceQualifie
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroupProducer producer,
 			LockMode lockMode,
 			SqlAliasBase sqlAliasBase,
@@ -64,7 +63,7 @@ public abstract class AbstractTableGroup extends AbstractColumnReferenceQualifie
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

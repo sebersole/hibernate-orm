@@ -33,14 +33,14 @@ import org.hibernate.metamodel.model.domain.PluralPersistentAttribute;
 import org.hibernate.metamodel.model.domain.SetPersistentAttribute;
 import org.hibernate.metamodel.model.domain.SingularPersistentAttribute;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.query.SemanticException;
 import org.hibernate.query.criteria.JpaPath;
 import org.hibernate.query.criteria.JpaSubQuery;
-import org.hibernate.query.sqm.NodeBuilder;
-import org.hibernate.query.SemanticException;
-import org.hibernate.query.sqm.SqmPathSource;
-import org.hibernate.query.sqm.UnknownPathException;
 import org.hibernate.query.hql.spi.SemanticPathPart;
 import org.hibernate.query.hql.spi.SqmCreationState;
+import org.hibernate.query.sqm.NodeBuilder;
+import org.hibernate.query.sqm.SqmPathSource;
+import org.hibernate.query.sqm.UnknownPathException;
 import org.hibernate.query.sqm.spi.SqmCreationHelper;
 import org.hibernate.query.sqm.tree.SqmJoinType;
 import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
@@ -61,7 +61,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 	private List<SqmJoin<T,?>> joins;
 
 	protected AbstractSqmFrom(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedNavigable,
 			SqmFrom lhs,
 			String alias,
@@ -106,7 +106,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 			String name,
 			boolean isTerminal,
 			SqmCreationState creationState) {
-		final NavigablePath subNavPath = getNavigablePath().append( name );
+		final String subNavPath = NavigablePath.append( getNavigablePath(), name );
 		return creationState.getProcessingStateStack().getCurrent().getPathRegistry().resolvePath(
 				subNavPath,
 				snp -> {
@@ -272,7 +272,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 						"Passed attribute name [%s] did not correspond to a collection (bag) reference [%s] relative to %s",
 						attributeName,
 						joinedPathSource,
-						getNavigablePath().getFullPath()
+						getNavigablePath()
 				)
 		);
 	}
@@ -298,7 +298,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 						"Passed attribute name [%s] did not correspond to a collection (set) reference [%s] relative to %s",
 						attributeName,
 						joinedPathSource,
-						getNavigablePath().getFullPath()
+						getNavigablePath()
 				)
 		);
 	}
@@ -324,7 +324,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 						"Passed attribute name [%s] did not correspond to a collection (list) reference [%s] relative to %s",
 						attributeName,
 						joinedPathSource,
-						getNavigablePath().getFullPath()
+						getNavigablePath()
 				)
 		);
 	}
@@ -350,7 +350,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 						"Passed attribute name [%s] did not correspond to a collection (map) reference [%s] relative to %s",
 						attributeName,
 						joinedPathSource,
-						getNavigablePath().getFullPath()
+						getNavigablePath()
 				)
 		);
 	}
@@ -455,7 +455,7 @@ public abstract class AbstractSqmFrom<O,T> extends AbstractSqmPath<T> implements
 						"Passed attribute [%s] did not correspond to a joinable reference [%s] relative to %s",
 						joinedPathSource.getPathName(),
 						joinedPathSource,
-						getNavigablePath().getFullPath()
+						getNavigablePath()
 				)
 		);
 	}

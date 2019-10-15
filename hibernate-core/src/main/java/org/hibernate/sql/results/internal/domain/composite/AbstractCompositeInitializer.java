@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.internal.domain.composite;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -14,7 +13,6 @@ import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMapping;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.NullValueAssembler;
 import org.hibernate.sql.results.internal.domain.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
@@ -30,7 +28,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  * @author Steve Ebersole
  */
 public abstract class AbstractCompositeInitializer extends AbstractFetchParentAccess implements CompositeInitializer {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final EmbeddableValuedModelPart embeddedModelPartDescriptor;
 	private final FetchParentAccess fetchParentAccess;
 
@@ -77,7 +75,7 @@ public abstract class AbstractCompositeInitializer extends AbstractFetchParentAc
 		return fetchParentAccess;
 	}
 
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

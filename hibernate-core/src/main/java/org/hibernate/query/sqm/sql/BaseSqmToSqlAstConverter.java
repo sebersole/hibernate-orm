@@ -469,7 +469,6 @@ public abstract class BaseSqmToSqlAstConverter
 
 	private void consumeAttributeJoin(SqmAttributeJoin<?,?> sqmJoin, TableGroup lhsTableGroup) {
 		assert fromClauseIndex.findTableGroup( sqmJoin.getNavigablePath() ) == null;
-		assert fromClauseIndex.findTableGroupJoin( sqmJoin.getNavigablePath() ) == null;
 
 		final SqmPathSource<?> pathSource = sqmJoin.getReferencedPathSource();
 

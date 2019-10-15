@@ -19,7 +19,6 @@ import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.property.access.spi.PropertyAccess;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlAstCreationState;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.sql.ast.Clause;
@@ -91,7 +90,7 @@ public class BasicValuedSingularAttributeMapping extends AbstractSingularAttribu
 
 	@Override
 	public <T> DomainResult<T> createDomainResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -133,7 +132,7 @@ public class BasicValuedSingularAttributeMapping extends AbstractSingularAttribu
 
 	@Override
 	public void applySqlSelections(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			DomainResultCreationState creationState) {
 		final SqlExpressionResolver expressionResolver = creationState.getSqlAstCreationState().getSqlExpressionResolver();
@@ -160,7 +159,7 @@ public class BasicValuedSingularAttributeMapping extends AbstractSingularAttribu
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			NavigablePath fetchablePath,
+			String fetchablePath,
 			FetchTiming fetchTiming,
 			boolean selected,
 			LockMode lockMode,

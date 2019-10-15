@@ -8,6 +8,7 @@ package org.hibernate.metamodel.model.domain.internal;
 
 import org.hibernate.metamodel.model.domain.AllowableParameterType;
 import org.hibernate.metamodel.model.domain.EmbeddableDomainType;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.SqmPathSource;
 import org.hibernate.query.hql.spi.SqmCreationState;
 import org.hibernate.query.sqm.tree.domain.SqmEmbeddedValuedSimplePath;
@@ -48,7 +49,7 @@ public class EmbeddedSqmPathSource<J> extends AbstractSqmPathSource<J> implement
 	@Override
 	public SqmPath<J> createSqmPath(SqmPath<?> lhs, SqmCreationState creationState) {
 		return new SqmEmbeddedValuedSimplePath<>(
-				lhs.getNavigablePath().append( getPathName() ),
+				NavigablePath.append( lhs.getNavigablePath(), getPathName() ),
 				this,
 				lhs,
 				creationState.getCreationContext().getNodeBuilder()

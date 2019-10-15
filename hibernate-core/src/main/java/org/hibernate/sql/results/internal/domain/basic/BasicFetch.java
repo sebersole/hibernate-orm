@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.mapping.BasicValuedModelPart;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.BasicResultMappingNode;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -27,7 +26,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class BasicFetch<T> implements Fetch, BasicResultMappingNode<T> {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final FetchParent fetchParent;
 	private final BasicValuedModelPart valuedMapping;
 	private final boolean nullable;
@@ -39,7 +38,7 @@ public class BasicFetch<T> implements Fetch, BasicResultMappingNode<T> {
 	public BasicFetch(
 			int valuesArrayPosition,
 			FetchParent fetchParent,
-			NavigablePath fetchablePath,
+			String fetchablePath,
 			BasicValuedModelPart valuedMapping,
 			boolean nullable,
 			BasicValueConverter valueConverter,
@@ -77,7 +76,7 @@ public class BasicFetch<T> implements Fetch, BasicResultMappingNode<T> {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

@@ -9,14 +9,13 @@ package org.hibernate.query.sqm.tree.domain;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.EntityDomainType;
 import org.hibernate.metamodel.model.domain.PluralPersistentAttribute;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 
 /**
  * @author Steve Ebersole
  */
 public abstract class AbstractSqmSpecificPluralPartPath<T> extends AbstractSqmPath<T> implements SqmPath<T> {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final SqmPath pluralDomainPath;
 	private final PluralPersistentAttribute<?,?,T> pluralAttribute;
 
@@ -24,7 +23,7 @@ public abstract class AbstractSqmSpecificPluralPartPath<T> extends AbstractSqmPa
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractSqmSpecificPluralPartPath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPath<?> pluralDomainPath,
 			PluralPersistentAttribute<?,?,T> referencedAttribute) {
 		super(
@@ -49,7 +48,7 @@ public abstract class AbstractSqmSpecificPluralPartPath<T> extends AbstractSqmPa
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

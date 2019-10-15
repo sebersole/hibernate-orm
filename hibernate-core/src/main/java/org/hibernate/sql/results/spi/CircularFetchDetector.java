@@ -27,14 +27,14 @@ public class CircularFetchDetector {
 		assert fetchParent instanceof Fetch;
 		final Fetch fetchParentAsFetch = (Fetch) fetchParent;
 
-		final NavigablePath parentParentPath = fetchParent.getNavigablePath().getParent();
-		assert fetchParent.getNavigablePath().getParent() != null;
+		final String parentParentPath = fetchParentAsFetch.getFetchParent().getNavigablePath();
+		assert parentParentPath != null;
 
 		assert fetchParentAsFetch.getFetchParent().getNavigablePath().equals( parentParentPath );
 
 		if ( fetchParentAsFetch.getFetchParent() instanceof Fetch ) {
 			return new BiDirectionalFetchImpl(
-					fetchParent.getNavigablePath().append( fetchable.getFetchableName() ),
+					NavigablePath.append( fetchParent.getNavigablePath(), fetchable.getFetchableName() ),
 					fetchParent,
 					fetchParentAsFetch
 			);
@@ -46,7 +46,7 @@ public class CircularFetchDetector {
 			// 		be handled in the `Fetch` block since `RootBiDirectionalFetchImpl` is a Fetch
 
 			return new RootBiDirectionalFetchImpl(
-					fetchParent.getNavigablePath().append( fetchable.getFetchableName() ),
+					NavigablePath.append( fetchParent.getNavigablePath(), fetchable.getFetchableName() ),
 					fetchParent,
 					(EntityResult) fetchParentAsFetch
 			);

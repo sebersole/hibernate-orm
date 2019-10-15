@@ -201,7 +201,7 @@ public class StandardSqmSelectToSqlAstConverter
 		// but it would still have access to its parent info - and be able to access its
 		// "initializing" state as part of AfterLoadAction
 
-		final NavigablePath fetchablePath = fetchParent.getNavigablePath().append( fetchable.getFetchableName() );
+		final String fetchablePath = NavigablePath.append( fetchParent.getNavigablePath(), fetchable.getFetchableName() );
 
 		final GraphImplementor<?> previousGraphNode = currentJpaGraphNode;
 

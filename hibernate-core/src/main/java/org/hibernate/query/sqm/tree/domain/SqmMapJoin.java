@@ -69,7 +69,7 @@ public class SqmMapJoin<O,K,V>
 	@SuppressWarnings("unchecked")
 	public SqmPath<K> key() {
 		final SqmPathSource keyPathSource = getReferencedPathSource().getKeyPathSource();
-		final NavigablePath navigablePath = getNavigablePath().append( keyPathSource.getPathName() );
+		final String navigablePath = NavigablePath.append( getNavigablePath(), keyPathSource.getPathName() );
 
 		if ( keyPathSource.getSqmPathType() instanceof BasicDomainType ) {
 			return new SqmBasicValuedSimplePath(
@@ -105,7 +105,7 @@ public class SqmMapJoin<O,K,V>
 	@SuppressWarnings("unchecked")
 	public Path<V> value() {
 		final SqmPathSource elementPathSource = getReferencedPathSource().getElementPathSource();
-		final NavigablePath navigablePath = getNavigablePath().append( elementPathSource.getPathName() );
+		final String navigablePath = NavigablePath.append( getNavigablePath(), elementPathSource.getPathName() );
 
 		if ( elementPathSource.getSqmPathType() instanceof BasicDomainType ) {
 			return new SqmBasicValuedSimplePath(

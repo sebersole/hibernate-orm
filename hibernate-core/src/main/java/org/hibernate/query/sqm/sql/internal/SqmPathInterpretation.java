@@ -7,7 +7,6 @@
 package org.hibernate.query.sqm.sql.internal;
 
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.domain.SqmPath;
 import org.hibernate.sql.ast.tree.expression.Expression;
 
@@ -20,7 +19,7 @@ import org.hibernate.sql.ast.tree.expression.Expression;
  * @author Steve Ebersole
  */
 public interface SqmPathInterpretation<T> extends Expression, DomainResultProducer<T> {
-	default NavigablePath getNavigablePath() {
+	default String getNavigablePath() {
 		return getInterpretedSqmPath().getNavigablePath();
 	}
 

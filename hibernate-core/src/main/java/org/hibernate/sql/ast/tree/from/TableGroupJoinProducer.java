@@ -7,7 +7,6 @@
 package org.hibernate.sql.ast.tree.from;
 
 import org.hibernate.LockMode;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.spi.SqlAliasBaseGenerator;
@@ -21,7 +20,7 @@ public interface TableGroupJoinProducer extends TableGroupProducer {
 	 * Create a TableGroupJoin as defined for this producer
 	 */
 	TableGroupJoin createTableGroupJoin(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup lhs,
 			String explicitSourceAlias,
 			JoinType joinType,

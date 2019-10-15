@@ -22,7 +22,6 @@ import org.hibernate.query.sqm.tree.domain.SqmPath;
 public class BasicSqmPathSource<J>
 		extends AbstractSqmPathSource<J>
 		implements AllowableParameterType<J>, AllowableFunctionReturnType<J> {
-	@SuppressWarnings("WeakerAccess")
 	public BasicSqmPathSource(
 			String localPathName,
 			BasicDomainType<J> domainType,
@@ -43,7 +42,7 @@ public class BasicSqmPathSource<J>
 
 	@Override
 	public SqmPath<J> createSqmPath(SqmPath<?> lhs, SqmCreationState creationState) {
-		final NavigablePath navigablePath = lhs.getNavigablePath().append( getPathName() );
+		final String navigablePath = NavigablePath.append( lhs.getNavigablePath(), getPathName() );
 		return new SqmBasicValuedSimplePath<>(
 				navigablePath,
 				this,

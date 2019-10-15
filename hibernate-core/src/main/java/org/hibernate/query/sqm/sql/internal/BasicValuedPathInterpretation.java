@@ -128,6 +128,6 @@ public class BasicValuedPathInterpretation<T> implements AssignableSqmPathInterp
 
 	@Override
 	public String toString() {
-		return "BasicValuedPathInterpretation(" + sqmPath.getNavigablePath().getFullPath() + ')';
+		return "BasicValuedPathInterpretation(" + sqmPath.getNavigablePath() + ')';
 	}
 }

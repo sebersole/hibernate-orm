@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.sqm.tree.domain;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.NodeBuilder;
 import org.hibernate.query.sqm.SqmPathSource;
 
@@ -14,11 +13,11 @@ import org.hibernate.query.sqm.SqmPathSource;
  * @author Steve Ebersole
  */
 public abstract class AbstractSqmSimplePath<T> extends AbstractSqmPath<T> implements SqmSimplePath<T> {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractSqmSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			NodeBuilder nodeBuilder) {
@@ -27,7 +26,7 @@ public abstract class AbstractSqmSimplePath<T> extends AbstractSqmPath<T> implem
 
 	@SuppressWarnings("WeakerAccess")
 	public AbstractSqmSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			String explicitAlias,
@@ -39,7 +38,7 @@ public abstract class AbstractSqmSimplePath<T> extends AbstractSqmPath<T> implem
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 }

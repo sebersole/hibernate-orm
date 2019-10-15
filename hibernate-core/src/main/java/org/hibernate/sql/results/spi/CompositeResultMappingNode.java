@@ -8,15 +8,13 @@ package org.hibernate.sql.results.spi;
 
 import org.hibernate.metamodel.mapping.EmbeddableMappingType;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
-import org.hibernate.metamodel.mapping.ManagedMappingType;
-import org.hibernate.query.NavigablePath;
 
 /**
  * @author Steve Ebersole
  */
 public interface CompositeResultMappingNode extends ResultSetMappingNode, FetchParent {
 	@Override
-	default NavigablePath getNavigablePath() {
+	default String getNavigablePath() {
 		return null;
 	}
 

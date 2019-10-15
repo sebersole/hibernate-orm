@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.mapping.EmbeddableMappingType;
 import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMapping;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.domain.AbstractFetchParent;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.CompositeResultMappingNode;
@@ -31,7 +30,7 @@ public class CompositeFetch extends AbstractFetchParent implements CompositeResu
 	private final FetchTiming fetchTiming;
 
 	public CompositeFetch(
-			NavigablePath navigablePath,
+			String navigablePath,
 			EmbeddedAttributeMapping embeddedAttribute,
 			FetchParent fetchParent,
 			FetchTiming fetchTiming,

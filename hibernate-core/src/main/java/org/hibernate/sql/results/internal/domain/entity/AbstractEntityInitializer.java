@@ -37,7 +37,6 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.mapping.StateArrayContributorMapping;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.internal.NullValueAssembler;
 import org.hibernate.sql.results.internal.domain.AbstractFetchParentAccess;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
@@ -66,7 +65,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	// 		these
 
 	private final EntityPersister entityDescriptor;
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final LockMode lockMode;
 
 	private final List<Initializer> identifierInitializers = new ArrayList<>();
@@ -89,7 +88,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	@SuppressWarnings("WeakerAccess")
 	protected AbstractEntityInitializer(
 			EntityResultNode resultDescriptor,
-			NavigablePath navigablePath,
+			String navigablePath,
 			LockMode lockMode,
 			DomainResult<?> identifierResult,
 			DomainResult<?> discriminatorResult,
@@ -159,7 +158,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		initializerConsumer.accept( this );
 	}
 
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 
@@ -205,7 +204,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			EntityLoadingLogger.INSTANCE.tracef(
 					"(%s) Beginning Initializer#resolveKey process for entity : %s",
 					StringHelper.collapse( this.getClass().getName() ),
-					getNavigablePath().getFullPath()
+					getNavigablePath()
 			);
 		}
 

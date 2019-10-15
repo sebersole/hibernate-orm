@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.criteria.JpaPath;
@@ -34,8 +33,9 @@ public interface SqmPath<T> extends SqmExpression<T>, SemanticPathPart, JpaPath<
 
 	/**
 	 * Returns the NavigablePath.
+	 * @return
 	 */
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * The path source that this path refers to (and that most likely

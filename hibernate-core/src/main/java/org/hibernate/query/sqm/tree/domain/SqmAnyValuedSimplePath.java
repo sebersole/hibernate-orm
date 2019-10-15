@@ -9,7 +9,6 @@ package org.hibernate.query.sqm.tree.domain;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.metamodel.model.domain.AnyMappingDomainType;
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 import org.hibernate.query.sqm.NodeBuilder;
 import org.hibernate.query.sqm.SqmPathSource;
@@ -22,7 +21,7 @@ import org.hibernate.query.hql.spi.SqmCreationState;
  */
 public class SqmAnyValuedSimplePath<T> extends AbstractSqmSimplePath<T> {
 	public SqmAnyValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			NodeBuilder nodeBuilder) {
@@ -33,7 +32,7 @@ public class SqmAnyValuedSimplePath<T> extends AbstractSqmSimplePath<T> {
 
 	@SuppressWarnings("unused")
 	public SqmAnyValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			String explicitAlias,

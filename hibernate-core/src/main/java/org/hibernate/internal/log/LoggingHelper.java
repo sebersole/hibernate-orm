@@ -11,7 +11,6 @@ import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.query.NavigablePath;
 
 /**
  * Helper for logging collection, entity and embeddable information.  Uses path collapsing
@@ -31,23 +30,12 @@ public class LoggingHelper {
 		return role.getFullPath();
 	}
 
-	public static String toLoggableString(NavigablePath path) {
-		assert path != null;
-
-		return path.getFullPath();
-	}
-
 	public static String toLoggableString(NavigableRole role, Object key) {
 		if ( role == null ) {
 			return UNREFERENCED;
 		}
 
 		return toLoggableString( toLoggableString( role ), key );
-	}
-
-	public static String toLoggableString(NavigablePath path, Object key) {
-		assert path != null;
-		return toLoggableString( toLoggableString( path ), key );
 	}
 
 	public static String toLoggableString(CollectionKey collectionKey) {
@@ -58,7 +46,7 @@ public class LoggingHelper {
 		return toLoggableString( StringHelper.collapse( entityKey.getEntityName() ), entityKey.getIdentifierValue() );
 	}
 
-	private static String toLoggableString(String roleOrPath, Object key) {
+	public static String toLoggableString(String roleOrPath, Object key) {
 		assert roleOrPath != null;
 
 		StringBuilder buffer = new StringBuilder();

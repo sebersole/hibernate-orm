@@ -10,7 +10,6 @@ import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.spi.SqlAliasBaseGenerator;
@@ -34,7 +33,7 @@ public interface Loadable extends ModelPart, RootTableGroupProducer {
 
 	@Override
 	default TableGroup createRootTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			String explicitSourceAlias,
 			JoinType tableReferenceJoinType,
 			LockMode lockMode,

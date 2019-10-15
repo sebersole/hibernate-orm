@@ -64,7 +64,7 @@ public class SqmListJoin<O,E>
 	@Override
 	public SqmPath<Integer> index() {
 		final String navigableName = "{index}";
-		final NavigablePath navigablePath = getNavigablePath().append( navigableName );
+		final String navigablePath = NavigablePath.append( getNavigablePath(), navigableName );
 
 		//noinspection unchecked
 		return new SqmBasicValuedSimplePath<>(

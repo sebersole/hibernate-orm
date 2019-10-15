@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -28,7 +27,7 @@ public class EntityResultImpl extends AbstractEntityResultNode implements Entity
 
 
 	public EntityResultImpl(
-			NavigablePath navigablePath,
+			String navigablePath,
 			EntityValuedModelPart entityValuedModelPart,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -36,7 +35,7 @@ public class EntityResultImpl extends AbstractEntityResultNode implements Entity
 	}
 
 	public EntityResultImpl(
-			NavigablePath navigablePath,
+			String navigablePath,
 			EntityValuedModelPart entityValuedModelPart,
 			String resultVariable,
 			EntityMappingType targetType,

@@ -111,6 +111,6 @@ public class EmbeddableValuedPathInterpretation<T> implements AssignableSqmPathI
 
 	@Override
 	public String toString() {
-		return "EmbeddableValuedPathInterpretation(" + sqmPath.getNavigablePath().getFullPath() + ')';
+		return "EmbeddableValuedPathInterpretation(" + sqmPath.getNavigablePath() + ')';
 	}
 }

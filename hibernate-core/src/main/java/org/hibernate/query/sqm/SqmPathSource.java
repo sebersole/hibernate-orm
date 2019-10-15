@@ -24,8 +24,7 @@ import org.hibernate.query.sqm.tree.domain.SqmPath;
  */
 public interface SqmPathSource<J> extends SqmExpressable<J>, Bindable<J> {
 	/**
-	 * The name of this thing.  Mainly used in logging and when creating a
-	 * {@link org.hibernate.query.NavigablePath}
+	 * The name of this thing.  Mainly used in logging and when creating a "navigable path"
 	 */
 	String getPathName();
 

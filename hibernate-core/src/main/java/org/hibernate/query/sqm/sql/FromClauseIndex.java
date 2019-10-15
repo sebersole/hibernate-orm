@@ -12,13 +12,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.domain.SqmPath;
 import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.sql.ast.spi.SimpleFromClauseAccessImpl;
 import org.hibernate.sql.ast.tree.from.TableGroup;
-import org.hibernate.sql.ast.tree.from.TableGroupJoin;
 
 import org.jboss.logging.Logger;
 
@@ -30,14 +28,12 @@ import org.jboss.logging.Logger;
 public class FromClauseIndex extends SimpleFromClauseAccessImpl {
 	private static final Logger log = Logger.getLogger( FromClauseIndex.class );
 
-	private Map<NavigablePath, TableGroupJoin> tableGroupJoinMap;
 	private final Map<String, TableGroup> tableGroupByAliasXref = new HashMap<>();
 
 	/**
 	 * Holds *explicitly* fetched joins
 	 */
-	private Map<NavigablePath, SqmAttributeJoin> fetchesByPath;
-	private Map<NavigablePath, Map<NavigablePath, SqmAttributeJoin>> fetchesByParentPath;
+	private Map<String, SqmAttributeJoin> fetchesByPath;
 
 	private final Set<String> affectedTableNames = new HashSet<>();
 
@@ -68,16 +64,12 @@ public class FromClauseIndex extends SimpleFromClauseAccessImpl {
 	}
 
 	@Override
-	public void registerTableGroup(NavigablePath navigablePath, TableGroup tableGroup) {
+	public void registerTableGroup(String navigablePath, TableGroup tableGroup) {
 		super.registerTableGroup( navigablePath, tableGroup );
 		tableGroup.applyAffectedTableNames( affectedTableNames::add );
 	}
 
-	public TableGroupJoin findTableGroupJoin(NavigablePath navigablePath) {
-		return tableGroupJoinMap == null ? null : tableGroupJoinMap.get( navigablePath );
-	}
-
-	public SqmAttributeJoin findFetchedJoinByPath(NavigablePath path) {
+	public SqmAttributeJoin findFetchedJoinByPath(String path) {
 		return fetchesByPath == null ? null : fetchesByPath.get( path );
 	}
 }

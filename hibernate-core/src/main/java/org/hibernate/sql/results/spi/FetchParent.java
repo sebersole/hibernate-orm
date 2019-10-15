@@ -9,7 +9,6 @@ package org.hibernate.sql.results.spi;
 import java.util.List;
 
 import org.hibernate.metamodel.mapping.ManagedMappingType;
-import org.hibernate.query.NavigablePath;
 
 /**
  * Contract for things that can be the parent of a fetch
@@ -27,7 +26,7 @@ public interface FetchParent extends ResultSetMappingNode {
 	/**
 	 * Get the property path to this parent
 	 */
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * Retrieve the fetches owned by this fetch source.

@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.spi.SqlAliasBase;
 
 /**
@@ -22,7 +21,7 @@ public class StandardTableGroup extends AbstractTableGroup {
 	private final List<TableReferenceJoin> tableJoins;
 
 	public StandardTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			RootTableGroupProducer tableGroupProducer,
 			LockMode lockMode,
 			TableReference primaryTableReference,

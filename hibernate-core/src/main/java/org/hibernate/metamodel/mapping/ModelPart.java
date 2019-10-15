@@ -7,7 +7,6 @@
 package org.hibernate.metamodel.mapping;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.results.spi.DomainResult;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
@@ -32,7 +31,7 @@ public interface ModelPart extends MappingModelExpressable {
 	 * Create a DomainResult for a specific reference to this ModelPart.
 	 */
 	default <T> DomainResult<T> createDomainResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -43,7 +42,7 @@ public interface ModelPart extends MappingModelExpressable {
 	 * Apply SQL selections for a specific reference to this ModelPart outside the domain query's root select clause.
 	 */
 	default void applySqlSelections(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			DomainResultCreationState creationState) {
 		throw new NotYetImplementedFor6Exception( getClass() );

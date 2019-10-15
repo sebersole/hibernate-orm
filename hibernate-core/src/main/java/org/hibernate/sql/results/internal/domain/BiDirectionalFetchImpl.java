@@ -9,7 +9,6 @@ package org.hibernate.sql.results.internal.domain;
 import java.util.function.Consumer;
 
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
 import org.hibernate.sql.results.spi.BiDirectionalFetch;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
@@ -29,19 +28,18 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class BiDirectionalFetchImpl implements BiDirectionalFetch {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final FetchParent fetchParent;
 	private final Fetch referencedFetch;
 
 	/**
 	 * Create the bi-dir fetch
-	 *
-	 * @param navigablePath `Person(p).address.owner.address`
+	 *  @param navigablePath `Person(p).address.owner.address`
 	 * @param fetchParent The parent for the `oa` fetch is `o`
 	 * @param referencedFetch `RootBiDirectionalFetchImpl(a)` (because `a` is itself also a bi-dir fetch referring to the `p root)
 	 */
 	public BiDirectionalFetchImpl(
-			NavigablePath navigablePath,
+			String navigablePath,
 			FetchParent fetchParent,
 			Fetch referencedFetch) {
 		this.navigablePath = navigablePath;
@@ -50,12 +48,12 @@ public class BiDirectionalFetchImpl implements BiDirectionalFetch {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 
 	@Override
-	public NavigablePath getReferencedPath() {
+	public String getReferencedPath() {
 		return referencedFetch.getNavigablePath();
 	}
 
@@ -86,11 +84,11 @@ public class BiDirectionalFetchImpl implements BiDirectionalFetch {
 	}
 
 	private static class CircularFetchAssembler implements DomainResultAssembler {
-		private final NavigablePath circularPath;
+		private final String circularPath;
 		private final JavaTypeDescriptor javaTypeDescriptor;
 
 		public CircularFetchAssembler(
-				NavigablePath circularPath,
+				String circularPath,
 				JavaTypeDescriptor javaTypeDescriptor) {
 			this.circularPath = circularPath;
 			this.javaTypeDescriptor = javaTypeDescriptor;

@@ -104,7 +104,6 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterHelper;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.ArrayHelper;
-import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.jdbc.Expectation;
 import org.hibernate.jdbc.Expectations;
 import org.hibernate.jdbc.TooManyRowsAffectedException;
@@ -160,7 +159,6 @@ import org.hibernate.property.access.internal.PropertyAccessStrategyBackRefImpl;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.property.access.spi.Setter;
 import org.hibernate.query.ComparisonOperator;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.sql.Alias;
 import org.hibernate.sql.Delete;
@@ -1146,7 +1144,7 @@ public abstract class AbstractEntityPersister
 
 	@Override
 	public <T> DomainResult<T> createDomainResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -1156,7 +1154,7 @@ public abstract class AbstractEntityPersister
 
 	@Override
 	public void applySqlSelections(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			DomainResultCreationState creationState) {
 		throw new NotYetImplementedFor6Exception( getClass() );
@@ -1174,7 +1172,7 @@ public abstract class AbstractEntityPersister
 
 	@Override
 	public TableGroup createRootTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			String explicitSourceAlias,
 			org.hibernate.sql.ast.JoinType tableReferenceJoinType,
 			LockMode lockMode,

@@ -9,7 +9,6 @@ package org.hibernate.sql.ast.spi;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.SqlTreeCreationLogger;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 
@@ -19,18 +18,18 @@ import org.hibernate.sql.ast.tree.from.TableGroup;
  * @author Steve Ebersole
  */
 public class SimpleFromClauseAccessImpl implements FromClauseAccess {
-	protected final Map<NavigablePath, TableGroup> tableGroupMap = new HashMap<>();
+	protected final Map<String, TableGroup> tableGroupMap = new HashMap<>();
 
 	public SimpleFromClauseAccessImpl() {
 	}
 
 	@Override
-	public TableGroup findTableGroup(NavigablePath navigablePath) {
+	public TableGroup findTableGroup(String navigablePath) {
 		return tableGroupMap.get( navigablePath );
 	}
 
 	@Override
-	public void registerTableGroup(NavigablePath navigablePath, TableGroup tableGroup) {
+	public void registerTableGroup(String navigablePath, TableGroup tableGroup) {
 		final TableGroup previous = tableGroupMap.put( navigablePath, tableGroup );
 		if ( previous != null ) {
 			SqlTreeCreationLogger.LOGGER.debugf(

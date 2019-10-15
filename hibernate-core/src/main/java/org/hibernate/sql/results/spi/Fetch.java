@@ -8,9 +8,6 @@ package org.hibernate.sql.results.spi;
 
 import java.util.function.Consumer;
 
-import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.query.NavigablePath;
-
 /**
  * Contract for fetches including entity, collection and composite.  Acts as the
  * producer for the {@link DomainResultAssembler} for this result as well
@@ -47,7 +44,7 @@ public interface Fetch {
 	 *
 	 * @return The property path
 	 */
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * Is this fetch nullable?  Meaning is it mapped as being optional?

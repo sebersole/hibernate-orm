@@ -9,6 +9,7 @@ package org.hibernate.metamodel.model.domain.internal;
 import org.hibernate.metamodel.model.domain.EntityDomainType;
 import org.hibernate.metamodel.model.domain.PersistentAttribute;
 import org.hibernate.metamodel.model.domain.SingularPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.sqm.SqmPathSource;
 import org.hibernate.query.hql.spi.SqmCreationState;
@@ -50,7 +51,7 @@ public class EntitySqmPathSource<J> extends AbstractSqmPathSource<J> {
 	@Override
 	public SqmPath<J> createSqmPath(SqmPath<?> lhs, SqmCreationState creationState) {
 		return new SqmEntityValuedSimplePath<>(
-				lhs.getNavigablePath().append( getPathName() ),
+				NavigablePath.append( lhs.getNavigablePath(), getPathName() ),
 				this,
 				lhs,
 				creationState.getCreationContext().getNodeBuilder()

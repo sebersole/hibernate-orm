@@ -9,7 +9,6 @@ package org.hibernate.query.hql.spi;
 import java.util.function.Function;
 
 import org.hibernate.Incubating;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.tree.domain.SqmPath;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
 import org.hibernate.query.sqm.tree.select.SqmSelection;
@@ -44,8 +43,9 @@ public interface SqmPathRegistry {
 	 * Find a SqmFrom by its NavigablePath.  Will search any parent contexts as well
 	 *
 	 * @return matching SqmFrom or {@code null}
+	 * @param navigablePath
 	 */
-	SqmFrom findFromByPath(NavigablePath navigablePath);
+	SqmFrom findFromByPath(String navigablePath);
 
 	/**
 	 * Find a SqmFrom which exposes a Navigable by the given name.  Will search any
@@ -60,16 +60,19 @@ public interface SqmPathRegistry {
 	 * has (yet) been resolved to a SqmFrom.  Otherwise, it will be a non-SqmFrom SqmPath
 	 *
 	 * @return matching SqmPath or {@code null}
+	 * @param path
 	 */
-	SqmPath findPath(NavigablePath path);
+	SqmPath findPath(String path);
 
 	/**
 	 * Similar to {@link #findPath}, but accepting a producer to be used
 	 * to create and register a SqmPath if none yet registered.
 	 *
 	 * @return The existing or just-created SqmPath
+	 * @param path
+	 * @param creator
 	 */
-	SqmPath resolvePath(NavigablePath path, Function<NavigablePath, SqmPath> creator);
+	SqmPath resolvePath(String path, Function<String, SqmPath> creator);
 
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

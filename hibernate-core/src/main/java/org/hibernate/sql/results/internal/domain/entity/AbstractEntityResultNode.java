@@ -6,12 +6,10 @@
  */
 package org.hibernate.sql.results.internal.domain.entity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.LockMode;
 import org.hibernate.internal.util.collections.CollectionHelper;
-import org.hibernate.metamodel.mapping.AttributeMapping;
 import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
@@ -41,7 +39,7 @@ public abstract class AbstractEntityResultNode extends AbstractFetchParent imple
 	public AbstractEntityResultNode(
 			EntityValuedModelPart referencedModelPart,
 			LockMode lockMode,
-			NavigablePath navigablePath,
+			String navigablePath,
 			DomainResultCreationState creationState) {
 		this( referencedModelPart, lockMode, navigablePath, null, creationState );
 	}
@@ -49,7 +47,7 @@ public abstract class AbstractEntityResultNode extends AbstractFetchParent imple
 	public AbstractEntityResultNode(
 			EntityValuedModelPart referencedModelPart,
 			LockMode lockMode,
-			NavigablePath navigablePath,
+			String navigablePath,
 			EntityMappingType targetType,
 			DomainResultCreationState creationState) {
 		super( referencedModelPart, navigablePath );
@@ -62,13 +60,13 @@ public abstract class AbstractEntityResultNode extends AbstractFetchParent imple
 		final TableGroup entityTableGroup = creationState.getSqlAstCreationState().getFromClauseAccess().findTableGroup( navigablePath );
 
 		identifierResult = entityDescriptor.getIdentifierMapping().createDomainResult(
-				navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME ),
+				NavigablePath.append( navigablePath, EntityIdentifierMapping.ROLE_LOCAL_NAME ),
 				entityTableGroup,
 				null,
 				creationState
 		);
 
-//		final DiscriminatorMappDescriptor<?> discriminatorDescriptor = entityDescriptor.getHierarchy().getDiscriminatorDescriptor();
+//		final DiscriminatorDescriptor<?> discriminatorDescriptor = entityDescriptor.getHierarchy().getDiscriminatorDescriptor();
 //		if ( discriminatorDescriptor == null ) {
 //			discriminatorResult = null;
 //		}
@@ -87,7 +85,7 @@ public abstract class AbstractEntityResultNode extends AbstractFetchParent imple
 		}
 		else {
 			versionResult = versionDescriptor.createDomainResult(
-					navigablePath.append( versionDescriptor.getAttributeName() ),
+					NavigablePath.append( navigablePath, versionDescriptor.getAttributeName() ),
 					entityTableGroup,
 					null,
 					creationState
@@ -101,7 +99,7 @@ public abstract class AbstractEntityResultNode extends AbstractFetchParent imple
 		entityDescriptor.visitAttributeMappings(
 				mapping -> attributeDomainResults.add(
 						mapping.createDomainResult(
-								navigablePath.append( mapping.getAttributeName() ),
+								NavigablePath.append( navigablePath, mapping.getAttributeName() ),
 								entityTableGroup,
 								null,
 								creationState

@@ -7,7 +7,6 @@
 package org.hibernate.sql.results.spi;
 
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -17,7 +16,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  */
 public interface EntityResultNode extends ResultSetMappingNode, FetchParent {
 	@Override
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	EntityValuedModelPart getEntityValuedModelPart();
 

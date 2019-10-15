@@ -7,7 +7,6 @@
 package org.hibernate.query.sqm.tree.domain;
 
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.hql.spi.SemanticPathPart;
@@ -22,7 +21,7 @@ import org.hibernate.type.descriptor.java.BasicJavaDescriptor;
  */
 public class SqmBasicValuedSimplePath<T> extends AbstractSqmSimplePath<T> {
 	public SqmBasicValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			NodeBuilder nodeBuilder) {
@@ -30,7 +29,7 @@ public class SqmBasicValuedSimplePath<T> extends AbstractSqmSimplePath<T> {
 	}
 
 	public SqmBasicValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			String explicitAlias,

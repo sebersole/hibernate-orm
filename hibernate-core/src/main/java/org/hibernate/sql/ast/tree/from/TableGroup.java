@@ -12,10 +12,7 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.mapping.ModelPartContainer;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.internal.DomainResultProducer;
-import org.hibernate.sql.ast.spi.SqlAliasBase;
-import org.hibernate.sql.ast.spi.SqlAppender;
 import org.hibernate.sql.ast.spi.SqlAstWalker;
 import org.hibernate.sql.ast.tree.SqlAstNode;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
@@ -29,7 +26,7 @@ import org.hibernate.sql.results.spi.DomainResultCreationState;
  * @author Steve Ebersole
  */
 public interface TableGroup extends SqlAstNode, ColumnReferenceQualifier, DomainResultProducer {
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * If we want to use CTE for TableGroup rendering we will need to know the

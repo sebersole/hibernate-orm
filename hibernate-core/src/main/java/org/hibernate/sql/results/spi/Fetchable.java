@@ -10,7 +10,6 @@ import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.query.NavigablePath;
 
 /**
  * @author Steve Ebersole
@@ -27,7 +26,7 @@ public interface Fetchable extends ModelPart {
 
 	Fetch generateFetch(
 			FetchParent fetchParent,
-			NavigablePath fetchablePath,
+			String fetchablePath,
 			FetchTiming fetchTiming,
 			boolean selected,
 			LockMode lockMode,

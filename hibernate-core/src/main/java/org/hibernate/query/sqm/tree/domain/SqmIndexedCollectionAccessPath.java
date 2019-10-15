@@ -28,7 +28,7 @@ public class SqmIndexedCollectionAccessPath<T> extends AbstractSqmPath<T> implem
 			SqmExpression<?> selectorExpression) {
 		//noinspection unchecked
 		super(
-				pluralDomainPath.getNavigablePath().append( "[]" ),
+				NavigablePath.append( pluralDomainPath.getNavigablePath(), "[]" ),
 				(PluralPersistentAttribute) pluralDomainPath.getReferencedPathSource(),
 				pluralDomainPath,
 				pluralDomainPath.nodeBuilder()
@@ -48,7 +48,7 @@ public class SqmIndexedCollectionAccessPath<T> extends AbstractSqmPath<T> implem
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		// todo (6.0) : this would require some String-ified form of the selector
 		return null;
 	}

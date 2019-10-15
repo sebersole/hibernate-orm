@@ -16,14 +16,13 @@ import java.util.function.Supplier;
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
 import org.hibernate.metamodel.mapping.ModelPartContainer;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 
 /**
  * @author Steve Ebersole
  */
 public class CompositeTableGroup implements VirtualTableGroup {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final EmbeddableValuedModelPart compositionMapping;
 
 	private final TableGroup underlyingTableGroup;
@@ -31,7 +30,7 @@ public class CompositeTableGroup implements VirtualTableGroup {
 	private Set<TableGroupJoin> tableGroupJoins;
 
 	public CompositeTableGroup(
-			NavigablePath navigablePath,
+			String navigablePath,
 			EmbeddableValuedModelPart compositionMapping,
 			TableGroup underlyingTableGroup) {
 		this.navigablePath = navigablePath;
@@ -40,7 +39,7 @@ public class CompositeTableGroup implements VirtualTableGroup {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

@@ -63,7 +63,7 @@ public class AttributePathTests extends BaseSqmUnitTest {
 	private void assertPropertyPath(SqmExpression expression, String expectedFullPath) {
 		assertThat( expression, instanceOf( SqmSimplePath.class ) );
 		final SqmSimplePath domainReferenceBinding = (SqmSimplePath) expression;
-		assertThat( domainReferenceBinding.getNavigablePath().getFullPath(), is( expectedFullPath) );
+		assertThat( domainReferenceBinding.getNavigablePath(), is( expectedFullPath) );
 	}
 
 	@Test

@@ -10,11 +10,10 @@ import java.util.function.Consumer;
 
 import org.hibernate.Internal;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.AssemblerCreationState;
+import org.hibernate.sql.results.spi.BasicResultMappingNode;
 import org.hibernate.sql.results.spi.DomainResultAssembler;
 import org.hibernate.sql.results.spi.Initializer;
-import org.hibernate.sql.results.spi.BasicResultMappingNode;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -24,7 +23,7 @@ public class BasicResult<T> implements BasicResultMappingNode<T> {
 	private final String resultVariable;
 	private final JavaTypeDescriptor<T> javaTypeDescriptor;
 
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 
 	private final DomainResultAssembler<T> assembler;
 
@@ -32,14 +31,14 @@ public class BasicResult<T> implements BasicResultMappingNode<T> {
 			int jdbcValuesArrayPosition,
 			String resultVariable,
 			JavaTypeDescriptor<T> javaTypeDescriptor) {
-		this( jdbcValuesArrayPosition, resultVariable, javaTypeDescriptor, (NavigablePath) null );
+		this( jdbcValuesArrayPosition, resultVariable, javaTypeDescriptor, (String) null );
 	}
 
 	public BasicResult(
 			int jdbcValuesArrayPosition,
 			String resultVariable,
 			JavaTypeDescriptor<T> javaTypeDescriptor,
-			NavigablePath navigablePath) {
+			String navigablePath) {
 		this.resultVariable = resultVariable;
 		this.javaTypeDescriptor = javaTypeDescriptor;
 
@@ -61,7 +60,7 @@ public class BasicResult<T> implements BasicResultMappingNode<T> {
 			String resultVariable,
 			JavaTypeDescriptor<T> javaTypeDescriptor,
 			BasicValueConverter<T,?> valueConverter,
-			NavigablePath navigablePath) {
+			String navigablePath) {
 		this.resultVariable = resultVariable;
 		this.javaTypeDescriptor = javaTypeDescriptor;
 		this.navigablePath = navigablePath;
@@ -80,7 +79,7 @@ public class BasicResult<T> implements BasicResultMappingNode<T> {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

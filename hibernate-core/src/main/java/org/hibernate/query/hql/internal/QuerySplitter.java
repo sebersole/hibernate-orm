@@ -13,7 +13,6 @@ import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.internal.util.collections.Stack;
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.hql.spi.SqmCreationOptions;
 import org.hibernate.query.hql.spi.SqmCreationProcessingState;
 import org.hibernate.query.hql.spi.SqmCreationState;
@@ -121,7 +120,7 @@ public class QuerySplitter {
 		private final SqmRoot unmappedPolymorphicFromElement;
 		private final EntityDomainType mappedDescriptor;
 
-		private Map<NavigablePath, SqmPath> sqmPathCopyMap = new HashMap<>();
+		private Map<String, SqmPath> sqmPathCopyMap = new HashMap<>();
 		private Map<SqmFrom,SqmFrom> sqmFromCopyMap = new HashMap<>();
 
 		private UnmappedPolymorphismReplacer(

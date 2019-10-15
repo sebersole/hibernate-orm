@@ -9,7 +9,6 @@ package org.hibernate.sql.results.internal.domain;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.collection.internal.PersistentArrayHolder;
 import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.CollectionInitializer;
 import org.hibernate.sql.results.spi.RowProcessingState;
 
@@ -18,7 +17,7 @@ import org.hibernate.sql.results.spi.RowProcessingState;
  */
 public class ArrayInitializer implements CollectionInitializer {
 	private final CollectionPersister arrayDescriptor;
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 //	private final DomainResultAssembler listIndexAssembler;
 //	private final DomainResultAssembler elementAssembler;
 
@@ -39,7 +38,7 @@ public class ArrayInitializer implements CollectionInitializer {
 
 	public ArrayInitializer(
 			CollectionPersister arrayDescriptor,
-			NavigablePath navigablePath) {
+			String navigablePath) {
 		this.arrayDescriptor = arrayDescriptor;
 		this.navigablePath = navigablePath;
 	}
@@ -50,7 +49,7 @@ public class ArrayInitializer implements CollectionInitializer {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

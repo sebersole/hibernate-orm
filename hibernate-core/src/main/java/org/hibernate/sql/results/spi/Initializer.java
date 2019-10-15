@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 
 /**
@@ -19,7 +18,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 public interface Initializer {
 	Object getInitializedInstance();
 
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * Step 1 - Resolve the key value for this initializer for the current

@@ -14,9 +14,7 @@ import java.util.Map;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.loader.plan.spi.EntityFetch;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.QueryOptions;
-import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.exec.spi.Callback;
 import org.hibernate.sql.exec.spi.DomainParameterBindingContext;
 import org.hibernate.sql.results.spi.Initializer;
@@ -25,18 +23,14 @@ import org.hibernate.sql.results.spi.JdbcValuesSourceProcessingState;
 import org.hibernate.sql.results.spi.RowProcessingState;
 import org.hibernate.sql.results.spi.RowReader;
 
-import org.jboss.logging.Logger;
-
 /**
  * @author Steve Ebersole
  */
 public class RowProcessingStateStandardImpl implements RowProcessingState {
-	private static final Logger log = Logger.getLogger( RowProcessingStateStandardImpl.class );
-
 	private final JdbcValuesSourceProcessingStateStandardImpl resultSetProcessingState;
 	private final QueryOptions queryOptions;
 
-	private final Map<NavigablePath, Initializer> initializerMap;
+	private final Map<String, Initializer> initializerMap;
 
 	private final JdbcValues jdbcValues;
 	private Object[] currentRowJdbcValues;
@@ -114,7 +108,7 @@ public class RowProcessingStateStandardImpl implements RowProcessingState {
 	}
 
 	@Override
-	public Initializer resolveInitializer(NavigablePath path) {
+	public Initializer resolveInitializer(String path) {
 		return initializerMap == null ? null : initializerMap.get( path );
 	}
 }

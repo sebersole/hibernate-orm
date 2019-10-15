@@ -11,6 +11,12 @@ import java.util.Locale;
 import org.hibernate.NotYetImplementedFor6Exception;
 import org.hibernate.query.QueryLogger;
 import org.hibernate.query.sqm.SemanticQueryWalker;
+import org.hibernate.query.sqm.function.SqmCastTarget;
+import org.hibernate.query.sqm.function.SqmDistinct;
+import org.hibernate.query.sqm.function.SqmExtractUnit;
+import org.hibernate.query.sqm.function.SqmFunction;
+import org.hibernate.query.sqm.function.SqmStar;
+import org.hibernate.query.sqm.function.SqmTrimSpecification;
 import org.hibernate.query.sqm.tree.SqmStatement;
 import org.hibernate.query.sqm.tree.delete.SqmDeleteStatement;
 import org.hibernate.query.sqm.tree.domain.SqmBasicValuedSimplePath;
@@ -25,11 +31,11 @@ import org.hibernate.query.sqm.tree.domain.SqmMinElementPath;
 import org.hibernate.query.sqm.tree.domain.SqmMinIndexPath;
 import org.hibernate.query.sqm.tree.domain.SqmPluralValuedSimplePath;
 import org.hibernate.query.sqm.tree.domain.SqmTreatedPath;
+import org.hibernate.query.sqm.tree.expression.JpaCriteriaParameter;
 import org.hibernate.query.sqm.tree.expression.SqmBinaryArithmetic;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSearched;
 import org.hibernate.query.sqm.tree.expression.SqmCaseSimple;
 import org.hibernate.query.sqm.tree.expression.SqmCollectionSize;
-import org.hibernate.query.sqm.tree.expression.JpaCriteriaParameter;
 import org.hibernate.query.sqm.tree.expression.SqmEntityType;
 import org.hibernate.query.sqm.tree.expression.SqmEnumLiteral;
 import org.hibernate.query.sqm.tree.expression.SqmExpression;
@@ -41,12 +47,6 @@ import org.hibernate.query.sqm.tree.expression.SqmPositionalParameter;
 import org.hibernate.query.sqm.tree.expression.SqmRestrictedSubQueryExpression;
 import org.hibernate.query.sqm.tree.expression.SqmTuple;
 import org.hibernate.query.sqm.tree.expression.SqmUnaryOperation;
-import org.hibernate.query.sqm.function.SqmCastTarget;
-import org.hibernate.query.sqm.function.SqmDistinct;
-import org.hibernate.query.sqm.function.SqmExtractUnit;
-import org.hibernate.query.sqm.function.SqmFunction;
-import org.hibernate.query.sqm.function.SqmStar;
-import org.hibernate.query.sqm.function.SqmTrimSpecification;
 import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
 import org.hibernate.query.sqm.tree.from.SqmCrossJoin;
 import org.hibernate.query.sqm.tree.from.SqmEntityJoin;
@@ -244,7 +244,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 			processStanza(
 					"delete",
 					() -> {
-						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath().getFullPath() );
+						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath() );
 						visitWhereClause( statement.getWhereClause() );
 					}
 			);
@@ -259,7 +259,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 			processStanza(
 					"insert",
 					() -> {
-						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath().getFullPath() );
+						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath() );
 						processStanza(
 								"into",
 								() -> statement.getInsertionTargetPaths().forEach( sqmPath -> sqmPath.accept( this ) )
@@ -290,7 +290,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 			processStanza(
 					"update",
 					() -> {
-						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath().getFullPath() );
+						logWithIndentation( "[target = %s]", statement.getTarget().getNavigablePath() );
 
 						visitSetClause( statement.getSetClause() );
 
@@ -405,7 +405,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 	public Object visitRootPath(SqmRoot sqmRoot) {
 		processStanza(
 				"root",
-				'`' + sqmRoot.getNavigablePath().getFullPath() + '`',
+				'`' + sqmRoot.getNavigablePath() + '`',
 				() -> processJoins( sqmRoot )
 		);
 
@@ -427,7 +427,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 	public Object visitCrossJoin(SqmCrossJoin joinedFromElement) {
 		processStanza(
 				"cross",
-				'`' + joinedFromElement.getNavigablePath().getFullPath() + '`',
+				'`' + joinedFromElement.getNavigablePath() + '`',
 				() -> processJoins( joinedFromElement )
 		);
 
@@ -438,7 +438,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 	public Object visitQualifiedEntityJoin(SqmEntityJoin joinedFromElement) {
 		processStanza(
 				"entity",
-				'`' + joinedFromElement.getNavigablePath().getFullPath() + '`',
+				'`' + joinedFromElement.getNavigablePath() + '`',
 				() -> {
 					if ( joinedFromElement.getJoinPredicate() != null ) {
 						processStanza(
@@ -458,7 +458,7 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 	public Object visitQualifiedAttributeJoin(SqmAttributeJoin joinedFromElement) {
 		processStanza(
 				"attribute",
-				'`' + joinedFromElement.getNavigablePath().getFullPath() + '`',
+				'`' + joinedFromElement.getNavigablePath() + '`',
 				() -> {
 					logIndented( "[fetched = " + joinedFromElement.isFetched() + ']' );
 
@@ -478,28 +478,28 @@ public class SqmTreePrinter implements SemanticQueryWalker<Object> {
 
 	@Override
 	public Object visitBasicValuedPath(SqmBasicValuedSimplePath path) {
-		logWithIndentation( "-> [basic-path] - `%s`", path.getNavigablePath().getFullPath() );
+		logWithIndentation( "-> [basic-path] - `%s`", path.getNavigablePath() );
 
 		return null;
 	}
 
 	@Override
 	public Object visitEmbeddableValuedPath(SqmEmbeddedValuedSimplePath path) {
-		logWithIndentation( "-> [embedded-path] - `%s`", path.getNavigablePath().getFullPath() );
+		logWithIndentation( "-> [embedded-path] - `%s`", path.getNavigablePath() );
 
 		return null;
 	}
 
 	@Override
 	public Object visitEntityValuedPath(SqmEntityValuedSimplePath path) {
-		logWithIndentation( "-> [entity-path] - `%s`", path.getNavigablePath().getFullPath() );
+		logWithIndentation( "-> [entity-path] - `%s`", path.getNavigablePath() );
 
 		return null;
 	}
 
 	@Override
 	public Object visitPluralValuedPath(SqmPluralValuedSimplePath path) {
-		logWithIndentation( "-> [plural-path] - `%s`", path.getNavigablePath().getFullPath() );
+		logWithIndentation( "-> [plural-path] - `%s`", path.getNavigablePath() );
 
 		return null;
 	}

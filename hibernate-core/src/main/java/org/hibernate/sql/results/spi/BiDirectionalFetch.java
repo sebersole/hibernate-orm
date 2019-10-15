@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.spi;
 
-import org.hibernate.query.NavigablePath;
-
 /**
  * @asciidoc
  *
@@ -53,6 +51,7 @@ public interface BiDirectionalFetch extends Fetch {
 	 *
 	 * Different from {@link #getNavigablePath()} which returns this fetch's path, i.e.
 	 * `p.address.owner` and `p.address.owner.address` respectively
+	 * @return
 	 */
-	NavigablePath getReferencedPath();
+	String getReferencedPath();
 }

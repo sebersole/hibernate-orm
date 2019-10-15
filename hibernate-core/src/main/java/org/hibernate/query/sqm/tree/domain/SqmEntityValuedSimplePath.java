@@ -7,7 +7,6 @@
 package org.hibernate.query.sqm.tree.domain;
 
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 import org.hibernate.query.hql.spi.SemanticPathPart;
 import org.hibernate.query.sqm.NodeBuilder;
@@ -20,7 +19,7 @@ import org.hibernate.query.hql.spi.SqmCreationState;
  */
 public class SqmEntityValuedSimplePath<T> extends AbstractSqmSimplePath<T> {
 	public SqmEntityValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedPathSource,
 			SqmPath lhs,
 			NodeBuilder nodeBuilder) {

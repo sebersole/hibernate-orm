@@ -9,7 +9,6 @@ package org.hibernate.query.criteria;
 import javax.persistence.criteria.Path;
 
 import org.hibernate.metamodel.model.domain.EntityDomainType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.PathException;
 
 /**
@@ -20,8 +19,9 @@ import org.hibernate.query.PathException;
 public interface JpaPath<T> extends JpaExpression<T>, Path<T> {
 	/**
 	 * Get this path's NavigablePath
+	 * @return
 	 */
-	NavigablePath getNavigablePath();
+	String getNavigablePath();
 
 	/**
 	 * The source (think "left hand side") of this path

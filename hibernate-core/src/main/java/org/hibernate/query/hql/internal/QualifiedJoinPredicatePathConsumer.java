@@ -40,8 +40,8 @@ public class QualifiedJoinPredicatePathConsumer extends BasicDotIdentifierConsum
 							String.format(
 									Locale.ROOT,
 									"SqmQualifiedJoin predicate referred to SqmRoot [`%s`] other than the join's root [`%s`]",
-									pathRoot.getNavigablePath().getFullPath(),
-									sqmJoin.getNavigablePath().getFullPath()
+									pathRoot.getNavigablePath(),
+									sqmJoin.getNavigablePath()
 							)
 					);
 				}

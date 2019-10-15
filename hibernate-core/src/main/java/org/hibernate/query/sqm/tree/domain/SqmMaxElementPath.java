@@ -8,6 +8,7 @@ package org.hibernate.query.sqm.tree.domain;
 
 import org.hibernate.metamodel.model.domain.ManagedDomainType;
 import org.hibernate.metamodel.model.domain.PluralPersistentAttribute;
+import org.hibernate.query.NavigablePath;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.hql.spi.SemanticPathPart;
 import org.hibernate.query.sqm.SqmPathSource;
@@ -23,7 +24,7 @@ public class SqmMaxElementPath<T> extends AbstractSqmSpecificPluralPartPath<T> {
 	public SqmMaxElementPath(SqmPath<?> pluralDomainPath) {
 		//noinspection unchecked
 		super(
-				pluralDomainPath.getNavigablePath().append( NAVIGABLE_NAME ),
+				NavigablePath.append( pluralDomainPath.getNavigablePath(), NAVIGABLE_NAME ),
 				pluralDomainPath,
 				(PluralPersistentAttribute) pluralDomainPath.getReferencedPathSource()
 		);

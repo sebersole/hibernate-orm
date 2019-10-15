@@ -6,7 +6,6 @@
  */
 package org.hibernate.query.sqm.tree.domain;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.NodeBuilder;
 import org.hibernate.query.sqm.SqmPathSource;
 import org.hibernate.query.sqm.tree.SqmJoinType;
@@ -20,7 +19,7 @@ public abstract class AbstractSqmJoin<O,T> extends AbstractSqmFrom<O,T> implemen
 	private final SqmJoinType joinType;
 
 	public AbstractSqmJoin(
-			NavigablePath navigablePath,
+			String navigablePath,
 			SqmPathSource<T> referencedNavigable,
 			SqmFrom lhs,
 			String alias,

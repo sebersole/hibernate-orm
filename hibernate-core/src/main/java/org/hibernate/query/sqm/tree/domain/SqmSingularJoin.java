@@ -68,7 +68,7 @@ public class SqmSingularJoin<O,T> extends AbstractSqmAttributeJoin<O,T> implemen
 		return String.format(
 				Locale.ROOT,
 				"SqmSingularJoin(%s : %s)",
-				getNavigablePath().getFullPath(),
+				getNavigablePath(),
 				getReferencedPathSource().getPathName()
 		);
 	}

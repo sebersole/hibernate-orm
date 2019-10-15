@@ -25,7 +25,6 @@ import org.hibernate.metamodel.mapping.ModelPart;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
 import org.hibernate.property.access.spi.PropertyAccess;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.query.sqm.sql.SqlAstCreationState;
 import org.hibernate.query.sqm.sql.SqlExpressionResolver;
 import org.hibernate.query.sqm.sql.SqmToSqlAstConverter;
@@ -126,7 +125,7 @@ public class EmbeddedAttributeMapping
 
 	@Override
 	public <T> DomainResult<T> createDomainResult(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			String resultVariable,
 			DomainResultCreationState creationState) {
@@ -140,7 +139,7 @@ public class EmbeddedAttributeMapping
 
 	@Override
 	public void applySqlSelections(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup tableGroup,
 			DomainResultCreationState creationState) {
 		throw new NotYetImplementedFor6Exception( getClass() );
@@ -150,7 +149,7 @@ public class EmbeddedAttributeMapping
 	@Override
 	public Fetch generateFetch(
 			FetchParent fetchParent,
-			NavigablePath fetchablePath,
+			String fetchablePath,
 			FetchTiming fetchTiming,
 			boolean selected,
 			LockMode lockMode,
@@ -225,7 +224,7 @@ public class EmbeddedAttributeMapping
 
 	@Override
 	public TableGroupJoin createTableGroupJoin(
-			NavigablePath navigablePath,
+			String navigablePath,
 			TableGroup lhs,
 			String explicitSourceAlias,
 			JoinType joinType,
@@ -239,13 +238,14 @@ public class EmbeddedAttributeMapping
 				lhs
 		);
 
-		lhs.addTableGroupJoin( new TableGroupJoin( navigablePath, JoinType.INNER, compositeTableGroup, null ) );
-
-		return new TableGroupJoin(
+		final TableGroupJoin tableGroupJoin = new TableGroupJoin(
 				navigablePath,
-				joinType,
-				compositeTableGroup
+				JoinType.INNER,
+				compositeTableGroup,
+				null
 		);
+		lhs.addTableGroupJoin( tableGroupJoin );
+		return tableGroupJoin;
 	}
 
 	@Override

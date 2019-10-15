@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.metamodel.mapping.ManagedMappingType;
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.spi.DomainResultCreationState;
 import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
@@ -22,11 +21,11 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  */
 public abstract class AbstractFetchParent implements FetchParent {
 	private final FetchableContainer fetchContainer;
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 
 	private List<Fetch> fetches;
 
-	public AbstractFetchParent(FetchableContainer fetchContainer, NavigablePath navigablePath) {
+	public AbstractFetchParent(FetchableContainer fetchContainer, String navigablePath) {
 		this.fetchContainer = fetchContainer;
 		this.navigablePath = navigablePath;
 	}
@@ -50,7 +49,7 @@ public abstract class AbstractFetchParent implements FetchParent {
 	}
 
 	@Override
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

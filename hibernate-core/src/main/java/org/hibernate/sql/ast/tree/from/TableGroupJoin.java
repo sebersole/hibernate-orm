@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.ast.tree.from;
 
-import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.JoinType;
 import org.hibernate.sql.ast.spi.SqlAstTreeHelper;
 import org.hibernate.sql.ast.spi.SqlAstWalker;
@@ -20,14 +19,14 @@ import org.hibernate.query.sqm.sql.internal.DomainResultProducer;
  * @author Steve Ebersole
  */
 public class TableGroupJoin implements SqlAstNode, DomainResultProducer {
-	private final NavigablePath navigablePath;
+	private final String navigablePath;
 	private final JoinType joinType;
 	private final TableGroup joinedGroup;
 
 	private Predicate predicate;
 
 	public TableGroupJoin(
-			NavigablePath navigablePath,
+			String navigablePath,
 			JoinType joinType,
 			TableGroup joinedGroup,
 			Predicate predicate) {
@@ -38,7 +37,7 @@ public class TableGroupJoin implements SqlAstNode, DomainResultProducer {
 	}
 
 	public TableGroupJoin(
-			NavigablePath navigablePath,
+			String navigablePath,
 			JoinType joinType,
 			TableGroup joinedGroup) {
 		this( navigablePath, joinType, joinedGroup, null );
@@ -65,7 +64,7 @@ public class TableGroupJoin implements SqlAstNode, DomainResultProducer {
 		sqlTreeWalker.visitTableGroupJoin( this );
 	}
 
-	public NavigablePath getNavigablePath() {
+	public String getNavigablePath() {
 		return navigablePath;
 	}
 

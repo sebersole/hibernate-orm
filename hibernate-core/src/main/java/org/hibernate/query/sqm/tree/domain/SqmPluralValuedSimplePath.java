@@ -27,7 +27,7 @@ import org.hibernate.query.hql.spi.SqmCreationState;
  */
 public class SqmPluralValuedSimplePath<E> extends AbstractSqmSimplePath<E> {
 	public SqmPluralValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			PluralPersistentAttribute referencedNavigable,
 			SqmPath lhs,
 			NodeBuilder nodeBuilder) {
@@ -36,7 +36,7 @@ public class SqmPluralValuedSimplePath<E> extends AbstractSqmSimplePath<E> {
 
 	@SuppressWarnings("WeakerAccess")
 	public SqmPluralValuedSimplePath(
-			NavigablePath navigablePath,
+			String navigablePath,
 			PluralPersistentAttribute referencedNavigable,
 			SqmPath lhs,
 			String explicitAlias,
@@ -78,7 +78,7 @@ public class SqmPluralValuedSimplePath<E> extends AbstractSqmSimplePath<E> {
 		//
 		//	or probably some combination of.  For now,
 
-		final NavigablePath navigablePath = getNavigablePath().append( name );
+		final String navigablePath = NavigablePath.append( getNavigablePath(), name );
 		return creationState.getProcessingStateStack().getCurrent().getPathRegistry().resolvePath(
 				navigablePath,
 				np -> {
