@@ -50,6 +50,7 @@ import org.hibernate.sql.results.spi.Fetch;
 import org.hibernate.sql.results.spi.FetchParent;
 import org.hibernate.type.BasicType;
 import org.hibernate.type.CompositeType;
+import org.hibernate.type.EntityType;
 import org.hibernate.type.descriptor.java.ImmutableMutabilityPlan;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.descriptor.java.MutabilityPlan;
@@ -580,4 +581,26 @@ public class MappingModelCreationHelper {
 
 		return (EmbeddedAttributeMapping) embeddableMappingType.getEmbeddedValueMapping();
 	}
+
+	public static SingularAssociationAttributeMapping buildSingularAssociationAttributeMapping(
+			String attrName,
+			int stateArrayPosition,
+			Property bootProperty,
+			ManagedMappingType declaringType,
+			EntityType attrType,
+			PropertyAccess propertyAccess,
+			CascadeStyle cascadeStyle,
+			MappingModelCreationProcess creationProcess) {
+
+		return new SingularAssociationAttributeMapping(
+				attrName,
+				stateArrayPosition,
+				null,
+				null,
+				declaringType,
+				declaringType,
+				propertyAccess
+		);
+	}
+
 }

@@ -6259,6 +6259,18 @@ public abstract class AbstractEntityPersister
 					creationProcess
 			);
 		}
+		else if ( attrType instanceof EntityType ) {
+			return MappingModelCreationHelper.buildSingularAssociationAttributeMapping(
+					attrName,
+					stateArrayPosition,
+					bootProperty,
+					declaringType,
+					(EntityType) attrType,
+					propertyAccess,
+					tupleAttrDefinition.getCascadeStyle(),
+					creationProcess
+			);
+		}
 
 		// todo (6.0) : for now ignore any non basic-typed attributes
 

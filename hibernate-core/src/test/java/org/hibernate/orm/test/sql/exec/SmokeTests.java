@@ -61,6 +61,11 @@ public class SmokeTests {
 					simpleEntity.setGender2( MALE );
 					simpleEntity.setComponent( new Component( "a1", "a2" ) );
 					session.save( simpleEntity );
+					OtherEntity otherEntity = new OtherEntity();
+					otherEntity.setId( 2 );
+					otherEntity.setName( "Bar" );
+					otherEntity.setSimpleEntity( simpleEntity );
+					session.save( otherEntity );
 				}
 		);
 	}
@@ -73,6 +78,7 @@ public class SmokeTests {
 								work -> {
 									Statement statement = work.createStatement();
 									statement.execute( "delete from mapping_simple_entity" );
+									statement.execute( "delete from mapping_other_entity" );
 									statement.close();
 								}
 						)

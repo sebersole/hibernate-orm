@@ -45,7 +45,7 @@ public class SingularAssociationAttributeMapping extends AbstractSingularAttribu
 
 	@Override
 	public EntityMappingType getEntityMappingType() {
-		return null;
+		return (EntityMappingType)getMappedTypeDescriptor();
 	}
 
 	@Override

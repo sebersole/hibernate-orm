@@ -42,6 +42,7 @@ import org.hibernate.query.sqm.spi.BaseSemanticQueryWalker;
 import org.hibernate.query.sqm.spi.JdbcParameterBySqmParameterAccess;
 import org.hibernate.query.sqm.sql.internal.BasicValuedPathInterpretation;
 import org.hibernate.query.sqm.sql.internal.EmbeddableValuedPathInterpretation;
+import org.hibernate.query.sqm.sql.internal.EntityValuedPathInterpretation;
 import org.hibernate.query.sqm.sql.internal.SqlAstQuerySpecProcessingStateImpl;
 import org.hibernate.query.sqm.sql.internal.SqmParameterInterpretation;
 import org.hibernate.query.sqm.sql.internal.SqmPathInterpretation;
@@ -677,10 +678,7 @@ public abstract class BaseSqmToSqlAstConverter
 
 	@Override
 	public SqmPathInterpretation<?> visitEntityValuedPath(SqmEntityValuedSimplePath sqmPath) {
-		final SqmPath<?> lhs = sqmPath.getLhs();
-		assert lhs != null;
-
-		return (SqmPathInterpretation) sqmPath;
+		return EntityValuedPathInterpretation.from( sqmPath, this);
 	}
 
 	@Override
