@@ -16,7 +16,6 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.UnionSubclassEntityPersister;
 
 import org.hibernate.testing.orm.junit.DomainModel;
-import org.hibernate.testing.orm.junit.FailureExpected;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
@@ -34,14 +33,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 @DomainModel(
 		annotatedClasses = {
-				TablePerClassInheritanceTest.Customer.class,
-				TablePerClassInheritanceTest.DomesticCustomer.class,
-				TablePerClassInheritanceTest.ForeignCustomer.class
+				TablePerClassInheritanceWithAbstractRootTest.Customer.class,
+				TablePerClassInheritanceWithAbstractRootTest.DomesticCustomer.class,
+				TablePerClassInheritanceWithAbstractRootTest.ForeignCustomer.class
 		}
 )
 @ServiceRegistry
 @SessionFactory
-public class TablePerClassInheritanceTest {
+public class TablePerClassInheritanceWithAbstractRootTest {
 
 	@Test
 	public void basicTest(SessionFactoryScope scope) {
@@ -75,7 +74,6 @@ public class TablePerClassInheritanceTest {
 	}
 
 	@Test
-	@FailureExpected
 	public void rootQueryExecutionTest(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -109,7 +107,6 @@ public class TablePerClassInheritanceTest {
 	}
 
 	@Test
-	@FailureExpected
 	public void subclassQueryExecutionTest(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -140,7 +137,7 @@ public class TablePerClassInheritanceTest {
 		);
 	}
 
-//	@BeforeEach
+	@BeforeEach
 	public void createTestData(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {
@@ -150,7 +147,7 @@ public class TablePerClassInheritanceTest {
 		);
 	}
 
-//	@AfterEach
+	@AfterEach
 	public void cleanupTestData(SessionFactoryScope scope) {
 		scope.inTransaction(
 				session -> {

@@ -5450,8 +5450,6 @@ public abstract class AbstractEntityPersister
 			return accessOptimizer.getPropertyValues( entity );
 		}
 
-		final Collection<AttributeMapping> attributeMappings = getAttributeMappings();
-
 		final Object[] result = new Object[this.attributeMappings.size()];
 		for ( int i = 0; i < this.attributeMappings.size(); i++ ) {
 			result[i] = this.attributeMappings.get( i ).getPropertyAccess().getGetter().getForInsert(
@@ -6070,7 +6068,7 @@ public abstract class AbstractEntityPersister
 	private List<AttributeMapping> attributeMappings;
 	private List<Fetchable> staticFetchableList;
 
-	private ReflectionOptimizer.AccessOptimizer accessOptimizer;
+	protected ReflectionOptimizer.AccessOptimizer accessOptimizer;
 
 	@Override
 	public void visitAttributeMappings(Consumer<AttributeMapping> action) {
@@ -6110,17 +6108,7 @@ public abstract class AbstractEntityPersister
 				);
 			}
 
-			if ( getDiscriminatorType() == null && shouldProcessSuperMapping() ) {
-				discriminatorMapping = null;
-			}
-			else {
-				discriminatorMapping = new EntityDiscriminatorMappingImpl(
-						this,
-						getRootTableName(),
-						getDiscriminatorColumnName(),
-						(BasicType) getDiscriminatorType()
-				);
-			}
+			buildDiscriminatorMapping();
 
 			// todo (6.0) : support for natural-id not yet implemented
 			naturalIdMapping = null;
@@ -6133,14 +6121,13 @@ public abstract class AbstractEntityPersister
 				.getEntityBinding( getEntityName() );
 
 		final EntityMetamodel currentEntityMetamodel = this.getEntityMetamodel();
-
-		int stateArrayPosition = superMappingType == null ? 0 : superMappingType.getNumberOfAttributeMappings();
+		int stateArrayPosition = getStateArrayInitialPosition( creationProcess );
 
 		for ( int i = 0; i < currentEntityMetamodel.getPropertySpan(); i++ ) {
 			final NonIdentifierAttribute runtimeAttrDefinition = currentEntityMetamodel.getProperties()[i];
 			final Property bootProperty = bootEntityDescriptor.getProperty( runtimeAttrDefinition.getName() );
 
-			if ( superMappingType != null && superMappingType.findAttributeMapping( bootProperty.getName() ) != null && shouldProcessSuperMapping() ) {
+			if ( superMappingType != null && superMappingType.findAttributeMapping( bootProperty.getName() ) != null ) {
 				// its defined on the super-type, skip it here
 			}
 			else {
@@ -6166,6 +6153,33 @@ public abstract class AbstractEntityPersister
 		}
 		else {
 			accessOptimizer = null;
+		}
+	}
+
+	protected int getStateArrayInitialPosition(MappingModelCreationProcess creationProcess) {
+		// todo (6.0) not sure this is correct in case of SingleTable Inheritance and for Table per class when the selection is the root
+		int stateArrayPosition;
+		if ( superMappingType != null ) {
+			( (InFlightEntityMappingType) superMappingType ).prepareMappingModel( creationProcess );
+			stateArrayPosition = superMappingType.getNumberOfAttributeMappings();
+		}
+		else {
+			stateArrayPosition = 0;
+		}
+		return stateArrayPosition;
+	}
+
+	protected void buildDiscriminatorMapping() {
+		if ( getDiscriminatorType() == null) {
+			discriminatorMapping = null;
+		}
+		else {
+			discriminatorMapping = new EntityDiscriminatorMappingImpl(
+					this,
+					getRootTableName(),
+					getDiscriminatorColumnName(),
+					(BasicType) getDiscriminatorType()
+			);
 		}
 	}
 
@@ -6489,6 +6503,7 @@ public abstract class AbstractEntityPersister
 			EntityMappingType treatTargetType) {
 		if ( treatTargetType == null ) {
 			getStaticFetchableList().forEach( fetchableConsumer );
+//			staticFetchableList.forEach( fetchableConsumer );
 			// EARLY EXIT!!!
 			return;
 		}
