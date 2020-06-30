@@ -6,26 +6,17 @@
  */
 package org.hibernate.sql.results.internal.domain;
 
-import org.hibernate.LockMode;
-import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.CollectionKey;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.mapping.Association;
 import org.hibernate.metamodel.mapping.AttributeMapping;
-import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
-import org.hibernate.metamodel.mapping.MappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
 import org.hibernate.sql.results.graph.BiDirectionalFetch;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
-import org.hibernate.sql.results.graph.DomainResultCreationState;
-import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.FetchParentAccess;
 import org.hibernate.sql.results.graph.Fetchable;
@@ -39,7 +30,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 /**
  * @author Andrea Boriero
  */
-public class BiDirectionalFetchImpl implements BiDirectionalFetch, Association {
+public class BiDirectionalFetchImpl implements BiDirectionalFetch {
 	private final FetchTiming timing;
 	private final NavigablePath navigablePath;
 	private final Fetchable fetchable;
@@ -104,58 +95,6 @@ public class BiDirectionalFetchImpl implements BiDirectionalFetch, Association {
 	@Override
 	public boolean hasTableGroup() {
 		return true;
-	}
-
-	@Override
-	public String getFetchableName() {
-		return fetchable.getFetchableName();
-	}
-
-	@Override
-	public String getPartName() {
-		return fetchable.getFetchableName();
-	}
-
-	@Override
-	public NavigableRole getNavigableRole() {
-		return fetchable.getNavigableRole();
-	}
-
-	@Override
-	public EntityMappingType findContainingEntityMapping() {
-		return fetchable.findContainingEntityMapping();
-	}
-
-	@Override
-	public MappingType getPartMappingType() {
-		return fetchable.getPartMappingType();
-	}
-
-	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
-		return fetchable.getJavaTypeDescriptor();
-	}
-
-	@Override
-	public FetchStrategy getMappedFetchOptions() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public ForeignKeyDescriptor getForeignKeyDescriptor() {
-		return ( (Association) fetchParent ).getForeignKeyDescriptor();
-	}
-
-	@Override
-	public Fetch generateFetch(
-			FetchParent fetchParent,
-			NavigablePath fetchablePath,
-			FetchTiming fetchTiming,
-			boolean selected,
-			LockMode lockMode,
-			String resultVariable,
-			DomainResultCreationState creationState) {
-		throw new UnsupportedOperationException();
 	}
 
 	private static class CircularFetchAssembler implements DomainResultAssembler {

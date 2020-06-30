@@ -194,9 +194,8 @@ public class OneToOneSecondPass implements SecondPass {
 					manyToOne.setIgnoreNotFound( ignoreNotFound );
 					manyToOne.setCascadeDeleteEnabled( value.isCascadeDeleteEnabled() );
 					manyToOne.setFetchMode( value.getFetchMode() );
-					manyToOne.setLazy( value.isLazy() );
+					manyToOne.setLazyToOneOption( value.getLazyToOneOption() );
 					manyToOne.setReferencedEntityName( value.getReferencedEntityName() );
-					manyToOne.setUnwrapProxy( value.isUnwrapProxy() );
 					prop.setValue( manyToOne );
 					Iterator otherSideJoinKeyColumns = otherSideJoin.getKey().getColumnIterator();
 					while ( otherSideJoinKeyColumns.hasNext() ) {

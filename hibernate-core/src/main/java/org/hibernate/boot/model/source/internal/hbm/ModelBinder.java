@@ -18,6 +18,7 @@ import java.util.Properties;
 import org.hibernate.AssertionFailure;
 import org.hibernate.EntityMode;
 import org.hibernate.FetchMode;
+import org.hibernate.annotations.LazyToOneOption;
 import org.hibernate.boot.MappingException;
 import org.hibernate.boot.jaxb.Origin;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmNamedNativeQueryType;
@@ -2135,13 +2136,23 @@ public class ModelBinder {
 			oneToOneBinding.setForeignKeyType( ForeignKeyDirection.TO_PARENT );
 		}
 
-		oneToOneBinding.setLazy( oneToOneSource.getFetchCharacteristics().getFetchTiming() == FetchTiming.DELAYED );
+		if ( oneToOneSource.getFetchCharacteristics().getFetchTiming() == FetchTiming.DELAYED ) {
+			if ( oneToOneSource.getFetchCharacteristics().isUnwrapProxies() ) {
+				oneToOneBinding.setLazyToOneOption( LazyToOneOption.NO_PROXY );
+			}
+			else {
+				oneToOneBinding.setLazyToOneOption( LazyToOneOption.PROXY );
+			}
+		}
+		else {
+			oneToOneBinding.setLazyToOneOption( LazyToOneOption.FALSE );
+		}
+
 		oneToOneBinding.setFetchMode(
 				oneToOneSource.getFetchCharacteristics().getFetchStyle() == FetchStyle.SELECT
 						? FetchMode.SELECT
 						: FetchMode.JOIN
 		);
-		oneToOneBinding.setUnwrapProxy( oneToOneSource.getFetchCharacteristics().isUnwrapProxies() );
 
 
 		if ( StringHelper.isNotEmpty( oneToOneSource.getReferencedEntityAttributeName() ) ) {
@@ -2265,8 +2276,18 @@ public class ModelBinder {
 			manyToOneBinding.setReferenceToPrimaryKey( true );
 		}
 
-		manyToOneBinding.setLazy( manyToOneSource.getFetchCharacteristics().getFetchTiming() == FetchTiming.DELAYED );
-		manyToOneBinding.setUnwrapProxy( manyToOneSource.getFetchCharacteristics().isUnwrapProxies() );
+		if ( manyToOneSource.getFetchCharacteristics().getFetchTiming() == FetchTiming.DELAYED ) {
+			if ( manyToOneSource.getFetchCharacteristics().isUnwrapProxies() ) {
+				manyToOneBinding.setLazyToOneOption( LazyToOneOption.NO_PROXY );
+			}
+			else {
+				manyToOneBinding.setLazyToOneOption( LazyToOneOption.PROXY );
+			}
+		}
+		else {
+			manyToOneBinding.setLazyToOneOption( LazyToOneOption.FALSE );
+		}
+
 		manyToOneBinding.setFetchMode(
 				manyToOneSource.getFetchCharacteristics().getFetchStyle() == FetchStyle.SELECT
 						? FetchMode.SELECT

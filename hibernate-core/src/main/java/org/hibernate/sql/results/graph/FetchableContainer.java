@@ -17,6 +17,13 @@ import org.hibernate.metamodel.mapping.ModelPartContainer;
 public interface FetchableContainer extends ModelPartContainer {
 	int getNumberOfFetchables();
 
+	default Fetchable getKeyFetchable() {
+		return null;
+	}
+
+	/**
+	 * There should only ever be at most one ket fetchable
+	 */
 	default void visitKeyFetchables(
 			Consumer<Fetchable> fetchableConsumer,
 			EntityMappingType treatTargetType) {

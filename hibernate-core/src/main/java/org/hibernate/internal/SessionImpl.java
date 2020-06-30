@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.persistence.CacheRetrieveMode;
 import javax.persistence.CacheStoreMode;
@@ -990,6 +991,51 @@ public class SessionImpl
 			Object id,
 			boolean eager,
 			boolean nullable) {
+		return performInternalLoad(
+				entityName,
+				id,
+				(s, o) -> {
+					final LoadEventListener.LoadType type;
+					if ( nullable ) {
+						type = LoadEventListener.INTERNAL_LOAD_NULLABLE;
+					}
+					else {
+						type = eager
+								? LoadEventListener.INTERNAL_LOAD_EAGER
+								: LoadEventListener.INTERNAL_LOAD_LAZY;
+					}
+
+					LoadEvent event = loadEvent;
+					loadEvent = null;
+
+					event = recycleEventInstance( event, id, entityName );
+
+					fireLoadNoChecks( event, type );
+
+					Object result = event.getResult();
+
+					if ( !nullable ) {
+						UnresolvableObjectException.throwIfNull( result, id, entityName );
+					}
+
+					if ( loadEvent == null ) {
+						event.setEntityClassName( null );
+						event.setEntityId( null );
+						event.setInstanceToLoad( null );
+						event.setResult( null );
+						loadEvent = event;
+					}
+
+					return result;
+				}
+		);
+	}
+
+	protected Object performInternalLoad(
+			String entityName,
+			Object id,
+			BiFunction<String,Object,Object> handler) {
+
 		final EffectiveEntityGraph effectiveEntityGraph = getLoadQueryInfluencers().getEffectiveEntityGraph();
 		final GraphSemantic semantic = effectiveEntityGraph.getSemantic();
 		final RootGraphImplementor<?> graph = effectiveEntityGraph.getGraph();
@@ -1003,37 +1049,7 @@ public class SessionImpl
 		}
 
 		try {
-			final LoadEventListener.LoadType type;
-			if ( nullable ) {
-				type = LoadEventListener.INTERNAL_LOAD_NULLABLE;
-			}
-			else {
-				type = eager
-						? LoadEventListener.INTERNAL_LOAD_EAGER
-						: LoadEventListener.INTERNAL_LOAD_LAZY;
-			}
-
-			LoadEvent event = loadEvent;
-			loadEvent = null;
-
-			event = recycleEventInstance( event, id, entityName );
-
-			fireLoadNoChecks( event, type );
-
-			Object result = event.getResult();
-
-			if ( !nullable ) {
-				UnresolvableObjectException.throwIfNull( result, id, entityName );
-			}
-
-			if ( loadEvent == null ) {
-				event.setEntityClassName( null );
-				event.setEntityId( null );
-				event.setInstanceToLoad( null );
-				event.setResult( null );
-				loadEvent = event;
-			}
-			return result;
+			return handler.apply( entityName, id );
 		}
 		finally {
 			if ( clearedEffectiveGraph ) {

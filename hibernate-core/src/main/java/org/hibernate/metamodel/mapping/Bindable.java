@@ -78,6 +78,10 @@ public interface Bindable {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
+	default void visitJdbcTypes(Consumer<JdbcMapping> action, TypeConfiguration typeConfiguration) {
+		visitJdbcTypes( action, Clause.IRRELEVANT, typeConfiguration );
+	}
+
 	/**
 	 * @asciidoc
 	 *

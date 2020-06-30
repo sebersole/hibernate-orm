@@ -19,6 +19,9 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public interface DomainResultAssembler<J> {
+	// todo (6.0) : rename GraphNodeAssembler (?)
+	// todo (6.0) : move (and related) to new `org.hibernate.sql.results.assemble` package (?)
+
 	/**
 	 * The main "assembly" contract.  Assemble the result and return it.
 	 */

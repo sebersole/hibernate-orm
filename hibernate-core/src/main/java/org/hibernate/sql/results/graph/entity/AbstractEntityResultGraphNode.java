@@ -6,8 +6,6 @@
  */
 package org.hibernate.sql.results.graph.entity;
 
-import java.util.ArrayList;
-
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.mapping.EntityDiscriminatorMapping;
 import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
@@ -15,15 +13,13 @@ import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.EntityRowIdMapping;
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
 import org.hibernate.metamodel.mapping.EntityVersionMapping;
-import org.hibernate.metamodel.mapping.ManagedMappingType;
-import org.hibernate.metamodel.mapping.internal.SingleAttributeIdentifierMapping;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
 import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.results.graph.AbstractFetchParent;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
 /**
@@ -33,7 +29,8 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  */
 public abstract class AbstractEntityResultGraphNode extends AbstractFetchParent implements EntityResultGraphNode {
 	private final EntityValuedModelPart referencedModelPart;
-	private final DomainResult identifierResult;
+
+	private final Fetch identifierFetch;
 	private final DomainResult discriminatorResult;
 	private final DomainResult versionResult;
 	private final DomainResult<Object> rowIdResult;
@@ -68,26 +65,11 @@ public abstract class AbstractEntityResultGraphNode extends AbstractFetchParent 
 		final EntityIdentifierMapping identifierMapping = entityDescriptor.getIdentifierMapping();
 
 		if ( navigablePath.getParent() == null && !creationState.forceIdentifierSelection() ) {
-			identifierResult = null;
-			if ( identifierMapping instanceof SingleAttributeIdentifierMapping ) {
-				identifierMapping.createDomainResult(
-						navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME ),
-						entityTableGroup,
-						null,
-						creationState
-				);
-			}
-			else {
-				visitCompositeIdentifierMapping( navigablePath, creationState, identifierMapping, entityTableGroup );
-			}
+			identifierFetch = null;
+			creationState.buildKeyFetch( this );
 		}
 		else {
-			identifierResult = entityDescriptor.getIdentifierMapping().createDomainResult(
-					navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME ),
-					entityTableGroup,
-					null,
-					creationState
-			);
+			identifierFetch = creationState.buildKeyFetch( this );
 		}
 
 		final EntityDiscriminatorMapping discriminatorMapping = getDiscriminatorMapping( entityDescriptor, entityTableGroup );
@@ -130,35 +112,6 @@ public abstract class AbstractEntityResultGraphNode extends AbstractFetchParent 
 		}
 	}
 
-	private void visitCompositeIdentifierMapping(
-			NavigablePath navigablePath,
-			DomainResultCreationState creationState,
-			EntityIdentifierMapping identifierMapping,
-			TableGroup entityTableGroup) {
-		ManagedMappingType mappingType = (ManagedMappingType) identifierMapping.getPartMappingType();
-		fetches = new ArrayList<>();
-		mappingType.visitAttributeMappings(
-				attributeMapping -> {
-					if ( attributeMapping instanceof ToOneAttributeMapping ) {
-						( (ToOneAttributeMapping) attributeMapping ).getForeignKeyDescriptor().createDomainResult(
-								navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME ),
-								entityTableGroup,
-								null,
-								creationState
-						);
-					}
-					else {
-						attributeMapping.createDomainResult(
-								navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME ),
-								entityTableGroup,
-								null,
-								creationState
-						);
-					}
-				}
-		);
-	}
-
 	protected EntityDiscriminatorMapping getDiscriminatorMapping(
 			EntityMappingType entityDescriptor,
 			TableGroup entityTableGroup) {
@@ -182,10 +135,6 @@ public abstract class AbstractEntityResultGraphNode extends AbstractFetchParent 
 
 	public LockMode getLockMode() {
 		return lockMode;
-	}
-
-	public DomainResult getIdentifierResult() {
-		return identifierResult;
 	}
 
 	public DomainResult getDiscriminatorResult() {

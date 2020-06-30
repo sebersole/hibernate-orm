@@ -13,13 +13,12 @@ import java.util.function.Consumer;
 import org.hibernate.LockMode;
 import org.hibernate.collection.spi.CollectionInitializerProducer;
 import org.hibernate.collection.spi.CollectionSemantics;
-import org.hibernate.engine.FetchTiming;
-import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.results.graph.collection.internal.SetInitializerProducer;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.FetchParent;
+import org.hibernate.sql.results.graph.collection.internal.SetInitializerProducer;
+import org.hibernate.sql.results.internal.ResultsHelper;
 
 /**
  * @author Steve Ebersole
@@ -58,15 +57,7 @@ public abstract class AbstractSetSemantics<S extends Set<?>> implements Collecti
 			DomainResultCreationState creationState) {
 		return new SetInitializerProducer(
 				attributeMapping,
-				attributeMapping.getElementDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ELEMENT.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				)
+				ResultsHelper.extractElementFetch( creationState.buildFetches( fetchParent ) )
 		);
 	}
 }

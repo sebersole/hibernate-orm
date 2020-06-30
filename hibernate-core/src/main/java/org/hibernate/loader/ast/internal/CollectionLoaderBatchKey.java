@@ -62,13 +62,13 @@ public class CollectionLoaderBatchKey implements CollectionLoader {
 		this.attributeMapping = attributeMapping;
 		this.batchSize = batchSize;
 
-		this.keyJdbcCount = attributeMapping.getKeyDescriptor().getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
+		this.keyJdbcCount = attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart().getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
 
 		this.batchSizeJdbcParameters = new ArrayList<>();
 		this.batchSizeSqlAst = LoaderSelectBuilder.createSelect(
 				attributeMapping,
 				null,
-				attributeMapping.getKeyDescriptor(),
+				attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart(),
 				null,
 				batchSize,
 				influencers,
@@ -98,7 +98,7 @@ public class CollectionLoaderBatchKey implements CollectionLoader {
 			final SelectStatement sqlAst = LoaderSelectBuilder.createSelect(
 					attributeMapping,
 					null,
-					attributeMapping.getKeyDescriptor(),
+					attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart(),
 					null,
 					batchSize,
 					session.getLoadQueryInfluencers(),
@@ -107,7 +107,11 @@ public class CollectionLoaderBatchKey implements CollectionLoader {
 					session.getFactory()
 			);
 
-			new SingleIdLoadPlan( attributeMapping.getKeyDescriptor(), sqlAst, jdbcParameters ).load( key, LockOptions.READ, session );
+			new SingleIdLoadPlan(
+					attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart(),
+					sqlAst,
+					jdbcParameters ).load( key, LockOptions.READ, session
+			);
 		}
 		else {
 			batchLoad( batchIds, session );
@@ -145,7 +149,7 @@ public class CollectionLoaderBatchKey implements CollectionLoader {
 						getLoadable(),
 						// null here means to select everything
 						null,
-						getLoadable().getKeyDescriptor(),
+						getLoadable().getForeignKeyDescriptor().getReferringSide().getKeyPart(),
 						null,
 						batchIds.length,
 						session.getLoadQueryInfluencers(),
@@ -168,7 +172,7 @@ public class CollectionLoaderBatchKey implements CollectionLoader {
 			final Iterator<JdbcParameter> paramItr = jdbcParameters.iterator();
 
 			for ( int i = smallBatchStart; i < smallBatchStart + smallBatchLength; i++ ) {
-				getLoadable().getKeyDescriptor().visitJdbcValues(
+				getLoadable().getForeignKeyDescriptor().getReferringSide().getKeyPart().visitJdbcValues(
 						batchIds[i],
 						Clause.WHERE,
 						(value, type) -> {

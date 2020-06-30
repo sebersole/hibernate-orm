@@ -6,13 +6,15 @@
  */
 package org.hibernate;
 
+import org.hibernate.metamodel.mapping.NonTransientException;
+
 /**
  * Indicates that an expected getter or setter method could not be
  * found on a class.
  *
  * @author Gavin King
  */
-public class PropertyNotFoundException extends MappingException {
+public class PropertyNotFoundException extends MappingException implements NonTransientException {
 	/**
 	 * Constructs a PropertyNotFoundException given the specified message.
 	 *

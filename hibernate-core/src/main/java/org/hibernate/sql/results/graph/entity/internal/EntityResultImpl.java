@@ -74,7 +74,7 @@ public class EntityResultImpl extends AbstractEntityResultGraphNode implements E
 						this,
 						getNavigablePath(),
 						getLockMode(),
-						getIdentifierResult(),
+						getKeyFetch(),
 						getDiscriminatorResult(),
 						getVersionResult(),
 						getRowIdResult(),

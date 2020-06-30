@@ -7,20 +7,19 @@
 package org.hibernate.sql.results;
 
 import org.hibernate.HibernateException;
-import org.hibernate.sql.results.graph.DomainResult;
 
 /**
- * Base for problems creating {@link DomainResult}
- * instances
+ * Exception for problems creating parts of the DomainResultAssembler
+ * and Initializer trees
  *
  * @author Steve Ebersole
  */
-public class DomainResultCreationException extends HibernateException {
-	public DomainResultCreationException(String message) {
+public class AssemblerCreationException extends HibernateException {
+	public AssemblerCreationException(String message) {
 		super( message );
 	}
 
-	public DomainResultCreationException(String message, Throwable cause) {
+	public AssemblerCreationException(String message, Throwable cause) {
 		super( message, cause );
 	}
 }

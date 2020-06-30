@@ -95,7 +95,7 @@ public interface ModelPart extends MappingModelExpressable {
 	}
 
 	default void visitColumns(ColumnConsumer consumer) {
-
+		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
 	EntityMappingType findContainingEntityMapping();

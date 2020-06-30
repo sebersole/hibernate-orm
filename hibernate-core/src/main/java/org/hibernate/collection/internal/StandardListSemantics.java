@@ -23,9 +23,11 @@ import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.from.TableGroup;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.collection.internal.ListInitializerProducer;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.FetchParent;
+import org.hibernate.sql.results.internal.ResultsHelper;
 
 /**
  * Hibernate's standard CollectionSemantics for Lists
@@ -78,27 +80,18 @@ public class StandardListSemantics implements CollectionSemantics<List> {
 			String resultVariable,
 			LockMode lockMode,
 			DomainResultCreationState creationState) {
-		return new ListInitializerProducer(
-				attributeMapping,
-				attributeMapping.getIndexDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.INDEX.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				),
-				attributeMapping.getElementDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ELEMENT.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				)
+		final Fetch elementFetch = ResultsHelper.extractElementFetch( creationState.buildFetches( fetchParent ) );
+		final Fetch indexFetch = attributeMapping.getIndexDescriptor().generateFetch(
+				fetchParent,
+				navigablePath.append( CollectionPart.Nature.INDEX.getName() ),
+				FetchTiming.IMMEDIATE,
+				selected,
+				lockMode,
+				null,
+				creationState
 		);
+
+		return new ListInitializerProducer( attributeMapping, indexFetch, elementFetch );
 	}
 
 	@Override

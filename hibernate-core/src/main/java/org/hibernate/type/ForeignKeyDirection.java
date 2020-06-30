@@ -25,6 +25,7 @@ public enum ForeignKeyDirection {
 		}
 
 	},
+
 	/**
 	 * A foreign key from parent to child
 	 */
@@ -33,7 +34,26 @@ public enum ForeignKeyDirection {
 		public boolean cascadeNow(CascadePoint cascadePoint) {
 			return cascadePoint != CascadePoint.AFTER_INSERT_BEFORE_DELETE;
 		}
-	};
+	},
+
+	/**
+	 * The referring side of the FK (FROM_PARENT)
+	 */
+	REFERRING {
+		@Override
+		public boolean cascadeNow(CascadePoint cascadePoint) {
+			return FROM_PARENT.cascadeNow( cascadePoint );
+		}
+	},
+
+	TARGET {
+		@Override
+		public boolean cascadeNow(CascadePoint cascadePoint) {
+			return TO_PARENT.cascadeNow( cascadePoint );
+		}
+	}
+
+	;
 
 	/**
 	 * Should we cascade at this cascade point?
@@ -45,4 +65,20 @@ public enum ForeignKeyDirection {
 	 * @see org.hibernate.engine.internal.Cascade
 	 */
 	public abstract boolean cascadeNow(CascadePoint cascadePoint);
+
+	/**
+	 * Normalize the direction (this) to either {@link #REFERRING} or
+	 * {@link #TARGET}
+	 */
+	public ForeignKeyDirection normalize() {
+		if ( this == FROM_PARENT ) {
+			return REFERRING;
+		}
+
+		if ( this == TO_PARENT ) {
+			return TARGET;
+		}
+
+		return this;
+	}
 }

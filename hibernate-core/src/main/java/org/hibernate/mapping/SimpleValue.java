@@ -172,7 +172,7 @@ public abstract class SimpleValue implements KeyValue {
 		return columns.iterator();
 	}
 
-	public List getConstraintColumns() {
+	public List<Selectable> getConstraintColumns() {
 		return columns;
 	}
 

@@ -6,7 +6,6 @@
  */
 package org.hibernate.metamodel.mapping.internal;
 
-import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
@@ -44,14 +43,14 @@ public abstract class AbstractStateArrayContributorMapping
 	public AbstractStateArrayContributorMapping(
 			String name,
 			StateArrayContributorMetadataAccess attributeMetadataAccess,
-			FetchStrategy mappedFetchStrategy,
+			FetchOptions fetchOptions,
 			int stateArrayPosition,
 			ManagedMappingType declaringType) {
 		this(
 				name,
 				attributeMetadataAccess,
-				mappedFetchStrategy.getTiming(),
-				mappedFetchStrategy.getStyle(),
+				fetchOptions.getTiming(),
+				fetchOptions.getStyle(),
 				stateArrayPosition,
 				declaringType
 		);

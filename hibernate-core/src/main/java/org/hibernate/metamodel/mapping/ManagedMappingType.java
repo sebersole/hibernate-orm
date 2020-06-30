@@ -9,8 +9,11 @@ package org.hibernate.metamodel.mapping;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+import org.hibernate.metamodel.mapping.internal.MappingModelCreationProcess;
 import org.hibernate.sql.results.graph.FetchableContainer;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+
+import static org.hibernate.metamodel.mapping.internal.MappingModelCreationProcess.*;
 
 /**
  * Commonality in regards to the mapping type system for all managed domain
@@ -18,7 +21,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  *
  * @author Steve Ebersole
  */
-public interface ManagedMappingType extends MappingType, FetchableContainer {
+public interface ManagedMappingType extends MappingType, FetchableContainer, InitializableContainer {
 	@Override
 	default JavaTypeDescriptor getJavaTypeDescriptor() {
 		return getMappedJavaTypeDescriptor();

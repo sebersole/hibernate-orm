@@ -13,8 +13,8 @@ import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
 import org.hibernate.metamodel.mapping.MappingModelHelper;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.query.spi.NonSelectQueryPlan;
 import org.hibernate.query.spi.QueryEngine;
@@ -28,12 +28,12 @@ import org.hibernate.query.sqm.tree.expression.SqmParameter;
 import org.hibernate.sql.ast.SqlAstDeleteTranslator;
 import org.hibernate.sql.ast.SqlAstTranslatorFactory;
 import org.hibernate.sql.ast.tree.expression.Expression;
+import org.hibernate.sql.ast.tree.expression.JdbcParameter;
 import org.hibernate.sql.ast.tree.from.MutatingTableReferenceGroupWrapper;
 import org.hibernate.sql.ast.tree.predicate.InSubQueryPredicate;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcDelete;
-import org.hibernate.sql.ast.tree.expression.JdbcParameter;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 
@@ -116,9 +116,9 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 						return null;
 					}
 
-					final ForeignKeyDescriptor fkDescriptor = attributeMapping.getKeyDescriptor();
+					final ForeignKey fkDescriptor = attributeMapping.getForeignKeyDescriptor();
 					final Expression fkColumnExpression = MappingModelHelper.buildColumnReferenceExpression(
-							fkDescriptor,
+							fkDescriptor.getReferringSide().getKeyPart(),
 							null,
 							factory
 					);
@@ -126,7 +126,7 @@ public class SimpleDeleteQueryPlan implements NonSelectQueryPlan {
 					final QuerySpec matchingIdSubQuery = new QuerySpec( false );
 
 					final Expression fkTargetColumnExpression = MappingModelHelper.buildColumnReferenceExpression(
-							fkDescriptor,
+							fkDescriptor.getTargetSide().getKeyPart(),
 							sqmInterpretation.getSqlExpressionResolver(),
 							factory
 					);

@@ -6,23 +6,45 @@
  */
 package org.hibernate.sql.results.graph;
 
-import org.hibernate.sql.results.jdbc.spi.RowProcessingState;
 import org.hibernate.metamodel.mapping.ModelPart;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.exec.spi.ExecutionContext;
+import org.hibernate.sql.results.jdbc.spi.RowProcessingState;
 
 /**
- * Defines a multi-step process for initializing entity, collection and
- * composite state.  Each step is performed on each initializer
- * before starting the next step.
+ * Defines a multi-step process for initializing entity, collection and composite
+ * state.  Each step is performed on every initializer before starting the next
+ * step.
  *
  * @author Steve Ebersole
  */
 public interface Initializer {
+
+	// todo (6.0) : define `ResultInitializer` and `FetchInitializer` specializations?
+	//		- would allow us to do things like `FetchInitializer#getFetchOptions`
+	//
+	// todo (6.0) : relatedly (^^) consider replacing `LoadType`, etc with info on the DomainResult?
+	//		- I.e. `DomainResult#allowProxyCreation`, `DomainResult#unwrapProxies`, etc
+	//		- see `org.hibernate.event.spi.LoadEventListener.LoadType`
+
+
+	/**
+	 * The path being initialized
+	 */
 	NavigablePath getNavigablePath();
 
+	/**
+	 * The model-part being initialized
+	 */
 	ModelPart getInitializedPart();
 
+	/**
+	 * The instance being initialized as part of the current row.
+	 *
+	 * Note, this is available after {@link #resolveInstance} is processed.
+	 * It *may* be available prior to that, though that is dependant on the
+	 * specific Initializer type and should not be depended on generically.
+	 */
 	Object getInitializedInstance();
 
 	/**

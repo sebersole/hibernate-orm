@@ -6,23 +6,20 @@
  */
 package org.hibernate.collection.spi;
 
-import java.util.function.Consumer;
-
 import org.hibernate.LockMode;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.collection.CollectionInitializer;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
 import org.hibernate.sql.results.graph.FetchParentAccess;
-import org.hibernate.sql.results.graph.Initializer;
 
 /**
  * Functional contract to create a CollectionInitializer
  *
  * @author Steve Ebersole
  */
-@FunctionalInterface
 public interface CollectionInitializerProducer {
 	/**
 	 * todo (6.0) : clean this contract up!
@@ -32,7 +29,11 @@ public interface CollectionInitializerProducer {
 			PluralAttributeMapping attributeMapping,
 			FetchParentAccess parentAccess,
 			LockMode lockMode,
-			DomainResultAssembler keyContainerAssembler,
-			DomainResultAssembler keyCollectionAssembler,
+			DomainResultAssembler<?> keyContainerAssembler,
+			DomainResultAssembler<?> keyCollectionAssembler,
 			AssemblerCreationState creationState);
+
+	Fetch getIndexFetch();
+
+	Fetch getElementFetch();
 }

@@ -6,16 +6,11 @@
  */
 package org.hibernate.orm.test.compositefk;
 
-import java.io.Serializable;
-import java.util.Objects;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-
 import org.hibernate.Hibernate;
+import org.hibernate.orm.test.models.datacenter.DataCenter;
+import org.hibernate.orm.test.models.datacenter.DataCenterUser;
+import org.hibernate.orm.test.models.datacenter.DataCenterUserPk;
+import org.hibernate.orm.test.models.datacenter.System;
 
 import org.hibernate.testing.jdbc.SQLStatementInspector;
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -36,9 +31,9 @@ import static org.junit.Assert.assertTrue;
  */
 @DomainModel(
 		annotatedClasses = {
-				ManyToOneEmbeddedIdWithToOneFKTest.System.class,
-				ManyToOneEmbeddedIdWithToOneFKTest.DataCenterUser.class,
-				ManyToOneEmbeddedIdWithToOneFKTest.DataCenter.class
+				System.class,
+				DataCenterUser.class,
+				DataCenter.class
 		}
 )
 @SessionFactory(statementInspectorClass = SQLStatementInspector.class)
@@ -58,12 +53,12 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 					assertThat( system.getDataCenterUser().getPk(), notNullValue() );
 					assertTrue( Hibernate.isInitialized( system.getDataCenterUser() ) );
 
-					final PK pk = system.getDataCenterUser().getPk();
-					assertTrue( Hibernate.isInitialized( pk.dataCenter ) );
+					final DataCenterUserPk pk = system.getDataCenterUser().getPk();
+					assertTrue( Hibernate.isInitialized( pk.getDataCenter() ) );
 
-					assertThat( pk.username, is( "Fab" ) );
-					assertThat( pk.dataCenter.id, is( 2 ) );
-					assertThat( pk.dataCenter.getDescription(), is( "Raleigh" ) );
+					assertThat( pk.getUsername(), is( "Fab" ) );
+					assertThat( pk.getDataCenter().getId(), is( 2 ) );
+					assertThat( pk.getDataCenter().getDescription(), is( "Raleigh" ) );
 
 					final DataCenterUser user = system.getDataCenterUser();
 					assertThat( user, notNullValue() );
@@ -151,12 +146,12 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 
 					assertTrue( Hibernate.isInitialized( system.getDataCenterUser() ) );
 
-					final PK pk = system.getDataCenterUser().getPk();
-					assertTrue( Hibernate.isInitialized( pk.dataCenter ) );
+					final DataCenterUserPk pk = system.getDataCenterUser().getPk();
+					assertTrue( Hibernate.isInitialized( pk.getDataCenter() ) );
 
-					assertThat( pk.username, is( "Fab" ) );
-					assertThat( pk.dataCenter.id, is( 2 ) );
-					assertThat( pk.dataCenter.getDescription(), is( "Raleigh" ) );
+					assertThat( pk.getUsername(), is( "Fab" ) );
+					assertThat( pk.getDataCenter().getId(), is( 2 ) );
+					assertThat( pk.getDataCenter().getDescription(), is( "Raleigh" ) );
 
 					DataCenterUser user = system.getDataCenterUser();
 					assertThat( user, is( notNullValue() ) );
@@ -212,7 +207,7 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 				session -> {
 					DataCenter dataCenter = new DataCenter( 2, "sub1" );
 
-					PK superUserKey = new PK( dataCenter, "Fab" );
+					DataCenterUserPk superUserKey = new DataCenterUserPk( dataCenter, "Fab" );
 
 					System system = session.createQuery(
 							"from System e join fetch e.user u where u.id = :id",
@@ -254,7 +249,7 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 					statementInspector.assertNumberOfOccurrenceInQuery( 0, "join", 0 );
 					statementInspector.assertNumberOfOccurrenceInQuery( 1, "join", 0 );
 
-					assertTrue( Hibernate.isInitialized( system.getPk().dataCenter ) );
+					assertTrue( Hibernate.isInitialized( system.getPk().getDataCenter() ) );
 
 				}
 		);
@@ -266,7 +261,7 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 		scope.inTransaction(
 				session -> {
 					DataCenter dataCenter = new DataCenter( 2, "Raleigh" );
-					PK userKey = new PK( dataCenter, "Fab" );
+					DataCenterUserPk userKey = new DataCenterUserPk( dataCenter, "Fab" );
 					DataCenterUser user = new DataCenterUser( userKey, (byte) 1 );
 
 					System system = new System( 1, "QA" );
@@ -290,148 +285,11 @@ public class ManyToOneEmbeddedIdWithToOneFKTest {
 		);
 	}
 
-	@Entity(name = "DataCenter")
-	@Table(name = "data_center" )
-	public static class DataCenter {
+	// data_center( id, ... )
+	// data_center_user( username, dataCenter_id, ... )
+	// systems( id, dataCenterUser_dataCenter_id, dataCenterUser_username, .. )
 
-		@Id
-		private Integer id;
+	// data_center_user.dataCenter_id -> data_center.id
+	// systems.(dataCenterUser_dataCenter_id, dataCenterUser_username) -> data_center_user.(dataCenter_id, username)
 
-		private String description;
-
-		public DataCenter() {
-		}
-
-		public DataCenter(Integer id, String description) {
-			this.id = id;
-			this.description = description;
-		}
-
-		public String getDescription() {
-			return description;
-		}
-
-		public void setDescription(String description) {
-			this.description = description;
-		}
-
-//		public Integer getId() {
-//			return id;
-//		}
-	}
-
-	@Entity(name = "System")
-	@Table( name = "systems" )
-	public static class System {
-		@Id
-		private Integer id;
-		private String name;
-
-		@ManyToOne
-		DataCenterUser dataCenterUser;
-
-		public System() {
-		}
-
-		public System(Integer id, String name) {
-			this.id = id;
-			this.name = name;
-		}
-
-		public Integer getId() {
-			return id;
-		}
-
-		public void setId(Integer id) {
-			this.id = id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public DataCenterUser getDataCenterUser() {
-			return dataCenterUser;
-		}
-
-		public void setDataCenterUser(DataCenterUser dataCenterUser) {
-			this.dataCenterUser = dataCenterUser;
-		}
-	}
-
-	@Entity( name = "DataCenterUser" )
-	@Table(name = "data_center_user" )
-	public static class DataCenterUser {
-
-		@EmbeddedId
-		private PK pk;
-
-		private byte privilegeMask;
-
-		public DataCenterUser() {
-		}
-
-		public DataCenterUser(DataCenter dataCenter, String username, byte privilegeMask) {
-			this( new PK( dataCenter, username ), privilegeMask );
-		}
-
-		public DataCenterUser(PK pk, byte privilegeMask) {
-			this.pk = pk;
-			this.privilegeMask = privilegeMask;
-		}
-
-		public PK getPk() {
-			return pk;
-		}
-
-		public void setPk(PK pk) {
-			this.pk = pk;
-		}
-
-//		public String getName() {
-//			return name;
-//		}
-
-//		public void setName(String name) {
-//			this.name = name;
-//		}
-	}
-
-	@Embeddable
-	public static class PK implements Serializable {
-
-		@ManyToOne
-		private DataCenter dataCenter;
-		private String username;
-
-		public PK(DataCenter dataCenter, String username) {
-			this.dataCenter = dataCenter;
-			this.username = username;
-		}
-
-		private PK() {
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if ( this == o ) {
-				return true;
-			}
-			if ( o == null || getClass() != o.getClass() ) {
-				return false;
-			}
-			PK pk = (PK) o;
-			return Objects.equals( dataCenter, pk.dataCenter ) &&
-					Objects.equals( username, pk.username );
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash( dataCenter, username );
-		}
-	}
 }

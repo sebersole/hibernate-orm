@@ -10,6 +10,10 @@ import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
 import org.hibernate.property.access.spi.PropertyAccess;
 
 /**
+ * Specialization of EntityIdentifierMapping for identifiers that
+ * are defined as a single attribute on the entity.  Applies to
+ * both basic and aggregated-composite identifiers
+ *
  * @author Steve Ebersole
  */
 public interface SingleAttributeIdentifierMapping extends EntityIdentifierMapping {

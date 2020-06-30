@@ -222,10 +222,4 @@ public class BasicValuedCollectionPart
 	public FetchTiming getTiming() {
 		return FetchTiming.IMMEDIATE;
 	}
-
-//
-//	@Override
-//	public BasicType getBasicType() {
-//		return mapper;
-//	}
 }

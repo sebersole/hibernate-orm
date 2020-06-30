@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.ast.spi;
 
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.hibernate.query.NavigablePath;
@@ -25,6 +26,8 @@ public interface FromClauseAccess {
 	 */
 	TableGroup findTableGroup(NavigablePath navigablePath);
 
+	void visitTableGroups(BiConsumer<NavigablePath,TableGroup> consumer);
+
 	/**
 	 * Get a  TableGroup by the NavigablePath it is registered under.  If there is
 	 * no registration, an exception is thrown.
@@ -32,8 +35,19 @@ public interface FromClauseAccess {
 	default TableGroup getTableGroup(NavigablePath navigablePath) throws SqlTreeCreationException {
 		final TableGroup tableGroup = findTableGroup( navigablePath );
 		if ( tableGroup == null ) {
-			throw new SqlTreeCreationException( "Could not locate TableGroup - " + navigablePath );
+			final StringBuilder buffer = new StringBuilder( "Could not locate TableGroup - " )
+					.append( navigablePath )
+					.append( System.lineSeparator() )
+					.append( "Registered TableGroups:" )
+					.append( System.lineSeparator() );
+
+			visitTableGroups(
+					(tgPath, tg) -> buffer.append( "  > " ).append( tgPath ).append( System.lineSeparator() )
+			);
+
+			throw new SqlTreeCreationException( buffer.toString() );
 		}
+
 		return tableGroup;
 	}
 

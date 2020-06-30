@@ -6,7 +6,12 @@
  */
 package org.hibernate.metamodel.mapping;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.hibernate.sql.results.graph.Fetchable;
+import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * @author Steve Ebersole
@@ -23,6 +28,24 @@ public interface BasicValuedModelPart extends BasicValuedMapping, ModelPart, Fet
 	 * is mapped
 	 */
 	String getMappedColumnExpression();
+
+	@Override
+	default void visitColumns(ColumnConsumer consumer) {
+		consumer.accept( getContainingTableExpression(), getMappedColumnExpression(), getJdbcMapping() );
+	}
+
+	@Override
+	default List<JdbcMapping> getJdbcMappings(TypeConfiguration typeConfiguration) {
+		return Collections.singletonList( getJdbcMapping() );
+	}
+
+	@Override
+	default JavaTypeDescriptor<?> getJavaTypeDescriptor() {
+		return getJdbcMapping().getJavaTypeDescriptor();
+	}
+
+	@Override
+	JdbcMapping getJdbcMapping();
 
 	@Override
 	default MappingType getPartMappingType() {

@@ -33,6 +33,7 @@ import org.hibernate.sql.exec.spi.ExecutionContext;
 import org.hibernate.sql.exec.spi.JdbcParameterBinding;
 import org.hibernate.sql.exec.spi.JdbcParameterBindings;
 import org.hibernate.sql.exec.spi.JdbcSelect;
+import org.hibernate.sql.results.graph.Fetchable;
 import org.hibernate.sql.results.internal.RowTransformerPassThruImpl;
 
 /**
@@ -54,13 +55,17 @@ public class CollectionLoaderSingleKey implements CollectionLoader {
 			SessionFactoryImplementor sessionFactory) {
 		this.attributeMapping = attributeMapping;
 
-		this.keyJdbcCount = attributeMapping.getKeyDescriptor().getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
+		final Fetchable keyPart = attributeMapping.getForeignKeyDescriptor()
+				.getReferringSide()
+				.getKeyPart();
+
+		this.keyJdbcCount = keyPart.getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
 
 		this.jdbcParameters = new ArrayList<>();
 		this.sqlAst = LoaderSelectBuilder.createSelect(
 				attributeMapping,
 				null,
-				attributeMapping.getKeyDescriptor(),
+				keyPart,
 				null,
 				1,
 				influencers,
@@ -103,7 +108,8 @@ public class CollectionLoaderSingleKey implements CollectionLoader {
 
 		final Iterator<JdbcParameter> paramItr = jdbcParameters.iterator();
 
-		attributeMapping.getKeyDescriptor().visitJdbcValues(
+		final Fetchable keyPart = attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart();
+		keyPart.visitJdbcValues(
 				key,
 				Clause.WHERE,
 				(value, type) -> {

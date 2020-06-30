@@ -8,6 +8,7 @@ package org.hibernate.mapping;
 
 import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
+import org.hibernate.annotations.LazyToOneOption;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.spi.MetadataImplementor;
@@ -107,6 +108,16 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 		return super.isValid( mapping );
 	}
 
+	private LazyToOneOption lazyToOneOption;
+
+	public LazyToOneOption getLazyToOneOption() {
+		return lazyToOneOption;
+	}
+
+	public void setLazyToOneOption(LazyToOneOption lazyToOneOption) {
+		this.lazyToOneOption = lazyToOneOption;
+	}
+
 	public boolean isLazy() {
 		return lazy;
 	}
@@ -116,11 +127,7 @@ public abstract class ToOne extends SimpleValue implements Fetchable {
 	}
 
 	public boolean isUnwrapProxy() {
-		return unwrapProxy;
-	}
-
-	public void setUnwrapProxy(boolean unwrapProxy) {
-		this.unwrapProxy = unwrapProxy;
+		return lazyToOneOption != LazyToOneOption.NO_PROXY;
 	}
 
 	public boolean isReferenceToPrimaryKey() {

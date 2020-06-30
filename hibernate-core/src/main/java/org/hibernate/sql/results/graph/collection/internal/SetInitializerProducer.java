@@ -36,8 +36,8 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 			PluralAttributeMapping attributeMapping,
 			FetchParentAccess parentAccess,
 			LockMode lockMode,
-			DomainResultAssembler keyContainerAssembler,
-			DomainResultAssembler keyCollectionAssembler,
+			DomainResultAssembler<?> keyContainerAssembler,
+			DomainResultAssembler<?> keyCollectionAssembler,
 			AssemblerCreationState creationState) {
 		final DomainResultAssembler elementAssembler = elementFetch.createAssembler( parentAccess, creationState );
 
@@ -50,5 +50,15 @@ public class SetInitializerProducer implements CollectionInitializerProducer {
 				keyCollectionAssembler,
 				elementAssembler
 		);
+	}
+
+	@Override
+	public Fetch getIndexFetch() {
+		return null;
+	}
+
+	@Override
+	public Fetch getElementFetch() {
+		return elementFetch;
 	}
 }

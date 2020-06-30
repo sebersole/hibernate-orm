@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.hibernate.metamodel.mapping.Association;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.query.NavigablePath;
 
 /**
@@ -45,7 +45,7 @@ public interface FetchParent extends DomainResultGraphNode {
 	 * referenced container type, this method returns the referenced part.
 	 *
 	 * E.g. for a many-to-one this methods returns the
-	 * {@link ToOneAttributeMapping} while
+	 * {@link ToOneAttributeTarget} while
 	 * {@link #getReferencedMappingContainer} and {@link #getReferencedMappingType} return the referenced
 	 * {@link org.hibernate.metamodel.mapping.EntityMappingType}.
 	 */
@@ -57,6 +57,12 @@ public interface FetchParent extends DomainResultGraphNode {
 	 * Get the property path to this parent
 	 */
 	NavigablePath getNavigablePath();
+
+	/**
+	 * The fetch for the parent's key, if one.  A key-fetch is either
+	 * the Fetch for an entity-identifier or the Fetch of an indexed-collection's index
+	 */
+	Fetch getKeyFetch();
 
 	/**
 	 * Retrieve the fetches owned by this fetch source.

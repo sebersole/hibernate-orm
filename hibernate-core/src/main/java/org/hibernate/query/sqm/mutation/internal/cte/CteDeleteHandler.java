@@ -108,8 +108,8 @@ public class CteDeleteHandler extends AbstractCteMutationHandler implements Dele
 							executeDelete(
 									cteDefinitionQuerySpec,
 									pluralAttribute.getSeparateCollectionTable(),
-									() -> columnConsumer -> pluralAttribute.getKeyDescriptor().visitReferringColumns( columnConsumer ),
-									pluralAttribute.getKeyDescriptor(),
+									() -> columnConsumer -> pluralAttribute.getForeignKeyDescriptor().visitReferringColumns( columnConsumer ),
+									pluralAttribute.getForeignKeyDescriptor().getReferringSide().getKeyPart(),
 									cteQuerySpec,
 									jdbcParameterBindings,
 									executionContext

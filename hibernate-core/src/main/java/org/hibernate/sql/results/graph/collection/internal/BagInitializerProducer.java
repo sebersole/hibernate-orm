@@ -49,8 +49,8 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 			PluralAttributeMapping attributeMapping,
 			FetchParentAccess parentAccess,
 			LockMode lockMode,
-			DomainResultAssembler keyContainerAssembler,
-			DomainResultAssembler keyCollectionAssembler,
+			DomainResultAssembler<?> keyContainerAssembler,
+			DomainResultAssembler<?> keyCollectionAssembler,
 			AssemblerCreationState creationState) {
 		final DomainResultAssembler elementAssembler = elementFetch.createAssembler(
 				parentAccess,
@@ -78,5 +78,15 @@ public class BagInitializerProducer implements CollectionInitializerProducer {
 				elementAssembler,
 				collectionIdAssembler
 		);
+	}
+
+	@Override
+	public Fetch getIndexFetch() {
+		return null;
+	}
+
+	@Override
+	public Fetch getElementFetch() {
+		return elementFetch;
 	}
 }

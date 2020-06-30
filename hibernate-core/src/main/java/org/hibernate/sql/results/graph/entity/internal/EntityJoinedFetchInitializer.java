@@ -11,6 +11,7 @@ import org.hibernate.internal.log.LoggingHelper;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
 import org.hibernate.sql.results.graph.DomainResult;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.entity.AbstractEntityInitializer;
 import org.hibernate.sql.results.graph.entity.EntityResultGraphNode;
 
@@ -24,7 +25,7 @@ public class EntityJoinedFetchInitializer extends AbstractEntityInitializer {
 			EntityResultGraphNode resultDescriptor,
 			NavigablePath navigablePath,
 			LockMode lockMode,
-			DomainResult<?> identifierResult,
+			Fetch identifierFetch,
 			DomainResult<?> discriminatorResult,
 			DomainResult<?> versionResult,
 			AssemblerCreationState creationState) {
@@ -32,7 +33,7 @@ public class EntityJoinedFetchInitializer extends AbstractEntityInitializer {
 				resultDescriptor,
 				navigablePath,
 				lockMode,
-				identifierResult,
+				identifierFetch,
 				discriminatorResult,
 				versionResult,
 				null,

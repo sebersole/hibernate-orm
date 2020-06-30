@@ -25,8 +25,8 @@ import org.hibernate.internal.util.MutableInteger;
 import org.hibernate.internal.FilterHelper;
 import org.hibernate.metamodel.mapping.ColumnConsumer;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
 import org.hibernate.metamodel.mapping.MappingModelHelper;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.Joinable;
 import org.hibernate.query.spi.QueryOptions;
@@ -415,11 +415,11 @@ public class RestrictedDeleteExecutionDelegate implements TableBasedDeleteHandle
 		SqmMutationStrategyHelper.cleanUpCollectionTables(
 				entityDescriptor,
 				(tableReference, attributeMapping) -> {
-					final ForeignKeyDescriptor fkDescriptor = attributeMapping.getKeyDescriptor();
+					final ForeignKey fkDescriptor = attributeMapping.getForeignKeyDescriptor();
 
 					return new InSubQueryPredicate(
 							MappingModelHelper.buildColumnReferenceExpression(
-									fkDescriptor,
+									fkDescriptor.getReferringSide().getKeyPart(),
 									null,
 									sessionFactory
 							),

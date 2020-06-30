@@ -28,7 +28,7 @@ import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.loader.ast.internal.LoaderSelectBuilder;
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
-import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMappingImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.sql.ast.tree.from.CompositeTableGroup;
 import org.hibernate.sql.ast.tree.from.FromClause;
@@ -296,7 +296,7 @@ public class EntityGraphLoadPlanBuilderTest implements SessionFactoryScopeAware 
 
 		final TableGroup joinedGroup = CollectionUtils.getOnlyElement( tableGroup.getTableGroupJoins() ).getJoinedGroup();
 		assertThat( joinedGroup.getModelPart().getPartName(), is( "homeAddress" ) );
-		assertThat( joinedGroup.getModelPart(), instanceOf( EmbeddedAttributeMapping.class ) );
+		assertThat( joinedGroup.getModelPart(), instanceOf( EmbeddedAttributeMappingImpl.class ) );
 		assertThat( joinedGroup, instanceOf( CompositeTableGroup.class ) );
 	}
 

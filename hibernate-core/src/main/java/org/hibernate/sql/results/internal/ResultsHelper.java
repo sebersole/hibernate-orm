@@ -21,9 +21,11 @@ import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.spi.SqlAstCreationContext;
 import org.hibernate.sql.exec.spi.Callback;
+import org.hibernate.sql.results.AssemblerCreationException;
 import org.hibernate.sql.results.ResultsLogger;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.Initializer;
 import org.hibernate.sql.results.jdbc.spi.JdbcValues;
 import org.hibernate.sql.results.spi.RowReader;
@@ -110,5 +112,13 @@ public class ResultsHelper {
 
 		// todo (6.0) : there is other logic still needing to be implemented here.  caching, etc
 		// 		see org.hibernate.engine.loading.internal.CollectionLoadContext#endLoadingCollection in 5.x
+	}
+
+	public static Fetch extractElementFetch(List<Fetch> buildFetches) {
+		if ( buildFetches == null || buildFetches.size() != 1 ) {
+			throw new AssemblerCreationException( "Could not build element fetch" );
+		}
+
+		return buildFetches.get( 0 );
 	}
 }

@@ -6,6 +6,7 @@
  */
 package org.hibernate.sql.results.graph.collection.internal;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.LockMode;
@@ -13,7 +14,7 @@ import org.hibernate.collection.spi.CollectionInitializerProducer;
 import org.hibernate.collection.spi.CollectionSemantics;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.metamodel.mapping.CollectionPart;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.spi.FromClauseAccess;
@@ -39,7 +40,7 @@ public class EagerCollectionFetch extends CollectionFetch implements FetchParent
 	private final Fetch elementFetch;
 	private final Fetch indexFetch;
 
-	private final List<Fetch> fetches;
+//	private final List<Fetch> fetches;
 
 	private final CollectionInitializerProducer initializerProducer;
 
@@ -55,38 +56,41 @@ public class EagerCollectionFetch extends CollectionFetch implements FetchParent
 		final NavigablePath parentPath = fetchedPath.getParent();
 		final TableGroup parentTableGroup = parentPath == null ? null : fromClauseAccess.findTableGroup( parentPath );
 
-		final ForeignKeyDescriptor keyDescriptor = fetchedAttribute.getKeyDescriptor();
+		final ForeignKey keyDescriptor = fetchedAttribute.getForeignKeyDescriptor();
 		if ( parentTableGroup != null ) {
 			// join fetch
-			keyContainerResult = keyDescriptor.createCollectionFetchDomainResult( fetchedPath, parentTableGroup, creationState );
-			keyCollectionResult = keyDescriptor.createDomainResult( fetchedPath, collectionTableGroup, creationState );
+			keyContainerResult = keyDescriptor.getTargetSide().getKeyPart().createDomainResult( fetchedPath, parentTableGroup, null, creationState );
+			keyCollectionResult = keyDescriptor.getReferringSide().getKeyPart().createDomainResult(
+					fetchedPath,
+					collectionTableGroup,
+					null,
+					creationState
+			);
 		}
 		else {
 			// select fetch
 			// todo (6.0) : we could potentially leverage batch fetching for performance
-			keyContainerResult = keyDescriptor.createCollectionFetchDomainResult( fetchedPath, collectionTableGroup, creationState );
+			keyContainerResult = keyDescriptor.getTargetSide().getKeyPart().createDomainResult( fetchedPath, parentTableGroup, null, creationState );
 
 			// use null for `keyCollectionResult`... the initializer will see that as trigger to use
 			// the assembled container-key value as the collection-key value.
 			keyCollectionResult = null;
 		}
 
-		fetches = creationState.visitFetches( this );
 		if ( fetchedAttribute.getIndexDescriptor() != null ) {
-			assert fetches.size() == 2;
-			indexFetch = fetches.get( 0 );
-			elementFetch = fetches.get( 1 );
+			indexFetch = creationState.buildKeyFetch( this );
 		}
 		else {
-			if ( !fetches.isEmpty() ) { // might be empty due to fetch depth limit
-				assert fetches.size() == 1;
-				indexFetch = null;
-				elementFetch = fetches.get( 0 );
-			}
-			else {
-				indexFetch = null;
-				elementFetch = null;
-			}
+			indexFetch = null;
+		}
+
+		final List<Fetch> fetches = creationState.buildFetches( this );
+		if ( fetches.isEmpty() ) {
+			// due to fetch depth limit
+			elementFetch = null;
+		}
+		else {
+			elementFetch = fetches.get( 0 );
 		}
 
 		final CollectionSemantics collectionSemantics = getFetchedMapping().getCollectionDescriptor().getCollectionSemantics();
@@ -153,8 +157,13 @@ public class EagerCollectionFetch extends CollectionFetch implements FetchParent
 	}
 
 	@Override
+	public Fetch getKeyFetch() {
+		return indexFetch;
+	}
+
+	@Override
 	public List<Fetch> getFetches() {
-		return fetches;
+		return Collections.singletonList( elementFetch );
 	}
 
 	@Override

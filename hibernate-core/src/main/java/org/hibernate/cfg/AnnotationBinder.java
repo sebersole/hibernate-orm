@@ -3226,18 +3226,18 @@ public final class AnnotationBinder {
 			);
 		}
 		if ( lazy != null ) {
-			toOne.setLazy( !( lazy.value() == LazyToOneOption.FALSE ) );
-			toOne.setUnwrapProxy( ( lazy.value() == LazyToOneOption.NO_PROXY ) );
+			toOne.setLazyToOneOption( lazy.value() );
 		}
 		else {
-			toOne.setLazy( fetchType == FetchType.LAZY );
-			toOne.setUnwrapProxy( false );
+			if ( fetchType == FetchType.EAGER ) {
+				toOne.setLazyToOneOption( LazyToOneOption.FALSE );
+			}
 		}
+
 		if ( fetch != null ) {
 			if ( fetch.value() == org.hibernate.annotations.FetchMode.JOIN ) {
+				toOne.setLazyToOneOption( LazyToOneOption.FALSE );
 				toOne.setFetchMode( FetchMode.JOIN );
-				toOne.setLazy( false );
-				toOne.setUnwrapProxy( false );
 			}
 			else if ( fetch.value() == org.hibernate.annotations.FetchMode.SELECT ) {
 				toOne.setFetchMode( FetchMode.SELECT );

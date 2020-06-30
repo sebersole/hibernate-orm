@@ -12,35 +12,49 @@ import java.util.function.Supplier;
 
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.jpa.spi.JpaCompliance;
+import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Collection;
+import org.hibernate.mapping.Component;
+import org.hibernate.mapping.DependantValue;
 import org.hibernate.mapping.IndexedCollection;
+import org.hibernate.mapping.KeyValue;
 import org.hibernate.mapping.List;
+import org.hibernate.mapping.ManyToOne;
 import org.hibernate.mapping.Property;
-import org.hibernate.mapping.Value;
-import org.hibernate.metamodel.mapping.BasicValuedModelPart;
+import org.hibernate.mapping.ToOne;
+import org.hibernate.metamodel.mapping.BasicEntityIdentifierMapping;
 import org.hibernate.metamodel.mapping.CollectionIdentifierDescriptor;
 import org.hibernate.metamodel.mapping.CollectionMappingType;
 import org.hibernate.metamodel.mapping.CollectionPart;
-import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
+import org.hibernate.metamodel.mapping.ColumnConsumer;
+import org.hibernate.metamodel.mapping.EmbeddableMappingType;
+import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
+import org.hibernate.metamodel.mapping.NonTransientException;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
+import org.hibernate.metamodel.mapping.internal.fk.CollectionKey;
+import org.hibernate.metamodel.mapping.internal.fk.CollectionKeyBasic;
+import org.hibernate.metamodel.mapping.internal.fk.CollectionKeyComposite;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
+import org.hibernate.metamodel.mapping.internal.fk.JoinTableKey;
+import org.hibernate.metamodel.mapping.internal.fk.JoinTableKeyBasic;
+import org.hibernate.metamodel.mapping.internal.fk.KeyModelPart;
 import org.hibernate.metamodel.mapping.ordering.OrderByFragment;
 import org.hibernate.metamodel.mapping.ordering.OrderByFragmentTranslator;
 import org.hibernate.metamodel.mapping.ordering.TranslationContext;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.collection.CollectionPersister;
-import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.persister.entity.Joinable;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.NavigablePath;
@@ -66,15 +80,19 @@ import org.hibernate.sql.results.graph.collection.internal.CollectionDomainResul
 import org.hibernate.sql.results.graph.collection.internal.DelayedCollectionFetch;
 import org.hibernate.sql.results.graph.collection.internal.EagerCollectionFetch;
 import org.hibernate.sql.results.graph.collection.internal.SelectEagerCollectionFetch;
+import org.hibernate.type.BasicType;
+import org.hibernate.type.CompositeType;
 import org.hibernate.type.EntityType;
+import org.hibernate.type.Type;
 
 import org.jboss.logging.Logger;
 
 /**
  * @author Steve Ebersole
  */
-public class PluralAttributeMappingImpl extends AbstractAttributeMapping implements PluralAttributeMapping,
-		FetchOptions {
+public class PluralAttributeMappingImpl
+		extends AbstractAttributeMapping
+		implements PluralAttributeMapping, FetchOptions {
 	private static final Logger log = Logger.getLogger( PluralAttributeMappingImpl.class );
 
 	public interface Aware {
@@ -86,6 +104,9 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 	private final int stateArrayPosition;
 	private final PropertyAccess propertyAccess;
 	private final StateArrayContributorMetadataAccess stateArrayContributorMetadataAccess;
+
+	private final CollectionKey collectionKey;
+	private final JoinTableKey manyToManyKey;
 
 	private final CollectionPart elementDescriptor;
 	private final CollectionPart indexDescriptor;
@@ -102,8 +123,6 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 
 	private final IndexMetadata indexMetadata;
 
-	private ForeignKeyDescriptor fkDescriptor;
-	private ForeignKeyDescriptor manyToManyFkDescriptor;
 
 	private OrderByFragment orderByFragment;
 	private OrderByFragment manyToManyOrderByFragment;
@@ -111,6 +130,7 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 	@SuppressWarnings({"WeakerAccess", "rawtypes"})
 	public PluralAttributeMappingImpl(
 			String attributeName,
+			Property bootProperty,
 			Collection bootDescriptor,
 			PropertyAccess propertyAccess,
 			StateArrayContributorMetadataAccess stateArrayContributorMetadataAccess,
@@ -122,9 +142,11 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 			FetchStrategy fetchStrategy,
 			CascadeStyle cascadeStyle,
 			ManagedMappingType declaringType,
-			CollectionPersister collectionDescriptor) {
+			CollectionPersister collectionDescriptor,
+			MappingModelCreationProcess creationProcess) {
 		this(
 				attributeName,
+				bootProperty,
 				bootDescriptor,
 				propertyAccess,
 				stateArrayContributorMetadataAccess,
@@ -137,13 +159,15 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 				fetchStrategy.getStyle(),
 				cascadeStyle,
 				declaringType,
-				collectionDescriptor
+				collectionDescriptor,
+				creationProcess
 		);
 	}
 
 	@SuppressWarnings({"WeakerAccess", "rawtypes"})
 	public PluralAttributeMappingImpl(
 			String attributeName,
+			Property bootProperty,
 			Collection bootDescriptor,
 			PropertyAccess propertyAccess,
 			StateArrayContributorMetadataAccess stateArrayContributorMetadataAccess,
@@ -156,7 +180,8 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 			FetchStyle fetchStyle,
 			CascadeStyle cascadeStyle,
 			ManagedMappingType declaringType,
-			CollectionPersister collectionDescriptor) {
+			CollectionPersister collectionDescriptor,
+			MappingModelCreationProcess creationProcess) {
 		super( attributeName, declaringType );
 		this.propertyAccess = propertyAccess;
 		this.stateArrayContributorMetadataAccess = stateArrayContributorMetadataAccess;
@@ -172,12 +197,44 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 
 		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( attributeName );
 
+		this.collectionKey = generateCollectionKey( bootDescriptor, this, creationProcess );
+
 		if ( bootDescriptor.isOneToMany() ) {
 			separateCollectionTable = null;
+			manyToManyKey = null;
 		}
 		else {
 			separateCollectionTable = ( (Joinable) collectionDescriptor ).getTableName();
+
+			if ( elementDescriptor instanceof EntityCollectionPart ) {
+				manyToManyKey = generateJoinTableKey(
+						(ManyToOne) bootDescriptor.getElement(),
+						bootDescriptor,
+						(EntityCollectionPart) elementDescriptor,
+						this,
+						creationProcess
+				);
+			}
+			else if ( indexDescriptor != null )  {
+				if ( indexDescriptor instanceof EntityCollectionPart ) {
+					final IndexedCollection indexedCollection = (IndexedCollection) bootDescriptor;
+					manyToManyKey = generateJoinTableKey(
+							(ManyToOne) indexedCollection.getIndex(),
+							bootDescriptor,
+							(EntityCollectionPart) indexDescriptor,
+							this,
+							creationProcess
+					);
+				}
+				else {
+					manyToManyKey = null;
+				}
+			}
+			else {
+				manyToManyKey = null;
+			}
 		}
+
 
 		indexMetadata = new IndexMetadata() {
 			final int baseIndex;
@@ -213,74 +270,136 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 		if ( indexDescriptor instanceof Aware ) {
 			( (Aware) indexDescriptor ).injectAttributeMapping( this );
 		}
+
+		creationProcess.registerInitializationCallback(
+				"PluralAttributeMapping initialization : " + getNavigableRole().getFullPath(),
+				() -> {
+					try {
+						finishInitialization( bootProperty, bootDescriptor, creationProcess );
+						return true;
+					}
+					catch (NotYetImplementedFor6Exception nye) {
+						throw nye;
+					}
+					catch (Exception e) {
+						if ( e instanceof NonTransientException ) {
+							throw e;
+						}
+
+						return false;
+					}
+				}
+		);
 	}
+
+	private static CollectionKey generateCollectionKey(
+			Collection bootDescriptor,
+			PluralAttributeMappingImpl pluralAttributeMapping,
+			MappingModelCreationProcess creationProcess) {
+		final KeyValue bootCollectionKey = bootDescriptor.getKey();
+
+		final boolean isBasic;
+		final Supplier<JdbcMapping> jdbcMappingSupplier;
+
+		final boolean isComposite;
+		final Component bootCompositeDescriptor;
+
+		if ( bootCollectionKey instanceof DependantValue ) {
+			final KeyValue wrappedValue = ( (DependantValue) bootCollectionKey ).getWrappedValue();
+			isBasic = wrappedValue instanceof BasicValue;
+			isComposite = wrappedValue instanceof Component;
+			jdbcMappingSupplier = isBasic ? () -> ( (BasicValue) wrappedValue ).resolve().getJdbcMapping() : null;
+			bootCompositeDescriptor = isComposite ? (Component) wrappedValue : null;
+		}
+		else {
+			isBasic = bootCollectionKey instanceof BasicValue;
+			isComposite = bootCollectionKey instanceof Component;
+			jdbcMappingSupplier = isBasic ? () -> ( (BasicValue) bootCollectionKey ).resolve().getJdbcMapping() : null;
+			bootCompositeDescriptor = isComposite ? (Component) bootCollectionKey : null;
+		}
+
+		if ( isBasic ) {
+			return new CollectionKeyBasic(
+					pluralAttributeMapping,
+					bootDescriptor,
+					jdbcMappingSupplier,
+					creationProcess
+			);
+		}
+
+		if ( isComposite ) {
+			final EmbeddableMappingType embeddableMappingType = EmbeddableMappingType.from(
+					bootCompositeDescriptor,
+					(CompositeType) bootCompositeDescriptor.getType(),
+					embeddableDescriptor -> new CollectionKeyComposite(
+							pluralAttributeMapping,
+							embeddableDescriptor,
+							bootDescriptor,
+							bootCompositeDescriptor,
+							creationProcess
+					),
+					creationProcess
+			);
+			return (CollectionKeyComposite) embeddableMappingType.getEmbeddedValueMapping();
+		}
+
+		throw new UnsupportedOperationException( "Unexpected collection-key nature : " + bootCollectionKey );
+	}
+
+	private JoinTableKey generateJoinTableKey(
+			ToOne collectionPartBootValue,
+			Collection bootDescriptor,
+			EntityCollectionPart collectionPart,
+			PluralAttributeMapping pluralAttributeMapping,
+			MappingModelCreationProcess creationProcess) {
+		assert ! bootDescriptor.isOneToMany();
+
+		final SessionFactoryImplementor sessionFactory = creationProcess.getCreationContext().getSessionFactory();
+		final EntityMappingType associatedEntity = collectionPart.getEntityMappingType();
+
+		final EntityIdentifierMapping associatedEntityIdentifier = associatedEntity.getIdentifierMapping();
+		if ( associatedEntityIdentifier != null ) {
+			if ( associatedEntityIdentifier instanceof BasicEntityIdentifierMapping ) {
+				final BasicEntityIdentifierMapping basicIdentifier = (BasicEntityIdentifierMapping) associatedEntityIdentifier;
+
+				return new JoinTableKeyBasic (
+						basicIdentifier,
+						pluralAttributeMapping,
+						collectionPart,
+						bootDescriptor,
+						collectionPartBootValue,
+						pluralAttributeMapping.getSeparateCollectionTable(),
+						creationProcess
+				);
+			}
+		}
+
+		// wait for the identifier to complete initialization...
+		final EntityType legacyAssociatedEntityType = (EntityType) collectionPartBootValue.getType();
+		final Type legacyKeyType = legacyAssociatedEntityType.getIdentifierOrUniqueKeyType( sessionFactory );
+		if ( legacyKeyType instanceof BasicType ) {
+			return new JoinTableKeyBasic(
+					associatedEntity,
+					pluralAttributeMapping,
+					collectionPart,
+					bootDescriptor,
+					collectionPartBootValue,
+					pluralAttributeMapping.getSeparateCollectionTable(),
+					creationProcess
+			);
+		}
+
+		throw new NotYetImplementedFor6Exception(
+				"Support for non-basic collection-table fks not yet implemented : " + pluralAttributeMapping.getNavigableRole().getFullPath()
+		);
+	}
+
 
 	@SuppressWarnings("unused")
 	public void finishInitialization(
 			Property bootProperty,
 			Collection bootDescriptor,
 			MappingModelCreationProcess creationProcess) {
-		if ( collectionDescriptor.getElementType() instanceof EntityType
-				|| collectionDescriptor.getIndexType() instanceof EntityType ) {
-			creationProcess.registerForeignKeyPostInitCallbacks(
-					() -> {
-						final EntityPersister associatedEntityDescriptor;
-						final ModelPart fkTargetPart;
-						final Value fkBootDescriptorSource;
-						if ( collectionDescriptor.getElementType() instanceof EntityType ) {
-							final EntityType elementEntityType = (EntityType) collectionDescriptor.getElementType();
-							associatedEntityDescriptor = creationProcess.getEntityPersister( elementEntityType.getAssociatedEntityName() );
-							fkTargetPart = elementEntityType.isReferenceToPrimaryKey()
-									? associatedEntityDescriptor.getIdentifierMapping()
-									: associatedEntityDescriptor.findSubPart( elementEntityType.getRHSUniqueKeyPropertyName() );
-							fkBootDescriptorSource = bootDescriptor.getElement();
-						}
-						else {
-							assert collectionDescriptor.getIndexType() != null;
-							assert bootDescriptor instanceof IndexedCollection;
-
-							final EntityType indexEntityType = (EntityType) collectionDescriptor.getIndexType();
-							associatedEntityDescriptor = creationProcess.getEntityPersister( indexEntityType.getAssociatedEntityName() );
-							fkTargetPart = indexEntityType.isReferenceToPrimaryKey()
-									? associatedEntityDescriptor.getIdentifierMapping()
-									: associatedEntityDescriptor.findSubPart( indexEntityType.getRHSUniqueKeyPropertyName() );
-							fkBootDescriptorSource = ( (IndexedCollection) bootDescriptor ).getIndex();
-						}
-
-						final Dialect dialect = creationProcess.getCreationContext()
-								.getSessionFactory()
-								.getJdbcServices()
-								.getDialect();
-						if ( fkTargetPart instanceof BasicValuedModelPart ) {
-							final BasicValuedModelPart basicFkTargetPart = (BasicValuedModelPart) fkTargetPart;
-							final Joinable collectionDescriptorAsJoinable = (Joinable) collectionDescriptor;
-							manyToManyFkDescriptor = new SimpleForeignKeyDescriptor(
-									collectionDescriptorAsJoinable.getTableName(),
-									fkBootDescriptorSource.getColumnIterator().next().getText( dialect ),
-									basicFkTargetPart.getContainingTableExpression(),
-									basicFkTargetPart.getMappedColumnExpression(),
-									basicFkTargetPart.getJdbcMapping()
-							);
-						}
-						else if ( fkTargetPart instanceof EmbeddableValuedModelPart ) {
-							manyToManyFkDescriptor = MappingModelCreationHelper.buildEmbeddedForeignKeyDescriptor(
-									(EmbeddableValuedModelPart) fkTargetPart,
-									this,
-									fkBootDescriptorSource,
-									dialect,
-									creationProcess
-							);
-						}
-						else {
-							throw new NotYetImplementedFor6Exception(
-									"Support for composite foreign keys not yet implemented : " + collectionDescriptor.getRole()
-							);
-						}
-						return true;
-					}
-			);
-		}
-
 		final boolean hasOrder = bootDescriptor.getOrderBy() != null;
 		final boolean hasManyToManyOrder = bootDescriptor.getManyToManyOrdering() != null;
 
@@ -324,6 +443,7 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 		}
 	}
 
+
 	@Override
 	public NavigableRole getNavigableRole() {
 		return getCollectionDescriptor().getNavigableRole();
@@ -336,8 +456,18 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 	}
 
 	@Override
-	public ForeignKeyDescriptor getKeyDescriptor() {
-		return fkDescriptor;
+	public KeyModelPart getKeyModelPart() {
+		return collectionKey;
+	}
+
+	@Override
+	public ForeignKey getForeignKeyDescriptor() {
+		return collectionKey.getForeignKeyDescriptor();
+	}
+
+	@Override
+	public boolean isNullable() {
+		return false;
 	}
 
 	@Override
@@ -527,8 +657,14 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 		}
 	}
 
-	public void setForeignKeyDescriptor(ForeignKeyDescriptor fkDescriptor) {
-		this.fkDescriptor = fkDescriptor;
+	@Override
+	public CollectionKey getCollectionKey() {
+		return collectionKey;
+	}
+
+	@Override
+	public JoinTableKey getJoinTableKey() {
+		return manyToManyKey;
 	}
 
 	@SuppressWarnings("unused")
@@ -555,7 +691,7 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 				navigablePath,
 				sqlAstJoinType,
 				tableGroup,
-				getKeyDescriptor().generateJoinPredicate(
+				getForeignKeyDescriptor().generateJoinPredicate(
 						lhs,
 						tableGroup,
 						sqlAstJoinType,
@@ -638,7 +774,7 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 				navigablePath,
 				sqlAstJoinType,
 				tableGroup,
-				getKeyDescriptor().generateJoinPredicate(
+				getForeignKeyDescriptor().generateJoinPredicate(
 						lhs,
 						tableGroup,
 						sqlAstJoinType,
@@ -708,9 +844,9 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 				final TableReferenceJoin associationJoin = new TableReferenceJoin(
 						joinType,
 						associatedPrimaryTable,
-						manyToManyFkDescriptor.generateJoinPredicate(
-								collectionTableReference,
+						collectionKey.getForeignKeyDescriptor().generateJoinPredicate(
 								associatedPrimaryTable,
+								collectionTableReference,
 								joinType,
 								sqlExpressionResolver,
 								creationContext
@@ -834,5 +970,20 @@ public class PluralAttributeMappingImpl extends AbstractAttributeMapping impleme
 	@Override
 	public String toString() {
 		return "PluralAttribute(" + getCollectionDescriptor().getRole() + ")";
+	}
+
+	@Override
+	public void visitColumns(ColumnConsumer consumer) {
+//		collectionKey.visitColumns( consumer );
+//
+//		if ( identifierDescriptor != null ) {
+//			identifierDescriptor.visitColumns( consumer );
+//		}
+//
+//		if ( indexDescriptor != null ) {
+//			indexDescriptor.visitColumns( consumer );
+//		}
+//
+//		elementDescriptor.visitColumns( consumer );
 	}
 }

@@ -6,8 +6,6 @@
  */
 package org.hibernate.metamodel.mapping;
 
-import org.hibernate.query.QueryLogger;
-
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.MessageLogger;
@@ -24,6 +22,14 @@ public interface MappingModelCreationLogger extends BasicLogger {
 	String LOGGER_NAME = "org.hibernate.orm.model.mapping.creation";
 
 	MappingModelCreationLogger LOGGER = Logger.getMessageLogger( MappingModelCreationLogger.class, LOGGER_NAME );
+
+	static String subLoggerName(String subName) {
+		return LOGGER_NAME + "." + subName;
+	}
+
+	static Logger subLogger(String subName) {
+		return Logger.getLogger( subLoggerName( subName ) );
+	}
 
 	boolean TRACE_ENABLED = LOGGER.isTraceEnabled();
 	boolean DEBUG_ENABLED = LOGGER.isDebugEnabled();

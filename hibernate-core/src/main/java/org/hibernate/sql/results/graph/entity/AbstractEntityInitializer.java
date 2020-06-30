@@ -8,6 +8,7 @@ package org.hibernate.sql.results.graph.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import org.hibernate.sql.results.graph.AssemblerCreationState;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
 import org.hibernate.sql.results.graph.Fetch;
+import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.Initializer;
 import org.hibernate.sql.results.internal.NullValueAssembler;
 import org.hibernate.sql.results.jdbc.spi.JdbcValuesSourceProcessingState;
@@ -70,7 +72,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 	private final NavigablePath navigablePath;
 	private final LockMode lockMode;
 
-	private final List<Initializer> identifierInitializers = new ArrayList<>();
+	private final List<Initializer> identifierInitializers;
 
 	private final DomainResultAssembler identifierAssembler;
 	private final DomainResultAssembler discriminatorAssembler;
@@ -93,7 +95,7 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 			EntityResultGraphNode resultDescriptor,
 			NavigablePath navigablePath,
 			LockMode lockMode,
-			DomainResult<?> identifierResult,
+			Fetch identifierFetch,
 			DomainResult<?> discriminatorResult,
 			DomainResult<?> versionResult,
 			DomainResult<Object> rowIdResult,
@@ -113,44 +115,37 @@ public abstract class AbstractEntityInitializer extends AbstractFetchParentAcces
 		this.navigablePath = navigablePath;
 		this.lockMode = lockMode;
 
-		if ( identifierResult != null ) {
-			this.identifierAssembler = identifierResult.createResultAssembler(
-					new AssemblerCreationState() {
-						@Override
-						public Initializer resolveInitializer(NavigablePath navigablePath, Supplier<Initializer> producer) {
-							for ( int i = 0; i < identifierInitializers.size(); i++ ) {
-								final Initializer existing = identifierInitializers.get( i );
-								if ( existing.getNavigablePath().equals( navigablePath ) ) {
-									identifierInitializers.add( existing );
-									return existing;
-								}
-							}
-
-//							// also check the non-identifier initializers
-//							final Initializer otherExisting = creationState.resolveInitializer(
-//									navigablePath,
-//									() -> null
-//							);
-//
-//							if ( otherExisting != null ) {
-//								identifierInitializers.add( otherExisting );
-//								return otherExisting;
-//							}
-
-							final Initializer initializer = producer.get();
-							identifierInitializers.add( initializer );
-							return initializer;
-						}
-
-						@Override
-						public SqlAstCreationContext getSqlAstCreationContext() {
-							return creationState.getSqlAstCreationContext();
+		assert identifierFetch != null;
+		if ( identifierFetch instanceof FetchParent ) {
+			identifierInitializers = new ArrayList<>();
+			final AssemblerCreationState idCreationState = new AssemblerCreationState() {
+				@Override
+				public Initializer resolveInitializer(
+						NavigablePath navigablePath,
+						Supplier<Initializer> producer) {
+					for ( int i = 0; i < identifierInitializers.size(); i++ ) {
+						final Initializer existing = identifierInitializers.get( i );
+						if ( existing.getNavigablePath().equals( navigablePath ) ) {
+							identifierInitializers.add( existing );
+							return existing;
 						}
 					}
-			);
+
+					final Initializer initializer = producer.get();
+					identifierInitializers.add( initializer );
+					return initializer;
+				}
+
+				@Override
+				public SqlAstCreationContext getSqlAstCreationContext() {
+					return creationState.getSqlAstCreationContext();
+				}
+			};
+			this.identifierAssembler = identifierFetch.createAssembler( this, idCreationState );
 		}
 		else {
-			this.identifierAssembler = null;
+			identifierInitializers = Collections.emptyList();
+			identifierAssembler = identifierFetch.createAssembler( this, creationState );
 		}
 
 		if ( discriminatorResult != null ) {

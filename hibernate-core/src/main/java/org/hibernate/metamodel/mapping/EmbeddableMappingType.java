@@ -27,7 +27,7 @@ import org.hibernate.mapping.Component;
 import org.hibernate.mapping.Property;
 import org.hibernate.metamodel.mapping.internal.MappingModelCreationHelper;
 import org.hibernate.metamodel.mapping.internal.MappingModelCreationProcess;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.spi.EmbeddableRepresentationStrategy;
 import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
@@ -64,13 +64,13 @@ public class EmbeddableMappingType implements ManagedMappingType {
 				.resolveStrategy( bootDescriptor, creationContext );
 
 		final EmbeddableMappingType mappingType = new EmbeddableMappingType(
-				bootDescriptor,
 				representationStrategy,
 				embeddedPartBuilder,
 				creationContext.getSessionFactory()
 		);
 
 		creationProcess.registerInitializationCallback(
+				"EmbeddableMappingType initialization : " + mappingType.getEmbeddedValueMapping().getNavigableRole().getFullPath(),
 				() -> mappingType.finishInitialization(
 						bootDescriptor,
 						compositeType,
@@ -94,13 +94,13 @@ public class EmbeddableMappingType implements ManagedMappingType {
 				.resolveStrategy( bootDescriptor, creationContext );
 
 		final EmbeddableMappingType mappingType = new EmbeddableMappingType(
-				bootDescriptor,
 				representationStrategy,
 				embeddedPartBuilder,
 				creationContext.getSessionFactory()
 		);
 
 		creationProcess.registerInitializationCallback(
+				"EmbeddableMappingType initialization : " + mappingType.getEmbeddedValueMapping().getNavigableRole().getFullPath(),
 				() -> mappingType.finishInitialization(
 						bootDescriptor,
 						compositeType,
@@ -124,8 +124,28 @@ public class EmbeddableMappingType implements ManagedMappingType {
 
 	private final boolean createEmptyCompositesEnabled;
 
+	public EmbeddableMappingType(
+			EmbeddableRepresentationStrategy representationStrategy,
+			Function<EmbeddableMappingType, List<AttributeMapping>> attributeMappingsProducer,
+			Function<EmbeddableMappingType, EmbeddableValuedModelPart> embeddedPartBuilder,
+			SessionFactoryImplementor sessionFactory) {
+		this.representationStrategy = representationStrategy;
+		this.sessionFactory = sessionFactory;
+
+		this.embeddableJtd = representationStrategy.getMappedJavaTypeDescriptor();
+		final List<AttributeMapping> attributeCopies = attributeMappingsProducer.apply( this );
+
+		for ( int i = 0; i < attributeCopies.size(); i++ ) {
+			final AttributeMapping attributeMapping = attributeCopies.get( i );
+			this.attributeMappings.put( attributeMapping.getAttributeName(), attributeMapping );
+		}
+
+		valueMapping = embeddedPartBuilder.apply( this );
+
+		createEmptyCompositesEnabled = false;
+	}
+
 	private EmbeddableMappingType(
-			@SuppressWarnings("unused") Component bootDescriptor,
 			EmbeddableRepresentationStrategy representationStrategy,
 			Function<EmbeddableMappingType, EmbeddableValuedModelPart> embeddedPartBuilder,
 			SessionFactoryImplementor sessionFactory) {
@@ -206,8 +226,7 @@ public class EmbeddableMappingType implements ManagedMappingType {
 				columnPosition += columnSpan;
 			}
 			else {
-				final EntityPersister entityPersister = creationProcess
-						.getEntityPersister( bootDescriptor.getOwner().getEntityName() );
+				final EntityPersister entityPersister = creationProcess.getEntityPersister( bootDescriptor.getOwner().getEntityName() );
 				if ( subtype instanceof CollectionType ) {
 					attributeMappings.put(
 							bootPropertyDescriptor.getName(),
@@ -215,7 +234,7 @@ public class EmbeddableMappingType implements ManagedMappingType {
 									bootPropertyDescriptor.getName(),
 									attributeIndex,
 									bootPropertyDescriptor,
-									entityPersister,
+									this,
 									representationStrategy.resolvePropertyAccess( bootPropertyDescriptor ),
 									compositeType.getCascadeStyle( attributeIndex),
 									compositeType.getFetchMode( attributeIndex ),
@@ -229,7 +248,7 @@ public class EmbeddableMappingType implements ManagedMappingType {
 							valueMapping.getNavigableRole().append( bootPropertyDescriptor.getName() ),
 							attributeIndex,
 							bootPropertyDescriptor,
-							entityPersister,
+							this,
 							(EntityType) subtype,
 							getRepresentationStrategy().resolvePropertyAccess( bootPropertyDescriptor ),
 							compositeType.getCascadeStyle( attributeIndex ),
@@ -237,16 +256,22 @@ public class EmbeddableMappingType implements ManagedMappingType {
 					);
 					attributeMappings.put( bootPropertyDescriptor.getName(), toOneAttributeMapping );
 					// todo (6.0) : not sure it is always correct
-					columnPosition++;
+					columnPosition += subtype.getColumnSpan( sessionFactory );
 				}
 			}
 
 			attributeIndex++;
 		}
 
+		creationProcess.subPartGroupInitialized( this, MappingModelCreationProcess.SubPartGroup.NORMAL );
+
 		return true;
 	}
 
+	@Override
+	public boolean isInitialized(MappingModelCreationProcess.SubPartGroup group) {
+		return ! attributeMappings.isEmpty();
+	}
 
 	public EmbeddableValuedModelPart getEmbeddedValueMapping() {
 		return valueMapping;

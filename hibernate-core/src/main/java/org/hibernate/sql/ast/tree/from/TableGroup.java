@@ -67,12 +67,6 @@ public interface TableGroup extends SqlAstNode, ColumnReferenceQualifier, SqmPat
 		);
 	}
 
-	default ColumnReference locateColumnReferenceByName(String name) {
-		throw new UnsupportedOperationException(
-				"Cannot call #locateColumnReferenceByName on this type of TableGroup"
-		);
-	}
-
 	@Override
 	default void accept(SqlAstWalker sqlTreeWalker) {
 		sqlTreeWalker.visitTableGroup( this );

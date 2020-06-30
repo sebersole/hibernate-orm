@@ -8,6 +8,7 @@ package org.hibernate.loader.ast.internal;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 import javax.persistence.CacheRetrieveMode;
 import javax.persistence.CacheStoreMode;
 
@@ -33,6 +34,7 @@ import org.hibernate.sql.ast.spi.SqlAstProcessingState;
 import org.hibernate.sql.ast.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
+import org.hibernate.sql.results.ResultGraphCreationException;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
@@ -43,7 +45,11 @@ import org.hibernate.sql.results.graph.FetchParent;
 public class LoaderSqlAstCreationState
 		implements SqlAstProcessingState, SqlAstCreationState, DomainResultCreationState, QueryOptions {
 	interface FetchProcessor {
-		List<Fetch> visitFetches(FetchParent fetchParent, QuerySpec querySpec, LoaderSqlAstCreationState creationState);
+		List<Fetch> visitFetches(
+				FetchParent fetchParent,
+				QuerySpec querySpec,
+				boolean keyGraph,
+				LoaderSqlAstCreationState creationState);
 	}
 
 	private final QuerySpec querySpec;
@@ -88,7 +94,7 @@ public class LoaderSqlAstCreationState
 				sqlAliasBaseManager,
 				new FromClauseIndex(),
 				lockOptions,
-				(fetchParent, ast, state) -> Collections.emptyList(),
+				(fetchParent, ast, keyGraph, state) -> Collections.emptyList(),
 				true,
 				sf
 		);
@@ -129,8 +135,22 @@ public class LoaderSqlAstCreationState
 	}
 
 	@Override
-	public List<Fetch> visitFetches(FetchParent fetchParent) {
-		return fetchProcessor.visitFetches( fetchParent, getQuerySpec(), this );
+	public List<Fetch> buildFetches(FetchParent fetchParent) {
+		return fetchProcessor.visitFetches( fetchParent, getQuerySpec(), false,this );
+	}
+
+	@Override
+	public Fetch buildKeyFetch(FetchParent fetchParent) {
+		final List<Fetch> fetches = fetchProcessor.visitFetches( fetchParent, getQuerySpec(), true, this );
+		if ( fetches.isEmpty() ) {
+			return null;
+		}
+
+		if ( fetches.size() == 1 ) {
+			return fetches.get( 0 );
+		}
+
+		throw new ResultGraphCreationException( "Unexpected number of key-fetches : " + fetches.size() );
 	}
 
 	@Override
@@ -156,6 +176,11 @@ public class LoaderSqlAstCreationState
 
 	private static class FromClauseIndex implements FromClauseAccess {
 		private TableGroup tableGroup;
+
+		@Override
+		public void visitTableGroups(BiConsumer<NavigablePath, TableGroup> consumer) {
+			consumer.accept( tableGroup.getNavigablePath(), tableGroup );
+		}
 
 		@Override
 		public TableGroup findTableGroup(NavigablePath navigablePath) {

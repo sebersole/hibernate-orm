@@ -33,10 +33,24 @@ public class ColumnReference implements Expression, Assignable {
 	private final JdbcMapping jdbcMapping;
 
 	public ColumnReference(
-			String qualifier,
+			TableReference tableReference,
+			String columnExpression,
+			JdbcMapping jdbcMapping) {
+		this( tableReference.getIdentificationVariable(), columnExpression, jdbcMapping );
+	}
+
+	public ColumnReference(
+			TableReference tableReference,
 			String columnExpression,
 			JdbcMapping jdbcMapping,
 			SessionFactoryImplementor sessionFactory) {
+		this( tableReference, columnExpression, jdbcMapping );
+	}
+
+	public ColumnReference(
+			String qualifier,
+			String columnExpression,
+			JdbcMapping jdbcMapping) {
 		this.qualifier = StringHelper.nullIfEmpty( qualifier );
 		this.columnExpression = columnExpression;
 		this.referenceExpression = this.qualifier == null
@@ -46,11 +60,11 @@ public class ColumnReference implements Expression, Assignable {
 	}
 
 	public ColumnReference(
-			TableReference tableReference,
+			String qualifier,
 			String columnExpression,
 			JdbcMapping jdbcMapping,
 			SessionFactoryImplementor sessionFactory) {
-		this( tableReference.getIdentificationVariable(), columnExpression, jdbcMapping, sessionFactory );
+		this( qualifier, columnExpression, jdbcMapping );
 	}
 
 	public String getQualifier() {

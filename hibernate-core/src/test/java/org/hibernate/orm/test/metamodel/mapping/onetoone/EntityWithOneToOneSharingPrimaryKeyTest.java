@@ -6,9 +6,9 @@
  */
 package org.hibernate.orm.test.metamodel.mapping.onetoone;
 
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.domain.gambit.EntityWithOneToOneSharingPrimaryKey;
@@ -43,17 +43,17 @@ public class EntityWithOneToOneSharingPrimaryKeyTest {
 
 		final ModelPart otherAssociation = entityDescriptor.findSubPart( "other" );
 
-		assertThat( otherAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( otherAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping otherAttributeMapping = (ToOneAttributeMapping) otherAssociation;
+		final ToOneAttributeTarget otherAttributeMapping = (ToOneAttributeTarget) otherAssociation;
 
-		ForeignKeyDescriptor foreignKeyDescriptor = otherAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		ForeignKey foreignKey = otherAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "EntityWithOneToOneSharingPrimaryKey" ) );
 			assertThat( keyColumn, is( "id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "SIMPLE_ENTITY" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );

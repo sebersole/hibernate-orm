@@ -27,13 +27,12 @@ import org.hibernate.internal.util.MutableInteger;
 import org.hibernate.loader.ast.spi.Loadable;
 import org.hibernate.loader.ast.spi.Loader;
 import org.hibernate.metamodel.mapping.BasicValuedModelPart;
-import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
 import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ModelPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
-import org.hibernate.metamodel.mapping.internal.SimpleForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKeyBasic;
 import org.hibernate.metamodel.mapping.ordering.OrderByFragment;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.Joinable;
@@ -62,12 +61,12 @@ import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.Fetchable;
 import org.hibernate.sql.results.graph.FetchableContainer;
+import org.hibernate.sql.results.graph.ResultGraphLogger;
 import org.hibernate.sql.results.graph.collection.internal.CollectionDomainResult;
+import org.hibernate.sql.results.graph.embeddable.EmbeddableValuedFetchable;
 import org.hibernate.sql.results.graph.entity.EntityResultGraphNode;
 import org.hibernate.sql.results.internal.SqlSelectionImpl;
 import org.hibernate.sql.results.internal.StandardEntityGraphTraversalStateImpl;
-
-import org.jboss.logging.Logger;
 
 import static org.hibernate.sql.ast.spi.SqlExpressionResolver.createColumnReferenceKey;
 
@@ -78,8 +77,6 @@ import static org.hibernate.sql.ast.spi.SqlExpressionResolver.createColumnRefere
  * @author Nahtan Xu
  */
 public class LoaderSelectBuilder {
-	private static final Logger log = Logger.getLogger( LoaderSelectBuilder.class );
-
 	/**
 	 * Create an SQL AST select-statement based on matching one-or-more keys
 	 *
@@ -143,7 +140,7 @@ public class LoaderSelectBuilder {
 				sessionFactory,
 				attributeMapping,
 				null,
-				attributeMapping.getKeyDescriptor(),
+				attributeMapping.getForeignKeyDescriptor().getReferringSide().getKeyPart(),
 				cachedDomainResult,
 				-1,
 				loadQueryInfluencers,
@@ -424,20 +421,38 @@ public class LoaderSelectBuilder {
 		orderByFragments.put( orderByFragment, tableGroup );
 	}
 
-	private List<Fetch> visitFetches(FetchParent fetchParent, QuerySpec querySpec, LoaderSqlAstCreationState creationState) {
-		if ( log.isTraceEnabled() ) {
-			log.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
+	private List<Fetch> visitFetches(
+			FetchParent fetchParent,
+			QuerySpec querySpec,
+			boolean keyGraphs,
+			LoaderSqlAstCreationState creationState) {
+		ResultGraphLogger.LOGGER.tracef( "Starting visitation of FetchParent's Fetchables : %s", fetchParent.getNavigablePath() );
+
+		final FetchableContainer referencedMappingContainer = fetchParent.getReferencedMappingContainer();
+
+		if ( keyGraphs ) {
+			final Fetchable keyFetchable = referencedMappingContainer.getKeyFetchable();
+			if ( keyFetchable != null ) {
+				final NavigablePath keyNavPath = fetchParent.getNavigablePath().append( keyFetchable.getFetchableName() );
+				final Fetch keyFetch = keyFetchable.generateFetch(
+						fetchParent,
+						keyNavPath,
+						FetchTiming.IMMEDIATE,
+						false,
+						LockMode.READ,
+						null,
+						creationState
+				);
+				return Collections.singletonList( keyFetch );
+			}
+
+			return Collections.emptyList();
 		}
 
 		final List<Fetch> fetches = new ArrayList<>();
 
 		final BiConsumer<Fetchable, Boolean> processor = createFetchableBiConsumer( fetchParent, querySpec, creationState, fetches );
-
-		final FetchableContainer referencedMappingContainer = fetchParent.getReferencedMappingContainer();
-		if ( fetchParent.getNavigablePath().getParent() != null ) {
-			referencedMappingContainer.visitKeyFetchables( fetchable -> processor.accept( fetchable, true ), null );
-		}
-		referencedMappingContainer.visitFetchables( fetchable -> processor.accept( fetchable, false ), null );
+		referencedMappingContainer.visitFetchables( fetchable -> processor.accept( fetchable, keyGraphs ), null );
 
 		return fetches;
 	}
@@ -447,12 +462,9 @@ public class LoaderSelectBuilder {
 			QuerySpec querySpec,
 			LoaderSqlAstCreationState creationState,
 			List<Fetch> fetches) {
-		return (fetchable, isKeyFetchable) -> {
-			NavigablePath navigablePath = fetchParent.getNavigablePath();
-			if ( isKeyFetchable ) {
-				navigablePath = navigablePath.append( EntityIdentifierMapping.ROLE_LOCAL_NAME );
-			}
-			final NavigablePath fetchablePath = navigablePath.append( fetchable.getFetchableName() );
+		return (fetchable, keyGraphs) -> {
+			final NavigablePath parentPath = fetchParent.getNavigablePath();
+			final NavigablePath fetchablePath = parentPath.append( fetchable.getFetchableName() );
 
 			final Fetch biDirectionalFetch = fetchable.resolveCircularFetch(
 					fetchablePath,
@@ -472,8 +484,8 @@ public class LoaderSelectBuilder {
 			EntityGraphTraversalState.TraversalResult traversalResult = null;
 
 			// 'entity graph' takes precedence over 'fetch profile'
-			if ( entityGraphTraversalState != null) {
-				traversalResult = entityGraphTraversalState.traverse( fetchParent, fetchable, isKeyFetchable );
+			if ( entityGraphTraversalState != null ) {
+				traversalResult = entityGraphTraversalState.traverse( fetchParent, fetchable, keyGraphs );
 				fetchTiming = traversalResult.getFetchStrategy();
 				joined = traversalResult.isJoined();
 			}
@@ -642,33 +654,35 @@ public class LoaderSelectBuilder {
 		final SessionFactoryImplementor sessionFactory = sqlAstCreationContext.getSessionFactory();
 
 		assert loadable instanceof PluralAttributeMapping;
-		assert restrictedPart == null || restrictedPart instanceof ForeignKeyDescriptor;
+		assert restrictedPart == null || restrictedPart instanceof ForeignKey;
 
 		final PluralAttributeMapping attributeMapping = (PluralAttributeMapping) loadable;
-		final ForeignKeyDescriptor fkDescriptor = attributeMapping.getKeyDescriptor();
+		final ForeignKey fkDescriptor = attributeMapping.getForeignKeyDescriptor();
 
 		final Expression fkExpression;
 
-		final int jdbcTypeCount = fkDescriptor.getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
+		final int jdbcTypeCount = fkDescriptor.getReferringSide().getKeyPart().getJdbcTypeCount( sessionFactory.getTypeConfiguration() );
 		if ( jdbcTypeCount == 1 ) {
-			assert fkDescriptor instanceof SimpleForeignKeyDescriptor;
-			final SimpleForeignKeyDescriptor simpleFkDescriptor = (SimpleForeignKeyDescriptor) fkDescriptor;
+			assert fkDescriptor instanceof ForeignKeyBasic;
+			final ForeignKeyBasic simpleFkDescriptor = (ForeignKeyBasic) fkDescriptor;
+			final BasicValuedModelPart basicKeyPart = (BasicValuedModelPart) simpleFkDescriptor.getReferringSide().getKeyPart();
 			fkExpression = sqlAstCreationState.getSqlExpressionResolver().resolveSqlExpression(
 					createColumnReferenceKey(
-							simpleFkDescriptor.getContainingTableExpression(),
-							simpleFkDescriptor.getMappedColumnExpression()
+							basicKeyPart.getContainingTableExpression(),
+							basicKeyPart.getMappedColumnExpression()
 					),
 					sqlAstProcessingState -> new ColumnReference(
-							rootTableGroup.resolveTableReference( simpleFkDescriptor.getContainingTableExpression() ),
-							simpleFkDescriptor.getMappedColumnExpression(),
-							simpleFkDescriptor.getJdbcMapping(),
+							rootTableGroup.resolveTableReference( basicKeyPart.getContainingTableExpression() ),
+							basicKeyPart.getMappedColumnExpression(),
+							basicKeyPart.getJdbcMapping(),
 							this.creationContext.getSessionFactory()
 					)
 			);
 		}
 		else {
 			final List<ColumnReference> columnReferences = new ArrayList<>( jdbcTypeCount );
-			fkDescriptor.visitColumns(
+			final EmbeddableValuedFetchable basicKeyPart = (EmbeddableValuedFetchable) fkDescriptor.getReferringSide().getKeyPart();
+			basicKeyPart.visitColumns(
 					(containingTableExpression, columnExpression, jdbcMapping) ->
 						columnReferences.add(
 								(ColumnReference) sqlAstCreationState.getSqlExpressionResolver().resolveSqlExpression(
@@ -683,7 +697,7 @@ public class LoaderSelectBuilder {
 						)
 			);
 
-			fkExpression = new SqlTuple( columnReferences, fkDescriptor );
+			fkExpression = new SqlTuple( columnReferences, basicKeyPart );
 		}
 
 		querySpec.applyPredicate(
@@ -709,7 +723,7 @@ public class LoaderSelectBuilder {
 			int jdbcTypeCount,
 			LoaderSqlAstCreationState creationState,
 			SessionFactoryImplementor sessionFactory) {
-		final ForeignKeyDescriptor fkDescriptor = attributeMapping.getKeyDescriptor();
+		final ForeignKey fkDescriptor = attributeMapping.getForeignKeyDescriptor();
 
 		final QuerySpec subQuery = new QuerySpec( false );
 

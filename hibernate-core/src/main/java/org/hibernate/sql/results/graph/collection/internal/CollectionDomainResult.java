@@ -12,6 +12,7 @@ import java.util.List;
 import org.hibernate.LockMode;
 import org.hibernate.collection.spi.CollectionInitializerProducer;
 import org.hibernate.collection.spi.CollectionSemantics;
+import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.tree.from.TableGroup;
@@ -49,9 +50,10 @@ public class CollectionDomainResult implements DomainResult, CollectionResultGra
 		this.loadingAttribute = loadingAttribute;
 		this.resultVariable = resultVariable;
 
-		fkResult = loadingAttribute.getKeyDescriptor().createDomainResult(
+		this.fkResult = loadingAttribute.getForeignKeyDescriptor().getReferringSide().getKeyPart().createDomainResult(
 				loadingPath,
 				tableGroup,
+				null,
 				creationState
 		);
 
@@ -82,15 +84,15 @@ public class CollectionDomainResult implements DomainResult, CollectionResultGra
 		final CollectionInitializer initializer = (CollectionInitializer) creationState.resolveInitializer(
 				getNavigablePath(),
 				() -> {
-					final DomainResultAssembler fkAssembler = fkResult.createResultAssembler( creationState );
+					final DomainResultAssembler referringAssembler = fkResult.createResultAssembler( creationState );
 
 					return initializerProducer.produceInitializer(
 							loadingPath,
 							loadingAttribute,
 							null,
 							LockMode.READ,
-							fkAssembler,
-							fkAssembler,
+							referringAssembler,
+							referringAssembler,
 							creationState
 					);
 				}
@@ -115,13 +117,37 @@ public class CollectionDomainResult implements DomainResult, CollectionResultGra
 	}
 
 	@Override
+	public Fetch getKeyFetch() {
+		return initializerProducer.getIndexFetch();
+	}
+
+	public Fetch getElementFetch() {
+		return initializerProducer.getElementFetch();
+	}
+
+	@Override
 	public List<Fetch> getFetches() {
-		return Collections.emptyList();
+		return Collections.singletonList( initializerProducer.getElementFetch() );
 	}
 
 	@Override
 	public Fetch findFetch(String fetchableName) {
-		return null;
+		final CollectionPart.Nature nature = CollectionPart.Nature.fromName( fetchableName );
+		if ( nature == null ) {
+			return null;
+		}
+
+		switch ( nature ) {
+			case INDEX: {
+				return getKeyFetch();
+			}
+			case ELEMENT: {
+				return getElementFetch();
+			}
+			default: {
+				return null;
+			}
+		}
 	}
 
 }

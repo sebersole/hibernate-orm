@@ -27,7 +27,7 @@ import org.hibernate.graph.GraphSemantic;
 import org.hibernate.graph.spi.RootGraphImplementor;
 import org.hibernate.metamodel.mapping.EntityValuedModelPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
-import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMappingImpl;
 import org.hibernate.query.hql.spi.HqlQueryImplementor;
 import org.hibernate.query.spi.QueryImplementor;
 import org.hibernate.query.sqm.internal.QuerySqmImpl;
@@ -302,7 +302,7 @@ public class HqlEntityGraphTest implements SessionFactoryScopeAware {
 
 		final TableGroup joinedGroup = tableGroup.getTableGroupJoins().iterator().next().getJoinedGroup();
 		assertThat( joinedGroup.getModelPart().getPartName(), is( "homeAddress" ) );
-		assertThat( joinedGroup.getModelPart(), instanceOf( EmbeddedAttributeMapping.class ) );
+		assertThat( joinedGroup.getModelPart(), instanceOf( EmbeddedAttributeMappingImpl.class ) );
 		assertThat( joinedGroup, instanceOf( CompositeTableGroup.class ) );
 	}
 

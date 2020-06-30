@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 import org.hibernate.LockMode;
 import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
+import org.hibernate.metamodel.mapping.BasicSingularAttribute;
 import org.hibernate.metamodel.mapping.ColumnConsumer;
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.EntityVersionMapping;
@@ -62,8 +63,8 @@ public class EntityVersionMappingImpl implements EntityVersionMapping, FetchOpti
 	}
 
 	@Override
-	public BasicValuedSingularAttributeMapping getVersionAttribute() {
-		return (BasicValuedSingularAttributeMapping) declaringType.findAttributeMapping( attributeName );
+	public BasicSingularAttribute getVersionAttribute() {
+		return (BasicSingularAttribute) declaringType.findAttributeMapping( attributeName );
 	}
 
 	@Override

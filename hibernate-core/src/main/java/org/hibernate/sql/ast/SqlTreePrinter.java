@@ -108,7 +108,17 @@ public class SqlTreePrinter {
 
 	private void logTableGroupDetails(TableGroup tableGroup) {
 		logWithIndentation(
-				"primaryTableReference : %s as %s",
+				"navigablePath : %s,",
+				tableGroup.getNavigablePath()
+		);
+
+		logWithIndentation(
+				"modelPart : %s,",
+				tableGroup.getModelPart().getNavigableRole()
+		);
+
+		logWithIndentation(
+				"primaryTableReference : %s as %s,",
 				tableGroup.getPrimaryTableReference().getTableExpression(),
 				tableGroup.getPrimaryTableReference().getIdentificationVariable()
 		);
@@ -116,7 +126,7 @@ public class SqlTreePrinter {
 		final List<TableReferenceJoin> tableReferenceJoins = tableGroup.getTableReferenceJoins();
 		if ( ! tableReferenceJoins.isEmpty() ) {
 			logNode(
-					"TableReferenceJoins",
+					"tableReferenceJoins",
 					() -> {
 						for ( TableReferenceJoin join : tableReferenceJoins ) {
 							logWithIndentation(
@@ -133,7 +143,7 @@ public class SqlTreePrinter {
 		final Set<TableGroupJoin> tableGroupJoins = tableGroup.getTableGroupJoins();
 		if ( ! tableGroupJoins.isEmpty() ) {
 			logNode(
-					"TableGroupJoins",
+					"tableGroupJoins",
 					() -> tableGroup.visitTableGroupJoins( this::visitTableGroupJoin )
 			);
 		}

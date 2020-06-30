@@ -8,12 +8,14 @@ package org.hibernate.metamodel.mapping;
 
 import java.util.Collection;
 
+import org.hibernate.sql.results.graph.embeddable.EmbeddableValuedFetchable;
+
 /**
  * Support for composite identifier mappings
  *
  * @author Andrea Boriero
  */
-public interface CompositeIdentifierMapping extends EntityIdentifierMapping {
+public interface CompositeIdentifierMapping extends EntityIdentifierMapping, EmbeddableValuedFetchable {
 	/**
 	 * The number of attributes associated with this composite
 	 */

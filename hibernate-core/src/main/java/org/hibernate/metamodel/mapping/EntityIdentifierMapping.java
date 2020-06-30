@@ -7,11 +7,12 @@
 package org.hibernate.metamodel.mapping;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.sql.results.graph.Fetchable;
 
 /**
  * @author Steve Ebersole
  */
-public interface EntityIdentifierMapping extends ValueMapping, ModelPart {
+public interface EntityIdentifierMapping extends ValueMapping, ModelPart, Fetchable {
 	String ROLE_LOCAL_NAME = "{id}";
 
 	Object getIdentifier(Object entity, SharedSessionContractImplementor session);

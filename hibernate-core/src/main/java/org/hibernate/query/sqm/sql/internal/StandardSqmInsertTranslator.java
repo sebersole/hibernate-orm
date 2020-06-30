@@ -6,6 +6,9 @@
  */
 package org.hibernate.query.sqm.sql.internal;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.internal.util.collections.CollectionHelper;
@@ -40,9 +43,6 @@ import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Steve Ebersole
@@ -235,7 +235,12 @@ public class StandardSqmInsertTranslator
 	}
 
 	@Override
-	public List<Fetch> visitFetches(FetchParent fetchParent) {
+	public List<Fetch> buildFetches(FetchParent fetchParent) {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public Fetch buildKeyFetch(FetchParent fetchParent) {
+		return null;
 	}
 }

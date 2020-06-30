@@ -6,6 +6,7 @@
  */
 package org.hibernate.mapping;
 
+import org.hibernate.Internal;
 import org.hibernate.MappingException;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.Type;
@@ -64,4 +65,8 @@ public class DependantValue extends SimpleValue {
 				&& isSame( wrappedValue, other.wrappedValue );
 	}
 
+	@Internal
+	public KeyValue getWrappedValue() {
+		return wrappedValue;
+	}
 }

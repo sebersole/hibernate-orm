@@ -12,9 +12,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -48,17 +48,17 @@ public class ManyToOneTest {
 
 		final ModelPart simpleEntityAssociation = otherDescriptor.findSubPart( "simpleEntity" );
 
-		assertThat( simpleEntityAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( simpleEntityAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping childAttributeMapping = (ToOneAttributeMapping) simpleEntityAssociation;
+		final ToOneAttributeTarget childAttributeMapping = (ToOneAttributeTarget) simpleEntityAssociation;
 
-		ForeignKeyDescriptor foreignKeyDescriptor = childAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		ForeignKey foreignKey = childAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "other_entity" ) );
 			assertThat( keyColumn, is( "simple_entity_id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "simple_entity" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );

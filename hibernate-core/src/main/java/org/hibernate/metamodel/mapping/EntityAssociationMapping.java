@@ -6,14 +6,15 @@
  */
 package org.hibernate.metamodel.mapping;
 
-import org.hibernate.sql.results.graph.Fetchable;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKeySource;
+import org.hibernate.sql.results.graph.entity.EntityValuedFetchable;
 
 /**
  * Commonality between `many-to-one`, `one-to-one` and `any`, as well as entity-valued collection elements and map-keys
  *
  * @author Steve Ebersole
  */
-public interface EntityAssociationMapping extends ModelPart, Fetchable {
+public interface EntityAssociationMapping extends ForeignKeySource, EntityValuedFetchable {
 	@Override
 	default String getFetchableName() {
 		return getPartName();
@@ -25,5 +26,7 @@ public interface EntityAssociationMapping extends ModelPart, Fetchable {
 	 * The model sub-part relative to the associated entity type that is the target
 	 * of this association's foreign-key
 	 */
-	ModelPart getKeyTargetMatchPart();
+	default ModelPart getKeyTargetMatchPart() {
+		return getKeyModelPart().getForeignKeyDescriptor().getTargetSide().getKeyPart();
+	}
 }

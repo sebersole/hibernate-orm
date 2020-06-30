@@ -12,12 +12,12 @@ import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
 import org.hibernate.NotYetImplementedFor6Exception;
-import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.mapping.ColumnConsumer;
 import org.hibernate.metamodel.mapping.EmbeddableMappingType;
+import org.hibernate.metamodel.mapping.EmbeddedAttributeMapping;
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
@@ -44,19 +44,20 @@ import org.hibernate.sql.ast.tree.from.TableReference;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
+import org.hibernate.sql.results.graph.FetchOptions;
 import org.hibernate.sql.results.graph.FetchParent;
-import org.hibernate.sql.results.graph.Fetchable;
-import org.hibernate.sql.results.graph.embeddable.EmbeddableValuedFetchable;
 import org.hibernate.sql.results.graph.embeddable.internal.EmbeddableFetchImpl;
 import org.hibernate.sql.results.graph.embeddable.internal.EmbeddableResultImpl;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
+ * Standard implementation of EmbeddedAttributeMapping
+ *
  * @author Steve Ebersole
  */
-public class EmbeddedAttributeMapping
+public class EmbeddedAttributeMappingImpl
 		extends AbstractSingularAttributeMapping
-		implements EmbeddableValuedFetchable, Fetchable {
+		implements EmbeddedAttributeMapping {
 	private final NavigableRole navigableRole;
 
 	private final String tableExpression;
@@ -64,14 +65,14 @@ public class EmbeddedAttributeMapping
 	private final EmbeddableMappingType embeddableMappingType;
 
 	@SuppressWarnings("WeakerAccess")
-	public EmbeddedAttributeMapping(
+	public EmbeddedAttributeMappingImpl(
 			String name,
 			NavigableRole navigableRole,
 			int stateArrayPosition,
 			String tableExpression,
 			String[] attrColumnNames,
 			StateArrayContributorMetadataAccess attributeMetadataAccess,
-			FetchStrategy mappedFetchStrategy,
+			FetchOptions mappedFetchOptions,
 			EmbeddableMappingType embeddableMappingType,
 			ManagedMappingType declaringType,
 			PropertyAccess propertyAccess) {
@@ -79,7 +80,7 @@ public class EmbeddedAttributeMapping
 				name,
 				stateArrayPosition,
 				attributeMetadataAccess,
-				mappedFetchStrategy,
+				mappedFetchOptions,
 				declaringType,
 				propertyAccess
 		);

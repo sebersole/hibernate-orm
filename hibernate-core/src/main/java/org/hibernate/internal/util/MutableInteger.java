@@ -45,7 +45,11 @@ public class MutableInteger {
 		this.value = value;
 	}
 
-	public void increase() {
+	public void increment() {
 		++value;
+	}
+
+	public void decrement() {
+		--value;
 	}
 }

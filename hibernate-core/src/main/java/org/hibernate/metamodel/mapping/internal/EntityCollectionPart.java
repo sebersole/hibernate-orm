@@ -12,16 +12,17 @@ import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Value;
-import org.hibernate.metamodel.mapping.Association;
 import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.EntityAssociationMapping;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
 import org.hibernate.metamodel.mapping.MappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
+import org.hibernate.metamodel.mapping.internal.fk.JoinTableKey;
+import org.hibernate.metamodel.mapping.internal.fk.KeyModelPart;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.ast.spi.FromClauseAccess;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
@@ -30,7 +31,6 @@ import org.hibernate.sql.results.graph.FetchOptions;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.collection.internal.EntityCollectionPartTableGroup;
 import org.hibernate.sql.results.graph.entity.EntityFetch;
-import org.hibernate.sql.results.graph.entity.EntityValuedFetchable;
 import org.hibernate.sql.results.graph.entity.internal.EntityFetchJoinedImpl;
 import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 
@@ -38,42 +38,45 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class EntityCollectionPart
-		implements CollectionPart, EntityAssociationMapping, EntityValuedFetchable, Association, FetchOptions {
+		implements CollectionPart, EntityAssociationMapping, FetchOptions {
+
 	private final NavigableRole navigableRole;
 	private final CollectionPersister collectionDescriptor;
 	private final Nature nature;
-	private final EntityMappingType entityMappingType;
+	private final EntityMappingType associatedEntityDescriptor;
 
-	private ModelPart fkTargetModelPart;
+	private KeyModelPart keyModelPart;
 
 	@SuppressWarnings("WeakerAccess")
 	public EntityCollectionPart(
 			CollectionPersister collectionDescriptor,
 			Nature nature,
-			Value bootModelValue,
-			EntityMappingType entityMappingType,
+			Collection bootCollectionDescriptor,
+			Value bootPartDescriptor,
+			EntityMappingType associatedEntityDescriptor,
 			MappingModelCreationProcess creationProcess) {
 		this.navigableRole = collectionDescriptor.getNavigableRole().appendContainer( nature.getName() );
 		this.collectionDescriptor = collectionDescriptor;
 
 		this.nature = nature;
-		this.entityMappingType = entityMappingType;
-	}
+		this.associatedEntityDescriptor = associatedEntityDescriptor;
 
-	@SuppressWarnings("WeakerAccess")
-	public void finishInitialization(
-			CollectionPersister collectionDescriptor,
-			Collection bootValueMapping,
-			String fkTargetModelPartName,
-			MappingModelCreationProcess creationProcess) {
-		if ( fkTargetModelPartName == null ) {
-			fkTargetModelPart = entityMappingType.getIdentifierMapping();
-		}
-		else {
-			fkTargetModelPart = entityMappingType.findSubPart( fkTargetModelPartName, null );
-		}
-	}
+		creationProcess.registerForeignKeyPostInitCallbacks(
+				"EntityCollectionPart FK creation : " + collectionDescriptor.getNavigableRole().getFullPath(),
+				() -> {
+					final JoinTableKey joinTableKey = collectionDescriptor.getAttributeMapping().getJoinTableKey();
+					if ( joinTableKey != null ) {
+						// many-to-many
+						this.keyModelPart = joinTableKey;
+					}
+					else {
+						this.keyModelPart = collectionDescriptor.getAttributeMapping().getCollectionKey();
+					}
 
+					return true;
+				}
+		);
+	}
 
 	@Override
 	public Nature getNature() {
@@ -87,7 +90,7 @@ public class EntityCollectionPart
 
 	@Override
 	public EntityMappingType getEntityMappingType() {
-		return entityMappingType;
+		return associatedEntityDescriptor;
 	}
 
 	@Override
@@ -97,7 +100,7 @@ public class EntityCollectionPart
 
 	@Override
 	public ModelPart getKeyTargetMatchPart() {
-		return fkTargetModelPart;
+		return keyModelPart.getForeignKeyDescriptor().getTargetSide().getKeyPart();
 	}
 
 	@Override
@@ -139,21 +142,27 @@ public class EntityCollectionPart
 			DomainResultCreationState creationState) {
 //		assert fetchParent.getReferencedMappingContainer() instanceof PluralAttributeMapping;
 
+		final FromClauseAccess fromClauseAccess = creationState.getSqlAstCreationState().getFromClauseAccess();
+
 		// find or create the TableGroup associated with this `fetchablePath`
-		creationState.getSqlAstCreationState().getFromClauseAccess().resolveTableGroup(
+		fromClauseAccess.resolveTableGroup(
 				fetchablePath,
 				np -> {
 					// We need to create one.  The Result will be able to find it later by path
 
 					// first, find the collection's TableGroup
-					final TableGroup collectionTableGroup = creationState.getSqlAstCreationState()
-							.getFromClauseAccess()
-							.getTableGroup( fetchParent.getNavigablePath() );
+					final TableGroup collectionTableGroup = fromClauseAccess.getTableGroup( fetchParent.getNavigablePath() );
 
 					assert collectionTableGroup != null;
 
 					// create a "wrapper" around the collection TableGroup adding in the entity's table references
-					return new EntityCollectionPartTableGroup( fetchablePath, collectionTableGroup, this );
+					final EntityCollectionPartTableGroup collectionPartTableGroup = new EntityCollectionPartTableGroup(
+							fetchablePath,
+							collectionTableGroup,
+							this
+					);
+
+					return collectionPartTableGroup;
 				}
 		);
 
@@ -184,7 +193,7 @@ public class EntityCollectionPart
 
 	@Override
 	public int getNumberOfFetchables() {
-		return entityMappingType.getNumberOfFetchables();
+		return associatedEntityDescriptor.getNumberOfFetchables();
 	}
 
 	public String getMappedBy() {
@@ -197,12 +206,6 @@ public class EntityCollectionPart
 	}
 
 	@Override
-	public ForeignKeyDescriptor getForeignKeyDescriptor() {
-		// todo (6.0) : this will not strictly work - we'd want a new ForeignKeyDescriptor that points the other direction
-		return collectionDescriptor.getAttributeMapping().getKeyDescriptor();
-	}
-
-	@Override
 	public FetchStyle getStyle() {
 		return FetchStyle.JOIN;
 	}
@@ -210,5 +213,15 @@ public class EntityCollectionPart
 	@Override
 	public FetchTiming getTiming() {
 		return FetchTiming.IMMEDIATE;
+	}
+
+	@Override
+	public KeyModelPart getKeyModelPart() {
+		return keyModelPart;
+	}
+
+	@Override
+	public boolean isNullable() {
+		return false;
 	}
 }

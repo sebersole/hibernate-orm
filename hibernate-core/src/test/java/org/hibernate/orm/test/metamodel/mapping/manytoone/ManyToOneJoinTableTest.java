@@ -14,9 +14,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -51,34 +51,34 @@ public class ManyToOneJoinTableTest {
 
 		final ModelPart simpleEntityAssociation = otherDescriptor.findSubPart( "simpleEntity" );
 
-		assertThat( simpleEntityAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( simpleEntityAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping simpleAttributeMapping = (ToOneAttributeMapping) simpleEntityAssociation;
+		final ToOneAttributeTarget simpleAttributeMapping = (ToOneAttributeTarget) simpleEntityAssociation;
 
-		ForeignKeyDescriptor foreignKeyDescriptor = simpleAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		ForeignKey foreignKey = simpleAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "other_simple" ) );
 			assertThat( keyColumn, is( "RHS_ID" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "simple_entity" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );
 
 		final ModelPart anotherEntityAssociation = otherDescriptor.findSubPart( "anotherEntity" );
 
-		assertThat( anotherEntityAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( anotherEntityAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping anotherAttributeMapping = (ToOneAttributeMapping) anotherEntityAssociation;
+		final ToOneAttributeTarget anotherAttributeMapping = (ToOneAttributeTarget) anotherEntityAssociation;
 
-		foreignKeyDescriptor = anotherAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		foreignKey = anotherAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "other_another" ) );
 			assertThat( keyColumn, is( "RHS_ID" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "another_entity" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );
@@ -90,17 +90,17 @@ public class ManyToOneJoinTableTest {
 
 		ModelPart otherEntityEntityAssociation = simpleDescriptor.findSubPart( "other" );
 
-		assertThat( otherEntityEntityAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( otherEntityEntityAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		ToOneAttributeMapping otherAttributeMapping = (ToOneAttributeMapping) otherEntityEntityAssociation;
+		ToOneAttributeTarget otherAttributeMapping = (ToOneAttributeTarget) otherEntityEntityAssociation;
 
-		foreignKeyDescriptor = otherAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		foreignKey = otherAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "other_simple" ) );
 			assertThat( keyColumn, is( "LHS_ID" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "other_entity" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );
@@ -112,17 +112,17 @@ public class ManyToOneJoinTableTest {
 
 		otherEntityEntityAssociation = anotherDescriptor.findSubPart( "other" );
 
-		assertThat( otherEntityEntityAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( otherEntityEntityAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		otherAttributeMapping = (ToOneAttributeMapping) otherEntityEntityAssociation;
+		otherAttributeMapping = (ToOneAttributeTarget) otherEntityEntityAssociation;
 
-		foreignKeyDescriptor = otherAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		foreignKey = otherAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "another_entity" ) );
 			assertThat( keyColumn, is( "other_id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "other_entity" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );

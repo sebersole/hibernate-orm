@@ -27,45 +27,37 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.FetchTiming;
-import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 import org.hibernate.engine.spi.CascadeStyle;
 import org.hibernate.engine.spi.CascadeStyles;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Component;
 import org.hibernate.mapping.IndexedCollection;
-import org.hibernate.mapping.KeyValue;
+import org.hibernate.mapping.ManyToOne;
 import org.hibernate.mapping.OneToMany;
 import org.hibernate.mapping.OneToOne;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Selectable;
-import org.hibernate.mapping.Table;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
 import org.hibernate.metamodel.CollectionClassification;
 import org.hibernate.metamodel.MappingMetamodel;
-import org.hibernate.metamodel.mapping.BasicValuedModelPart;
+import org.hibernate.metamodel.mapping.BasicSingularAttribute;
 import org.hibernate.metamodel.mapping.CollectionIdentifierDescriptor;
 import org.hibernate.metamodel.mapping.CollectionMappingType;
 import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.CompositeIdentifierMapping;
 import org.hibernate.metamodel.mapping.EmbeddableMappingType;
-import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
 import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
-import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
-import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
-import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.NonTransientException;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadata;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
+import org.hibernate.metamodel.mapping.ToOneAttributeMapping;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
@@ -263,7 +255,7 @@ public class MappingModelCreationHelper {
 	// Non-identifier attributes
 
 	@SuppressWarnings("rawtypes")
-	public static BasicValuedSingularAttributeMapping buildBasicAttributeMapping(
+	public static BasicSingularAttribute buildBasicAttributeMapping(
 			String attrName,
 			NavigableRole navigableRole,
 			int stateArrayPosition,
@@ -346,7 +338,7 @@ public class MappingModelCreationHelper {
 					);
 
 
-			return new BasicValuedSingularAttributeMapping(
+			return new BasicSingularAttributeImpl(
 					attrName,
 					navigableRole,
 					stateArrayPosition,
@@ -361,7 +353,7 @@ public class MappingModelCreationHelper {
 			);
 		}
 		else {
-			return new BasicValuedSingularAttributeMapping(
+			return new BasicSingularAttributeImpl(
 					attrName,
 					navigableRole,
 					stateArrayPosition,
@@ -378,7 +370,7 @@ public class MappingModelCreationHelper {
 	}
 
 
-	public static EmbeddedAttributeMapping buildEmbeddedAttributeMapping(
+	public static EmbeddedAttributeMappingImpl buildEmbeddedAttributeMapping(
 			String attrName,
 			int stateArrayPosition,
 			Property bootProperty,
@@ -400,7 +392,7 @@ public class MappingModelCreationHelper {
 		final EmbeddableMappingType embeddableMappingType = EmbeddableMappingType.from(
 				(Component) bootProperty.getValue(),
 				attrType,
-				attributeMappingType -> new EmbeddedAttributeMapping(
+				attributeMappingType -> new EmbeddedAttributeMappingImpl(
 						attrName,
 						declaringType.getNavigableRole().append( attrName ),
 						stateArrayPosition,
@@ -415,7 +407,7 @@ public class MappingModelCreationHelper {
 				creationProcess
 		);
 
-		return (EmbeddedAttributeMapping) embeddableMappingType.getEmbeddedValueMapping();
+		return (EmbeddedAttributeMappingImpl) embeddableMappingType.getEmbeddedValueMapping();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -762,8 +754,9 @@ public class MappingModelCreationHelper {
 				sessionFactory
 		);
 
-		final PluralAttributeMappingImpl pluralAttributeMapping = new PluralAttributeMappingImpl(
+		return new PluralAttributeMappingImpl(
 				attrName,
+				bootProperty,
 				bootValueMapping,
 				propertyAccess,
 				entityMappingType -> contributorMetadata,
@@ -782,267 +775,9 @@ public class MappingModelCreationHelper {
 				),
 				cascadeStyle,
 				declaringType,
-				collectionDescriptor
-		);
-
-		creationProcess.registerInitializationCallback(
-				() -> {
-					try {
-						pluralAttributeMapping.finishInitialization( bootProperty, bootValueMapping, creationProcess );
-						return true;
-					}
-					catch (NotYetImplementedFor6Exception nye) {
-						throw nye;
-					}
-					catch (Exception e) {
-						if ( e instanceof NonTransientException ) {
-							throw e;
-						}
-
-						return false;
-					}
-				}
-		);
-
-		creationProcess.registerForeignKeyPostInitCallbacks(
-				() -> {
-					interpretPluralAttributeMappingKeyDescriptor(
-							pluralAttributeMapping,
-							bootValueMapping,
-							collectionDescriptor,
-							declaringType,
-							dialect,
-							creationProcess
-					);
-					return true;
-				}
-		);
-
-		return pluralAttributeMapping;
-	}
-
-	private static void interpretPluralAttributeMappingKeyDescriptor(
-			PluralAttributeMappingImpl attributeMapping,
-			Collection bootValueMapping,
-			CollectionPersister collectionDescriptor,
-			ManagedMappingType declaringType,
-			Dialect dialect,
-			MappingModelCreationProcess creationProcess) {
-		ModelPart attributeMappingSubPart = null;
-		if ( !StringHelper.isEmpty( collectionDescriptor.getMappedByProperty() ) ) {
-			attributeMappingSubPart = attributeMapping.findSubPart( collectionDescriptor.getMappedByProperty(), null );
-		}
-
-		if ( attributeMappingSubPart != null && attributeMappingSubPart instanceof ToOneAttributeMapping ) {
-			final ToOneAttributeMapping referencedAttributeMapping = (ToOneAttributeMapping) attributeMappingSubPart;
-
-			setRefererencedAttributeForeignKeyDescriptor(
-					attributeMapping,
-					referencedAttributeMapping,
-					(EntityPersister) referencedAttributeMapping.getDeclaringType(),
-					collectionDescriptor.getMappedByProperty(),
-					dialect,
-					creationProcess
-			);
-			return;
-		}
-
-		final KeyValue bootValueMappingKey = bootValueMapping.getKey();
-		final Type keyType = bootValueMappingKey.getType();
-		final ModelPart fkTarget;
-		final String lhsPropertyName = collectionDescriptor.getCollectionType().getLHSPropertyName();
-		if ( lhsPropertyName == null ) {
-			fkTarget = collectionDescriptor.getOwnerEntityPersister().getIdentifierMapping();
-		}
-		else {
-			fkTarget = declaringType.findAttributeMapping( lhsPropertyName );
-		}
-
-		if ( keyType instanceof BasicType ) {
-			assert bootValueMappingKey.getColumnSpan() == 1;
-			assert fkTarget instanceof BasicValuedModelPart;
-			final BasicValuedModelPart simpleFkTarget = (BasicValuedModelPart) fkTarget;
-			attributeMapping.setForeignKeyDescriptor(
-					new SimpleForeignKeyDescriptor(
-							getTableIdentifierExpression( bootValueMappingKey.getTable(), creationProcess ),
-							bootValueMappingKey.getColumnIterator().next().getText( dialect ),
-							simpleFkTarget.getContainingTableExpression(),
-							simpleFkTarget.getMappedColumnExpression(),
-							(JdbcMapping) keyType
-					)
-			);
-		}
-		else if ( fkTarget instanceof EmbeddableValuedModelPart ) {
-			final EmbeddedForeignKeyDescriptor embeddedForeignKeyDescriptor =
-					buildEmbeddedForeignKeyDescriptor(
-							(EmbeddableValuedModelPart) fkTarget,
-							attributeMapping,
-							bootValueMapping,
-							dialect,
-							creationProcess
-					);
-
-			attributeMapping.setForeignKeyDescriptor( embeddedForeignKeyDescriptor );
-		}
-		else {
-			throw new NotYetImplementedFor6Exception(
-					"Support for composite foreign keys not yet implemented: " + bootValueMapping.getRole()
-			);
-		}
-	}
-
-	public static void interpretSingularAssociationAttributeMappingKeyDescriptor(
-			ToOneAttributeMapping attributeMapping,
-			Property bootProperty,
-			ToOne bootValueMapping,
-			EntityMappingType declaringEntityDescriptor,
-			Dialect dialect,
-			MappingModelCreationProcess creationProcess) {
-		if ( attributeMapping.getForeignKeyDescriptor() != null ) {
-			return;
-		}
-
-		final ForeignKeyDirection foreignKeyDirection = ( (AssociationType) bootValueMapping.getType() ).getForeignKeyDirection();
-		attributeMapping.setForeignKeyDirection( foreignKeyDirection );
-		attributeMapping.setIdentifyingColumnsTableExpression( bootValueMapping.getTable().getName() );
-
-		final EntityPersister referencedEntityDescriptor = creationProcess
-				.getEntityPersister( bootValueMapping.getReferencedEntityName() );
-
-		String referencedPropertyName = bootValueMapping.getReferencedPropertyName();
-		if ( referencedPropertyName == null && bootValueMapping instanceof OneToOne ) {
-			referencedPropertyName = ( (OneToOne) bootValueMapping ).getMappedByProperty();
-		}
-
-		if ( referencedPropertyName != null  ) {
-			final ToOneAttributeMapping referencedAttributeMapping =
-					(ToOneAttributeMapping) referencedEntityDescriptor.findSubPart( referencedPropertyName );
-
-			setRefererencedAttributeForeignKeyDescriptor(
-					attributeMapping,
-					referencedAttributeMapping,
-					referencedEntityDescriptor,
-					referencedPropertyName,
-					dialect,
-					creationProcess
-			);
-			return;
-		}
-
-		final ModelPart fkTarget;
-		if ( bootValueMapping.isReferenceToPrimaryKey() ) {
-			fkTarget = referencedEntityDescriptor.getIdentifierMapping();
-		}
-		else {
-			fkTarget = declaringEntityDescriptor.getIdentifierMapping();
-		}
-
-		if ( fkTarget instanceof BasicValuedModelPart ) {
-			final String keyColumnExpression;
-			final Iterator<Selectable> columnIterator = bootValueMapping.getColumnIterator();
-			final Table table = bootValueMapping.getTable();
-			if ( columnIterator.hasNext() ) {
-				keyColumnExpression = columnIterator.next().getText( dialect );
-			}
-			else {
-				// case of ToOne with @PrimaryKeyJoinColumn
-				keyColumnExpression = table.getColumn( 0 ).getName();
-			}
-
-			final BasicValuedModelPart simpleFkTarget = (BasicValuedModelPart) fkTarget;
-			final ForeignKeyDescriptor foreignKeyDescriptor = new SimpleForeignKeyDescriptor(
-					getTableIdentifierExpression( table, creationProcess ),
-					keyColumnExpression,
-					simpleFkTarget.getContainingTableExpression(),
-					simpleFkTarget.getMappedColumnExpression(),
-					simpleFkTarget.getJdbcMapping()
-			);
-			attributeMapping.setForeignKeyDescriptor( foreignKeyDescriptor );
-		}
-		else if ( fkTarget instanceof EmbeddableValuedModelPart ) {
-			final EmbeddedForeignKeyDescriptor embeddedForeignKeyDescriptor = buildEmbeddedForeignKeyDescriptor(
-					(EmbeddableValuedModelPart) fkTarget,
-					attributeMapping,
-					bootValueMapping,
-					dialect,
-					creationProcess
-			);
-			attributeMapping.setForeignKeyDescriptor( embeddedForeignKeyDescriptor );
-		}
-		else {
-			throw new NotYetImplementedFor6Exception(
-					"Support for composite foreign-keys not yet implemented: " +
-							bootProperty.getPersistentClass().getEntityName() + " -> " + bootProperty.getName()
-			);
-		}
-	}
-
-	public static EmbeddedForeignKeyDescriptor buildEmbeddedForeignKeyDescriptor(
-			EmbeddableValuedModelPart fkTarget,
-			AbstractAttributeMapping attributeMapping,
-			Value bootValueMapping,
-			Dialect dialect,
-			MappingModelCreationProcess creationProcess) {
-		final List<String> keyColumnExpressions = new ArrayList<>(bootValueMapping.getColumnSpan());
-		bootValueMapping.getColumnIterator().forEachRemaining(
-				column ->
-						keyColumnExpressions.add( column.getText( dialect ) ) );
-
-		final List<String> mappedColumnExpressions = fkTarget.getMappedColumnExpressions();
-		final List<String> targetColumnExpressions = new ArrayList<>( mappedColumnExpressions.size() );
-		mappedColumnExpressions.forEach(
-				column ->
-						targetColumnExpressions.add( column ) );
-
-		return new EmbeddedForeignKeyDescriptor(
-				(EmbeddedIdentifierMappingImpl) fkTarget,
-				getTableIdentifierExpression( bootValueMapping.getTable(), creationProcess ),
-				keyColumnExpressions,
-				fkTarget.getContainingTableExpression(),
-				targetColumnExpressions,
+				collectionDescriptor,
 				creationProcess
 		);
-	}
-
-	private static void setRefererencedAttributeForeignKeyDescriptor(
-			AbstractAttributeMapping attributeMapping,
-			ToOneAttributeMapping referencedAttributeMapping,
-			EntityPersister referencedEntityDescriptor,
-			String referencedPropertyName,
-			Dialect dialect,
-			MappingModelCreationProcess creationProcess) {
-		ForeignKeyDescriptor foreignKeyDescriptor = referencedAttributeMapping.getForeignKeyDescriptor();
-		if ( foreignKeyDescriptor == null ) {
-			PersistentClass entityBinding = creationProcess.getCreationContext()
-					.getBootModel()
-					.getEntityBinding(
-							referencedEntityDescriptor.getEntityName() );
-			Property property = entityBinding.getProperty( referencedPropertyName );
-			interpretSingularAssociationAttributeMappingKeyDescriptor(
-					referencedAttributeMapping,
-					property,
-					(ToOne) property.getValue(),
-					referencedEntityDescriptor,
-					dialect,
-					creationProcess
-			);
-			attributeMapping.setForeignKeyDescriptor( referencedAttributeMapping.getForeignKeyDescriptor() );
-		}
-		else {
-			attributeMapping.setForeignKeyDescriptor( foreignKeyDescriptor );
-		}
-	}
-
-	private static String getTableIdentifierExpression(Table table, MappingModelCreationProcess creationProcess) {
-		final JdbcEnvironment jdbcEnvironment = creationProcess.getCreationContext()
-				.getMetadata()
-				.getDatabase()
-				.getJdbcEnvironment();
-		return jdbcEnvironment
-				.getQualifiedObjectNameFormatter().format(
-						table.getQualifiedTableName(),
-						jdbcEnvironment.getDialect()
-				);
 	}
 
 	private static CollectionPart interpretMapKey(
@@ -1101,36 +836,14 @@ public class MappingModelCreationHelper {
 			final EntityType indexEntityType = (EntityType) collectionDescriptor.getIndexType();
 			final EntityPersister associatedEntity = creationProcess.getEntityPersister( indexEntityType.getAssociatedEntityName() );
 
-			final EntityCollectionPart indexDescriptor = new EntityCollectionPart(
+			return new EntityCollectionPart(
 					collectionDescriptor,
 					CollectionPart.Nature.INDEX,
+					bootValueMapping,
 					bootMapKeyDescriptor,
 					associatedEntity,
 					creationProcess
 			);
-
-			creationProcess.registerInitializationCallback(
-					() -> {
-						try {
-							indexDescriptor.finishInitialization(
-									collectionDescriptor,
-									bootValueMapping,
-									indexEntityType.getRHSUniqueKeyPropertyName(),
-									creationProcess
-							);
-
-							return true;
-						}
-						catch (NotYetImplementedFor6Exception nye) {
-							throw nye;
-						}
-						catch (Exception wait) {
-							return false;
-						}
-					}
-			);
-
-			return indexDescriptor;
 		}
 
 		throw new NotYetImplementedFor6Exception(
@@ -1195,30 +908,10 @@ public class MappingModelCreationHelper {
 			final EntityCollectionPart elementDescriptor = new EntityCollectionPart(
 					collectionDescriptor,
 					CollectionPart.Nature.ELEMENT,
-					bootDescriptor.getElement(),
+					bootDescriptor,
+					element,
 					associatedEntity,
 					creationProcess
-			);
-
-			creationProcess.registerInitializationCallback(
-					() -> {
-						try {
-							elementDescriptor.finishInitialization(
-									collectionDescriptor,
-									bootDescriptor,
-									elementEntityType.getRHSUniqueKeyPropertyName(),
-									creationProcess
-							);
-
-							return true;
-						}
-						catch (NotYetImplementedFor6Exception nye) {
-							throw nye;
-						}
-						catch (Exception wait) {
-							return false;
-						}
-					}
 			);
 
 			return elementDescriptor;
@@ -1264,8 +957,8 @@ public class MappingModelCreationHelper {
 			CascadeStyle cascadeStyle,
 			MappingModelCreationProcess creationProcess) {
 		if ( bootProperty.getValue() instanceof ToOne ) {
-			final ToOne value = (ToOne) bootProperty.getValue();
-			final EntityPersister entityPersister = creationProcess.getEntityPersister( value.getReferencedEntityName() );
+			final ToOne bootToOne = (ToOne) bootProperty.getValue();
+			final EntityPersister entityPersister = creationProcess.getEntityPersister( bootToOne.getReferencedEntityName() );
 			final StateArrayContributorMetadataAccess stateArrayContributorMetadataAccess = getStateArrayContributorMetadataAccess(
 					bootProperty,
 					attrType,
@@ -1276,18 +969,17 @@ public class MappingModelCreationHelper {
 			SessionFactoryImplementor sessionFactory = creationProcess.getCreationContext().getSessionFactory();
 
 			final AssociationType type = (AssociationType) bootProperty.getType();
-			final FetchStyle fetchStyle = FetchStrategyHelper
-					.determineFetchStyleByMetadata(
-							bootProperty.getValue().getFetchMode(),
-							type,
-							sessionFactory
-					);
+			final FetchStyle fetchStyle = FetchStrategyHelper.determineFetchStyleByMetadata(
+					bootProperty.getValue().getFetchMode(),
+					type,
+					sessionFactory
+			);
 
 			final FetchTiming fetchTiming;
 
 			if ( fetchStyle == FetchStyle.JOIN
-					|| ( value instanceof OneToOne && value.isNullable() )
-					|| !( value ).isLazy() ) {
+					|| ( bootToOne instanceof OneToOne && bootToOne.isNullable() )
+					|| ! bootToOne.isLazy() ) {
 				fetchTiming = FetchTiming.IMMEDIATE;
 			}
 			else {
@@ -1296,37 +988,58 @@ public class MappingModelCreationHelper {
 
 			final FetchStrategy fetchStrategy = new FetchStrategy( fetchTiming, fetchStyle );
 
-			final ToOneAttributeMapping attributeMapping = new ToOneAttributeMapping(
-					attrName,
-					navigableRole,
-					stateArrayPosition,
-					(ToOne) bootProperty.getValue(),
-					stateArrayContributorMetadataAccess,
-					fetchStrategy,
-					entityPersister,
-					declaringType,
-					propertyAccess
-			);
+			final ForeignKeyDirection direction;
+			final ToOneAttributeMapping.Cardinality cardinality;
 
-			creationProcess.registerForeignKeyPostInitCallbacks(
-					() -> {
-						final Dialect dialect = creationProcess.getCreationContext()
-								.getSessionFactory()
-								.getJdbcServices()
-								.getDialect();
+			if ( bootToOne instanceof OneToOne ) {
+				final OneToOne oneToOneBootValue = (OneToOne) bootToOne;
 
-						MappingModelCreationHelper.interpretSingularAssociationAttributeMappingKeyDescriptor(
-								attributeMapping,
-								bootProperty,
-								(ToOne) bootProperty.getValue(),
-								declaringType.findContainingEntityMapping(),
-								dialect,
-								creationProcess
-						);
-						return true;
-					}
-			);
-			return attributeMapping;
+				if ( oneToOneBootValue.isConstrained() ) {
+					direction = ForeignKeyDirection.REFERRING;
+				}
+				else {
+					direction = ForeignKeyDirection.TARGET;
+				}
+
+				cardinality = ToOneAttributeMapping.Cardinality.ONE_TO_ONE;
+			}
+			else {
+				direction = ForeignKeyDirection.REFERRING;
+				cardinality = ( (ManyToOne) bootToOne ).isLogicalOneToOne()
+						? ToOneAttributeMapping.Cardinality.LOGICAL_ONE_TO_ONE
+						: ToOneAttributeMapping.Cardinality.MANY_TO_ONE;
+			}
+
+			if ( direction == ForeignKeyDirection.REFERRING ) {
+				return new ToOneAttributeReferring(
+						attrName,
+						navigableRole,
+						cardinality,
+						stateArrayPosition,
+						(ToOne) bootProperty.getValue(),
+						stateArrayContributorMetadataAccess,
+						fetchStrategy,
+						entityPersister,
+						declaringType,
+						propertyAccess,
+						creationProcess
+				);
+			}
+			else {
+				return new ToOneAttributeTarget(
+						attrName,
+						navigableRole,
+						cardinality,
+						stateArrayPosition,
+						bootToOne,
+						stateArrayContributorMetadataAccess,
+						fetchStrategy,
+						entityPersister,
+						declaringType,
+						propertyAccess,
+						creationProcess
+				);
+			}
 		}
 		else {
 			throw new NotYetImplementedFor6Exception( "AnyType support has not yet been implemented" );

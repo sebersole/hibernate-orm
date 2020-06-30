@@ -29,6 +29,8 @@ import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.Clause;
+import org.hibernate.sql.ast.spi.FromClauseAccess;
+import org.hibernate.sql.ast.spi.SqlAstCreationState;
 import org.hibernate.sql.ast.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
@@ -271,8 +273,32 @@ public class BasicEntityIdentifierMappingImpl implements BasicEntityIdentifierMa
 			LockMode lockMode,
 			String resultVariable,
 			DomainResultCreationState creationState) {
+		final SqlAstCreationState sqlAstCreationState = creationState.getSqlAstCreationState();
+		final SqlExpressionResolver sqlExpressionResolver = sqlAstCreationState.getSqlExpressionResolver();
+
+		final FromClauseAccess fromClauseAccess = sqlAstCreationState.getFromClauseAccess();
+		final TableGroup tableGroup = fromClauseAccess.getTableGroup( fetchParent.getNavigablePath() );
+
+		final TableReference rootTableReference = tableGroup.getTableReference( rootTable );
+
+		final Expression idReference = sqlExpressionResolver.resolveSqlExpression(
+				SqlExpressionResolver.createColumnReferenceKey( rootTableReference, pkColumnName ),
+				processingState -> new ColumnReference(
+						rootTableReference,
+						pkColumnName,
+						getJdbcMapping(),
+						sessionFactory
+				)
+		);
+
+		final SqlSelection idSelection = sqlExpressionResolver.resolveSqlSelection(
+				idReference,
+				getJavaTypeDescriptor(),
+				sessionFactory.getTypeConfiguration()
+		);
+
 		return new BasicFetch<>(
-				0,
+				idSelection.getValuesArrayPosition(),
 				fetchParent,
 				fetchablePath,
 				this,

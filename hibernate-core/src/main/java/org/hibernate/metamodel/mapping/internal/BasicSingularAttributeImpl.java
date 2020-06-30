@@ -9,16 +9,13 @@ package org.hibernate.metamodel.mapping.internal;
 import java.util.function.Consumer;
 
 import org.hibernate.LockMode;
-import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.metamodel.mapping.BasicValuedModelPart;
+import org.hibernate.metamodel.mapping.BasicSingularAttribute;
 import org.hibernate.metamodel.mapping.ColumnConsumer;
-import org.hibernate.metamodel.mapping.ConvertibleModelPart;
 import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
 import org.hibernate.metamodel.mapping.MappingType;
-import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.NavigableRole;
@@ -34,6 +31,7 @@ import org.hibernate.sql.ast.tree.from.TableReference;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
+import org.hibernate.sql.results.graph.FetchOptions;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.basic.BasicFetch;
 import org.hibernate.sql.results.graph.basic.BasicResult;
@@ -41,12 +39,14 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
+ * Standard implementation of BasicSingularAttribute
+ *
  * @author Steve Ebersole
  */
 @SuppressWarnings("rawtypes")
-public class BasicValuedSingularAttributeMapping
+public class BasicSingularAttributeImpl
 		extends AbstractSingularAttributeMapping
-		implements SingularAttributeMapping, BasicValuedModelPart, ConvertibleModelPart {
+		implements BasicSingularAttribute {
 	private final NavigableRole navigableRole;
 	private final String tableExpression;
 	private final String mappedColumnExpression;
@@ -57,19 +57,19 @@ public class BasicValuedSingularAttributeMapping
 	private final JavaTypeDescriptor domainTypeDescriptor;
 
 	@SuppressWarnings("WeakerAccess")
-	public BasicValuedSingularAttributeMapping(
+	public BasicSingularAttributeImpl(
 			String attributeName,
 			NavigableRole navigableRole,
 			int stateArrayPosition,
 			StateArrayContributorMetadataAccess attributeMetadataAccess,
-			FetchStrategy mappedFetchStrategy,
+			FetchOptions fetchOptions,
 			String tableExpression,
 			String mappedColumnExpression,
 			BasicValueConverter valueConverter,
 			JdbcMapping jdbcMapping,
 			ManagedMappingType declaringType,
 			PropertyAccess propertyAccess) {
-		super( attributeName, stateArrayPosition, attributeMetadataAccess, mappedFetchStrategy, declaringType, propertyAccess );
+		super( attributeName, stateArrayPosition, attributeMetadataAccess, fetchOptions, declaringType, propertyAccess );
 		this.navigableRole = navigableRole;
 		this.tableExpression = tableExpression;
 		this.mappedColumnExpression = mappedColumnExpression;
@@ -248,4 +248,32 @@ public class BasicValuedSingularAttributeMapping
 	public void visitColumns(ColumnConsumer consumer) {
 		consumer.accept( tableExpression, mappedColumnExpression, jdbcMapping );
 	}
+
+	/**
+	 * Make a copy of this attribute for use as a sub-part of a composite fk
+	 */
+	public BasicSingularAttribute makeKeyCopy(
+			ManagedMappingType declaringType,
+			String tableName,
+			String columnName,
+			MappingModelCreationProcess creationProcess) {
+		return new BasicSingularAttributeImpl(
+				getAttributeName(),
+				declaringType.getNavigableRole().append( getAttributeName() ),
+				getStateArrayPosition(),
+				getAttributeMetadataAccess(),
+				getMappedFetchOptions(),
+				tableName,
+				columnName,
+				getValueConverter(),
+				getJdbcMapping(),
+				declaringType,
+				getPropertyAccess()
+//					original.getPropertyAccess().getPropertyAccessStrategy().buildPropertyAccess(
+//							declaringType.getJavaTypeDescriptor().getJavaType(),
+//							original.getAttributeName()
+//					)
+		);
+	}
+
 }

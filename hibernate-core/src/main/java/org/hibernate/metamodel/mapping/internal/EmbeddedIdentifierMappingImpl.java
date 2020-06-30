@@ -62,7 +62,7 @@ import org.hibernate.type.spi.TypeConfiguration;
  * @author Andrea Boriero
  */
 public class EmbeddedIdentifierMappingImpl
-		implements CompositeIdentifierMapping, EmbeddableValuedFetchable, FetchOptions {
+		implements CompositeIdentifierMapping, EmbeddableValuedFetchable, SingleAttributeIdentifierMapping, FetchOptions {
 	private final NavigableRole navigableRole;
 	private final EntityMappingType entityMapping;
 	private final String name;
@@ -100,7 +100,7 @@ public class EmbeddedIdentifierMappingImpl
 	}
 
 	@Override
-	public JavaTypeDescriptor getJavaTypeDescriptor() {
+	public JavaTypeDescriptor<?> getJavaTypeDescriptor() {
 		return getMappedTypeDescriptor().getMappedJavaTypeDescriptor();
 	}
 
@@ -174,9 +174,9 @@ public class EmbeddedIdentifierMappingImpl
 		getEmbeddableTypeDescriptor().getAttributeMappings().forEach(
 				attributeMapping -> {
 					final Object o = attributeMapping.getPropertyAccess().getGetter().get( value );
-					if ( attributeMapping instanceof ToOneAttributeMapping ) {
+					if ( attributeMapping instanceof ToOneAttributeTarget ) {
 						final EntityMappingType associatedEntityMappingType =
-								( (ToOneAttributeMapping) attributeMapping ).getAssociatedEntityMappingType();
+								( (ToOneAttributeTarget) attributeMapping ).getAssociatedEntityMappingType();
 						final EntityIdentifierMapping identifierMapping =
 								associatedEntityMappingType.getIdentifierMapping();
 						final Object identifier = identifierMapping.getIdentifier( o, session );
@@ -320,8 +320,8 @@ public class EmbeddedIdentifierMappingImpl
 	public void visitColumns(ColumnConsumer consumer) {
 		getAttributes().forEach(
 				attribute -> {
-					if ( attribute instanceof ToOneAttributeMapping ) {
-						final ToOneAttributeMapping associationAttributeMapping = (ToOneAttributeMapping) attribute;
+					if ( attribute instanceof ToOneAttributeTarget ) {
+						final ToOneAttributeTarget associationAttributeMapping = (ToOneAttributeTarget) attribute;
 						associationAttributeMapping.getForeignKeyDescriptor().visitReferringColumns( consumer );
 					}
 					else {
@@ -343,7 +343,6 @@ public class EmbeddedIdentifierMappingImpl
 
 	@Override
 	public Collection<SingularAttributeMapping> getAttributes() {
-		//noinspection unchecked
 		return (Collection) getEmbeddableTypeDescriptor().getAttributeMappings();
 	}
 
@@ -355,5 +354,10 @@ public class EmbeddedIdentifierMappingImpl
 	@Override
 	public FetchTiming getTiming() {
 		return FetchTiming.IMMEDIATE;
+	}
+
+	@Override
+	public PropertyAccess getPropertyAccess() {
+		return propertyAccess;
 	}
 }

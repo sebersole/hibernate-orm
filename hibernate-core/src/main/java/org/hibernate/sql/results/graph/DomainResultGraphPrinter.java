@@ -99,11 +99,11 @@ public class DomainResultGraphPrinter {
 		fetchParentStack.push( fetchParent );
 
 		try {
-//			final Fetch identifierFetch = fetchParent.getKeyFetch();
-//			if ( identifierFetch != null ) {
-//				final boolean lastInBranch = identifierFetch.getFetchedMapping() instanceof FetchParent;
-//				visitKeyGraphNode( identifierFetch, lastInBranch );
-//			}
+			final Fetch identifierFetch = fetchParent.getKeyFetch();
+			if ( identifierFetch != null ) {
+				final boolean lastInBranch = identifierFetch.getFetchedMapping() instanceof FetchParent;
+				visitKeyGraphNode( identifierFetch, lastInBranch );
+			}
 
 			final int numberOfFetches = fetchParent.getFetches().size();
 
@@ -122,8 +122,9 @@ public class DomainResultGraphPrinter {
 	private void indentLine() {
 		fetchParentStack.visitRootFirst(
 				fetchParent -> {
-					final boolean hasSubFetches = ! fetchParent.getFetches().isEmpty();
-					if ( hasSubFetches ) {
+					final boolean hasFetches = ! fetchParent.getFetches().isEmpty();
+					final boolean hasAnyFetches = hasFetches || fetchParent.getKeyFetch() != null;
+					if ( hasAnyFetches ) {
 						buffer.append( " | " );
 					}
 					else {

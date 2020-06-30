@@ -105,7 +105,7 @@ public class NavigableRole implements DotIdentifierSequence {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + '[' + fullPath + ']';
+		return fullPath;
 	}
 
 	@Override

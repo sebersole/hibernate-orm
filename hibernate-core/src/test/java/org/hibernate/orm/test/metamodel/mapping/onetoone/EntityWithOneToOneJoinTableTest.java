@@ -6,9 +6,9 @@
  */
 package org.hibernate.orm.test.metamodel.mapping.onetoone;
 
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.domain.gambit.EntityWithOneToOneJoinTable;
@@ -42,17 +42,17 @@ public class EntityWithOneToOneJoinTableTest {
 				.getMetamodel()
 				.findEntityDescriptor( EntityWithOneToOneJoinTable.class );
 		final ModelPart other = entityWithOneToOneJoinTableDescriptor.findSubPart( "other" );
-		assertThat( other, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( other, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping otherAttributeMapping = (ToOneAttributeMapping) other;
+		final ToOneAttributeTarget otherAttributeMapping = (ToOneAttributeTarget) other;
 
-		final ForeignKeyDescriptor foreignKeyDescriptor = otherAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		final ForeignKey foreignKey = otherAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "Entity_SimpleEntity" ) );
 			assertThat( keyColumn, is( "other_id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "SIMPLE_ENTITY" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );

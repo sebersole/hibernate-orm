@@ -21,10 +21,10 @@ import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.tree.from.TableGroup;
-import org.hibernate.sql.results.graph.collection.internal.ArrayInitializerProducer;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.FetchParent;
+import org.hibernate.sql.results.graph.collection.internal.ArrayInitializerProducer;
+import org.hibernate.sql.results.internal.ResultsHelper;
 
 /**
  * CollectionSemantics implementation for arrays
@@ -115,15 +115,7 @@ public class StandardArraySemantics implements CollectionSemantics<Object[]> {
 						null,
 						creationState
 				),
-				attributeMapping.getElementDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ELEMENT.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				)
+				ResultsHelper.extractElementFetch( creationState.buildFetches( fetchParent ) )
 		);
 	}
 }

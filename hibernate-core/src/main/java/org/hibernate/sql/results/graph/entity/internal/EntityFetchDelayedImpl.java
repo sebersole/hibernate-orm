@@ -8,11 +8,11 @@ package org.hibernate.sql.results.graph.entity.internal;
 
 import org.hibernate.LockMode;
 import org.hibernate.engine.FetchTiming;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.ToOneAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
-import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.FetchParentAccess;
 import org.hibernate.sql.results.graph.entity.EntityInitializer;
@@ -25,7 +25,7 @@ public class EntityFetchDelayedImpl extends AbstractNonJoinedEntityFetch {
 	private final LockMode lockMode;
 	private final boolean nullable;
 
-	private final DomainResult keyResult;
+	private final Fetch keyFetch;
 
 	public EntityFetchDelayedImpl(
 			FetchParent fetchParent,
@@ -33,12 +33,11 @@ public class EntityFetchDelayedImpl extends AbstractNonJoinedEntityFetch {
 			LockMode lockMode,
 			boolean nullable,
 			NavigablePath navigablePath,
-			DomainResult keyResult) {
+			Fetch keyFetch) {
 		super( navigablePath, fetchedAttribute, fetchParent );
 		this.lockMode = lockMode;
 		this.nullable = nullable;
-
-		this.keyResult = keyResult;
+		this.keyFetch = keyFetch;
 	}
 
 	@Override
@@ -52,6 +51,11 @@ public class EntityFetchDelayedImpl extends AbstractNonJoinedEntityFetch {
 	}
 
 	@Override
+	public Fetch getKeyFetch() {
+		return keyFetch;
+	}
+
+	@Override
 	public DomainResultAssembler createAssembler(
 			FetchParentAccess parentAccess,
 			AssemblerCreationState creationState) {
@@ -60,7 +64,7 @@ public class EntityFetchDelayedImpl extends AbstractNonJoinedEntityFetch {
 				() -> new EntityFetchDelayedInitializer(
 						getNavigablePath(),
 						getEntityValuedModelPart().getEntityMappingType().getEntityPersister(),
-						keyResult.createResultAssembler( creationState )
+						keyFetch.createAssembler( parentAccess, creationState )
 				)
 		);
 

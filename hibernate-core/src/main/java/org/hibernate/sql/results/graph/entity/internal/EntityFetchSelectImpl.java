@@ -8,12 +8,12 @@ package org.hibernate.sql.results.graph.entity.internal;
 
 import org.hibernate.LockMode;
 import org.hibernate.engine.FetchTiming;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.ToOneAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
-import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.FetchParentAccess;
 import org.hibernate.sql.results.graph.entity.EntityInitializer;
@@ -25,7 +25,7 @@ import org.hibernate.sql.results.graph.entity.EntityInitializer;
  */
 public class EntityFetchSelectImpl extends AbstractNonJoinedEntityFetch {
 	private final boolean nullable;
-	private final DomainResult result;
+	private final Fetch keyFetch;
 
 	public EntityFetchSelectImpl(
 			FetchParent fetchParent,
@@ -33,11 +33,11 @@ public class EntityFetchSelectImpl extends AbstractNonJoinedEntityFetch {
 			LockMode lockMode,
 			boolean nullable,
 			NavigablePath navigablePath,
-			DomainResult result,
+			Fetch keyFetch,
 			DomainResultCreationState creationState) {
 		super( navigablePath, fetchedAttribute, fetchParent );
 		this.nullable = nullable;
-		this.result = result;
+		this.keyFetch = keyFetch;
 	}
 
 	@Override
@@ -51,17 +51,22 @@ public class EntityFetchSelectImpl extends AbstractNonJoinedEntityFetch {
 	}
 
 	@Override
-	public DomainResultAssembler createAssembler(FetchParentAccess parentAccess, AssemblerCreationState creationState) {
+	public DomainResultAssembler<?> createAssembler(FetchParentAccess parentAccess, AssemblerCreationState creationState) {
 		final EntityInitializer initializer = (EntityInitializer) creationState.resolveInitializer(
 				getNavigablePath(),
 				() -> new EntitySelectFetchInitializer(
 						getNavigablePath(),
 						getReferencedMappingContainer().getEntityPersister(),
-						result.createResultAssembler( creationState ),
+						keyFetch.createAssembler( parentAccess, creationState ),
 						nullable
 				)
 		);
 
 		return new EntityAssembler( getResultJavaTypeDescriptor(), initializer );
+	}
+
+	@Override
+	public Fetch getKeyFetch() {
+		return keyFetch;
 	}
 }

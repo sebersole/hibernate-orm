@@ -13,9 +13,9 @@ import javax.persistence.JoinTable;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.junit.DomainModel;
@@ -48,17 +48,17 @@ public class EntityWithOneBidirectionalJoinTableAssociationTest {
 
 		final ModelPart childAssociation = parentDescriptor.findSubPart( "child" );
 
-		assertThat( childAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( childAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping childAttributeMapping = (ToOneAttributeMapping) childAssociation;
+		final ToOneAttributeTarget childAttributeMapping = (ToOneAttributeTarget) childAssociation;
 
-		ForeignKeyDescriptor foreignKeyDescriptor = childAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		ForeignKey foreignKey = childAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "PARENT_CHILD" ) );
 			assertThat( keyColumn, is( "child_id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "CHILD" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );
@@ -69,17 +69,17 @@ public class EntityWithOneBidirectionalJoinTableAssociationTest {
 
 		final ModelPart parentAssociation = childDescriptor.findSubPart( "parent" );
 
-		assertThat( parentAssociation, instanceOf( ToOneAttributeMapping.class ) );
+		assertThat( parentAssociation, instanceOf( ToOneAttributeTarget.class ) );
 
-		final ToOneAttributeMapping parentAttributeMapping = (ToOneAttributeMapping) parentAssociation;
+		final ToOneAttributeTarget parentAttributeMapping = (ToOneAttributeTarget) parentAssociation;
 
-		foreignKeyDescriptor = parentAttributeMapping.getForeignKeyDescriptor();
-		foreignKeyDescriptor.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
+		foreignKey = parentAttributeMapping.getForeignKeyDescriptor();
+		foreignKey.visitReferringColumns( (keyTable, keyColumn, jdbcMapping) -> {
 			assertThat( keyTable, is( "PARENT_CHILD" ) );
 			assertThat( keyColumn, is( "parent_id" ) );
 		} );
 
-		foreignKeyDescriptor.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
+		foreignKey.visitTargetColumns( (targetTable, targetColumn, jdbcMapping) -> {
 			assertThat( targetTable, is( "PARENT" ) );
 			assertThat( targetColumn, is( "id" ) );
 		} );

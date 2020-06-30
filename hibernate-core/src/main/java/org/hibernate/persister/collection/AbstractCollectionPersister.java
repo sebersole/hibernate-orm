@@ -295,7 +295,7 @@ public abstract class AbstractCollectionPersister
 		ownerPersister = creationContext.getDomainModel().getEntityDescriptor( entityName );
 		queryLoaderName = collectionBootDescriptor.getLoaderName();
 		isMutable = collectionBootDescriptor.isMutable();
-		mappedByProperty = collectionBootDescriptor.getMappedByProperty();
+		mappedByProperty = StringHelper.nullIfEmpty( collectionBootDescriptor.getMappedByProperty() );
 
 		Table table = collectionBootDescriptor.getCollectionTable();
 		fetchMode = elementBootDescriptor.getFetchMode();

@@ -19,6 +19,7 @@ public abstract class AbstractFetchParent implements FetchParent {
 	private final FetchableContainer fetchContainer;
 	private final NavigablePath navigablePath;
 
+	protected Fetch keyFetch;
 	protected List<Fetch> fetches;
 
 	public AbstractFetchParent(FetchableContainer fetchContainer, NavigablePath navigablePath) {
@@ -27,7 +28,8 @@ public abstract class AbstractFetchParent implements FetchParent {
 	}
 
 	protected void afterInitialize(DomainResultCreationState creationState) {
-		this.fetches = creationState.visitFetches( this );
+		this.keyFetch = creationState.buildKeyFetch( this );
+		this.fetches = creationState.buildFetches( this );
 	}
 
 	public FetchableContainer getFetchContainer() {
@@ -66,5 +68,10 @@ public abstract class AbstractFetchParent implements FetchParent {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public Fetch getKeyFetch() {
+		return keyFetch;
 	}
 }

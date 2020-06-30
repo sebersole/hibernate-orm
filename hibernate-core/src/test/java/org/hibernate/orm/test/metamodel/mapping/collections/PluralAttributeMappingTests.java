@@ -120,67 +120,67 @@ public class PluralAttributeMappingTests {
 
 		final PluralAttributeMapping basicByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "basicByBasic" );
 		assertThat( basicByBasic, notNullValue() );
-		assertThat( basicByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( basicByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( basicByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping sortedBasicByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "sortedBasicByBasic" );
 		assertThat( sortedBasicByBasic, notNullValue() );
-		assertThat( sortedBasicByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( sortedBasicByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( sortedBasicByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping sortedBasicByBasicWithSortNaturalByDefault = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "sortedBasicByBasicWithSortNaturalByDefault" );
 		assertThat( sortedBasicByBasicWithSortNaturalByDefault, notNullValue() );
-		assertThat( sortedBasicByBasicWithSortNaturalByDefault.getKeyDescriptor(), notNullValue() );
+		assertThat( sortedBasicByBasicWithSortNaturalByDefault.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( sortedBasicByBasicWithSortNaturalByDefault.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping basicByEnum = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "basicByEnum" );
 		assertThat( basicByEnum, notNullValue() );
-		assertThat( basicByEnum.getKeyDescriptor(), notNullValue() );
+		assertThat( basicByEnum.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( basicByEnum.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping basicByConvertedEnum = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "basicByConvertedEnum" );
 		assertThat( basicByConvertedEnum, notNullValue() );
-		assertThat( basicByConvertedEnum.getKeyDescriptor(), notNullValue() );
+		assertThat( basicByConvertedEnum.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( basicByConvertedEnum.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping someStuffByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "componentByBasic" );
 		assertThat( someStuffByBasic, notNullValue() );
-		assertThat( someStuffByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( someStuffByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( someStuffByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping basicBySomeStuff = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "basicByComponent" );
 		assertThat( basicBySomeStuff, notNullValue() );
-		assertThat( basicBySomeStuff.getKeyDescriptor(), notNullValue() );
+		assertThat( basicBySomeStuff.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( basicBySomeStuff.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping oneToManyByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "oneToManyByBasic" );
 		assertThat( oneToManyByBasic, notNullValue() );
-		assertThat( oneToManyByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( oneToManyByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( oneToManyByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping basicByOneToMany = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "basicByOneToMany" );
 		assertThat( basicByOneToMany, notNullValue() );
-		assertThat( basicByOneToMany.getKeyDescriptor(), notNullValue() );
+		assertThat( basicByOneToMany.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( basicByOneToMany.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping manyToManyByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "manyToManyByBasic" );
 		assertThat( manyToManyByBasic, notNullValue() );
-		assertThat( manyToManyByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( manyToManyByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( manyToManyByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping sortedManyToManyByBasic = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "sortedManyToManyByBasic" );
 		assertThat( sortedManyToManyByBasic, notNullValue() );
-		assertThat( sortedManyToManyByBasic.getKeyDescriptor(), notNullValue() );
+		assertThat( sortedManyToManyByBasic.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( sortedManyToManyByBasic.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping sortedManyToManyByBasicWithSortNaturalByDefault = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "sortedManyToManyByBasicWithSortNaturalByDefault" );
 		assertThat( sortedManyToManyByBasicWithSortNaturalByDefault, notNullValue() );
-		assertThat( sortedManyToManyByBasicWithSortNaturalByDefault.getKeyDescriptor(), notNullValue() );
+		assertThat( sortedManyToManyByBasicWithSortNaturalByDefault.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( sortedManyToManyByBasicWithSortNaturalByDefault.getElementDescriptor(), notNullValue() );
 
 		final PluralAttributeMapping componentByBasicOrdered = (PluralAttributeMapping) containerEntityDescriptor.findAttributeMapping( "componentByBasicOrdered" );
 		assertThat( componentByBasicOrdered, notNullValue() );
-		assertThat( componentByBasicOrdered.getKeyDescriptor(), notNullValue() );
+		assertThat( componentByBasicOrdered.getForeignKeyDescriptor(), notNullValue() );
 		assertThat( componentByBasicOrdered.getElementDescriptor(), notNullValue() );
 		assertThat( componentByBasicOrdered.getOrderByFragment(), notNullValue() );
 	}

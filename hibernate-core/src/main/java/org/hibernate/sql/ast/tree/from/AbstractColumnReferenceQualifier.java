@@ -40,7 +40,22 @@ public abstract class AbstractColumnReferenceQualifier implements ColumnReferenc
 
 		final TableReference tableReference = resolveTableReferenceInternal( tableExpression );
 		if ( tableReference == null ) {
-			throw new IllegalStateException( "Could not resolve binding for table `" + tableExpression + "`" );
+			final StringBuilder buffer = new StringBuilder()
+					.append( "Could not resolve TableReference for table `" ).append( tableExpression ).append( "`" )
+					.append( System.lineSeparator() )
+					.append( "  Existing tables:" )
+					.append( System.lineSeparator() )
+					.append( "`" ).append( getPrimaryTableReference().getTableExpression() ).append( "`" );
+
+			for ( int i = 0; i < getTableReferenceJoins().size(); i++ ) {
+				buffer.append( "," ).append( System.lineSeparator() );
+
+				final TableReferenceJoin tableReferenceJoin = getTableReferenceJoins().get( i );
+				final TableReference joinedTableReference = tableReferenceJoin.getJoinedTableReference();
+				buffer.append( "`" ).append( joinedTableReference.getTableExpression() ).append( "`" );
+			}
+
+			throw new IllegalStateException( buffer.toString() );
 		}
 
 		return tableReference;

@@ -39,8 +39,8 @@ public class ArrayInitializerProducer implements CollectionInitializerProducer {
 			PluralAttributeMapping attributeMapping,
 			FetchParentAccess parentAccess,
 			LockMode lockMode,
-			DomainResultAssembler keyContainerAssembler,
-			DomainResultAssembler keyCollectionAssembler,
+			DomainResultAssembler<?> keyContainerAssembler,
+			DomainResultAssembler<?> keyCollectionAssembler,
 			AssemblerCreationState creationState) {
 		return new ArrayInitializer(
 				navigablePath,
@@ -52,5 +52,15 @@ public class ArrayInitializerProducer implements CollectionInitializerProducer {
 				listIndexFetch.createAssembler( parentAccess, creationState ),
 				elementFetch.createAssembler( parentAccess, creationState )
 		);
+	}
+
+	@Override
+	public Fetch getIndexFetch() {
+		return listIndexFetch;
+	}
+
+	@Override
+	public Fetch getElementFetch() {
+		return elementFetch;
 	}
 }

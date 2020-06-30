@@ -10,7 +10,7 @@ import org.hibernate.LockMode;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.results.graph.AssemblerCreationState;
 import org.hibernate.sql.results.graph.DomainResult;
-import org.hibernate.sql.results.graph.collection.internal.MapInitializer;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.entity.AbstractEntityInitializer;
 import org.hibernate.sql.results.graph.entity.EntityResultGraphNode;
 
@@ -26,7 +26,7 @@ public class EntityResultInitializer extends AbstractEntityInitializer {
 			EntityResultGraphNode resultDescriptor,
 			NavigablePath navigablePath,
 			LockMode lockMode,
-			DomainResult identifierResult,
+			Fetch idFetch,
 			DomainResult discriminatorResult,
 			DomainResult versionResult,
 			DomainResult<Object> rowIdResult,
@@ -35,7 +35,7 @@ public class EntityResultInitializer extends AbstractEntityInitializer {
 				resultDescriptor,
 				navigablePath,
 				lockMode,
-				identifierResult,
+				idFetch,
 				discriminatorResult,
 				versionResult,
 				rowIdResult,

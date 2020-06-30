@@ -9,6 +9,9 @@ package org.hibernate.metamodel.mapping;
 import java.util.function.Consumer;
 
 import org.hibernate.loader.ast.spi.Loadable;
+import org.hibernate.metamodel.mapping.internal.fk.CollectionKey;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
+import org.hibernate.metamodel.mapping.internal.fk.JoinTableKey;
 import org.hibernate.metamodel.mapping.ordering.OrderByFragment;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.sql.ast.tree.from.TableGroupJoinProducer;
@@ -19,11 +22,14 @@ import org.hibernate.sql.results.graph.FetchableContainer;
  * @author Steve Ebersole
  */
 public interface PluralAttributeMapping
-		extends AttributeMapping, StateArrayContributorMapping, TableGroupJoinProducer, FetchableContainer, Loadable {
+		extends AttributeMapping, StateArrayContributorMapping, TableGroupJoinProducer, FetchableContainer, Loadable, Association {
 
 	CollectionPersister getCollectionDescriptor();
 
-	ForeignKeyDescriptor getKeyDescriptor();
+	ForeignKey getForeignKeyDescriptor();
+
+	CollectionKey getCollectionKey();
+	JoinTableKey getJoinTableKey();
 
 	CollectionPart getIndexDescriptor();
 
@@ -40,6 +46,11 @@ public interface PluralAttributeMapping
 
 	OrderByFragment getOrderByFragment();
 	OrderByFragment getManyToManyOrderByFragment();
+
+	@Override
+	default Fetchable getKeyFetchable() {
+		return getIndexDescriptor();
+	}
 
 	@Override
 	default void visitKeyFetchables(Consumer<Fetchable> fetchableConsumer, EntityMappingType treatTargetType) {

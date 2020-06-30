@@ -66,12 +66,14 @@ import org.hibernate.sql.ast.tree.predicate.FilterPredicate;
 import org.hibernate.sql.ast.tree.predicate.Predicate;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectStatement;
+import org.hibernate.sql.results.ResultGraphCreationException;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.EntityGraphTraversalState;
 import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.Fetchable;
+import org.hibernate.sql.results.graph.FetchableContainer;
 import org.hibernate.sql.results.graph.entity.EntityResultGraphNode;
 import org.hibernate.sql.results.graph.instantiation.internal.DynamicInstantiation;
 import org.hibernate.sql.results.internal.StandardEntityGraphTraversalStateImpl;
@@ -258,46 +260,77 @@ public class StandardSqmSelectTranslator
 	}
 
 	@Override
-	public List<Fetch> visitFetches(FetchParent fetchParent) {
-		final List<Fetch> fetches = CollectionHelper.arrayList( fetchParent.getReferencedMappingType().getNumberOfFetchables() );
+	public Fetch buildKeyFetch(FetchParent fetchParent) {
+		final FetchableContainer container = fetchParent.getReferencedMappingContainer();
+		final Fetchable keyFetchable = container.getKeyFetchable();
+		if ( keyFetchable == null ) {
+			return null;
+		}
 
-		final BiConsumer<Fetchable, Boolean> fetchableBiConsumer = (fetchable, isKeyFetchable) -> {
-				final NavigablePath fetchablePath = fetchParent.getNavigablePath().append( fetchable.getFetchableName() );
+		return keyFetchable.generateFetch(
+				fetchParent,
+				fetchParent.getNavigablePath().append( keyFetchable.getFetchableName() ),
+				FetchTiming.IMMEDIATE,
+				false,
+				LockMode.READ,
+				null,
+				this
+		);
+	}
 
-				final Fetch biDirectionalFetch = fetchable.resolveCircularFetch(
-						fetchablePath,
-						fetchParent,
-						StandardSqmSelectTranslator.this
-				);
+	@Override
+	public List<Fetch> buildFetches(FetchParent fetchParent) {
+		return buildFetches( fetchParent, false );
+	}
 
-				if ( biDirectionalFetch != null ) {
-					fetches.add( biDirectionalFetch );
-					return;
-				}
+	protected List<Fetch> buildFetches(FetchParent fetchParent, boolean keys) {
+		final FetchableContainer container = fetchParent.getReferencedMappingContainer();
+		final List<Fetch> fetches = CollectionHelper.arrayList( container.getNumberOfFetchables() );
+		final BiConsumer<Fetchable, Boolean> consumer = buildFetchVisitor( fetchParent, fetches );
 
-				try {
-					fetchDepth++;
-					final Fetch fetch = buildFetch( fetchablePath, fetchParent, fetchable, isKeyFetchable );
+		// todo (6.0) : determine how to best handle TREAT
+		final EntityMappingType treatTarget = null;
 
-					if ( fetch != null ) {
-						fetches.add( fetch );
-					}
-				}
-				finally {
-					fetchDepth--;
-				}
-		};
-
-// todo (6.0) : determine how to best handle TREAT
-//		fetchParent.getReferencedMappingContainer().visitKeyFetchables( fetchableBiConsumer, treatTargetType );
-//		fetchParent.getReferencedMappingContainer().visitFetchables( fetchableBiConsumer, treatTargetType );
-		fetchParent.getReferencedMappingContainer().visitKeyFetchables( fetchable -> fetchableBiConsumer.accept( fetchable, true ), null );
-		fetchParent.getReferencedMappingContainer().visitFetchables( fetchable -> fetchableBiConsumer.accept( fetchable, false ), null );
+		if ( keys ) {
+			container.visitKeyFetchables( fetchable -> consumer.accept( fetchable, keys ), treatTarget );
+		}
+		else {
+			container.visitFetchables( fetchable -> consumer.accept( fetchable, keys ), treatTarget );
+		}
 
 		return fetches;
 	}
 
-	private Fetch buildFetch(NavigablePath fetchablePath, FetchParent fetchParent, Fetchable fetchable, boolean isKeyFetchable) {
+	private BiConsumer<Fetchable, Boolean> buildFetchVisitor(FetchParent fetchParent, List<Fetch> fetches) {
+		return (fetchable, isKeyFetchable) -> {
+					final NavigablePath fetchablePath = fetchParent.getNavigablePath().append( fetchable.getFetchableName() );
+
+					final Fetch biDirectionalFetch = fetchable.resolveCircularFetch(
+							fetchablePath,
+							fetchParent,
+							StandardSqmSelectTranslator.this
+					);
+
+					if ( biDirectionalFetch != null ) {
+						fetches.add( biDirectionalFetch );
+						return;
+					}
+
+					try {
+						fetchDepth++;
+						final Fetch fetch = buildFetch( fetchablePath, fetchParent, fetchable, isKeyFetchable );
+
+						if ( fetch != null ) {
+							fetches.add( fetch );
+						}
+					}
+					finally {
+						fetchDepth--;
+					}
+			};
+	}
+
+	private Fetch buildFetch(NavigablePath fetchablePath, FetchParent fetchParent, Fetchable fetchable, boolean keyGraph) {
 		// fetch has access to its parent in addition to the parent having its fetches.
 		//
 		// we could sever the parent -> fetch link ... it would not be "seen" while walking
@@ -332,7 +365,7 @@ public class StandardSqmSelectTranslator
 			alias = null;
 
 			if ( entityGraphTraversalState != null ) {
-				traversalResult = entityGraphTraversalState.traverse( fetchParent, fetchable, isKeyFetchable );
+				traversalResult = entityGraphTraversalState.traverse( fetchParent, fetchable, keyGraph );
 				fetchTiming = traversalResult.getFetchStrategy();
 				joined = traversalResult.isJoined();
 			}
@@ -458,7 +491,7 @@ public class StandardSqmSelectTranslator
 			return fetch;
 		}
 		catch (RuntimeException e) {
-			throw new HibernateException(
+			throw new ResultGraphCreationException(
 					String.format(
 							Locale.ROOT,
 							"Could not generate fetch : %s -> %s",

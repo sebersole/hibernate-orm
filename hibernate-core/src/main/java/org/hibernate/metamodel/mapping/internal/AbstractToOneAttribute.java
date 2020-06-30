@@ -6,25 +6,32 @@
  */
 package org.hibernate.metamodel.mapping.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
+import org.hibernate.annotations.LazyToOneOption;
+import org.hibernate.bytecode.spi.BytecodeEnhancementMetadata;
 import org.hibernate.engine.FetchStrategy;
 import org.hibernate.engine.FetchTiming;
-import org.hibernate.mapping.ManyToOne;
-import org.hibernate.mapping.OneToOne;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.metamodel.mapping.Association;
-import org.hibernate.metamodel.mapping.EntityAssociationMapping;
+import org.hibernate.metamodel.mapping.ColumnConsumer;
 import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
+import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
 import org.hibernate.metamodel.mapping.StateArrayContributorMetadataAccess;
+import org.hibernate.metamodel.mapping.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKey;
+import org.hibernate.metamodel.mapping.internal.fk.ToOneKey;
 import org.hibernate.metamodel.model.domain.NavigableRole;
-import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.persister.entity.Loadable;
 import org.hibernate.persister.entity.SingleTableEntityPersister;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.query.NavigablePath;
+import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.SqlAstJoinType;
 import org.hibernate.sql.ast.spi.FromClauseAccess;
 import org.hibernate.sql.ast.spi.SqlAliasBase;
@@ -36,60 +43,53 @@ import org.hibernate.sql.ast.spi.SqlExpressionResolver;
 import org.hibernate.sql.ast.tree.from.StandardTableGroup;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.ast.tree.from.TableGroupJoin;
-import org.hibernate.sql.ast.tree.from.TableGroupJoinProducer;
 import org.hibernate.sql.ast.tree.from.TableReference;
-import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
 import org.hibernate.sql.results.graph.Fetchable;
 import org.hibernate.sql.results.graph.entity.EntityFetch;
 import org.hibernate.sql.results.graph.entity.EntityResultGraphNode;
-import org.hibernate.sql.results.graph.entity.EntityValuedFetchable;
 import org.hibernate.sql.results.graph.entity.internal.EntityFetchDelayedImpl;
 import org.hibernate.sql.results.graph.entity.internal.EntityFetchJoinedImpl;
 import org.hibernate.sql.results.graph.entity.internal.EntityFetchSelectImpl;
 import org.hibernate.sql.results.internal.domain.BiDirectionalFetchImpl;
 import org.hibernate.type.ForeignKeyDirection;
+import org.hibernate.type.spi.TypeConfiguration;
 
 /**
+ * Standard implementation of ToOneAttributeMapping
+ *
  * @author Steve Ebersole
  */
-public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
-		implements EntityValuedFetchable, EntityAssociationMapping, Association, TableGroupJoinProducer {
-
-	public enum Cardinality {
-		ONE_TO_ONE,
-		MANY_TO_ONE,
-		LOGICAL_ONE_TO_ONE
-	}
+public abstract class AbstractToOneAttribute
+		extends AbstractSingularAttributeMapping
+		implements ToOneAttributeMapping {
 
 	private final NavigableRole navigableRole;
 
 	private final String sqlAliasStem;
 	private final boolean isNullable;
 	private final boolean unwrapProxy;
-	private final EntityMappingType entityMappingType;
+	private final EntityMappingType associatedEntityType;
+	private final ToOneKey toOneKey;
 
 	private final String referencedPropertyName;
-	private final boolean referringPrimaryKey;
 
 	private final Cardinality cardinality;
 
-	private ForeignKeyDescriptor foreignKeyDescriptor;
-	private ForeignKeyDirection foreignKeyDirection;
-	private String identifyingColumnsTableExpression;
-
-	public ToOneAttributeMapping(
+	public AbstractToOneAttribute(
 			String name,
 			NavigableRole navigableRole,
+			Cardinality cardinality,
 			int stateArrayPosition,
 			ToOne bootValue,
 			StateArrayContributorMetadataAccess attributeMetadataAccess,
 			FetchStrategy mappedFetchStrategy,
-			EntityMappingType entityMappingType,
+			EntityMappingType associatedEntityType,
 			ManagedMappingType declaringType,
-			PropertyAccess propertyAccess) {
+			PropertyAccess propertyAccess,
+			MappingModelCreationProcess creationProcess) {
 		super(
 				name,
 				stateArrayPosition,
@@ -98,51 +98,84 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 				declaringType,
 				propertyAccess
 		);
+
+		this.navigableRole = navigableRole;
+		this.cardinality = cardinality;
+
 		this.sqlAliasStem = SqlAliasStemHelper.INSTANCE.generateStemFromAttributeName( name );
 		this.isNullable = bootValue.isNullable();
-		this.referencedPropertyName = bootValue.getReferencedPropertyName();
-		this.referringPrimaryKey = bootValue.isReferenceToPrimaryKey();
-		this.unwrapProxy = bootValue.isUnwrapProxy();
-		this.entityMappingType = entityMappingType;
+		this.unwrapProxy = resolveUnwrapProxy( associatedEntityType, bootValue.getLazyToOneOption(), creationProcess );
+		this.associatedEntityType = associatedEntityType;
 
-		if ( referringPrimaryKey ) {
+		this.referencedPropertyName = bootValue.getReferencedPropertyName();
+		if ( bootValue.isReferenceToPrimaryKey() ) {
 			assert referencedPropertyName == null;
 		}
 		else {
 			assert referencedPropertyName != null;
 		}
 
-		if ( bootValue instanceof ManyToOne ) {
-			final ManyToOne manyToOne = (ManyToOne) bootValue;
-			if ( manyToOne.isLogicalOneToOne() ) {
-				cardinality = Cardinality.LOGICAL_ONE_TO_ONE;
-			}
-			else {
-				cardinality = Cardinality.MANY_TO_ONE;
-			}
+		this.toOneKey = generateKey( bootValue, declaringType, creationProcess );
+	}
+
+	private static boolean resolveUnwrapProxy(
+			EntityMappingType associatedEntityType,
+			LazyToOneOption lazyToOneOption,
+			MappingModelCreationProcess creationProcess) {
+		// enable proxy unwrapping if:
+		// 		1) the bytecode proxy feature is enabled
+		// 		2) the associated entity is enhanced for lazy loading
+		//		3) the user has not explicitly asked for PROXY via `@LazyToOne`
+
+		final SessionFactoryImplementor sessionFactory = creationProcess.getCreationContext().getSessionFactory();
+
+		if ( ! sessionFactory.getSessionFactoryOptions().isEnhancementAsProxyEnabled() ) {
+			return false;
 		}
-		else {
-			assert bootValue instanceof OneToOne;
-			cardinality = Cardinality.ONE_TO_ONE;
+
+		if ( lazyToOneOption == LazyToOneOption.PROXY ) {
+			return false;
 		}
 
-		this.navigableRole = navigableRole;
+		final BytecodeEnhancementMetadata enhancementMetadata = associatedEntityType.getEntityPersister().getBytecodeEnhancementMetadata();
+
+		if ( ! enhancementMetadata.isEnhancedForLazyLoading() ) {
+			return false;
+		}
+
+		//noinspection RedundantIfStatement
+		if ( ! ( ( Loadable) associatedEntityType ).hasSubclasses() ) {
+			return false;
+		}
+
+		return true;
 	}
 
-	public void setForeignKeyDescriptor(ForeignKeyDescriptor foreignKeyDescriptor) {
-		this.foreignKeyDescriptor = foreignKeyDescriptor;
+	protected abstract ToOneKey generateKey(
+			ToOne bootValue,
+			ManagedMappingType declaringType,
+			MappingModelCreationProcess creationProcess);
+//	{
+//		final SessionFactoryImplementor sessionFactory = creationProcess.getCreationContext().getSessionFactory();
+//
+//		final EntityType toOneType = (EntityType) bootValue.getType();
+//		final Type keyType = toOneType.getIdentifierOrUniqueKeyType( sessionFactory );
+//
+//		if ( keyType instanceof BasicType ) {
+//			return new ToOneKeyBasic( bootValue, this, creationProcess );
+//		}
+//
+//		return new ToOneKeyCompositeReferring( bootValue, this, declaringType, creationProcess );
+//	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return cardinality;
 	}
 
-	public void setIdentifyingColumnsTableExpression(String tableExpression) {
-		identifyingColumnsTableExpression = tableExpression;
-	}
-
-	public void setForeignKeyDirection(ForeignKeyDirection direction) {
-		foreignKeyDirection = direction;
-	}
-
-	public ForeignKeyDescriptor getForeignKeyDescriptor() {
-		return this.foreignKeyDescriptor;
+	@Override
+	public ToOneKey getKeyModelPart() {
+		return toOneKey;
 	}
 
 	public String getReferencedPropertyName() {
@@ -156,12 +189,30 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 
 	@Override
 	public EntityMappingType getEntityMappingType() {
-		return entityMappingType;
+		return associatedEntityType;
 	}
 
 	@Override
 	public NavigableRole getNavigableRole() {
 		return navigableRole;
+	}
+
+	@Override
+	public int getJdbcTypeCount(TypeConfiguration typeConfiguration) {
+		return toOneKey.getJdbcTypeCount( typeConfiguration );
+	}
+
+	@Override
+	public void visitJdbcTypes(
+			Consumer<JdbcMapping> action,
+			Clause clause,
+			TypeConfiguration typeConfiguration) {
+		toOneKey.visitJdbcTypes( action, clause, typeConfiguration );
+	}
+
+	@Override
+	public void visitColumns(ColumnConsumer consumer) {
+		toOneKey.visitColumns( consumer );
 	}
 
 	@Override
@@ -189,7 +240,7 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 
 		final Association associationParent = (Association) referencedModePart;
 
-		if ( foreignKeyDescriptor.equals( associationParent.getForeignKeyDescriptor() ) ) {
+		if ( toOneKey.getForeignKeyDescriptor().equals( associationParent.getForeignKeyDescriptor() ) ) {
 			// we need to determine the NavigablePath referring to the entity that the bi-dir
 			// fetch will "return" for its Assembler.  so we walk "up" the FetchParent graph
 			// to find the "referenced entity" reference
@@ -208,16 +259,16 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 		// in such a case the associationParent.getIdentifyingColumnExpressions() is PARENT_CHILD.parent_id
 		// while the getIdentifyingColumnExpressions for this association is PARENT_CHILD.child_id
 		// so we will check if the parentAssociation ForeignKey Target match with the association entity identifier table and columns
-		final ForeignKeyDescriptor associationParentForeignKeyDescriptor = associationParent.getForeignKeyDescriptor();
+		final ForeignKey associationParentForeignKey = associationParent.getForeignKeyDescriptor();
 		if ( referencedModePart instanceof ToOneAttributeMapping
 				&& ( (ToOneAttributeMapping) referencedModePart ).getDeclaringType() == getPartMappingType() ) {
-			if ( this.foreignKeyDescriptor.getReferringTableExpression()
-					.equals( associationParentForeignKeyDescriptor.getReferringTableExpression() ) ) {
+			if ( this.toOneKey.getForeignKeyDescriptor().getReferringTableExpression()
+					.equals( associationParentForeignKey.getReferringTableExpression() ) ) {
 				final SingleTableEntityPersister entityPersister = (SingleTableEntityPersister) getDeclaringType();
-				if ( associationParentForeignKeyDescriptor.getTargetTableExpression()
+				if ( associationParentForeignKey.getTargetTableExpression()
 						.equals( entityPersister.getTableName() ) ) {
 					final String[] identifierColumnNames = entityPersister.getIdentifierColumnNames();
-					if ( associationParentForeignKeyDescriptor.areTargetColumnNamesEqualsTo( identifierColumnNames ) ) {
+					if ( associationParentForeignKey.areTargetColumnNamesEqualsTo( identifierColumnNames ) ) {
 						return createBiDirectionalFetch( fetchablePath, fetchParent );
 					}
 					return null;
@@ -292,7 +343,6 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 							sqlAstJoinType = SqlAstJoinType.INNER;
 						}
 
-
 						final TableGroupJoin tableGroupJoin = createTableGroupJoin(
 								fetchablePath,
 								parentTableGroup,
@@ -316,16 +366,17 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 			);
 		}
 
-		//noinspection rawtypes
-		final DomainResult keyResult;
+		// the associated entity table was not joined.
 
-		if ( referringPrimaryKey ) {
-			keyResult = foreignKeyDescriptor.createDomainResult( fetchablePath, parentTableGroup, creationState );
-		}
-		else {
-			keyResult = ( (EntityPersister) getDeclaringType() ).getIdentifierMapping()
-					.createDomainResult( fetchablePath, parentTableGroup, null, creationState );
-		}
+		final Fetch keyFetch = generateNonJoinedKeyFetch(
+				fetchParent,
+				fetchablePath,
+				fetchTiming,
+				selected,
+				lockMode,
+				parentTableGroup,
+				creationState
+		);
 
 		assert !selected;
 		if ( fetchTiming == FetchTiming.IMMEDIATE ) {
@@ -335,7 +386,7 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 					lockMode,
 					isNullable,
 					fetchablePath,
-					keyResult,
+					keyFetch,
 					creationState
 			);
 		}
@@ -346,9 +397,19 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 				lockMode,
 				isNullable,
 				fetchablePath,
-				keyResult
+				keyFetch
 		);
 	}
+
+	protected abstract Fetch generateNonJoinedKeyFetch(
+			FetchParent fetchParent,
+			NavigablePath fetchablePath,
+			FetchTiming fetchTiming,
+			boolean selected,
+			LockMode lockMode,
+			TableGroup parentTableGroup,
+			DomainResultCreationState creationState);
+
 
 	@Override
 	public int getNumberOfFetchables() {
@@ -392,15 +453,32 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 				creationContext.getSessionFactory()
 		);
 
-		final TableReference lhsTableReference = lhs.resolveTableReference( identifyingColumnsTableExpression );
+		final TableReference lhsTableReference;
+		final TableReference rhsTableReference;
+		if ( toOneKey.getDirection().normalize() == ForeignKeyDirection.REFERRING ) {
+			lhsTableReference = lhs.resolveTableReference(
+					toOneKey.getForeignKeyDescriptor().getReferringSide().getTableName()
+			);
+			rhsTableReference = tableGroup.resolveTableReference(
+					toOneKey.getForeignKeyDescriptor().getTargetSide().getTableName()
+			);
+		}
+		else {
+			lhsTableReference = lhs.resolveTableReference(
+					toOneKey.getForeignKeyDescriptor().getTargetSide().getTableName()
+			);
+			rhsTableReference = tableGroup.resolveTableReference(
+					toOneKey.getForeignKeyDescriptor().getReferringSide().getTableName()
+			);
+		}
 
 		final TableGroupJoin tableGroupJoin = new TableGroupJoin(
 				navigablePath,
 				sqlAstJoinType,
 				tableGroup,
-				foreignKeyDescriptor.generateJoinPredicate(
+				toOneKey.getForeignKeyDescriptor().generateJoinPredicate(
 						lhsTableReference,
-						primaryTableReference,
+						rhsTableReference,
 						sqlAstJoinType,
 						sqlExpressionResolver,
 						creationContext
@@ -432,7 +510,7 @@ public class ToOneAttributeMapping extends AbstractSingularAttributeMapping
 
 	@Override
 	public ModelPart getKeyTargetMatchPart() {
-		return foreignKeyDescriptor;
+		return toOneKey.getForeignKeyDescriptor().getTargetSide().getKeyPart();
 	}
 
 	@Override

@@ -20,10 +20,11 @@ import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.tree.from.TableGroup;
-import org.hibernate.sql.results.graph.collection.internal.BagInitializerProducer;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
+import org.hibernate.sql.results.graph.collection.internal.BagInitializerProducer;
+import org.hibernate.sql.results.internal.ResultsHelper;
 
 /**
  * @author Steve Ebersole
@@ -73,26 +74,22 @@ public abstract class AbstractBagSemantics<B extends Collection<?>> implements C
 			String resultVariable,
 			LockMode lockMode,
 			DomainResultCreationState creationState) {
-		return new BagInitializerProducer(
-				attributeMapping,
-				attributeMapping.getIdentifierDescriptor() == null ? null : attributeMapping.getIdentifierDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ID.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				),
-				attributeMapping.getElementDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ELEMENT.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				)
-		);
+		final Fetch elementFetch = ResultsHelper.extractElementFetch( creationState.buildFetches( fetchParent ) );
+		final Fetch rowIdFetch;
+		if ( attributeMapping.getIdentifierDescriptor() == null ) {
+			rowIdFetch = null;
+		}
+		else {
+			rowIdFetch = attributeMapping.getIdentifierDescriptor().generateFetch(
+					fetchParent,
+					navigablePath.append( CollectionPart.Nature.ID.getName() ),
+					FetchTiming.IMMEDIATE,
+					selected,
+					lockMode,
+					null,
+					creationState
+			);
+		}
+		return new BagInitializerProducer( attributeMapping, rowIdFetch, elementFetch );
 	}
 }

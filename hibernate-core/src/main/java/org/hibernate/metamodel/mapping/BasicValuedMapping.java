@@ -9,17 +9,11 @@ package org.hibernate.metamodel.mapping;
 import java.util.Collections;
 import java.util.List;
 
-import org.hibernate.type.BasicType;
 import org.hibernate.type.spi.TypeConfiguration;
 
 /**
  * Any basic-typed ValueMapping - e.g. a basic-valued singular attribute or a
  * basic-valued collection element
- *
- * todo (6.0) : better to use {@link org.hibernate.metamodel.relational.Identifier} instead to handle quoting?
- *
- * todo (6.0) : expose {@link org.hibernate.metamodel.model.convert.spi.BasicValueConverter}?
- * 		- Or just handle internal to impl?
  *
  * @author Steve Ebersole
  */

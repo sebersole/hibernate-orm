@@ -19,9 +19,9 @@ import javax.persistence.Table;
 
 import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
 import org.hibernate.metamodel.mapping.ModelPart;
-import org.hibernate.metamodel.mapping.internal.BasicValuedSingularAttributeMapping;
-import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMapping;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.BasicSingularAttribute;
+import org.hibernate.metamodel.mapping.internal.EmbeddedAttributeMappingImpl;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.metamodel.model.convert.internal.NamedEnumValueConverter;
 import org.hibernate.metamodel.model.convert.internal.OrdinalEnumValueConverter;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
@@ -66,21 +66,21 @@ public class SmokeTests {
 
 		{
 			final ModelPart namePart = entityDescriptor.findSubPart( "name" );
-			assert namePart instanceof BasicValuedSingularAttributeMapping;
-			assert "mapping_simple_entity".equals( ( (BasicValuedSingularAttributeMapping) namePart ).getContainingTableExpression() );
-			assert "name".equals( ( (BasicValuedSingularAttributeMapping) namePart ).getMappedColumnExpression() );
+			assert namePart instanceof BasicSingularAttribute;
+			assert "mapping_simple_entity".equals( ( (BasicSingularAttribute) namePart ).getContainingTableExpression() );
+			assert "name".equals( ( (BasicSingularAttribute) namePart ).getMappedColumnExpression() );
 		}
 
 		{
 			final ModelPart genderPart = entityDescriptor.findSubPart( "gender" );
-			assert genderPart instanceof BasicValuedSingularAttributeMapping;
-			final BasicValuedSingularAttributeMapping genderAttrMapping = (BasicValuedSingularAttributeMapping) genderPart;
+			assert genderPart instanceof BasicSingularAttribute;
+			final BasicSingularAttribute genderAttrMapping = (BasicSingularAttribute) genderPart;
 			assert "mapping_simple_entity".equals( genderAttrMapping.getContainingTableExpression() );
 			assert "gender".equals( genderAttrMapping.getMappedColumnExpression() );
 
 			assertThat( genderAttrMapping.getJavaTypeDescriptor().getJavaType(), equalTo( Gender.class ) );
 
-			final BasicValueConverter valueConverter = genderAttrMapping.getValueConverter();
+			final BasicValueConverter<?,?> valueConverter = genderAttrMapping.getValueConverter();
 			assertThat( valueConverter, instanceOf( OrdinalEnumValueConverter.class ) );
 			assertThat( valueConverter.getDomainJavaDescriptor(), is( genderAttrMapping.getJavaTypeDescriptor() ) );
 			assertThat( valueConverter.getRelationalJavaDescriptor().getJavaType(), equalTo( Integer.class ) );
@@ -90,14 +90,14 @@ public class SmokeTests {
 
 		{
 			final ModelPart part = entityDescriptor.findSubPart( "gender2" );
-			assert part instanceof BasicValuedSingularAttributeMapping;
-			final BasicValuedSingularAttributeMapping attrMapping = (BasicValuedSingularAttributeMapping) part;
+			assert part instanceof BasicSingularAttribute;
+			final BasicSingularAttribute attrMapping = (BasicSingularAttribute) part;
 			assert "mapping_simple_entity".equals( attrMapping.getContainingTableExpression() );
 			assert "gender2".equals( attrMapping.getMappedColumnExpression() );
 
 			assertThat( attrMapping.getJavaTypeDescriptor().getJavaType(), equalTo( Gender.class ) );
 
-			final BasicValueConverter valueConverter = attrMapping.getValueConverter();
+			final BasicValueConverter<?,?> valueConverter = attrMapping.getValueConverter();
 			assertThat( valueConverter, instanceOf( NamedEnumValueConverter.class ) );
 			assertThat( valueConverter.getDomainJavaDescriptor(), is( attrMapping.getJavaTypeDescriptor() ) );
 			assertThat( valueConverter.getRelationalJavaDescriptor().getJavaType(), equalTo( String.class ) );
@@ -107,8 +107,8 @@ public class SmokeTests {
 
 		{
 			final ModelPart part = entityDescriptor.findSubPart( "component" );
-			assert part instanceof EmbeddedAttributeMapping;
-			final EmbeddedAttributeMapping attrMapping = (EmbeddedAttributeMapping) part;
+			assert part instanceof EmbeddedAttributeMappingImpl;
+			final EmbeddedAttributeMappingImpl attrMapping = (EmbeddedAttributeMappingImpl) part;
 			assertThat( attrMapping.getContainingTableExpression(), is( "mapping_simple_entity" ) );
 			assertThat( attrMapping.getMappedColumnExpressions(), CollectionMatchers.hasSize( 4 ) );
 			assertThat( attrMapping.getMappedColumnExpressions().get( 0 ), is( "attribute1" ) );
@@ -128,8 +128,8 @@ public class SmokeTests {
 
 		final ModelPart part = entityDescriptor.findSubPart( "simpleEntity" );
 		assertThat( part, notNullValue() );
-		assertThat( part, instanceOf( ToOneAttributeMapping.class ) );
-		final ToOneAttributeMapping attrMapping = (ToOneAttributeMapping) part;
+		assertThat( part, instanceOf( ToOneAttributeTarget.class ) );
+		final ToOneAttributeTarget attrMapping = (ToOneAttributeTarget) part;
 		assertThat( attrMapping.getAttributeName(), is( "simpleEntity" ) );
 		assertThat( attrMapping.getMappedTypeDescriptor(), is( simpleEntityDescriptor ) );
 		assertThat(
@@ -270,6 +270,7 @@ public class SmokeTests {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Embeddable
 	static class SubComponent {
 		private String subAttribute1;
@@ -300,6 +301,7 @@ public class SmokeTests {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Embeddable
 	public static class Component {
 		private String attribute1;

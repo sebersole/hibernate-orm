@@ -218,8 +218,13 @@ public class MultiTableSqmMutationConverter extends BaseSqmToSqlAstConverter imp
 	}
 
 	@Override
-	public List<Fetch> visitFetches(FetchParent fetchParent) {
+	public List<Fetch> buildFetches(FetchParent fetchParent) {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public Fetch buildKeyFetch(FetchParent fetchParent) {
+		return null;
 	}
 
 	public void visitSelectClause(

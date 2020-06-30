@@ -15,14 +15,13 @@ import java.util.function.Consumer;
 import org.hibernate.LockMode;
 import org.hibernate.collection.spi.CollectionInitializerProducer;
 import org.hibernate.collection.spi.MapSemantics;
-import org.hibernate.engine.FetchTiming;
-import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.query.NavigablePath;
-import org.hibernate.sql.ast.tree.from.TableGroup;
-import org.hibernate.sql.results.graph.collection.internal.MapInitializerProducer;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
+import org.hibernate.sql.results.graph.Fetch;
 import org.hibernate.sql.results.graph.FetchParent;
+import org.hibernate.sql.results.graph.collection.internal.MapInitializerProducer;
+import org.hibernate.sql.results.internal.ResultsHelper;
 
 /**
  * @author Steve Ebersole
@@ -86,26 +85,10 @@ public abstract class AbstractMapSemantics<M extends Map<?,?>> implements MapSem
 			String resultVariable,
 			LockMode lockMode,
 			DomainResultCreationState creationState) {
-		return new MapInitializerProducer(
-				attributeMapping,
-				attributeMapping.getIndexDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.INDEX.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				),
-				attributeMapping.getElementDescriptor().generateFetch(
-						fetchParent,
-						navigablePath.append( CollectionPart.Nature.ELEMENT.getName() ),
-						FetchTiming.IMMEDIATE,
-						selected,
-						lockMode,
-						null,
-						creationState
-				)
-		);
+		final Fetch mapKeyFetch = creationState.buildKeyFetch( fetchParent );
+		final Fetch elementFetch = ResultsHelper.extractElementFetch( creationState.buildFetches( fetchParent ) );
+
+		return new MapInitializerProducer( attributeMapping, mapKeyFetch, elementFetch );
 	}
+
 }

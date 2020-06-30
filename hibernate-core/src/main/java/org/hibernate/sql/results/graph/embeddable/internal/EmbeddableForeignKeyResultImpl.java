@@ -9,13 +9,9 @@ package org.hibernate.sql.results.graph.embeddable.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.engine.FetchTiming;
 import org.hibernate.internal.util.MutableInteger;
-import org.hibernate.metamodel.mapping.BasicValuedModelPart;
 import org.hibernate.metamodel.mapping.EmbeddableMappingType;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
-import org.hibernate.metamodel.mapping.EntityMappingType;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
 import org.hibernate.query.NavigablePath;
 import org.hibernate.sql.ast.spi.SqlSelection;
 import org.hibernate.sql.results.graph.AbstractFetchParent;
@@ -24,13 +20,8 @@ import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultAssembler;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
-import org.hibernate.sql.results.graph.Fetchable;
-import org.hibernate.sql.results.graph.basic.BasicFetch;
-import org.hibernate.sql.results.graph.basic.BasicResult;
 import org.hibernate.sql.results.graph.embeddable.EmbeddableInitializer;
 import org.hibernate.sql.results.graph.embeddable.EmbeddableResultGraphNode;
-import org.hibernate.sql.results.graph.entity.internal.EntityFetchDelayedImpl;
-import org.hibernate.sql.results.graph.entity.internal.EntityFetchSelectImpl;
 
 /**
  * @author Andrea Boriero
@@ -50,67 +41,9 @@ public class EmbeddableForeignKeyResultImpl<T>
 		super( embeddableValuedModelPart.getEmbeddableTypeDescriptor(), navigablePath );
 		this.resultVariable = resultVariable;
 		fetches = new ArrayList<>();
-		MutableInteger index = new MutableInteger();
+		MutableInteger index = new MutableInteger( 0 );
 
-		embeddableValuedModelPart.visitFetchables(
-				fetchable -> {
-					generateFetches( sqlSelections, navigablePath, creationState, index, fetchable );
-				},
-				null
-		);
-	}
-
-	private void generateFetches(
-			List<SqlSelection> sqlSelections,
-			NavigablePath navigablePath,
-			DomainResultCreationState creationState,
-			MutableInteger mutableInteger,
-			Fetchable fetchable) {
-		if ( fetchable instanceof ToOneAttributeMapping ) {
-			final ToOneAttributeMapping toOneAttributeMapping = (ToOneAttributeMapping) fetchable;
-			EntityMappingType associatedEntityMappingType = toOneAttributeMapping.getAssociatedEntityMappingType();
-			BasicResult domainResult = new BasicResult(
-					sqlSelections.get( mutableInteger.getAndIncrement() ).getValuesArrayPosition(),
-					null,
-					associatedEntityMappingType.getIdentifierMapping().getJavaTypeDescriptor()
-			);
-			Fetch fetch;
-			if ( toOneAttributeMapping.getMappedFetchOptions().getTiming() == FetchTiming.DELAYED ) {
-				fetch = new EntityFetchDelayedImpl(
-						this,
-						toOneAttributeMapping,
-						null,
-						false,
-						navigablePath.append( fetchable.getFetchableName() ),
-						domainResult
-				);
-			}
-			else {
-				fetch = new EntityFetchSelectImpl(
-						this,
-						toOneAttributeMapping,
-						null,
-						false,
-						navigablePath.append( fetchable.getFetchableName() ),
-						domainResult,
-						creationState
-				);
-			}
-			fetches.add( fetch );
-		}
-		else {
-			final Fetch fetch = new BasicFetch(
-					sqlSelections.get( mutableInteger.getAndIncrement() ).getValuesArrayPosition(),
-					null,
-					navigablePath.append( fetchable.getFetchableName() ),
-					(BasicValuedModelPart) fetchable,
-					true,
-					null,
-					FetchTiming.IMMEDIATE,
-					creationState
-			);
-			fetches.add( fetch );
-		}
+		afterInitialize( creationState );
 	}
 
 	@Override

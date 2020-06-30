@@ -56,7 +56,7 @@ import org.hibernate.type.descriptor.java.JavaTypeDescriptor;
  * @author Steve Ebersole
  */
 public class NonAggregatedIdentifierMappingImpl
-		implements CompositeIdentifierMapping, EmbeddableValuedFetchable, FetchOptions {
+		implements CompositeIdentifierMapping, FetchOptions {
 	private final EmbeddableMappingType embeddableDescriptor;
 	private final NavigableRole navigableRole;
 	private final EntityMappingType entityMapping;

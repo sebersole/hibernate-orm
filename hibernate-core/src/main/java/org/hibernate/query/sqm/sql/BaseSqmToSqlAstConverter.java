@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -254,6 +255,11 @@ public abstract class BaseSqmToSqlAstConverter
 	@Override
 	public TableGroup findTableGroup(NavigablePath navigablePath) {
 		return fromClauseIndex.findTableGroup( navigablePath );
+	}
+
+	@Override
+	public void visitTableGroups(BiConsumer<NavigablePath, TableGroup> consumer) {
+		fromClauseIndex.visitTableGroups( consumer );
 	}
 
 	@Override

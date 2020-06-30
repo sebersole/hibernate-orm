@@ -135,15 +135,19 @@ public interface EntityMappingType extends ManagedMappingType, Loadable {
 
 	EntityIdentifierMapping getIdentifierMapping();
 
-	EntityVersionMapping getVersionMapping();
-
-	EntityRowIdMapping getRowIdMapping();
-
 	default EntityDiscriminatorMapping getDiscriminatorMapping() {
 		throw new NotYetImplementedFor6Exception( getClass() );
 	}
 
+	EntityVersionMapping getVersionMapping();
+
 	NaturalIdMapping getNaturalIdMapping();
+
+	default TenancyMapping getTenancyMapping() {
+		throw new NotYetImplementedFor6Exception( getClass() );
+	}
+
+	EntityRowIdMapping getRowIdMapping();
 
 	/**
 	 * Visit the mappings, but limited to just attributes defined

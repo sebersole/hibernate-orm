@@ -6,11 +6,11 @@
  */
 package org.hibernate.metamodel.mapping;
 
+import org.hibernate.metamodel.mapping.internal.fk.ForeignKeySource;
 import org.hibernate.sql.results.graph.Fetchable;
 
 /**
  * @author Steve Ebersole
  */
-public interface Association extends Fetchable {
-	ForeignKeyDescriptor getForeignKeyDescriptor();
+public interface Association extends ForeignKeySource, Fetchable {
 }

@@ -11,9 +11,9 @@ import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metamodel.mapping.AttributeMapping;
 import org.hibernate.metamodel.mapping.EntityIdentifierMapping;
-import org.hibernate.metamodel.mapping.internal.BasicValuedSingularAttributeMapping;
+import org.hibernate.metamodel.mapping.BasicSingularAttribute;
 import org.hibernate.metamodel.mapping.internal.NonAggregatedIdentifierMappingImpl;
-import org.hibernate.metamodel.mapping.internal.ToOneAttributeMapping;
+import org.hibernate.metamodel.mapping.internal.ToOneAttributeTarget;
 import org.hibernate.persister.entity.EntityPersister;
 
 import org.hibernate.testing.orm.junit.ServiceRegistry;
@@ -57,15 +57,15 @@ public class DynamicCompositeIdManyToOneTests {
 
 			final AttributeMapping key1 = cid.getEmbeddableTypeDescriptor().findAttributeMapping( "key1" );
 			assertThat( key1, notNullValue() );
-			assertThat( key1, instanceOf( BasicValuedSingularAttributeMapping.class ) );
+			assertThat( key1, instanceOf( BasicSingularAttribute.class ) );
 
 			final AttributeMapping key2 = cid.getEmbeddableTypeDescriptor().findAttributeMapping( "key2" );
 			assertThat( key2, notNullValue() );
-			assertThat( key2, instanceOf( ToOneAttributeMapping.class ) );
+			assertThat( key2, instanceOf( ToOneAttributeTarget.class ) );
 
 			final AttributeMapping attr1 = entityDescriptor.findAttributeMapping( "attr1" );
 			assertThat( attr1, notNullValue() );
-			assertThat( attr1, instanceOf( BasicValuedSingularAttributeMapping.class ) );
+			assertThat( attr1, instanceOf( BasicSingularAttribute.class ) );
 
 			assertThat( entityDescriptor.getNumberOfAttributeMappings(), is( 3 ) );
 
