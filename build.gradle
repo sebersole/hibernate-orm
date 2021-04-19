@@ -1,7 +1,3 @@
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-apply from: "./libraries.gradle"
-
 
 buildscript {
 	repositories {
@@ -22,9 +18,19 @@ buildscript {
 		classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
 		classpath 'org.hibernate.build.gradle:hibernate-matrix-testing:2.0.0-SNAPSHOT'
 		classpath 'org.hibernate.build.gradle:version-injection-plugin:1.0.0'
-		classpath 'org.hibernate.build.gradle:gradle-xjc-plugin:1.0.2.Final'
-		classpath 'com.github.lburgazzoli:lb-karaf-features-gen:1.0.0-SNAPSHOT'
+//		classpath 'org.hibernate.build.gradle:gradle-xjc-plugin:1.0.2.Final'
+//		classpath 'com.github.lburgazzoli:lb-karaf-features-gen:1.0.0-SNAPSHOT'
 	}
+}
+
+plugins {
+	id 'eclipse'
+	id 'idea'
+//	id 'me.champeau.buildscan-recipes' version '0.2.3'
+	id 'org.hibernate.build.xjc' version '2.0.1' apply false
+	id 'org.hibernate.build.maven-repo-auth' version '3.0.3' apply false
+	id 'org.jetbrains.gradle.plugin.idea-ext' version '0.5'
+	id 'biz.aQute.bnd' version '5.1.1' apply false
 }
 
 allprojects {
@@ -41,6 +47,11 @@ allprojects {
             url "http://snapshots.jboss.org/maven2/"
         }
     }
+
+	// minimize changes, at least for now (gradle uses 'build' by default)..
+	buildDir = "target"
+
+	apply from: rootProject.file( 'gradle/base-information.gradle' )
 }
 
 ext {
@@ -60,6 +71,12 @@ idea {
     module {
         name = "hibernate-orm"
     }
+}
+
+wrapper {
+	// To upgrade the version of gradle used in the wrapper, run:
+	//     ./gradlew wrapper --gradle-version NEW_VERSION
+	distributionType = Wrapper.DistributionType.ALL
 }
 
 /*
@@ -97,10 +114,10 @@ subprojects { subProject ->
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
 	apply plugin: 'maven-publish-auth'
-	apply plugin: 'osgi'
+//	apply plugin: 'osgi'
 
-	apply plugin: 'findbugs'
-	apply plugin: 'checkstyle'
+//	apply plugin: 'findbugs'
+//	apply plugin: 'checkstyle'
 	apply plugin: 'build-dashboard'
 	apply plugin: 'project-report'
 
@@ -137,8 +154,8 @@ subprojects { subProject ->
 		testRuntime( libraries.h2 )
 		testRuntime( libraries.woodstox )
 
-		// 6.6 gave me some NPE problems from within checkstyle...
-		checkstyle 'com.puppycrawl.tools:checkstyle:6.5'
+//		// 6.6 gave me some NPE problems from within checkstyle...
+//		checkstyle 'com.puppycrawl.tools:checkstyle:6.5'
 	}
 
 	// mac-specific stuff ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,29 +177,29 @@ subprojects { subProject ->
 	}
 
 	jar {
-		manifest = osgiManifest {
-			// GRADLE-1411: Even if we override Imports and Exports
-			// auto-generation with instructions, classesDir and classpath
-			// need to be here (temporarily).
-			classesDir = sourceSets.main.output.classesDir
-			classpath = configurations.runtime
-
-			instruction 'Import-Package',
-				// Temporarily support JTA 1.1 -- Karaf and other frameworks still
-				// use it.  Without this, the plugin generates [1.2,2).
-				'javax.transaction;version="[1.1,2)"',
-				// Tell Gradle OSGi to still dynamically import the other packages.
-				// IMPORTANT: Do not include the * in the modules' .gradle files.
-				// If it exists more than once, the manifest will physically contain a *.
-				'*'
-
-			instruction 'Bundle-Vendor', 'Hibernate.org'
-			instruction 'Bundle-Description', subProject.osgiDescription()
-			instruction 'Implementation-Url', 'http://hibernate.org'
-			instruction 'Implementation-Version', version
-			instruction 'Implementation-Vendor', 'Hibernate.org'
-			instruction 'Implementation-Vendor-Id', 'org.hibernate'
-		}
+//		manifest = osgiManifest {
+//			// GRADLE-1411: Even if we override Imports and Exports
+//			// auto-generation with instructions, classesDir and classpath
+//			// need to be here (temporarily).
+//			classesDir = sourceSets.main.output.classesDir
+//			classpath = configurations.runtime
+//
+//			instruction 'Import-Package',
+//				// Temporarily support JTA 1.1 -- Karaf and other frameworks still
+//				// use it.  Without this, the plugin generates [1.2,2).
+//				'javax.transaction;version="[1.1,2)"',
+//				// Tell Gradle OSGi to still dynamically import the other packages.
+//				// IMPORTANT: Do not include the * in the modules' .gradle files.
+//				// If it exists more than once, the manifest will physically contain a *.
+//				'*'
+//
+//			instruction 'Bundle-Vendor', 'Hibernate.org'
+//			instruction 'Bundle-Description', subProject.osgiDescription()
+//			instruction 'Implementation-Url', 'http://hibernate.org'
+//			instruction 'Implementation-Version', version
+//			instruction 'Implementation-Vendor', 'Hibernate.org'
+//			instruction 'Implementation-Vendor-Id', 'org.hibernate'
+//		}
 	}
 
 	test {
@@ -245,44 +262,44 @@ subprojects { subProject ->
 	eclipseClasspath.dependsOn compile
 
 
-	// Report configs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	checkstyle {
-		sourceSets = [ subProject.sourceSets.main ]
-		configFile = rootProject.file( 'shared/config/checkstyle/checkstyle.xml' )
-		showViolations = false
-	}
-	// exclude generated java sources - by explicitly setting the base source dir
-	checkstyleMain.source = 'src/main/java'
-
-	findbugs {
-		sourceSets = [ subProject.sourceSets.main, subProject.sourceSets.test ]
-		ignoreFailures = true
-		toolVersion = '3.0.1'
-		// for now we need to set this to low so that FindBugs will actually report the DM_CONVERT_CASE warning we care about
-		reportLevel = 'low'
-		// remove all low level bug warnings except DM_CONVERT_CASE
-		excludeFilterConfig=resources.text.fromString(excludeAllLowLevelBugsExcept('DM_CONVERT_CASE'))
-	}
-
-	// exclude generated java sources and cfg package is a mess mainly from annotation stuff
-	findbugsMain.doFirst {
-		classes = classes.filter {
-			!it.path.contains( 'org/hibernate/hql/internal/antlr' ) &&
-					!it.path.contains( 'org/hibernate/boot/jaxb/cfg/spi' ) &&
-					!it.path.contains( 'org/hibernate/sql/ordering/antlr/Generated' ) &&
-					!it.path.contains( 'org/hibernate/sql/ordering/antlr/OrderByTemplateTokenTypes' ) &&
-					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/Jaxb' ) &&
-					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/Adapter' ) &&
-					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/ObjectFactory' ) &&
-					!it.path.contains( 'org/hibernate/cfg' ) &&
-					!it.path.contains( '_\$logger' )
-		}
-	}
-
-		// because cfg package is a mess mainly from annotation stuff
-	checkstyleMain.exclude '**/org/hibernate/cfg/**'
-	checkstyleMain.exclude '**/org/hibernate/cfg/*'
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//	// Report configs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//	checkstyle {
+//		sourceSets = [ subProject.sourceSets.main ]
+//		configFile = rootProject.file( 'shared/config/checkstyle/checkstyle.xml' )
+//		showViolations = false
+//	}
+//	// exclude generated java sources - by explicitly setting the base source dir
+//	checkstyleMain.source = 'src/main/java'
+//
+//	findbugs {
+//		sourceSets = [ subProject.sourceSets.main, subProject.sourceSets.test ]
+//		ignoreFailures = true
+//		toolVersion = '3.0.1'
+//		// for now we need to set this to low so that FindBugs will actually report the DM_CONVERT_CASE warning we care about
+//		reportLevel = 'low'
+//		// remove all low level bug warnings except DM_CONVERT_CASE
+//		excludeFilterConfig=resources.text.fromString(excludeAllLowLevelBugsExcept('DM_CONVERT_CASE'))
+//	}
+//
+//	// exclude generated java sources and cfg package is a mess mainly from annotation stuff
+//	findbugsMain.doFirst {
+//		classes = classes.filter {
+//			!it.path.contains( 'org/hibernate/hql/internal/antlr' ) &&
+//					!it.path.contains( 'org/hibernate/boot/jaxb/cfg/spi' ) &&
+//					!it.path.contains( 'org/hibernate/sql/ordering/antlr/Generated' ) &&
+//					!it.path.contains( 'org/hibernate/sql/ordering/antlr/OrderByTemplateTokenTypes' ) &&
+//					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/Jaxb' ) &&
+//					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/Adapter' ) &&
+//					!it.path.contains( 'org/hibernate/boot/jaxb/hbm/spi/ObjectFactory' ) &&
+//					!it.path.contains( 'org/hibernate/cfg' ) &&
+//					!it.path.contains( '_\$logger' )
+//		}
+//	}
+//
+//		// because cfg package is a mess mainly from annotation stuff
+//	checkstyleMain.exclude '**/org/hibernate/cfg/**'
+//	checkstyleMain.exclude '**/org/hibernate/cfg/*'
+//	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 	publishing {
@@ -290,9 +307,9 @@ subprojects { subProject ->
 			mavenJava(MavenPublication) {
 				from components.java
 
-				artifact( sourcesJar ) {
-					classifier 'sources'
-				}
+//				artifact( sourcesJar ) {
+//					classifier 'sources'
+//				}
 			}
 			// http://issues.gradle.org/browse/GRADLE-2966
 			// Once ^^ is resolved:
@@ -318,9 +335,9 @@ subprojects { subProject ->
 
 task release(type: Task, dependsOn: 'release:release')
 
-task wrapper(type: Wrapper) {
-    gradleVersion = expectedGradleVersion
-}
+//task wrapper(type: Wrapper) {
+//    gradleVersion = expectedGradleVersion
+//}
 
 def excludeAllLowLevelBugsExcept(String[] bugTypes){
 	def writer = new StringWriter()
@@ -337,3 +354,5 @@ def excludeAllLowLevelBugsExcept(String[] bugTypes){
 	}
 	return writer.toString(  )
 }
+
+

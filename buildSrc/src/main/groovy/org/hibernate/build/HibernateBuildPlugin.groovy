@@ -31,55 +31,55 @@ class HibernateBuildPlugin implements Plugin<Project> {
 
 		project.apply( plugin: 'org.hibernate.build.gradle.animalSniffer' )
 
-		final Jvm java6Home;
-		if ( project.rootProject.extensions.extraProperties.has( 'java6Home' ) ) {
-			java6Home = project.rootProject.extensions.extraProperties.get( 'java6Home' ) as Jvm
-		}
-		else {
-			String java6HomeDirSetting = null;
-			if ( project.hasProperty( "JAVA6_HOME" ) ) {
-				java6HomeDirSetting = project.property( "JAVA6_HOME" ) as String;
-			}
-			if ( java6HomeDirSetting == null ) {
-				java6HomeDirSetting = System.getProperty( "JAVA6_HOME" );
-			}
-			if ( java6HomeDirSetting == null ) {
-				java6HomeDirSetting = System.getenv( "JAVA6_HOME" );
-			}
-
-			if ( java6HomeDirSetting != null ) {
-				project.logger.info( "Using JAVA6_HOME setting [${java6HomeDirSetting}]" )
-
-				final File specifiedJava6Home = project.file( java6HomeDirSetting );
-				if ( specifiedJava6Home == null ) {
-					throw new GradleException( "Could not resolve specified java home ${java6HomeDirSetting}" )
-				}
-				if ( !specifiedJava6Home.exists() ) {
-					throw new GradleException( "Specified java home [${java6HomeDirSetting}] does not exist" )
-				}
-				if ( !specifiedJava6Home.isDirectory() ) {
-					throw new GradleException( "Specified java home [${java6HomeDirSetting}] is not a directory" )
-				}
-
-				java6Home = Jvm.forHome( specifiedJava6Home ) as Jvm;
-
-				if ( java6Home == null ) {
-					throw new GradleException( "Could not resolve JAVA6_HOME [${java6HomeDirSetting}] to proper JAVA_HOME" );
-				}
-
-				project.rootProject.extensions.extraProperties.set( 'java6Home', java6Home )
-			}
-			else {
-				project.logger.warn( "JAVA6_HOME setting not specified, some build features will be disabled" )
-				java6Home = null;
-			}
-		}
-
+//		final Jvm java6Home;
+//		if ( project.rootProject.extensions.extraProperties.has( 'java6Home' ) ) {
+//			java6Home = project.rootProject.extensions.extraProperties.get( 'java6Home' ) as Jvm
+//		}
+//		else {
+//			String java6HomeDirSetting = null;
+//			if ( project.hasProperty( "JAVA6_HOME" ) ) {
+//				java6HomeDirSetting = project.property( "JAVA6_HOME" ) as String;
+//			}
+//			if ( java6HomeDirSetting == null ) {
+//				java6HomeDirSetting = System.getProperty( "JAVA6_HOME" );
+//			}
+//			if ( java6HomeDirSetting == null ) {
+//				java6HomeDirSetting = System.getenv( "JAVA6_HOME" );
+//			}
+//
+//			if ( java6HomeDirSetting != null ) {
+//				project.logger.info( "Using JAVA6_HOME setting [${java6HomeDirSetting}]" )
+//
+//				final File specifiedJava6Home = project.file( java6HomeDirSetting );
+//				if ( specifiedJava6Home == null ) {
+//					throw new GradleException( "Could not resolve specified java home ${java6HomeDirSetting}" )
+//				}
+//				if ( !specifiedJava6Home.exists() ) {
+//					throw new GradleException( "Specified java home [${java6HomeDirSetting}] does not exist" )
+//				}
+//				if ( !specifiedJava6Home.isDirectory() ) {
+//					throw new GradleException( "Specified java home [${java6HomeDirSetting}] is not a directory" )
+//				}
+//
+//				java6Home = Jvm.forHome( specifiedJava6Home ) as Jvm;
+//
+//				if ( java6Home == null ) {
+//					throw new GradleException( "Could not resolve JAVA6_HOME [${java6HomeDirSetting}] to proper JAVA_HOME" );
+//				}
+//
+//				project.rootProject.extensions.extraProperties.set( 'java6Home', java6Home )
+//			}
+//			else {
+//				project.logger.warn( "JAVA6_HOME setting not specified, some build features will be disabled" )
+//				java6Home = null;
+//			}
+//		}
+//
 		JavaTargetExtension javaTargetExtension = project.extensions.create( "javaTarget", JavaTargetExtension, project )
 		MavenPublishingExtension publishingExtension = project.extensions.create( "mavenPom", MavenPublishingExtension )
 
 		project.afterEvaluate {
-			applyJavaTarget( javaTargetExtension, project, java6Home )
+//			applyJavaTarget( javaTargetExtension, project, java6Home )
 			applyPublishing( publishingExtension, project )
 		}
 	}
