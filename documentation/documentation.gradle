@@ -21,7 +21,7 @@ def projectsToIncludeInAggregatedJavadoc = [
 		':hibernate-proxool',
 		':hibernate-vibur',
 		':hibernate-gradle-plugin',
-		':hibernate-enhance-maven-plugin',
+//		':hibernate-enhance-maven-plugin',
 		':hibernate-jpamodelgen',
 ]
 

@@ -157,8 +157,8 @@ project(':hibernate-gradle-plugin').projectDir = new File(rootProject.projectDir
 //include 'project-template'
 //project(':project-template').projectDir = new File(rootProject.projectDir, "tooling/project-template")
 
-include 'hibernate-enhance-maven-plugin'
-project(':hibernate-enhance-maven-plugin').projectDir = new File(rootProject.projectDir, "tooling/hibernate-enhance-maven-plugin")
+//include 'hibernate-enhance-maven-plugin'
+//project(':hibernate-enhance-maven-plugin').projectDir = new File(rootProject.projectDir, "tooling/hibernate-enhance-maven-plugin")
 
 
 rootProject.children.each { project ->
