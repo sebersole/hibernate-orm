@@ -194,17 +194,6 @@ public class NamedQueryTest extends BaseEntityManagerFunctionalTestCase {
 		} );
 	}
 
-	@Test
-	public void testQueryHintLockMode() {
-		doInJPA( this::entityManagerFactory, entityManager -> {
-					 Query query = entityManager.createNamedQuery( "NamedNativeQuery" );
-					 query.setHint( QueryHints.HINT_NATIVE_LOCKMODE, "none" );
-					 query.setParameter( 1, GAME_TITLES[0] );
-					 assertEquals( LockMode.NONE, query.getHints().get( QueryHints.HINT_NATIVE_LOCKMODE ) );
-				 }
-		);
-	}
-
 	@Entity(name = "Game")
 	@NamedQueries(@NamedQuery(name = "NamedQuery", query = "select g from Game g where title = ?1"))
 	@NamedNativeQueries(@NamedNativeQuery(name = "NamedNativeQuery", query = "select * from Game g where title = ?"))

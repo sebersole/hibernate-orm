@@ -483,10 +483,7 @@ public class NativeQueryImpl<T> extends AbstractProducedQuery<T> implements Nati
 
 	@Override
 	public NativeQueryImplementor<T> addSynchronizedEntityClass(Class entityClass) throws MappingException {
-		addQuerySpaces( getProducer().getFactory()
-								.getMetamodel()
-								.entityPersister( entityClass.getName() )
-								.getQuerySpaces() );
+		addQuerySpaces( getProducer().getFactory().getMetamodel().entityPersister( entityClass.getName() ).getQuerySpaces() );
 		return this;
 	}
 

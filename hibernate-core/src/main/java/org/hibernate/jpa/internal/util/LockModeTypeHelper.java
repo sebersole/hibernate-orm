@@ -32,24 +32,25 @@ public final class LockModeTypeHelper {
 		if ( value == null ) {
 			return LockMode.NONE;
 		}
-		if ( LockMode.class.isInstance( value ) ) {
+
+		if ( value instanceof LockMode ) {
 			return (LockMode) value;
 		}
-		else if ( LockModeType.class.isInstance( value ) ) {
+
+		if ( value instanceof LockModeType ) {
 			return getLockMode( (LockModeType) value );
 		}
-		else if ( String.class.isInstance( value ) ) {
+
+		if ( value instanceof String ) {
 			// first try LockMode name
-			LockMode lockMode = LockMode.fromExternalForm( (String) value );
-			if ( lockMode == null ) {
-				try {
-					lockMode = getLockMode( LockModeType.valueOf( (String) value ) );
-				}
-				catch (Exception ignore) {
-				}
+			final LockMode nativeLockMode = LockMode.fromExternalForm( (String) value );
+			if ( nativeLockMode != null ) {
+				return nativeLockMode;
 			}
-			if ( lockMode != null ) {
-				return lockMode;
+
+			final LockMode jpaLockModeCorollary = getLockMode( LockModeType.valueOf( (String) value ) );
+			if ( jpaLockModeCorollary != null ) {
+				return jpaLockModeCorollary;
 			}
 		}
 
