@@ -11,11 +11,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.common.reflection.MetadataProviderInjector;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
@@ -35,11 +30,19 @@ import org.hibernate.cfg.AnnotationBinder;
 import org.hibernate.cfg.InheritanceState;
 import org.hibernate.cfg.annotations.reflection.AttributeConverterDefinitionCollector;
 import org.hibernate.cfg.annotations.reflection.internal.JPAXMLOverriddenMetadataProvider;
-import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 import org.jboss.jandex.IndexView;
 import org.jboss.logging.Logger;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
+
+import static java.lang.Boolean.TRUE;
+import static org.hibernate.internal.util.StringHelper.nullIfEmpty;
 
 /**
  * @author Steve Ebersole
@@ -86,9 +89,9 @@ public class AnnotationMetadataSourceProcessorImpl implements MetadataSourceProc
 				if ( !(root instanceof JaxbEntityMappings) ) {
 					continue;
 				}
-				JaxbEntityMappings entityMappings = (JaxbEntityMappings) xmlBinding.getRoot();
 
-				final List<String> classNames = jpaMetadataProvider.getXMLContext().addDocument( entityMappings );
+				final JaxbEntityMappings entityMappings = (JaxbEntityMappings) xmlBinding.getRoot();
+				final List<String> classNames = jpaMetadataProvider.getXMLContext().addDocument( entityMappings, rootMetadataBuildingContext );
 				for ( String className : classNames ) {
 					xClasses.add( toXClass( className, reflectionManager, classLoaderService ) );
 				}
@@ -98,11 +101,11 @@ public class AnnotationMetadataSourceProcessorImpl implements MetadataSourceProc
 		}
 
 		for ( String className : managedResources.getAnnotatedClassNames() ) {
-			final Class annotatedClass = classLoaderService.classForName( className );
+			final Class<?> annotatedClass = classLoaderService.classForName( className );
 			categorizeAnnotatedClass( annotatedClass, attributeConverterManager, classLoaderService );
 		}
 
-		for ( Class annotatedClass : managedResources.getAnnotatedClassReferences() ) {
+		for ( Class<?> annotatedClass : managedResources.getAnnotatedClassReferences() ) {
 			categorizeAnnotatedClass( annotatedClass, attributeConverterManager, classLoaderService );
 		}
 	}
@@ -134,32 +137,42 @@ public class AnnotationMetadataSourceProcessorImpl implements MetadataSourceProc
 	@Override
 	public void prepare() {
 		// use any persistence-unit-defaults defined in orm.xml
+
+		//noinspection unchecked
+		final Map<String,?> persistenceUnitDefaults = reflectionManager.getDefaults();
+		final String defaultSchema = nullIfEmpty( (String) persistenceUnitDefaults.get( "schema" ) );
+		final String defaultCatalog = nullIfEmpty( (String) persistenceUnitDefaults.get( "catalog" ) );
+		final boolean delimitedIdentifiers = persistenceUnitDefaults.get( "delimited-identifier" ) == TRUE;
+
 		( (JpaOrmXmlPersistenceUnitDefaultAware) rootMetadataBuildingContext.getBuildingOptions() ).apply(
 				new JpaOrmXmlPersistenceUnitDefaults() {
-					final Map persistenceUnitDefaults = reflectionManager.getDefaults();
-
 					@Override
 					public String getDefaultSchemaName() {
-						return StringHelper.nullIfEmpty( (String) persistenceUnitDefaults.get( "schema" ) );
+						return defaultSchema;
 					}
 
 					@Override
 					public String getDefaultCatalogName() {
-						return StringHelper.nullIfEmpty( (String) persistenceUnitDefaults.get( "catalog" ) );
+						return defaultCatalog;
 					}
 
 					@Override
 					public boolean shouldImplicitlyQuoteIdentifiers() {
-						final Object isDelimited = persistenceUnitDefaults.get( "delimited-identifier" );
-						return isDelimited == Boolean.TRUE;
+						return delimitedIdentifiers;
 					}
 				}
 		);
 
-		rootMetadataBuildingContext.getMetadataCollector().getDatabase().adjustDefaultNamespace(
-				rootMetadataBuildingContext.getBuildingOptions().getMappingDefaults().getImplicitCatalogName(),
-				rootMetadataBuildingContext.getBuildingOptions().getMappingDefaults().getImplicitSchemaName()
-		);
+		// at the start of annotation processing we want to apply any values
+		// specified via `persistence-unit-defaults#catalog` and
+		// `persistence-unit-defaults#schema` from orm.xml as the database
+		// default namespace.  It effectively overrides
+		// `hibernate.default_catalog` and `hibernate.default_schema` in
+		// terms of precedence
+
+		if ( defaultCatalog != null || defaultSchema != null ) {
+			rootMetadataBuildingContext.getMetadataCollector().getDatabase().adjustDefaultNamespace( defaultCatalog, defaultSchema );
+		}
 
 		AnnotationBinder.bindDefaults( rootMetadataBuildingContext );
 		for ( String annotatedPackage : annotatedPackages ) {

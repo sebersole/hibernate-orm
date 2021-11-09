@@ -25,6 +25,8 @@ import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.model.convert.internal.ClassBasedConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.JpaAttributeConverterCreationContext;
+import org.hibernate.boot.model.naming.Identifier;
+import org.hibernate.boot.model.relational.Namespace;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.classloading.spi.ClassLoadingException;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
@@ -70,6 +72,7 @@ public abstract class SimpleValue implements KeyValue {
 
 	private MetadataBuildingContext buildingContext;
 	private final MetadataImplementor metadata;
+	private final Namespace.Name defaultNamespaceName;
 
 	private final List<Selectable> columns = new ArrayList<>();
 	private final List<Boolean> insertability = new ArrayList<>();
@@ -96,6 +99,13 @@ public abstract class SimpleValue implements KeyValue {
 	public SimpleValue(MetadataBuildingContext buildingContext) {
 		this.buildingContext = buildingContext;
 		this.metadata = buildingContext.getMetadataCollector();
+
+		// store the default namespace in effect when this SimpleValue is
+		// created so that we can properly determine the namespace to use
+		// as default for database objects created relative to the mapped
+		// value.  Generally this means tables, sequences, etc. for
+		// identifier generators
+		defaultNamespaceName = metadata.getDatabase().getDefaultNamespace().getName();
 	}
 
 	public SimpleValue(MetadataBuildingContext buildingContext, Table table) {
@@ -310,17 +320,29 @@ public abstract class SimpleValue implements KeyValue {
 		}
 
 		final Properties params = new Properties();
-		
-		//if the hibernate-mapping did not specify a schema/catalog, use the defaults
-		//specified by properties - but note that if the schema/catalog were specified
-		//in hibernate-mapping, or as params, they will already be initialized and
-		//will override the values set here (they are in identifierGeneratorProperties)
-		if ( defaultSchema != null ) {
-			params.setProperty( PersistentIdentifierGenerator.SCHEMA, defaultSchema);
-		}
 
-		if ( defaultCatalog != null ) {
-			params.setProperty( PersistentIdentifierGenerator.CATALOG, defaultCatalog );
+		// Determine the "default" catalog and schema to pass along to the generator
+		// for any database objects (sequence, table, etc.) it maps when no explicit schema
+		// or catalog were specified
+		if ( defaultNamespaceName != null
+				&& ( defaultNamespaceName.getCatalog() != null || defaultNamespaceName.getSchema() != null ) ) {
+			final Identifier implicitCatalog = defaultNamespaceName.getCatalog();
+			final Identifier implicitSchema = defaultNamespaceName.getSchema();
+			if ( implicitCatalog != null ) {
+				params.setProperty( PersistentIdentifierGenerator.CATALOG, implicitCatalog.getText() );
+			}
+			if ( implicitSchema != null ) {
+				params.setProperty( PersistentIdentifierGenerator.SCHEMA, implicitSchema.getText() );
+			}
+		}
+		else {
+			if ( defaultCatalog != null ) {
+				params.setProperty( PersistentIdentifierGenerator.CATALOG, defaultCatalog );
+			}
+
+			if ( defaultSchema != null ) {
+				params.setProperty( PersistentIdentifierGenerator.SCHEMA, defaultSchema);
+			}
 		}
 
 		// default initial value and allocation size per-JPA defaults

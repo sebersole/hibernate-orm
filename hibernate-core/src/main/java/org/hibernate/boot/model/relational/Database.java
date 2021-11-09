@@ -24,8 +24,32 @@ import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
+import jakarta.persistence.Table;
+
 /**
- * @author Steve Ebersole
+ * Keeps track of boot-time descriptors for various database namespaces and objects.
+ *
+ * @implNote Note about precedence of the namespace used for the various database
+ * objects...<ol>
+ *     <li>
+ *         Explicit namespace specified for the object.  {@link Table#catalog()},
+ *         {@link Table#schema()}, etc.
+ *     </li>
+ *     <li>
+ *         Default namespace specified by `persistence-unit-defaults#catalog` and
+ *         `persistence-unit-defaults#schema` from orm.xml
+ *     </li>
+ *     <li>
+ *         Default namespace specified in the mapping file (orm.xml and hbm.xml) which
+ *         maps the database object - `entity-mappings#catalog` and
+ *         `entity-mappings#schema` from orm.xml; `hibernate-mapping#schema`
+ *         and `hibernate-mapping#schema` from hbm.xml
+ *     </li>
+ *     <li>
+ *         Defaults specified as properties `hibernate.default_catalog` and
+ *         `hibernate.default_schema`
+ *     </li>
+ * </ol>
  */
 public class Database {
 
@@ -51,12 +75,10 @@ public class Database {
 		this.physicalNamingStrategy = buildingOptions.getPhysicalNamingStrategy();
 		this.dialect = determineDialect( buildingOptions );
 
-		this.implicitNamespace = makeNamespace(
-				new Namespace.Name(
-						toIdentifier( buildingOptions.getMappingDefaults().getImplicitCatalogName() ),
-						toIdentifier( buildingOptions.getMappingDefaults().getImplicitSchemaName() )
-				)
-		);
+		final Identifier defaultCatalogName = toIdentifier( buildingOptions.getMappingDefaults().getImplicitCatalogName() );
+		final Identifier defaultSchemaName = toIdentifier( buildingOptions.getMappingDefaults().getImplicitSchemaName() );
+
+		implicitNamespace = makeNamespace( new Namespace.Name( defaultCatalogName, defaultSchemaName )  );
 	}
 
 	private static Dialect determineDialect(MetadataBuildingOptions buildingOptions) {
@@ -70,8 +92,7 @@ public class Database {
 	}
 
 	private Namespace makeNamespace(Namespace.Name name) {
-		Namespace namespace;
-		namespace = new Namespace( this.getPhysicalNamingStrategy(), this.getJdbcEnvironment(), name );
+		final Namespace namespace = new Namespace( this.getPhysicalNamingStrategy(), this.getJdbcEnvironment(), name );
 		namespaceMap.put( name, namespace );
 		return namespace;
 	}

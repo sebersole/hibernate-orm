@@ -41,6 +41,6 @@ public class XMLContextTest {
 
 		JaxbEntityMappings mappings = xmlHelper.readOrmXmlMappings(
 				"org/hibernate/orm/test/annotations/reflection/orm.xml" );
-		context.addDocument( mappings );
+		context.addDocument( mappings, null );
 	}
 }
