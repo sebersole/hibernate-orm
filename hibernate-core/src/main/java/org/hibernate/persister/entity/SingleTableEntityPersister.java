@@ -101,7 +101,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 	private final String[] subclassClosure;
 
 	private final String[] subclassTableNameClosure;
-//	private final boolean[] subclassTableIsLazyClosure;
+	//	private final boolean[] subclassTableIsLazyClosure;
 	private final boolean[] isInverseSubclassTable;
 	private final boolean[] isNullableSubclassTable;
 	private final boolean[] subclassTableSequentialSelect;
@@ -146,8 +146,9 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 			final EntityDataAccess cacheAccessStrategy,
 			final NaturalIdDataAccess naturalIdRegionAccessStrategy,
 			final PersisterCreationContext creationContext) throws HibernateException {
-		this( persistentClass,cacheAccessStrategy,naturalIdRegionAccessStrategy,
-				(RuntimeModelCreationContext) creationContext );
+		this( persistentClass, cacheAccessStrategy, naturalIdRegionAccessStrategy,
+			  (RuntimeModelCreationContext) creationContext
+		);
 	}
 
 	public SingleTableEntityPersister(
@@ -172,7 +173,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		qualifiedTableNames[0] = rootTableName;
 
 		final StaticInsertBuilder rootTableInsertBuilder;
-		final Map<String,StaticInsertBuilder> staticInsertBuilderMap;
+		final Map<String, StaticInsertBuilder> staticInsertBuilderMap;
 		if ( persistentClass.useDynamicInsert() ) {
 			staticInsertBuilderMap = null;
 			rootTableInsertBuilder = null;
@@ -180,7 +181,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		else {
 			staticInsertBuilderMap = new HashMap<>();
 			rootTableInsertBuilder = new StaticInsertBuilder( rootTableName );
-			staticInsertBuilderMap.put( rootTableName, rootTableInsertBuilder );
+			staticInsertBuilderMap.put( table.getName(), rootTableInsertBuilder );
 		}
 
 		isInverseTable = new boolean[joinSpan];
@@ -223,8 +224,8 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 		List<Join> joinClosure = persistentClass.getJoinClosure();
 		boolean hasDuplicateTableName = false;
-		for ( int j = 1; j-1 < joinClosure.size(); j++ ) {
-			Join join = joinClosure.get(j-1);
+		for ( int j = 1; j - 1 < joinClosure.size(); j++ ) {
+			Join join = joinClosure.get( j - 1 );
 			qualifiedTableNames[j] = determineTableName( join.getTable() );
 			hasDuplicateTableName = hasDuplicateTableName
 					|| ArrayHelper.indexOf( qualifiedTableNames, j, qualifiedTableNames[j] ) != -1;
@@ -252,7 +253,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 			List<Column> columns = join.getKey().getColumns();
 			for ( int i = 0; i < columns.size(); i++ ) {
-				keyColumnNames[j][i] = columns.get(i).getQuotedName( dialect );
+				keyColumnNames[j][i] = columns.get( i ).getQuotedName( dialect );
 			}
 		}
 
@@ -294,17 +295,24 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 			isNullables.add( join.isOptional() );
 //			isLazies.add( lazyAvailable && join.isLazy() );
 
-			boolean isDeferred = join.isSequentialSelect() && !persistentClass.isClassOrSuperclassJoin( join ) ;
+			boolean isDeferred = join.isSequentialSelect() && !persistentClass.isClassOrSuperclassJoin( join );
 			isDeferreds.add( isDeferred );
 
 			String joinTableName = determineTableName( join.getTable() );
 			subclassTables.add( joinTableName );
+			StaticInsertBuilder staticInsertBuilder = staticInsertBuilderMap.get( join.getTable().getName() );
+			if ( staticInsertBuilder == null ) {
+				staticInsertBuilder = new StaticInsertBuilder( joinTableName );
+			}
+			staticInsertBuilderMap.put( join.getTable().getName(), staticInsertBuilder );
 
 			String[] keyCols = new String[join.getKey().getColumnSpan()];
 			List<Column> columns = join.getKey().getColumns();
 			for ( int i = 0; i < columns.size(); i++ ) {
-				Column col = columns.get(i);
-				keyCols[i] = col.getQuotedName(dialect);
+				Column col = columns.get( i );
+
+				keyCols[i] = col.getQuotedName( dialect );
+				staticInsertBuilder.addTargetColumn( keyCols[i] );
 			}
 			joinKeyColumns.add( keyCols );
 		}
@@ -326,7 +334,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 				throw new MappingException( "discriminator mapping required for single table polymorphic persistence" );
 			}
 			forceDiscriminator = persistentClass.isForceDiscriminator();
-			Selectable selectable = discriminator.getSelectables().get(0);
+			Selectable selectable = discriminator.getSelectables().get( 0 );
 			SqmFunctionRegistry functionRegistry = factory.getQueryEngine().getSqmFunctionRegistry();
 			discriminatorType = DiscriminatorHelper.getDiscriminatorType( persistentClass );
 			discriminatorValue = DiscriminatorHelper.getDiscriminatorValue( persistentClass );
@@ -378,7 +386,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		propertyTableNumbers = new int[getPropertySpan()];
 		List<Property> propertyClosure = persistentClass.getPropertyClosure();
 		for ( int k = 0; k < propertyClosure.size(); k++ ) {
-			propertyTableNumbers[k] = persistentClass.getJoinNumber( propertyClosure.get(k) );
+			propertyTableNumbers[k] = persistentClass.getJoinNumber( propertyClosure.get( k ) );
 		}
 
 		//TODO: code duplication with JoinedSubclassEntityPersister
@@ -393,6 +401,11 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		for ( Property property : persistentClass.getSubclassPropertyClosure() ) {
 			Integer join = persistentClass.getJoinNumber( property );
 			propertyJoinNumbers.add( join );
+			String qualifiedTableName = qualifiedTableNames[join];
+			StaticInsertBuilder staticInsertBuilder = staticInsertBuilderMap.get( qualifiedTableName );
+			property.getValue().getColumns().forEach( column -> {
+				staticInsertBuilder.addTargetColumn( column.getQuotedName( dialect ) );
+			} );
 
 			//propertyTableNumbersByName.put( prop.getName(), join );
 //			propertyTableNumbersByNameAndSubclassLocal.put(
@@ -436,7 +449,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 			// SUBCLASSES
 			List<Subclass> subclasses = persistentClass.getSubclasses();
 			for ( int k = 0; k < subclasses.size(); k++ ) {
-				Subclass subclass = subclasses.get(k);
+				Subclass subclass = subclasses.get( k );
 				subclassClosure[k] = subclass.getEntityName();
 				Object subclassDiscriminatorValue = DiscriminatorHelper.getDiscriminatorValue( subclass );
 				addSubclassByDiscriminatorValue(
@@ -466,29 +479,43 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 		postConstruct( creationContext.getMetadata() );
 
-		staticInsertBuilders = processStaticInsertBuilders( staticInsertBuilderMap );
+		staticInsertBuilders = processStaticInsertBuilders( dialect,persistentClass, staticInsertBuilderMap );
 	}
 
-	private StaticInsertBuilder[] processStaticInsertBuilders(Map<String, StaticInsertBuilder> staticInsertBuilderMap) {
+	private StaticInsertBuilder[] processStaticInsertBuilders(
+			Dialect dialect,
+			PersistentClass persistentClass,
+			Map<String, StaticInsertBuilder> staticInsertBuilderMap) {
 		final List<StaticInsertBuilder> builderList = new ArrayList<>( staticInsertBuilderMap.size() );
+		persistentClass.getSubclassPropertyClosure().forEach( property -> {
+			final String tableName = property.getValue().getTable().getName();
+			final StaticInsertBuilder staticInsertBuilder = staticInsertBuilderMap.get( tableName );
+			final List<Column> columns = property.getValue().getColumns();
+			columns.forEach( column -> {
+				staticInsertBuilder.addTargetColumn( column.getQuotedName(dialect) );
+			} );
 
+		});
 		staticInsertBuilderMap.forEach( (tableName, builder) -> {
 			if ( !builder.getTargetColumns().isEmpty() ) {
 				builderList.add( builder );
 			}
-		});
+		} );
 
 		return builderList.toArray( new StaticInsertBuilder[0] );
 	}
 
 	private static boolean isDiscriminatorInsertable(PersistentClass persistentClass) {
 		return !persistentClass.isDiscriminatorValueNull()
-			&& !persistentClass.isDiscriminatorValueNotNull()
-			&& persistentClass.isDiscriminatorInsertable()
-			&& !persistentClass.getDiscriminator().hasFormula();
+				&& !persistentClass.isDiscriminatorValueNotNull()
+				&& persistentClass.isDiscriminatorInsertable()
+				&& !persistentClass.getDiscriminator().hasFormula();
 	}
 
-	private static void addSubclassByDiscriminatorValue(Map<Object, String> subclassesByDiscriminatorValue, Object discriminatorValue, String entityName) {
+	private static void addSubclassByDiscriminatorValue(
+			Map<Object, String> subclassesByDiscriminatorValue,
+			Object discriminatorValue,
+			String entityName) {
 		String mappedEntityName = subclassesByDiscriminatorValue.put( discriminatorValue, entityName );
 		if ( mappedEntityName != null ) {
 			throw new MappingException(
@@ -799,7 +826,7 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		if ( hasSubclasses() ) {
 			final List<Expression> values = new ArrayList<>( fullDiscriminatorValues.length );
 			boolean hasNull = false, hasNonNull = false;
-			for ( Object discriminatorValue : fullDiscriminatorValues) {
+			for ( Object discriminatorValue : fullDiscriminatorValues ) {
 				if ( discriminatorValue == DiscriminatorHelper.NULL_DISCRIMINATOR ) {
 					hasNull = true;
 				}
@@ -901,7 +928,10 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 			consumer.consume(
 					tableName,
-					() -> columnConsumer -> columnConsumer.accept( tableName, constraintOrderedKeyColumnNames[tablePosition] )
+					() -> columnConsumer -> columnConsumer.accept(
+							tableName,
+							constraintOrderedKeyColumnNames[tablePosition]
+					)
 			);
 		}
 	}
