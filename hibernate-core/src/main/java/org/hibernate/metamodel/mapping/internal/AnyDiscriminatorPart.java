@@ -62,7 +62,6 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 	private final Long length;
 	private final Integer precision;
 	private final Integer scale;
-	private final boolean nullable;
 
 	private final MetaType metaType;
 
@@ -75,7 +74,6 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 			Long length,
 			Integer precision,
 			Integer scale,
-			boolean nullable,
 			MetaType metaType) {
 		this.navigableRole = partRole;
 		this.declaringType = declaringType;
@@ -85,7 +83,6 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 		this.length = length;
 		this.precision = precision;
 		this.scale = scale;
-		this.nullable = nullable;
 		this.metaType = metaType;
 	}
 
@@ -109,6 +106,11 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 
 	@Override
 	public boolean isFormula() {
+		return false;
+	}
+
+	@Override
+	public boolean isNullable() {
 		return false;
 	}
 

@@ -16,12 +16,12 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.IndexedConsumer;
 import org.hibernate.metamodel.mapping.BasicValuedModelPart;
 import org.hibernate.metamodel.mapping.CollectionPart;
-import org.hibernate.metamodel.mapping.SelectableConsumer;
-import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.metamodel.mapping.ConvertibleModelPart;
 import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.MappingType;
+import org.hibernate.metamodel.mapping.SelectableConsumer;
+import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.metamodel.model.convert.spi.BasicValueConverter;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.persister.collection.CollectionPersister;
@@ -93,6 +93,11 @@ public class BasicValuedCollectionPart
 	@Override
 	public boolean isFormula() {
 		return selectableMapping.isFormula();
+	}
+
+	@Override
+	public boolean isNullable() {
+		return selectableMapping.isNullable();
 	}
 
 	@Override

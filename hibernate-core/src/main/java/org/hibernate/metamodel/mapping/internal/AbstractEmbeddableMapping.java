@@ -281,18 +281,21 @@ public abstract class AbstractEmbeddableMapping implements EmbeddableMappingType
 				final Long length;
 				final Integer precision;
 				final Integer scale;
+				final boolean nullable;
 				if ( selectable instanceof Column ) {
 					Column column = (Column) selectable;
 					columnDefinition = column.getSqlType();
 					length = column.getLength();
 					precision = column.getPrecision();
 					scale = column.getScale();
+					nullable = column.isNullable();
 				}
 				else {
 					columnDefinition = null;
 					length = null;
 					precision = null;
 					scale = null;
+					nullable = true;
 				}
 
 				attributeMapping = MappingModelCreationHelper.buildBasicAttributeMapping(
@@ -311,6 +314,7 @@ public abstract class AbstractEmbeddableMapping implements EmbeddableMappingType
 						length,
 						precision,
 						scale,
+						nullable,
 						propertyAccess,
 						compositeType.getCascadeStyle( attributeIndex ),
 						creationProcess

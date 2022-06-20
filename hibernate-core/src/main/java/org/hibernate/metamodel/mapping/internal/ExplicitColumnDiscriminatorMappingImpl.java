@@ -131,6 +131,11 @@ public class ExplicitColumnDiscriminatorMappingImpl extends AbstractDiscriminato
 	}
 
 	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
+	@Override
 	public boolean isPhysical() {
 		return isPhysical;
 	}

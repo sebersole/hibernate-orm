@@ -80,6 +80,11 @@ public interface SelectableConsumer {
 			}
 
 			@Override
+			public boolean isNullable() {
+				return true;
+			}
+
+			@Override
 			public JdbcMapping getJdbcMapping() {
 				return null;
 			}

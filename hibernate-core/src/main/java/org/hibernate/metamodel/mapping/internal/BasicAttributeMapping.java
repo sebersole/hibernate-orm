@@ -62,6 +62,7 @@ public class BasicAttributeMapping
 	private final Integer scale;
 
 	private final JdbcMapping jdbcMapping;
+	private final boolean nullable;
 	private final BasicValueConverter<Object, ?> valueConverter;
 
 	private final JavaType domainTypeDescriptor;
@@ -82,6 +83,7 @@ public class BasicAttributeMapping
 			Long length,
 			Integer precision,
 			Integer scale,
+			boolean nullable,
 			BasicValueConverter valueConverter,
 			JdbcMapping jdbcMapping,
 			ManagedMappingType declaringType,
@@ -105,6 +107,8 @@ public class BasicAttributeMapping
 		this.length = length;
 		this.precision = precision;
 		this.scale = scale;
+		this.nullable = nullable;
+		//noinspection unchecked
 		this.valueConverter = valueConverter;
 		this.jdbcMapping = jdbcMapping;
 
@@ -138,7 +142,6 @@ public class BasicAttributeMapping
 		if ( original instanceof SingleAttributeIdentifierMapping ) {
 			final SingleAttributeIdentifierMapping mapping = (SingleAttributeIdentifierMapping) original;
 			attributeName = mapping.getAttributeName();
-			attributeMetadataAccess = null;
 		}
 		else if ( original instanceof SingularAttributeMapping ) {
 			final SingularAttributeMapping mapping = (SingularAttributeMapping) original;
@@ -165,6 +168,7 @@ public class BasicAttributeMapping
 				selectableMapping.getLength(),
 				selectableMapping.getPrecision(),
 				selectableMapping.getScale(),
+				selectableMapping.isNullable(),
 				valueConverter,
 				original.getJdbcMapping(),
 				declaringType,
@@ -196,6 +200,11 @@ public class BasicAttributeMapping
 	@Override
 	public boolean isFormula() {
 		return isFormula;
+	}
+
+	@Override
+	public boolean isNullable() {
+		return nullable;
 	}
 
 	@Override
@@ -269,7 +278,7 @@ public class BasicAttributeMapping
 	private SqlSelection resolveSqlSelection(
 			NavigablePath navigablePath,
 			TableGroup tableGroup,
-			boolean allowFkOptimization,
+			@SuppressWarnings("SameParameterValue") boolean allowFkOptimization,
 			FetchParent fetchParent,
 			DomainResultCreationState creationState) {
 		final SqlExpressionResolver expressionResolver = creationState.getSqlAstCreationState().getSqlExpressionResolver();

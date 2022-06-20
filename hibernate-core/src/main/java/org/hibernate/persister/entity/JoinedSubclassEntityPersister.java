@@ -29,6 +29,8 @@ import org.hibernate.internal.DynamicFilterAliasGenerator;
 import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.jdbc.Expectation;
+import org.hibernate.jdbc.Expectations;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Formula;
 import org.hibernate.mapping.Join;
@@ -51,14 +53,16 @@ import org.hibernate.metamodel.mapping.internal.MappingModelCreationProcess;
 import org.hibernate.metamodel.spi.MappingMetamodelImplementor;
 import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
 import org.hibernate.persister.spi.PersisterCreationContext;
-import org.hibernate.spi.NavigablePath;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
+import org.hibernate.spi.NavigablePath;
 import org.hibernate.sql.Insert;
 import org.hibernate.sql.ast.SqlAstJoinType;
 import org.hibernate.sql.ast.tree.from.NamedTableReference;
 import org.hibernate.sql.ast.tree.from.TableGroup;
 import org.hibernate.sql.ast.tree.from.TableReference;
 import org.hibernate.sql.ast.tree.from.TableReferenceJoin;
+import org.hibernate.sql.group.builder.MutationSqlGroupBuilder;
+import org.hibernate.sql.group.builder.TableInsertBuilder;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.entity.internal.EntityResultJoinedSubclassImpl;
@@ -402,26 +406,37 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 		updateResultCheckStyles = new ExecuteUpdateResultCheckStyle[tableSpan];
 		deleteResultCheckStyles = new ExecuteUpdateResultCheckStyle[tableSpan];
 
+		insertExpectations = new Expectation[tableSpan];
+		updateExpectations = new Expectation[tableSpan];
+		deleteExpectations = new Expectation[tableSpan];
+
 		PersistentClass pc = persistentClass;
 		int jk = coreTableSpan - 1;
 		while ( pc != null ) {
 			isNullableTable[jk] = false;
 			isInverseTable[jk] = false;
+
 			customSQLInsert[jk] = pc.getCustomSQLInsert();
 			insertCallable[jk] = customSQLInsert[jk] != null && pc.isCustomInsertCallable();
 			insertResultCheckStyles[jk] = pc.getCustomSQLInsertCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[jk], insertCallable[jk] )
 					: pc.getCustomSQLInsertCheckStyle();
+			insertExpectations[jk] = Expectations.appropriateExpectation( insertResultCheckStyles[jk] );
+
 			customSQLUpdate[jk] = pc.getCustomSQLUpdate();
 			updateCallable[jk] = customSQLUpdate[jk] != null && pc.isCustomUpdateCallable();
 			updateResultCheckStyles[jk] = pc.getCustomSQLUpdateCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[jk], updateCallable[jk] )
 					: pc.getCustomSQLUpdateCheckStyle();
+			updateExpectations[jk] = Expectations.appropriateExpectation( updateResultCheckStyles[jk] );
+
 			customSQLDelete[jk] = pc.getCustomSQLDelete();
 			deleteCallable[jk] = customSQLDelete[jk] != null && pc.isCustomDeleteCallable();
 			deleteResultCheckStyles[jk] = pc.getCustomSQLDeleteCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[jk], deleteCallable[jk] )
 					: pc.getCustomSQLDeleteCheckStyle();
+			deleteExpectations[jk] = Expectations.appropriateExpectation( deleteResultCheckStyles[jk] );
+
 			jk--;
 			pc = pc.getSuperclass();
 		}
@@ -440,16 +455,22 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 			insertResultCheckStyles[j] = join.getCustomSQLInsertCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[j], insertCallable[j] )
 					: join.getCustomSQLInsertCheckStyle();
+			insertExpectations[j] = Expectations.appropriateExpectation( insertResultCheckStyles[j] );
+
 			customSQLUpdate[j] = join.getCustomSQLUpdate();
 			updateCallable[j] = customSQLUpdate[j] != null && join.isCustomUpdateCallable();
 			updateResultCheckStyles[j] = join.getCustomSQLUpdateCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[j], updateCallable[j] )
 					: join.getCustomSQLUpdateCheckStyle();
+			updateExpectations[j] = Expectations.appropriateExpectation( updateResultCheckStyles[j] );
+
 			customSQLDelete[j] = join.getCustomSQLDelete();
 			deleteCallable[j] = customSQLDelete[j] != null && join.isCustomDeleteCallable();
 			deleteResultCheckStyles[j] = join.getCustomSQLDeleteCheckStyle() == null
 					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[j], deleteCallable[j] )
 					: join.getCustomSQLDeleteCheckStyle();
+			deleteExpectations[j] = Expectations.appropriateExpectation( deleteResultCheckStyles[j] );
+
 			j++;
 		}
 
@@ -725,6 +746,12 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 	}
 
 	@Override
+	public boolean hasSkippableTables() {
+		// todo (6.x) : cache this?
+		return hasAnySkippableTables( isNullableTable, isInverseTable );
+	}
+
+	@Override
 	public boolean isInverseTable(int j) {
 		return isInverseTable[j];
 	}
@@ -810,6 +837,13 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 	protected void addDiscriminatorToInsert(Insert insert) {
 		if ( explicitDiscriminatorColumnName != null ) {
 			insert.addColumn( explicitDiscriminatorColumnName, getDiscriminatorSQLValue() );
+		}
+	}
+
+	@Override
+	protected void addDiscriminatorToInsertGroup(MutationSqlGroupBuilder<TableInsertBuilder> insertGroupBuilder) {
+		if ( explicitDiscriminatorColumnName != null ) {
+			insertGroupBuilder.getTableDetailsBuilder( getRootTableName() ).addValuesColumn( explicitDiscriminatorColumnName, getDiscriminatorSQLValue() );
 		}
 	}
 

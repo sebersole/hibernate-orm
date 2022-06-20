@@ -76,6 +76,13 @@ import org.hibernate.engine.internal.StatefulPersistenceContext;
 import org.hibernate.engine.internal.Versioning;
 import org.hibernate.engine.jdbc.batch.internal.BasicBatchKey;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
+import org.hibernate.engine.jdbc.group.PreparedStatementDetails;
+import org.hibernate.engine.jdbc.group.PreparedStatementGroup;
+import org.hibernate.engine.jdbc.mutation.MutationExecutor;
+import org.hibernate.engine.jdbc.mutation.MutationTarget;
+import org.hibernate.engine.jdbc.mutation.ParameterBinder;
+import org.hibernate.engine.jdbc.mutation.internal.Helper;
+import org.hibernate.engine.jdbc.mutation.spi.MutationExecutorService;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.spi.CachedNaturalIdValueSource;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -109,6 +116,7 @@ import org.hibernate.internal.CoreMessageLogger;
 import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.internal.FilterHelper;
 import org.hibernate.internal.util.LazyValue;
+import org.hibernate.internal.util.MutableInteger;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
@@ -174,6 +182,7 @@ import org.hibernate.metamodel.mapping.SelectableConsumer;
 import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;
 import org.hibernate.metamodel.mapping.VirtualModelPart;
+import org.hibernate.metamodel.mapping.internal.BasicAttributeMapping;
 import org.hibernate.metamodel.mapping.internal.BasicEntityIdentifierMappingImpl;
 import org.hibernate.metamodel.mapping.internal.CompoundNaturalIdMapping;
 import org.hibernate.metamodel.mapping.internal.DiscriminatedAssociationAttributeMapping;
@@ -198,16 +207,16 @@ import org.hibernate.persister.spi.PersisterCreationContext;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.property.access.spi.Setter;
-import org.hibernate.query.sqm.ComparisonOperator;
-import org.hibernate.spi.NavigablePath;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.named.NamedQueryMemento;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sql.internal.SQLQueryParser;
+import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.mutation.internal.SqmMutationStrategyHelper;
 import org.hibernate.query.sqm.mutation.spi.SqmMultiTableInsertStrategy;
 import org.hibernate.query.sqm.mutation.spi.SqmMultiTableMutationStrategy;
+import org.hibernate.spi.NavigablePath;
 import org.hibernate.sql.Alias;
 import org.hibernate.sql.Delete;
 import org.hibernate.sql.Insert;
@@ -240,6 +249,22 @@ import org.hibernate.sql.ast.tree.predicate.Predicate;
 import org.hibernate.sql.ast.tree.select.QuerySpec;
 import org.hibernate.sql.ast.tree.select.SelectClause;
 import org.hibernate.sql.ast.tree.select.SelectStatement;
+import org.hibernate.sql.group.MutationSqlGroup;
+import org.hibernate.sql.group.MutationType;
+import org.hibernate.sql.group.TableDelete;
+import org.hibernate.sql.group.TableInsert;
+import org.hibernate.sql.group.TableMutation;
+import org.hibernate.sql.group.TableUpdate;
+import org.hibernate.sql.group.builder.CustomTableDeleteBuilder;
+import org.hibernate.sql.group.builder.CustomTableInsertBuilder;
+import org.hibernate.sql.group.builder.CustomTableUpdateBuilder;
+import org.hibernate.sql.group.builder.MutationSqlGroupBuilder;
+import org.hibernate.sql.group.builder.StandardTableDeleteBuilder;
+import org.hibernate.sql.group.builder.StandardTableInsertBuilder;
+import org.hibernate.sql.group.builder.StandardTableUpdateBuilder;
+import org.hibernate.sql.group.builder.TableDeleteBuilder;
+import org.hibernate.sql.group.builder.TableInsertBuilder;
+import org.hibernate.sql.group.builder.TableUpdateBuilder;
 import org.hibernate.sql.results.graph.DomainResult;
 import org.hibernate.sql.results.graph.DomainResultCreationState;
 import org.hibernate.sql.results.graph.Fetch;
@@ -273,7 +298,7 @@ import org.hibernate.type.descriptor.java.MutabilityPlan;
 public abstract class AbstractEntityPersister
 		implements OuterJoinLoadable, Queryable, ClassMetadata, UniqueKeyLoadable,
 				SQLLoadable, LazyPropertyInitializer, PostInsertIdentityPersister, Lockable,
-				org.hibernate.persister.entity.Queryable, InFlightEntityMappingType {
+				org.hibernate.persister.entity.Queryable, InFlightEntityMappingType, MutationTarget {
 
 	private static final CoreMessageLogger LOG = CoreLogging.messageLogger( AbstractEntityPersister.class );
 
@@ -384,6 +409,10 @@ public abstract class AbstractEntityPersister
 	private String sqlUpdateByRowIdString;
 	private String sqlLazyUpdateByRowIdString;
 
+	private MutationSqlGroup<TableInsert> staticSqlInsertGroup;
+	private MutationSqlGroup<TableUpdate> staticSqlUpdateGroup;
+	private MutationSqlGroup<TableDelete> staticSqlDeleteGroup;
+
 	private String[] sqlDeleteStrings;
 	private String[] sqlInsertStrings;
 	private String[] sqlUpdateStrings;
@@ -402,6 +431,10 @@ public abstract class AbstractEntityPersister
 	protected ExecuteUpdateResultCheckStyle[] insertResultCheckStyles;
 	protected ExecuteUpdateResultCheckStyle[] updateResultCheckStyles;
 	protected ExecuteUpdateResultCheckStyle[] deleteResultCheckStyles;
+
+	protected Expectation[] insertExpectations;
+	protected Expectation[] updateExpectations;
+	protected Expectation[] deleteExpectations;
 
 	private InsertGeneratedIdentifierDelegate identityDelegate;
 
@@ -423,6 +456,8 @@ public abstract class AbstractEntityPersister
 	private final boolean useReferenceCacheEntries;
 
 	protected void addDiscriminatorToInsert(Insert insert) {
+	}
+	protected void addDiscriminatorToInsertGroup(MutationSqlGroupBuilder<TableInsertBuilder> insertGroupBuilder) {
 	}
 
 	@Override
@@ -460,6 +495,19 @@ public abstract class AbstractEntityPersister
 
 	public abstract boolean hasDuplicateTables();
 
+	/**
+	 * @deprecated Only ever used from places where we really want to use<ul>
+	 *     <li>{@link SelectStatement} (select generator)</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.insert.InsertStatement}</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.update.UpdateStatement}</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.delete.DeleteStatement}</li>
+	 * </ul>
+	 *
+	 * todo (6.2) - would be really, really, really nice to drop this for 6.2.
+	 * 		the alternative is to keep an array of tables names that is never
+	 * 		used from our code taking up completely unnecessary memory
+	 */
+	@Deprecated( since = "6.2" )
 	public abstract String getTableName(int j);
 
 	public abstract String[] getKeyColumns(int j);
@@ -3355,10 +3403,107 @@ public abstract class AbstractEntityPersister
 						.getBatchStatement( sql, callable );
 			}
 			else {
+				final String tableName = getTableName( j );
+				final TableInsert tableMutation = staticSqlInsertGroup.getTableMutation( tableName );
 				insert = session
 						.getJdbcCoordinator()
 						.getStatementPreparer()
-						.prepareStatement( sql, callable );
+						.prepareStatement( tableMutation.getSqlString(), callable );
+
+				final JdbcValueConsumer paramBinder = (jdbcValue, mapping) -> {
+					final Integer jdbcParamIndex = tableMutation
+							.getValuesColumnParamIndexMap()
+							.get( mapping.getSelectionExpression() );
+					if ( jdbcParamIndex == null ) {
+						return;
+					}
+					try {
+						mapping.getJdbcMapping().getJdbcValueBinder().bind(
+								insert,
+								jdbcValue,
+								jdbcParamIndex + 1,
+								session
+						);
+					}
+					catch (SQLException e) {
+						throw getFactory().getJdbcServices().getSqlExceptionHelper().convert(
+								e,
+								"could not bind JDBC insert parameter: " + MessageHelper.infoString( this ),
+								sql
+						);
+					}
+				};
+
+				try {
+					expectation.prepare( insert );
+					for ( int i = 0; i < attributeMappings.size(); i++ ) {
+						final AttributeMapping attributeMapping = attributeMappings.get( i );
+						if ( attributeMapping instanceof PluralAttributeMapping ) {
+							continue;
+						}
+//						final boolean insertable = attributeMapping.getAttributeMetadataAccess()
+//								.resolveAttributeMetadata( this )
+//								.isInsertable();
+//						if ( !insertable ) {
+//							continue;
+//						}
+						final Object attributeValue = fields[i];
+						attributeMapping.breakDownJdbcValues( attributeValue, paramBinder, session );
+					}
+
+					// for the root table, bind the identifier.
+					// for non-root tables, bind the fk
+					final String[] keyColumns = getKeyColumns( j );
+					final MutableInteger keyColumnPositionRef = new MutableInteger();
+					identifierMapping.breakDownJdbcValues(
+							id,
+							(jdbcValue, mapping) -> {
+								final int keyColumnPosition = keyColumnPositionRef.getAndIncrement();
+								final Integer jdbcParamIndex = tableMutation
+										.getValuesKeyColumnParamIndexMap()
+										.get( keyColumns[keyColumnPosition] );
+
+								if ( jdbcParamIndex == null ) {
+									return;
+								}
+								try {
+									mapping.getJdbcMapping().getJdbcValueBinder().bind(
+											insert,
+											jdbcValue,
+											jdbcParamIndex + 1,
+											session
+									);
+								}
+								catch (SQLException e) {
+									throw getFactory().getJdbcServices().getSqlExceptionHelper().convert(
+											e,
+											"could not bind JDBC insert parameter: " + MessageHelper.infoString( this ),
+											sql
+									);
+								}
+							},
+							session
+					);
+
+					expectation.verifyOutcome(
+							session.getJdbcCoordinator()
+									.getResultSetReturn()
+									.executeUpdate( insert ), insert, -1, sql
+					);
+				}
+				catch (SQLException e) {
+					throw getFactory().getJdbcServices().getSqlExceptionHelper().convert(
+							e,
+							"could not insert: " + MessageHelper.infoString( this ),
+							sql
+					);
+				}
+				finally {
+					session.getJdbcCoordinator().getLogicalConnection().getResourceRegistry().release( insert );
+					session.getJdbcCoordinator().afterStatementExecution();
+				}
+
+				return;
 			}
 
 			try {
@@ -3892,94 +4037,174 @@ public abstract class AbstractEntityPersister
 	}
 
 	@Override
+	public InsertGeneratedIdentifierDelegate getIdentityInsertStatementExecutor() {
+		return identityDelegate;
+	}
+
+	@Override
 	public void insert(Object id, Object[] fields, Object object, SharedSessionContractImplementor session) {
 		// apply any pre-insert in-memory value generation
 		preInsertInMemoryValueGeneration( fields, object, session );
 
 		final int span = getTableSpan();
 		if ( entityMetamodel.isDynamicInsert() ) {
-			// For the case of dynamic-insert="true", we need to generate the INSERT SQL
-			boolean[] notNull = getPropertiesToInsert( fields );
-			if ( hasDuplicateTables() ) {
-				final String[] insertedTables = new String[span];
-				for ( int j = 0; j < span; j++ ) {
-					if ( isInverseTable( j ) ) {
-						continue;
-					}
-
-					//note: it is conceptually possible that a UserType could map null to
-					//	  a non-null value, so the following is arguable:
-					if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
-						continue;
-					}
-					final String tableName = getTableName( j );
-					insertedTables[j] = tableName;
-					if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
-						update(
-								id,
-								fields,
-								null,
-								null,
-								notNull,
-								j,
-								null,
-								object,
-								generateUpdateString( notNull, j, false ),
-								session
-						);
-					}
-					else {
-						insert( id, fields, notNull, j, generateInsertString( notNull, j ), object, session );
-					}
-				}
-			}
-			else {
-				for ( int j = 0; j < span; j++ ) {
-					insert( id, fields, notNull, j, generateInsertString( notNull, j ), object, session );
-				}
-			}
+			doDynamicInserts( id, fields, object, session, span );
 		}
 		else {
-			// For the case of dynamic-insert="false", use the static SQL
-			if ( hasDuplicateTables() ) {
-				final String[] insertedTables = new String[span];
-				for ( int j = 0; j < span; j++ ) {
-					if ( isInverseTable( j ) ) {
-						continue;
-					}
+			doStaticInserts( id, fields, object, session );
+		}
+	}
 
-					//note: it is conceptually possible that a UserType could map null to
-					//	  a non-null value, so the following is arguable:
-					if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
-						continue;
-					}
-					final String tableName = getTableName( j );
-					insertedTables[j] = tableName;
-					if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
-						update(
-								id,
-								fields,
-								null,
-								null,
-								getPropertyInsertability(),
-								j,
-								null,
-								object,
-								getSQLUpdateStrings()[j],
+	/**
+	 * Perform inserts using the static (non-dynamic) SQL generated on
+	 * initialization of the persister, possibly returning a post-insert
+	 * generated key
+	 */
+	private Object doStaticInserts(Object id, Object[] values, Object object, SharedSessionContractImplementor session) {
+		// todo (6.2) : would be better to check for "single table" execution and circumvent the Map
+
+		final Set<TableMutation> tablesToSkip = Helper.determineTablesToSkip(
+				MutationType.INSERT,
+				this,
+				staticSqlInsertGroup,
+				(tableInsert) -> ( tableInsert.isOptional() && areAllNull( values, tableInsert ) )
+						|| isInverseTable( tableInsert.getPrimaryTableIndex() )
+		);
+
+		final MutationExecutorService mutationExecutorService = session.getSessionFactory()
+				.getServiceRegistry()
+				.getService( MutationExecutorService.class );
+		final MutationExecutor mutationExecutor = mutationExecutorService.createExecutor(
+				MutationType.INSERT,
+				this,
+				this::resolvedInsertBatchKey,
+				() -> staticSqlInsertGroup,
+				session
+		);
+
+		preInsertInMemoryValueGeneration( values, object, session );
+		dehydrateForInsert( mutationExecutor, id, values, staticSqlInsertGroup, getPropertyInsertability(), tablesToSkip, session );
+
+		mutationExecutor.execute( session );
+
+		// for now...
+		return null;
+	}
+
+	private void dehydrateForInsert(
+			MutationExecutor mutationExecutor,
+			Object id,
+			Object[] values,
+			MutationSqlGroup<TableInsert> sqlGroup,
+			boolean[] propertyInclusions,
+			Set<TableMutation> tablesToSkip,
+			SharedSessionContractImplementor session) {
+		final PreparedStatementGroup statementGroup = mutationExecutor.getStatementGroup();
+		final ParameterBinder parameterBinder = mutationExecutor.getParameterBinder();
+
+		final MutableInteger columnIndexRef = new MutableInteger();
+
+		for ( int attributeIndex = 0; attributeIndex < attributeMappings.size(); attributeIndex++ ) {
+			if ( !propertyInclusions[attributeIndex] ) {
+				continue;
+			}
+
+			// todo (write-path) : convert to keep `insertable` and `updateable` on `SelectionMapping`
+			final boolean[] columnInsertability = propertyColumnInsertable[ attributeIndex ];
+			columnIndexRef.set( 0 );
+
+			final AttributeMapping attributeMapping = attributeMappings.get( attributeIndex );
+			if ( attributeMapping instanceof PluralAttributeMapping ) {
+				continue;
+			}
+
+			attributeMapping.breakDownJdbcValues(
+					values[ attributeIndex ],
+					(jdbcValue, selectableMapping) -> {
+						final int columnIndex = columnIndexRef.getAndIncrement();
+						if ( !columnInsertability[columnIndex] ) {
+							return;
+						}
+
+						// unfortunately we cannot use `SelectableMapping#getContainingTableExpression()` here
+						// as that blows up for attributes declared on super-type for union-subclass mappings
+						final String physicalTableName = getAttributeMutationTableName( attributeMapping.getStateArrayPosition() );
+						final TableInsert tableInsert = sqlGroup.getTableMutation( physicalTableName );
+						if ( tablesToSkip.contains( tableInsert ) ) {
+							return;
+						}
+
+						final PreparedStatementDetails batchStatement = statementGroup.getPreparedStatementDetails( tableInsert.getTableName() );
+						if ( batchStatement == null ) {
+							return;
+						}
+
+						if ( LOG.isTraceEnabled() ) {
+							LOG.tracef( "Inserting entity : `%s`", MessageHelper.infoString( this, id, getFactory() ) );
+							if ( tableInsert.getPrimaryTableIndex() == 0 && isVersioned() ) {
+								LOG.tracef( "Version : `%s`", Versioning.getVersion( values, this ) );
+							}
+						}
+
+						final Integer jdbcParamIndex = tableInsert
+								.getValuesColumnParamIndexMap()
+								.get( selectableMapping.getSelectionExpression() );
+						if ( jdbcParamIndex == null ) {
+							return;
+						}
+
+						//noinspection unchecked
+						parameterBinder.bindParameter(
+								jdbcValue,
+								selectableMapping.getJdbcMapping().getJdbcValueBinder(),
+								batchStatement.getBaseOffset() + jdbcParamIndex + 1,
+								tableInsert.getTableName(),
 								session
 						);
-					}
-					else {
-						insert( id, fields, getPropertyInsertability(), j, getSQLInsertStrings()[j], object, session );
-					}
-				}
-			}
-			else {
-				for ( int j = 0; j < span; j++ ) {
-					insert( id, fields, getPropertyInsertability(), j, getSQLInsertStrings()[j], object, session );
-				}
-			}
+					},
+					session
+			);
 		}
+
+		sqlGroup.forEachTableMutation( (position, tableInsert) -> {
+			if ( tablesToSkip.contains( tableInsert ) ) {
+				return;
+			}
+
+			final PreparedStatementDetails batchStatement = statementGroup.getPreparedStatementDetails( tableInsert.getTableName() );
+			if ( batchStatement == null ) {
+				// table has been skipped
+				return;
+			}
+
+			final String[] keyColumns = getKeyColumns( tableInsert.getPrimaryTableIndex() );
+			final MutableInteger keyColumnPositionRef = new MutableInteger();
+
+			identifierMapping.breakDownJdbcValues(
+					id,
+					(jdbcValue, selectableMapping) -> {
+						final int keyColumnPosition = keyColumnPositionRef.getAndIncrement();
+						final Integer jdbcParamPosition = tableInsert
+								.getValuesKeyColumnParamIndexMap()
+								.get( keyColumns[keyColumnPosition] );
+						assert jdbcParamPosition != null;
+
+						//noinspection unchecked
+						parameterBinder.bindParameter(
+								jdbcValue,
+								selectableMapping.getJdbcMapping().getJdbcValueBinder(),
+								batchStatement.getBaseOffset() + jdbcParamPosition + 1,
+								tableInsert.getTableName(),
+								session
+						);
+					},
+					session
+			);
+		} );
+	}
+
+	protected String physicalTableNameForMutation(SelectableMapping selectableMapping) {
+		return selectableMapping.getContainingTableExpression();
 	}
 
 	protected void preInsertInMemoryValueGeneration(Object[] fields, Object object, SharedSessionContractImplementor session) {
@@ -3992,6 +4217,124 @@ public abstract class AbstractEntityPersister
 				}
 			}
 		}
+	}
+
+	private Object doDynamicInserts(Object id, Object[] values, Object object, SharedSessionContractImplementor session, int span) {
+		final boolean[] insertability = getPropertiesToInsert( values );
+		final MutationSqlGroup<TableInsert> insertGroup = generateDynamicInsertSqlGroup( insertability );
+
+		final MutationExecutorService mutationExecutorService = session
+				.getFactory()
+				.getServiceRegistry()
+				.getService( MutationExecutorService.class );
+		final MutationExecutor mutationExecutor = mutationExecutorService.createExecutor(
+				MutationType.INSERT,
+				this,
+				this::resolvedInsertBatchKey,
+				() -> insertGroup,
+				session
+		);
+
+		final Set<TableMutation> tablesToSkip = Helper.determineTablesToSkip(
+				MutationType.INSERT,
+				this,
+				insertGroup,
+				(tableInsert) -> ( tableInsert.isOptional() && areAllNull( values, tableInsert ) )
+						|| isInverseTable( tableInsert.getPrimaryTableIndex() )
+		);
+
+		preInsertInMemoryValueGeneration( values, object, session );
+		dehydrateForInsert( mutationExecutor, id, values, insertGroup, insertability, tablesToSkip, session );
+
+		mutationExecutor.execute( session );
+
+		// for now
+		return null;
+	}
+
+	private MutationSqlGroup<TableInsert> generateDynamicInsertSqlGroup(boolean[] insertable) {
+		assert entityMetamodel.isDynamicInsert();
+
+		final MutationSqlGroupBuilder<TableInsertBuilder> insertGroupBuilder = new MutationSqlGroupBuilder<>( MutationType.INSERT, this );
+
+		final int joinSpan = getTableSpan();
+		for ( int tableIndex = 0; tableIndex < joinSpan; tableIndex++ ) {
+			final String tableName = getTableName( tableIndex );
+			final String customInsertSql = customSQLInsert[ tableIndex ];
+
+			final TableInsertBuilder tableInsertBuilder;
+			if ( customInsertSql == null ) {
+				final TableInsertBuilder existingInsertBuilder = insertGroupBuilder.findTableDetailsBuilder( tableName );
+				if ( existingInsertBuilder != null ) {
+					existingInsertBuilder.addTableIndex( tableIndex );
+				}
+				else {
+					tableInsertBuilder = new StandardTableInsertBuilder(
+							this,
+							tableIndex == 0 ? identityDelegate : null,
+							tableName,
+							isNullableTable( tableIndex ),
+							tableIndex,
+							insertExpectations[ tableIndex ],
+							factory
+					);
+					insertGroupBuilder.addTableDetailsBuilder( tableInsertBuilder );
+				}
+			}
+			else {
+				tableInsertBuilder = new CustomTableInsertBuilder(
+						this,
+						tableName,
+						isNullableTable( tableIndex ),
+						tableIndex,
+						substituteBrackets( customInsertSql ),
+						isInsertCallable( tableIndex ),
+						insertExpectations[ tableIndex ]
+				);
+				insertGroupBuilder.addTableDetailsBuilder( tableInsertBuilder );
+			}
+		}
+
+		applyTableInsertDetails( insertGroupBuilder, insertable );
+
+		return (MutationSqlGroup) insertGroupBuilder.buildGroup();
+	}
+
+	private BasicBatchKey resolvedInsertBatchKey() {
+		if ( insertBatchKey == null ) {
+			insertBatchKey = new BasicBatchKey(
+					getEntityName() + "#INSERT",
+					insertExpectations[0]
+			);
+		}
+		return insertBatchKey;
+	}
+
+	@Override
+	public int getNumberOfTables() {
+		return getTableSpan();
+	}
+
+	@Override
+	public boolean hasSkippableTables() {
+		return false;
+	}
+
+	protected boolean hasAnySkippableTables(boolean[] optionalTables, boolean[] inverseTables) {
+		// todo (6.x) : cache this?
+		for ( int i = 0; i < optionalTables.length; i++ ) {
+			if ( optionalTables[i] ) {
+				return true;
+			}
+		}
+
+		for ( int i = 0; i < inverseTables.length; i++ ) {
+			if ( inverseTables[i] ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -4195,17 +4538,55 @@ public abstract class AbstractEntityPersister
 	 */
 	protected void postConstruct(Metadata mapping) throws MappingException {
 		initPropertyPaths( mapping );
-
-		//doLateInit();
 	}
 
 	private void doLateInit() {
-		//insert/update/delete SQL
+		if ( isIdentifierAssignedByInsert() ) {
+			final PostInsertIdentifierGenerator idGenerator = (PostInsertIdentifierGenerator) getIdentifierGenerator();
+			identityDelegate = idGenerator.getInsertGeneratedIdentifierDelegate(
+					this,
+					getFactory().getJdbcServices().getDialect(),
+					useGetGeneratedKeys()
+			);
+			sqlIdentityInsertString = customSQLInsert[0] == null
+					? generateIdentityInsertString( getPropertyInsertability() )
+					: substituteBrackets( customSQLInsert[0] );
+		}
+		else {
+			sqlIdentityInsertString = null;
+		}
+
+		if ( entityMetamodel.isDynamicInsert() ) {
+			// skip generating the static inserts if the entity is defined with
+			// dynamic-insert - we will create the inserts every time
+			staticSqlInsertGroup = null;
+		}
+		else {
+			staticSqlInsertGroup = generateStaticInsertSqlGroup();
+		}
+
+		if ( entityMetamodel.isDynamicUpdate() ) {
+			// the mapping for the entity specified dynamic-update - skip generating
+			// the static updates as we will create them every time
+			staticSqlUpdateGroup = null;
+		}
+		else if ( isAllOrDirtyOptLocking() ) {
+			// similar for ad-hoc optimistic locking - skip generating
+			// the static updates as we will create them every time
+			staticSqlUpdateGroup = null;
+		}
+		else {
+			staticSqlUpdateGroup = generateStaticUpdateSqlGroup();
+		}
+
+		staticSqlDeleteGroup = generateStaticDeleteSqlGroup();
+
 		final int joinSpan = getTableSpan();
 		sqlDeleteStrings = new String[joinSpan];
 		sqlInsertStrings = new String[joinSpan];
 		sqlUpdateStrings = new String[joinSpan];
 		sqlLazyUpdateStrings = new String[joinSpan];
+
 
 		sqlUpdateByRowIdString = rowIdName == null ?
 				null :
@@ -4237,22 +4618,363 @@ public abstract class AbstractEntityPersister
 		//select SQL
 		sqlLazySelectStringsByFetchGroup = generateLazySelectStringsByFetchGroup();
 		sqlVersionSelectString = generateSelectVersionString();
-		if ( isIdentifierAssignedByInsert() ) {
-			identityDelegate = ( (PostInsertIdentifierGenerator) getIdentifierGenerator() )
-					.getInsertGeneratedIdentifierDelegate(
-							this,
-							getFactory().getJdbcServices().getDialect(),
-							useGetGeneratedKeys()
-					);
-			sqlIdentityInsertString = customSQLInsert[0] == null
-					? generateIdentityInsertString( getPropertyInsertability() )
-					: substituteBrackets( customSQLInsert[0] );
-		}
-		else {
-			sqlIdentityInsertString = null;
-		}
 
 		logStaticSQL();
+	}
+
+	private MutationSqlGroup<TableDelete> generateStaticDeleteSqlGroup() {
+		final MutationSqlGroupBuilder<TableDeleteBuilder> deleteGroupBuilder = new MutationSqlGroupBuilder<>( MutationType.DELETE, this );
+
+		final int joinSpan = getTableSpan();
+		for ( int tableIndex = 0; tableIndex < joinSpan; tableIndex++ ) {
+			final String tableName = getTableName( tableIndex );
+			final String customDeleteSql = customSQLDelete[ tableIndex ];
+
+			final TableDeleteBuilder tableDeleteBuilder;
+			if ( customDeleteSql == null ) {
+				final TableDeleteBuilder existingUpdateBuilder = deleteGroupBuilder.findTableDetailsBuilder( tableName );
+				if ( existingUpdateBuilder == null ) {
+					tableDeleteBuilder = new StandardTableDeleteBuilder(
+							this,
+							tableName,
+							isNullableTable( tableIndex ),
+							tableIndex,
+							insertExpectations[tableIndex],
+							factory
+					);
+					deleteGroupBuilder.addTableDetailsBuilder( tableDeleteBuilder );
+				}
+			}
+			else {
+				tableDeleteBuilder = new CustomTableDeleteBuilder(
+						this,
+						tableName,
+						isNullableTable( tableIndex ),
+						tableIndex,
+						substituteBrackets( customSQLDelete[tableIndex]),
+						isDeleteCallable( tableIndex ),
+						insertExpectations[tableIndex]
+				);
+				deleteGroupBuilder.addTableDetailsBuilder( tableDeleteBuilder );
+			}
+		}
+
+		deleteGroupBuilder.forEachTableMutationBuilder( this::applyTableDeleteDetails );
+
+		//noinspection unchecked
+		return (MutationSqlGroup) deleteGroupBuilder.buildGroup();
+	}
+
+	private void applyTableDeleteDetails(TableDeleteBuilder tableDeleteBuilder) {
+		identifierMapping.forEachSelectable( (index, selectable) -> {
+			tableDeleteBuilder.addPrimaryKeyColumn( selectable.getSelectionExpression() );
+		} );
+		if ( tableDeleteBuilder.getPrimaryTableIndex() == 0 ) {
+			tableDeleteBuilder.setVersionColumn( getVersionColumnName() );
+		}
+
+		// todo (6.2) : apply where + where-fragments
+	}
+
+	private MutationSqlGroup<TableUpdate> generateStaticUpdateSqlGroup() {
+		assert !entityMetamodel.isDynamicUpdate();
+
+		final MutationSqlGroupBuilder<TableUpdateBuilder> updateGroupBuilder = new MutationSqlGroupBuilder<>( MutationType.UPDATE, this );
+
+		final int joinSpan = getTableSpan();
+		for ( int tableIndex = 0; tableIndex < joinSpan; tableIndex++ ) {
+			final String tableName = getTableName( tableIndex );
+			final String customSql = customSQLInsert[ tableIndex ];
+
+			final TableUpdateBuilder tableUpdateBuilder;
+
+			if ( customSql == null ) {
+				final TableUpdateBuilder existingUpdateBuilder = updateGroupBuilder.findTableDetailsBuilder( tableName );
+				if ( existingUpdateBuilder != null ) {
+					tableUpdateBuilder = existingUpdateBuilder;
+				}
+				else {
+					tableUpdateBuilder = new StandardTableUpdateBuilder(
+							this,
+							tableName,
+							isNullableTable( tableIndex ),
+							tableIndex,
+							updateExpectations[tableIndex],
+							factory
+					);
+				}
+			}
+			else {
+				tableUpdateBuilder = new CustomTableUpdateBuilder(
+						this,
+						tableName,
+						isNullableTable( tableIndex ),
+						tableIndex,
+						substituteBrackets( customSql ),
+						isUpdateCallable( tableIndex ),
+						updateExpectations[tableIndex]
+				);
+				updateGroupBuilder.addTableDetailsBuilder( tableUpdateBuilder );
+			}
+
+			applyTableUpdateDetails( tableName, tableUpdateBuilder, null, getPropertyUpdateability() );
+		}
+
+		return (MutationSqlGroup) updateGroupBuilder.buildGroup();
+	}
+
+	private void applyTableUpdateDetails(
+			String tableName,
+			TableUpdateBuilder tableUpdateBuilder,
+			Object[] oldValues,
+			boolean[] attributeInclusions) {
+		final Dialect dialect = factory.getJdbcServices().getDialect();
+
+		for ( int index = 0; index < attributeMappings.size(); index++ ) {
+			final AttributeMapping attributeMapping = attributeMappings.get( index );
+			if ( !attributeInclusions[index] ) {
+				continue;
+			}
+
+			final ValueGeneration valueGeneration = attributeMapping.getValueGeneration();
+			if ( valueGeneration.getGenerationTiming().includesInsert()
+					&& valueGeneration.getValueGenerator() == null
+					&& valueGeneration.referenceColumnInSql() ) {
+				// value-generation is only valid for basic attributes
+				final BasicAttributeMapping basicAttributeMapping = (BasicAttributeMapping) attributeMapping;
+				tableUpdateBuilder.addValuesColumn(
+						basicAttributeMapping.getSelectionExpression(),
+						valueGeneration.getDatabaseGeneratedReferencedColumnValue()
+				);
+			}
+			else {
+				// the attribute value is not generated - normal handling
+				attributeMapping.forEachSelectable( (selectionIndex, selectableMapping) -> {
+					if ( selectableMapping.isFormula() ) {
+						// no physical column
+						return;
+					}
+					if ( !selectableMapping.getContainingTableExpression().equals( tableName ) ) {
+						// different table than we are currently processing
+						return;
+					}
+
+					if ( selectableMapping.getJdbcMapping().getJdbcType().isLob() ) {
+						// we need to handle lobs specially for certain databases (ok, for Oracle)
+						if ( dialect.forceLobAsLastValue() ) {
+							tableUpdateBuilder.addValuesLobColumn(
+									selectableMapping.getSelectionExpression(),
+									selectableMapping.getCustomWriteExpression()
+							);
+						}
+						else {
+							tableUpdateBuilder.addValuesColumn(
+									selectableMapping.getSelectionExpression(),
+									selectableMapping.getCustomWriteExpression()
+							);
+						}
+					}
+					else {
+						tableUpdateBuilder.addValuesColumn(
+								selectableMapping.getSelectionExpression(),
+								selectableMapping.getCustomWriteExpression()
+						);
+					}
+				} );
+			}
+		}
+
+		// todo (6.2) : what dictates this?
+		boolean useRowId = false;
+
+		// select the correct row by either pk or row id
+		if ( useRowId ) {
+			tableUpdateBuilder.addPrimaryKeyColumn( rowIdName ); //TODO: eventually, rowIdName[j]
+		}
+		else {
+			final String[] keyColumns = getKeyColumns( tableUpdateBuilder.getPrimaryTableIndex() );
+			for ( int i = 0; i < keyColumns.length; i++ ) {
+				tableUpdateBuilder.addPrimaryKeyColumn( keyColumns[i] );
+			}
+		}
+
+		if ( tableUpdateBuilder.getPrimaryTableIndex() == 0
+				&& isVersioned()
+				&& entityMetamodel.getOptimisticLockStyle().isVersion() ) {
+			// this is the root (versioned) table, and we are using version-based
+			// optimistic locking;  if we are not updating the version, also don't
+			// check it (unless this is a "generated" version column)!
+			if ( checkVersion( attributeInclusions ) ) {
+				tableUpdateBuilder.setVersionColumn( getVersionColumnName() );
+			}
+		}
+		else if ( isAllOrDirtyOptLocking() && oldValues != null ) {
+			// we are using "all" or "dirty" property-based optimistic locking
+
+			final boolean[] includeInWhere;
+			if ( entityMetamodel.getOptimisticLockStyle().isAll() ) {
+				//optimistic-lock="all", include all updatable properties
+				includeInWhere = getPropertyUpdateability();
+			}
+			else {
+				includeInWhere = attributeInclusions;
+			}
+
+			boolean[] versionability = getPropertyVersionability();
+			for ( int index = 0; index < attributeMappings.size(); index++ ) {
+				final AttributeMapping attributeMapping = attributeMappings.get( index );
+				boolean include = includeInWhere[index]
+						&& isPropertyOfTable( index, tableUpdateBuilder.getPrimaryTableIndex() )
+						&& versionability[index];
+				if ( include ) {
+					// this property belongs to the table, and it is not specifically
+					// excluded from optimistic locking by optimistic-lock="false"
+					attributeMapping.forEachSelectable( (position, selectable) -> {
+						if ( selectable.isNullable() ) {
+							tableUpdateBuilder.addRestrictionColumn( selectable.getSelectionExpression(), " is null" );
+						}
+						else {
+							tableUpdateBuilder.addRestrictionColumn( selectable.getSelectionExpression() );
+						}
+					} );
+				}
+			}
+		}
+	}
+
+	private MutationSqlGroup<TableInsert> generateStaticInsertSqlGroup() {
+		assert !entityMetamodel.isDynamicInsert();
+
+		final MutationSqlGroupBuilder<TableInsertBuilder> insertGroupBuilder = new MutationSqlGroupBuilder<>( MutationType.INSERT, this );
+
+		final int joinSpan = getTableSpan();
+		for ( int tableIndex = 0; tableIndex < joinSpan; tableIndex++ ) {
+			final String tableName = getTableName( tableIndex );
+			final String customInsertSql = customSQLInsert[ tableIndex ];
+
+			if ( customInsertSql == null ) {
+				final TableInsertBuilder existingInsertBuilder = insertGroupBuilder.findTableDetailsBuilder( tableName );
+				if ( existingInsertBuilder == null ) {
+					insertGroupBuilder.addTableDetailsBuilder(
+							new StandardTableInsertBuilder(
+									this,
+									tableIndex == 0 ? identityDelegate : null,
+									tableName,
+									isNullableTable( tableIndex ),
+									tableIndex,
+									insertExpectations[tableIndex],
+									factory
+							)
+					);
+				}
+				else {
+					existingInsertBuilder.addTableIndex( tableIndex );
+				}
+			}
+			else {
+				final CustomTableInsertBuilder tableInsertBuilder = new CustomTableInsertBuilder(
+						this,
+						tableName,
+						isNullableTable( tableIndex ),
+						tableIndex,
+						substituteBrackets( customInsertSql ),
+						isInsertCallable( tableIndex ),
+						insertExpectations[tableIndex]
+				);
+				insertGroupBuilder.addTableDetailsBuilder( tableInsertBuilder );
+			}
+		}
+
+		applyTableInsertDetails( insertGroupBuilder, getPropertyInsertability() );
+
+		return (MutationSqlGroup) insertGroupBuilder.buildGroup();
+	}
+
+	private void applyTableInsertDetails(
+			MutationSqlGroupBuilder<TableInsertBuilder> insertGroupBuilder,
+			boolean[] attributeInclusions) {
+
+		final Dialect dialect = factory.getJdbcServices().getDialect();
+		final MutableInteger columnIndexRef = new MutableInteger();
+
+		for ( int attributeIndex = 0; attributeIndex < attributeMappings.size(); attributeIndex++ ) {
+			final AttributeMapping attributeMapping = attributeMappings.get( attributeIndex );
+			final ValueGeneration valueGeneration = attributeMapping.getValueGeneration();
+			if ( !attributeInclusions[ attributeIndex ] ) {
+				if ( valueGeneration.getGenerationTiming().includesInsert()
+						&& valueGeneration.getValueGenerator() == null
+						&& valueGeneration.referenceColumnInSql() ) {
+					// value-generation is only valid for basic attributes
+					final BasicAttributeMapping basicAttributeMapping = (BasicAttributeMapping) attributeMapping;
+					final String tableNameForMutation = physicalTableNameForMutation( basicAttributeMapping );
+					final TableInsertBuilder tableInsertBuilder = insertGroupBuilder.findTableDetailsBuilder( tableNameForMutation );
+					tableInsertBuilder.addValuesColumn(
+							basicAttributeMapping.getSelectionExpression(),
+							valueGeneration.getDatabaseGeneratedReferencedColumnValue()
+					);
+				}
+				continue;
+			}
+
+			// todo (write-path) : convert to keep `insertable` and `updateable` on `SelectionMapping`
+			final boolean[] columnInsertability = propertyColumnInsertable[ attributeIndex ];
+			columnIndexRef.set( 0 );
+
+			attributeMapping.forEachSelectable( (selectionIndex, selectableMapping) -> {
+				final int columnIndex = columnIndexRef.getAndIncrement();
+
+				if ( selectableMapping.isFormula() ) {
+					// no physical column
+					return;
+				}
+
+				if ( ! columnInsertability[columnIndex] ) {
+					return;
+				}
+
+				final String tableNameForMutation = physicalTableNameForMutation( selectableMapping );
+				final TableInsertBuilder tableInsertBuilder = insertGroupBuilder.findTableDetailsBuilder( tableNameForMutation );
+
+				if ( selectableMapping.getJdbcMapping().getJdbcType().isLob() ) {
+					// we need to handle lobs specially for certain databases (ok, for Oracle)
+					if ( dialect.forceLobAsLastValue() ) {
+						tableInsertBuilder.addValuesLobColumn(
+								selectableMapping.getSelectionExpression(),
+								selectableMapping.getCustomWriteExpression()
+						);
+					}
+					else {
+						tableInsertBuilder.addValuesColumn(
+								selectableMapping.getSelectionExpression(),
+								selectableMapping.getCustomWriteExpression()
+						);
+					}
+				}
+				else {
+					tableInsertBuilder.addValuesColumn(
+							selectableMapping.getSelectionExpression(),
+							selectableMapping.getCustomWriteExpression()
+					);
+				}
+			} );
+		}
+
+		// add the discriminator
+		addDiscriminatorToInsertGroup( insertGroupBuilder );
+
+		// add the keys
+		insertGroupBuilder.forEachTableMutationBuilder( (tableInsertBuilder) -> {
+			//noinspection StatementWithEmptyBody
+			if ( tableInsertBuilder.getPrimaryTableIndex() == 0 && identityDelegate != null ) {
+				// nothing to do - the builder already includes the identity handling
+			}
+			else {
+				final String[] keyColumns = getKeyColumns( tableInsertBuilder.getPrimaryTableIndex() );
+				for ( int i = 0; i < keyColumns.length; i++ ) {
+					tableInsertBuilder.addValuesKeyColumn( keyColumns[ i ] );
+				}
+			}
+		} );
 	}
 
 	private String substituteBrackets(String sql) {
@@ -4450,6 +5172,28 @@ public abstract class AbstractEntityPersister
 		for ( int i = 0; i < array.length; i++ ) {
 			if ( isPropertyOfTable( i, tableNumber ) && array[i] != null ) {
 				return false;
+			}
+		}
+		return true;
+	}
+
+	public final boolean areAllNull(Object[] values, TableMutation tableMutation) {
+		if ( tableMutation.getTableIndexes().size() == 1 ) {
+			final int tableIndex = tableMutation.getPrimaryTableIndex();
+			for ( int i = 0; i < values.length; i++ ) {
+				if ( isPropertyOfTable( i, tableIndex ) && values[i] != null ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// we have multiple ("duplicate") tables
+		for ( Integer tableIndex : tableMutation.getTableIndexes() ) {
+			for ( int i = 0; i < values.length; i++ ) {
+				if ( isPropertyOfTable( i, tableIndex ) && values[i] != null ) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -6241,6 +6985,7 @@ public abstract class AbstractEntityPersister
 					column.getLength(),
 					column.getPrecision(),
 					column.getScale(),
+					column.isNullable(),
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess
@@ -6258,6 +7003,7 @@ public abstract class AbstractEntityPersister
 			final Long length;
 			final Integer precision;
 			final Integer scale;
+			final boolean nullable;
 
 			if ( bootValue instanceof DependantValue ) {
 				attrColumnExpression = attrColumnNames[0];
@@ -6269,6 +7015,7 @@ public abstract class AbstractEntityPersister
 				length = column.getLength();
 				precision = column.getPrecision();
 				scale = column.getScale();
+				nullable = column.isNullable();
 			}
 			else {
 				final BasicValue basicBootValue = (BasicValue) bootValue;
@@ -6294,6 +7041,7 @@ public abstract class AbstractEntityPersister
 					length = column.getLength();
 					precision = column.getPrecision();
 					scale = column.getScale();
+					nullable = column.isNullable();
 				}
 				else {
 					final String[] attrColumnFormulaTemplate = propertyColumnFormulaTemplates[ propertyIndex ];
@@ -6305,6 +7053,7 @@ public abstract class AbstractEntityPersister
 					length = null;
 					precision = null;
 					scale = null;
+					nullable = true;
 				}
 			}
 
@@ -6324,6 +7073,7 @@ public abstract class AbstractEntityPersister
 					length,
 					precision,
 					scale,
+					nullable,
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess

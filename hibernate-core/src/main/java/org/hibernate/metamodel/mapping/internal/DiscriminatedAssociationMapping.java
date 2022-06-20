@@ -94,7 +94,6 @@ public class DiscriminatedAssociationMapping implements MappingType, FetchOption
 				metaColumn.getLength(),
 				metaColumn.getPrecision(),
 				metaColumn.getScale(),
-				bootValueMapping.isNullable(),
 				(MetaType) anyType.getDiscriminatorType()
 		);
 

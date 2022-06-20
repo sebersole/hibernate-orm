@@ -9,8 +9,8 @@ package org.hibernate.metamodel.mapping.internal;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Selectable;
-import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.metamodel.mapping.JdbcMapping;
+import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.type.spi.TypeConfiguration;
 
@@ -23,6 +23,7 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 	private final String selectionExpression;
 	private final String customReadExpression;
 	private final String customWriteExpression;
+	private final boolean nullable;
 	private final boolean isFormula;
 
 	public SelectableMappingImpl(
@@ -34,6 +35,7 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 			Long length,
 			Integer precision,
 			Integer scale,
+			boolean nullable,
 			boolean isFormula,
 			JdbcMapping jdbcMapping) {
 		super( columnDefinition, length, precision, scale, jdbcMapping );
@@ -42,6 +44,7 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 		this.selectionExpression = selectionExpression == null ? null : selectionExpression.intern();
 		this.customReadExpression = customReadExpression == null ? null : customReadExpression.intern();
 		this.customWriteExpression = customWriteExpression == null ? null : customWriteExpression.intern();
+		this.nullable = nullable;
 		this.isFormula = isFormula;
 	}
 
@@ -57,12 +60,14 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 		final Long length;
 		final Integer precision;
 		final Integer scale;
+		final boolean isNullable;
 		if ( selectable.isFormula() ) {
 			columnExpression = selectable.getTemplate( dialect, typeConfiguration, sqmFunctionRegistry );
 			columnDefinition = null;
 			length = null;
 			precision = null;
 			scale = null;
+			isNullable = true;
 		}
 		else {
 			Column column = (Column) selectable;
@@ -71,6 +76,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 			length = column.getLength();
 			precision = column.getPrecision();
 			scale = column.getScale();
+
+			isNullable = column.isNullable();
 		}
 		return new SelectableMappingImpl(
 				containingTableExpression,
@@ -81,6 +88,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 				length,
 				precision,
 				scale,
+
+				isNullable,
 				selectable.isFormula(),
 				jdbcMapping
 		);
@@ -109,5 +118,10 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 	@Override
 	public boolean isFormula() {
 		return isFormula;
+	}
+
+	@Override
+	public boolean isNullable() {
+		return nullable;
 	}
 }

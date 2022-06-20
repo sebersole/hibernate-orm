@@ -59,4 +59,13 @@ public class BasicBatchKey implements BatchKey {
 		return comparison.hashCode();
 	}
 
+	@Override
+	public String toLoggableString() {
+		return comparison;
+	}
+
+	@Override
+	public String toString() {
+		return "BasicBatchKey(" + comparison + ")";
+	}
 }

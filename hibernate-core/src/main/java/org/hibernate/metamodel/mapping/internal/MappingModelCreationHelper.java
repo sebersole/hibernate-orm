@@ -127,11 +127,14 @@ public class MappingModelCreationHelper {
 		final PropertyAccess propertyAccess = entityPersister.getRepresentationStrategy()
 				.resolvePropertyAccess( bootEntityDescriptor.getIdentifierProperty() );
 
+		final Component component = (Component) bootProperty.getValue();
 		final EmbeddableMappingTypeImpl embeddableMappingType = EmbeddableMappingTypeImpl.from(
-				(Component) bootProperty.getValue(),
+				component,
 				cidType,
 				rootTableName,
 				rootTableKeyColumnNames,
+				component.getColumnInsertability(),
+				component.getColumnUpdateability(),
 				embeddable -> new EmbeddedIdentifierMappingImpl(
 						entityPersister,
 						attributeName,
@@ -183,6 +186,7 @@ public class MappingModelCreationHelper {
 			Long length,
 			Integer precision,
 			Integer scale,
+			boolean nullable,
 			PropertyAccess propertyAccess,
 			CascadeStyle cascadeStyle,
 			MappingModelCreationProcess creationProcess) {
@@ -293,6 +297,7 @@ public class MappingModelCreationHelper {
 					length,
 					precision,
 					scale,
+					nullable,
 					valueConverter,
 					mappingBasicType.getJdbcMapping(),
 					declaringType,
@@ -317,6 +322,7 @@ public class MappingModelCreationHelper {
 					length,
 					precision,
 					scale,
+					nullable,
 					null,
 					attrType,
 					declaringType,
@@ -352,6 +358,8 @@ public class MappingModelCreationHelper {
 				attrType,
 				tableExpression,
 				rootTableKeyColumnNames,
+				component.getColumnInsertability(),
+				component.getColumnUpdateability(),
 				attributeMappingType -> {
 					if ( component.isEmbedded() ) {
 						return new VirtualEmbeddedAttributeMapping(

@@ -499,6 +499,11 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 	}
 
 	@Override
+	public boolean isNullable() {
+		return keySide.getModelPart().isNullable();
+	}
+
+	@Override
 	public String getCustomReadExpression() {
 		return keySide.getModelPart().getCustomReadExpression();
 	}

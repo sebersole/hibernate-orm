@@ -35,6 +35,8 @@ import org.hibernate.internal.FilterAliasGenerator;
 import org.hibernate.internal.StaticFilterAliasGenerator;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.internal.util.collections.JoinedList;
+import org.hibernate.jdbc.Expectation;
+import org.hibernate.jdbc.Expectations;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Subclass;
@@ -138,6 +140,7 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 		customSQLInsert = new String[] {sql};
 		insertCallable = new boolean[] {callable};
 		insertResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
+		insertExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		sql = persistentClass.getCustomSQLUpdate();
 		callable = sql != null && persistentClass.isCustomUpdateCallable();
@@ -149,6 +152,7 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 		customSQLUpdate = new String[] {sql};
 		updateCallable = new boolean[] {callable};
 		updateResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
+		updateExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		sql = persistentClass.getCustomSQLDelete();
 		callable = sql != null && persistentClass.isCustomDeleteCallable();
@@ -160,6 +164,7 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 		customSQLDelete = new String[] {sql};
 		deleteCallable = new boolean[] {callable};
 		deleteResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
+		deleteExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		discriminatorValue = persistentClass.getSubclassId();
 		discriminatorSQLValue = String.valueOf( persistentClass.getSubclassId() );
@@ -362,6 +367,11 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 	}
 
 	@Override
+	public String getAttributeMutationTableName(int attributeIndex) {
+		return getRootTableName();
+	}
+
+	@Override
 	protected int getSubclassPropertyTableNumber(int i) {
 		return 0;
 	}
@@ -369,6 +379,11 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 	@Override
 	public int getSubclassPropertyTableNumber(String propertyName) {
 		return 0;
+	}
+
+	@Override
+	protected String physicalTableNameForMutation(SelectableMapping selectableMapping) {
+		return tableName;
 	}
 
 	@Override

@@ -123,6 +123,11 @@ public class AnonymousTupleBasicValuedModelPart implements ModelPart, MappingTyp
 	}
 
 	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
+	@Override
 	public String getColumnDefinition() {
 		return null;
 	}

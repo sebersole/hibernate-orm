@@ -81,6 +81,11 @@ public class CollectionIdentifierDescriptorImpl implements CollectionIdentifierD
 	}
 
 	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
+	@Override
 	public String getCustomReadExpression() {
 		return null;
 	}

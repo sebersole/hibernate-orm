@@ -286,6 +286,12 @@ public class DiscriminatedAssociationAttributeMapping
 
 	@Override
 	public void breakDownJdbcValues(Object domainValue, JdbcValueConsumer valueConsumer, SharedSessionContractImplementor session) {
+		if ( domainValue == null ) {
+			valueConsumer.consume( null, discriminatorMapping.getDiscriminatorPart() );
+			valueConsumer.consume( null, discriminatorMapping.getKeyPart() );
+			return;
+		}
+
 		final EntityMappingType concreteMappingType = determineConcreteType( domainValue, session );
 
 		final Object discriminator = discriminatorMapping

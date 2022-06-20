@@ -208,6 +208,11 @@ public class EntityRowIdMappingImpl implements EntityRowIdMapping, SelectableMap
 	}
 
 	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
+	@Override
 	public JdbcMapping getJdbcMapping() {
 		return rowIdType.getJdbcMapping();
 	}

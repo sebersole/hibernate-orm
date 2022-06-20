@@ -307,6 +307,11 @@ public class BasicEntityIdentifierMappingImpl implements BasicEntityIdentifierMa
 	}
 
 	@Override
+	public boolean isNullable() {
+		return false;
+	}
+
+	@Override
 	public String getCustomReadExpression() {
 		return null;
 	}

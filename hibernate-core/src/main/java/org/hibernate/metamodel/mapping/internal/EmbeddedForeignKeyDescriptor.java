@@ -522,13 +522,20 @@ public class EmbeddedForeignKeyDescriptor implements ForeignKeyDescriptor {
 
 	@Override
 	public void breakDownJdbcValues(Object domainValue, JdbcValueConsumer valueConsumer, SharedSessionContractImplementor session) {
-		assert domainValue instanceof Object[];
-
-		final Object[] values = (Object[]) domainValue;
-
-		keySelectableMappings.forEachSelectable(
-				(index, selectable) -> valueConsumer.consume( values[ index ], selectable )
-		);
+		if ( domainValue == null ) {
+			keySelectableMappings.forEachSelectable( (index, selectable) -> {
+				valueConsumer.consume( null, selectable );
+			} );
+		}
+		else if ( domainValue instanceof Object[] ) {
+			final Object[] values = (Object[]) domainValue;
+			keySelectableMappings.forEachSelectable( (index, selectable) -> {
+				valueConsumer.consume( values[ index ], selectable );
+			} );
+		}
+		else {
+			keySide.getModelPart().breakDownJdbcValues( domainValue, valueConsumer, session );
+		}
 	}
 
 	@Override

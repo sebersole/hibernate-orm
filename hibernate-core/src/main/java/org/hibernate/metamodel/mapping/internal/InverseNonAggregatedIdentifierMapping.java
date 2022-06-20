@@ -277,7 +277,6 @@ public class InverseNonAggregatedIdentifierMapping extends EmbeddedAttributeMapp
 
 	@Override
 	public void breakDownJdbcValues(Object domainValue, JdbcValueConsumer valueConsumer, SharedSessionContractImplementor session) {
-		assert domainValue instanceof Object[];
 		identifierValueMapper.breakDownJdbcValues( domainValue, valueConsumer, session );
 	}
 

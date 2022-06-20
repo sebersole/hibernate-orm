@@ -92,6 +92,8 @@ public @interface Table {
 	 * by default, Hibernate avoids creating a row of null values.
 	 * <p>
 	 * <em>Only applies to secondary tables.<p></em>
+	 *
+	 * @apiNote Only relevant for secondary tables
 	 */
 	boolean optional() default true;
 

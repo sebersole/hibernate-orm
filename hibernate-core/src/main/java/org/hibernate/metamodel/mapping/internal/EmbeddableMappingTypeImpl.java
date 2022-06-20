@@ -83,7 +83,7 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 			CompositeType compositeType,
 			Function<EmbeddableMappingType, EmbeddableValuedModelPart> embeddedPartBuilder,
 			MappingModelCreationProcess creationProcess) {
-		return from( bootDescriptor, compositeType, null, null, embeddedPartBuilder, creationProcess );
+		return from( bootDescriptor, compositeType, null, null, null, null, embeddedPartBuilder, creationProcess );
 	}
 
 	public static EmbeddableMappingTypeImpl from(
@@ -91,6 +91,8 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 			CompositeType compositeType,
 			String rootTableExpression,
 			String[] rootTableKeyColumnNames,
+			boolean[] insertability,
+			boolean[] updateability,
 			Function<EmbeddableMappingType,EmbeddableValuedModelPart> embeddedPartBuilder,
 			MappingModelCreationProcess creationProcess) {
 		final RuntimeModelCreationContext creationContext = creationProcess.getCreationContext();
@@ -113,6 +115,8 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 								compositeType,
 								rootTableExpression,
 								rootTableKeyColumnNames,
+								insertability,
+								updateability,
 								creationProcess
 						)
 		);
@@ -199,6 +203,8 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 			CompositeType compositeType,
 			String rootTableExpression,
 			String[] rootTableKeyColumnNames,
+			boolean[] insertability,
+			boolean[] updateability,
 			MappingModelCreationProcess creationProcess) {
 // for some reason I cannot get this to work, though only a single test fails - `CompositeElementTest`
 //		return finishInitialization(
@@ -279,18 +285,21 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 				final Long length;
 				final Integer precision;
 				final Integer scale;
+				final boolean nullable;
 				if ( selectable instanceof Column ) {
 					Column column = (Column) selectable;
 					columnDefinition = column.getSqlType();
 					length = column.getLength();
 					precision = column.getPrecision();
 					scale = column.getScale();
+					nullable = column.isNullable();
 				}
 				else {
 					columnDefinition = null;
 					length = null;
 					precision = null;
 					scale = null;
+					nullable = true;
 				}
 				attributeMapping = MappingModelCreationHelper.buildBasicAttributeMapping(
 						bootPropertyDescriptor.getName(),
@@ -308,6 +317,7 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 						length,
 						precision,
 						scale,
+						nullable,
 						representationStrategy.resolvePropertyAccess( bootPropertyDescriptor ),
 						compositeType.getCascadeStyle( attributeIndex ),
 						creationProcess
@@ -602,12 +612,16 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 			}
 		}
 		else {
-			attributeMappings.forEach(
-					(attributeMapping) -> {
-						final Object attributeValue = attributeMapping.getPropertyAccess().getGetter().get( domainValue );
-						attributeMapping.breakDownJdbcValues( attributeValue, valueConsumer, session );
-					}
-			);
+			attributeMappings.forEach( (attributeMapping) -> {
+				if ( attributeMapping instanceof PluralAttributeMapping ) {
+					return;
+				}
+
+				final Object attributeValue = domainValue == null
+						? null
+						: attributeMapping.getPropertyAccess().getGetter().get( domainValue );
+				attributeMapping.breakDownJdbcValues( attributeValue, valueConsumer, session );
+			} );
 		}
 	}
 

@@ -33,6 +33,7 @@ import org.hibernate.mapping.Selectable;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
 import org.hibernate.metamodel.mapping.AssociationKey;
+import org.hibernate.metamodel.mapping.AttributeMapping;
 import org.hibernate.metamodel.mapping.AttributeMetadataAccess;
 import org.hibernate.metamodel.mapping.CollectionPart;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
@@ -53,9 +54,9 @@ import org.hibernate.persister.collection.QueryableCollection;
 import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.property.access.spi.PropertyAccess;
+import org.hibernate.spi.EntityIdentifierNavigablePath;
 import org.hibernate.spi.NavigablePath;
 import org.hibernate.spi.TreatedNavigablePath;
-import org.hibernate.spi.EntityIdentifierNavigablePath;
 import org.hibernate.sql.ast.Clause;
 import org.hibernate.sql.ast.SqlAstJoinType;
 import org.hibernate.sql.ast.spi.FromClauseAccess;
@@ -1841,11 +1842,53 @@ public class ToOneAttributeMapping
 			Object domainValue,
 			JdbcValueConsumer valueConsumer,
 			SharedSessionContractImplementor session) {
-		foreignKeyDescriptor.breakDownJdbcValues(
-				foreignKeyDescriptor.getAssociationKeyFromSide( domainValue, sideNature.inverse(), session ),
-				valueConsumer,
-				session
-		);
+		if ( cardinality == Cardinality.ONE_TO_ONE && sideNature == ForeignKeyDescriptor.Nature.TARGET ) {
+			return;
+		}
+
+		final Object value = extractValue( domainValue, session );
+		foreignKeyDescriptor.breakDownJdbcValues( value, valueConsumer, session );
+	}
+
+	private Object extractValue(Object domainValue, SharedSessionContractImplementor session) {
+		if ( domainValue == null ) {
+			return null;
+		}
+
+		if ( referencedPropertyName != null ) {
+			assert getAssociatedEntityMappingType()
+					.getRepresentationStrategy()
+					.getInstantiator()
+					.isInstance( domainValue, session.getSessionFactory() );
+			return extractAttributePathValue( domainValue, getAssociatedEntityMappingType(), referencedPropertyName );
+		}
+
+		return foreignKeyDescriptor.getAssociationKeyFromSide( domainValue, sideNature.inverse(), session );
+	}
+
+	private static Object extractAttributePathValue(Object domainValue, EntityMappingType entityType, String attributePath) {
+		if ( ! attributePath.contains( "." ) ) {
+			return entityType.findAttributeMapping( attributePath ).getValue( domainValue );
+		}
+
+		Object value = domainValue;
+		ManagedMappingType managedType = entityType;
+		final String[] pathParts = attributePath.split( "\\." );
+		for ( int i = 0; i < pathParts.length; i++ ) {
+			assert managedType != null;
+
+			final String pathPart = pathParts[ i ];
+			final AttributeMapping attributeMapping = managedType.findAttributeMapping( pathPart );
+			value = attributeMapping.getValue( value );
+			if ( attributeMapping.getMappedType() instanceof ManagedMappingType ) {
+				managedType = (ManagedMappingType) attributeMapping.getMappedType();
+			}
+			else {
+				managedType = null;
+			}
+		}
+
+		return value;
 	}
 
 	@Override
