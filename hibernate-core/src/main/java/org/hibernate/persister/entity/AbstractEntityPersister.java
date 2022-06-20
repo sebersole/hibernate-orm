@@ -198,16 +198,16 @@ import org.hibernate.persister.spi.PersisterCreationContext;
 import org.hibernate.pretty.MessageHelper;
 import org.hibernate.property.access.spi.PropertyAccess;
 import org.hibernate.property.access.spi.Setter;
-import org.hibernate.query.sqm.ComparisonOperator;
-import org.hibernate.spi.NavigablePath;
 import org.hibernate.query.SemanticException;
 import org.hibernate.query.named.NamedQueryMemento;
 import org.hibernate.query.spi.QueryOptions;
 import org.hibernate.query.sql.internal.SQLQueryParser;
+import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.query.sqm.mutation.internal.SqmMutationStrategyHelper;
 import org.hibernate.query.sqm.mutation.spi.SqmMultiTableInsertStrategy;
 import org.hibernate.query.sqm.mutation.spi.SqmMultiTableMutationStrategy;
+import org.hibernate.spi.NavigablePath;
 import org.hibernate.sql.Alias;
 import org.hibernate.sql.Delete;
 import org.hibernate.sql.Insert;
@@ -460,6 +460,19 @@ public abstract class AbstractEntityPersister
 
 	public abstract boolean hasDuplicateTables();
 
+	/**
+	 * @deprecated Only ever used from places where we really want to use<ul>
+	 *     <li>{@link SelectStatement} (select generator)</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.insert.InsertStatement}</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.update.UpdateStatement}</li>
+	 *     <li>{@link org.hibernate.sql.ast.tree.delete.DeleteStatement}</li>
+	 * </ul>
+	 *
+	 * todo (6.2) - would be really, really, really nice to drop this for 6.2.
+	 * 		the alternative is to keep an array of tables names that is never
+	 * 		used from our code taking up completely unnecessary memory
+	 */
+	@Deprecated( since = "6.2" )
 	public abstract String getTableName(int j);
 
 	public abstract String[] getKeyColumns(int j);
@@ -3898,86 +3911,95 @@ public abstract class AbstractEntityPersister
 
 		final int span = getTableSpan();
 		if ( entityMetamodel.isDynamicInsert() ) {
-			// For the case of dynamic-insert="true", we need to generate the INSERT SQL
-			boolean[] notNull = getPropertiesToInsert( fields );
-			if ( hasDuplicateTables() ) {
-				final String[] insertedTables = new String[span];
-				for ( int j = 0; j < span; j++ ) {
-					if ( isInverseTable( j ) ) {
-						continue;
-					}
+			doDynamicInserts( id, fields, object, session, span );
+		}
+		else {
+			doStaticInserts( id, fields, object, session, span );
+		}
+	}
 
-					//note: it is conceptually possible that a UserType could map null to
-					//	  a non-null value, so the following is arguable:
-					if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
-						continue;
-					}
-					final String tableName = getTableName( j );
-					insertedTables[j] = tableName;
-					if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
-						update(
-								id,
-								fields,
-								null,
-								null,
-								notNull,
-								j,
-								null,
-								object,
-								generateUpdateString( notNull, j, false ),
-								session
-						);
-					}
-					else {
-						insert( id, fields, notNull, j, generateInsertString( notNull, j ), object, session );
-					}
+	private void doDynamicInserts(Object id, Object[] fields, Object object, SharedSessionContractImplementor session, int span) {
+		// For the case of dynamic-insert="true", we need to generate the INSERT SQL
+		boolean[] notNull = getPropertiesToInsert( fields );
+		if ( hasDuplicateTables() ) {
+			// todo (6.x) : this can possibly be unnecessary if we group together prepared-statements for the logical insert
+			final String[] insertedTables = new String[ span ];
+			for ( int j = 0; j < span; j++ ) {
+				if ( isInverseTable( j ) ) {
+					continue;
 				}
-			}
-			else {
-				for ( int j = 0; j < span; j++ ) {
+
+				//note: it is conceptually possible that a UserType could map null to
+				//	  a non-null value, so the following is arguable:
+				if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
+					continue;
+				}
+				final String tableName = getTableName( j );
+				insertedTables[j] = tableName;
+				if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
+					update(
+							id,
+							fields,
+							null,
+							null,
+							notNull,
+							j,
+							null,
+							object,
+							generateUpdateString( notNull, j, false ),
+							session
+					);
+				}
+				else {
 					insert( id, fields, notNull, j, generateInsertString( notNull, j ), object, session );
 				}
 			}
 		}
 		else {
-			// For the case of dynamic-insert="false", use the static SQL
-			if ( hasDuplicateTables() ) {
-				final String[] insertedTables = new String[span];
-				for ( int j = 0; j < span; j++ ) {
-					if ( isInverseTable( j ) ) {
-						continue;
-					}
-
-					//note: it is conceptually possible that a UserType could map null to
-					//	  a non-null value, so the following is arguable:
-					if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
-						continue;
-					}
-					final String tableName = getTableName( j );
-					insertedTables[j] = tableName;
-					if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
-						update(
-								id,
-								fields,
-								null,
-								null,
-								getPropertyInsertability(),
-								j,
-								null,
-								object,
-								getSQLUpdateStrings()[j],
-								session
-						);
-					}
-					else {
-						insert( id, fields, getPropertyInsertability(), j, getSQLInsertStrings()[j], object, session );
-					}
-				}
+			for ( int j = 0; j < span; j++ ) {
+				insert( id, fields, notNull, j, generateInsertString( notNull, j ), object, session );
 			}
-			else {
-				for ( int j = 0; j < span; j++ ) {
+		}
+	}
+
+	private void doStaticInserts(Object id, Object[] fields, Object object, SharedSessionContractImplementor session, int span) {
+		// For the case of dynamic-insert="false", use the static SQL
+		if ( hasDuplicateTables() ) {
+			final String[] insertedTables = new String[ span ];
+			for ( int j = 0; j < span; j++ ) {
+				if ( isInverseTable( j ) ) {
+					continue;
+				}
+
+				//note: it is conceptually possible that a UserType could map null to
+				//	  a non-null value, so the following is arguable:
+				if ( isNullableTable( j ) && isAllNull( fields, j ) ) {
+					continue;
+				}
+				final String tableName = getTableName( j );
+				insertedTables[j] = tableName;
+				if ( ArrayHelper.indexOf( insertedTables, j, tableName ) != -1 ) {
+					update(
+							id,
+							fields,
+							null,
+							null,
+							getPropertyInsertability(),
+							j,
+							null,
+							object,
+							getSQLUpdateStrings()[j],
+							session
+					);
+				}
+				else {
 					insert( id, fields, getPropertyInsertability(), j, getSQLInsertStrings()[j], object, session );
 				}
+			}
+		}
+		else {
+			for ( int j = 0; j < span; j++ ) {
+				insert( id, fields, getPropertyInsertability(), j, getSQLInsertStrings()[j], object, session );
 			}
 		}
 	}

@@ -40,8 +40,8 @@ import org.hibernate.metamodel.spi.MappingMetamodelImplementor;
 import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
 import org.hibernate.persister.spi.PersisterCreationContext;
 import org.hibernate.query.sqm.ComparisonOperator;
-import org.hibernate.spi.NavigablePath;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
+import org.hibernate.spi.NavigablePath;
 import org.hibernate.sql.InFragment;
 import org.hibernate.sql.Insert;
 import org.hibernate.sql.ast.spi.FromClauseAccess;
@@ -54,6 +54,7 @@ import org.hibernate.sql.ast.tree.expression.Expression;
 import org.hibernate.sql.ast.tree.expression.QueryLiteral;
 import org.hibernate.sql.ast.tree.from.NamedTableReference;
 import org.hibernate.sql.ast.tree.from.TableGroup;
+import org.hibernate.sql.ast.tree.insert.StaticInsertBuilder;
 import org.hibernate.sql.ast.tree.predicate.ComparisonPredicate;
 import org.hibernate.sql.ast.tree.predicate.InListPredicate;
 import org.hibernate.sql.ast.tree.predicate.Junction;
@@ -79,7 +80,17 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 	// the class hierarchy structure
 	private final int joinSpan;
 	private final boolean hasDuplicateTables;
+
+
+	/**
+	 * todo (6.2) - this assumes duplicates are included which we are trying to do away wi
+	 */
 	private final String[] qualifiedTableNames;
+
+
+	private StaticInsertBuilder[] staticInsertBuilders;
+
+
 	private final boolean[] isInverseTable;
 	private final boolean[] isNullableTable;
 	private final String[][] keyColumnNames;
@@ -105,16 +116,12 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 	// subclasses and superclasses of this class
 	private final int[] subclassPropertyTableNumberClosure;
 
-//	private final int[] subclassColumnTableNumberClosure;
-//	private final int[] subclassFormulaTableNumberClosure;
-
 	// discriminator column
 	private final Map<Object, String> subclassesByDiscriminatorValue;
 	private final boolean forceDiscriminator;
 	private final String discriminatorColumnName;
 	private final String discriminatorColumnReaders;
 	private final String discriminatorColumnReaderTemplate;
-//	private final String discriminatorFormula;
 	private final String discriminatorFormulaTemplate;
 	private final String discriminatorAlias;
 	private final BasicType<?> discriminatorType;
@@ -157,12 +164,28 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		// CLASS + TABLE
 
 		joinSpan = persistentClass.getJoinClosureSpan() + 1;
+		// todo (6.2) : see note on AbstractEntityPersister#getTableName(int)
 		qualifiedTableNames = new String[joinSpan];
+
+		final Table table = persistentClass.getRootTable();
+		final String rootTableName = determineTableName( table );
+		qualifiedTableNames[0] = rootTableName;
+
+		final StaticInsertBuilder rootTableInsertBuilder;
+		final Map<String,StaticInsertBuilder> staticInsertBuilderMap;
+		if ( persistentClass.useDynamicInsert() ) {
+			staticInsertBuilderMap = null;
+			rootTableInsertBuilder = null;
+		}
+		else {
+			staticInsertBuilderMap = new HashMap<>();
+			rootTableInsertBuilder = new StaticInsertBuilder( rootTableName );
+			staticInsertBuilderMap.put( rootTableName, rootTableInsertBuilder );
+		}
+
 		isInverseTable = new boolean[joinSpan];
 		isNullableTable = new boolean[joinSpan];
 		keyColumnNames = new String[joinSpan][];
-		final Table table = persistentClass.getRootTable();
-		qualifiedTableNames[0] = determineTableName( table );
 
 		isInverseTable[0] = false;
 		isNullableTable[0] = false;
@@ -305,6 +328,10 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 			forceDiscriminator = persistentClass.isForceDiscriminator();
 			Selectable selectable = discriminator.getSelectables().get(0);
 			SqmFunctionRegistry functionRegistry = factory.getQueryEngine().getSqmFunctionRegistry();
+			discriminatorType = DiscriminatorHelper.getDiscriminatorType( persistentClass );
+			discriminatorValue = DiscriminatorHelper.getDiscriminatorValue( persistentClass );
+			discriminatorSQLValue = DiscriminatorHelper.getDiscriminatorSQLValue( persistentClass, dialect, factory );
+			discriminatorInsertable = isDiscriminatorInsertable( persistentClass );
 			if ( discriminator.hasFormula() ) {
 				Formula formula = (Formula) selectable;
 //				discriminatorFormula = formula.getFormula();
@@ -331,10 +358,6 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 //				discriminatorFormula = null;
 				discriminatorFormulaTemplate = null;
 			}
-			discriminatorType = DiscriminatorHelper.getDiscriminatorType( persistentClass );
-			discriminatorValue = DiscriminatorHelper.getDiscriminatorValue( persistentClass );
-			discriminatorSQLValue = DiscriminatorHelper.getDiscriminatorSQLValue( persistentClass, dialect, factory );
-			discriminatorInsertable = isDiscriminatorInsertable( persistentClass );
 		}
 		else {
 			forceDiscriminator = false;
@@ -442,6 +465,20 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		initSubclassPropertyAliasesMap( persistentClass );
 
 		postConstruct( creationContext.getMetadata() );
+
+		staticInsertBuilders = processStaticInsertBuilders( staticInsertBuilderMap );
+	}
+
+	private StaticInsertBuilder[] processStaticInsertBuilders(Map<String, StaticInsertBuilder> staticInsertBuilderMap) {
+		final List<StaticInsertBuilder> builderList = new ArrayList<>( staticInsertBuilderMap.size() );
+
+		staticInsertBuilderMap.forEach( (tableName, builder) -> {
+			if ( !builder.getTargetColumns().isEmpty() ) {
+				builderList.add( builder );
+			}
+		});
+
+		return builderList.toArray( new StaticInsertBuilder[0] );
 	}
 
 	private static boolean isDiscriminatorInsertable(PersistentClass persistentClass) {

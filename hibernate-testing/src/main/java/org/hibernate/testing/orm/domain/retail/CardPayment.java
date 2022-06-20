@@ -6,7 +6,9 @@
  */
 package org.hibernate.testing.orm.domain.retail;
 
+import javax.money.Monetary;
 import javax.money.MonetaryAmount;
+
 import jakarta.persistence.Entity;
 
 /**
@@ -21,6 +23,16 @@ public class CardPayment extends Payment {
 
 	public CardPayment(Integer id, Integer transactionId, MonetaryAmount amount) {
 		super( id,amount );
+		this.transactionId = transactionId;
+	}
+
+	public CardPayment(Integer id, Integer transactionId, Number amount, String currencyCode) {
+		super( id, Monetary.getDefaultAmountFactory().setNumber( amount ).setCurrency( currencyCode ).create() );
+		this.transactionId = transactionId;
+	}
+
+	public CardPayment(Integer id, Integer transactionId, Long amount, String currencyCode) {
+		super( id, Monetary.getDefaultAmountFactory().setNumber( amount ).setCurrency( currencyCode ).create() );
 		this.transactionId = transactionId;
 	}
 
