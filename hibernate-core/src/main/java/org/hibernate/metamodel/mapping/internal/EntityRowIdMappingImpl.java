@@ -213,6 +213,16 @@ public class EntityRowIdMappingImpl implements EntityRowIdMapping, SelectableMap
 	}
 
 	@Override
+	public boolean isInsertable() {
+		return true;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return false;
+	}
+
+	@Override
 	public JdbcMapping getJdbcMapping() {
 		return rowIdType.getJdbcMapping();
 	}

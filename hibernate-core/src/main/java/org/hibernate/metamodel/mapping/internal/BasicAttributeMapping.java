@@ -63,6 +63,8 @@ public class BasicAttributeMapping
 
 	private final JdbcMapping jdbcMapping;
 	private final boolean nullable;
+	private final boolean insertable;
+	private final boolean updateable;
 	private final BasicValueConverter<Object, ?> valueConverter;
 
 	private final JavaType domainTypeDescriptor;
@@ -84,6 +86,8 @@ public class BasicAttributeMapping
 			Integer precision,
 			Integer scale,
 			boolean nullable,
+			boolean insertable,
+			boolean updateable,
 			BasicValueConverter valueConverter,
 			JdbcMapping jdbcMapping,
 			ManagedMappingType declaringType,
@@ -108,6 +112,8 @@ public class BasicAttributeMapping
 		this.precision = precision;
 		this.scale = scale;
 		this.nullable = nullable;
+		this.insertable = insertable;
+		this.updateable = updateable;
 		//noinspection unchecked
 		this.valueConverter = valueConverter;
 		this.jdbcMapping = jdbcMapping;
@@ -134,6 +140,8 @@ public class BasicAttributeMapping
 			BasicValuedModelPart original,
 			PropertyAccess propertyAccess,
 			ValueGeneration valueGeneration,
+			boolean insertable,
+			boolean updateable,
 			SelectableMapping selectableMapping) {
 		String attributeName = null;
 		int stateArrayPosition = 0;
@@ -169,6 +177,8 @@ public class BasicAttributeMapping
 				selectableMapping.getPrecision(),
 				selectableMapping.getScale(),
 				selectableMapping.isNullable(),
+				insertable,
+				updateable,
 				valueConverter,
 				original.getJdbcMapping(),
 				declaringType,
@@ -205,6 +215,16 @@ public class BasicAttributeMapping
 	@Override
 	public boolean isNullable() {
 		return nullable;
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return insertable;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return updateable;
 	}
 
 	@Override

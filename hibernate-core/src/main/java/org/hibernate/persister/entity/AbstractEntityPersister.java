@@ -3783,16 +3783,10 @@ public abstract class AbstractEntityPersister
 		final PreparedStatementGroup statementGroup = mutationExecutor.getStatementGroup();
 		final ParameterBinder parameterBinder = mutationExecutor.getParameterBinder();
 
-		final MutableInteger columnIndexRef = new MutableInteger();
-
 		for ( int attributeIndex = 0; attributeIndex < attributeMappings.size(); attributeIndex++ ) {
 			if ( !propertyInclusions[attributeIndex] ) {
 				continue;
 			}
-
-			// todo (write-path) : convert to keep `insertable` and `updateable` on `SelectionMapping`
-			final boolean[] columnInsertability = propertyColumnInsertable[ attributeIndex ];
-			columnIndexRef.set( 0 );
 
 			final AttributeMapping attributeMapping = attributeMappings.get( attributeIndex );
 			if ( attributeMapping instanceof PluralAttributeMapping ) {
@@ -3802,8 +3796,7 @@ public abstract class AbstractEntityPersister
 			attributeMapping.breakDownJdbcValues(
 					values[ attributeIndex ],
 					(jdbcValue, selectableMapping) -> {
-						final int columnIndex = columnIndexRef.getAndIncrement();
-						if ( !columnInsertability[columnIndex] ) {
+						if ( !selectableMapping.isInsertable() ) {
 							return;
 						}
 
@@ -6573,6 +6566,7 @@ public abstract class AbstractEntityPersister
 			scale = column.getScale();
 		}
 
+		final Value value = bootEntityDescriptor.getIdentifierProperty().getValue();
 		return new BasicEntityIdentifierMappingImpl(
 				this,
 				templateInstanceCreator,
@@ -6583,6 +6577,8 @@ public abstract class AbstractEntityPersister
 				length,
 				precision,
 				scale,
+				Value.isInsertable( value, 0),
+				Value.isUpdateable( value, 0),
 				(BasicType<?>) idType,
 				creationProcess
 		);
@@ -6655,8 +6651,9 @@ public abstract class AbstractEntityPersister
 
 		final PropertyAccess propertyAccess = getRepresentationStrategy().resolvePropertyAccess( bootProperty );
 
+		final Value value = bootProperty.getValue();
 		if ( propertyIndex == getVersionProperty() ) {
-			Column column = bootProperty.getValue().getColumns().get( 0 );
+			Column column = value.getColumns().get( 0 );
 			return MappingModelCreationHelper.buildBasicAttributeMapping(
 					attrName,
 					getNavigableRole().append( bootProperty.getName() ),
@@ -6674,6 +6671,8 @@ public abstract class AbstractEntityPersister
 					column.getPrecision(),
 					column.getScale(),
 					column.isNullable(),
+					Value.isInsertable( value, 0 ),
+					Value.isUpdateable( value, 0 ),
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess
@@ -6681,7 +6680,7 @@ public abstract class AbstractEntityPersister
 		}
 
 		if ( attrType instanceof BasicType ) {
-			final Value bootValue = bootProperty.getValue();
+			final Value bootValue = value;
 
 			final String attrColumnExpression;
 			final boolean isAttrColumnExpressionFormula;
@@ -6762,6 +6761,8 @@ public abstract class AbstractEntityPersister
 					precision,
 					scale,
 					nullable,
+					Value.isInsertable( value, 0 ),
+					Value.isUpdateable( value, 0 ),
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess
@@ -6828,7 +6829,7 @@ public abstract class AbstractEntityPersister
 					propertyAccess,
 					bootProperty,
 					(AnyType) attrType,
-					(Any) bootProperty.getValue(),
+					(Any) value,
 					creationProcess
 			);
 		}

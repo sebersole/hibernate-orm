@@ -81,6 +81,16 @@ public class CollectionIdentifierDescriptorImpl implements CollectionIdentifierD
 	}
 
 	@Override
+	public boolean isInsertable() {
+		return true;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return false;
+	}
+
+	@Override
 	public boolean isNullable() {
 		return false;
 	}

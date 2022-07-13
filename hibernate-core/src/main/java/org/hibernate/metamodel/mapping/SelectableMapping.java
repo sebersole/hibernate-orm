@@ -48,4 +48,8 @@ public interface SelectableMapping extends SqlTypedMapping {
 	 * Is the mapping considered nullable?
 	 */
 	boolean isNullable();
+
+	boolean isInsertable();
+
+	boolean isUpdateable();
 }

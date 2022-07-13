@@ -67,6 +67,8 @@ public class BasicEntityIdentifierMappingImpl implements BasicEntityIdentifierMa
 	private final Long length;
 	private final Integer precision;
 	private final Integer scale;
+	private final boolean insertable;
+	private final boolean updateable;
 
 	private final BasicType<?> idType;
 
@@ -82,12 +84,16 @@ public class BasicEntityIdentifierMappingImpl implements BasicEntityIdentifierMa
 			Long length,
 			Integer precision,
 			Integer scale,
+			boolean insertable,
+			boolean updateable,
 			BasicType<?> idType,
 			MappingModelCreationProcess creationProcess) {
 		this.columnDefinition = columnDefinition;
 		this.length = length;
 		this.precision = precision;
 		this.scale = scale;
+		this.insertable = insertable;
+		this.updateable = updateable;
 		assert attributeName != null;
 		this.attributeName = attributeName;
 		this.rootTable = rootTable;
@@ -309,6 +315,16 @@ public class BasicEntityIdentifierMappingImpl implements BasicEntityIdentifierMa
 	@Override
 	public boolean isNullable() {
 		return false;
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return updateable;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return insertable;
 	}
 
 	@Override

@@ -130,6 +130,16 @@ public class EntityVersionMappingImpl implements EntityVersionMapping, FetchOpti
 	}
 
 	@Override
+	public boolean isInsertable() {
+		return true;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return true;
+	}
+
+	@Override
 	public String getCustomReadExpression() {
 		return null;
 	}
