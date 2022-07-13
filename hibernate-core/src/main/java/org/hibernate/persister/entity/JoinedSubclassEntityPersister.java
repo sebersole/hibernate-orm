@@ -1161,6 +1161,7 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 			precision = column.getPrecision();
 			scale = column.getScale();
 		}
+		final Value value = bootEntityDescriptor.getIdentifierProperty().getValue();
 		return new BasicEntityIdentifierMappingImpl(
 				this,
 				templateInstanceCreator,
@@ -1171,6 +1172,8 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 				length,
 				precision,
 				scale,
+				Value.isInsertable( value, 0),
+				Value.isUpdateable( value, 0),
 				(BasicType<?>) idType,
 				creationProcess
 		);

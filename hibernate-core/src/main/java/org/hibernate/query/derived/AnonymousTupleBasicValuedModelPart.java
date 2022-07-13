@@ -128,6 +128,16 @@ public class AnonymousTupleBasicValuedModelPart implements ModelPart, MappingTyp
 	}
 
 	@Override
+	public boolean isInsertable() {
+		return true;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return false;
+	}
+
+	@Override
 	public String getColumnDefinition() {
 		return null;
 	}

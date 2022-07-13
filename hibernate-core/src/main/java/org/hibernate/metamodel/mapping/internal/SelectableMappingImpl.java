@@ -24,6 +24,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 	private final String customReadExpression;
 	private final String customWriteExpression;
 	private final boolean nullable;
+	private final boolean insertable;
+	private final boolean updateable;
 	private final boolean isFormula;
 
 	public SelectableMappingImpl(
@@ -36,6 +38,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 			Integer precision,
 			Integer scale,
 			boolean nullable,
+			boolean insertable,
+			boolean updateable,
 			boolean isFormula,
 			JdbcMapping jdbcMapping) {
 		super( columnDefinition, length, precision, scale, jdbcMapping );
@@ -45,6 +49,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 		this.customReadExpression = customReadExpression == null ? null : customReadExpression.intern();
 		this.customWriteExpression = customWriteExpression == null ? null : customWriteExpression.intern();
 		this.nullable = nullable;
+		this.insertable = insertable;
+		this.updateable = updateable;
 		this.isFormula = isFormula;
 	}
 
@@ -53,6 +59,8 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 			final Selectable selectable,
 			final JdbcMapping jdbcMapping,
 			final TypeConfiguration typeConfiguration,
+			boolean insertable,
+			boolean updateable,
 			final Dialect dialect,
 			final SqmFunctionRegistry sqmFunctionRegistry) {
 		final String columnExpression;
@@ -88,8 +96,9 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 				length,
 				precision,
 				scale,
-
 				isNullable,
+				insertable,
+				updateable,
 				selectable.isFormula(),
 				jdbcMapping
 		);
@@ -123,5 +132,15 @@ public class SelectableMappingImpl extends SqlTypedMappingImpl implements Select
 	@Override
 	public boolean isNullable() {
 		return nullable;
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return insertable;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return updateable;
 	}
 }

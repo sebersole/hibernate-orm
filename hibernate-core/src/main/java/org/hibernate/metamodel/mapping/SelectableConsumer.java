@@ -85,6 +85,16 @@ public interface SelectableConsumer {
 			}
 
 			@Override
+			public boolean isInsertable() {
+				return true;
+			}
+
+			@Override
+			public boolean isUpdateable() {
+				return true;
+			}
+
+			@Override
 			public JdbcMapping getJdbcMapping() {
 				return null;
 			}

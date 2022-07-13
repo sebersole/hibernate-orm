@@ -187,6 +187,8 @@ public class MappingModelCreationHelper {
 			Integer precision,
 			Integer scale,
 			boolean nullable,
+			boolean insertable,
+			boolean updateable,
 			PropertyAccess propertyAccess,
 			CascadeStyle cascadeStyle,
 			MappingModelCreationProcess creationProcess) {
@@ -298,6 +300,8 @@ public class MappingModelCreationHelper {
 					precision,
 					scale,
 					nullable,
+					insertable,
+					updateable,
 					valueConverter,
 					mappingBasicType.getJdbcMapping(),
 					declaringType,
@@ -323,6 +327,8 @@ public class MappingModelCreationHelper {
 					precision,
 					scale,
 					nullable,
+					insertable,
+					updateable,
 					null,
 					attrType,
 					declaringType,
@@ -603,6 +609,8 @@ public class MappingModelCreationHelper {
 						index.getSelectables().get(0),
 						creationContext.getTypeConfiguration().getBasicTypeForJavaType( Integer.class ),
 						creationProcess.getCreationContext().getTypeConfiguration(),
+						Value.isInsertable( index, 0 ),
+						Value.isUpdateable( index, 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -655,6 +663,8 @@ public class MappingModelCreationHelper {
 						index.getSelectables().get(0),
 						creationContext.getTypeConfiguration().getBasicTypeForJavaType( Integer.class ),
 						creationProcess.getCreationContext().getTypeConfiguration(),
+						Value.isInsertable( index, 0 ),
+						Value.isUpdateable( index, 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -885,6 +895,8 @@ public class MappingModelCreationHelper {
 					bootValueMappingKey.getSelectables().get(0),
 					(JdbcMapping) keyType,
 					creationProcess.getCreationContext().getTypeConfiguration(),
+					Value.isInsertable( bootValueMappingKey, 0 ),
+					Value.isUpdateable( bootValueMappingKey, 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -895,6 +907,8 @@ public class MappingModelCreationHelper {
 							null,
 							keySelectableMapping,
 							simpleFkTarget,
+							Value.isInsertable( bootValueMappingKey, 0 ),
+							Value.isUpdateable( bootValueMappingKey, 0 ),
 							isReferenceToPrimaryKey,
 							( (SimpleValue) bootValueMappingKey ).isConstrained()
 					)
@@ -908,6 +922,8 @@ public class MappingModelCreationHelper {
 							keyDeclaringType,
 							collectionDescriptor.getAttributeMapping(),
 							false,
+							bootValueMappingKey.getColumnInsertability(),
+							bootValueMappingKey.getColumnUpdateability(),
 							dialect,
 							creationProcess
 					);
@@ -993,6 +1009,8 @@ public class MappingModelCreationHelper {
 						attributeMapping.getDeclaringType(),
 						attributeMapping.findContainingEntityMapping(),
 						true,
+						bootValueMapping.getColumnInsertability(),
+						bootValueMapping.getColumnUpdateability(),
 						dialect,
 						creationProcess
 				);
@@ -1036,7 +1054,6 @@ public class MappingModelCreationHelper {
 				}
 				else {
 					declaringKeyPart = simpleFkTarget;
-//					declaringKeyPropertyAccess = ( (PropertyBasedMapping) declaringKeyPart ).getPropertyAccess();
 					declaringKeyPropertyAccess = new ChainedPropertyAccessImpl(
 							attributeMapping.getPropertyAccess(),
 							( (PropertyBasedMapping) declaringKeyPart ).getPropertyAccess()
@@ -1051,15 +1068,20 @@ public class MappingModelCreationHelper {
 				);
 			}
 			final SelectableMapping keySelectableMapping;
+			int i = 0;
+			final Value value = bootProperty.getValue();
 			if ( columnIterator.hasNext() ) {
 				keySelectableMapping = SelectableMappingImpl.from(
 						tableExpression,
 						columnIterator.next(),
 						simpleFkTarget.getJdbcMapping(),
 						creationProcess.getCreationContext().getTypeConfiguration(),
+						Value.isInsertable( value, i ),
+						Value.isUpdateable( value, i ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
+				i++;
 			}
 			else {
 				// case of ToOne with @PrimaryKeyJoinColumn
@@ -1068,6 +1090,8 @@ public class MappingModelCreationHelper {
 						table.getColumn( 0 ),
 						simpleFkTarget.getJdbcMapping(),
 						creationProcess.getCreationContext().getTypeConfiguration(),
+						Value.isInsertable( value, 0 ),
+						Value.isUpdateable( value, 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -1079,6 +1103,8 @@ public class MappingModelCreationHelper {
 					declaringKeyPropertyAccess,
 					keySelectableMapping,
 					simpleFkTarget,
+					Value.isInsertable( value, 0 ),
+					Value.isUpdateable( value, 0 ),
 					bootValueMapping.isReferenceToPrimaryKey(),
 					bootValueMapping.isConstrained(),
 					swapDirection
@@ -1086,12 +1112,15 @@ public class MappingModelCreationHelper {
 			attributeMapping.setForeignKeyDescriptor( foreignKeyDescriptor );
 		}
 		else if ( fkTarget instanceof EmbeddableValuedModelPart ) {
+			final Value value = bootProperty.getValue();
 			final EmbeddedForeignKeyDescriptor embeddedForeignKeyDescriptor = buildEmbeddableForeignKeyDescriptor(
 					(EmbeddableValuedModelPart) fkTarget,
 					bootValueMapping,
 					attributeMapping.getDeclaringType(),
 					attributeMapping.findContainingEntityMapping(),
 					swapDirection,
+					value.getColumnInsertability(),
+					value.getColumnUpdateability(),
 					dialect,
 					creationProcess
 			);
@@ -1165,6 +1194,8 @@ public class MappingModelCreationHelper {
 			ManagedMappingType keyDeclaringType,
 			TableGroupProducer keyDeclaringTableGroupProducer,
 			boolean inverse,
+			boolean[] insertable,
+			boolean[] updateable,
 			Dialect dialect,
 			MappingModelCreationProcess creationProcess) {
 		final boolean hasConstraint;
@@ -1172,7 +1203,7 @@ public class MappingModelCreationHelper {
 		final String keyTableExpression;
 		if ( bootValueMapping instanceof Collection ) {
 			final Collection collectionBootValueMapping = (Collection) bootValueMapping;
-			hasConstraint = ( (SimpleValue) collectionBootValueMapping.getKey() ).isConstrained();
+			hasConstraint = ((SimpleValue) collectionBootValueMapping.getKey()).isConstrained();
 			keyTableExpression = getTableIdentifierExpression(
 					collectionBootValueMapping.getCollectionTable(),
 					creationProcess
@@ -1183,6 +1214,8 @@ public class MappingModelCreationHelper {
 					getPropertyOrder( bootValueMapping, creationProcess ),
 					creationProcess.getCreationContext().getSessionFactory(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
+					insertable,
+					updateable,
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -1193,7 +1226,7 @@ public class MappingModelCreationHelper {
 				hasConstraint = !bootValueMapping.isNullable();
 			}
 			else {
-				hasConstraint = ( (SimpleValue) bootValueMapping ).isConstrained();
+				hasConstraint = ((SimpleValue) bootValueMapping).isConstrained();
 			}
 			keyTableExpression = getTableIdentifierExpression(
 					bootValueMapping.getTable(),
@@ -1205,6 +1238,8 @@ public class MappingModelCreationHelper {
 					getPropertyOrder( bootValueMapping, creationProcess ),
 					creationProcess.getCreationContext().getSessionFactory(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
+					insertable,
+					updateable,
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -1352,6 +1387,8 @@ public class MappingModelCreationHelper {
 					basicValue.getSelectables().get(0),
 					basicValue.resolve().getJdbcMapping(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
+					Value.isInsertable( basicValue, 0 ),
+					Value.isUpdateable( basicValue, 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -1371,6 +1408,8 @@ public class MappingModelCreationHelper {
 			final EmbeddableMappingTypeImpl mappingType = EmbeddableMappingTypeImpl.from(
 					component,
 					compositeType,
+					component.getColumnInsertability(),
+					component.getColumnUpdateability(),
 					inflightDescriptor -> new EmbeddedCollectionPart(
 							collectionDescriptor,
 							CollectionPart.Nature.INDEX,
@@ -1437,6 +1476,8 @@ public class MappingModelCreationHelper {
 					basicElement.getSelectables().get(0),
 					basicElement.resolve().getJdbcMapping(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
+					Value.isInsertable( basicElement, 0 ),
+					Value.isUpdateable( basicElement, 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -1456,6 +1497,8 @@ public class MappingModelCreationHelper {
 			final EmbeddableMappingTypeImpl mappingType = EmbeddableMappingTypeImpl.from(
 					component,
 					compositeType,
+					component.getColumnInsertability(),
+					component.getColumnUpdateability(),
 					embeddableMappingType -> new EmbeddedCollectionPart(
 							collectionDescriptor,
 							CollectionPart.Nature.ELEMENT,

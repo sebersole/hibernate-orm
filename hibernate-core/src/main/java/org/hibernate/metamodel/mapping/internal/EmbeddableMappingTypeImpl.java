@@ -33,6 +33,7 @@ import org.hibernate.mapping.Component;
 import org.hibernate.mapping.IndexedConsumer;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Selectable;
+import org.hibernate.mapping.Value;
 import org.hibernate.metamodel.mapping.AttributeMapping;
 import org.hibernate.metamodel.mapping.AttributeMetadata;
 import org.hibernate.metamodel.mapping.AttributeMetadataAccess;
@@ -81,9 +82,11 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 	public static EmbeddableMappingTypeImpl from(
 			Component bootDescriptor,
 			CompositeType compositeType,
+			boolean[] insertability,
+			boolean[] updateability,
 			Function<EmbeddableMappingType, EmbeddableValuedModelPart> embeddedPartBuilder,
 			MappingModelCreationProcess creationProcess) {
-		return from( bootDescriptor, compositeType, null, null, null, null, embeddedPartBuilder, creationProcess );
+		return from( bootDescriptor, compositeType, null, null, insertability, updateability, embeddedPartBuilder, creationProcess );
 	}
 
 	public static EmbeddableMappingTypeImpl from(
@@ -251,8 +254,9 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 			final AttributeMapping attributeMapping;
 
 			final Type subtype = subtypes[attributeIndex];
+			final Value value = bootPropertyDescriptor.getValue();
 			if ( subtype instanceof BasicType ) {
-				final BasicValue basicValue = (BasicValue) bootPropertyDescriptor.getValue();
+				final BasicValue basicValue = (BasicValue) value;
 				final Selectable selectable = basicValue.getColumn();
 				final String containingTableExpression;
 				final String columnExpression;
@@ -318,6 +322,8 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 						precision,
 						scale,
 						nullable,
+						insertability[columnPosition],
+						updateability[columnPosition],
 						representationStrategy.resolvePropertyAccess( bootPropertyDescriptor ),
 						compositeType.getCascadeStyle( attributeIndex ),
 						creationProcess
@@ -326,19 +332,19 @@ public class EmbeddableMappingTypeImpl extends AbstractEmbeddableMapping impleme
 				columnPosition++;
 			}
 			else if ( subtype instanceof AnyType ) {
-				final Any bootValueMapping = (Any) bootPropertyDescriptor.getValue();
+				final Any bootValueMapping = (Any) value;
 				final AnyType anyType = (AnyType) subtype;
 
 				final PropertyAccess propertyAccess = representationStrategy.resolvePropertyAccess( bootPropertyDescriptor );
 				final boolean nullable = bootValueMapping.isNullable();
-				final boolean insertable = bootPropertyDescriptor.isInsertable();
-				final boolean updateable = bootPropertyDescriptor.isUpdateable();
+				final boolean insertable = insertability[columnPosition];
+				final boolean updateable = updateability[columnPosition];
 				final boolean includeInOptimisticLocking = bootPropertyDescriptor.isOptimisticLocked();
 				final CascadeStyle cascadeStyle = compositeType.getCascadeStyle( attributeIndex );
 				final MutabilityPlan<?> mutabilityPlan;
 
 				if ( updateable ) {
-					mutabilityPlan = new MutabilityPlan<Object>() {
+					mutabilityPlan = new MutabilityPlan<>() {
 						@Override
 						public boolean isMutable() {
 							return true;

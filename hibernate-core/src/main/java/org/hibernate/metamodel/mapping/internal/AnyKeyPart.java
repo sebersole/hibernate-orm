@@ -56,6 +56,8 @@ public class AnyKeyPart implements BasicValuedModelPart, FetchOptions {
 	private final Integer precision;
 	private final Integer scale;
 	private final boolean nullable;
+	private boolean isInsertable;
+	private boolean isUpdateable;
 	private final JdbcMapping jdbcMapping;
 
 	public AnyKeyPart(
@@ -63,7 +65,13 @@ public class AnyKeyPart implements BasicValuedModelPart, FetchOptions {
 			DiscriminatedAssociationModelPart anyPart,
 			String table,
 			String column,
-			String columnDefinition, Long length, Integer precision, Integer scale, boolean nullable,
+			String columnDefinition,
+			Long length,
+			Integer precision,
+			Integer scale,
+			boolean nullable,
+			boolean insertable,
+			boolean updateable,
 			JdbcMapping jdbcMapping) {
 		this.navigableRole = navigableRole;
 		this.table = table;
@@ -74,6 +82,8 @@ public class AnyKeyPart implements BasicValuedModelPart, FetchOptions {
 		this.precision = precision;
 		this.scale = scale;
 		this.nullable = nullable;
+		this.isInsertable = insertable;
+		this.isUpdateable = updateable;
 		this.jdbcMapping = jdbcMapping;
 	}
 
@@ -94,7 +104,17 @@ public class AnyKeyPart implements BasicValuedModelPart, FetchOptions {
 
 	@Override
 	public boolean isNullable() {
-		return false;
+		return nullable;
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return isInsertable;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return isUpdateable;
 	}
 
 	@Override

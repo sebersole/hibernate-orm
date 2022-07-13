@@ -63,6 +63,8 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 	private final Integer precision;
 	private final Integer scale;
 
+	private boolean isInsertable;
+	private boolean isUpdateable;
 	private final MetaType metaType;
 
 	public AnyDiscriminatorPart(
@@ -74,6 +76,8 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 			Long length,
 			Integer precision,
 			Integer scale,
+			boolean insertable,
+			boolean updateable,
 			MetaType metaType) {
 		this.navigableRole = partRole;
 		this.declaringType = declaringType;
@@ -83,6 +87,8 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 		this.length = length;
 		this.precision = precision;
 		this.scale = scale;
+		this.isInsertable = insertable;
+		this.isUpdateable = updateable;
 		this.metaType = metaType;
 	}
 
@@ -112,6 +118,16 @@ public class AnyDiscriminatorPart implements BasicValuedModelPart, FetchOptions,
 	@Override
 	public boolean isNullable() {
 		return false;
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return isInsertable;
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return isUpdateable;
 	}
 
 	@Override

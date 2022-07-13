@@ -71,9 +71,22 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 			PropertyAccess keyPropertyAccess,
 			SelectableMapping keySelectableMapping,
 			BasicValuedModelPart targetModelPart,
+			boolean insertable,
+			boolean updateable,
 			boolean refersToPrimaryKey,
 			boolean hasConstraint) {
-		this( keyDeclaringType, keyModelPart, keyPropertyAccess, keySelectableMapping, targetModelPart, refersToPrimaryKey, hasConstraint, false );
+		this(
+				keyDeclaringType,
+				keyModelPart,
+				keyPropertyAccess,
+				keySelectableMapping,
+				targetModelPart,
+				insertable,
+				updateable,
+				refersToPrimaryKey,
+				hasConstraint,
+				false
+		);
 	}
 
 	public SimpleForeignKeyDescriptor(
@@ -82,6 +95,8 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 			PropertyAccess keyPropertyAccess,
 			SelectableMapping keySelectableMapping,
 			BasicValuedModelPart targetModelPart,
+			boolean insertable,
+			boolean updateable,
 			boolean refersToPrimaryKey,
 			boolean hasConstraint,
 			boolean swapDirection) {
@@ -93,6 +108,8 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 				keyModelPart,
 				keyPropertyAccess,
 				NoValueGeneration.INSTANCE,
+				insertable,
+				updateable,
 				keySelectableMapping
 		);
 		if ( swapDirection ) {
@@ -149,6 +166,8 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 				( (PropertyBasedMapping) keySide.getModelPart() ).getPropertyAccess(),
 				selectableMappingAccess.apply( 0 ),
 				targetSide.getModelPart(),
+				true,
+				true,
 				refersToPrimaryKey,
 				hasConstraint
 		);
@@ -501,6 +520,16 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 	@Override
 	public boolean isNullable() {
 		return keySide.getModelPart().isNullable();
+	}
+
+	@Override
+	public boolean isInsertable() {
+		return keySide.getModelPart().isInsertable();
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return keySide.getModelPart().isUpdateable();
 	}
 
 	@Override

@@ -101,6 +101,16 @@ public class BasicValuedCollectionPart
 	}
 
 	@Override
+	public boolean isInsertable() {
+		return selectableMapping.isInsertable();
+	}
+
+	@Override
+	public boolean isUpdateable() {
+		return selectableMapping.isUpdateable();
+	}
+
+	@Override
 	public String getCustomReadExpression() {
 		return selectableMapping.getCustomReadExpression();
 	}
