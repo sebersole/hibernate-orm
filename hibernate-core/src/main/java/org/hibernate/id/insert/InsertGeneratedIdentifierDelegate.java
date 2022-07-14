@@ -6,7 +6,11 @@
  */
 package org.hibernate.id.insert;
 
+import java.sql.PreparedStatement;
+
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
+import org.hibernate.engine.jdbc.group.PreparedStatementDetails;
+import org.hibernate.engine.jdbc.mutation.spi.ParameterBinderImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
 /**
@@ -28,6 +32,14 @@ public interface InsertGeneratedIdentifierDelegate {
 	 * @return The insert object.
 	 */
 	IdentifierGeneratingInsert prepareIdentifierGeneratingInsert(SqlStringGenerationContext context);
+
+	PreparedStatement prepareStatement(String insertSql, SharedSessionContractImplementor session);
+
+	Object performInsert(
+			PreparedStatementDetails insertStatementDetails,
+			ParameterBinderImplementor parameterBinder,
+			Object entity,
+			SharedSessionContractImplementor session);
 
 	/**
 	 * Append SQL specific to the delegate's mode

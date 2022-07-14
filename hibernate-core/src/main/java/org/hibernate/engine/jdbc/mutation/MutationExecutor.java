@@ -33,7 +33,7 @@ public interface MutationExecutor {
 	ParameterBinder getParameterBinder();
 
 	/**
-	 * Perform the execution
+	 * Perform the execution, returning any generated value
 	 */
-	void execute(SharedSessionContractImplementor session);
+	Object execute(Object modelReference, SharedSessionContractImplementor session);
 }

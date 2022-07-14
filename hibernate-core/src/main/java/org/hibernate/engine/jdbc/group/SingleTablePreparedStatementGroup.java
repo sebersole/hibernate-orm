@@ -15,6 +15,7 @@ import org.hibernate.engine.jdbc.spi.MutationStatementPreparer;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.resource.jdbc.ResourceRegistry;
 import org.hibernate.sql.group.MutationSqlGroup;
+import org.hibernate.sql.group.MutationType;
 import org.hibernate.sql.group.SingleTableMutationSqlGroup;
 import org.hibernate.sql.group.TableMutation;
 
@@ -60,9 +61,21 @@ public class SingleTablePreparedStatementGroup implements PreparedStatementGroup
 			return null;
 		}
 
-		final JdbcCoordinator jdbcCoordinator = session.getJdbcCoordinator();
-		final MutationStatementPreparer statementPreparer = jdbcCoordinator.getMutationStatementPreparer();
-		final PreparedStatement statement = statementPreparer.prepareStatement( tableMutation.getSqlString(), tableMutation.isCallable() );
+		// todo (6.2) : figure out a better way to involve InsertGeneratedIdentifierDelegate
+		final PreparedStatement statement;
+		if ( sqlGroup.getMutationType() == MutationType.INSERT
+				&& sqlGroup.getMutationTarget().getIdentityInsertDelegate() != null ) {
+			statement = sqlGroup.getMutationTarget().getIdentityInsertDelegate().prepareStatement(
+					tableMutation.getSqlString(),
+					session
+			);
+		}
+		else {
+			final JdbcCoordinator jdbcCoordinator = session.getJdbcCoordinator();
+			final MutationStatementPreparer statementPreparer = jdbcCoordinator.getMutationStatementPreparer();
+			statement = statementPreparer.prepareStatement( tableMutation.getSqlString(), tableMutation.isCallable() );
+		}
+
 		try {
 			statementDetails = new StandardPreparedStatementDetails( tableMutation, statement, tableMutation.getExpectation() );
 			return statementDetails;

@@ -139,7 +139,6 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 				: persistentClass.getCustomSQLInsertCheckStyle();
 		customSQLInsert = new String[] {sql};
 		insertCallable = new boolean[] {callable};
-		insertResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
 		insertExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		sql = persistentClass.getCustomSQLUpdate();
@@ -151,7 +150,6 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 				: persistentClass.getCustomSQLUpdateCheckStyle();
 		customSQLUpdate = new String[] {sql};
 		updateCallable = new boolean[] {callable};
-		updateResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
 		updateExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		sql = persistentClass.getCustomSQLDelete();
@@ -163,7 +161,6 @@ public class UnionSubclassEntityPersister extends AbstractEntityPersister {
 				: persistentClass.getCustomSQLDeleteCheckStyle();
 		customSQLDelete = new String[] {sql};
 		deleteCallable = new boolean[] {callable};
-		deleteResultCheckStyles = new ExecuteUpdateResultCheckStyle[] {checkStyle};
 		deleteExpectations = new Expectation[] { Expectations.appropriateExpectation( checkStyle ) };
 
 		discriminatorValue = persistentClass.getSubclassId();

@@ -90,12 +90,13 @@ public class BatchedExecutor implements MutationExecutor {
 	}
 
 	@Override
-	public void execute(SharedSessionContractImplementor session) {
+	public Object execute(Object modelReference, SharedSessionContractImplementor session) {
 		// NOTE : we do process the parameter-binder directly here
 		// in order to avoid iterating the statements twice -
 		// once here to process the binds (for grouped) and then
 		// again in addBatch
 		batch.addToBatch( parameterBinder );
+		return null;
 	}
 
 	@Override

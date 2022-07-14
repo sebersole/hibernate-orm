@@ -6,12 +6,6 @@
  */
 package org.hibernate.orm.test.persister.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.NamedNativeQuery;
 import org.hibernate.annotations.Persister;
@@ -23,12 +17,17 @@ import org.hibernate.dialect.H2Dialect;
 import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.hibernate.persister.entity.SingleTableEntityPersister;
 
-import org.hibernate.testing.orm.junit.RequiresDialect;
 import org.hibernate.testing.orm.junit.DomainModel;
+import org.hibernate.testing.orm.junit.RequiresDialect;
 import org.hibernate.testing.orm.junit.SessionFactory;
 import org.hibernate.testing.orm.junit.SessionFactoryScope;
-
 import org.junit.jupiter.api.Test;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -50,7 +49,8 @@ public class CustomSqlSchemaResolvingIdentityTest {
 		String className = CustomEntity.class.getName();
 
         final AbstractEntityPersister persister = (AbstractEntityPersister) scope.getSessionFactory().getMappingMetamodel().getEntityDescriptor(className);
-		String insertQuery = persister.getSQLInsertStrings()[0];
+		String insertQuery = persister.getStaticSqlInsertGroup().getSingleTableMutation().getSqlString();
+
 		String updateQuery = persister.getSQLUpdateStrings()[0];
 		String deleteQuery = persister.getSQLDeleteStrings()[0];
 

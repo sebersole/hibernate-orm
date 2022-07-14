@@ -16,6 +16,7 @@ import org.hibernate.engine.jdbc.mutation.MutationTarget;
 import org.hibernate.engine.jdbc.mutation.internal.batched.BatchedExecutor;
 import org.hibernate.engine.jdbc.mutation.internal.batched.BatchedSingleTableExecutor;
 import org.hibernate.engine.jdbc.mutation.internal.post.PostInsertExecutor;
+import org.hibernate.engine.jdbc.mutation.internal.post.PostInsertSingleTableExecutor;
 import org.hibernate.engine.jdbc.mutation.internal.unbatched.UnBatchedExecutor;
 import org.hibernate.engine.jdbc.mutation.internal.unbatched.UnBatchedSingleTableExecutor;
 import org.hibernate.engine.jdbc.mutation.spi.MutationExecutorService;
@@ -45,8 +46,13 @@ public class StandardMutationExecutorService implements MutationExecutorService 
 			SharedSessionContractImplementor session) {
 		// specialized handling for inserts using post-insert id generation
 		if ( mutationType == MutationType.INSERT
-				&& mutationTarget.getIdentityInsertStatementExecutor() != null ) {
-			return new PostInsertExecutor( mutationTarget, sqlGroupSupplier.get(), session );
+				&& mutationTarget.getIdentityInsertDelegate() != null ) {
+			if ( mutationTarget.getNumberOfTables() == 1 ) {
+				return new PostInsertSingleTableExecutor( mutationTarget, sqlGroupSupplier.get(), session );
+			}
+			else {
+				return new PostInsertExecutor( mutationTarget, sqlGroupSupplier.get(), session );
+			}
 		}
 
 		// decide whether to us batching - any number > zero means to batch

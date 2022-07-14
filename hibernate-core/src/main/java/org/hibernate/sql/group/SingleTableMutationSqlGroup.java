@@ -36,6 +36,11 @@ public class SingleTableMutationSqlGroup<M extends TableMutation> implements Mut
 	}
 
 	@Override
+	public MutationTarget getMutationTarget() {
+		return mutationTarget;
+	}
+
+	@Override
 	public int getNumberOfTableMutations() {
 		return 1;
 	}
@@ -48,6 +53,14 @@ public class SingleTableMutationSqlGroup<M extends TableMutation> implements Mut
 	@Override
 	public M getTableMutation(String tableName) {
 		assert tableMutation.getTableName().equals( tableName );
+		return tableMutation;
+	}
+
+	@Override
+	public M getTableMutation(int position) {
+		if ( position != 0 ) {
+			throw new IllegalArgumentException( "A SingleTableMutationSqlGroup contains only a single table" );
+		}
 		return tableMutation;
 	}
 

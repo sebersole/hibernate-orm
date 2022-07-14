@@ -20,6 +20,7 @@ import org.hibernate.engine.jdbc.spi.MutationStatementPreparer;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.resource.jdbc.ResourceRegistry;
 import org.hibernate.sql.group.MutationSqlGroup;
+import org.hibernate.sql.group.MutationType;
 import org.hibernate.sql.group.TableMutation;
 
 /**
@@ -78,7 +79,19 @@ public class StandardPreparedStatementGroup implements PreparedStatementGroup {
 			return null;
 		}
 
-		final PreparedStatement statement = statementPreparer.prepareStatement( tableMutation.getSqlString(), tableMutation.isCallable() );
+		final PreparedStatement statement;
+		if ( sqlGroup.getMutationType() == MutationType.INSERT
+				&& sqlGroup.getMutationTarget().getIdentityInsertDelegate() != null
+				&& tableMutation.getTableName().equals( sqlGroup.getMutationTarget().getIdentifierTableName() ) ) {
+			statement = sqlGroup.getMutationTarget().getIdentityInsertDelegate().prepareStatement(
+					tableMutation.getSqlString(),
+					session
+			);
+		}
+		else {
+			statement = statementPreparer.prepareStatement( tableMutation.getSqlString(), tableMutation.isCallable() );
+		}
+
 		try {
 			final PreparedStatementDetails statementDetails = new StandardPreparedStatementDetails( tableMutation, statement, tableMutation.getExpectation() );
 			statementMap.put( tableMutation.getTableName(), statementDetails );

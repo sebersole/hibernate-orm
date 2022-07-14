@@ -118,7 +118,10 @@ public class Batch2Impl implements Batch2 {
 		try {
 			getStatementGroup().forEachStatement( (tableName, statementDetails) -> {
 				sqlStatementLogger.logStatement( statementDetails.getTableMutation().getSqlString() );
-				final boolean handBindings = parameterBinder.beforeStatement( tableName, (SharedSessionContractImplementor) jdbcCoordinator.getJdbcSessionOwner() );
+				final boolean handBindings = parameterBinder.beforeStatement(
+						tableName,
+						(SharedSessionContractImplementor) jdbcCoordinator.getJdbcSessionOwner()
+				);
 				if ( handBindings ) {
 					try {
 						statementDetails.getStatement().addBatch();

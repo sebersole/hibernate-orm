@@ -81,7 +81,8 @@ public class BatchedSingleTableExecutor implements MutationExecutor {
 	}
 
 	@Override
-	public void execute(SharedSessionContractImplementor session) {
+	public Object execute(Object modelReference, SharedSessionContractImplementor session) {
 		batch.addToBatch( parameterBinder );
+		return null;
 	}
 }

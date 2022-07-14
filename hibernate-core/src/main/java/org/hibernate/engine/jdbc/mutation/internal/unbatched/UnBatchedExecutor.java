@@ -71,7 +71,7 @@ public class UnBatchedExecutor implements MutationExecutor {
 	}
 
 	@Override
-	public void execute(SharedSessionContractImplementor session) {
+	public Object execute(Object modelReference, SharedSessionContractImplementor session) {
 		final SqlStatementLogger sqlStatementLogger = session.getJdbcServices().getSqlStatementLogger();
 		try {
 			statementGroup.forEachStatement( (tableName, statementDetails) -> {
@@ -104,6 +104,8 @@ public class UnBatchedExecutor implements MutationExecutor {
 		finally {
 			statementGroup.release();
 		}
+
+		return null;
 	}
 
 	@Override

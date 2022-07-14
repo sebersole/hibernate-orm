@@ -45,7 +45,6 @@ import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.spi.NavigablePath;
 import org.hibernate.sql.InFragment;
-import org.hibernate.sql.Insert;
 import org.hibernate.sql.ast.spi.FromClauseAccess;
 import org.hibernate.sql.ast.spi.SqlAliasBase;
 import org.hibernate.sql.ast.spi.SqlAstCreationContext;
@@ -185,9 +184,6 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 		insertCallable = new boolean[joinSpan];
 		updateCallable = new boolean[joinSpan];
 		deleteCallable = new boolean[joinSpan];
-		insertResultCheckStyles = new ExecuteUpdateResultCheckStyle[joinSpan];
-		updateResultCheckStyles = new ExecuteUpdateResultCheckStyle[joinSpan];
-		deleteResultCheckStyles = new ExecuteUpdateResultCheckStyle[joinSpan];
 
 		insertExpectations = new Expectation[joinSpan];
 		updateExpectations = new Expectation[joinSpan];
@@ -195,24 +191,27 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 		customSQLInsert[0] = persistentClass.getCustomSQLInsert();
 		insertCallable[0] = customSQLInsert[0] != null && persistentClass.isCustomInsertCallable();
-		insertResultCheckStyles[0] = persistentClass.getCustomSQLInsertCheckStyle() == null
-				? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[0], insertCallable[0] )
-				: persistentClass.getCustomSQLInsertCheckStyle();
-		insertExpectations[0] = Expectations.appropriateExpectation( insertResultCheckStyles[0] );
+		insertExpectations[0] = Expectations.appropriateExpectation(
+				persistentClass.getCustomSQLInsertCheckStyle() == null
+						? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[0], insertCallable[0] )
+						: persistentClass.getCustomSQLInsertCheckStyle()
+		);
 
 		customSQLUpdate[0] = persistentClass.getCustomSQLUpdate();
 		updateCallable[0] = customSQLUpdate[0] != null && persistentClass.isCustomUpdateCallable();
-		updateResultCheckStyles[0] = persistentClass.getCustomSQLUpdateCheckStyle() == null
-				? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[0], updateCallable[0] )
-				: persistentClass.getCustomSQLUpdateCheckStyle();
-		updateExpectations[0] = Expectations.appropriateExpectation( updateResultCheckStyles[0] );
+		updateExpectations[0] = Expectations.appropriateExpectation(
+				persistentClass.getCustomSQLUpdateCheckStyle() == null
+						? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[0], updateCallable[0] )
+						: persistentClass.getCustomSQLUpdateCheckStyle()
+		);
 
 		customSQLDelete[0] = persistentClass.getCustomSQLDelete();
 		deleteCallable[0] = customSQLDelete[0] != null && persistentClass.isCustomDeleteCallable();
-		deleteResultCheckStyles[0] = persistentClass.getCustomSQLDeleteCheckStyle() == null
-				? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[0], deleteCallable[0] )
-				: persistentClass.getCustomSQLDeleteCheckStyle();
-		deleteExpectations[0] = Expectations.appropriateExpectation( deleteResultCheckStyles[0] );
+		deleteExpectations[0] = Expectations.appropriateExpectation(
+				persistentClass.getCustomSQLDeleteCheckStyle() == null
+						? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[0], deleteCallable[0] )
+						: persistentClass.getCustomSQLDeleteCheckStyle()
+		);
 
 		// JOINS
 
@@ -229,24 +228,27 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 
 			customSQLInsert[j] = join.getCustomSQLInsert();
 			insertCallable[j] = customSQLInsert[j] != null && join.isCustomInsertCallable();
-			insertResultCheckStyles[j] = join.getCustomSQLInsertCheckStyle() == null
-					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[j], insertCallable[j] )
-					: join.getCustomSQLInsertCheckStyle();
-			insertExpectations[j] = Expectations.appropriateExpectation( insertResultCheckStyles[j] );
+			insertExpectations[j] = Expectations.appropriateExpectation(
+					join.getCustomSQLInsertCheckStyle() == null
+							? ExecuteUpdateResultCheckStyle.determineDefault( customSQLInsert[j], insertCallable[j] )
+							: join.getCustomSQLInsertCheckStyle()
+			);
 
 			customSQLUpdate[j] = join.getCustomSQLUpdate();
 			updateCallable[j] = customSQLUpdate[j] != null && join.isCustomUpdateCallable();
-			updateResultCheckStyles[j] = join.getCustomSQLUpdateCheckStyle() == null
-					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[j], updateCallable[j] )
-					: join.getCustomSQLUpdateCheckStyle();
-			updateExpectations[j] = Expectations.appropriateExpectation( updateResultCheckStyles[j] );
+			updateExpectations[j] = Expectations.appropriateExpectation(
+					join.getCustomSQLUpdateCheckStyle() == null
+							? ExecuteUpdateResultCheckStyle.determineDefault( customSQLUpdate[j], updateCallable[j] )
+							: join.getCustomSQLUpdateCheckStyle()
+			);
 
 			customSQLDelete[j] = join.getCustomSQLDelete();
 			deleteCallable[j] = customSQLDelete[j] != null && join.isCustomDeleteCallable();
-			deleteResultCheckStyles[j] = join.getCustomSQLDeleteCheckStyle() == null
-					? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[j], deleteCallable[j] )
-					: join.getCustomSQLDeleteCheckStyle();
-			deleteExpectations[j] = Expectations.appropriateExpectation( deleteResultCheckStyles[j] );
+			deleteExpectations[j] = Expectations.appropriateExpectation(
+					join.getCustomSQLDeleteCheckStyle() == null
+							? ExecuteUpdateResultCheckStyle.determineDefault( customSQLDelete[j], deleteCallable[j] )
+							: join.getCustomSQLDeleteCheckStyle()
+			);
 
 			keyColumnNames[j] = new String[join.getKey().getColumnSpan()];
 
@@ -604,14 +606,6 @@ public class SingleTableEntityPersister extends AbstractEntityPersister {
 	@Override
 	public int getTableSpan() {
 		return joinSpan;
-	}
-
-	@Override
-	protected void addDiscriminatorToInsert(Insert insert) {
-		if ( discriminatorInsertable ) {
-			insert.addColumn( getDiscriminatorColumnName(), discriminatorSQLValue );
-		}
-
 	}
 
 	@Override

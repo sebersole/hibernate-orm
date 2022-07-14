@@ -6,7 +6,6 @@
  */
 package org.hibernate.sql.group.builder;
 
-import org.hibernate.boot.model.relational.SqlStringGenerationContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.id.insert.InsertGeneratedIdentifierDelegate;
 import org.hibernate.jdbc.Expectation;
@@ -20,6 +19,7 @@ import org.hibernate.sql.group.TableInsert;
  * @author Steve Ebersole
  */
 public class StandardTableInsertBuilder extends AbstractValuedTableMutationBuilder<TableInsert> implements TableInsertBuilder {
+	private final InsertGeneratedIdentifierDelegate identifierDelegate;
 	private final Expectation expectation;
 	private final Insert insert;
 
@@ -32,11 +32,12 @@ public class StandardTableInsertBuilder extends AbstractValuedTableMutationBuild
 			Expectation expectation,
 			SessionFactoryImplementor factory) {
 		super( entityMapping, tableName, isOptional, tableIndex );
+		this.identifierDelegate = identifierDelegate;
 		this.expectation = expectation;
 
 		if ( identifierDelegate != null ) {
 			assert tableIndex == 0;
-			this.insert = identifierDelegate.prepareIdentifierGeneratingInsert( (SqlStringGenerationContext) null );
+			this.insert = identifierDelegate.prepareIdentifierGeneratingInsert( factory.getSqlStringGenerationContext() );
 		}
 		else {
 			this.insert = new Insert( factory.getJdbcServices().getDialect() );

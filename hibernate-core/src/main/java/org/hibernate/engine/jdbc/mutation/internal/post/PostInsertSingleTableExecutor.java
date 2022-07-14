@@ -6,7 +6,6 @@
  */
 package org.hibernate.engine.jdbc.mutation.internal.post;
 
-import java.sql.SQLException;
 import java.util.Locale;
 
 import org.hibernate.engine.jdbc.group.PreparedStatementDetails;
@@ -19,7 +18,6 @@ import org.hibernate.engine.jdbc.mutation.internal.Helper;
 import org.hibernate.engine.jdbc.mutation.spi.ParameterBinderImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.insert.InsertGeneratedIdentifierDelegate;
-import org.hibernate.metamodel.mapping.ModelPart;
 import org.hibernate.sql.group.MutationSqlGroup;
 import org.hibernate.sql.group.TableMutation;
 
@@ -29,12 +27,12 @@ import static org.hibernate.engine.jdbc.mutation.MutationExecutionLogging.MUTATI
 /**
  * @author Steve Ebersole
  */
-public class PostInsertExecutor implements MutationExecutor {
+public class PostInsertSingleTableExecutor implements MutationExecutor {
 	private final MutationTarget mutationTarget;
 	private final StandardPreparedStatementGroup statementGroup;
 	private final ParameterBinderImplementor parameterBinder;
 
-	public PostInsertExecutor(
+	public PostInsertSingleTableExecutor(
 			MutationTarget mutationTarget,
 			MutationSqlGroup<? extends TableMutation> sqlGroup,
 			SharedSessionContractImplementor session) {
@@ -78,55 +76,7 @@ public class PostInsertExecutor implements MutationExecutor {
 			);
 		}
 
-		final ModelPart identifierDescriptor = mutationTarget.getIdentifierDescriptor();
-
-		// apply the generated id to inserts for all the non-identifier tables
-		statementGroup.forEachStatement( (tableName, statementDetails) -> {
-			if ( mutationTarget.getIdentifierTableName().equals( statementDetails.getTableMutation().getTableName() ) ) {
-				return;
-			}
-
-			final int position =  statementDetails.getTableMutation().getNumberOfParameters();
-
-			identifierDescriptor.breakDownJdbcValues(
-					id,
-					(value, jdbcValueMapping) -> {
-						parameterBinder.bindParameter(
-								value,
-								jdbcValueMapping.getJdbcMapping().getJdbcValueBinder(),
-								position,
-								statementDetails.getTableMutation().getTableName(),
-								session
-						);
-					},
-					session
-			);
-
-			final boolean hadBindings = parameterBinder.beforeStatement( tableName, session );
-			if ( ! hadBindings ) {
-				return;
-			}
-
-			try {
-				final int rowCount = session.getJdbcCoordinator()
-						.getResultSetReturn()
-						.executeUpdate( statementDetails.getStatement() );
-
-				statementDetails.getExpectation().verifyOutcome(
-						rowCount,
-						statementDetails.getStatement(),
-						-1,
-						statementDetails.getTableMutation().getSqlString()
-				);
-			}
-			catch (SQLException e) {
-				throw session.getJdbcServices().getSqlExceptionHelper().convert(
-						e,
-						"Unable to execute mutation PreparedStatement against table `" + tableName + "`",
-						statementDetails.getTableMutation().getSqlString()
-				);
-			}
-		} );
+		// todo (6.2) : apply id to non-identifier tables
 
 		return id;
 	}

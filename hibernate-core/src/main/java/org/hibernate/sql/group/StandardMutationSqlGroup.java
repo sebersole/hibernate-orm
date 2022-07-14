@@ -39,6 +39,11 @@ public class StandardMutationSqlGroup<M extends TableMutation> implements Mutati
 	}
 
 	@Override
+	public MutationTarget getMutationTarget() {
+		return mutationTarget;
+	}
+
+	@Override
 	public int getNumberOfTableMutations() {
 		return tableMutationList.size();
 	}
@@ -62,6 +67,22 @@ public class StandardMutationSqlGroup<M extends TableMutation> implements Mutati
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public M getTableMutation(int position) {
+		for ( int i = 0; i < tableMutationList.size(); i++ ) {
+			final M tableMutation = tableMutationList.get( i );
+			if ( tableMutation.getPrimaryTableIndex() == position ) {
+				return tableMutation;
+			}
+
+			if ( tableMutation.getTableIndexes().contains( position ) ) {
+				return tableMutation;
+			}
+		}
+
+		throw new IllegalArgumentException( "Could not locate TableMutation #" + position );
 	}
 
 	@Override

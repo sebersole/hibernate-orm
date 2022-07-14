@@ -36,11 +36,11 @@ import org.hibernate.metamodel.mapping.EntityMappingType;
 import org.hibernate.metamodel.mapping.MappingModelExpressible;
 import org.hibernate.metamodel.mapping.ModelPartContainer;
 import org.hibernate.persister.entity.AbstractEntityPersister;
-import org.hibernate.query.sqm.ComparisonOperator;
 import org.hibernate.query.SemanticException;
-import org.hibernate.query.sqm.SortOrder;
 import org.hibernate.query.results.TableGroupImpl;
 import org.hibernate.query.spi.DomainQueryExecutionContext;
+import org.hibernate.query.sqm.ComparisonOperator;
+import org.hibernate.query.sqm.SortOrder;
 import org.hibernate.query.sqm.internal.DomainParameterXref;
 import org.hibernate.query.sqm.internal.SqmUtil;
 import org.hibernate.query.sqm.mutation.internal.MultiTableSqmMutationConverter;
@@ -75,6 +75,7 @@ import org.hibernate.sql.results.spi.ListResultsConsumer;
 import org.hibernate.type.descriptor.ValueBinder;
 
 /**
+ * @author Christian Beikov
  * @author Steve Ebersole
  */
 public class InsertExecutionDelegate implements TableBasedInsertHandler.ExecutionDelegate {
