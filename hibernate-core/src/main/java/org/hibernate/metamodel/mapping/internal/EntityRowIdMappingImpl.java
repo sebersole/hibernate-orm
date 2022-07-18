@@ -214,7 +214,7 @@ public class EntityRowIdMappingImpl implements EntityRowIdMapping, SelectableMap
 
 	@Override
 	public boolean isInsertable() {
-		return true;
+		return false;
 	}
 
 	@Override

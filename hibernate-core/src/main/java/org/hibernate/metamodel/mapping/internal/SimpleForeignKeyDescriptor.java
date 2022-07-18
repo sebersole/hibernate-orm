@@ -166,8 +166,8 @@ public class SimpleForeignKeyDescriptor implements ForeignKeyDescriptor, BasicVa
 				( (PropertyBasedMapping) keySide.getModelPart() ).getPropertyAccess(),
 				selectableMappingAccess.apply( 0 ),
 				targetSide.getModelPart(),
-				true,
-				true,
+				keySide.getModelPart().isInsertable(),
+				keySide.getModelPart().isUpdateable(),
 				refersToPrimaryKey,
 				hasConstraint
 		);
