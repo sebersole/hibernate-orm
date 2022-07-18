@@ -217,7 +217,7 @@ public class CaseStatementDiscriminatorMappingImpl extends AbstractDiscriminator
 
 	@Override
 	public boolean isInsertable() {
-		return true;
+		return false;
 	}
 
 	@Override
