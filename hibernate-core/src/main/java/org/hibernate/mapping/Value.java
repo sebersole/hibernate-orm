@@ -102,19 +102,7 @@ public interface Value extends Serializable {
 	ServiceRegistry getServiceRegistry();
 	Value copy();
 
-	static boolean isInsertable(Value value, int index) {
-		boolean[] columnInsertability = value.getColumnInsertability();
-		if ( columnInsertability.length > 0 ) {
-			return columnInsertability[index];
-		}
-		return false;
-	}
+	boolean isColumnInsertable(int index);
 
-	static boolean isUpdateable(Value value, int index) {
-		boolean[] columnUpdateability = value.getColumnUpdateability();
-		if ( columnUpdateability.length > 0 ) {
-			return columnUpdateability[index];
-		}
-		return false;
-	}
+	boolean isColumnUpdateable(int index);
 }

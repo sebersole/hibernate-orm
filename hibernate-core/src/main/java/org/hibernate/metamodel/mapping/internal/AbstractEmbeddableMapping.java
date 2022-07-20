@@ -319,8 +319,8 @@ public abstract class AbstractEmbeddableMapping implements EmbeddableMappingType
 						precision,
 						scale,
 						nullable,
-						Value.isInsertable( value, 0 ),
-						Value.isUpdateable( value, 0 ),
+						value.isColumnInsertable( 0 ),
+						value.isColumnUpdateable( 0 ),
 						propertyAccess,
 						compositeType.getCascadeStyle( attributeIndex ),
 						creationProcess
@@ -333,8 +333,8 @@ public abstract class AbstractEmbeddableMapping implements EmbeddableMappingType
 				final AnyType anyType = (AnyType) subtype;
 
 				final boolean nullable = bootValueMapping.isNullable();
-				final boolean insertable = Value.isInsertable( value, 0 );
-				final boolean updateable = Value.isUpdateable( value, 0 );
+				final boolean insertable = value.isColumnInsertable( 0 );
+				final boolean updateable = value.isColumnUpdateable( 0 );
 				final boolean includeInOptimisticLocking = bootPropertyDescriptor.isOptimisticLocked();
 				final CascadeStyle cascadeStyle = compositeType.getCascadeStyle( attributeIndex );
 				final MutabilityPlan<?> mutabilityPlan;

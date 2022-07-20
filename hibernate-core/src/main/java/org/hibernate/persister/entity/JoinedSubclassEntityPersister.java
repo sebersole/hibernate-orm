@@ -1172,8 +1172,8 @@ public class JoinedSubclassEntityPersister extends AbstractEntityPersister {
 				length,
 				precision,
 				scale,
-				Value.isInsertable( value, 0),
-				Value.isUpdateable( value, 0),
+				value.isColumnInsertable( 0 ),
+				value.isColumnUpdateable( 0 ),
 				(BasicType<?>) idType,
 				creationProcess
 		);

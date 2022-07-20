@@ -23,7 +23,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Any;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Selectable;
-import org.hibernate.mapping.Value;
 import org.hibernate.metamodel.RuntimeMetamodels;
 import org.hibernate.metamodel.mapping.BasicValuedModelPart;
 import org.hibernate.metamodel.mapping.DiscriminatedAssociationModelPart;
@@ -95,8 +94,8 @@ public class DiscriminatedAssociationMapping implements MappingType, FetchOption
 				metaColumn.getLength(),
 				metaColumn.getPrecision(),
 				metaColumn.getScale(),
-				Value.isInsertable( bootValueMapping, 0 ),
-				Value.isUpdateable( bootValueMapping, 0 ),
+				bootValueMapping.isColumnInsertable( 0 ),
+				bootValueMapping.isColumnUpdateable( 0 ),
 				(MetaType) anyType.getDiscriminatorType()
 		);
 
@@ -112,8 +111,8 @@ public class DiscriminatedAssociationMapping implements MappingType, FetchOption
 				keyColumn.getPrecision(),
 				keyColumn.getScale(),
 				bootValueMapping.isNullable(),
-				Value.isInsertable( bootValueMapping, 1 ),
-				Value.isUpdateable( bootValueMapping, 1 ),
+				bootValueMapping.isColumnInsertable( 1 ),
+				bootValueMapping.isColumnUpdateable( 1 ),
 				keyType
 		);
 

@@ -345,8 +345,8 @@ public class EntityCollectionPart
 					fkBootDescriptorSource.getSelectables().get(0),
 					basicFkTargetPart.getJdbcMapping(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
-					Value.isInsertable( fkBootDescriptorSource, 0 ),
-					Value.isUpdateable( fkBootDescriptorSource, 0 ),
+					fkBootDescriptorSource.isColumnInsertable( 0 ),
+					fkBootDescriptorSource.isColumnUpdateable( 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -364,8 +364,8 @@ public class EntityCollectionPart
 					null,
 					keySelectableMapping,
 					basicFkTargetPart,
-					Value.isInsertable( fkBootDescriptorSource, 0 ),
-					Value.isUpdateable( fkBootDescriptorSource, 0 ),
+					fkBootDescriptorSource.isColumnInsertable( 0 ),
+					fkBootDescriptorSource.isColumnUpdateable( 0 ),
 					entityType.isReferenceToPrimaryKey(),
 					hasConstraint
 			);

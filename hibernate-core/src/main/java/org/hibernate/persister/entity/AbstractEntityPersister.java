@@ -6577,8 +6577,8 @@ public abstract class AbstractEntityPersister
 				length,
 				precision,
 				scale,
-				Value.isInsertable( value, 0),
-				Value.isUpdateable( value, 0),
+				value.isColumnInsertable( 0 ),
+				value.isColumnUpdateable( 0 ),
 				(BasicType<?>) idType,
 				creationProcess
 		);
@@ -6671,8 +6671,8 @@ public abstract class AbstractEntityPersister
 					column.getPrecision(),
 					column.getScale(),
 					column.isNullable(),
-					Value.isInsertable( value, 0 ),
-					Value.isUpdateable( value, 0 ),
+					value.isColumnInsertable( 0 ),
+					value.isColumnUpdateable( 0 ),
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess
@@ -6761,8 +6761,8 @@ public abstract class AbstractEntityPersister
 					precision,
 					scale,
 					nullable,
-					Value.isInsertable( value, 0 ),
-					Value.isUpdateable( value, 0 ),
+					value.isColumnInsertable( 0 ),
+					value.isColumnUpdateable( 0 ),
 					propertyAccess,
 					tupleAttrDefinition.getCascadeStyle(),
 					creationProcess

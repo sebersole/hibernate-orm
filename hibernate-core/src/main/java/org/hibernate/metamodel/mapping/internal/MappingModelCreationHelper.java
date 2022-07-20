@@ -609,8 +609,8 @@ public class MappingModelCreationHelper {
 						index.getSelectables().get(0),
 						creationContext.getTypeConfiguration().getBasicTypeForJavaType( Integer.class ),
 						creationProcess.getCreationContext().getTypeConfiguration(),
-						Value.isInsertable( index, 0 ),
-						Value.isUpdateable( index, 0 ),
+						index.isColumnInsertable( 0 ),
+						index.isColumnUpdateable( 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -663,8 +663,8 @@ public class MappingModelCreationHelper {
 						index.getSelectables().get(0),
 						creationContext.getTypeConfiguration().getBasicTypeForJavaType( Integer.class ),
 						creationProcess.getCreationContext().getTypeConfiguration(),
-						Value.isInsertable( index, 0 ),
-						Value.isUpdateable( index, 0 ),
+						index.isColumnInsertable( 0 ),
+						index.isColumnUpdateable( 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -895,8 +895,8 @@ public class MappingModelCreationHelper {
 					bootValueMappingKey.getSelectables().get(0),
 					(JdbcMapping) keyType,
 					creationProcess.getCreationContext().getTypeConfiguration(),
-					Value.isInsertable( bootValueMappingKey, 0 ),
-					Value.isUpdateable( bootValueMappingKey, 0 ),
+					bootValueMappingKey.isColumnInsertable( 0 ),
+					bootValueMappingKey.isColumnUpdateable( 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -907,8 +907,8 @@ public class MappingModelCreationHelper {
 							null,
 							keySelectableMapping,
 							simpleFkTarget,
-							Value.isInsertable( bootValueMappingKey, 0 ),
-							Value.isUpdateable( bootValueMappingKey, 0 ),
+							bootValueMappingKey.isColumnInsertable( 0 ),
+							bootValueMappingKey.isColumnUpdateable( 0 ),
 							isReferenceToPrimaryKey,
 							( (SimpleValue) bootValueMappingKey ).isConstrained()
 					)
@@ -1076,8 +1076,8 @@ public class MappingModelCreationHelper {
 						columnIterator.next(),
 						simpleFkTarget.getJdbcMapping(),
 						creationProcess.getCreationContext().getTypeConfiguration(),
-						Value.isInsertable( value, i ),
-						Value.isUpdateable( value, i ),
+						value.isColumnInsertable( i ),
+						value.isColumnUpdateable( i ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -1090,8 +1090,8 @@ public class MappingModelCreationHelper {
 						table.getColumn( 0 ),
 						simpleFkTarget.getJdbcMapping(),
 						creationProcess.getCreationContext().getTypeConfiguration(),
-						Value.isInsertable( value, 0 ),
-						Value.isUpdateable( value, 0 ),
+						value.isColumnInsertable( 0 ),
+						value.isColumnUpdateable( 0 ),
 						dialect,
 						creationProcess.getSqmFunctionRegistry()
 				);
@@ -1103,8 +1103,8 @@ public class MappingModelCreationHelper {
 					declaringKeyPropertyAccess,
 					keySelectableMapping,
 					simpleFkTarget,
-					Value.isInsertable( value, 0 ),
-					Value.isUpdateable( value, 0 ),
+					value.isColumnInsertable( 0 ),
+					value.isColumnUpdateable( 0 ),
 					bootValueMapping.isReferenceToPrimaryKey(),
 					bootValueMapping.isConstrained(),
 					swapDirection
@@ -1387,8 +1387,8 @@ public class MappingModelCreationHelper {
 					basicValue.getSelectables().get(0),
 					basicValue.resolve().getJdbcMapping(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
-					Value.isInsertable( basicValue, 0 ),
-					Value.isUpdateable( basicValue, 0 ),
+					basicValue.isColumnInsertable( 0 ),
+					basicValue.isColumnUpdateable( 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);
@@ -1476,8 +1476,8 @@ public class MappingModelCreationHelper {
 					basicElement.getSelectables().get(0),
 					basicElement.resolve().getJdbcMapping(),
 					creationProcess.getCreationContext().getTypeConfiguration(),
-					Value.isInsertable( basicElement, 0 ),
-					Value.isUpdateable( basicElement, 0 ),
+					basicElement.isColumnInsertable( 0 ),
+					basicElement.isColumnUpdateable( 0 ),
 					dialect,
 					creationProcess.getSqmFunctionRegistry()
 			);

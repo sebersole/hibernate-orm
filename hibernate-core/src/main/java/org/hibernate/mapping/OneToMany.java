@@ -217,4 +217,13 @@ public class OneToMany implements Value {
 				: null;
 	}
 
+	@Override
+	public boolean isColumnInsertable(int index) {
+		return false;
+	}
+
+	@Override
+	public boolean isColumnUpdateable(int index) {
+		return false;
+	}
 }

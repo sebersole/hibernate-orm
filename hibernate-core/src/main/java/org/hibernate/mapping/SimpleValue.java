@@ -961,6 +961,22 @@ public abstract class SimpleValue implements KeyValue {
 		return false;
 	}
 
+	@Override
+	public boolean isColumnInsertable(int index) {
+		if ( insertability.size() > 0 ) {
+			return insertability.get( index );
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isColumnUpdateable(int index) {
+		if ( updatability.size() > 0 ) {
+			return updatability.get( index );
+		}
+		return false;
+	}
+
 	private static boolean[] extractBooleansFromList(List<Boolean> list) {
 		final boolean[] array = new boolean[ list.size() ];
 		int i = 0;
