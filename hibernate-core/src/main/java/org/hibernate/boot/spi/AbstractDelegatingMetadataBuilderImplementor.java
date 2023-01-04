@@ -6,9 +6,6 @@
  */
 package org.hibernate.boot.spi;
 
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.SharedCacheMode;
-
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataBuilder;
@@ -30,6 +27,9 @@ import org.hibernate.type.BasicType;
 import org.hibernate.usertype.UserType;
 
 import org.jboss.jandex.IndexView;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.SharedCacheMode;
 
 /**
  * Convenience base class for custom implementors of {@link MetadataBuilderImplementor} using delegation.
@@ -97,6 +97,12 @@ public abstract class AbstractDelegatingMetadataBuilderImplementor<T extends Met
 	@Override
 	public MetadataBuilder applyAccessType(AccessType accessType) {
 		delegate.applyAccessType( accessType );
+		return getThis();
+	}
+
+	@Override
+	public MetadataBuilder enableAutoIndexMemberTypes(boolean enable) {
+		delegate.enableAutoIndexMemberTypes( enable );
 		return getThis();
 	}
 

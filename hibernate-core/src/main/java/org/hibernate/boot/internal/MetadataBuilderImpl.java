@@ -201,8 +201,14 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 	}
 
 	@Override
+	public MetadataBuilder enableAutoIndexMemberTypes(boolean enable) {
+		this.options.autoIndexMemberTypes = enable;
+		return this;
+	}
+
+	@Override
 	public MetadataBuilder applyIndexView(IndexView jandexView) {
-		this.bootstrapContext.injectJandexView( jandexView );
+		this.options.suppliedJandexIndex = jandexView;
 		return this;
 	}
 
@@ -569,6 +575,9 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		private boolean noConstraintByDefault;
 		private final ArrayList<MetadataSourceType> sourceProcessOrdering;
 
+		private IndexView suppliedJandexIndex;
+		private boolean autoIndexMemberTypes;
+
 		private final IdGeneratorInterpreterImpl idGenerationTypeInterpreter = new IdGeneratorInterpreterImpl();
 
 		private final String schemaCharset;
@@ -582,6 +591,13 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 			final ConfigurationService configService = serviceRegistry.getService( ConfigurationService.class );
 
 			this.mappingDefaults = new MappingDefaultsImpl( serviceRegistry );
+
+			this.suppliedJandexIndex = (IndexView) configService.getSettings().get( AvailableSettings.JANDEX_INDEX );
+			this.autoIndexMemberTypes = configService.getSetting(
+					AvailableSettings.ENABLE_AUTO_INDEX_MEMBER_TYPES,
+					StandardConverters.BOOLEAN,
+					false
+			);
 
 			this.defaultTimezoneStorage = resolveTimeZoneStorageStrategy( configService );
 			this.multiTenancyEnabled = serviceRegistry.getService(MultiTenantConnectionProvider.class)!=null;
@@ -860,6 +876,16 @@ public class MetadataBuilderImpl implements MetadataBuilderImplementor, TypeCont
 		@Override
 		public AccessType getImplicitCacheAccessType() {
 			return defaultCacheAccessType;
+		}
+
+		@Override
+		public IndexView getSuppliedJandexIndex() {
+			return suppliedJandexIndex;
+		}
+
+		@Override
+		public boolean autoIndexMemberTypes() {
+			return autoIndexMemberTypes;
 		}
 
 		@Override

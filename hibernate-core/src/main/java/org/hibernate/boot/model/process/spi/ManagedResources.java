@@ -9,6 +9,7 @@ package org.hibernate.boot.model.process.spi;
 import java.util.Collection;
 import java.util.Map;
 
+import org.hibernate.boot.jandex.spi.JandexIndexBuilder;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 
@@ -64,7 +65,9 @@ public interface ManagedResources {
 	 *
 	 * @return The list of bindings for all known XML mapping files.
 	 */
-	Collection<Binding> getXmlMappingBindings();
+	Collection<Binding<?>> getXmlMappingBindings();
 
 	Map<String,Class<?>> getExtraQueryImports();
+
+	JandexIndexBuilder getJandexIndexBuilder();
 }

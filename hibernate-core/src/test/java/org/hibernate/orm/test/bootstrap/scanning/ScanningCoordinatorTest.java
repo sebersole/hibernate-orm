@@ -41,13 +41,13 @@ import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.orm.junit.Logger;
 import org.hibernate.testing.orm.junit.MessageKeyInspection;
 import org.hibernate.testing.orm.junit.MessageKeyWatcher;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -186,7 +186,7 @@ public class ScanningCoordinatorTest {
 
 		when( bootstrapContext.getScanner() ).thenReturn( scanner );
 
-		final ManagedResourcesImpl managedResources = ManagedResourcesImpl.baseline(
+		final ManagedResourcesImpl managedResources = new ManagedResourcesImpl(
 				new MetadataSources(),
 				bootstrapContext
 		);
@@ -210,15 +210,15 @@ public class ScanningCoordinatorTest {
 	private void assertManagedResourcesAfterCoordinateScanWithScanner(final Scanner scanner, final boolean expectedIsManagedResourcesEmpty) {
 		when( bootstrapContext.getScanner() ).thenReturn( scanner );
 
-		final ManagedResourcesImpl managedResources = ManagedResourcesImpl.baseline( new MetadataSources(), bootstrapContext );
+		final ManagedResourcesImpl managedResources = new ManagedResourcesImpl( new MetadataSources(), bootstrapContext );
 
 		ScanningCoordinator.INSTANCE.coordinateScan( managedResources, bootstrapContext, xmlMappingBinderAccess );
 
 		assertEquals( 1, scanEnvironment.getExplicitlyListedClassNames().size() );
 		assertEquals( "a.b.C", scanEnvironment.getExplicitlyListedClassNames().get( 0 ) );
 
-		assertEquals( true, managedResources.getAttributeConverterDescriptors().isEmpty() );
-		assertEquals( true, managedResources.getAnnotatedClassReferences().isEmpty() );
+		assertTrue( managedResources.getAttributeConverterDescriptors().isEmpty() );
+		assertTrue( managedResources.getAnnotatedClassReferences().isEmpty() );
 		assertEquals( expectedIsManagedResourcesEmpty, managedResources.getAnnotatedClassNames().isEmpty() );
 		assertEquals( expectedIsManagedResourcesEmpty, managedResources.getAnnotatedPackageNames().isEmpty() );
 		assertEquals( expectedIsManagedResourcesEmpty, managedResources.getXmlMappingBindings().isEmpty() );

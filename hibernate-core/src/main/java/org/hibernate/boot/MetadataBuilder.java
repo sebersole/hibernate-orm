@@ -139,6 +139,12 @@ public interface MetadataBuilder {
 	MetadataBuilder applyAccessType(AccessType accessType);
 
 	/**
+	 * Controls whether to perform auto-indexing of classes discovered as
+	 * managed-type members (attributes, id, etc)
+	 */
+	MetadataBuilder enableAutoIndexMemberTypes(boolean enable);
+
+	/**
 	 * Allows specifying a specific Jandex index to use for reading annotation information.
 	 * <p>
 	 * It's important to understand that if a Jandex index is passed in, it is expected that

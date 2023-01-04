@@ -8,8 +8,6 @@ package org.hibernate.boot.spi;
 
 import java.util.List;
 
-import jakarta.persistence.SharedCacheMode;
-
 import org.hibernate.TimeZoneStorageStrategy;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
@@ -26,6 +24,10 @@ import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.metamodel.internal.ManagedTypeRepresentationResolverStandard;
 import org.hibernate.metamodel.spi.ManagedTypeRepresentationResolver;
 import org.hibernate.type.spi.TypeConfiguration;
+
+import org.jboss.jandex.IndexView;
+
+import jakarta.persistence.SharedCacheMode;
 
 /**
  * Describes the options used while building the {@link org.hibernate.boot.Metadata}
@@ -126,6 +128,25 @@ public interface MetadataBuildingOptions {
 	 * @see org.hibernate.cfg.AvailableSettings#DEFAULT_CACHE_CONCURRENCY_STRATEGY
 	 */
 	AccessType getImplicitCacheAccessType();
+
+	/**
+	 * Access to the Jandex index passed by call to
+	 * {@link org.hibernate.boot.MetadataBuilder#applyIndexView(org.jboss.jandex.IndexView)}, if any.
+	 *
+	 * @return The Jandex index explicitly passed to Hibernate; {@code null} if none was passed
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#JANDEX_INDEX
+	 */
+	IndexView getSuppliedJandexIndex();
+
+	/**
+	 * If we are building the Jandex index ourselves, should the types of class members
+	 * be automatically added to the Jandex Indexer?  If we are not building the index,
+	 * this is ignored.
+	 *
+	 * @see org.hibernate.cfg.AvailableSettings#ENABLE_AUTO_INDEX_MEMBER_TYPES
+	 */
+	boolean autoIndexMemberTypes();
 
 	/**
 	 * Is multi-tenancy enabled?

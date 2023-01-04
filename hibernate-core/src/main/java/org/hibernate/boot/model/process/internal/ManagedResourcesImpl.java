@@ -15,36 +15,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.Internal;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.jandex.spi.JandexIndexBuilder;
+import org.hibernate.boot.jaxb.mapping.JaxbEntity;
+import org.hibernate.boot.jaxb.mapping.JaxbEntityMappings;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.spi.BootstrapContext;
+import org.hibernate.internal.util.StringHelper;
+
+import static java.lang.Boolean.TRUE;
+import static org.hibernate.boot.jandex.internal.JandexIndexBuilderFactory.buildJandexIndexBuilder;
 
 /**
  * @author Steve Ebersole
  */
 public class ManagedResourcesImpl implements ManagedResources {
-	private Map<Class, ConverterDescriptor> attributeConverterDescriptorMap = new HashMap<>();
-	private Set<Class> annotatedClassReferences = new LinkedHashSet<>();
-	private Set<String> annotatedClassNames = new LinkedHashSet<>();
-	private Set<String> annotatedPackageNames = new LinkedHashSet<>();
-	private List<Binding> mappingFileBindings = new ArrayList<>();
-	private Map<String, Class<?>> extraQueryImports;
+	private final Set<Class<?>> annotatedClassReferences = new LinkedHashSet<>();
+	private final Set<String> annotatedClassNames = new LinkedHashSet<>();
+	private final Set<String> annotatedPackageNames = new LinkedHashSet<>();
+	private final List<Binding<?>> mappingFileBindings = new ArrayList<>();
 
-	public static ManagedResourcesImpl baseline(MetadataSources sources, BootstrapContext bootstrapContext) {
-		final ManagedResourcesImpl impl = new ManagedResourcesImpl();
-		bootstrapContext.getAttributeConverters().forEach( impl::addAttributeConverterDefinition );
-		impl.annotatedClassReferences.addAll( sources.getAnnotatedClasses() );
-		impl.annotatedClassNames.addAll( sources.getAnnotatedClassNames() );
-		impl.annotatedPackageNames.addAll( sources.getAnnotatedPackages() );
-		impl.mappingFileBindings.addAll( sources.getXmlBindings() );
-		impl.extraQueryImports = sources.getExtraQueryImports();
-		return impl;
+	private final Map<Class<?>, ConverterDescriptor> attributeConverterDescriptorMap = new HashMap<>();
+
+	private final Map<String, Class<?>> extraQueryImports;
+
+	private final JandexIndexBuilder jandexIndexBuilder;
+
+	public ManagedResourcesImpl(MetadataSources sources, BootstrapContext bootstrapContext) {
+		this.jandexIndexBuilder = buildJandexIndexBuilder( bootstrapContext );
+
+		this.annotatedClassReferences.addAll( sources.getAnnotatedClasses() );
+		this.annotatedClassNames.addAll( sources.getAnnotatedClassNames() );
+		this.annotatedPackageNames.addAll( sources.getAnnotatedPackages() );
+		this.mappingFileBindings.addAll( sources.getXmlBindings() );
+		this.extraQueryImports = sources.getExtraQueryImports() == null
+				? Collections.emptyMap()
+				: sources.getExtraQueryImports();
+
+		bootstrapContext.getAttributeConverters().forEach( this::addAttributeConverterDefinition );
 	}
 
-	private ManagedResourcesImpl() {
+	@Override
+	public JandexIndexBuilder getJandexIndexBuilder() {
+		return jandexIndexBuilder;
 	}
 
 	@Override
@@ -68,7 +83,7 @@ public class ManagedResourcesImpl implements ManagedResources {
 	}
 
 	@Override
-	public Collection<Binding> getXmlMappingBindings() {
+	public Collection<Binding<?>> getXmlMappingBindings() {
 		return Collections.unmodifiableList( mappingFileBindings );
 	}
 
@@ -78,31 +93,71 @@ public class ManagedResourcesImpl implements ManagedResources {
 	}
 
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// @Internal
-
-	@Internal
 	public void addAttributeConverterDefinition(ConverterDescriptor descriptor) {
 		attributeConverterDescriptorMap.put( descriptor.getAttributeConverterClass(), descriptor );
 	}
 
-	@Internal
-	public void addAnnotatedClassReference(Class annotatedClassReference) {
+	public void addAnnotatedClassReference(Class<?> annotatedClassReference) {
 		annotatedClassReferences.add( annotatedClassReference );
 	}
 
-	@Internal
 	public void addAnnotatedClassName(String annotatedClassName) {
 		annotatedClassNames.add( annotatedClassName );
 	}
 
-	@Internal
 	public void addAnnotatedPackageName(String annotatedPackageName) {
 		annotatedPackageNames.add( annotatedPackageName );
 	}
 
-	@Internal
-	public void addXmlBinding(Binding binding) {
+	public void addXmlBinding(Binding<?> binding) {
 		mappingFileBindings.add( binding );
+	}
+
+	/**
+	 * When ManagedResources is first built, scanning is not yet complete.  At that point,
+	 * we only know about things we were explicitly told about.
+	 * <p/>
+	 * Here, we can now assume all resources are known.
+	 */
+	public void finishPreparation() {
+		attributeConverterDescriptorMap.forEach( (type, descriptor) -> jandexIndexBuilder.indexClass( type ) );
+
+		annotatedClassReferences.forEach( jandexIndexBuilder::indexClass );
+		annotatedClassNames.forEach( jandexIndexBuilder::indexClass );
+		annotatedPackageNames.forEach( jandexIndexBuilder::indexPackage );
+
+		mappingFileBindings.forEach( this::handleXmlBindings );
+	}
+
+	private void handleXmlBindings(Binding<?> binding) {
+		if ( binding.getRoot() instanceof JaxbEntityMappings ) {
+			final JaxbEntityMappings root = (JaxbEntityMappings) binding.getRoot();
+			effectiveXmlPackageName = StringHelper.nullIfEmpty( root.getPackage() );
+			try {
+				root.getEntities().forEach( this::addXmlMappedEntity );
+			}
+			finally {
+				effectiveXmlPackageName = null;
+			}
+		}
+	}
+
+	private String effectiveXmlPackageName;
+
+	private void addXmlMappedEntity(JaxbEntity mapping) {
+		if ( mapping.isMetadataComplete() == TRUE ) {
+			// no need to index
+			return;
+		}
+
+		jandexIndexBuilder.indexClass( fqn( effectiveXmlPackageName, mapping.getClazz() ) );
+	}
+
+	private String fqn(String effectivePackageName, String className) {
+		if ( className.contains( "." ) || effectivePackageName == null ) {
+			return className;
+		}
+
+		return StringHelper.qualify( effectivePackageName, className );
 	}
 }

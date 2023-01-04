@@ -18,6 +18,7 @@ import java.util.Set;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.internal.InFlightMetadataCollectorImpl;
 import org.hibernate.boot.internal.MetadataBuildingContextRootImpl;
+import org.hibernate.boot.jandex.internal.JandexIndexAugmenter;
 import org.hibernate.boot.jaxb.internal.MappingBinder;
 import org.hibernate.boot.model.TypeContributions;
 import org.hibernate.boot.model.TypeContributor;
@@ -113,7 +114,7 @@ public class MetadataBuildingProcess {
 	public static ManagedResources prepare(
 			final MetadataSources sources,
 			final BootstrapContext bootstrapContext) {
-		final ManagedResourcesImpl managedResources = ManagedResourcesImpl.baseline( sources, bootstrapContext );
+		final ManagedResourcesImpl managedResources = new ManagedResourcesImpl( sources, bootstrapContext );
 		final ConfigurationService configService = bootstrapContext.getServiceRegistry().getService( ConfigurationService.class );
 		final boolean xmlMappingEnabled = configService.getSetting(
 				AvailableSettings.XML_MAPPING_ENABLED,
@@ -125,6 +126,7 @@ public class MetadataBuildingProcess {
 				bootstrapContext,
 				xmlMappingEnabled ? sources.getXmlMappingBinderAccess() : null
 		);
+		managedResources.finishPreparation();
 		return managedResources;
 	}
 
@@ -160,8 +162,11 @@ public class MetadataBuildingProcess {
 
 		bootstrapContext.getTypeConfiguration().scope( rootMetadataBuildingContext );
 
+		final IndexView jandexView = JandexIndexAugmenter.buildAugmentedIndex(
+				managedResources,
+				rootMetadataBuildingContext
+		);
 
-		final IndexView jandexView = bootstrapContext.getJandexView();
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// Set up the processors and start binding

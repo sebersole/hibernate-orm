@@ -42,7 +42,6 @@ import org.hibernate.resource.beans.spi.BeanInstanceProducer;
 import org.hibernate.type.internal.BasicTypeImpl;
 import org.hibernate.type.spi.TypeConfiguration;
 
-import org.jboss.jandex.IndexView;
 import org.jboss.logging.Logger;
 
 /**
@@ -69,8 +68,6 @@ public class BootstrapContextImpl implements BootstrapContext {
 	private ScanEnvironment scanEnvironment;
 	private Object scannerSetting;
 	private ArchiveDescriptorFactory archiveDescriptorFactory;
-
-	private IndexView jandexView;
 
 	private HashMap<String,SqmFunctionDescriptor> sqlFunctionMap;
 	private ArrayList<AuxiliaryDatabaseObject> auxiliaryDatabaseObjectList;
@@ -186,11 +183,6 @@ public class BootstrapContextImpl implements BootstrapContext {
 	}
 
 	@Override
-	public IndexView getJandexView() {
-		return jandexView;
-	}
-
-	@Override
 	public Map<String, SqmFunctionDescriptor> getSqlFunctions() {
 		return sqlFunctionMap == null ? Collections.emptyMap() : sqlFunctionMap;
 	}
@@ -234,7 +226,6 @@ public class BootstrapContextImpl implements BootstrapContext {
 		scanEnvironment = null;
 		scannerSetting = null;
 		archiveDescriptorFactory = null;
-		jandexView = null;
 
 		if ( sqlFunctionMap != null ) {
 			sqlFunctionMap.clear();
@@ -302,11 +293,6 @@ public class BootstrapContextImpl implements BootstrapContext {
 	void injectArchiveDescriptorFactory(ArchiveDescriptorFactory factory) {
 		log.debugf( "Injecting ArchiveDescriptorFactory [%s] into BootstrapContext; was [%s]", factory, this.archiveDescriptorFactory );
 		this.archiveDescriptorFactory = factory;
-	}
-
-	void injectJandexView(IndexView jandexView) {
-		log.debugf( "Injecting Jandex IndexView [%s] into BootstrapContext; was [%s]", jandexView, this.jandexView );
-		this.jandexView = jandexView;
 	}
 
 	public void addSqlFunction(String functionName, SqmFunctionDescriptor function) {
