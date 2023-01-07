@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.hibernate.Internal;
@@ -36,14 +37,14 @@ public class AnnotationDescriptor<T extends Annotation> {
 	/**
 	 * The {@linkplain Class Java type} of the annotation.
 	 */
-	Class<? extends Annotation> getAnnotationType() {
+	public Class<? extends Annotation> getAnnotationType() {
 		return annotationType;
 	}
 
 	/**
 	 * Descriptors for the attributes of this annotation
 	 */
-	public List<AttributeDescriptor<?>> getAttributeDescriptors() {
+	public List<AttributeDescriptor<?>> getAttributes() {
 		return attributeDescriptors;
 	}
 
@@ -51,7 +52,7 @@ public class AnnotationDescriptor<T extends Annotation> {
 	 * If the annotation is {@linkplain java.lang.annotation.Repeatable repeatable},
 	 * returns the descriptor for the container annotation
 	 */
-	AnnotationDescriptor<?> getRepeatableContainer() {
+	public AnnotationDescriptor<?> getRepeatableContainer() {
 		return repeatableContainer;
 	}
 
@@ -158,4 +159,20 @@ public class AnnotationDescriptor<T extends Annotation> {
 		return attributeDescriptors;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+		AnnotationDescriptor<?> that = (AnnotationDescriptor<?>) o;
+		return annotationType.equals( that.annotationType );
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash( annotationType );
+	}
 }

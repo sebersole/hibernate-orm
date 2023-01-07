@@ -11,14 +11,12 @@ import java.lang.reflect.Field;
 import org.hibernate.annotations.Comment;
 import org.hibernate.boot.model.TruthValue;
 import org.hibernate.boot.model.source.annotations.internal.ColumnSourceImpl;
+import org.hibernate.boot.model.source.annotations.internal.StandardAnnotationUsage;
+import org.hibernate.boot.model.source.annotations.spi.JpaAnnotations;
 
 import org.junit.jupiter.api.Test;
 
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -28,13 +26,18 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class ColumnSmokeTests {
 	@Test
 	void testBasicBuilding() throws NoSuchFieldException {
-		final Field nameField = SimpleEntity.class.getDeclaredField( "name" );
+		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
 
 		final Comment nameCommentAnn = nameField.getAnnotation( Comment.class );
-		assertThat( nameCommentAnn.value() ).isEqualTo( "SimpleEntity#name" );
+		assertThat( nameCommentAnn.value() ).isEqualTo( "SimpleColumnEntity#name" );
 
 		final Column nameColumnAnn = nameField.getAnnotation( Column.class );
 		final ColumnSourceImpl columnSource = new ColumnSourceImpl( nameColumnAnn );
+
+		verifyNameAttributeMapping( columnSource );
+	}
+
+	private void verifyNameAttributeMapping(ColumnSourceImpl columnSource) {
 		assertThat( columnSource.getName() ).isEqualTo( "description" );
 		assertThat( columnSource.getContainingTableName() ).isNull();
 		assertThat( columnSource.isNullable() ).isEqualTo( TruthValue.FALSE );
@@ -45,17 +48,21 @@ public class ColumnSmokeTests {
 
 	@Test
 	void testOverrideHandling() throws NoSuchFieldException {
-		final Field nameField = SimpleEntity.class.getDeclaredField( "name" );
+		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
 
 		final ColumnSourceImpl columnSource = new ColumnSourceImpl( nameField.getAnnotation( Column.class ) );
 		columnSource.applyComment( nameField.getAnnotation( Comment.class ) );
 
 		// note: up to this point the assertions are the same from `#testBasicBuilding`.
 		// now, apply an "overlay" from another column - this one uses all default values
-		final Field name2Field = SimpleEntity.class.getDeclaredField( "name2" );
+		final Field name2Field = SimpleColumnEntity.class.getDeclaredField( "name2" );
 		final Column name2ColumnAnn = name2Field.getAnnotation( Column.class );
 		columnSource.overlay( name2ColumnAnn );
 
+		verifyOverriddenValues( columnSource );
+	}
+
+	private void verifyOverriddenValues(ColumnSourceImpl columnSource) {
 		assertThat( columnSource.getContainingTableName() ).isEqualTo( "another_table" );
 		assertThat( columnSource.isNullable() ).isEqualTo( TruthValue.TRUE );
 		assertThat( columnSource.isUnique() ).isFalse();
@@ -63,42 +70,27 @@ public class ColumnSmokeTests {
 		assertThat( columnSource.isUpdateable() ).isTrue();
 	}
 
-	@Entity( name = "SimpleEntity" )
-	@Table( name = "simple_entities" )
-	public static class SimpleEntity {
-	    @Id
-		@Column( name = "id" )
-		@Comment( "SimpleEntity PK column" )
-	    private Integer id;
-
-	    @Basic
-		@Column( name = "description", nullable = false, unique = true, insertable = false )
-		@Comment( "SimpleEntity#name" )
-		private String name;
-
-	    @Basic
-		@Column( table = "another_table", columnDefinition = "special_type" )
-		private String name2;
-
-		private SimpleEntity() {
-			// for use by Hibernate
-		}
-
-		public SimpleEntity(Integer id, String name) {
-			this.id = id;
-			this.name = name;
-		}
-
-		public Integer getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
+	@Test
+	void testAnnotationUsage() throws NoSuchFieldException {
+		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
+		final Column nameColumnAnn = nameField.getAnnotation( Column.class );
+		final StandardAnnotationUsage<Column> nameColumnAnnUsage = new StandardAnnotationUsage<>( nameColumnAnn, JpaAnnotations.COLUMN, null );
+		final ColumnSourceImpl columnSource = new ColumnSourceImpl( nameColumnAnnUsage );
+		verifyNameAttributeMapping( columnSource );
 	}
+
+	@Test
+	void testAnnotationUsageOverride() throws NoSuchFieldException {
+		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
+		final Column nameColumnAnn = nameField.getAnnotation( Column.class );
+		final StandardAnnotationUsage<Column> nameColumnAnnUsage = new StandardAnnotationUsage<>( nameColumnAnn, JpaAnnotations.COLUMN, null );
+		final ColumnSourceImpl columnSource = new ColumnSourceImpl( nameColumnAnnUsage );
+
+		final Field name2Field = SimpleColumnEntity.class.getDeclaredField( "name2" );
+		final Column name2ColumnAnn = name2Field.getAnnotation( Column.class );
+		final StandardAnnotationUsage<Column> name2ColumnAnnUsage = new StandardAnnotationUsage<>( name2ColumnAnn, JpaAnnotations.COLUMN, null );
+		columnSource.overlay( name2ColumnAnnUsage );
+		verifyOverriddenValues( columnSource );
+	}
+
 }

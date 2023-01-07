@@ -19,10 +19,12 @@ import org.hibernate.boot.model.source.annotations.spi.JdbcTypeSource;
 import org.hibernate.boot.model.source.spi.ColumnSource;
 import org.hibernate.boot.model.source.spi.JdbcDataType;
 import org.hibernate.boot.model.source.spi.SizeSource;
+import org.hibernate.internal.util.NullnessHelper;
 import org.hibernate.internal.util.StringHelper;
 
 import jakarta.persistence.Column;
 
+import static org.hibernate.boot.model.source.annotations.internal.AnnotationHelper.ifNotDefault;
 import static org.hibernate.boot.model.source.annotations.internal.AnnotationHelper.ifSpecified;
 
 /**
@@ -56,7 +58,11 @@ public class ColumnSourceImpl implements ColumnSource, SizeSource {
 	}
 
 	public ColumnSourceImpl(Column annotation) {
-		this.name = StringHelper.nullIfEmpty( annotation.name() );
+		this( annotation, null );
+	}
+
+	public ColumnSourceImpl(Column annotation, String defaultName) {
+		this.name = NullnessHelper.coalesce( annotation.name(), defaultName );
 		this.tableName = StringHelper.nullIfEmpty( annotation.table() );
 		this.sqlTypeDefinition = StringHelper.nullIfEmpty( annotation.columnDefinition() );
 
@@ -64,12 +70,14 @@ public class ColumnSourceImpl implements ColumnSource, SizeSource {
 	}
 
 	public ColumnSourceImpl(AnnotationUsage<Column> annotation) {
-		this();
+		setName( AnnotationHelper.nullIfUnspecified( annotation.getAttributeValue( "name" ) ) );
+		setTableName( AnnotationHelper.nullIfUnspecified( annotation.getAttributeValue( "table" ) ) );
+		setSqlTypeDefinition( AnnotationHelper.nullIfUnspecified( annotation.getAttributeValue( "columnDefinition" ) ) );
+
 		overlay( annotation );
 	}
 
 	public ColumnSourceImpl(JaxbColumn jaxbColumn) {
-		this();
 		overlay( jaxbColumn );
 	}
 
@@ -309,9 +317,9 @@ public class ColumnSourceImpl implements ColumnSource, SizeSource {
 	}
 
 	public void overlay(AnnotationUsage<Column> override) {
-		ifSpecified( override.getAttributeValue( "name" ), this::setName );
-		ifSpecified( override.getAttributeValue( "table" ), this::setTableName );
-		ifSpecified( override.getAttributeValue( "columnDefinition" ), this::setSqlTypeDefinition );
+		ifNotDefault( override.getAttributeValue( "name" ), this::setName );
+		ifNotDefault( override.getAttributeValue( "table" ), this::setTableName );
+		ifNotDefault( override.getAttributeValue( "columnDefinition" ), this::setSqlTypeDefinition );
 		ifSpecified( override.getAttributeValue( "nullable" ), this::setNullable );
 		ifSpecified( override.getAttributeValue( "unique" ), this::setUnique );
 		ifSpecified( override.getAttributeValue( "length" ), this::setLength );

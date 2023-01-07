@@ -55,6 +55,23 @@ public class NullnessHelper {
 		return null;
 	}
 
+	public static <T> T coalesce(T value1, T value2) {
+		if ( value1 != null ) {
+			return value1;
+		}
+		return value2;
+	}
+
+	public static <T> T coalesce(T value1, T value2, T value3) {
+		if ( value1 != null ) {
+			return value1;
+		}
+		if ( value2 != null ) {
+			return value2;
+		}
+		return value3;
+	}
+
 	/**
 	 * Operates like SQL coalesce expression, returning the first non-empty value
 	 *

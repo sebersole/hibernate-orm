@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.model.source.annotations.spi;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -20,12 +21,12 @@ public interface AnnotationTarget {
 	 * {@linkplain java.lang.annotation.Repeatable repeatable}
 	 * annotation types, returns all usages including the repetitions.
 	 */
-	List<AnnotationUsage> getUsages(AnnotationDescriptor type);
+	<A extends Annotation> List<AnnotationUsage<A>> getUsages(AnnotationDescriptor<A> type);
 
 	/**
 	 * Like {@link #getUsages} but allowing functional access
 	 */
-	void withAnnotations(AnnotationDescriptor type, Consumer<AnnotationUsage> consumer);
+	<A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer);
 
 	/**
 	 * Get a singular usage of the given annotation type.  For
@@ -33,15 +34,17 @@ public interface AnnotationTarget {
 	 * annotation types, will throw an exception if there are
 	 * multiple usages
 	 */
-	AnnotationUsage getUsage(AnnotationDescriptor type);
+	<A extends Annotation> AnnotationUsage<A> getUsage(AnnotationDescriptor<A> type);
 
 	/**
 	 * Get a usage of the given annotation type with the given name.
 	 *
 	 * @implNote Delegates to {@link #getNamedUsage(AnnotationDescriptor, String, String)}
-	 * with {@link "name"} as the {@code attributeName}.
+	 * 		with {@link "name"} as the {@code attributeName}.
 	 */
-	AnnotationUsage getNamedUsage(AnnotationDescriptor type, String name);
+	default <A extends Annotation> AnnotationUsage<A> getNamedUsage(AnnotationDescriptor<A> type, String name) {
+		return getNamedUsage( type, name, "name" );
+	}
 
 	/**
 	 * Get a usage of the given annotation type with the given name.
@@ -49,5 +52,5 @@ public interface AnnotationTarget {
 	 * @param attributeName The name of the annotation attribute on which
 	 * to match the {@code name}.
 	 */
-	AnnotationUsage getNamedUsage(AnnotationDescriptor type, String name, String attributeName);
+	<A extends Annotation> AnnotationUsage<A> getNamedUsage(AnnotationDescriptor<A> type, String name, String attributeName);
 }
