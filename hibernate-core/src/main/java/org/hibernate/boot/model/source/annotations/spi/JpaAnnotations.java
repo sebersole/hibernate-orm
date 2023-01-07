@@ -1,0 +1,302 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
+ */
+package org.hibernate.boot.model.source.annotations.spi;
+
+import java.util.function.Consumer;
+
+import org.hibernate.annotations.NamedQueries;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AssociationOverrides;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ColumnResult;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Converter;
+import jakarta.persistence.Converts;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EntityResult;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.ExcludeDefaultListeners;
+import jakarta.persistence.ExcludeSuperclassListeners;
+import jakarta.persistence.FieldResult;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Index;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinColumns;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapKey;
+import jakarta.persistence.MapKeyClass;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.MapKeyEnumerated;
+import jakarta.persistence.MapKeyJoinColumn;
+import jakarta.persistence.MapKeyJoinColumns;
+import jakarta.persistence.MapKeyTemporal;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedEntityGraphs;
+import jakarta.persistence.NamedNativeQueries;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.NamedStoredProcedureQueries;
+import jakarta.persistence.NamedStoredProcedureQuery;
+import jakarta.persistence.NamedSubgraph;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceContexts;
+import jakarta.persistence.PersistenceProperty;
+import jakarta.persistence.PersistenceUnit;
+import jakarta.persistence.PersistenceUnits;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostRemove;
+import jakarta.persistence.PostUpdate;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreRemove;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.PrimaryKeyJoinColumns;
+import jakarta.persistence.QueryHint;
+import jakarta.persistence.SecondaryTable;
+import jakarta.persistence.SecondaryTables;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.SequenceGenerators;
+import jakarta.persistence.SqlResultSetMapping;
+import jakarta.persistence.SqlResultSetMappings;
+import jakarta.persistence.StoredProcedureParameter;
+import jakarta.persistence.Table;
+import jakarta.persistence.TableGenerator;
+import jakarta.persistence.TableGenerators;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.Transient;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
+
+import static org.hibernate.boot.model.source.annotations.spi.AnnotationDescriptor.createDetails;
+
+/**
+ * Descriptors for JPA annotations
+ *
+ * @author Steve Ebersole
+ */
+public interface JpaAnnotations {
+	AnnotationDescriptor ACCESS = createDetails( Access.class );
+	AnnotationDescriptor ASSOCIATION_OVERRIDES = createDetails( AssociationOverrides.class );
+	AnnotationDescriptor ASSOCIATION_OVERRIDE = createDetails( AssociationOverride.class, ASSOCIATION_OVERRIDES );
+	AnnotationDescriptor ATTRIBUTE_OVERRIDES = createDetails( AttributeOverrides.class );
+	AnnotationDescriptor ATTRIBUTE_OVERRIDE = createDetails( AttributeOverride.class, ATTRIBUTE_OVERRIDES );
+	AnnotationDescriptor BASIC = createDetails( Basic.class );
+	AnnotationDescriptor CACHEABLE = createDetails( Cacheable.class );
+	AnnotationDescriptor COLLECTION_TABLE = createDetails( CollectionTable.class );
+	AnnotationDescriptor COLUMN = createDetails( Column.class );
+	AnnotationDescriptor COLUMN_RESULT = createDetails( ColumnResult.class );
+	AnnotationDescriptor CONVERTS = createDetails( Converts.class );
+	AnnotationDescriptor CONVERT = createDetails( Convert.class, CONVERTS );
+	AnnotationDescriptor CONVERTER = createDetails( Converter.class );
+	AnnotationDescriptor DISCRIMINATOR_COLUMN = createDetails( DiscriminatorColumn.class );
+	AnnotationDescriptor DISCRIMINATOR_VALUE = createDetails( DiscriminatorValue.class );
+	AnnotationDescriptor ELEMENT_COLLECTION = createDetails( ElementCollection.class );
+	AnnotationDescriptor EMBEDDABLE = createDetails( Embeddable.class );
+	AnnotationDescriptor EMBEDDED = createDetails( Embedded.class );
+	AnnotationDescriptor EMBEDDED_ID = createDetails( EmbeddedId.class );
+	AnnotationDescriptor ENTITY = createDetails( Entity.class );
+	AnnotationDescriptor ENTITY_LISTENERS = createDetails( EntityListeners.class );
+	AnnotationDescriptor ENTITY_RESULT = createDetails( EntityResult.class );
+	AnnotationDescriptor ENUMERATED = createDetails( Enumerated.class );
+	AnnotationDescriptor EXCLUDE_DEFAULT_LISTENERS = createDetails( ExcludeDefaultListeners.class );
+	AnnotationDescriptor EXCLUDE_SUPERCLASS_LISTENERS = createDetails( ExcludeSuperclassListeners.class );
+	AnnotationDescriptor FIELD_RESULT = createDetails( FieldResult.class );
+	AnnotationDescriptor FOREIGN_KEY = createDetails( ForeignKey.class );
+	AnnotationDescriptor GENERATED_VALUE = createDetails( GeneratedValue.class );
+	AnnotationDescriptor ID = createDetails( Id.class );
+	AnnotationDescriptor ID_CLASS = createDetails( IdClass.class );
+	AnnotationDescriptor INDEX = createDetails( Index.class );
+	AnnotationDescriptor INHERITANCE = createDetails( Inheritance.class );
+	AnnotationDescriptor JOIN_COLUMNS = createDetails( JoinColumns.class );
+	AnnotationDescriptor JOIN_COLUMN = createDetails( JoinColumn.class, JOIN_COLUMNS );
+	AnnotationDescriptor JOIN_TABLE = createDetails( JoinTable.class );
+	AnnotationDescriptor LOB = createDetails( Lob.class );
+	AnnotationDescriptor MANY_TO_MANY = createDetails( ManyToMany.class );
+	AnnotationDescriptor MANY_TO_ONE = createDetails( ManyToOne.class );
+	AnnotationDescriptor MAP_KEY = createDetails( MapKey.class );
+	AnnotationDescriptor MAP_KEY_CLASS = createDetails( MapKeyClass.class );
+	AnnotationDescriptor MAP_KEY_COLUMN = createDetails( MapKeyColumn.class );
+	AnnotationDescriptor MAP_KEY_ENUMERATED = createDetails( MapKeyEnumerated.class );
+	AnnotationDescriptor MAP_KEY_JOIN_COLUMNS = createDetails( MapKeyJoinColumns.class );
+	AnnotationDescriptor MAP_KEY_JOIN_COLUMN = createDetails( MapKeyJoinColumn.class, MAP_KEY_JOIN_COLUMNS );
+	AnnotationDescriptor MAP_KEY_TEMPORAL = createDetails( MapKeyTemporal.class );
+	AnnotationDescriptor MAPPED_SUPERCLASS = createDetails( MappedSuperclass.class );
+	AnnotationDescriptor MAPS_ID = createDetails( MapsId.class );
+	AnnotationDescriptor NAMED_ATTRIBUTE_NODE = createDetails( NamedAttributeNode.class );
+	AnnotationDescriptor NAMED_ENTITY_GRAPHS = createDetails( NamedEntityGraphs.class );
+	AnnotationDescriptor NAMED_ENTITY_GRAPH = createDetails( NamedEntityGraph.class, NAMED_ENTITY_GRAPHS );
+	AnnotationDescriptor NAMED_NATIVE_QUERIES = createDetails( NamedNativeQueries.class );
+	AnnotationDescriptor NAMED_NATIVE_QUERY = createDetails( NamedNativeQuery.class, NAMED_NATIVE_QUERIES );
+	AnnotationDescriptor NAMED_QUERIES = createDetails( NamedQueries.class );
+	AnnotationDescriptor NAMED_QUERY = createDetails( NamedQuery.class, NAMED_QUERIES );
+	AnnotationDescriptor NAMED_STORED_PROCEDURE_QUERIES = createDetails( NamedStoredProcedureQueries.class );
+	AnnotationDescriptor NAMED_STORED_PROCEDURE_QUERY = createDetails( NamedStoredProcedureQuery.class, NAMED_STORED_PROCEDURE_QUERIES );
+	AnnotationDescriptor NAMED_SUB_GRAPH = createDetails( NamedSubgraph.class );
+	AnnotationDescriptor ONE_TO_MANY = createDetails( OneToMany.class );
+	AnnotationDescriptor ONE_TO_ONE = createDetails( OneToOne.class );
+	AnnotationDescriptor ORDER_BY = createDetails( OrderBy.class );
+	AnnotationDescriptor ORDER_COLUMN = createDetails( OrderColumn.class );
+	AnnotationDescriptor POST_LOAD = createDetails( PostLoad.class );
+	AnnotationDescriptor POST_PERSIST = createDetails( PostPersist.class );
+	AnnotationDescriptor POST_REMOVE = createDetails( PostRemove.class );
+	AnnotationDescriptor POST_UPDATE = createDetails( PostUpdate.class );
+	AnnotationDescriptor PRE_PERSIST = createDetails( PrePersist.class );
+	AnnotationDescriptor PRE_REMOVE = createDetails( PreRemove.class );
+	AnnotationDescriptor PRE_UPDATE = createDetails( PreUpdate.class );
+	AnnotationDescriptor PRIMARY_KEY_JOIN_COLUMNS = createDetails( PrimaryKeyJoinColumns.class );
+	AnnotationDescriptor PRIMARY_KEY_JOIN_COLUMN = createDetails( PrimaryKeyJoinColumn.class, PRIMARY_KEY_JOIN_COLUMNS );
+	AnnotationDescriptor QUERY_HINT = createDetails( QueryHint.class );
+	AnnotationDescriptor SECONDARY_TABLES = createDetails( SecondaryTables.class );
+	AnnotationDescriptor SECONDARY_TABLE = createDetails( SecondaryTable.class, SECONDARY_TABLES );
+	AnnotationDescriptor SEQUENCE_GENERATORS = createDetails( SequenceGenerators.class );
+	AnnotationDescriptor SEQUENCE_GENERATOR = createDetails( SequenceGenerator.class, SEQUENCE_GENERATORS );
+	AnnotationDescriptor SQL_RESULT_SET_MAPPINGS = createDetails( SqlResultSetMappings.class );
+	AnnotationDescriptor SQL_RESULT_SET_MAPPING = createDetails( SqlResultSetMapping.class, SQL_RESULT_SET_MAPPINGS );
+	AnnotationDescriptor STORED_PROCEDURE_PARAMETER = createDetails( StoredProcedureParameter.class );
+	AnnotationDescriptor TABLE = createDetails( Table.class );
+	AnnotationDescriptor TABLE_GENERATORS = createDetails( TableGenerators.class );
+	AnnotationDescriptor TABLE_GENERATOR = createDetails( TableGenerator.class, TABLE_GENERATORS );
+	AnnotationDescriptor TEMPORAL = createDetails( Temporal.class );
+	AnnotationDescriptor TRANSIENT = createDetails( Transient.class );
+	AnnotationDescriptor UNIQUE_CONSTRAINT = createDetails( UniqueConstraint.class );
+	AnnotationDescriptor VERSION = createDetails( Version.class );
+
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Not sure we need these
+
+	AnnotationDescriptor PERSISTENCE_PROPERTY = createDetails( PersistenceProperty.class );
+	AnnotationDescriptor PERSISTENCE_UNITS = createDetails( PersistenceUnits.class );
+	AnnotationDescriptor PERSISTENCE_CONTEXTS = createDetails( PersistenceContexts.class );
+	AnnotationDescriptor PERSISTENCE_CONTEXT = createDetails( PersistenceContext.class, PERSISTENCE_CONTEXTS );
+	AnnotationDescriptor PERSISTENCE_UNIT = createDetails( PersistenceUnit.class, PERSISTENCE_UNITS );
+
+	/**
+	 * Consume each defined AnnotationDescriptor
+	 */
+	static void forEachAnnotation(Consumer<AnnotationDescriptor> consumer) {
+		consumer.accept( ACCESS );
+		consumer.accept( ASSOCIATION_OVERRIDES );
+		consumer.accept( ASSOCIATION_OVERRIDE );
+		consumer.accept( ATTRIBUTE_OVERRIDES );
+		consumer.accept( ATTRIBUTE_OVERRIDE );
+		consumer.accept( BASIC );
+		consumer.accept( CACHEABLE );
+		consumer.accept( COLLECTION_TABLE );
+		consumer.accept( COLUMN );
+		consumer.accept( COLUMN_RESULT );
+		consumer.accept( CONVERTS );
+		consumer.accept( CONVERT );
+		consumer.accept( CONVERTER );
+		consumer.accept( DISCRIMINATOR_COLUMN );
+		consumer.accept( DISCRIMINATOR_VALUE );
+		consumer.accept( ELEMENT_COLLECTION );
+		consumer.accept( EMBEDDABLE );
+		consumer.accept( EMBEDDED );
+		consumer.accept( EMBEDDED_ID );
+		consumer.accept( ENTITY );
+		consumer.accept( ENTITY_LISTENERS );
+		consumer.accept( ENTITY_RESULT );
+		consumer.accept( ENUMERATED );
+		consumer.accept( EXCLUDE_DEFAULT_LISTENERS );
+		consumer.accept( EXCLUDE_SUPERCLASS_LISTENERS );
+		consumer.accept( FIELD_RESULT );
+		consumer.accept( FOREIGN_KEY );
+		consumer.accept( GENERATED_VALUE );
+		consumer.accept( ID );
+		consumer.accept( ID_CLASS );
+		consumer.accept( INDEX );
+		consumer.accept( INHERITANCE );
+		consumer.accept( JOIN_COLUMNS );
+		consumer.accept( JOIN_COLUMN );
+		consumer.accept( JOIN_TABLE );
+		consumer.accept( LOB );
+		consumer.accept( MANY_TO_MANY );
+		consumer.accept( MANY_TO_ONE );
+		consumer.accept( MAP_KEY );
+		consumer.accept( MAP_KEY_CLASS );
+		consumer.accept( MAP_KEY_COLUMN );
+		consumer.accept( MAP_KEY_ENUMERATED );
+		consumer.accept( MAP_KEY_JOIN_COLUMNS );
+		consumer.accept( MAP_KEY_JOIN_COLUMN );
+		consumer.accept( MAP_KEY_TEMPORAL );
+		consumer.accept( MAPPED_SUPERCLASS );
+		consumer.accept( MAPS_ID );
+		consumer.accept( NAMED_ATTRIBUTE_NODE );
+		consumer.accept( NAMED_ENTITY_GRAPHS );
+		consumer.accept( NAMED_ENTITY_GRAPH );
+		consumer.accept( NAMED_NATIVE_QUERIES );
+		consumer.accept( NAMED_NATIVE_QUERY );
+		consumer.accept( NAMED_QUERIES );
+		consumer.accept( NAMED_QUERY );
+		consumer.accept( NAMED_STORED_PROCEDURE_QUERIES );
+		consumer.accept( NAMED_STORED_PROCEDURE_QUERY );
+		consumer.accept( NAMED_SUB_GRAPH );
+		consumer.accept( ONE_TO_MANY );
+		consumer.accept( ONE_TO_ONE );
+		consumer.accept( ORDER_BY );
+		consumer.accept( ORDER_COLUMN );
+		consumer.accept( PERSISTENCE_CONTEXTS );
+		consumer.accept( PERSISTENCE_CONTEXT );
+		consumer.accept( PERSISTENCE_PROPERTY );
+		consumer.accept( PERSISTENCE_UNITS );
+		consumer.accept( PERSISTENCE_UNIT );
+		consumer.accept( POST_LOAD );
+		consumer.accept( POST_PERSIST );
+		consumer.accept( POST_REMOVE );
+		consumer.accept( POST_UPDATE );
+		consumer.accept( PRE_PERSIST );
+		consumer.accept( PRE_REMOVE );
+		consumer.accept( PRE_UPDATE );
+		consumer.accept( PRIMARY_KEY_JOIN_COLUMNS );
+		consumer.accept( PRIMARY_KEY_JOIN_COLUMN );
+		consumer.accept( QUERY_HINT );
+		consumer.accept( SECONDARY_TABLES );
+		consumer.accept( SECONDARY_TABLE );
+		consumer.accept( SEQUENCE_GENERATORS );
+		consumer.accept( SEQUENCE_GENERATOR );
+		consumer.accept( SQL_RESULT_SET_MAPPINGS );
+		consumer.accept( SQL_RESULT_SET_MAPPING );
+		consumer.accept( STORED_PROCEDURE_PARAMETER );
+		consumer.accept( TABLE );
+		consumer.accept( TABLE_GENERATORS );
+		consumer.accept( TABLE_GENERATOR );
+		consumer.accept( TEMPORAL );
+		consumer.accept( TRANSIENT );
+		consumer.accept( UNIQUE_CONSTRAINT );
+		consumer.accept( VERSION );
+	}
+}
