@@ -72,6 +72,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @see Generator
  * @see AnnotationBasedGenerator
  *
+ * @author Steve Ebersole
+ *
  * @since 6.0
  */
 @Target(ANNOTATION_TYPE)

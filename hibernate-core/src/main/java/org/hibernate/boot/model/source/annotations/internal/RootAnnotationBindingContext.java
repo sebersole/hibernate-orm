@@ -7,10 +7,8 @@
 package org.hibernate.boot.model.source.annotations.internal;
 
 import org.hibernate.boot.internal.DelegatingMetadataBuildingContext;
+import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.model.source.annotations.spi.AnnotationBindingContext;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationDescriptorXref;
-import org.hibernate.boot.model.source.annotations.spi.HibernateAnnotations;
-import org.hibernate.boot.model.source.annotations.spi.JpaAnnotations;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
@@ -19,18 +17,15 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 public class RootAnnotationBindingContext
 		extends DelegatingMetadataBuildingContext
 		implements AnnotationBindingContext {
-	private final AnnotationDescriptorXref annotationDescriptorXref;
+	private final AnnotationProcessingContext processingContext;
 
-	public RootAnnotationBindingContext(MetadataBuildingContext delegate) {
+	public RootAnnotationBindingContext(AnnotationProcessingContext processingContext, MetadataBuildingContext delegate) {
 		super( delegate );
-
-		annotationDescriptorXref = new AnnotationDescriptorXref();
-		JpaAnnotations.forEachAnnotation( annotationDescriptorXref::register );
-		HibernateAnnotations.forEachAnnotation( annotationDescriptorXref::register );
+		this.processingContext = processingContext;
 	}
 
 	@Override
-	public AnnotationDescriptorXref getAnnotationDescriptorXref() {
-		return annotationDescriptorXref;
+	public AnnotationProcessingContext getAnnotationProcessingContext() {
+		return processingContext;
 	}
 }

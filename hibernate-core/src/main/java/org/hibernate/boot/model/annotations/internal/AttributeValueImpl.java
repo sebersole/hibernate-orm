@@ -4,21 +4,21 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.source.annotations.internal;
+package org.hibernate.boot.model.annotations.internal;
 
 import java.util.Objects;
 
-import org.hibernate.boot.model.source.annotations.spi.AnnotationDescriptor.AttributeDescriptor;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor.AttributeDescriptor;
+import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
 
 /**
  * @author Steve Ebersole
  */
-public class StandardAttributeValue implements AnnotationUsage.AttributeValue {
+public class AttributeValueImpl implements AnnotationUsage.AttributeValue {
 	private final AttributeDescriptor<?> attributeDescriptor;
 	private final Object value;
 
-	public StandardAttributeValue(AttributeDescriptor attributeDescriptor, Object value) {
+	public AttributeValueImpl(AttributeDescriptor attributeDescriptor, Object value) {
 		this.attributeDescriptor = attributeDescriptor;
 		this.value = value;
 	}

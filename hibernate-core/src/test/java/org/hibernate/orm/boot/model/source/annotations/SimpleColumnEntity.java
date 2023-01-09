@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
  */
 @Entity(name = "SimpleColumnEntity")
 @Table(name = "simple_entities")
+@CustomAnnotation()
 public class SimpleColumnEntity {
 	@Id
 	@Column(name = "id")

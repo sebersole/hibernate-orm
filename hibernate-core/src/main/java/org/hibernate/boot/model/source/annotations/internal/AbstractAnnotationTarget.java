@@ -13,51 +13,80 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.hibernate.boot.model.source.annotations.AnnotationAccessException;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationBindingContext;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationDescriptor;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationDescriptorXref;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationTarget;
-import org.hibernate.boot.model.source.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.model.annotations.AnnotationAccessException;
+import org.hibernate.boot.model.annotations.internal.AnnotationUsageImpl;
+import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.model.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.model.annotations.spi.AnnotationTarget;
+import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
+ * Base support for things which can be {@linkplain java.lang.annotation.Target targeted}
+ * by annotations, providing access to the details about those associated annotations
+ *
  * @author Steve Ebersole
  */
 public abstract class AbstractAnnotationTarget implements AnnotationTarget {
+	private final AnnotationProcessingContext processingContext;
 	private final Map<Class<? extends Annotation>,List<AnnotationUsage<?>>> usagesMap = new HashMap<>();
 
-	public AbstractAnnotationTarget(Annotation[] annotations, AnnotationBindingContext bindingContext) {
-		final AnnotationDescriptorXref descriptorXref = bindingContext.getAnnotationDescriptorXref();
+	public AbstractAnnotationTarget(AnnotationProcessingContext processingContext) {
+		this.processingContext = processingContext;
+	}
 
+	public AbstractAnnotationTarget(List<AnnotationUsage<?>> annotationUsages, AnnotationProcessingContext processingContext) {
+		this( processingContext );
+		apply( annotationUsages );
+	}
+
+	public void apply(List<AnnotationUsage<?>> annotationUsages) {
 		// todo (annotation-source) : handle meta-annotations
+		annotationUsages.forEach( this::apply );
+	}
 
-		for ( int i = 0; i < annotations.length; i++ ) {
-			final Annotation annotation = annotations[i];
-			final Class<? extends Annotation> annotationJavaType = annotation.annotationType();
+	public void apply(AnnotationUsage<?> annotationUsage) {
+		final AnnotationDescriptor<?> annotationDescriptor = annotationUsage.getAnnotationDescriptor();
+		final Class<? extends Annotation> annotationJavaType = annotationDescriptor.getAnnotationType();
 
-			//noinspection rawtypes
-			final AnnotationDescriptor containedDescriptor = descriptorXref.getRepeatableDescriptor( annotationJavaType );
-			if ( containedDescriptor != null ) {
-				final List<Annotation> repeated = AnnotationHelper.extractRepeated( annotation );
-				final List<AnnotationUsage<?>> usages = CollectionHelper.arrayList( repeated.size() );
-				for ( int r = 0; r < repeated.size(); r++ ) {
-					//noinspection unchecked,rawtypes
-					usages.add( new StandardAnnotationUsage<>( repeated.get(r), containedDescriptor, this ) );
-				}
-				//noinspection unchecked
-				usagesMap.put( containedDescriptor.getAnnotationType(), usages );
-				continue;
+		if ( annotationDescriptor.getRepeatableContainer() != null ) {
+			// The annotation is repeatable.  Since Java does not allow the repeatable and container
+			// to exist on the same target, this means that this usage is the only effective
+			// one for its descriptor
+			usagesMap.put( annotationJavaType, Collections.singletonList( annotationUsage ) );
+		}
+		else {
+			final AnnotationDescriptorRegistry descriptorXref = processingContext.getAnnotationDescriptorRegistry();
+			final AnnotationDescriptor<?> repeatableDescriptor = descriptorXref.getRepeatableDescriptor( annotationJavaType );
+			if ( repeatableDescriptor != null ) {
+				// The usage type is a repeatable container.  Flatten its contained annotations
+				final AnnotationUsage.AttributeValue value = annotationUsage.getAttributeValue( "value" );
+				final List<AnnotationUsage<?>> repeatableUsages = value.getValue();
+				usagesMap.put( repeatableDescriptor.getAnnotationType(), repeatableUsages );
 			}
-
-			final AnnotationDescriptor<?> descriptor = descriptorXref.getDescriptor( annotationJavaType );
-			if ( descriptor != null ) {
-				//noinspection unchecked,rawtypes
-				final StandardAnnotationUsage usage = new StandardAnnotationUsage( annotation, descriptor, this );
-				//noinspection unchecked
-				usagesMap.put( descriptor.getAnnotationType(), Collections.singletonList( usage ) );
+			else {
+				usagesMap.put( annotationJavaType, Collections.singletonList( annotationUsage ) );
 			}
 		}
+	}
+
+	public void apply(Annotation[] annotations) {
+		// todo (annotation-source) : handle meta-annotations
+		for ( int i = 0; i < annotations.length; i++ ) {
+			apply( annotations[i] );
+		}
+	}
+
+	protected void apply(Annotation annotation) {
+		final AnnotationDescriptorRegistry descriptorXref = processingContext.getAnnotationDescriptorRegistry();
+		//noinspection rawtypes,unchecked
+		final AnnotationUsageImpl usage = new AnnotationUsageImpl(
+				annotation,
+				descriptorXref.getDescriptor( annotation.annotationType() ),
+				this
+		);
+		apply( usage );
 	}
 
 	@Override

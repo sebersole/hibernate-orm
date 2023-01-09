@@ -4,14 +4,18 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.source.annotations.spi;
+package org.hibernate.boot.model.annotations.spi;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * A model part which can be the target of an annotation
+ * A model part which can be the target of annotations.
+ *
+ * @apiNote "Flattens" {@linkplain java.lang.annotation.Repeatable repeatable}
+ * annotations such that the container is removed and the actual repeatable
+ * annotations are lumped together
  *
  * @author Steve Ebersole
  */
@@ -37,17 +41,18 @@ public interface AnnotationTarget {
 	<A extends Annotation> AnnotationUsage<A> getUsage(AnnotationDescriptor<A> type);
 
 	/**
-	 * Get a usage of the given annotation type with the given name.
+	 * Get a usage of the given annotation {@code type} with the given {@code name}.
 	 *
 	 * @implNote Delegates to {@link #getNamedUsage(AnnotationDescriptor, String, String)}
-	 * 		with {@link "name"} as the {@code attributeName}.
+	 * with {@link "name"} as the {@code attributeName}.
 	 */
 	default <A extends Annotation> AnnotationUsage<A> getNamedUsage(AnnotationDescriptor<A> type, String name) {
 		return getNamedUsage( type, name, "name" );
 	}
 
 	/**
-	 * Get a usage of the given annotation type with the given name.
+	 * Get a usage of the given annotation {@code type} with its
+	 * {@code attributeName} equal to the given {@code name}.
 	 *
 	 * @param attributeName The name of the annotation attribute on which
 	 * to match the {@code name}.

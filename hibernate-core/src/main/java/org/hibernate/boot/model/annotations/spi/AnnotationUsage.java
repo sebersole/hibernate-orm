@@ -4,19 +4,21 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.source.annotations.spi;
+package org.hibernate.boot.model.annotations.spi;
 
 import java.lang.annotation.Annotation;
 
+import org.hibernate.boot.model.annotations.internal.OrmAnnotationDescriptorImpl;
+
 /**
- * Abstraction of the usage of an annotation.  That is, not the
+ * Describes the usage of an annotation.  That is, not the
  * {@linkplain AnnotationDescriptor annotation class} itself, but
  * rather a particular usage of the annotation on one of its
  * allowable {@linkplain AnnotationTarget targets}.
  *
  * @apiNote Abstracts the underlying source of the annotation information,
- * whether that is the annotation itself or another source (Jandex, proxy
- * for dynamic models, etc.).
+ * whether that is the {@linkplain Annotation annotation} itself, Jandex,
+ * HCANN, etc.
  *
  * @author Steve Ebersole
  */
@@ -50,12 +52,24 @@ public interface AnnotationUsage<A extends Annotation> {
 		/**
 		 * Descriptor for the attribute for which this is a value
 		 */
-		<T> AnnotationDescriptor.AttributeDescriptor<T> getAttributeDescriptor();
+		<T> OrmAnnotationDescriptorImpl.AttributeDescriptor<T> getAttributeDescriptor();
 
 		/**
 		 * The value
 		 */
 		<T> T getValue();
+
+		default String getStringValue() {
+			return getValue().toString();
+		}
+
+		default boolean getBooleanValue() {
+			return getValue();
+		}
+
+		default boolean getIntValue() {
+			return getValue();
+		}
 
 		/**
 		 * Whether the value is a default.

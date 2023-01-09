@@ -6,11 +6,17 @@
  */
 package org.hibernate.boot.model.source.annotations.spi;
 
+import org.hibernate.boot.model.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**
  * @author Steve Ebersole
  */
 public interface AnnotationBindingContext extends MetadataBuildingContext {
-	AnnotationDescriptorXref getAnnotationDescriptorXref();
+	AnnotationProcessingContext getAnnotationProcessingContext();
+
+	default AnnotationDescriptorRegistry getAnnotationDescriptorRegistry() {
+		return getAnnotationProcessingContext().getAnnotationDescriptorRegistry();
+	}
 }
