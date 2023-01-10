@@ -4,11 +4,12 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.annotations.spi;
+package org.hibernate.boot.annotations.spi;
 
 import java.util.function.Consumer;
 
 import org.hibernate.annotations.*;
+import org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder;
 
 import static org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder.createDetails;
 
@@ -21,7 +22,7 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<Any> ANY = createDetails( Any.class );
 	AnnotationDescriptor<AnyDiscriminator> ANY_DISCRIMINATOR = createDetails( AnyDiscriminator.class );
 	AnnotationDescriptor<AnyDiscriminatorValues> ANY_DISCRIMINATOR_VALUES = createDetails( AnyDiscriminatorValues.class );
-	AnnotationDescriptor<AnyDiscriminatorValue> ANY_DISCRIMINATOR_VALUE = createDetails( AnyDiscriminatorValue.class, ANY_DISCRIMINATOR_VALUES );
+	AnnotationDescriptor<AnyDiscriminatorValue> ANY_DISCRIMINATOR_VALUE = AnnotationDescriptorBuilder.createDetails( AnyDiscriminatorValue.class, ANY_DISCRIMINATOR_VALUES );
 	AnnotationDescriptor<AnyKeyJavaClass> ANY_KEY_JAVA_CLASS = createDetails( AnyKeyJavaClass.class );
 	AnnotationDescriptor<AnyKeyJavaType> ANY_KEY_JAVA_TYPE = createDetails( AnyKeyJavaType.class );
 	AnnotationDescriptor<AnyKeyJdbcType> ANY_KEY_JDBC_TYPE = createDetails( AnyKeyJdbcType.class );
@@ -33,7 +34,7 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<Cache> CACHE = createDetails( Cache.class );
 	AnnotationDescriptor<Cascade> CASCADE = createDetails( Cascade.class );
 	AnnotationDescriptor<Checks> CHECKS = createDetails( Checks.class );
-	AnnotationDescriptor<Check> CHECK = createDetails( Check.class, CHECKS );
+	AnnotationDescriptor<Check> CHECK = AnnotationDescriptorBuilder.createDetails( Check.class, CHECKS );
 	AnnotationDescriptor<CollectionId> COLLECTION_ID = createDetails( CollectionId.class );
 	AnnotationDescriptor<CollectionIdJavaType> COLLECTION_ID_JAVA_TYPE = createDetails( CollectionIdJavaType.class );
 	AnnotationDescriptor<CollectionIdJdbcType> COLLECTION_ID_JDBC_TYPE = createDetails( CollectionIdJdbcType.class );
@@ -42,16 +43,16 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<CollectionIdType> COLLECTION_ID_TYPE = createDetails( CollectionIdType.class );
 	AnnotationDescriptor<CollectionType> COLLECTION_TYPE = createDetails( CollectionType.class );
 	AnnotationDescriptor<CollectionTypeRegistrations> COLLECTION_TYPE_REGS = createDetails( CollectionTypeRegistrations.class );
-	AnnotationDescriptor<CollectionTypeRegistration> COLLECTION_TYPE_REG = createDetails( CollectionTypeRegistration.class, COLLECTION_TYPE_REGS );
+	AnnotationDescriptor<CollectionTypeRegistration> COLLECTION_TYPE_REG = AnnotationDescriptorBuilder.createDetails( CollectionTypeRegistration.class, COLLECTION_TYPE_REGS );
 	AnnotationDescriptor<ColumnDefault> COLUMN_DEFAULT = createDetails( ColumnDefault.class );
 	AnnotationDescriptor<ColumnTransformers> COLUMN_TRANSFORMERS = createDetails( ColumnTransformers.class );
-	AnnotationDescriptor<ColumnTransformer> COLUMN_TRANSFORMER = createDetails( ColumnTransformer.class, COLUMN_TRANSFORMERS );
+	AnnotationDescriptor<ColumnTransformer> COLUMN_TRANSFORMER = AnnotationDescriptorBuilder.createDetails( ColumnTransformer.class, COLUMN_TRANSFORMERS );
 	AnnotationDescriptor<Comment> COMMENT = createDetails( Comment.class );
 	AnnotationDescriptor<CompositeType> COMPOSITE_TYPE = createDetails( CompositeType.class );
 	AnnotationDescriptor<CompositeTypeRegistrations> COMPOSITE_TYPE_REGS = createDetails( CompositeTypeRegistrations.class );
-	AnnotationDescriptor<CompositeTypeRegistration> COMPOSITE_TYPE_REG = createDetails( CompositeTypeRegistration.class, COMPOSITE_TYPE_REGS );
+	AnnotationDescriptor<CompositeTypeRegistration> COMPOSITE_TYPE_REG = AnnotationDescriptorBuilder.createDetails( CompositeTypeRegistration.class, COMPOSITE_TYPE_REGS );
 	AnnotationDescriptor<ConverterRegistrations> CONVERTER_REGS = createDetails( ConverterRegistrations.class );
-	AnnotationDescriptor<ConverterRegistration> CONVERTER_REG = createDetails( ConverterRegistration.class, CONVERTER_REGS );
+	AnnotationDescriptor<ConverterRegistration> CONVERTER_REG = AnnotationDescriptorBuilder.createDetails( ConverterRegistration.class, CONVERTER_REGS );
 	AnnotationDescriptor<CreationTimestamp> CREATION_TIMESTAMP = createDetails( CreationTimestamp.class );
 	AnnotationDescriptor<CurrentTimestamp> CURRENT_TIMESTAMP = createDetails( CurrentTimestamp.class );
 	AnnotationDescriptor<DiscriminatorFormula> DISCRIMINATOR_FORMULA = createDetails( DiscriminatorFormula.class );
@@ -60,23 +61,23 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<DynamicUpdate> DYNAMIC_UPDATE = createDetails( DynamicUpdate.class );
 	AnnotationDescriptor<EmbeddableInstantiator> EMBEDDABLE_INSTANTIATOR = createDetails( EmbeddableInstantiator.class );
 	AnnotationDescriptor<EmbeddableInstantiatorRegistrations> EMBEDDABLE_INSTANTIATOR_REGS = createDetails( EmbeddableInstantiatorRegistrations.class );
-	AnnotationDescriptor<EmbeddableInstantiatorRegistration> EMBEDDABLE_INSTANTIATOR_REG = createDetails( EmbeddableInstantiatorRegistration.class, EMBEDDABLE_INSTANTIATOR_REGS );
+	AnnotationDescriptor<EmbeddableInstantiatorRegistration> EMBEDDABLE_INSTANTIATOR_REG = AnnotationDescriptorBuilder.createDetails( EmbeddableInstantiatorRegistration.class, EMBEDDABLE_INSTANTIATOR_REGS );
 	AnnotationDescriptor<Fetch> FETCH = createDetails( Fetch.class );
 	AnnotationDescriptor<FetchProfiles> FETCH_PROFILES = createDetails( FetchProfiles.class );
-	AnnotationDescriptor<FetchProfile> FETCH_PROFILE = createDetails( FetchProfile.class, FETCH_PROFILES );
+	AnnotationDescriptor<FetchProfile> FETCH_PROFILE = AnnotationDescriptorBuilder.createDetails( FetchProfile.class, FETCH_PROFILES );
 	AnnotationDescriptor<Filters> FILTERS = createDetails( Filters.class );
-	AnnotationDescriptor<Filter> FILTER = createDetails( Filter.class, FILTERS );
+	AnnotationDescriptor<Filter> FILTER = AnnotationDescriptorBuilder.createDetails( Filter.class, FILTERS );
 	AnnotationDescriptor<FilterDefs> FILTER_DEFS = createDetails( FilterDefs.class );
-	AnnotationDescriptor<FilterDef> FILTER_DEF = createDetails( FilterDef.class, FILTER_DEFS );
+	AnnotationDescriptor<FilterDef> FILTER_DEF = AnnotationDescriptorBuilder.createDetails( FilterDef.class, FILTER_DEFS );
 	AnnotationDescriptor<FilterJoinTables> FILTER_JOIN_TABLES = createDetails( FilterJoinTables.class );
-	AnnotationDescriptor<FilterJoinTable> FILTER_JOIN_TABLE = createDetails( FilterJoinTable.class, FILTER_JOIN_TABLES );
+	AnnotationDescriptor<FilterJoinTable> FILTER_JOIN_TABLE = AnnotationDescriptorBuilder.createDetails( FilterJoinTable.class, FILTER_JOIN_TABLES );
 	AnnotationDescriptor<ForeignKey> FOREIGN_KEY = createDetails( ForeignKey.class );
 	AnnotationDescriptor<Formula> FORMULA = createDetails( Formula.class );
 	AnnotationDescriptor<Generated> GENERATED = createDetails( Generated.class );
 	AnnotationDescriptor<GeneratedColumn> GENERATED_COLUMN = createDetails( GeneratedColumn.class );
 	AnnotationDescriptor<GeneratorType> GENERATOR_TYPE = createDetails( GeneratorType.class );
 	AnnotationDescriptor<GenericGenerators> GENERIC_GENERATORS = createDetails( GenericGenerators.class );
-	AnnotationDescriptor<GenericGenerator> GENERIC_GENERATOR = createDetails( GenericGenerator.class, GENERIC_GENERATORS );
+	AnnotationDescriptor<GenericGenerator> GENERIC_GENERATOR = AnnotationDescriptorBuilder.createDetails( GenericGenerator.class, GENERIC_GENERATORS );
 	AnnotationDescriptor<IdGeneratorType> ID_GENERATOR_TYPE = createDetails( IdGeneratorType.class );
 	AnnotationDescriptor<Immutable> IMMUTABLE = createDetails( Immutable.class );
 	AnnotationDescriptor<Imported> IMPORTED = createDetails( Imported.class );
@@ -85,13 +86,13 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<Instantiator> INSTANTIATOR = createDetails( Instantiator.class );
 	AnnotationDescriptor<JavaType> JAVA_TYPE = createDetails( JavaType.class );
 	AnnotationDescriptor<JavaTypeRegistrations> JAVA_TYPE_REGS = createDetails( JavaTypeRegistrations.class );
-	AnnotationDescriptor<JavaTypeRegistration> JAVA_TYPE_REG = createDetails( JavaTypeRegistration.class, JAVA_TYPE_REGS );
+	AnnotationDescriptor<JavaTypeRegistration> JAVA_TYPE_REG = AnnotationDescriptorBuilder.createDetails( JavaTypeRegistration.class, JAVA_TYPE_REGS );
 	AnnotationDescriptor<JdbcType> JDBC_TYPE = createDetails( JdbcType.class );
 	AnnotationDescriptor<JdbcTypeCode> JDBC_TYPE_CODE = createDetails( JdbcTypeCode.class );
 	AnnotationDescriptor<JdbcTypeRegistrations> JDBC_TYPE_REGS = createDetails( JdbcTypeRegistrations.class );
-	AnnotationDescriptor<JdbcTypeRegistration> JDBC_TYPE_REG = createDetails( JdbcTypeRegistration.class, JDBC_TYPE_REGS );
+	AnnotationDescriptor<JdbcTypeRegistration> JDBC_TYPE_REG = AnnotationDescriptorBuilder.createDetails( JdbcTypeRegistration.class, JDBC_TYPE_REGS );
 	AnnotationDescriptor<JoinColumnsOrFormulas> JOIN_COLUMNS_OR_FORMULAS = createDetails( JoinColumnsOrFormulas.class );
-	AnnotationDescriptor<JoinColumnOrFormula> JOIN_COLUMN_OR_FORMULA = createDetails( JoinColumnOrFormula.class, JOIN_COLUMNS_OR_FORMULAS );
+	AnnotationDescriptor<JoinColumnOrFormula> JOIN_COLUMN_OR_FORMULA = AnnotationDescriptorBuilder.createDetails( JoinColumnOrFormula.class, JOIN_COLUMNS_OR_FORMULAS );
 	AnnotationDescriptor<JoinFormula> JOIN_FORMULA = createDetails( JoinFormula.class );
 	AnnotationDescriptor<LazyCollection> LAZY_COLLECTION = createDetails( LazyCollection.class );
 	AnnotationDescriptor<LazyGroup> LAZY_GROUP = createDetails( LazyGroup.class );
@@ -110,9 +111,9 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<MapKeyType> MAP_KEY_TYPE = createDetails( MapKeyType.class );
 	AnnotationDescriptor<Mutability> MUTABILITY = createDetails( Mutability.class );
 	AnnotationDescriptor<NamedNativeQueries> NAMED_NATIVE_QUERIES = createDetails( NamedNativeQueries.class );
-	AnnotationDescriptor<NamedNativeQuery> NAMED_NATIVE_QUERY = createDetails( NamedNativeQuery.class, NAMED_NATIVE_QUERIES );
+	AnnotationDescriptor<NamedNativeQuery> NAMED_NATIVE_QUERY = AnnotationDescriptorBuilder.createDetails( NamedNativeQuery.class, NAMED_NATIVE_QUERIES );
 	AnnotationDescriptor<NamedQueries> NAMED_QUERIES = createDetails( NamedQueries.class );
-	AnnotationDescriptor<NamedQuery> NAMED_QUERY = createDetails( NamedQuery.class, NAMED_QUERIES );
+	AnnotationDescriptor<NamedQuery> NAMED_QUERY = AnnotationDescriptorBuilder.createDetails( NamedQuery.class, NAMED_QUERIES );
 	AnnotationDescriptor<Nationalized> NATIONALIZED = createDetails( Nationalized.class );
 	AnnotationDescriptor<NaturalId> NATURAL_ID = createDetails( NaturalId.class );
 	AnnotationDescriptor<NaturalIdCache> NATURAL_ID_CACHE = createDetails( NaturalIdCache.class );
@@ -130,24 +131,24 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<Proxy> PROXY = createDetails( Proxy.class );
 	AnnotationDescriptor<RowId> ROW_ID = createDetails( RowId.class );
 	AnnotationDescriptor<SecondaryRows> SECONDARY_ROWS = createDetails( SecondaryRows.class );
-	AnnotationDescriptor<SecondaryRow> SECONDARY_ROW = createDetails( SecondaryRow.class, SECONDARY_ROWS );
+	AnnotationDescriptor<SecondaryRow> SECONDARY_ROW = AnnotationDescriptorBuilder.createDetails( SecondaryRow.class, SECONDARY_ROWS );
 	AnnotationDescriptor<SelectBeforeUpdate> SELECT_BEFORE_UPDATE = createDetails( SelectBeforeUpdate.class );
 	AnnotationDescriptor<SortComparator> SORT_COMPARATOR = createDetails( SortComparator.class );
 	AnnotationDescriptor<SortNatural> SORT_NATURAL = createDetails( SortNatural.class );
 	AnnotationDescriptor<Source> SOURCE = createDetails( Source.class );
 	AnnotationDescriptor<SQLDeletes> SQL_DELETES = createDetails( SQLDeletes.class );
-	AnnotationDescriptor<SQLDelete> SQL_DELETE = createDetails( SQLDelete.class, SQL_DELETES );
+	AnnotationDescriptor<SQLDelete> SQL_DELETE = AnnotationDescriptorBuilder.createDetails( SQLDelete.class, SQL_DELETES );
 	AnnotationDescriptor<SQLDeleteAll> SQL_DELETE_ALL = createDetails( SQLDeleteAll.class );
 	AnnotationDescriptor<SqlFragmentAlias> SQL_FRAGMENT_ALIAS = createDetails( SqlFragmentAlias.class );
 	AnnotationDescriptor<SQLInserts> SQL_INSERTS = createDetails( SQLInserts.class );
-	AnnotationDescriptor<SQLInsert> SQL_INSERT = createDetails( SQLInsert.class, SQL_INSERTS );
+	AnnotationDescriptor<SQLInsert> SQL_INSERT = AnnotationDescriptorBuilder.createDetails( SQLInsert.class, SQL_INSERTS );
 	AnnotationDescriptor<SQLUpdates> SQL_UPDATES = createDetails( SQLUpdates.class );
-	AnnotationDescriptor<SQLUpdate> SQL_UPDATE = createDetails( SQLUpdate.class, SQL_UPDATES );
+	AnnotationDescriptor<SQLUpdate> SQL_UPDATE = AnnotationDescriptorBuilder.createDetails( SQLUpdate.class, SQL_UPDATES );
 	AnnotationDescriptor<Struct> STRUCT = createDetails( Struct.class );
 	AnnotationDescriptor<Subselect> SUBSELECT = createDetails( Subselect.class );
 	AnnotationDescriptor<Synchronize> SYNCHRONIZE = createDetails( Synchronize.class );
 	AnnotationDescriptor<Tables> TABLES = createDetails( Tables.class );
-	AnnotationDescriptor<Table> TABLE = createDetails( Table.class, TABLES );
+	AnnotationDescriptor<Table> TABLE = AnnotationDescriptorBuilder.createDetails( Table.class, TABLES );
 	AnnotationDescriptor<Target> TARGET = createDetails( Target.class );
 	AnnotationDescriptor<TenantId> TENANT_ID = createDetails( TenantId.class );
 	AnnotationDescriptor<TimeZoneColumn> TZ_COLUMN = createDetails( TimeZoneColumn.class );
@@ -155,7 +156,7 @@ public interface HibernateAnnotations {
 	AnnotationDescriptor<Type> TYPE = createDetails( Type.class );
 	AnnotationDescriptor<TypeBinderType> TYPE_BINDER_TYPE = createDetails( TypeBinderType.class );
 	AnnotationDescriptor<TypeRegistrations> TYPE_REGS = createDetails( TypeRegistrations.class );
-	AnnotationDescriptor<TypeRegistration> TYPE_REG = createDetails( TypeRegistration.class, TYPE_REGS );
+	AnnotationDescriptor<TypeRegistration> TYPE_REG = AnnotationDescriptorBuilder.createDetails( TypeRegistration.class, TYPE_REGS );
 	AnnotationDescriptor<UpdateTimestamp> UPDATE_TIMESTAMP = createDetails( UpdateTimestamp.class );
 	AnnotationDescriptor<UuidGenerator> UUID_GENERATOR = createDetails( UuidGenerator.class );
 	AnnotationDescriptor<ValueGenerationType> VALUE_GENERATION_TYPE = createDetails( ValueGenerationType.class );
@@ -164,25 +165,25 @@ public interface HibernateAnnotations {
 
 
 	AnnotationDescriptor<DialectOverride.Checks> DIALECT_OVERRIDE_CHECKS = createDetails( DialectOverride.Checks.class );
-	AnnotationDescriptor<DialectOverride.Check> DIALECT_OVERRIDE_CHECK = createDetails( DialectOverride.Check.class, DIALECT_OVERRIDE_CHECKS );
+	AnnotationDescriptor<DialectOverride.Check> DIALECT_OVERRIDE_CHECK = AnnotationDescriptorBuilder.createDetails( DialectOverride.Check.class, DIALECT_OVERRIDE_CHECKS );
 	AnnotationDescriptor<DialectOverride.OrderBys> DIALECT_OVERRIDE_ORDER_BYS = createDetails( DialectOverride.OrderBys.class );
-	AnnotationDescriptor<DialectOverride.OrderBy> DIALECT_OVERRIDE_ORDER_BY = createDetails( DialectOverride.OrderBy.class, DIALECT_OVERRIDE_ORDER_BYS );
+	AnnotationDescriptor<DialectOverride.OrderBy> DIALECT_OVERRIDE_ORDER_BY = AnnotationDescriptorBuilder.createDetails( DialectOverride.OrderBy.class, DIALECT_OVERRIDE_ORDER_BYS );
 	AnnotationDescriptor<DialectOverride.ColumnDefaults> DIALECT_OVERRIDE_COLUMN_DEFAULTS = createDetails( DialectOverride.ColumnDefaults.class );
-	AnnotationDescriptor<DialectOverride.ColumnDefault> DIALECT_OVERRIDE_COLUMN_DEFAULT = createDetails( DialectOverride.ColumnDefault.class, DIALECT_OVERRIDE_COLUMN_DEFAULTS );
+	AnnotationDescriptor<DialectOverride.ColumnDefault> DIALECT_OVERRIDE_COLUMN_DEFAULT = AnnotationDescriptorBuilder.createDetails( DialectOverride.ColumnDefault.class, DIALECT_OVERRIDE_COLUMN_DEFAULTS );
 	AnnotationDescriptor<DialectOverride.GeneratedColumns> DIALECT_OVERRIDE_GENERATED_COLUMNS = createDetails( DialectOverride.GeneratedColumns.class );
-	AnnotationDescriptor<DialectOverride.GeneratedColumn> DIALECT_OVERRIDE_GENERATED_COLUMN = createDetails( DialectOverride.GeneratedColumn.class, DIALECT_OVERRIDE_GENERATED_COLUMNS );
+	AnnotationDescriptor<DialectOverride.GeneratedColumn> DIALECT_OVERRIDE_GENERATED_COLUMN = AnnotationDescriptorBuilder.createDetails( DialectOverride.GeneratedColumn.class, DIALECT_OVERRIDE_GENERATED_COLUMNS );
 	AnnotationDescriptor<DialectOverride.DiscriminatorFormulas> DIALECT_OVERRIDE_DISCRIMINATOR_FORMULAS = createDetails( DialectOverride.DiscriminatorFormulas.class );
-	AnnotationDescriptor<DialectOverride.DiscriminatorFormula> DIALECT_OVERRIDE_DISCRIMINATOR_FORMULA = createDetails( DialectOverride.DiscriminatorFormula.class, DIALECT_OVERRIDE_DISCRIMINATOR_FORMULAS );
+	AnnotationDescriptor<DialectOverride.DiscriminatorFormula> DIALECT_OVERRIDE_DISCRIMINATOR_FORMULA = AnnotationDescriptorBuilder.createDetails( DialectOverride.DiscriminatorFormula.class, DIALECT_OVERRIDE_DISCRIMINATOR_FORMULAS );
 	AnnotationDescriptor<DialectOverride.Formulas> DIALECT_OVERRIDE_FORMULAS = createDetails( DialectOverride.Formulas.class );
-	AnnotationDescriptor<DialectOverride.Formula> DIALECT_OVERRIDE_FORMULA = createDetails( DialectOverride.Formula.class, DIALECT_OVERRIDE_FORMULAS );
+	AnnotationDescriptor<DialectOverride.Formula> DIALECT_OVERRIDE_FORMULA = AnnotationDescriptorBuilder.createDetails( DialectOverride.Formula.class, DIALECT_OVERRIDE_FORMULAS );
 	AnnotationDescriptor<DialectOverride.JoinFormulas> DIALECT_OVERRIDE_JOIN_FORMULAS = createDetails( DialectOverride.JoinFormulas.class );
-	AnnotationDescriptor<DialectOverride.JoinFormula> DIALECT_OVERRIDE_JOIN_FORMULA = createDetails( DialectOverride.JoinFormula.class, DIALECT_OVERRIDE_JOIN_FORMULAS );
+	AnnotationDescriptor<DialectOverride.JoinFormula> DIALECT_OVERRIDE_JOIN_FORMULA = AnnotationDescriptorBuilder.createDetails( DialectOverride.JoinFormula.class, DIALECT_OVERRIDE_JOIN_FORMULAS );
 	AnnotationDescriptor<DialectOverride.Wheres> DIALECT_OVERRIDE_WHERES = createDetails( DialectOverride.Wheres.class );
-	AnnotationDescriptor<DialectOverride.Where> DIALECT_OVERRIDE_WHERE = createDetails( DialectOverride.Where.class, DIALECT_OVERRIDE_WHERES );
+	AnnotationDescriptor<DialectOverride.Where> DIALECT_OVERRIDE_WHERE = AnnotationDescriptorBuilder.createDetails( DialectOverride.Where.class, DIALECT_OVERRIDE_WHERES );
 	AnnotationDescriptor<DialectOverride.FilterOverrides> DIALECT_OVERRIDE_FILTER_OVERRIDES = createDetails( DialectOverride.FilterOverrides.class );
-	AnnotationDescriptor<DialectOverride.Filters> DIALECT_OVERRIDE_FILTERS = createDetails( DialectOverride.Filters.class, DIALECT_OVERRIDE_FILTER_OVERRIDES );
+	AnnotationDescriptor<DialectOverride.Filters> DIALECT_OVERRIDE_FILTERS = AnnotationDescriptorBuilder.createDetails( DialectOverride.Filters.class, DIALECT_OVERRIDE_FILTER_OVERRIDES );
 	AnnotationDescriptor<DialectOverride.FilterDefOverrides> DIALECT_OVERRIDE_FILTER_DEF_OVERRIDES = createDetails( DialectOverride.FilterDefOverrides.class );
-	AnnotationDescriptor<DialectOverride.FilterDefs> DIALECT_OVERRIDE_FILTER_DEFS = createDetails( DialectOverride.FilterDefs.class, DIALECT_OVERRIDE_FILTER_DEF_OVERRIDES );
+	AnnotationDescriptor<DialectOverride.FilterDefs> DIALECT_OVERRIDE_FILTER_DEFS = AnnotationDescriptorBuilder.createDetails( DialectOverride.FilterDefs.class, DIALECT_OVERRIDE_FILTER_DEF_OVERRIDES );
 	AnnotationDescriptor<DialectOverride.Version> DIALECT_OVERRIDE_VERSION = createDetails( DialectOverride.Version.class );
 
 	/**

@@ -6,7 +6,7 @@
  */
 package org.hibernate.boot.model.source.annotations.spi;
 
-import org.hibernate.boot.model.annotations.spi.AnnotationTarget;
+import org.hibernate.boot.annotations.spi.AnnotationTarget;
 
 /**
  * Descriptor for a Java package, mainly to act as AnnotationTarget

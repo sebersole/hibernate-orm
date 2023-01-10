@@ -6,8 +6,8 @@
  */
 package org.hibernate.boot.model.source.annotations.internal;
 
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.internal.DelegatingMetadataBuildingContext;
-import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.model.source.annotations.spi.AnnotationBindingContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 

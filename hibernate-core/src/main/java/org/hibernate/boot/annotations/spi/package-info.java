@@ -8,10 +8,10 @@
 /**
  * Abstractions for modeling for annotations.
  *
- * @see org.hibernate.boot.model.annotations.internal.OrmAnnotationDescriptorImpl
- * @see org.hibernate.boot.model.annotations.spi.AnnotationUsage
- * @see org.hibernate.boot.model.annotations
+ * @see org.hibernate.boot.annotations.internal.OrmAnnotationDescriptorImpl
+ * @see org.hibernate.boot.annotations.spi.AnnotationUsage
+ * @see org.hibernate.boot.annotations
  *
  * @author Steve Ebersole
  */
-package org.hibernate.boot.model.annotations.spi;
+package org.hibernate.boot.annotations.spi;

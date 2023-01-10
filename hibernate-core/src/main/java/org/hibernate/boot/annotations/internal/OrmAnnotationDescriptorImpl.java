@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.annotations.internal;
+package org.hibernate.boot.annotations.internal;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -12,14 +12,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import org.hibernate.boot.model.annotations.AnnotationAccessException;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
-import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.spi.HibernateAnnotations;
+import org.hibernate.boot.annotations.spi.JpaAnnotations;
 
 /**
  * Used to represent the
- * {@linkplain org.hibernate.boot.model.annotations.spi.JpaAnnotations JPA} and
- * {@linkplain org.hibernate.boot.model.annotations.spi.HibernateAnnotations Hibernate}
+ * {@linkplain JpaAnnotations JPA} and
+ * {@linkplain HibernateAnnotations Hibernate}
  * annotations.  We never care about annotations associated with the annotation type
  * for these annotations.
  *

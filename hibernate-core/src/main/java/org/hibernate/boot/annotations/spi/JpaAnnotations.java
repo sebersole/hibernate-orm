@@ -4,12 +4,13 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.annotations.spi;
+package org.hibernate.boot.annotations.spi;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 import org.hibernate.annotations.NamedQueries;
+import org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AssociationOverride;
@@ -111,16 +112,16 @@ import static org.hibernate.boot.model.source.annotations.internal.AnnotationDes
 public interface JpaAnnotations {
 	AnnotationDescriptor<Access> ACCESS = createDetails( Access.class );
 	AnnotationDescriptor<AssociationOverrides> ASSOCIATION_OVERRIDES = createDetails( AssociationOverrides.class );
-	AnnotationDescriptor<AssociationOverride> ASSOCIATION_OVERRIDE = createDetails( AssociationOverride.class, ASSOCIATION_OVERRIDES );
+	AnnotationDescriptor<AssociationOverride> ASSOCIATION_OVERRIDE = AnnotationDescriptorBuilder.createDetails( AssociationOverride.class, ASSOCIATION_OVERRIDES );
 	AnnotationDescriptor<AttributeOverrides> ATTRIBUTE_OVERRIDES = createDetails( AttributeOverrides.class );
-	AnnotationDescriptor<AttributeOverride> ATTRIBUTE_OVERRIDE = createDetails( AttributeOverride.class, ATTRIBUTE_OVERRIDES );
+	AnnotationDescriptor<AttributeOverride> ATTRIBUTE_OVERRIDE = AnnotationDescriptorBuilder.createDetails( AttributeOverride.class, ATTRIBUTE_OVERRIDES );
 	AnnotationDescriptor<Basic> BASIC = createDetails( Basic.class );
 	AnnotationDescriptor<Cacheable> CACHEABLE = createDetails( Cacheable.class );
 	AnnotationDescriptor<CollectionTable> COLLECTION_TABLE = createDetails( CollectionTable.class );
 	AnnotationDescriptor<Column> COLUMN = createDetails( Column.class );
 	AnnotationDescriptor<ColumnResult> COLUMN_RESULT = createDetails( ColumnResult.class );
 	AnnotationDescriptor<Converts> CONVERTS = createDetails( Converts.class );
-	AnnotationDescriptor<Convert> CONVERT = createDetails( Convert.class, CONVERTS );
+	AnnotationDescriptor<Convert> CONVERT = AnnotationDescriptorBuilder.createDetails( Convert.class, CONVERTS );
 	AnnotationDescriptor<Converter> CONVERTER = createDetails( Converter.class );
 	AnnotationDescriptor<DiscriminatorColumn> DISCRIMINATOR_COLUMN = createDetails( DiscriminatorColumn.class );
 	AnnotationDescriptor<DiscriminatorValue> DISCRIMINATOR_VALUE = createDetails( DiscriminatorValue.class );
@@ -142,7 +143,7 @@ public interface JpaAnnotations {
 	AnnotationDescriptor<Index> INDEX = createDetails( Index.class );
 	AnnotationDescriptor<Inheritance> INHERITANCE = createDetails( Inheritance.class );
 	AnnotationDescriptor<JoinColumns> JOIN_COLUMNS = createDetails( JoinColumns.class );
-	AnnotationDescriptor<JoinColumn> JOIN_COLUMN = createDetails( JoinColumn.class, JOIN_COLUMNS );
+	AnnotationDescriptor<JoinColumn> JOIN_COLUMN = AnnotationDescriptorBuilder.createDetails( JoinColumn.class, JOIN_COLUMNS );
 	AnnotationDescriptor<JoinTable> JOIN_TABLE = createDetails( JoinTable.class );
 	AnnotationDescriptor<Lob> LOB = createDetails( Lob.class );
 	AnnotationDescriptor<ManyToMany> MANY_TO_MANY = createDetails( ManyToMany.class );
@@ -152,19 +153,19 @@ public interface JpaAnnotations {
 	AnnotationDescriptor<MapKeyColumn> MAP_KEY_COLUMN = createDetails( MapKeyColumn.class );
 	AnnotationDescriptor<MapKeyEnumerated> MAP_KEY_ENUMERATED = createDetails( MapKeyEnumerated.class );
 	AnnotationDescriptor<MapKeyJoinColumns> MAP_KEY_JOIN_COLUMNS = createDetails( MapKeyJoinColumns.class );
-	AnnotationDescriptor<MapKeyJoinColumn> MAP_KEY_JOIN_COLUMN = createDetails( MapKeyJoinColumn.class, MAP_KEY_JOIN_COLUMNS );
+	AnnotationDescriptor<MapKeyJoinColumn> MAP_KEY_JOIN_COLUMN = AnnotationDescriptorBuilder.createDetails( MapKeyJoinColumn.class, MAP_KEY_JOIN_COLUMNS );
 	AnnotationDescriptor<MapKeyTemporal> MAP_KEY_TEMPORAL = createDetails( MapKeyTemporal.class );
 	AnnotationDescriptor<MappedSuperclass> MAPPED_SUPERCLASS = createDetails( MappedSuperclass.class );
 	AnnotationDescriptor<MapsId> MAPS_ID = createDetails( MapsId.class );
 	AnnotationDescriptor<NamedAttributeNode> NAMED_ATTRIBUTE_NODE = createDetails( NamedAttributeNode.class );
 	AnnotationDescriptor<NamedEntityGraphs> NAMED_ENTITY_GRAPHS = createDetails( NamedEntityGraphs.class );
-	AnnotationDescriptor<NamedEntityGraph> NAMED_ENTITY_GRAPH = createDetails( NamedEntityGraph.class, NAMED_ENTITY_GRAPHS );
+	AnnotationDescriptor<NamedEntityGraph> NAMED_ENTITY_GRAPH = AnnotationDescriptorBuilder.createDetails( NamedEntityGraph.class, NAMED_ENTITY_GRAPHS );
 	AnnotationDescriptor<NamedNativeQueries> NAMED_NATIVE_QUERIES = createDetails( NamedNativeQueries.class );
-	AnnotationDescriptor<NamedNativeQuery> NAMED_NATIVE_QUERY = createDetails( NamedNativeQuery.class, NAMED_NATIVE_QUERIES );
+	AnnotationDescriptor<NamedNativeQuery> NAMED_NATIVE_QUERY = AnnotationDescriptorBuilder.createDetails( NamedNativeQuery.class, NAMED_NATIVE_QUERIES );
 	AnnotationDescriptor<NamedQueries> NAMED_QUERIES = createDetails( NamedQueries.class );
-	AnnotationDescriptor<NamedQuery> NAMED_QUERY = createDetails( NamedQuery.class, NAMED_QUERIES );
+	AnnotationDescriptor<NamedQuery> NAMED_QUERY = AnnotationDescriptorBuilder.createDetails( NamedQuery.class, NAMED_QUERIES );
 	AnnotationDescriptor<NamedStoredProcedureQueries> NAMED_STORED_PROCEDURE_QUERIES = createDetails( NamedStoredProcedureQueries.class );
-	AnnotationDescriptor<NamedStoredProcedureQuery> NAMED_STORED_PROCEDURE_QUERY = createDetails( NamedStoredProcedureQuery.class, NAMED_STORED_PROCEDURE_QUERIES );
+	AnnotationDescriptor<NamedStoredProcedureQuery> NAMED_STORED_PROCEDURE_QUERY = AnnotationDescriptorBuilder.createDetails( NamedStoredProcedureQuery.class, NAMED_STORED_PROCEDURE_QUERIES );
 	AnnotationDescriptor<NamedSubgraph> NAMED_SUB_GRAPH = createDetails( NamedSubgraph.class );
 	AnnotationDescriptor<OneToMany> ONE_TO_MANY = createDetails( OneToMany.class );
 	AnnotationDescriptor<OneToOne> ONE_TO_ONE = createDetails( OneToOne.class );
@@ -178,18 +179,18 @@ public interface JpaAnnotations {
 	AnnotationDescriptor<PreRemove> PRE_REMOVE = createDetails( PreRemove.class );
 	AnnotationDescriptor<PreUpdate> PRE_UPDATE = createDetails( PreUpdate.class );
 	AnnotationDescriptor<PrimaryKeyJoinColumns> PRIMARY_KEY_JOIN_COLUMNS = createDetails( PrimaryKeyJoinColumns.class );
-	AnnotationDescriptor<PrimaryKeyJoinColumn> PRIMARY_KEY_JOIN_COLUMN = createDetails( PrimaryKeyJoinColumn.class, PRIMARY_KEY_JOIN_COLUMNS );
+	AnnotationDescriptor<PrimaryKeyJoinColumn> PRIMARY_KEY_JOIN_COLUMN = AnnotationDescriptorBuilder.createDetails( PrimaryKeyJoinColumn.class, PRIMARY_KEY_JOIN_COLUMNS );
 	AnnotationDescriptor<QueryHint> QUERY_HINT = createDetails( QueryHint.class );
 	AnnotationDescriptor<SecondaryTables> SECONDARY_TABLES = createDetails( SecondaryTables.class );
-	AnnotationDescriptor<SecondaryTable> SECONDARY_TABLE = createDetails( SecondaryTable.class, SECONDARY_TABLES );
+	AnnotationDescriptor<SecondaryTable> SECONDARY_TABLE = AnnotationDescriptorBuilder.createDetails( SecondaryTable.class, SECONDARY_TABLES );
 	AnnotationDescriptor<SequenceGenerators> SEQUENCE_GENERATORS = createDetails( SequenceGenerators.class );
-	AnnotationDescriptor<SequenceGenerator> SEQUENCE_GENERATOR = createDetails( SequenceGenerator.class, SEQUENCE_GENERATORS );
+	AnnotationDescriptor<SequenceGenerator> SEQUENCE_GENERATOR = AnnotationDescriptorBuilder.createDetails( SequenceGenerator.class, SEQUENCE_GENERATORS );
 	AnnotationDescriptor<SqlResultSetMappings> SQL_RESULT_SET_MAPPINGS = createDetails( SqlResultSetMappings.class );
-	AnnotationDescriptor<SqlResultSetMapping> SQL_RESULT_SET_MAPPING = createDetails( SqlResultSetMapping.class, SQL_RESULT_SET_MAPPINGS );
+	AnnotationDescriptor<SqlResultSetMapping> SQL_RESULT_SET_MAPPING = AnnotationDescriptorBuilder.createDetails( SqlResultSetMapping.class, SQL_RESULT_SET_MAPPINGS );
 	AnnotationDescriptor<StoredProcedureParameter> STORED_PROCEDURE_PARAMETER = createDetails( StoredProcedureParameter.class );
 	AnnotationDescriptor<Table> TABLE = createDetails( Table.class );
 	AnnotationDescriptor<TableGenerators> TABLE_GENERATORS = createDetails( TableGenerators.class );
-	AnnotationDescriptor<TableGenerator> TABLE_GENERATOR = createDetails( TableGenerator.class, TABLE_GENERATORS );
+	AnnotationDescriptor<TableGenerator> TABLE_GENERATOR = AnnotationDescriptorBuilder.createDetails( TableGenerator.class, TABLE_GENERATORS );
 	AnnotationDescriptor<Temporal> TEMPORAL = createDetails( Temporal.class );
 	AnnotationDescriptor<Transient> TRANSIENT = createDetails( Transient.class );
 	AnnotationDescriptor<UniqueConstraint> UNIQUE_CONSTRAINT = createDetails( UniqueConstraint.class );
@@ -202,8 +203,8 @@ public interface JpaAnnotations {
 	AnnotationDescriptor<PersistenceProperty> PERSISTENCE_PROPERTY = createDetails( PersistenceProperty.class );
 	AnnotationDescriptor<PersistenceUnits> PERSISTENCE_UNITS = createDetails( PersistenceUnits.class );
 	AnnotationDescriptor<PersistenceContexts> PERSISTENCE_CONTEXTS = createDetails( PersistenceContexts.class );
-	AnnotationDescriptor<PersistenceContext> PERSISTENCE_CONTEXT = createDetails( PersistenceContext.class, PERSISTENCE_CONTEXTS );
-	AnnotationDescriptor<PersistenceUnit> PERSISTENCE_UNIT = createDetails( PersistenceUnit.class, PERSISTENCE_UNITS );
+	AnnotationDescriptor<PersistenceContext> PERSISTENCE_CONTEXT = AnnotationDescriptorBuilder.createDetails( PersistenceContext.class, PERSISTENCE_CONTEXTS );
+	AnnotationDescriptor<PersistenceUnit> PERSISTENCE_UNIT = AnnotationDescriptorBuilder.createDetails( PersistenceUnit.class, PERSISTENCE_UNITS );
 
 	/**
 	 * Consume each defined AnnotationDescriptor

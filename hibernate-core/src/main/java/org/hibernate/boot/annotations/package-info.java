@@ -10,13 +10,13 @@
  * source - {@link java.lang.annotation.Annotation}, Jandex,
  * XML, etc.
  *
- * @see org.hibernate.boot.model.annotations.spi
+ * @see org.hibernate.boot.annotations.spi
  *
  * @apiNote Considered {@linkplain org.hibernate.Incubating incubating}
  *
  * @author Steve Ebersole
  */
 @Incubating
-package org.hibernate.boot.model.annotations;
+package org.hibernate.boot.annotations;
 
 import org.hibernate.Incubating;

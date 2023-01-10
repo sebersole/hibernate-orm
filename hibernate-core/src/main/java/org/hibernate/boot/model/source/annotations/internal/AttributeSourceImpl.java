@@ -8,7 +8,7 @@ package org.hibernate.boot.model.source.annotations.internal;
 
 import java.util.List;
 
-import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.boot.model.source.annotations.spi.AnnotationBindingContext;
 import org.hibernate.boot.model.source.annotations.spi.AttributeSource;
 

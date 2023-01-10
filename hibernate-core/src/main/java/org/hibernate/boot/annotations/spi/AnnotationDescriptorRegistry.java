@@ -4,15 +4,15 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.annotations.spi;
+package org.hibernate.boot.annotations.spi;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hibernate.boot.model.annotations.internal.AnnotationDescriptorImpl;
-import org.hibernate.boot.model.annotations.internal.OrmAnnotationDescriptorImpl;
+import org.hibernate.boot.annotations.internal.AnnotationDescriptorImpl;
+import org.hibernate.boot.annotations.internal.OrmAnnotationDescriptorImpl;
 
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;

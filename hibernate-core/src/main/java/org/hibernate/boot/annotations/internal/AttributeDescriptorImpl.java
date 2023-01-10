@@ -4,14 +4,14 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.annotations.internal;
+package org.hibernate.boot.annotations.internal;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.hibernate.boot.model.annotations.AnnotationAccessException;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 
 /**
  * @author Steve Ebersole

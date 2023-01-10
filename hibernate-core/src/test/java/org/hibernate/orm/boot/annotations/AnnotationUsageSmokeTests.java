@@ -8,11 +8,11 @@ package org.hibernate.orm.boot.annotations;
 
 import java.lang.reflect.Field;
 
-import org.hibernate.boot.model.annotations.internal.AnnotationUsageImpl;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
-import org.hibernate.boot.model.annotations.spi.JpaAnnotations;
+import org.hibernate.boot.annotations.internal.AnnotationUsageImpl;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.spi.JpaAnnotations;
 import org.hibernate.orm.boot.model.source.annotations.CustomAnnotation;
 import org.hibernate.orm.boot.model.source.annotations.CustomMetaAnnotation;
 import org.hibernate.orm.boot.model.source.annotations.SimpleColumnEntity;

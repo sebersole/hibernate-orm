@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.hibernate.boot.model.annotations.AnnotationAccessException;
-import org.hibernate.boot.model.annotations.internal.AnnotationUsageImpl;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
-import org.hibernate.boot.model.annotations.spi.AnnotationTarget;
-import org.hibernate.boot.model.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.internal.AnnotationUsageImpl;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.annotations.spi.AnnotationTarget;
+import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**

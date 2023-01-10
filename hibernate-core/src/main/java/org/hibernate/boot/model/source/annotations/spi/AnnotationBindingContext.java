@@ -6,8 +6,8 @@
  */
 package org.hibernate.boot.model.source.annotations.spi;
 
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.model.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
 /**

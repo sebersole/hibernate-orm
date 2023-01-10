@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.hibernate.Internal;
-import org.hibernate.boot.model.annotations.internal.AttributeDescriptorImpl;
-import org.hibernate.boot.model.annotations.internal.OrmAnnotationDescriptorImpl;
-import org.hibernate.boot.model.annotations.spi.AnnotationDescriptor;
-import org.hibernate.boot.model.annotations.spi.HibernateAnnotations;
-import org.hibernate.boot.model.annotations.spi.JpaAnnotations;
+import org.hibernate.boot.annotations.internal.AttributeDescriptorImpl;
+import org.hibernate.boot.annotations.internal.OrmAnnotationDescriptorImpl;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.HibernateAnnotations;
+import org.hibernate.boot.annotations.spi.JpaAnnotations;
 
 /**
  * Builders for AnnotationDescriptor instances.
