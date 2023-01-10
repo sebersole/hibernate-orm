@@ -9,9 +9,9 @@ package org.hibernate.boot.annotations.spi;
 import java.util.function.Consumer;
 
 import org.hibernate.annotations.*;
-import org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder;
+import org.hibernate.boot.annotations.internal.AnnotationDescriptorBuilder;
 
-import static org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder.createDetails;
+import static org.hibernate.boot.annotations.internal.AnnotationDescriptorBuilder.createDetails;
 
 /**
  * Details about Hibernate annotations

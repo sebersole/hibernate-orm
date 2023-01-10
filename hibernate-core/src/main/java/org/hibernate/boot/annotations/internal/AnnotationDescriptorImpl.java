@@ -14,7 +14,6 @@ import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.spi.JpaAnnotations;
-import org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder;
 
 /**
  * AnnotationDescriptor used for annotations other than

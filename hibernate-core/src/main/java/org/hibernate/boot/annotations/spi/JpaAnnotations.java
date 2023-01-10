@@ -10,7 +10,7 @@ import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 import org.hibernate.annotations.NamedQueries;
-import org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder;
+import org.hibernate.boot.annotations.internal.AnnotationDescriptorBuilder;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AssociationOverride;
@@ -102,7 +102,7 @@ import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
-import static org.hibernate.boot.model.source.annotations.internal.AnnotationDescriptorBuilder.createDetails;
+import static org.hibernate.boot.annotations.internal.AnnotationDescriptorBuilder.createDetails;
 
 /**
  * Descriptors for JPA annotations
