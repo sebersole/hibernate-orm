@@ -10,7 +10,6 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
@@ -18,6 +17,7 @@ import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.spi.JpaAnnotations;
+import org.hibernate.internal.util.IndexedConsumer;
 
 /**
  * Used to represent the {@linkplain JpaAnnotations JPA} and
@@ -89,7 +89,7 @@ public class OrmAnnotationDescriptorImpl<T extends Annotation> implements Annota
 	}
 
 	@Override
-	public <A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
+	public <A extends Annotation> void forEachUsage(AnnotationDescriptor<A> type, IndexedConsumer<AnnotationUsage<A>> consumer) {
 		// there are none
 	}
 

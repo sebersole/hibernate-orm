@@ -10,7 +10,6 @@ import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
@@ -18,6 +17,7 @@ import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
+import org.hibernate.internal.util.IndexedConsumer;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
@@ -64,12 +64,17 @@ public class LazyAnnotationTarget implements AnnotationTarget {
 	}
 
 	@Override
-	public <A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
+	public <A extends Annotation> void forEachUsage(
+			AnnotationDescriptor<A> type,
+			IndexedConsumer<AnnotationUsage<A>> consumer) {
 		final List<AnnotationUsage<A>> annotationUsages = getUsages( type );
 		if ( annotationUsages == null ) {
 			return;
 		}
-		annotationUsages.forEach( consumer );
+
+		for ( int i = 0; i < annotationUsages.size(); i++ ) {
+			consumer.accept( i, annotationUsages.get( i ) );
+		}
 	}
 
 	@Override

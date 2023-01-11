@@ -8,8 +8,8 @@ package org.hibernate.boot.model.source.annotations.internal.dynamic;
 
 import java.util.List;
 
+import org.hibernate.boot.annotations.internal.DelayedAnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.model.source.annotations.internal.DelayedAnnotationTarget;
 import org.hibernate.boot.model.source.annotations.spi.FieldSource;
 import org.hibernate.boot.model.source.annotations.spi.ManagedClass;
 import org.hibernate.boot.model.source.annotations.spi.MethodSource;

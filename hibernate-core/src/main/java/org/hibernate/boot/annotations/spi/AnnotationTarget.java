@@ -7,38 +7,54 @@
 package org.hibernate.boot.annotations.spi;
 
 import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.function.Consumer;
+
+import org.hibernate.internal.util.IndexedConsumer;
 
 /**
  * A model part which can be the target of annotations.
  *
- * @apiNote "Flattens" {@linkplain java.lang.annotation.Repeatable repeatable}
- * annotations such that the container is removed and the actual repeatable
- * annotations are lumped together
+ * @apiNote We treat {@linkplain java.lang.annotation.Repeatable repeatable}
+ * annotations as "collapsed" meaning that usages of its container are
+ * collapsed into a collection of the repeatable annotations.  Accessing
+ * container annotations via this contract is not supported.
  *
  * @author Steve Ebersole
  */
 public interface AnnotationTarget {
 	/**
-	 * Find the usages of the given annotation type.  For
-	 * {@linkplain java.lang.annotation.Repeatable repeatable}
-	 * annotation types, returns all usages including the repetitions.
-	 */
-	<A extends Annotation> List<AnnotationUsage<A>> getUsages(AnnotationDescriptor<A> type);
-
-	/**
-	 * Like {@link #getUsages} but allowing functional access
-	 */
-	<A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer);
-
-	/**
-	 * Get a singular usage of the given annotation type.  For
-	 * {@linkplain java.lang.annotation.Repeatable repeatable}
-	 * annotation types, will throw an exception if there are
-	 * multiple usages
+	 * Get the use of the given annotation on this target.
+	 * <p/>
+	 * Calling this method with the container annotation for a
+	 * {@linkplain java.lang.annotation.Repeatable repeatable} annotation
+	 * will always return {@code null}.  Use this method, {@link #getUsages} or
+	 * {@link #forEachUsage} with the repeatable annotation instead
+	 *
+	 * @apiNote If the annotation is {@linkplain java.lang.annotation.Repeatable repeatable},
+	 * this method will return the usage if there is just one.  If there are multiple,
+	 * {@link org.hibernate.boot.annotations.AnnotationAccessException} will be thrown
+	 *
+	 * @return The usage or {@code null}
 	 */
 	<A extends Annotation> AnnotationUsage<A> getUsage(AnnotationDescriptor<A> type);
+
+	/**
+	 * Find the usages of the given annotation type.
+	 * <p/>
+	 * For {@linkplain java.lang.annotation.Repeatable repeatable} annotation types,
+	 * returns all usages including the repetitions.
+	 */
+	<A extends Annotation> Iterable<AnnotationUsage<A>> getUsages(AnnotationDescriptor<A> type);
+
+	/**
+	 * Call the {@code consumer} for each {@linkplain AnnotationUsage usage} of the
+	 * given {@code type}.
+	 * <p/>
+	 * For {@linkplain java.lang.annotation.Repeatable repeatable} annotation types,
+	 * the consumer will also be called for those defined on the container.
+	 * Calling this, like {@link #getUsage} with the container will "find" none - the
+	 * consumer is never called.
+	 */
+	<A extends Annotation> void forEachUsage(AnnotationDescriptor<A> type, IndexedConsumer<AnnotationUsage<A>> consumer);
 
 	/**
 	 * Get a usage of the given annotation {@code type} with the given {@code name}.

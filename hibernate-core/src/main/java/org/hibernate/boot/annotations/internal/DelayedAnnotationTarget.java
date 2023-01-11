@@ -4,24 +4,24 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.model.source.annotations.internal;
+package org.hibernate.boot.annotations.internal;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
-import org.hibernate.boot.annotations.internal.AnnotationUsageImpl;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
+import org.hibernate.boot.model.source.annotations.internal.AnnotationsHelper;
+import org.hibernate.internal.util.IndexedConsumer;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
- * Support for AnnotationTarget where the annotations are not known up
+ * Implementation of  AnnotationTarget where the annotations are not known up
  * front; rather, they are {@linkplain  #apply(AnnotationUsage) applied} later
  *
  * @author Steve Ebersole
@@ -84,14 +84,17 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 	}
 
 	@Override
-	public <A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
-		final List<AnnotationUsage<?>> annotationUsages = usagesMap.get( type.getAnnotationType() );
+	public <A extends Annotation> void forEachUsage(
+			AnnotationDescriptor<A> type,
+			IndexedConsumer<AnnotationUsage<A>> consumer) {
+		final List<AnnotationUsage<A>> annotationUsages = getUsages( type );
 		if ( annotationUsages == null ) {
 			return;
 		}
 
-		//noinspection unchecked,rawtypes
-		annotationUsages.forEach( (Consumer) consumer );
+		for ( int i = 0; i < annotationUsages.size(); i++ ) {
+			consumer.accept( i, annotationUsages.get( i ) );
+		}
 	}
 
 	@Override
