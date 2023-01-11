@@ -6,18 +6,21 @@
  */
 package org.hibernate.boot.model.source.annotations.spi;
 
+import java.lang.reflect.Member;
+
 import org.hibernate.boot.annotations.spi.AnnotationTarget;
 
 /**
- * Source for an attribute while processing annotations.
+ * Details about a {@linkplain Member member} while processing annotations.
+ *
+ * @apiNote This can be a virtual member, meaning there is no physical
+ * member in the declaring type
  *
  * @author Steve Ebersole
  */
-public interface AttributeSource extends AnnotationTarget {
+public interface MemberSource extends AnnotationTarget {
 	/**
-	 * Obtain the attribute name.
-	 *
-	 * @return The attribute name. {@code null} is NOT allowed!
+	 * The name of the member.  This would be the name of the method or field.
 	 */
 	String getName();
 }

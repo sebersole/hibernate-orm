@@ -7,7 +7,9 @@
 package org.hibernate.boot.model.source.annotations.spi;
 
 /**
+ * Models a "{@linkplain java.lang.reflect.Method method}" in a {@link ManagedClass}
+ *
  * @author Steve Ebersole
  */
-public interface EntityTypeSource extends ManagedTypeSource {
+public interface MethodSource extends MemberSource {
 }

@@ -30,9 +30,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class AnnotationUsageSmokeTests {
 	@Test
 	void testColumn() throws NoSuchFieldException {
+		final AnnotationDescriptorRegistry descriptorRegistry = new AnnotationDescriptorRegistry();
+
 		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
 		final Column nameColumnAnn = nameField.getAnnotation( Column.class );
-		final AnnotationUsageImpl<Column> nameColumnUsage = new AnnotationUsageImpl<>( nameColumnAnn, JpaAnnotations.COLUMN, null );
+		final AnnotationUsageImpl<Column> nameColumnUsage = new AnnotationUsageImpl<>( nameColumnAnn, JpaAnnotations.COLUMN, null, descriptorRegistry );
 
 		AssertionsForClassTypes.assertThat( nameColumnUsage.getAttributeValue( "name" ).getStringValue() ).isEqualTo( "description" );
 		AssertionsForClassTypes.assertThat( nameColumnUsage.getAttributeValue( "table" ).getStringValue() ).isEqualTo( "" );

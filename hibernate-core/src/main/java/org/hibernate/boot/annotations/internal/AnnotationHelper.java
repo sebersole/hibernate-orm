@@ -7,6 +7,10 @@
 package org.hibernate.boot.annotations.internal;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -14,13 +18,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor.AttributeDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationTarget;
+import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.AnnotationUsage.AttributeValue;
 import org.hibernate.internal.util.collections.CollectionHelper;
+
+import static org.hibernate.internal.util.collections.CollectionHelper.arrayList;
 
 /**
  * Collection of helper functions related to annotation handling
@@ -28,53 +37,83 @@ import org.hibernate.internal.util.collections.CollectionHelper;
  * @author Steve Ebersole
  */
 public class AnnotationHelper {
-	private AnnotationHelper() {
-		// disallow direct instantiation
+	public static void processAnnotationUsages(
+			Annotation[] annotations,
+			AnnotationTarget target,
+			BiConsumer<Class<? extends Annotation>, List<AnnotationUsage<?>>> consumer,
+			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
+		for ( int i = 0; i < annotations.length; i++ ) {
+			final Annotation typeAnnotation = annotations[ i ];
+			final Class<? extends Annotation> typeAnnotationType = typeAnnotation.annotationType();
+
+			// skip a few well-know ones that are irrelevant
+			if ( typeAnnotationType == Repeatable.class
+					|| typeAnnotationType == Target.class
+					|| typeAnnotationType == Retention.class
+					|| typeAnnotationType == Documented.class ) {
+				continue;
+			}
+
+			final Class<? extends Annotation> usagesKey;
+			final List<AnnotationUsage<?>> usages;
+
+			final AnnotationDescriptor<?> typeAnnotationDescriptor = annotationDescriptorRegistry.getDescriptor( typeAnnotationType );
+			if ( typeAnnotationDescriptor.getRepeatableContainer() != null ) {
+				// `annotations[i]` will be the only one because it is repeatable,
+				// and we found this instead of the container
+				usagesKey = typeAnnotationType;
+				usages = Collections.singletonList( makeUsage(
+						annotations[i],
+						typeAnnotationDescriptor,
+						target,
+						annotationDescriptorRegistry
+				) );
+			}
+			else {
+				final AnnotationDescriptor<? extends Annotation> repeatableDescriptor = annotationDescriptorRegistry.getRepeatableDescriptor( typeAnnotationType );
+				if ( repeatableDescriptor != null ) {
+					usagesKey = repeatableDescriptor.getAnnotationType();
+					// `annotations[i]` is itself the container; flatten the repeated values
+					final AttributeDescriptor<Annotation[]> valueAttribute = typeAnnotationDescriptor.getValueAttribute();
+					final Annotation[] repeatableValues = valueAttribute.extractRawValue( typeAnnotation );
+					usages = arrayList( repeatableValues.length );
+					for ( int r = 0; r < repeatableValues.length; r++ ) {
+						usages.add( makeUsage(
+								repeatableValues[r],
+								repeatableDescriptor,
+								target,
+								annotationDescriptorRegistry
+						) );
+					}
+				}
+				else {
+					// otherwise, it is just  the one
+					usagesKey = typeAnnotationType;
+					usages = Collections.singletonList( makeUsage(
+							annotations[i],
+							typeAnnotationDescriptor,
+							target,
+							annotationDescriptorRegistry
+					) );
+				}
+			}
+
+			consumer.accept( usagesKey, usages );
+		}
 	}
 
-	/**
-	 * Call the passed {@code consumer} if the {@code attributeValue} is specified
-	 */
-	public static <T> void ifSpecified(AttributeValue attributeValue, Consumer<T> consumer) {
-		if ( attributeValue == null ) {
-			return;
-		}
-		consumer.accept( attributeValue.getValue() );
-	}
-
-	/**
-	 * Call the passed {@code consumer} if the {@code attributeValue} is specified and
-	 * is not a default value
-	 */
-	public static <T> void ifNotDefault(AttributeValue attributeValue, Consumer<T> consumer) {
-		if ( attributeValue == null ) {
-			return;
-		}
-		if ( attributeValue.isDefaultValue() ) {
-			return;
-		}
-		consumer.accept( attributeValue.getValue() );
-	}
-
-	/**
-	 * Return {@code null} if the {@code attributeValue} is not specified,
-	 * or is the default value
-	 */
-	public static <T> T nullIfUnspecified(AttributeValue attributeValue) {
-		if ( attributeValue == null ) {
-			return null;
-		}
-		if ( attributeValue.isDefaultValue() ) {
-			return null;
-		}
-		return attributeValue.getValue();
-	}
-
-	public static <T> void ifSpecified(T value, Consumer<T> consumer) {
-		if ( value == null ) {
-			return;
-		}
-		consumer.accept( value );
+	private static AnnotationUsage<?> makeUsage(
+			Annotation annotation,
+			AnnotationDescriptor<?> typeAnnotationDescriptor,
+			AnnotationTarget target,
+			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
+		//noinspection unchecked,rawtypes
+		return new AnnotationUsageImpl(
+				annotation,
+				typeAnnotationDescriptor,
+				target,
+				annotationDescriptorRegistry
+		);
 	}
 
 	/**
@@ -83,7 +122,8 @@ public class AnnotationHelper {
 	 */
 	public static <A extends Annotation> Map<String, AttributeValue> extractAttributeValues(
 			A annotation,
-			AnnotationDescriptor<A> annotationDescriptor) {
+			AnnotationDescriptor<A> annotationDescriptor,
+			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
 		if ( CollectionHelper.isEmpty( annotationDescriptor.getAttributes() ) ) {
 			return Collections.emptyMap();
 		}
@@ -92,7 +132,7 @@ public class AnnotationHelper {
 			final AttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( 0 );
 			return Collections.singletonMap(
 					attributeDescriptor.getAttributeName(),
-					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor ) )
+					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, annotationDescriptorRegistry ) )
 			);
 		}
 
@@ -101,28 +141,49 @@ public class AnnotationHelper {
 			final AttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( i );
 			valueMap.put(
 					attributeDescriptor.getAttributeName(),
-					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor ) )
+					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, annotationDescriptorRegistry ) )
 			);
 		}
 		return valueMap;
 	}
 
-	/**
-	 *
-	 * @param container
-	 * @return
-	 * @param <A>
-	 * @param <C>
-	 */
-	public static <A extends Annotation, C extends Annotation> List<A> extractRepeated(C container) {
-		return extractAttributeValue( container, "value" );
+	public static <A extends Annotation, T> T extractAttributeValue(
+			A annotation,
+			AttributeDescriptor<T> attributeDescriptor,
+			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
+		final Object rawValue = extractRawAttributeValue( annotation, attributeDescriptor.getAttributeName() );
+
+		if ( attributeDescriptor.getAttributeType().isAnnotation() ) {
+			// the attribute type is an annotation. we want to wrap that in a usage.  target?
+			//noinspection unchecked,rawtypes
+			final AnnotationDescriptor<?> descriptor = annotationDescriptorRegistry.getDescriptor( (Class) attributeDescriptor.getAttributeType() );
+			//noinspection unchecked
+			return (T) makeUsage( (Annotation) rawValue, descriptor, null, annotationDescriptorRegistry );
+		}
+
+		if ( attributeDescriptor.getAttributeType().isArray()
+				&& attributeDescriptor.getAttributeType().getComponentType().isAnnotation() ) {
+			// the attribute type is an array of annotations. we want to wrap those in a usage.  target?
+			//noinspection unchecked
+			final Class<? extends Annotation> annotationJavaType = (Class<? extends Annotation>) attributeDescriptor.getAttributeType().getComponentType();
+			final AnnotationDescriptor<? extends Annotation> valuesAnnotationDescriptor = annotationDescriptorRegistry.getDescriptor( annotationJavaType );
+			final Object[] rawValues = (Object[]) rawValue;
+			final AnnotationUsage<?>[] usages = new AnnotationUsage[ rawValues.length ];
+			for ( int i = 0; i < rawValues.length; i++ ) {
+				final Annotation valueAnnotation = (Annotation) rawValues[i];
+				usages[i] = makeUsage( valueAnnotation, valuesAnnotationDescriptor, null, annotationDescriptorRegistry );
+			}
+			//noinspection unchecked
+			return (T) usages;
+		}
+
+		//noinspection unchecked
+		return (T) rawValue;
 	}
 
-	public static <A extends Annotation, T> T extractAttributeValue(A annotation, AttributeDescriptor<T> attributeDescriptor) {
-		return extractAttributeValue( annotation, attributeDescriptor.getAttributeName() );
-	}
-
-	public static <A extends Annotation, T> T extractAttributeValue(A annotation, String attributeName) {
+	public static <A extends Annotation, T> T extractRawAttributeValue(
+			A annotation,
+			String attributeName) {
 		try {
 			final Method method = annotation.getClass().getDeclaredMethod( attributeName );
 			//noinspection unchecked
@@ -141,4 +202,7 @@ public class AnnotationHelper {
 		}
 	}
 
+	private AnnotationHelper() {
+		// disallow direct instantiation
+	}
 }

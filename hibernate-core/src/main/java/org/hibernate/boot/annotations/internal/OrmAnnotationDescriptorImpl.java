@@ -14,16 +14,17 @@ import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.spi.JpaAnnotations;
 
 /**
- * Used to represent the
- * {@linkplain JpaAnnotations JPA} and
- * {@linkplain HibernateAnnotations Hibernate}
- * annotations.  We never care about annotations associated with the annotation type
- * for these annotations.
+ * Used to represent the {@linkplain JpaAnnotations JPA} and
+ * {@linkplain HibernateAnnotations Hibernate} annotations.
+ *
+ * @implNote We never care about annotations defined on those annotation classes;
+ * the {@link AnnotationTarget} contract here behaves as if no annotations where found.
  *
  * @see AnnotationUsage
  * @see AnnotationDescriptorImpl
@@ -94,7 +95,7 @@ public class OrmAnnotationDescriptorImpl<T extends Annotation> implements Annota
 
 	@Override
 	public <A extends Annotation> AnnotationUsage<A> getUsage(AnnotationDescriptor<A> type) {
-		// there isn't one
+		// there are none
 		return null;
 	}
 

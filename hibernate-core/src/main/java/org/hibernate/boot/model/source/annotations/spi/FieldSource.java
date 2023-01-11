@@ -7,7 +7,9 @@
 package org.hibernate.boot.model.source.annotations.spi;
 
 /**
+ * Models a "{@linkplain java.lang.reflect.Field field}" in a {@link ManagedClass}
+ *
  * @author Steve Ebersole
  */
-public interface EmbeddableTypeSource extends ManagedTypeSource {
+public interface FieldSource extends MemberSource {
 }

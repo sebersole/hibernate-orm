@@ -12,16 +12,16 @@ import java.util.List;
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.spi.JpaAnnotations;
 
 /**
- * AnnotationDescriptor used for annotations other than
- * {@linkplain JpaAnnotations JPA}
- * and {@linkplain HibernateAnnotations Hibernate}
- * annotations.
+ * AnnotationDescriptor used for annotations other than {@linkplain JpaAnnotations JPA}
+ * and {@linkplain HibernateAnnotations Hibernate} annotations.
  * <p/>
- * This form makes the type annotations (annotations on the annotation type) available.
+ * Processes the annotations associated with the {@linkplain #getAnnotationType() annotation class}
+ * and makes them available via its {@link AnnotationTarget} implementation.
  *
  * @author Steve Ebersole
  */

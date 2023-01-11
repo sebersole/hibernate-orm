@@ -7,7 +7,6 @@
 package org.hibernate.boot.model.source.annotations.internal;
 
 import java.lang.annotation.Annotation;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,28 +16,22 @@ import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.internal.AnnotationUsageImpl;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
- * Base support for things which can be {@linkplain java.lang.annotation.Target targeted}
- * by annotations, providing access to the details about those associated annotations
+ * Support for AnnotationTarget where the annotations are not known up
+ * front; rather, they are {@linkplain  #apply(AnnotationUsage) applied} later
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractAnnotationTarget implements AnnotationTarget {
-	private final AnnotationProcessingContext processingContext;
+public abstract class DelayedAnnotationTarget implements AnnotationTarget {
+	private final AnnotationDescriptorRegistry annotationDescriptorRegistry;
 	private final Map<Class<? extends Annotation>,List<AnnotationUsage<?>>> usagesMap = new HashMap<>();
 
-	public AbstractAnnotationTarget(AnnotationProcessingContext processingContext) {
-		this.processingContext = processingContext;
-	}
-
-	public AbstractAnnotationTarget(List<AnnotationUsage<?>> annotationUsages, AnnotationProcessingContext processingContext) {
-		this( processingContext );
-		apply( annotationUsages );
+	public DelayedAnnotationTarget(AnnotationDescriptorRegistry annotationDescriptorRegistry) {
+		this.annotationDescriptorRegistry = annotationDescriptorRegistry;
 	}
 
 	public void apply(List<AnnotationUsage<?>> annotationUsages) {
@@ -46,28 +39,23 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 		annotationUsages.forEach( this::apply );
 	}
 
+	/**
+	 * Applies the given {@code annotationUsage} to this target.
+	 *
+	 * @apiNote
+	 * todo (annotation-source) : It is undefined currently what happens if the
+	 * 		{@link AnnotationUsage#getAnnotationDescriptor() annotation type} is
+	 * 		already applied on this target.
+	 */
 	public void apply(AnnotationUsage<?> annotationUsage) {
 		final AnnotationDescriptor<?> annotationDescriptor = annotationUsage.getAnnotationDescriptor();
 		final Class<? extends Annotation> annotationJavaType = annotationDescriptor.getAnnotationType();
 
-		if ( annotationDescriptor.getRepeatableContainer() != null ) {
-			// The annotation is repeatable.  Since Java does not allow the repeatable and container
-			// to exist on the same target, this means that this usage is the only effective
-			// one for its descriptor
-			usagesMap.put( annotationJavaType, Collections.singletonList( annotationUsage ) );
-		}
-		else {
-			final AnnotationDescriptorRegistry descriptorXref = processingContext.getAnnotationDescriptorRegistry();
-			final AnnotationDescriptor<?> repeatableDescriptor = descriptorXref.getRepeatableDescriptor( annotationJavaType );
-			if ( repeatableDescriptor != null ) {
-				// The usage type is a repeatable container.  Flatten its contained annotations
-				final AnnotationUsage.AttributeValue value = annotationUsage.getAttributeValue( "value" );
-				final List<AnnotationUsage<?>> repeatableUsages = value.getValue();
-				usagesMap.put( repeatableDescriptor.getAnnotationType(), repeatableUsages );
-			}
-			else {
-				usagesMap.put( annotationJavaType, Collections.singletonList( annotationUsage ) );
-			}
+		final List<AnnotationUsage<?>> usages = AnnotationsHelper.resolveRepeatable( annotationUsage, annotationDescriptorRegistry );
+		final List<AnnotationUsage<?>> previousList = usagesMap.put( annotationJavaType, usages );
+
+		if ( previousList != null ) {
+			// todo (annotation-source) : ignore?  log?  exception?
 		}
 	}
 
@@ -79,12 +67,12 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 	}
 
 	protected void apply(Annotation annotation) {
-		final AnnotationDescriptorRegistry descriptorXref = processingContext.getAnnotationDescriptorRegistry();
 		//noinspection rawtypes,unchecked
 		final AnnotationUsageImpl usage = new AnnotationUsageImpl(
 				annotation,
-				descriptorXref.getDescriptor( annotation.annotationType() ),
-				this
+				annotationDescriptorRegistry.getDescriptor( annotation.annotationType() ),
+				this,
+				annotationDescriptorRegistry
 		);
 		apply( usage );
 	}

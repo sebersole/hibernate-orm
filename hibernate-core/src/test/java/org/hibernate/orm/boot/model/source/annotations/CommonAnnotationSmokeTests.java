@@ -6,26 +6,25 @@
  */
 package org.hibernate.orm.boot.model.source.annotations;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.annotations.common.reflection.XClass;
-import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
-import org.hibernate.boot.annotations.internal.AnnotationProcessingContextImpl;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.JpaAnnotations;
-import org.hibernate.boot.model.source.annotations.internal.AttributeSourceImpl;
-import org.hibernate.boot.model.source.annotations.internal.RootAnnotationBindingContext;
-import org.hibernate.boot.model.source.annotations.spi.AttributeSource;
+import org.hibernate.boot.model.source.annotations.internal.hcann.ManagedClassImpl;
+import org.hibernate.boot.model.source.annotations.spi.FieldSource;
+import org.hibernate.boot.model.source.annotations.spi.MethodSource;
 
-import org.hibernate.testing.boot.MetadataBuildingContextTestingImpl;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
-import org.hibernate.testing.orm.junit.ServiceRegistryScope;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.NamedQuery;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Steve Ebersole
@@ -33,36 +32,41 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @ServiceRegistry
 public class CommonAnnotationSmokeTests {
 	@Test
-	void testBasic(ServiceRegistryScope scope) {
-		final AnnotationProcessingContextImpl annotationProcessingContext = new AnnotationProcessingContextImpl();
-		final MetadataBuildingContextTestingImpl baseContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
-		final RootAnnotationBindingContext rootContext = new RootAnnotationBindingContext( annotationProcessingContext, baseContext );
-
+	void basicAssertions() {
 		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
 		final XClass xClass = hcannReflectionManager.toXClass( SimpleColumnEntity.class );
-		final List<XProperty> properties = xClass.getDeclaredProperties( "field" );
-		final XProperty name = extractProperty( properties, "name" );
-		final AttributeSourceImpl nameAttributeSource = makeAttributeSource( name, rootContext );
-		verifyBaseValues( nameAttributeSource );
+
+		final AnnotationDescriptorRegistry descriptorRegistry = new AnnotationDescriptorRegistry();
+
+		final ManagedClassImpl entityClass = new ManagedClassImpl( xClass, descriptorRegistry );
+		assertThat( entityClass.getFields() ).hasSize( 3 );
+		assertThat( entityClass.getFields().stream().map( FieldSource::getName ) )
+				.containsAll( Arrays.asList( "id", "name", "name2" ) );
+
+		assertThat( entityClass.getMethods() ).hasSize( 3 );
+		assertThat( entityClass.getMethods().stream().map( MethodSource::getName ) )
+				.containsAll( Arrays.asList( "getId", "getName", "setName" ) );
+
+		verifyNameMapping( findNamedField( entityClass.getFields(), "name" ) );
+		verifyIdMapping( findNamedField( entityClass.getFields(), "id" ) );
+
+		final AnnotationUsage<CustomAnnotation> customAnnotation = entityClass.getUsage( descriptorRegistry.getDescriptor( CustomAnnotation.class ) );
+		assertThat( customAnnotation ).isNotNull();
+
+		final List<AnnotationUsage<NamedQuery>> usages = entityClass.getUsages( JpaAnnotations.NAMED_QUERY );
+		assertThat( usages ).hasSize( 2 );
 	}
 
-	private AttributeSourceImpl makeAttributeSource(XProperty name, RootAnnotationBindingContext rootContext) {
-		final AttributeSourceImpl nameAttributeSource = new AttributeSourceImpl( "name", rootContext );
-		nameAttributeSource.apply( name.getAnnotations() );
-		return nameAttributeSource;
-	}
-
-	private XProperty extractProperty(List<XProperty> properties, String name) {
-		for ( int i = 0; i < properties.size(); i++ ) {
-			if ( name.equals( properties.get( i ).getName() ) ) {
-				return properties.get( i );
+	private FieldSource findNamedField(List<FieldSource> fields, String name) {
+		for ( FieldSource field : fields ) {
+			if ( field.getName().equals( name ) ) {
+				return field;
 			}
 		}
-
 		throw new RuntimeException();
 	}
 
-	private void verifyBaseValues(AttributeSource nameAttributeSource) {
+	private void verifyNameMapping(FieldSource nameAttributeSource) {
 		final AnnotationUsage<Column> column = nameAttributeSource.getUsage( JpaAnnotations.COLUMN );
 		assertThat( column.getAttributeValue( "name" ).getStringValue() ).isEqualTo( "description" );
 		assertThat( column.getAttributeValue( "table" ).isDefaultValue() ).isTrue();
@@ -70,6 +74,16 @@ public class CommonAnnotationSmokeTests {
 		assertThat( column.getAttributeValue( "unique" ).getBooleanValue() ).isTrue();
 		assertThat( column.getAttributeValue( "insertable" ).getBooleanValue() ).isFalse();
 		assertThat( column.getAttributeValue( "updatable" ).getBooleanValue() ).isTrue();
+	}
+
+	private void verifyIdMapping(FieldSource idSource) {
+		final AnnotationUsage<Column> column = idSource.getUsage( JpaAnnotations.COLUMN );
+		assertThat( column.getAttributeValue( "name" ).getStringValue() ).isEqualTo( "id" );
+		assertThat( column.getAttributeValue( "table" ).isDefaultValue() ).isTrue();
+		assertThat( column.getAttributeValue( "nullable" ).isDefaultValue() ).isTrue();
+		assertThat( column.getAttributeValue( "unique" ).isDefaultValue() ).isTrue();
+		assertThat( column.getAttributeValue( "insertable" ).isDefaultValue() ).isTrue();
+		assertThat( column.getAttributeValue( "updatable" ).isDefaultValue() ).isTrue();
 	}
 
 }

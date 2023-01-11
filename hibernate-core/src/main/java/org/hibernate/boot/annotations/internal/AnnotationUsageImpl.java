@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.spi.AnnotationUsage;
 
@@ -27,11 +28,12 @@ public class AnnotationUsageImpl<A extends Annotation> implements AnnotationUsag
 	public AnnotationUsageImpl(
 			A annotation,
 			AnnotationDescriptor<A> annotationDescriptor,
-			AnnotationTarget location) {
+			AnnotationTarget location,
+			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
 		this.annotationDescriptor = annotationDescriptor;
 		this.location = location;
 
-		this.valueMap = extractAttributeValues( annotation, annotationDescriptor );
+		this.valueMap = extractAttributeValues( annotation, annotationDescriptor, annotationDescriptorRegistry );
 	}
 
 	@Override

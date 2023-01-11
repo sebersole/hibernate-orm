@@ -7,10 +7,11 @@
 package org.hibernate.boot.annotations.internal;
 
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.spi.AnnotationDescriptor;
@@ -20,44 +21,60 @@ import org.hibernate.boot.annotations.spi.AnnotationUsage;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
- * Basic support for AnnotationTarget
+ * AnnotationTarget where we know the annotations up front, but
+ * want to delay processing them until (unless!) they are needed
  *
  * @author Steve Ebersole
  */
-public abstract class AbstractAnnotationTarget implements AnnotationTarget {
-	private final Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> usageMap = new ConcurrentHashMap<>();
+public class LazyAnnotationTarget implements AnnotationTarget {
+	private final Supplier<Annotation[]> annotationSupplier;
+	private final AnnotationDescriptorRegistry annotationDescriptorRegistry;
 
-	public AbstractAnnotationTarget(
-			Annotation[] annotations,
+	private Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> usagesMap;
+
+	public LazyAnnotationTarget(
+			Supplier<Annotation[]> annotationSupplier,
 			AnnotationDescriptorRegistry annotationDescriptorRegistry) {
-		AnnotationHelper.processAnnotationUsages(
-				annotations,
-				this,
-				usageMap::put,
-				annotationDescriptorRegistry
-		);
+		this.annotationSupplier = annotationSupplier;
+		this.annotationDescriptorRegistry = annotationDescriptorRegistry;
 	}
 
 	@Override
 	public <A extends Annotation> List<AnnotationUsage<A>> getUsages(AnnotationDescriptor<A> type) {
 		//noinspection unchecked,rawtypes
-		return (List) usageMap.get( type.getAnnotationType() );
+		return (List) getUsagesMap().get( type.getAnnotationType() );
+	}
+
+	private Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> getUsagesMap() {
+		if ( usagesMap == null ) {
+			usagesMap = buildUsagesMap();
+		}
+		return usagesMap;
+	}
+
+	private Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> buildUsagesMap() {
+		final Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> result = new HashMap<>();
+		AnnotationHelper.processAnnotationUsages(
+				annotationSupplier.get(),
+				this,
+				result::put,
+				annotationDescriptorRegistry
+		);
+		return result;
 	}
 
 	@Override
 	public <A extends Annotation> void withAnnotations(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
-		final List<AnnotationUsage<?>> annotationUsages = usageMap.get( type.getAnnotationType() );
+		final List<AnnotationUsage<A>> annotationUsages = getUsages( type );
 		if ( annotationUsages == null ) {
 			return;
 		}
-
-		//noinspection unchecked,rawtypes
-		annotationUsages.forEach( (Consumer) consumer );
+		annotationUsages.forEach( consumer );
 	}
 
 	@Override
 	public <A extends Annotation> AnnotationUsage<A> getUsage(AnnotationDescriptor<A> type) {
-		final List<AnnotationUsage<?>> annotationUsages = usageMap.get( type.getAnnotationType() );
+		final List<AnnotationUsage<A>> annotationUsages = getUsages( type );
 		if ( CollectionHelper.isEmpty( annotationUsages ) ) {
 			return null;
 		}
@@ -66,22 +83,18 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 					"Expected single annotation usage, but found multiple : " + type.getAnnotationType().getName()
 			);
 		}
-		//noinspection unchecked
-		return (AnnotationUsage<A>) annotationUsages.get( 0 );
+		return annotationUsages.get( 0 );
 	}
 
 	@Override
-	public <A extends Annotation> AnnotationUsage<A> getNamedUsage(
-			AnnotationDescriptor<A> type,
-			String name,
-			String attributeName) {
-		final List<AnnotationUsage<?>> annotationUsages = usageMap.get( type.getAnnotationType() );
-		if ( CollectionHelper.isEmpty( annotationUsages ) ) {
+	public <A extends Annotation> AnnotationUsage<A> getNamedUsage(AnnotationDescriptor<A> type, String name, String attributeName) {
+		final List<AnnotationUsage<A>> annotationUsages = getUsages( type );
+		if ( annotationUsages == null ) {
 			return null;
 		}
+
 		for ( int i = 0; i < annotationUsages.size(); i++ ) {
-			//noinspection unchecked
-			final AnnotationUsage<A> annotationUsage = (AnnotationUsage<A>) annotationUsages.get( i );
+			final AnnotationUsage<A> annotationUsage = annotationUsages.get( i );
 			final AnnotationUsage.AttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
 			if ( attributeValue == null ) {
 				continue;
@@ -90,6 +103,7 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 				return annotationUsage;
 			}
 		}
+
 		return null;
 	}
 }
