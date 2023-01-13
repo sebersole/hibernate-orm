@@ -13,11 +13,11 @@ import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
 import org.hibernate.boot.annotations.source.internal.AnnotationProcessingContextImpl;
 import org.hibernate.boot.annotations.source.internal.hcann.ManagedClassImpl;
 import org.hibernate.boot.annotations.source.spi.ManagedClass;
-import org.hibernate.boot.annotations.source.spi.ManagedClassRegistry;
 import org.hibernate.boot.annotations.spi.RootAnnotationBindingContext;
 import org.hibernate.boot.annotations.type.internal.EntityHierarchyBuilder;
 import org.hibernate.boot.annotations.type.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.type.spi.EntityTypeMetadata;
+import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.orm.boot.model.annotations.SimpleColumnEntity;
 
 import org.hibernate.testing.boot.MetadataBuildingContextTestingImpl;
@@ -38,24 +38,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EntityHierarchySmokeTests {
 	@Test
 	void testNoInheritance(ServiceRegistryScope scope) {
-		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
-
-		final XClass xClass = hcannReflectionManager.toXClass( SimpleColumnEntity.class );
-		final ManagedClassImpl entityClass = new ManagedClassImpl( xClass, processingContext );
-
-		final ManagedClassRegistry managedClassRegistry = processingContext.getManagedClassRegistry();
-		final ManagedClass registered = managedClassRegistry.getManagedClass( entityClass.getName() );
-		assertThat( registered ).isSameAs( entityClass );
-
-		final MetadataBuildingContextTestingImpl rootContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
-		final RootAnnotationBindingContext rootAnnotationContext = new RootAnnotationBindingContext( processingContext, rootContext );
-		final Set<EntityHierarchy> entityHierarchies = EntityHierarchyBuilder.createEntityHierarchies( rootAnnotationContext );
+		final Set<EntityHierarchy> entityHierarchies = buildHierarchies( scope.getRegistry(), SimpleColumnEntity.class );
 
 		assertThat( entityHierarchies ).hasSize( 1 );
 
 		final EntityHierarchy hierarchy = entityHierarchies.iterator().next();
-		assertThat( hierarchy ).isNotNull();
 		assertThat( hierarchy.getInheritanceType() ).isEqualTo( SINGLE_TABLE );
 
 		final EntityTypeMetadata entityTypeMetadata = hierarchy.getRoot();
@@ -65,33 +52,39 @@ public class EntityHierarchySmokeTests {
 		assertThat( entityTypeMetadata.getEntityName() ).isEqualTo( managedClass.getClassName() );
 		assertThat( entityTypeMetadata.getJpaEntityName() ).isEqualTo( "SimpleColumnEntity" );
 
-		assertThat( entityTypeMetadata.hasSubTypes() ).isFalse();
 		assertThat( entityTypeMetadata.getSuperType() ).isNull();
+		assertThat( entityTypeMetadata.hasSubTypes() ).isFalse();
+	}
+
+	private Set<EntityHierarchy> buildHierarchies(StandardServiceRegistry registry, Class<?>... classes) {
+		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
+		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
+
+		for ( int i = 0; i < classes.length; i++ ) {
+			final XClass xClass = hcannReflectionManager.toXClass( classes[ i ] );
+			new ManagedClassImpl( xClass, processingContext );
+		}
+
+		final MetadataBuildingContextTestingImpl rootContext = new MetadataBuildingContextTestingImpl( registry );
+		final RootAnnotationBindingContext rootAnnotationContext = new RootAnnotationBindingContext( processingContext, rootContext );
+		return EntityHierarchyBuilder.createEntityHierarchies( rootAnnotationContext );
 	}
 
 	@Test
 	void testJoinedInheritance(ServiceRegistryScope scope) {
-		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
-
-		final XClass leafXClass = hcannReflectionManager.toXClass( JoinedLeaf.class );
-		new ManagedClassImpl( leafXClass, processingContext );
-
-		final ManagedClass root = processingContext
-				.getManagedClassRegistry()
-				.findManagedClass( JoinedRoot.class.getName() );
-		assertThat( root ).isNotNull();
-		assertThat( root.getClassName() ).isEqualTo( JoinedRoot.class.getName() );
-
-		final MetadataBuildingContextTestingImpl rootContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
-		final RootAnnotationBindingContext rootAnnotationContext = new RootAnnotationBindingContext( processingContext, rootContext );
-		final Set<EntityHierarchy> entityHierarchies = EntityHierarchyBuilder.createEntityHierarchies( rootAnnotationContext );
+		final Set<EntityHierarchy> entityHierarchies = buildHierarchies(
+				scope.getRegistry(),
+				JoinedRoot.class,
+				JoinedLeaf.class
+		);
 
 		assertThat( entityHierarchies ).hasSize( 1 );
 
 		final EntityHierarchy hierarchy = entityHierarchies.iterator().next();
 		assertThat( hierarchy.getInheritanceType() ).isEqualTo( JOINED );
+
 		assertThat( hierarchy.getRoot().getEntityName() ).isEqualTo( JoinedRoot.class.getName() );
+		assertThat( hierarchy.getRoot().getSuperType() ).isNull();
 		assertThat( hierarchy.getRoot().hasSubTypes() ).isTrue();
 		final EntityTypeMetadata subType = (EntityTypeMetadata) hierarchy.getRoot().getSubTypes().iterator().next();
 		assertThat( subType.getEntityName() ).isEqualTo( JoinedLeaf.class.getName() );
