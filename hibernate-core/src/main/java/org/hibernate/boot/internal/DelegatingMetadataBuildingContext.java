@@ -24,6 +24,10 @@ public class DelegatingMetadataBuildingContext implements MetadataBuildingContex
 		this.delegate = delegate;
 	}
 
+	protected MetadataBuildingContext getDelegate() {
+		return delegate;
+	}
+
 	@Override
 	public BootstrapContext getBootstrapContext() {
 		return delegate.getBootstrapContext();
