@@ -10,9 +10,9 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 
 /**
  * @author Steve Ebersole

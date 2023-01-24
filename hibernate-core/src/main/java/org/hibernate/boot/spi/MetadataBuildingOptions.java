@@ -9,6 +9,8 @@ package org.hibernate.boot.spi;
 import java.util.List;
 
 import org.hibernate.TimeZoneStorageStrategy;
+import org.hibernate.boot.annotations.model.internal.StandardPersistentAttributeMemberResolver;
+import org.hibernate.boot.annotations.model.spi.PersistentAttributeMemberResolver;
 import org.hibernate.boot.model.IdGeneratorStrategyInterpreter;
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
@@ -230,6 +232,15 @@ public interface MetadataBuildingOptions {
 	 */
 	default boolean isXmlMappingEnabled() {
 		return true;
+	}
+
+	/**
+	 * Hook for pluggable delegation for resolving the members that define a persistent attribute
+	 *
+	 * @since 6.2
+	 */
+	default PersistentAttributeMemberResolver getPersistentAttributeMemberResolver() {
+		return StandardPersistentAttributeMemberResolver.INSTANCE;
 	}
 
 	/**

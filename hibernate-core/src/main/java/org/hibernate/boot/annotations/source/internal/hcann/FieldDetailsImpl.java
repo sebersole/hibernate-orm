@@ -8,8 +8,11 @@ package org.hibernate.boot.annotations.source.internal.hcann;
 
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.boot.annotations.source.internal.LazyAnnotationTarget;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
+import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.FieldDetails;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+
+import static org.hibernate.boot.annotations.source.internal.ModifierUtils.isPersistableField;
 
 
 /**
@@ -17,14 +20,29 @@ import org.hibernate.boot.annotations.source.spi.FieldDetails;
  */
 public class FieldDetailsImpl extends LazyAnnotationTarget implements FieldDetails {
 	private final XProperty xProperty;
+	private final ClassDetails type;
 
 	public FieldDetailsImpl(XProperty xProperty, AnnotationProcessingContext processingContext) {
 		super( xProperty::getAnnotations, processingContext );
 		this.xProperty = xProperty;
+		this.type = processingContext.getClassDetailsRegistry().resolveManagedClass(
+				xProperty.getType().getName(),
+				() -> new ClassDetailsImpl( xProperty.getType(), processingContext )
+		);
 	}
 
 	@Override
 	public String getName() {
 		return xProperty.getName();
+	}
+
+	@Override
+	public ClassDetails getType() {
+		return type;
+	}
+
+	@Override
+	public boolean isPersistable() {
+		return isPersistableField( xProperty.getModifiers() );
 	}
 }

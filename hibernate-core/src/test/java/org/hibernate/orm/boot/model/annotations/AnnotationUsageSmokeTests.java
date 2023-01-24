@@ -15,6 +15,9 @@ import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
 
+import org.hibernate.testing.boot.MetadataBuildingContextTestingImpl;
+import org.hibernate.testing.orm.junit.ServiceRegistry;
+import org.hibernate.testing.orm.junit.ServiceRegistryScope;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.Column;
@@ -25,10 +28,12 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 /**
  * @author Steve Ebersole
  */
+@ServiceRegistry
 public class AnnotationUsageSmokeTests {
 	@Test
-	void testColumn() throws NoSuchFieldException {
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
+	void testColumn(ServiceRegistryScope scope) throws NoSuchFieldException {
+		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
+		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl( buildingContext );
 
 		final Field nameField = SimpleColumnEntity.class.getDeclaredField( "name" );
 		final Column nameColumnAnn = nameField.getAnnotation( Column.class );
@@ -43,9 +48,11 @@ public class AnnotationUsageSmokeTests {
 	}
 
 	@Test
-	void testMetaAnnotation() {
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
+	void testMetaAnnotation(ServiceRegistryScope scope) {
+		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
+		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl( buildingContext );
 		final AnnotationDescriptorRegistry descriptorRegistry = processingContext.getAnnotationDescriptorRegistry();
+
 		final AnnotationDescriptor<CustomAnnotation> descriptor = descriptorRegistry.getDescriptor( CustomAnnotation.class );
 		final AnnotationDescriptor<CustomMetaAnnotation> metaDescriptor = descriptorRegistry.getDescriptor( CustomMetaAnnotation.class );
 		assertThat( descriptor ).isNotNull();

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.hibernate.boot.annotations.source.internal.AnnotationDescriptorImpl;
 import org.hibernate.boot.annotations.source.internal.OrmAnnotationDescriptorImpl;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;

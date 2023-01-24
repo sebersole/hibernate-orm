@@ -31,9 +31,9 @@ import org.hibernate.internal.FilterConfiguration;
 import org.hibernate.internal.util.collections.JoinedIterator;
 import org.hibernate.internal.util.collections.JoinedList;
 import org.hibernate.internal.util.collections.SingletonIterator;
+import org.hibernate.jpa.event.spi.CallbackDefinition;
 import org.hibernate.metamodel.spi.RuntimeModelCreationContext;
 import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.jpa.event.spi.CallbackDefinition;
 import org.hibernate.query.sqm.function.SqmFunctionRegistry;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.sql.Alias;
@@ -1030,6 +1030,10 @@ public abstract class PersistentClass implements AttributeContainer, Serializabl
 
 	public void addSynchronizedTable(String table) {
 		synchronizedTables.add( table );
+	}
+
+	public void addSynchronizedTables(String[] tables) {
+		synchronizedTables.addAll( List.of( tables ) );
 	}
 
 	public Boolean isAbstract() {

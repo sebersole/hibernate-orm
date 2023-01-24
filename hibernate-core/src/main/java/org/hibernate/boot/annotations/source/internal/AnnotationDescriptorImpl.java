@@ -11,10 +11,10 @@ import java.util.List;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 
 /**
  * AnnotationDescriptor used for annotations other than {@linkplain JpaAnnotations JPA}

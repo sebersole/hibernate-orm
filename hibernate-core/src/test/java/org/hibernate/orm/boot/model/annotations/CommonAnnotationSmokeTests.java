@@ -12,16 +12,18 @@ import java.util.List;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
 import org.hibernate.boot.annotations.source.internal.AnnotationProcessingContextImpl;
-import org.hibernate.boot.annotations.source.internal.hcann.ManagedClassImpl;
+import org.hibernate.boot.annotations.source.internal.hcann.ClassDetailsImpl;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.FieldDetails;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
 import org.hibernate.boot.annotations.source.spi.MethodDetails;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.MutableInteger;
 
+import org.hibernate.testing.boot.MetadataBuildingContextTestingImpl;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
+import org.hibernate.testing.orm.junit.ServiceRegistryScope;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.Column;
@@ -35,9 +37,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ServiceRegistry
 public class CommonAnnotationSmokeTests {
 	@Test
-	void basicAssertions() {
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
-		final ManagedClassImpl entityClass = buildManagedClass( processingContext );
+	void basicAssertions(ServiceRegistryScope scope) {
+		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
+		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl( buildingContext );
+
+		final ClassDetailsImpl entityClass = buildManagedClass( processingContext );
 
 		assertThat( entityClass.getFields() ).hasSize( 3 );
 		assertThat( entityClass.getFields().stream().map( FieldDetails::getName ) )
@@ -55,17 +59,19 @@ public class CommonAnnotationSmokeTests {
 		assertThat( customAnnotation ).isNotNull();
 	}
 
-	private ManagedClassImpl buildManagedClass(AnnotationProcessingContext processingContext) {
+	private ClassDetailsImpl buildManagedClass(AnnotationProcessingContext processingContext) {
 		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
 		final XClass xClass = hcannReflectionManager.toXClass( SimpleColumnEntity.class );
 
-		return new ManagedClassImpl( xClass, processingContext );
+		return new ClassDetailsImpl( xClass, processingContext );
 	}
 
 	@Test
-	void testRepeatableAnnotationHandling() {
-		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl();
-		final ManagedClassImpl entityClass = buildManagedClass( processingContext );
+	void testRepeatableAnnotationHandling(ServiceRegistryScope scope) {
+		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
+		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl( buildingContext );
+
+		final ClassDetailsImpl entityClass = buildManagedClass( processingContext );
 
 		final List<AnnotationUsage<NamedQuery>> usages = entityClass.getAnnotations( JpaAnnotations.NAMED_QUERY );
 		assertThat( usages ).hasSize( 2 );

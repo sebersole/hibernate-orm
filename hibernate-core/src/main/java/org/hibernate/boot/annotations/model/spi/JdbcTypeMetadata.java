@@ -1,0 +1,19 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
+ * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
+ */
+package org.hibernate.boot.annotations.model.spi;
+
+import org.hibernate.type.descriptor.jdbc.JdbcType;
+
+/**
+ * Source of {@linkplain JdbcType JDBC type} information
+ *
+ * @author Steve Ebersole
+ */
+public interface JdbcTypeMetadata {
+	Integer getTypeCode();
+	Class<? extends JdbcType> getJdbcTypeClass();
+}

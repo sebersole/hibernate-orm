@@ -6,7 +6,7 @@
  */
 
 /**
- * Package modeling {@linkplain org.hibernate.boot.annotations.source.spi.ManagedClass "managed classes"},
+ * Package modeling {@linkplain org.hibernate.boot.annotations.source.spi.ClassDetails "managed classes"},
  * their {@linkplain org.hibernate.boot.annotations.source.spi.FieldDetails fields} and
  * {@linkplain org.hibernate.boot.annotations.source.spi.MethodDetails methods} as well as
  * {@linkplain org.hibernate.boot.annotations.source.spi.AnnotationUsage annotations} defined on them.

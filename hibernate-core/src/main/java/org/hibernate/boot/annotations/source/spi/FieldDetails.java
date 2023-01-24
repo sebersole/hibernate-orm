@@ -7,7 +7,7 @@
 package org.hibernate.boot.annotations.source.spi;
 
 /**
- * Models a "{@linkplain java.lang.reflect.Field field}" in a {@link ManagedClass}
+ * Models a "{@linkplain java.lang.reflect.Field field}" in a {@link ClassDetails}
  *
  * @author Steve Ebersole
  */
@@ -15,5 +15,10 @@ public interface FieldDetails extends MemberDetails {
 	@Override
 	default Kind getKind() {
 		return Kind.FIELD;
+	}
+
+	@Override
+	default String resolveAttributeName() {
+		return getName();
 	}
 }

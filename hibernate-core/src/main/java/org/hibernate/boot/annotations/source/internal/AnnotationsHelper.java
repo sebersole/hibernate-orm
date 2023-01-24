@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
+import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -19,10 +21,21 @@ import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
  * @author Steve Ebersole
  */
 public class AnnotationsHelper {
+	/**
+	 * Get the annotation attribute value.  Return {@code null} if the value is
+	 * {@linkplain AnnotationUsage.AttributeValue#isDefaultValue() the default}.
+	 */
 	public static <T> T getValueOrNull(AnnotationUsage.AttributeValue attributeValue) {
-		return getValue( attributeValue, (T) null );
+		if ( attributeValue == null || attributeValue.isDefaultValue() ) {
+			return null;
+		}
+		return attributeValue.getValue();
 	}
 
+	/**
+	 * Get the annotation attribute value, or {@code null} if its value is
+	 * {@linkplain AnnotationUsage.AttributeValue#isDefaultValue() the default}.
+	 */
 	public static <T> T getValueOrNull(AnnotationUsage.AttributeValue attributeValue, T defaultValue) {
 		assert defaultValue != null;
 		if ( attributeValue == null || defaultValue.equals( attributeValue.getValue() ) ) {
@@ -68,6 +81,45 @@ public class AnnotationsHelper {
 				return Collections.singletonList( annotationUsage );
 			}
 		}
+	}
+
+	/**
+	 * Look for the given annotation on the passed type as well as any of its super-types
+	 */
+	public static <A extends Annotation> AnnotationUsage<A> findInheritedAnnotation(
+			IdentifiableTypeMetadata base,
+			AnnotationDescriptor<A> annotationDescriptor) {
+		final AnnotationUsage<A> annotation = base.getManagedClass().getAnnotation( annotationDescriptor );
+		if ( annotation != null ) {
+			return annotation;
+		}
+
+		if ( base.getSuperType() != null ) {
+			return findInheritedAnnotation( base.getSuperType(), annotationDescriptor );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Same as {@link #findInheritedAnnotation}, expect stopping at an entity-type
+	 * boundary.  It effectively searches the given type and all of its mapped-superclasses
+	 */
+	public static <A extends Annotation> AnnotationUsage<A> findSemiInheritedAnnotation(
+			IdentifiableTypeMetadata base,
+			AnnotationDescriptor<A> annotationDescriptor) {
+		final AnnotationUsage<A> annotation = base.getManagedClass().getAnnotation( annotationDescriptor );
+		if ( annotation != null ) {
+			return annotation;
+		}
+
+		if ( base.getSuperType() != null ) {
+			if ( ! (base.getSuperType() instanceof EntityTypeMetadata) ) {
+				return findSemiInheritedAnnotation( base.getSuperType(), annotationDescriptor );
+			}
+		}
+
+		return null;
 	}
 
 	private AnnotationsHelper() {

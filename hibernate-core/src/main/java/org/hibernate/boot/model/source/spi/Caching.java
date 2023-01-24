@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.model.source.spi;
 
+import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
@@ -21,6 +22,7 @@ import org.hibernate.internal.util.StringHelper;
  */
 public class Caching {
 	private boolean enabled;
+
 	private String region;
 	private AccessType accessType;
 	private boolean cacheLazyProperties;
@@ -33,23 +35,23 @@ public class Caching {
 	}
 
 	public Caching(
-			AnnotationUsage<?> cachingAnnotation,
+			AnnotationUsage<Cache> cacheAnnotation,
 			AccessType implicitCacheAccessType,
 			String implicitRegionName) {
 		this.enabled = true;
 
-		if ( cachingAnnotation == null ) {
+		if ( cacheAnnotation == null ) {
 			region = implicitRegionName;
 			accessType = implicitCacheAccessType;
 			cacheLazyProperties = true;
 		}
 		else {
-			region = AnnotationsHelper.getValue( cachingAnnotation.getAttributeValue( "region" ), implicitRegionName );
-			accessType = interpretAccessType( cachingAnnotation.getAttributeValue( "usage" ), implicitCacheAccessType );
+			region = AnnotationsHelper.getValue( cacheAnnotation.getAttributeValue( "region" ), implicitRegionName );
+			accessType = interpretAccessType( cacheAnnotation.getAttributeValue( "usage" ), implicitCacheAccessType );
 			cacheLazyProperties = AnnotationsHelper.getValue(
-					cachingAnnotation.getAttributeValue( "includeLazy" ),
+					cacheAnnotation.getAttributeValue( "includeLazy" ),
 					() -> {
-						final String include = cachingAnnotation.getAttributeValue( "include" ).asString();
+						final String include = cacheAnnotation.getAttributeValue( "include" ).asString();
 						assert "all".equals( include ) || "non-lazy".equals( include );
 						return include.equals( "all" );
 					}

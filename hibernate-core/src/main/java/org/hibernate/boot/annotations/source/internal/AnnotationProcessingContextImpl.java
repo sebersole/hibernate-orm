@@ -6,10 +6,11 @@
  */
 package org.hibernate.boot.annotations.source.internal;
 
-import org.hibernate.boot.annotations.source.internal.reflection.ManagedClassImpl;
+import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsImpl;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
-import org.hibernate.boot.annotations.source.spi.ManagedClassRegistry;
+import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.type.descriptor.java.JavaType;
 import org.hibernate.type.descriptor.jdbc.JdbcType;
 
@@ -20,15 +21,17 @@ import jakarta.persistence.AttributeConverter;
  */
 public class AnnotationProcessingContextImpl implements AnnotationProcessingContext {
 	private final AnnotationDescriptorRegistry descriptorRegistry;
-	private final ManagedClassRegistry managedClassRegistry;
+	private final ClassDetailsRegistry classDetailsRegistry;
+	private final MetadataBuildingContext buildingContext;
 
-	public AnnotationProcessingContextImpl() {
+	public AnnotationProcessingContextImpl(MetadataBuildingContext buildingContext) {
+		this.buildingContext = buildingContext;
 		this.descriptorRegistry = new AnnotationDescriptorRegistry( this );
-		this.managedClassRegistry = new ManagedClassRegistry( this );
+		this.classDetailsRegistry = new ClassDetailsRegistry( this );
 
-		managedClassRegistry.addManagedClass( new ManagedClassImpl( AttributeConverter.class, this ) );
-		managedClassRegistry.addManagedClass( new ManagedClassImpl( JavaType.class, this ) );
-		managedClassRegistry.addManagedClass( new ManagedClassImpl( JdbcType.class, this ) );
+		classDetailsRegistry.addManagedClass( new ClassDetailsImpl( AttributeConverter.class, this ) );
+		classDetailsRegistry.addManagedClass( new ClassDetailsImpl( JavaType.class, this ) );
+		classDetailsRegistry.addManagedClass( new ClassDetailsImpl( JdbcType.class, this ) );
 	}
 
 	@Override
@@ -37,7 +40,12 @@ public class AnnotationProcessingContextImpl implements AnnotationProcessingCont
 	}
 
 	@Override
-	public ManagedClassRegistry getManagedClassRegistry() {
-		return managedClassRegistry;
+	public ClassDetailsRegistry getClassDetailsRegistry() {
+		return classDetailsRegistry;
+	}
+
+	@Override
+	public MetadataBuildingContext getMetadataBuildingContext() {
+		return buildingContext;
 	}
 }

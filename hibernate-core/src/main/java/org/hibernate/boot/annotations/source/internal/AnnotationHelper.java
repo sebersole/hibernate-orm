@@ -21,16 +21,16 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
-import org.hibernate.boot.annotations.source.internal.reflection.ManagedClassImpl;
+import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsImpl;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor.AttributeDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage.AttributeValue;
-import org.hibernate.boot.annotations.source.spi.ManagedClass;
-import org.hibernate.boot.annotations.source.spi.ManagedClassRegistry;
+import org.hibernate.boot.annotations.source.spi.ClassDetails;
+import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 import static org.hibernate.internal.util.collections.CollectionHelper.arrayList;
@@ -41,6 +41,13 @@ import static org.hibernate.internal.util.collections.CollectionHelper.arrayList
  * @author Steve Ebersole
  */
 public class AnnotationHelper {
+	/**
+	 * Processes `annotations` creating {@link AnnotationUsage} instances
+	 *
+	 * @param annotations The annotations to process
+	 * @param target The target of the usages
+	 * @param consumer Consumer of the generated usages
+	 */
 	public static void processAnnotationUsages(
 			Annotation[] annotations,
 			AnnotationTarget target,
@@ -191,29 +198,29 @@ public class AnnotationHelper {
 			final Class<? extends Annotation> annotationJavaType = (Class<? extends Annotation>) attributeDescriptor.getAttributeType().getComponentType();
 			final AnnotationDescriptor<? extends Annotation> valuesAnnotationDescriptor = annotationDescriptorRegistry.getDescriptor( annotationJavaType );
 			final Class<?>[] rawValues = (Class<?>[]) rawValue;
-			final ManagedClass[] managedClasses = new ManagedClass[ rawValues.length ];
+			final ClassDetails[] classDetails = new ClassDetails[ rawValues.length ];
 			for ( int i = 0; i < rawValues.length; i++ ) {
 				final Class<?> rawClassValue = rawValues[ i ];
-				managedClasses[i] = resolveClassReference( processingContext, rawClassValue );
+				classDetails[i] = resolveClassReference( processingContext, rawClassValue );
 			}
 			//noinspection unchecked
-			return (T) managedClasses;
+			return (T) classDetails;
 		}
 
 		//noinspection unchecked
 		return (T) rawValue;
 	}
 
-	private static ManagedClass resolveClassReference(AnnotationProcessingContext processingContext, Class<?> rawClassValue) {
-		final ManagedClassRegistry managedClassRegistry = processingContext.getManagedClassRegistry();
-		final ManagedClass existing = managedClassRegistry.findManagedClass( rawClassValue.getName() );
+	private static ClassDetails resolveClassReference(AnnotationProcessingContext processingContext, Class<?> rawClassValue) {
+		final ClassDetailsRegistry classDetailsRegistry = processingContext.getClassDetailsRegistry();
+		final ClassDetails existing = classDetailsRegistry.findManagedClass( rawClassValue.getName() );
 		if ( existing != null ) {
 			return existing;
 		}
 		else {
-			final ManagedClass managedClass = new ManagedClassImpl( rawClassValue, processingContext );
-			managedClassRegistry.addManagedClass( managedClass );
-			return managedClass;
+			final ClassDetails classDetails = new ClassDetailsImpl( rawClassValue, processingContext );
+			classDetailsRegistry.addManagedClass( classDetails );
+			return classDetails;
 		}
 	}
 

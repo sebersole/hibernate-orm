@@ -14,9 +14,9 @@ import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.IndexedConsumer;
 import org.hibernate.internal.util.collections.CollectionHelper;
 

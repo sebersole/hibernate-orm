@@ -11,6 +11,8 @@
  * XML, etc.
  *
  * @see org.hibernate.boot.annotations.source
+ * @see org.hibernate.boot.annotations.model
+ * @see org.hibernate.boot.annotations.bind
  *
  * @apiNote Considered {@linkplain org.hibernate.Incubating incubating}
  *
