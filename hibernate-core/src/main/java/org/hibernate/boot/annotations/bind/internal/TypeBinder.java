@@ -21,19 +21,22 @@ import org.hibernate.annotations.SQLInsert;
 import org.hibernate.annotations.SQLUpdate;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.annotations.Synchronize;
+import org.hibernate.boot.annotations.AnnotationSourceLogging;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext;
 import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.MappedSuperclassTypeMetadata;
-import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
+import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
+import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.boot.spi.MetadataBuildingOptions;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.JoinedSubclass;
@@ -52,6 +55,8 @@ import jakarta.persistence.Table;
 import static jakarta.persistence.InheritanceType.SINGLE_TABLE;
 import static org.hibernate.boot.annotations.AnnotationSourceLogging.ANNOTATION_SOURCE_MSG_LOGGER;
 import static org.hibernate.boot.annotations.source.internal.AnnotationsHelper.findInheritedAnnotation;
+import static org.hibernate.boot.annotations.source.internal.AnnotationsHelper.getValue;
+import static org.hibernate.internal.util.NullnessHelper.coalesceSuppliedValues;
 
 /**
  * @author Steve Ebersole
@@ -74,6 +79,11 @@ public class TypeBinder {
 			final RootClass rootEntityMapping = new RootClass( processingContext.getMetadataBuildingContext() );
 			entityMapping = rootEntityMapping;
 
+			if ( entityTypeMetadata.getSuperType() != null ) {
+				// the root has supers (which should only ever be mapped-superclasses).
+				// bind them to the RootClass
+			}
+
 			rootEntityMapping.setEntityName( entityTypeMetadata.getEntityName() );
 			rootEntityMapping.setJpaEntityName( entityTypeMetadata.getJpaEntityName() );
 
@@ -81,12 +91,14 @@ public class TypeBinder {
 			applyDiscriminator( entityTypeMetadata, rootEntityMapping, processingContext );
 
 			if ( hierarchy.getCaching().isEnabled() ) {
+				rootEntityMapping.setCached( true );
 				rootEntityMapping.setCacheConcurrencyStrategy( hierarchy.getCaching().getAccessType().getExternalName() );
 				rootEntityMapping.setCacheRegionName( hierarchy.getCaching().getRegion() );
 				rootEntityMapping.setLazyPropertiesCacheable( hierarchy.getCaching().isCacheLazyProperties() );
 			}
 
 			if ( hierarchy.getNaturalIdCaching().isEnabled() ) {
+				rootEntityMapping.setCached( true );
 				rootEntityMapping.setNaturalIdCacheRegionName( hierarchy.getNaturalIdCaching().getRegion() );
 			}
 
@@ -161,14 +173,94 @@ public class TypeBinder {
 
 	private static void applyPrimaryTable(
 			EntityTypeMetadata entityTypeMetadata,
-			RootClass entityMapping,
+			RootClass persistentClass,
 			LocalAnnotationProcessingContext processingContext) {
+		final InFlightMetadataCollector metadataCollector = processingContext
+				.getMetadataBuildingContext()
+				.getMetadataCollector();
+
 		final AnnotationUsage<Table> tableAnnotation = findInheritedAnnotation( entityTypeMetadata, JpaAnnotations.TABLE );
 		final AnnotationUsage<Subselect> subSelectAnnotation = findInheritedAnnotation( entityTypeMetadata, HibernateAnnotations.SUBSELECT );
 
-		if ( subSelectAnnotation != null ) {
-			throw new UnsupportedOperationException( "not yet implemented" );
+		if ( AnnotationSourceLogging.ANNOTATION_SOURCE_LOGGER_DEBUG_ENABLED ) {
+			if ( tableAnnotation != null && subSelectAnnotation != null ) {
+				AnnotationSourceLogging.ANNOTATION_SOURCE_LOGGER.debugf(
+						"Entity contained both @Table and @Subselect - %s",
+						entityTypeMetadata.getEntityName()
+				);
+			}
 		}
+
+		final org.hibernate.mapping.Table primaryTable;
+		if ( subSelectAnnotation != null ) {
+			primaryTable = metadataCollector.addTable(
+					null,
+					null,
+					null,
+					subSelectAnnotation.getValueAttributeValue().asString(),
+					entityTypeMetadata.isAbstract(),
+					processingContext.getMetadataBuildingContext()
+			);
+		}
+		else {
+			primaryTable = metadataCollector.addTable(
+					schemaName( entityTypeMetadata, tableAnnotation, processingContext ),
+					catalogName( entityTypeMetadata, tableAnnotation, processingContext ),
+					tableName( entityTypeMetadata, tableAnnotation, processingContext ),
+					null,
+					entityTypeMetadata.isAbstract(),
+					processingContext.getMetadataBuildingContext()
+			);
+		}
+
+		// todo : add to x-refs
+		persistentClass.setTable( primaryTable );
+	}
+
+	private static String catalogName(
+			EntityTypeMetadata entityTypeMetadata,
+			AnnotationUsage<Table> tableAnnotation,
+			LocalAnnotationProcessingContext processingContext) {
+		if ( tableAnnotation != null ) {
+			return coalesceSuppliedValues(
+					() -> tableAnnotation.getAttributeValue( "catalog" ).getValue(),
+					() -> processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitCatalogName()
+			);
+		}
+
+		return processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitCatalogName();
+	}
+
+	private static String schemaName(
+			EntityTypeMetadata entityTypeMetadata,
+			AnnotationUsage<Table> tableAnnotation,
+			LocalAnnotationProcessingContext processingContext) {
+		if ( tableAnnotation != null ) {
+			return coalesceSuppliedValues(
+					() -> tableAnnotation.getAttributeValue( "schema" ).getValue(),
+					() -> processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitSchemaName()
+			);
+		}
+		return processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitSchemaName();
+	}
+
+	private static String tableName(
+			EntityTypeMetadata entityTypeMetadata,
+			AnnotationUsage<Table> tableAnnotation,
+			LocalAnnotationProcessingContext processingContext) {
+
+		if ( tableAnnotation != null ) {
+			final String explicitName = getValue( tableAnnotation.getAttributeValue( "name" ), null );
+			if ( explicitName != null ) {
+				return explicitName;
+			}
+		}
+
+		final MetadataBuildingContext buildingContext = processingContext.getMetadataBuildingContext();
+		final MetadataBuildingOptions buildingOptions = buildingContext.getBuildingOptions();
+		final ImplicitNamingStrategy namingStrategy = buildingOptions.getImplicitNamingStrategy();
+
+		return namingStrategy.determinePrimaryTableName( entityTypeMetadata ).render();
 	}
 
 	private static void applyDiscriminator(
@@ -213,10 +305,10 @@ public class TypeBinder {
 		}
 		else {
 			final AnnotationUsage.AttributeValue nameValue = annotation.getAttributeValue( "name" );
-			column.setName( AnnotationsHelper.getValue( nameValue, "DTYPE" ) );
+			column.setName( getValue( nameValue, "DTYPE" ) );
 
 			final AnnotationUsage.AttributeValue discriminatorType = annotation.getAttributeValue( "discriminatorType" );
-			final DiscriminatorType type = AnnotationsHelper.getValue( discriminatorType, DiscriminatorType.STRING );
+			final DiscriminatorType type = getValue( discriminatorType, DiscriminatorType.STRING );
 			switch ( type ) {
 				case CHAR: {
 					column.setSqlTypeCode( SqlTypes.CHAR );
@@ -229,7 +321,7 @@ public class TypeBinder {
 				default: {
 					column.setSqlTypeCode( SqlTypes.VARCHAR );
 					final AnnotationUsage.AttributeValue length = annotation.getAttributeValue( "length" );
-					column.setLength( AnnotationsHelper.getValue( length, 31 ) );
+					column.setLength( getValue( length, 31 ) );
 				}
 			}
 		}
@@ -247,7 +339,7 @@ public class TypeBinder {
 			EntityTypeMetadata entityTypeMetadata,
 			PersistentClass entityMapping,
 			LocalAnnotationProcessingContext processingContext) {
-
+		entityMapping.setClassName( entityTypeMetadata.getManagedClass().getClassName() );
 		applyBatchSize( entityTypeMetadata, entityMapping, processingContext );
 		applySqlCustomizations( entityTypeMetadata, entityMapping, processingContext );
 		applySynchronizedTableNames( entityTypeMetadata, entityMapping, processingContext );

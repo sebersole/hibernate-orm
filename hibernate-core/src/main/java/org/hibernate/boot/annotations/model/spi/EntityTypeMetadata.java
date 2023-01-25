@@ -6,12 +6,14 @@
  */
 package org.hibernate.boot.annotations.model.spi;
 
+import org.hibernate.boot.model.naming.ImplicitEntityNameSource;
+
 /**
  * Intermediate representation of an {@linkplain jakarta.persistence.metamodel.EntityType entity type}
  *
  * @author Steve Ebersole
  */
-public interface EntityTypeMetadata extends IdentifiableTypeMetadata {
+public interface EntityTypeMetadata extends IdentifiableTypeMetadata, ImplicitEntityNameSource {
 	String getEntityName();
 	String getJpaEntityName();
 }

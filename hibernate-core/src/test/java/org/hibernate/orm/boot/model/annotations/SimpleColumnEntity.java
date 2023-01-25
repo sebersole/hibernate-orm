@@ -6,9 +6,12 @@
  */
 package org.hibernate.orm.boot.model.annotations;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Comment;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -23,6 +26,8 @@ import jakarta.persistence.Table;
 @CustomAnnotation()
 @NamedQuery( name = "abc", query = "select me" )
 @NamedQuery( name = "xyz", query = "select you" )
+@Cacheable
+@Cache( usage = CacheConcurrencyStrategy.READ_ONLY, region = "custom-region" )
 public class SimpleColumnEntity {
 	@Id
 	@Column(name = "id")

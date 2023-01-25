@@ -20,9 +20,11 @@ import jakarta.persistence.InheritanceType;
  * @author Steve Ebersole
  */
 public interface IdentifiableTypeMetadata extends ManagedTypeMetadata {
+	EntityHierarchy getHierarchy();
+
 	IdentifiableTypeMetadata getSuperType();
 
-	EntityHierarchy getHierarchy();
+	boolean isAbstract();
 
 	default InheritanceType getLocallyDefinedInheritanceType() {
 		final AnnotationUsage<Inheritance> localAnnotation = getManagedClass().getAnnotation( JpaAnnotations.INHERITANCE );

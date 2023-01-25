@@ -12,6 +12,8 @@ import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.model.naming.EntityNaming;
+import org.hibernate.boot.spi.MetadataBuildingContext;
 
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Entity;
@@ -23,7 +25,7 @@ import static org.hibernate.internal.util.StringHelper.unqualify;
  */
 public class EntityTypeMetadataImpl
 		extends AbstractIdentifiableTypeMetadata
-		implements EntityTypeMetadata {
+		implements EntityTypeMetadata, EntityNaming {
 	private final EntityHierarchy hierarchy;
 
 	private final String entityName;
@@ -194,6 +196,16 @@ public class EntityTypeMetadataImpl
 //	}
 
 	@Override
+	public EntityHierarchy getHierarchy() {
+		return hierarchy;
+	}
+
+	@Override
+	public EntityNaming getEntityNaming() {
+		return this;
+	}
+
+	@Override
 	public String getEntityName() {
 		return entityName;
 	}
@@ -204,8 +216,8 @@ public class EntityTypeMetadataImpl
 	}
 
 	@Override
-	public EntityHierarchy getHierarchy() {
-		return hierarchy;
+	public String getClassName() {
+		return getManagedClass().getClassName();
 	}
 
 //	@Override
@@ -256,4 +268,10 @@ public class EntityTypeMetadataImpl
 //	public String getProxy() {
 //		return proxy;
 //	}
+
+
+	@Override
+	public MetadataBuildingContext getBuildingContext() {
+		return getLocalProcessingContext().getMetadataBuildingContext();
+	}
 }
