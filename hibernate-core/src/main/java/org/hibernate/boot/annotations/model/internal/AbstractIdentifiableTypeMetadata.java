@@ -6,6 +6,7 @@
  */
 package org.hibernate.boot.annotations.model.internal;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,23 +17,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.hibernate.boot.MappingException;
+import org.hibernate.MappingException;
 import org.hibernate.boot.annotations.model.spi.AssociationOverrideMetadata;
 import org.hibernate.boot.annotations.model.spi.AttributeOverrideMetadata;
 import org.hibernate.boot.annotations.model.spi.CallbacksMetadata;
 import org.hibernate.boot.annotations.model.spi.ConversionMetadata;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
+import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
 import org.hibernate.boot.annotations.source.spi.MethodDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
-import org.hibernate.boot.jaxb.Origin;
-import org.hibernate.boot.jaxb.SourceType;
 import org.hibernate.boot.model.source.spi.AttributePath;
+import org.hibernate.internal.util.collections.CollectionHelper;
 
+import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.EntityListeners;
 
@@ -46,7 +48,9 @@ public abstract class AbstractIdentifiableTypeMetadata
 		implements IdentifiableTypeMetadata {
 	private final EntityHierarchy hierarchy;
 	private final AbstractIdentifiableTypeMetadata superType;
-	private Set<IdentifiableTypeMetadata> subTypes;
+	private final Set<IdentifiableTypeMetadata> subTypes = new HashSet<>();
+
+	private final AccessType accessType;
 
 	private final Map<AttributePath, ConversionMetadata> conversionInfoMap = new HashMap<>();
 	private final Map<AttributePath, AttributeOverrideMetadata> attributeOverrideMap = new HashMap<>();
@@ -63,34 +67,26 @@ public abstract class AbstractIdentifiableTypeMetadata
 	 * @param hierarchy Details about the hierarchy
 	 * @param isRootEntity Whether this descriptor is for the root entity itself, or
 	 * one of its mapped-superclasses.
-	 * @param defaultAccessType The default AccessType for the hierarchy
+	 * @param accessType The default AccessType for the hierarchy
 	 * @param processingContext The context
 	 */
 	public AbstractIdentifiableTypeMetadata(
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			boolean isRootEntity,
-			AccessType defaultAccessType,
+			AccessType accessType,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, defaultAccessType, processingContext );
+		super( classDetails, processingContext );
 
 		this.hierarchy = hierarchy;
+		this.accessType = determineAccessType( accessType );
 
 		// walk up
-		this.superType = walkRootSuperclasses( classDetails, defaultAccessType );
-		if ( superType != null ) {
-			superType.addSubclass( this );
-		}
-
-		// todo (annotation-source) :
+		this.superType = walkRootSuperclasses( classDetails, accessType );
 
 		if ( isRootEntity ) {
 			// walk down
-			walkSubclasses( classDetails, this, defaultAccessType );
-		}
-
-		if ( subTypes == null ) {
-			subTypes = Collections.emptySet();
+			walkSubclasses( classDetails, this, this.accessType );
 		}
 
 		// the idea here is to collect up class-level annotations and to apply
@@ -100,28 +96,37 @@ public abstract class AbstractIdentifiableTypeMetadata
 		collectAssociationOverrides();
 	}
 
+	private AccessType determineAccessType(AccessType defaultAccessType) {
+		final AnnotationUsage<Access> annotation = getManagedClass().getAnnotation( JpaAnnotations.ACCESS );
+		if ( annotation != null ) {
+			return annotation.getValueAttributeValue().getValue();
+		}
+
+		return defaultAccessType;
+	}
+
 	/**
-	 * This form is intended for cases where the Entity/MappedSuperclass
+	 * This form is intended for cases where the entity/mapped-superclass
 	 * is part of the root subclass tree.
 	 *
-	 * @param classDetails The Entity/MappedSuperclass class descriptor
+	 * @param classDetails The entity/mapped-superclass class descriptor
+	 * @param hierarchy The hierarchy
 	 * @param superType The metadata for the super type.
-	 * @param defaultAccessType The default AccessType for the entity hierarchy
 	 * @param processingContext The binding context
 	 *
 	 * @implNote We do not process subclasses here as they are processed from
-	 * {@link AbstractIdentifiableTypeMetadata#AbstractIdentifiableTypeMetadata(ClassDetails, EntityHierarchy, boolean, AccessType, AnnotationProcessingContext)}
+	 * {@link #AbstractIdentifiableTypeMetadata(ClassDetails, EntityHierarchy, boolean, AccessType, AnnotationProcessingContext)}
 	 */
 	public AbstractIdentifiableTypeMetadata(
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AbstractIdentifiableTypeMetadata superType,
-			AccessType defaultAccessType,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, defaultAccessType, processingContext );
+		super( classDetails, processingContext );
 
 		this.hierarchy = hierarchy;
 		this.superType = superType;
+		this.accessType = determineAccessType( superType.getAccessType() );
 
 		// the idea here is to collect up class-level annotations and to apply
 		// the maps from supers
@@ -132,7 +137,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 
 	private AbstractIdentifiableTypeMetadata walkRootSuperclasses(
 			ClassDetails classDetails,
-			AccessType defaultAccessType) {
+			AccessType hierarchyAccessType) {
 		final ClassDetails superTypeClassDetails = classDetails.getSuperType();
 		if ( superTypeClassDetails == null ) {
 			return null;
@@ -145,23 +150,23 @@ public abstract class AbstractIdentifiableTypeMetadata
 							Locale.ENGLISH,
 							"Unexpected @Entity [%s] as MappedSuperclass of entity hierarchy",
 							superTypeClassDetails.getName()
-					),
-					new Origin( SourceType.ANNOTATION, superTypeClassDetails.getName().toString() )
+					)
 			);
 		}
 		else if ( isMappedSuperclass( superTypeClassDetails ) ) {
-			return new MappedSuperclassTypeMetadataImpl(
+			final MappedSuperclassTypeMetadataImpl superType = new MappedSuperclassTypeMetadataImpl(
 					superTypeClassDetails,
 					getHierarchy(),
-					walkRootSuperclasses( superTypeClassDetails, defaultAccessType ),
-					defaultAccessType,
+					hierarchyAccessType,
 					getLocalProcessingContext()
 			);
+			superType.addSubclass( this );
+			return superType;
 		}
 		else {
 			// otherwise, we might have an "intermediate" subclass
 			if ( superTypeClassDetails.getSuperType() != null ) {
-				return walkRootSuperclasses( superTypeClassDetails, defaultAccessType );
+				return walkRootSuperclasses( superTypeClassDetails, hierarchyAccessType );
 			}
 			else {
 				return null;
@@ -170,9 +175,6 @@ public abstract class AbstractIdentifiableTypeMetadata
 	}
 
 	protected void addSubclass(IdentifiableTypeMetadata subclass) {
-		if ( subTypes == null ) {
-			subTypes = new HashSet<>();
-		}
 		subTypes.add( subclass );
 	}
 
@@ -196,7 +198,6 @@ public abstract class AbstractIdentifiableTypeMetadata
 						subTypeManagedClass,
 						getHierarchy(),
 						superType,
-						defaultAccessType,
 						getLocalProcessingContext()
 				);
 				superType.addSubclass( subTypeMetadata );
@@ -206,7 +207,6 @@ public abstract class AbstractIdentifiableTypeMetadata
 						subTypeManagedClass,
 						getHierarchy(),
 						superType,
-						defaultAccessType,
 						getLocalProcessingContext()
 				);
 				superType.addSubclass( subTypeMetadata );
@@ -236,6 +236,11 @@ public abstract class AbstractIdentifiableTypeMetadata
 	}
 
 	@Override
+	public int getNumberOfSubTypes() {
+		return subTypes.size();
+	}
+
+	@Override
 	public void forEachSubType(Consumer<IdentifiableTypeMetadata> consumer) {
 		// assume this is called only after its constructor is complete
 		subTypes.forEach( consumer );
@@ -245,6 +250,11 @@ public abstract class AbstractIdentifiableTypeMetadata
 	public Iterable<IdentifiableTypeMetadata> getSubTypes() {
 		// assume this is called only after its constructor is complete
 		return subTypes;
+	}
+
+	@Override
+	public AccessType getAccessType() {
+		return accessType;
 	}
 
 	protected void collectConversionInfo() {
@@ -473,5 +483,43 @@ public abstract class AbstractIdentifiableTypeMetadata
 			AttributePath attributePath,
 			AssociationOverrideMetadata override) {
 		associationOverrideMap.put( attributePath, override );
+	}
+
+	@Override
+	public <A extends Annotation> AnnotationUsage<A> findAnnotation(AnnotationDescriptor<A> type) {
+		final AnnotationUsage<A> annotation = super.findAnnotation( type );
+		if ( annotation != null ) {
+			return annotation;
+		}
+
+		if ( superType != null ) {
+			return superType.findAnnotation( type );
+		}
+
+		return null;
+	}
+
+	@Override
+	public <A extends Annotation> List<AnnotationUsage<A>> findAnnotations(AnnotationDescriptor<A> type) {
+		final List<AnnotationUsage<A>> annotations = super.findAnnotations( type );
+		if ( CollectionHelper.isNotEmpty( annotations ) ) {
+			return annotations;
+		}
+
+		if ( superType != null ) {
+			return superType.findAnnotations( type );
+		}
+
+		return null;
+	}
+
+	@Override
+	public <A extends Annotation> void forEachAnnotation(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
+		final List<AnnotationUsage<A>> annotations = findAnnotations( type );
+		if ( CollectionHelper.isNotEmpty( annotations ) ) {
+			for ( int i = 0; i < annotations.size(); i++ ) {
+				consumer.accept( annotations.get( i ) );
+			}
+		}
 	}
 }

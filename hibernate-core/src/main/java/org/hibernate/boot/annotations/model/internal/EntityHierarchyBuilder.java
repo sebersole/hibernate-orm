@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.boot.annotations.model.AccessTypeDeterminationException;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
@@ -104,6 +105,8 @@ public class EntityHierarchyBuilder {
 	}
 
 	private AccessType determineDefaultAccessTypeForHierarchy(ClassDetails rootEntityType) {
+		assert rootEntityType != null;
+
 		ClassDetails current = rootEntityType;
 		while ( current != null ) {
 			// look for `@Access` on the class
@@ -131,8 +134,11 @@ public class EntityHierarchyBuilder {
 			current = current.getSuperType();
 		}
 
-		// todo (annotation-source) : what's best here - pick one (PROPERTY)?  error?
-		return null;
+		// 2.3.1 Default Access Type
+		//    It is an error if a default access type cannot be determined and an access type is not explicitly specified
+		//    by means of annotations or the XML descriptor.
+
+		throw new AccessTypeDeterminationException( rootEntityType );
 	}
 
 	private AnnotationTarget determineIdMember(ClassDetails current) {

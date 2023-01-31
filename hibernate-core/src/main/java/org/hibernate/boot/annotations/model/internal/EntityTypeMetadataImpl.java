@@ -6,6 +6,9 @@
  */
 package org.hibernate.boot.annotations.model.internal;
 
+import java.util.List;
+
+import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -30,6 +33,8 @@ public class EntityTypeMetadataImpl
 
 	private final String entityName;
 	private final String jpaEntityName;
+
+	private final List<AttributeMetadata> attributeList;
 
 //	private final String proxy;
 //
@@ -114,6 +119,8 @@ public class EntityTypeMetadataImpl
 //		else {
 //			this.discriminatorMatchValue = null;
 //		}
+
+		this.attributeList = resolveAttributes();
 	}
 
 	/**
@@ -123,9 +130,8 @@ public class EntityTypeMetadataImpl
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AbstractIdentifiableTypeMetadata superType,
-			AccessType defaultAccessType,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, hierarchy, superType, defaultAccessType, processingContext );
+		super( classDetails, hierarchy, superType, processingContext );
 		this.hierarchy = hierarchy;
 
 		// NOTE: this is no annotation for `entity-name`.  it comes exclusively from
@@ -135,6 +141,8 @@ public class EntityTypeMetadataImpl
 
 		final AnnotationUsage<Entity> entityAnnotation = classDetails.getAnnotation( JpaAnnotations.ENTITY );
 		this.jpaEntityName = determineJpaEntityName( entityAnnotation, entityName );
+
+		this.attributeList = resolveAttributes();
 	}
 
 	private String determineJpaEntityName(AnnotationUsage<Entity> entityAnnotation, String entityName) {
@@ -143,6 +151,11 @@ public class EntityTypeMetadataImpl
 			return nameValue.asString();
 		}
 		return unqualify( entityName );
+	}
+
+	@Override
+	protected List<AttributeMetadata> attributeList() {
+		return attributeList;
 	}
 
 //	private String determineCustomLoader() {

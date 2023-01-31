@@ -8,37 +8,46 @@ package org.hibernate.boot.annotations.model.spi;
 
 import java.util.function.Consumer;
 
-import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
-import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
-
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-
 /**
  * Intermediate representation of an {@linkplain jakarta.persistence.metamodel.IdentifiableType identifiable type}
  *
  * @author Steve Ebersole
  */
 public interface IdentifiableTypeMetadata extends ManagedTypeMetadata {
+	/**
+	 * The hierarchy in which this IdentifiableType occurs.
+	 */
 	EntityHierarchy getHierarchy();
+
+	/**
+	 * The super-type, if one
+	 */
 
 	IdentifiableTypeMetadata getSuperType();
 
+	/**
+	 * Whether this type is considered abstract.
+	 */
 	boolean isAbstract();
 
-	default InheritanceType getLocallyDefinedInheritanceType() {
-		final AnnotationUsage<Inheritance> localAnnotation = getManagedClass().getAnnotation( JpaAnnotations.INHERITANCE );
-		if ( localAnnotation == null ) {
-			return null;
-		}
-
-		return localAnnotation.getAttributeValue( "strategy" ).getValue();
-	}
-
+	/**
+	 * Whether this type has subtypes
+	 */
 	boolean hasSubTypes();
 
+	/**
+	 * Get the number of direct subtypes
+	 */
+	int getNumberOfSubTypes();
+
+	/**
+	 * Get the direct subtypes
+	 */
 	Iterable<IdentifiableTypeMetadata> getSubTypes();
 
+	/**
+	 * Visit each direct subtype
+	 */
 	void forEachSubType(Consumer<IdentifiableTypeMetadata> consumer);
 
 //	// todo (annotation-source) - id, version, etc

@@ -57,14 +57,27 @@ public class CallbacksMetadata {
 		this.postUpdateCallback = postUpdateCallback;
 	}
 
+	/**
+	 * The class which is the target for callbacks.
+	 * <p/>
+	 * Depending on {@link #isListener()}, the target might be the entity class or a separate
+	 * listener class
+	 */
 	public ClassDetails getCallbackTarget() {
 		return callbackTarget;
 	}
 
+	/**
+	 * Whether these callbacks are an {@linkplain jakarta.persistence.EntityListeners "entity listener"}
+	 * (separate listener class) as opposed to "entity callback" (entity with callback methods)
+	 */
 	public boolean isListener() {
 		return isEntityListener;
 	}
 
+	/**
+	 * Find the method that is the callback for the given event-type.
+	 */
 	public MethodDetails getCallbackMethod(Class<? extends Annotation> callbackType) {
 		if ( PrePersist.class.equals( callbackType ) ) {
 			return prePersistCallback;

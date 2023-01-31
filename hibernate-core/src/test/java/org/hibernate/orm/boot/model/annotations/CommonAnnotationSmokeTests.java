@@ -87,9 +87,8 @@ public class CommonAnnotationSmokeTests {
 		assertThat( xyzReverse.getAttributeValue( "name" ).asString() ).isEqualTo( "xyz" );
 
 		final MutableInteger expectedIndexRef = new MutableInteger();
-		entityClass.forEachAnnotation( JpaAnnotations.NAMED_QUERY, (index, usage) -> {
-			assertThat( index ).isEqualTo( expectedIndexRef.getAndIncrement() );
-
+		entityClass.forEachAnnotation( JpaAnnotations.NAMED_QUERY, (usage) -> {
+			expectedIndexRef.getAndIncrement();
 		} );
 		assertThat( expectedIndexRef.get() ).isEqualTo( 2 );
 	}

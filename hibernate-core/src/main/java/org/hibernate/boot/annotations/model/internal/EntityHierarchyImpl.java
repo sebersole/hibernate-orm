@@ -23,6 +23,7 @@ import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.cache.spi.access.AccessType;
 
 import jakarta.persistence.Cacheable;
+import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.SharedCacheMode;
 
@@ -51,6 +52,7 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 
 		this.inheritanceType = determineInheritanceType( rootEntityTypeMetadata );
 
+		rootEntityTypeMetadata.findAnnotation( JpaAnnotations.CACHEABLE );
 		final AnnotationUsage<Cacheable> cacheableAnnotation = rootEntityClassDetails.getAnnotation( JpaAnnotations.CACHEABLE );
 		final AnnotationUsage<Cache> cacheAnnotation = rootEntityClassDetails.getAnnotation( HibernateAnnotations.CACHE );
 		final AnnotationUsage<NaturalIdCache> naturalIdCacheAnnotation = rootEntityClassDetails.getAnnotation( HibernateAnnotations.NATURAL_ID_CACHE );
@@ -114,17 +116,37 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 			ensureNoInheritanceAnnotationsOnSubclasses( root );
 		}
 
-		final InheritanceType inheritanceType = root.getLocallyDefinedInheritanceType();
-		if ( inheritanceType != null ) {
-			return inheritanceType;
+		IdentifiableTypeMetadata current = root;
+		while ( current != null ) {
+			final InheritanceType inheritanceType = getLocallyDefinedInheritanceType( current.getManagedClass() );
+			if ( inheritanceType != null ) {
+				return inheritanceType;
+			}
+
+			current = current.getSuperType();
 		}
 
 		return InheritanceType.SINGLE_TABLE;
 	}
 
+	/**
+	 * Find the InheritanceType from the locally defined {@link Inheritance} annotation,
+	 * if one.  Returns {@code null} if {@link Inheritance} is not locally defined.
+	 *
+	 * @apiNote Used when building the {@link EntityHierarchy}
+	 */
+	private static InheritanceType getLocallyDefinedInheritanceType(ClassDetails managedClass) {
+		final AnnotationUsage<Inheritance> localAnnotation = managedClass.getAnnotation( JpaAnnotations.INHERITANCE );
+		if ( localAnnotation == null ) {
+			return null;
+		}
+
+		return localAnnotation.getAttributeValue( "strategy" ).getValue();
+	}
+
 	private void ensureNoInheritanceAnnotationsOnSubclasses(IdentifiableTypeMetadata type) {
 		type.forEachSubType( (subType) -> {
-			if ( subType.getLocallyDefinedInheritanceType() != null ) {
+			if ( getLocallyDefinedInheritanceType( subType.getManagedClass() ) != null ) {
 				AnnotationSourceLogging.ANNOTATION_SOURCE_LOGGER.debugf(
 						"@javax.persistence.Inheritance was specified on non-root entity [%s]; ignoring...",
 						type.getManagedClass().getName()

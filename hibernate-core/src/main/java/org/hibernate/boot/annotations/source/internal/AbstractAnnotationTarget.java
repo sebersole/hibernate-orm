@@ -10,13 +10,13 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
-import org.hibernate.internal.util.IndexedConsumer;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
@@ -40,14 +40,14 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 	}
 
 	@Override
-	public <A extends Annotation> void forEachAnnotation(AnnotationDescriptor<A> type, IndexedConsumer<AnnotationUsage<A>> consumer) {
+	public <A extends Annotation> void forEachAnnotation(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
 		final List<AnnotationUsage<A>> annotationUsages = getAnnotations( type );
 		if ( annotationUsages == null ) {
 			return;
 		}
 
 		for ( int i = 0; i < annotationUsages.size(); i++ ) {
-			consumer.accept( i, annotationUsages.get( i ) );
+			consumer.accept( annotationUsages.get( i ) );
 		}
 	}
 

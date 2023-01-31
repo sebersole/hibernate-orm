@@ -6,6 +6,9 @@
  */
 package org.hibernate.boot.annotations.model.internal;
 
+import java.util.List;
+
+import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.MappedSuperclassTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
@@ -20,12 +23,30 @@ public class MappedSuperclassTypeMetadataImpl
 		extends AbstractIdentifiableTypeMetadata
 		implements MappedSuperclassTypeMetadata {
 
+	private final List<AttributeMetadata> attributeList;
+
+	public MappedSuperclassTypeMetadataImpl(
+			ClassDetails classDetails,
+			EntityHierarchy hierarchy,
+			AccessType defaultAccessType,
+			AnnotationProcessingContext processingContext) {
+		super( classDetails, hierarchy, false, defaultAccessType, processingContext );
+
+		this.attributeList = resolveAttributes();
+	}
+
 	public MappedSuperclassTypeMetadataImpl(
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AbstractIdentifiableTypeMetadata superType,
-			AccessType defaultAccessType,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, hierarchy, superType, defaultAccessType, processingContext );
+		super( classDetails, hierarchy, superType, processingContext );
+
+		this.attributeList = resolveAttributes();
+	}
+
+	@Override
+	protected List<AttributeMetadata> attributeList() {
+		return attributeList;
 	}
 }

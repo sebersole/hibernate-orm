@@ -23,7 +23,7 @@ public interface OverrideAndConverterCollector {
 //	ManagedTypeMetadata getSuperType();
 //	Set<? extends ManagedTypeMetadata> getSubclasses();
 
-	AccessType getClassLevelAccessType();
+	AccessType getAccessType();
 
 	AttributeRole getAttributeRoleBase();
 	AttributePath getAttributePathBase();
