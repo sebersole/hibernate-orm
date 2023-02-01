@@ -10,4 +10,4 @@
  *
  * @author Steve Ebersole
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations;

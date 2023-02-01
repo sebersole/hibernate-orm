@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations.intermediate;
 
 import java.util.Set;
 
@@ -23,16 +23,16 @@ import org.hibernate.testing.boot.MetadataBuildingContextTestingImpl;
  * @author Steve Ebersole
  */
 public class ModelHelper {
-	static AnnotationProcessingContext buildProcessingContext(StandardServiceRegistry registry) {
+	public static AnnotationProcessingContext buildProcessingContext(StandardServiceRegistry registry) {
 		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( registry );
 		return new AnnotationProcessingContextImpl( buildingContext );
 	}
 
-	static Set<EntityHierarchy> buildHierarchies(StandardServiceRegistry registry, Class<?>... classes) {
+	public static Set<EntityHierarchy> buildHierarchies(StandardServiceRegistry registry, Class<?>... classes) {
 		return buildHierarchies( buildProcessingContext( registry ), classes );
 	}
 
-	static Set<EntityHierarchy> buildHierarchies(AnnotationProcessingContext processingContext, Class<?>... classes) {
+	public static Set<EntityHierarchy> buildHierarchies(AnnotationProcessingContext processingContext, Class<?>... classes) {
 		final JavaReflectionManager hcannReflectionManager = new JavaReflectionManager();
 
 		for ( int i = 0; i < classes.length; i++ ) {

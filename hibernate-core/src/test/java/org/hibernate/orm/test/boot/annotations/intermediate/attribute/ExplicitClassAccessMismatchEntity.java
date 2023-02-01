@@ -4,20 +4,25 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations.intermediate.attribute;
 
+import jakarta.persistence.Access;
+import jakarta.persistence.Basic;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
+import static jakarta.persistence.AccessType.PROPERTY;
+
 /**
- * Very simple entity, with lots of implicit mappings to test
- * resolution of those implicit values
+ * The class specifies PROPERTY but the annotations are defined on fields
  *
  * @author Steve Ebersole
  */
 @Entity
-public class BasicEntity {
+@Access(PROPERTY)
+public class ExplicitClassAccessMismatchEntity {
 	@Id
 	private Integer id;
+	@Basic
 	private String name;
 }

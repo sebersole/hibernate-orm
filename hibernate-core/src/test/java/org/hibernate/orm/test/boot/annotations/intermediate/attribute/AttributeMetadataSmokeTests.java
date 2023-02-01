@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations.intermediate.attribute;
 
 import java.sql.Types;
 import java.util.Set;
@@ -24,17 +24,20 @@ import org.hibernate.annotations.TenantId;
 import org.hibernate.annotations.TimeZoneColumn;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.Type;
+import org.hibernate.boot.annotations.model.AccessTypePlacementException;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.orm.test.boot.annotations.intermediate.ModelHelper;
 import org.hibernate.orm.test.mapping.embeddable.strategy.instantiator.registered.NameInstantiator;
 import org.hibernate.orm.test.mapping.embeddable.strategy.usertype.embedded.NameCompositeUserType;
 import org.hibernate.type.descriptor.java.StringJavaType;
 import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 import org.hibernate.usertype.UserTypeSupport;
 
+import org.hibernate.testing.orm.junit.NotImplementedYet;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.ServiceRegistryScope;
 import org.junit.jupiter.api.Test;
@@ -74,23 +77,26 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @ServiceRegistry
 public class AttributeMetadataSmokeTests {
-
 	@Test
-	void testClassLevelAccess(ServiceRegistryScope scope) {
-		final EntityTypeMetadata proper = ModelHelper.buildHierarchies( scope.getRegistry(), ClassLevelAccess.class )
+	void testClassLevelAccessMismatch(ServiceRegistryScope scope) {
+		final EntityTypeMetadata mismatch = ModelHelper.buildHierarchies( scope.getRegistry(), ExplicitClassAccessMismatchEntity.class )
 				.iterator()
 				.next()
 				.getRoot();
-		assertThat( proper.getAttributes() ).hasSize( 2 );
+		// todo (annotation-source) : the spec seems to imply that this is "undefined", but it is very unclear.
+		//		an error seems more appropriate
+		assertThat( mismatch.getAttributes() ).hasSize( 0 );
 	}
 
 	@Test
-	void testClassLevelAccessMismatch(ServiceRegistryScope scope) {
-		final EntityTypeMetadata mismatch = ModelHelper.buildHierarchies( scope.getRegistry(), ClassLevelAccessMismatch.class )
-				.iterator()
-				.next()
-				.getRoot();
-		assertThat( mismatch.getAttributes() ).hasSize( 0 );
+	@NotImplementedYet
+	void testAccessOnSetter(ServiceRegistryScope scope) {
+		try {
+			ModelHelper.buildHierarchies( scope.getRegistry(), ExplicitAccessOnSetterEntity.class );
+			fail( "Expecting error about annotations on setter" );
+		}
+		catch (AccessTypePlacementException expected) {
+		}
 	}
 
 	@Test
@@ -181,26 +187,6 @@ public class AttributeMetadataSmokeTests {
 				fail();
 			}
 		} );
-	}
-
-	@Entity( name = "ClassLevelAccess" )
-	@Table( name = "ClassLevelAccess" )
-	@Access(AccessType.FIELD)
-	public static class ClassLevelAccess {
-	    @Id
-	    private Integer id;
-	    @Basic
-		private String name;
-	}
-
-	@Entity( name = "ClassLevelAccessMismatch" )
-	@Table( name = "ClassLevelAccessMismatch" )
-	@Access(PROPERTY)
-	public static class ClassLevelAccessMismatch {
-	    @Id
-	    private Integer id;
-	    @Basic
-		private String name;
 	}
 
 	@Entity( name = "Transiency" )

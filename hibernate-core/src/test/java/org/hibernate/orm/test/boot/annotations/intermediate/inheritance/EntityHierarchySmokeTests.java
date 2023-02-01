@@ -4,13 +4,15 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations.intermediate.inheritance;
 
 import java.util.Set;
 
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
+import org.hibernate.orm.test.boot.annotations.intermediate.ModelHelper;
+import org.hibernate.orm.test.boot.annotations.source.SimpleColumnEntity;
 
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.ServiceRegistryScope;

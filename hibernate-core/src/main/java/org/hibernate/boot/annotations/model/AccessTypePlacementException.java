@@ -15,9 +15,11 @@ import org.hibernate.boot.annotations.source.spi.MemberDetails;
 import jakarta.persistence.Access;
 
 /**
- * Indicates a problem with the placement of the {@link Access} annotation; either
- * {@linkplain jakarta.persistence.AccessType#FIELD FIELD} on a getter or
- * {@linkplain jakarta.persistence.AccessType#PROPERTY PROPERTY} on a field
+ * Indicates a problem with the placement of the {@link Access} annotation; either<ul>
+ *     <li>{@linkplain jakarta.persistence.AccessType#FIELD FIELD} on a getter</li>
+ *     <li>{@linkplain jakarta.persistence.AccessType#PROPERTY PROPERTY} on a field
+ *     <li>{@linkplain jakarta.persistence.AccessType#PROPERTY PROPERTY} on a setter</li></li>
+ * </ul>
  *
  * @author Steve Ebersole
  */

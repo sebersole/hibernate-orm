@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.orm.boot.model.annotations;
+package org.hibernate.orm.test.boot.annotations.bind;
 
 import java.util.Set;
 
@@ -12,6 +12,8 @@ import org.hibernate.boot.annotations.bind.internal.TypeBinder;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.mapping.RootClass;
+import org.hibernate.orm.test.boot.annotations.intermediate.ModelHelper;
+import org.hibernate.orm.test.boot.annotations.source.SimpleColumnEntity;
 
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.ServiceRegistryScope;
@@ -19,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hibernate.cache.spi.access.AccessType.READ_ONLY;
-import static org.hibernate.orm.boot.model.annotations.ModelHelper.buildHierarchies;
 
 /**
  * Tests for {@link TypeBinder}
@@ -30,7 +31,7 @@ import static org.hibernate.orm.boot.model.annotations.ModelHelper.buildHierarch
 public class TypeBinderTests {
 	@Test
 	void simpleEntityTest(ServiceRegistryScope scope) {
-		final Set<EntityHierarchy> entityHierarchies = buildHierarchies( scope.getRegistry(), SimpleColumnEntity.class );
+		final Set<EntityHierarchy> entityHierarchies = ModelHelper.buildHierarchies( scope.getRegistry(), SimpleColumnEntity.class );
 		final EntityHierarchy hierarchy = entityHierarchies.iterator().next();
 		final EntityTypeMetadata entity = hierarchy.getRoot();
 
@@ -49,7 +50,7 @@ public class TypeBinderTests {
 
 	@Test
 	void basicEntityTest(ServiceRegistryScope scope) {
-		final Set<EntityHierarchy> entityHierarchies = buildHierarchies( scope.getRegistry(), BasicEntity.class );
+		final Set<EntityHierarchy> entityHierarchies = ModelHelper.buildHierarchies( scope.getRegistry(), BasicEntity.class );
 		final EntityHierarchy hierarchy = entityHierarchies.iterator().next();
 		final EntityTypeMetadata entity = hierarchy.getRoot();
 
