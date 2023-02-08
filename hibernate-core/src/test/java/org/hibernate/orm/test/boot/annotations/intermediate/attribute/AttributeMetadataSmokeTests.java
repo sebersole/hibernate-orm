@@ -7,6 +7,8 @@
 package org.hibernate.orm.test.boot.annotations.intermediate.attribute;
 
 import java.sql.Types;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.annotations.Any;
@@ -31,6 +33,8 @@ import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.orm.test.boot.annotations.intermediate.ModelHelper;
+import org.hibernate.orm.test.mapping.converted.converter.mutabiity.ListConverter;
+import org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter;
 import org.hibernate.orm.test.mapping.embeddable.strategy.instantiator.registered.NameInstantiator;
 import org.hibernate.orm.test.mapping.embeddable.strategy.usertype.embedded.NameCompositeUserType;
 import org.hibernate.type.descriptor.java.StringJavaType;
@@ -38,9 +42,11 @@ import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 import org.hibernate.usertype.UserTypeSupport;
 
 import org.hibernate.testing.orm.junit.NotImplementedYet;
+import org.hibernate.testing.orm.junit.NotImplementedYetExtension;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.ServiceRegistryScope;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
@@ -76,6 +82,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @author Steve Ebersole
  */
 @ServiceRegistry
+@ExtendWith( NotImplementedYetExtension.class )
 public class AttributeMetadataSmokeTests {
 	@Test
 	void testClassLevelAccessMismatch(ServiceRegistryScope scope) {
@@ -89,7 +96,7 @@ public class AttributeMetadataSmokeTests {
 	}
 
 	@Test
-	@NotImplementedYet
+	@NotImplementedYet(strict = false)
 	void testAccessOnSetter(ServiceRegistryScope scope) {
 		try {
 			ModelHelper.buildHierarchies( scope.getRegistry(), ExplicitAccessOnSetterEntity.class );
@@ -182,6 +189,48 @@ public class AttributeMetadataSmokeTests {
 					|| "manyToMany".equals( attributeMetadata.getName() )
 					|| "oneToMany".equals( attributeMetadata.getName() ) ) {
 				assertThat( attributeMetadata.getNature() ).isEqualTo( PLURAL );
+			}
+			else {
+				fail();
+			}
+		} );
+	}
+
+	@Test
+	void testCollectionsAsBasic(ServiceRegistryScope scope) {
+		final StandardServiceRegistry registry = scope.getRegistry();
+		final AnnotationProcessingContext processingContext = ModelHelper.buildProcessingContext( registry );
+
+		final ClassDetails integerDescriptor = processingContext
+				.getClassDetailsRegistry()
+				.getManagedClass( Integer.class.getName() );
+		final ClassDetails mapDescriptor = processingContext
+				.getClassDetailsRegistry()
+				.getManagedClass( Map.class.getName() );
+		final ClassDetails collectionDescriptor = processingContext
+				.getClassDetailsRegistry()
+				.getManagedClass( Collection.class.getName() );
+
+		final Set<EntityHierarchy> hierarchies = ModelHelper.buildHierarchies( processingContext, CollectionsAsBasicEntity.class );
+		assertThat( hierarchies ).hasSize( 1 );
+		final EntityHierarchy hierarchy = hierarchies.iterator().next();
+		final EntityTypeMetadata entityDescriptor = hierarchy.getRoot();
+
+		entityDescriptor.getAttributes().forEach( (attribute) -> {
+			assertThat( attribute.getNature() ).isEqualTo( BASIC );
+
+			if ( "id".equals( attribute.getName() ) ) {
+				assertThat( attribute.getMember().getType() ).isSameAs( integerDescriptor );
+			}
+			else if ( "implicitMapAsBasic".equals( attribute.getName() )
+					|| "mapAsBasic".equals( attribute.getName() )
+					|| "convertedMapAsBasic".equals( attribute.getName() ) ) {
+				assertThat( attribute.getMember().getType() ).isSameAs( mapDescriptor );
+			}
+			else if ( "implicitCollectionAsBasic".equals( attribute.getName() )
+					|| "collectionAsBasic".equals( attribute.getName() )
+					|| "convertedCollectionAsBasic".equals( attribute.getName() ) ) {
+				assertThat( attribute.getMember().getType() ).isSameAs( collectionDescriptor );
 			}
 			else {
 				fail();
@@ -303,6 +352,23 @@ public class AttributeMetadataSmokeTests {
 
 		@ManyToMany
 		private String manyToMany;
+	}
+
+	@Entity( name = "CollectionsAsBasicEntity" )
+	@Table( name = "CollectionsAsBasicEntity" )
+	public static class CollectionsAsBasicEntity {
+	    @Id
+	    private Integer id;
+		@Basic
+		private Map<?,?> mapAsBasic;
+		private Map<?,?> implicitMapAsBasic;
+		@Convert(converter = MapConverter.class)
+		private Map<?,?> convertedMapAsBasic;
+		@Basic
+		private Collection<?> collectionAsBasic;
+		private Collection<?> implicitCollectionAsBasic;
+		@Convert(converter = ListConverter.class)
+		private Collection<?> convertedCollectionAsBasic;
 	}
 
 	public static class UserTypeImpl extends UserTypeSupport<String> {

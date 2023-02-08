@@ -11,6 +11,8 @@ import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.model.relational.Database;
+import org.hibernate.boot.model.relational.Namespace;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 
 
@@ -34,6 +36,17 @@ public class LocalAnnotationProcessingContextImpl implements LocalAnnotationProc
 	@Override
 	public ManagedTypeMetadata getScope() {
 		return scope;
+	}
+
+	@Override
+	public Database getDatabase() {
+		return parentProcessingContext.getMetadataBuildingContext().getMetadataCollector().getDatabase();
+	}
+
+	@Override
+	public Namespace getDefaultNamespace() {
+
+		return null;
 	}
 
 	@Override

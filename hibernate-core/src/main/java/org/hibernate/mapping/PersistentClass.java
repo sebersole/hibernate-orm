@@ -1332,4 +1332,17 @@ public abstract class PersistentClass implements AttributeContainer, Serializabl
 	public List<CheckConstraint> getCheckConstraints() {
 		return checkConstraints;
 	}
+
+	public Table findTable(String name) {
+		if ( getTable().getName().equals( name ) ) {
+			return getTable();
+		}
+		for ( int i = 0; i < joins.size(); i++ ) {
+			final Table table = joins.get( i ).getTable();
+			if ( table.getName().equals( name ) ) {
+				return table;
+			}
+		}
+		throw new MappingException( "Could not locate Table : " + name );
+	}
 }

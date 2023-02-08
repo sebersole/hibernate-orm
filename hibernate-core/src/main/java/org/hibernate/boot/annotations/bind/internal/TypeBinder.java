@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.hibernate.MappingException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -19,6 +20,7 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLInsert;
 import org.hibernate.annotations.SQLUpdate;
+import org.hibernate.annotations.SecondaryRow;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.annotations.Synchronize;
 import org.hibernate.boot.annotations.AnnotationSourceLogging;
@@ -37,8 +39,10 @@ import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.spi.InFlightMetadataCollector;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.boot.spi.MetadataBuildingOptions;
+import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Column;
+import org.hibernate.mapping.Join;
 import org.hibernate.mapping.JoinedSubclass;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
@@ -50,13 +54,13 @@ import org.hibernate.type.SqlTypes;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.SecondaryTable;
 import jakarta.persistence.Table;
 
 import static jakarta.persistence.InheritanceType.SINGLE_TABLE;
 import static org.hibernate.boot.annotations.AnnotationSourceLogging.ANNOTATION_SOURCE_MSG_LOGGER;
 import static org.hibernate.boot.annotations.source.internal.AnnotationsHelper.findInheritedAnnotation;
 import static org.hibernate.boot.annotations.source.internal.AnnotationsHelper.getValue;
-import static org.hibernate.internal.util.NullnessHelper.coalesceSuppliedValues;
 
 /**
  * @author Steve Ebersole
@@ -88,6 +92,7 @@ public class TypeBinder {
 			rootEntityMapping.setJpaEntityName( entityTypeMetadata.getJpaEntityName() );
 
 			applyPrimaryTable( entityTypeMetadata, rootEntityMapping, processingContext );
+			applySecondaryTables( entityTypeMetadata, rootEntityMapping, processingContext );
 			applyDiscriminator( entityTypeMetadata, rootEntityMapping, processingContext );
 
 			if ( hierarchy.getCaching().isEnabled() ) {
@@ -146,10 +151,12 @@ public class TypeBinder {
 			switch ( hierarchy.getInheritanceType() ) {
 				case JOINED: {
 					subEntity = new JoinedSubclass( superEntity, processingContext.getMetadataBuildingContext() );
+					applyPrimaryTable( entityTypeMetadata, (JoinedSubclass) subEntity, processingContext );
 					break;
 				}
 				case TABLE_PER_CLASS: {
 					subEntity = new UnionSubclass( superEntity, processingContext.getMetadataBuildingContext() );
+					applyPrimaryTable( entityTypeMetadata, (UnionSubclass) subEntity, processingContext );
 					break;
 				}
 				default: {
@@ -162,6 +169,8 @@ public class TypeBinder {
 
 			subEntity.setEntityName( entityTypeMetadata.getEntityName() );
 			subEntity.setJpaEntityName( entityTypeMetadata.getJpaEntityName() );
+
+			applySecondaryTables( entityTypeMetadata, subEntity, processingContext );
 		}
 
 		bindCommonValues( entityTypeMetadata, entityMapping, processingContext );
@@ -175,10 +184,29 @@ public class TypeBinder {
 			EntityTypeMetadata entityTypeMetadata,
 			RootClass persistentClass,
 			LocalAnnotationProcessingContext processingContext) {
-		final InFlightMetadataCollector metadataCollector = processingContext
-				.getMetadataBuildingContext()
-				.getMetadataCollector();
+		// todo : add to x-refs
+		persistentClass.setTable( buildPrimaryTable( entityTypeMetadata, processingContext ) );
+	}
 
+	private static void applyPrimaryTable(
+			EntityTypeMetadata entityTypeMetadata,
+			JoinedSubclass persistentClass,
+			LocalAnnotationProcessingContext processingContext) {
+		// todo : add to x-refs
+		persistentClass.setTable( buildPrimaryTable( entityTypeMetadata, processingContext ) );
+	}
+
+	private static void applyPrimaryTable(
+			EntityTypeMetadata entityTypeMetadata,
+			UnionSubclass persistentClass,
+			LocalAnnotationProcessingContext processingContext) {
+		// todo : add to x-refs
+		persistentClass.setTable( buildPrimaryTable( entityTypeMetadata, processingContext ) );
+	}
+
+	private static org.hibernate.mapping.Table buildPrimaryTable(
+			EntityTypeMetadata entityTypeMetadata,
+			LocalAnnotationProcessingContext processingContext) {
 		final AnnotationUsage<Table> tableAnnotation = findInheritedAnnotation( entityTypeMetadata, JpaAnnotations.TABLE );
 		final AnnotationUsage<Subselect> subSelectAnnotation = findInheritedAnnotation( entityTypeMetadata, HibernateAnnotations.SUBSELECT );
 
@@ -193,7 +221,10 @@ public class TypeBinder {
 
 		final org.hibernate.mapping.Table primaryTable;
 		if ( subSelectAnnotation != null ) {
-			primaryTable = metadataCollector.addTable(
+			final InFlightMetadataCollector metadataCollector = processingContext
+					.getMetadataBuildingContext()
+					.getMetadataCollector();
+			return metadataCollector.addTable(
 					null,
 					null,
 					null,
@@ -203,50 +234,18 @@ public class TypeBinder {
 			);
 		}
 		else {
-			primaryTable = metadataCollector.addTable(
-					schemaName( entityTypeMetadata, tableAnnotation, processingContext ),
-					catalogName( entityTypeMetadata, tableAnnotation, processingContext ),
-					tableName( entityTypeMetadata, tableAnnotation, processingContext ),
-					null,
+			return TableBinder.bindTable(
+					tableAnnotation,
+					() -> tableName( entityTypeMetadata, tableAnnotation, processingContext ),
 					entityTypeMetadata.isAbstract(),
-					processingContext.getMetadataBuildingContext()
+					processingContext
 			);
 		}
-
-		// todo : add to x-refs
-		persistentClass.setTable( primaryTable );
 	}
 
-	private static String catalogName(
+	static String tableName(
 			EntityTypeMetadata entityTypeMetadata,
-			AnnotationUsage<Table> tableAnnotation,
-			LocalAnnotationProcessingContext processingContext) {
-		if ( tableAnnotation != null ) {
-			return coalesceSuppliedValues(
-					() -> tableAnnotation.getAttributeValue( "catalog" ).getValue(),
-					() -> processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitCatalogName()
-			);
-		}
-
-		return processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitCatalogName();
-	}
-
-	private static String schemaName(
-			EntityTypeMetadata entityTypeMetadata,
-			AnnotationUsage<Table> tableAnnotation,
-			LocalAnnotationProcessingContext processingContext) {
-		if ( tableAnnotation != null ) {
-			return coalesceSuppliedValues(
-					() -> tableAnnotation.getAttributeValue( "schema" ).getValue(),
-					() -> processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitSchemaName()
-			);
-		}
-		return processingContext.getMetadataBuildingContext().getMappingDefaults().getImplicitSchemaName();
-	}
-
-	private static String tableName(
-			EntityTypeMetadata entityTypeMetadata,
-			AnnotationUsage<Table> tableAnnotation,
+			AnnotationUsage<jakarta.persistence.Table> tableAnnotation,
 			LocalAnnotationProcessingContext processingContext) {
 
 		if ( tableAnnotation != null ) {
@@ -261,6 +260,45 @@ public class TypeBinder {
 		final ImplicitNamingStrategy namingStrategy = buildingOptions.getImplicitNamingStrategy();
 
 		return namingStrategy.determinePrimaryTableName( entityTypeMetadata ).render();
+	}
+
+	private static void applySecondaryTables(
+			EntityTypeMetadata entityTypeMetadata,
+			PersistentClass persistentClass,
+			LocalAnnotationProcessingContext processingContext) {
+		final InFlightMetadataCollector metadataCollector = processingContext
+				.getMetadataBuildingContext()
+				.getMetadataCollector();
+		final List<AnnotationUsage<SecondaryTable>> annotations = entityTypeMetadata.findAnnotations( JpaAnnotations.SECONDARY_TABLE );
+		if ( CollectionHelper.isEmpty( annotations ) ) {
+			return;
+		}
+
+		for ( int i = 0; i < annotations.size(); i++ ) {
+			final AnnotationUsage<SecondaryTable> secondaryTableAnnotation = annotations.get( i );
+			final org.hibernate.mapping.Table secondaryTable = TableBinder.bindTable(
+					secondaryTableAnnotation,
+					() -> {
+						throw new MappingException( "SecondaryTable#name is required" );
+					},
+					false,
+					processingContext
+			);
+
+			final Join join = new Join();
+			join.setPersistentClass( persistentClass );
+			persistentClass.addJoin( join );
+			join.setTable( secondaryTable );
+
+			final AnnotationUsage<SecondaryRow> secondaryRowAnnotation = entityTypeMetadata.getManagedClass().getNamedAnnotation(
+					HibernateAnnotations.SECONDARY_ROW,
+					secondaryTable.getName()
+			);
+			if ( secondaryRowAnnotation != null ) {
+				join.setOptional( BindingHelper.extractValue( secondaryRowAnnotation, "optional", true ) );
+				join.setInverse( !BindingHelper.extractValue( secondaryRowAnnotation, "owned", true ) );
+			}
+		}
 	}
 
 	private static void applyDiscriminator(

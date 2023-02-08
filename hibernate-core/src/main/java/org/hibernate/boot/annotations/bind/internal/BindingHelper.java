@@ -6,6 +6,9 @@
  */
 package org.hibernate.boot.annotations.bind.internal;
 
+import java.util.function.Supplier;
+
+import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.model.CustomSql;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
@@ -39,6 +42,27 @@ public final class BindingHelper {
 		}
 
 		return new CustomSql( sql, isCallable, checkStyle );
+	}
+
+	public static <T> T extractValue(AnnotationUsage<?> usage, String attrName) {
+		if ( usage == null ) {
+			return null;
+		}
+		return AnnotationsHelper.getValueOrNull( usage.getAttributeValue( attrName ) );
+	}
+
+	public static <T> T extractValue(AnnotationUsage<?> usage, String attrName, T defaultValue) {
+		if ( usage == null ) {
+			return defaultValue;
+		}
+		return AnnotationsHelper.getValue( usage.getAttributeValue( attrName ), defaultValue );
+	}
+
+	public static <T> T extractValue(AnnotationUsage<?> usage, String attrName, Supplier<T> defaultValueSupplier) {
+		if ( usage == null ) {
+			return defaultValueSupplier.get();
+		}
+		return AnnotationsHelper.getValue( usage.getAttributeValue( attrName ), defaultValueSupplier );
 	}
 
 //	public static BasicValue extractDiscriminatorValue(

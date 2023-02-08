@@ -7,6 +7,8 @@
 package org.hibernate.boot.annotations.model.spi;
 
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
+import org.hibernate.boot.model.relational.Database;
+import org.hibernate.boot.model.relational.Namespace;
 
 /**
  * AnnotationProcessingContext implementation {@linkplain #getScope() scoped} to a
@@ -16,4 +18,8 @@ import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
  */
 public interface LocalAnnotationProcessingContext extends AnnotationProcessingContext {
 	ManagedTypeMetadata getScope();
+
+	Database getDatabase();
+
+	Namespace getDefaultNamespace();
 }

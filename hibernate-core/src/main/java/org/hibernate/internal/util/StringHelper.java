@@ -20,6 +20,8 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.loader.internal.AliasConstantsHelper;
 
+import static org.hibernate.internal.util.collections.CollectionHelper.arrayList;
+
 public final class StringHelper {
 
 	private static final int ALIAS_TRUNCATE_LENGTH = 10;
@@ -315,6 +317,21 @@ public final class StringHelper {
 
 	public static String[] split(String separators, String list) {
 		return split( separators, list, false );
+	}
+
+
+	public static List<String> splitToList(String separators, String list) {
+		return splitToList( separators, list, false );
+	}
+
+	public static List<String> splitToList(String separators, String list, boolean include) {
+		final StringTokenizer tokens = new StringTokenizer( list, separators, include );
+		final ArrayList<String> result = arrayList( tokens.countTokens() );
+		int i = 0;
+		while ( tokens.hasMoreTokens() ) {
+			result.set( i++, tokens.nextToken() );
+		}
+		return result;
 	}
 
 	public static String[] split(String separators, String list, boolean include) {

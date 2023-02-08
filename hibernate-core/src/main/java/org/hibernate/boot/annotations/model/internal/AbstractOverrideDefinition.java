@@ -15,7 +15,7 @@ import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.compare.EqualsHelper;
 
 /**
- * @author Strong Liu <stliu@hibernate.org>
+ * @author Strong Liu
  */
 public abstract class AbstractOverrideDefinition {
 

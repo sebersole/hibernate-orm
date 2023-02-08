@@ -16,6 +16,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.SecondaryTable;
 import jakarta.persistence.Table;
 
 /**
@@ -23,6 +24,7 @@ import jakarta.persistence.Table;
  */
 @Entity(name = "SimpleColumnEntity")
 @Table(name = "simple_entities")
+@SecondaryTable(name="another_table")
 @CustomAnnotation()
 @NamedQuery( name = "abc", query = "select me" )
 @NamedQuery( name = "xyz", query = "select you" )

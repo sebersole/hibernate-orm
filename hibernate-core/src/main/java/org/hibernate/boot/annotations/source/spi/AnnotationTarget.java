@@ -74,7 +74,7 @@ public interface AnnotationTarget {
 	 * Get a usage of the given annotation {@code type} with the given {@code name}.
 	 *
 	 * @implNote Delegates to {@link #getNamedAnnotation(AnnotationDescriptor, String, String)}
-	 * with {@link "name"} as the {@code attributeName}.
+	 * with {@code "name"} as the {@code attributeName}.
 	 */
 	default <A extends Annotation> AnnotationUsage<A> getNamedAnnotation(AnnotationDescriptor<A> type, String name) {
 		return getNamedAnnotation( type, name, "name" );

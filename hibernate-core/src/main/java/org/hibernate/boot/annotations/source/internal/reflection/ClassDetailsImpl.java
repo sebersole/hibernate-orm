@@ -140,4 +140,13 @@ public class ClassDetailsImpl extends LazyAnnotationTarget implements ClassDetai
 		//noinspection unchecked,rawtypes
 		methods.forEach( (Consumer) consumer );
 	}
+
+	@Override
+	public String toString() {
+		return "ClassDetails(reflection) {" +
+				"    name='" + name + "'," +
+				"    managedClass='" + managedClass.getName() + "'," +
+				"	 sys-hash-code=" + System.identityHashCode( this ) +
+				"}";
+	}
 }
