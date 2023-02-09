@@ -15,6 +15,7 @@ import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext
 import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
+import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.mapping.BasicValue;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.Table;
@@ -68,6 +69,7 @@ public class PropertyBinder {
 			Function<String, Table> tableLocator) {
 		final LocalAnnotationProcessingContext processingContext = declaringTypeMetadata.getLocalProcessingContext();
 		final Property property = new Property();
+		property.setName( attributeMetadata.getName() );
 
 		final AnnotationUsage<Column> columnAnnotation = attributeMetadata.getMember().getAnnotation( JpaAnnotations.COLUMN );
 		final Table table = determineColumnTable( columnAnnotation, implicitTable, tableLocator, processingContext );
@@ -75,11 +77,28 @@ public class PropertyBinder {
 		final BasicValue valueMapping = new BasicValue( processingContext.getMetadataBuildingContext() );
 		valueMapping.setTable( table );
 
+		valueMapping.addColumn( ColumnBinder.bindColumn(
+				columnAnnotation,
+				() -> implicitColumnName( attributeMetadata, declaringTypeMetadata, processingContext ),
+				processingContext
+		) );
+
 		property.setValue( valueMapping );
 		property.setInsertable( BindingHelper.extractValue( columnAnnotation, "insertable", true ) );
 		property.setUpdateable( BindingHelper.extractValue( columnAnnotation, "updatable", true ) );
 
 		return property;
+	}
+
+	private static String implicitColumnName(
+			AttributeMetadata attributeMetadata,
+			ManagedTypeMetadata declaringTypeMetadata,
+			AnnotationProcessingContext processingContext) {
+		// todo (annotation-source) : consider moving `#getAttributeRoleBase` and `#getAttributePathBase` up
+		//  	to ManagedTypeMetadata for use here with ImplicitBasicColumnNameSource
+		// for now, just cheat
+
+		return attributeMetadata.getName();
 	}
 
 	private static Table determineColumnTable(

@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.source.UnknownManagedClassException;
+import org.hibernate.boot.annotations.source.internal.hcann.ClassDetailsBuilderImpl;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 
 /**
@@ -24,11 +25,13 @@ import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 public class ClassDetailsRegistry {
 	private final AnnotationProcessingContext context;
 
+	private final ClassDetailsBuilder fallbackClassDetailsBuilder;
 	private final Map<String, ClassDetails> managedClassMap = new ConcurrentHashMap<>();
 	private final Map<String, List<ClassDetails>> subTypeManagedClassMap = new ConcurrentHashMap<>();
 
 	public ClassDetailsRegistry(AnnotationProcessingContext context) {
 		this.context = context;
+		this.fallbackClassDetailsBuilder = new ClassDetailsBuilderImpl( context );
 	}
 
 	public ClassDetails findManagedClass(String name) {
@@ -73,6 +76,23 @@ public class ClassDetailsRegistry {
 			}
 			subTypes.add( classDetails );
 		}
+	}
+
+	public ClassDetails resolveManagedClass(String name) {
+		return resolveManagedClass( name, fallbackClassDetailsBuilder );
+	}
+
+	public ClassDetails resolveManagedClass(
+			String name,
+			ClassDetailsBuilder creator) {
+		final ClassDetails existing = managedClassMap.get( name );
+		if ( existing != null ) {
+			return existing;
+		}
+
+		final ClassDetails created = creator.buildClassDetails( name, context );
+		addManagedClass( name, created );
+		return created;
 	}
 
 	public ClassDetails resolveManagedClass(

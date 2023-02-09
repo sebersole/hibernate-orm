@@ -39,25 +39,46 @@ public class PropertyBinderSmokeTests {
 		final EntityHierarchy hierarchy = entityHierarchies.iterator().next();
 		final EntityTypeMetadata entity = hierarchy.getRoot();
 
-		final RootClass persistentClass = (RootClass) TypeBinder.buildPersistentClass( entity );
-		assertThat( persistentClass.getTable() ).isNotNull();
-		assertThat( persistentClass.getTable().getName() ).isEqualTo( "simple_entities" );
+		final RootClass entityBinding = (RootClass) TypeBinder.buildPersistentClass( entity );
+		verifySimpleColumnEntityDetails( entityBinding );
 
 		entity.forEachAttribute( (index, attribute) -> {
-			final Property property = buildProperty( attribute, entity, persistentClass.getTable(), persistentClass::findTable );
-			final BasicValue valueMapping = (BasicValue) property.getValue();
+			if ( "id".equals( attribute.getName() ) ) {
+				return;
+			}
 
-			if ( "name".equals( property.getName() ) ) {
-				assertThat( valueMapping.getColumn() ).isNotNull();
-				assertThat( valueMapping.getColumn().getText() ).isEqualTo( "description" );
-				assertThat( valueMapping.getTable() ).isEqualTo( persistentClass.getTable() );
-			}
-			else if ( "name2".equals( property.getName() ) ) {
-				assertThat( valueMapping.getColumn() ).isNotNull();
-				assertThat( valueMapping.getColumn().getText() ).isEqualTo( "name2" );
-				assertThat( valueMapping.getTable() ).isNotSameAs( persistentClass.getTable() );
-				assertThat( valueMapping.getTable().getName() ).isEqualTo( "another_table" );
-			}
+			final Property property = buildProperty( attribute, entity, entityBinding.getTable(), entityBinding::getTable );
+			verifySimpleColumnEntityProperty( entityBinding, property );
 		} );
+	}
+
+	public static void verifySimpleColumnEntityProperty(RootClass entityBinding, Property property) {
+		assertThat( property.getName() ).isNotNull();
+
+		final BasicValue valueMapping = (BasicValue) property.getValue();
+		assertThat( valueMapping ).isNotNull();
+
+		if ( "name".equals( property.getName() ) ) {
+			assertThat( valueMapping.getColumn() ).isNotNull();
+			assertThat( valueMapping.getColumn().getText() ).isEqualTo( "description" );
+			assertThat( valueMapping.getTable() ).isEqualTo( entityBinding.getTable() );
+		}
+		else if ( "name2".equals( property.getName() ) ) {
+			assertThat( valueMapping.getColumn() ).isNotNull();
+			assertThat( valueMapping.getColumn().getText() ).isEqualTo( "name2" );
+			assertThat( valueMapping.getTable().getName() ).isEqualTo( "another_table" );
+			assertThat( valueMapping.getTable() ).isSameAs( entityBinding.getTable( "another_table" ) );
+		}
+		else {
+			throw new RuntimeException( "Unexpected Property : " + property );
+		}
+	}
+
+	public static void verifySimpleColumnEntityDetails(RootClass entityBinding) {
+		assertThat( entityBinding ).isNotNull();
+		assertThat( entityBinding.getTable() ).isNotNull();
+		assertThat( entityBinding.getTable().getName() ).isEqualTo( "simple_entities" );
+		assertThat( entityBinding.getJoins() ).hasSize( 1 );
+		assertThat( entityBinding.getJoins().get(0).getTable().getName() ).isEqualTo( "another_table" );
 	}
 }

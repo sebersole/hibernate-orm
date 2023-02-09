@@ -27,7 +27,7 @@ public class MethodDetailsImpl extends LazyAnnotationTarget implements FieldDeta
 		this.method = method;
 		this.type = processingContext.getClassDetailsRegistry().resolveManagedClass(
 				method.getReturnType().getName(),
-				() -> new ClassDetailsImpl( method.getReturnType(), processingContext )
+				() -> ClassDetailsBuilderImpl.INSTANCE.buildClassDetails( method.getReturnType(), getProcessingContext() )
 		);
 	}
 

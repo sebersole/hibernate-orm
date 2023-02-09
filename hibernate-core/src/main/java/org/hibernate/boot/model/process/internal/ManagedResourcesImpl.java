@@ -44,7 +44,7 @@ public class ManagedResourcesImpl implements ManagedResources {
 		return impl;
 	}
 
-	private ManagedResourcesImpl() {
+	public ManagedResourcesImpl() {
 	}
 
 	@Override

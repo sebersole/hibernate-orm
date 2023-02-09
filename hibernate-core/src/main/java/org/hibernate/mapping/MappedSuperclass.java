@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @author Emmanuel Bernard
  */
-public class MappedSuperclass {
+public class MappedSuperclass implements TableContainer {
 	private final MappedSuperclass superMappedSuperclass;
 	private final PersistentClass superPersistentClass;
 	private final List<Property> declaredProperties;
@@ -204,5 +204,25 @@ public class MappedSuperclass {
 
 	public void prepareForMappingModel() {
 		declaredProperties.sort( Comparator.comparing( Property::getName ) );
+	}
+
+	@Override
+	public Table findTable(String name) {
+		return null;
+	}
+
+	@Override
+	public Table getTable(String name) {
+		return null;
+	}
+
+	@Override
+	public Join findSecondaryTable(String name) {
+		return null;
+	}
+
+	@Override
+	public Join getSecondaryTable(String name) {
+		return null;
 	}
 }

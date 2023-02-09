@@ -7,6 +7,7 @@
 package org.hibernate.boot.annotations.source.internal.hcann;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -20,6 +21,7 @@ import org.hibernate.boot.annotations.source.spi.FieldDetails;
 import org.hibernate.boot.annotations.source.spi.MethodDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.IndexedConsumer;
+import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
@@ -95,7 +97,21 @@ public class ClassDetailsImpl extends LazyAnnotationTarget implements ClassDetai
 	}
 
 	private List<ClassDetails> buildImplementedInterfaces() {
-		throw new UnsupportedOperationException( "Not yet implemented" );
+		final XClass[] interfaces = xClass.getInterfaces();
+		if ( ArrayHelper.isEmpty( interfaces ) ) {
+			return Collections.emptyList();
+		}
+
+		final ArrayList<ClassDetails> result = CollectionHelper.arrayList( interfaces.length );
+		for ( int i = 0; i < interfaces.length; i++ ) {
+			final XClass intf = interfaces[ i ];
+			final ClassDetails classDetails = getProcessingContext().getClassDetailsRegistry().resolveManagedClass(
+					intf.getName(),
+					() -> new ClassDetailsImpl( intf, getProcessingContext() )
+			);
+			result.add( classDetails );
+		}
+		return result;
 	}
 
 	@Override
@@ -154,5 +170,13 @@ public class ClassDetailsImpl extends LazyAnnotationTarget implements ClassDetai
 		}
 		//noinspection unchecked,rawtypes
 		methods.forEach( (Consumer) consumer );
+	}
+
+	@Override
+	public Class<?> toJavaClass() {
+		return getProcessingContext().getMetadataBuildingContext()
+				.getBootstrapContext()
+				.getReflectionManager()
+				.toClass( xClass );
 	}
 }

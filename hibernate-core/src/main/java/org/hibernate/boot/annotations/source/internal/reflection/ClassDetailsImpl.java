@@ -9,6 +9,8 @@ package org.hibernate.boot.annotations.source.internal.reflection;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -19,6 +21,7 @@ import org.hibernate.boot.annotations.source.spi.FieldDetails;
 import org.hibernate.boot.annotations.source.spi.MethodDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.IndexedConsumer;
+import org.hibernate.internal.util.collections.ArrayHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 
 /**
@@ -57,13 +60,10 @@ public class ClassDetailsImpl extends LazyAnnotationTarget implements ClassDetai
 			superType = null;
 		}
 		else {
-			final ClassDetails existing = classDetailsRegistry.findManagedClass( superclass.getName() );
-			if ( existing != null ) {
-				superType = existing;
-			}
-			else {
-				superType = new ClassDetailsImpl( null, superclass, processingContext );
-			}
+			superType = classDetailsRegistry.resolveManagedClass(
+					superclass.getName(),
+					() -> ClassDetailsBuilderImpl.INSTANCE.buildClassDetails( superclass, getProcessingContext() )
+			);
 		}
 
 		classDetailsRegistry.addManagedClass( this );
@@ -80,18 +80,44 @@ public class ClassDetailsImpl extends LazyAnnotationTarget implements ClassDetai
 	}
 
 	@Override
+	public Class<?> toJavaClass() {
+		return managedClass;
+	}
+
+	@Override
 	public boolean isAbstract() {
 		return Modifier.isAbstract( managedClass.getModifiers() );
 	}
 
 	@Override
 	public ClassDetails getSuperType() {
-		return null;
+		return superType;
 	}
 
 	@Override
 	public List<ClassDetails> getImplementedInterfaceTypes() {
-		return null;
+		if ( interfaces == null ) {
+			interfaces = collectInterfaces();
+		}
+		return interfaces;
+	}
+
+	private List<ClassDetails> collectInterfaces() {
+		final Class<?>[] interfaceClasses = managedClass.getInterfaces();
+		if ( ArrayHelper.isEmpty( interfaceClasses ) ) {
+			return Collections.emptyList();
+		}
+
+		final ArrayList<ClassDetails> result = CollectionHelper.arrayList( interfaceClasses.length );
+		for ( int i = 0; i < interfaceClasses.length; i++ ) {
+			final Class<?> interfaceClass = interfaceClasses[ i ];
+			final ClassDetails interfaceDetails = getProcessingContext().getClassDetailsRegistry().resolveManagedClass(
+					interfaceClass.getName(),
+					() -> ClassDetailsBuilderImpl.INSTANCE.buildClassDetails( interfaceClass, getProcessingContext() )
+			);
+			result.add( interfaceDetails );
+		}
+		return result;
 	}
 
 	@Override

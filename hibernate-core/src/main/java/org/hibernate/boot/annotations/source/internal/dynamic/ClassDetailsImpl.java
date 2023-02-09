@@ -80,4 +80,9 @@ public class ClassDetailsImpl extends DelayedAnnotationTarget implements ClassDe
 	public void forEachMethod(IndexedConsumer<MethodDetails> consumer) {
 		throw new IllegalStateException( "Not yet implemented" );
 	}
+
+	@Override
+	public Class<?> toJavaClass() {
+		throw new UnsupportedOperationException();
+	}
 }

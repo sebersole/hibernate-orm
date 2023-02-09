@@ -53,7 +53,8 @@ import static org.hibernate.sql.Template.collectColumnNames;
  *
  * @author Gavin King
  */
-public abstract class PersistentClass implements AttributeContainer, Serializable, Filterable, MetaAttributable, Contributable {
+public abstract class PersistentClass
+		implements AttributeContainer, TableContainer, Serializable, Filterable, MetaAttributable, Contributable {
 
 	private static final Alias PK_ALIAS = new Alias( 15, "PK" );
 
@@ -1333,16 +1334,44 @@ public abstract class PersistentClass implements AttributeContainer, Serializabl
 		return checkConstraints;
 	}
 
+	@Override
 	public Table findTable(String name) {
 		if ( getTable().getName().equals( name ) ) {
 			return getTable();
 		}
+		final Join secondaryTable = findSecondaryTable( name );
+		if ( secondaryTable != null ) {
+			return secondaryTable.getTable();
+		}
+		return null;
+	}
+
+	@Override
+	public Table getTable(String name) {
+		final Table table = findTable( name );
+		if ( table == null ) {
+			throw new MappingException( "Could not locate Table : " + name );
+		}
+		return table;
+	}
+
+	@Override
+	public Join findSecondaryTable(String name) {
 		for ( int i = 0; i < joins.size(); i++ ) {
-			final Table table = joins.get( i ).getTable();
-			if ( table.getName().equals( name ) ) {
-				return table;
+			final Join join = joins.get( i );
+			if ( join.getTable().getNameIdentifier().matches( name ) ) {
+				return join;
 			}
 		}
-		throw new MappingException( "Could not locate Table : " + name );
+		return null;
+	}
+
+	@Override
+	public Join getSecondaryTable(String name) {
+		final Join secondaryTable = findSecondaryTable( name );
+		if ( secondaryTable == null ) {
+			throw new MappingException( "Could not locate secondary Table : " + name );
+		}
+		return secondaryTable;
 	}
 }
