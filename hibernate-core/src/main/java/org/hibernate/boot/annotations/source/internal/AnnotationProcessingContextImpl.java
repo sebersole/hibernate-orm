@@ -6,24 +6,32 @@
  */
 package org.hibernate.boot.annotations.source.internal;
 
+import java.lang.annotation.Annotation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.NClob;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.function.Consumer;
 
+import org.hibernate.HibernateException;
 import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsImpl;
+import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.spi.MetadataBuildingContext;
+import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.type.descriptor.java.JavaType;
 import org.hibernate.type.descriptor.jdbc.JdbcType;
 
@@ -38,6 +46,8 @@ public class AnnotationProcessingContextImpl implements AnnotationProcessingCont
 	private final AnnotationDescriptorRegistry descriptorRegistry;
 	private final ClassDetailsRegistry classDetailsRegistry;
 	private final MetadataBuildingContext buildingContext;
+
+	private final Map<AnnotationDescriptor<?>,List<AnnotationUsage<?>>> annotationUsageMap = new HashMap<>();
 
 	public AnnotationProcessingContextImpl(MetadataBuildingContext buildingContext) {
 		this.buildingContext = buildingContext;
@@ -92,5 +102,62 @@ public class AnnotationProcessingContextImpl implements AnnotationProcessingCont
 	@Override
 	public MetadataBuildingContext getMetadataBuildingContext() {
 		return buildingContext;
+	}
+
+	@Override
+	public void registerUsage(AnnotationUsage<?> usage) {
+		// todo (annotation-source) : we only care about this in specific cases.
+		//		this feeds a Map used to locate annotations regardless of target.
+		//		this is used when locating "global" annotations such as generators,
+		//		named-queries, etc.
+		//		+
+		//		an option to limit what we cache would be to add a flag to AnnotationDescriptor
+		//		to indicate whether the annotation is "globally resolvable".
+
+		// register the usage under the appropriate descriptor.
+		//
+		// if the incoming value is a usage of a "repeatable container", skip the
+		// registration - the repetitions themselves are what we are interested in,
+		// and they will get registered themselves
+
+		final AnnotationDescriptor<?> incomingUsageDescriptor = usage.getAnnotationDescriptor();
+		final AnnotationDescriptor<Annotation> repeatableDescriptor = descriptorRegistry.getRepeatableDescriptor( incomingUsageDescriptor );
+		if ( repeatableDescriptor != null ) {
+			// the incoming value is a usage of a "repeatable container", skip the registration
+			return;
+		}
+
+
+		final List<AnnotationUsage<?>> registeredUsages;
+		final List<AnnotationUsage<?>> existingRegisteredUsages = annotationUsageMap.get( incomingUsageDescriptor );
+		if ( existingRegisteredUsages == null ) {
+			registeredUsages = new ArrayList<>();
+			annotationUsageMap.put( incomingUsageDescriptor, registeredUsages );
+		}
+		else {
+			registeredUsages = existingRegisteredUsages;
+		}
+
+		registeredUsages.add( usage );
+	}
+
+	@Override
+	public <A extends Annotation> List<AnnotationUsage<A>> getAllUsages(AnnotationDescriptor<A> annotationDescriptor) {
+		final AnnotationDescriptor<Annotation> repeatableDescriptor = descriptorRegistry.getRepeatableDescriptor( annotationDescriptor );
+		if ( repeatableDescriptor != null ) {
+			throw new HibernateException( "Annotations which are repeatable-containers are not supported" );
+		}
+
+		//noinspection unchecked,rawtypes
+		return (List) annotationUsageMap.get( annotationDescriptor );
+	}
+
+	@Override
+	public <A extends Annotation> void forEachUsage(AnnotationDescriptor<A> annotationDescriptor, Consumer<AnnotationUsage<A>> consumer) {
+		final List<AnnotationUsage<A>> allUsages = getAllUsages( annotationDescriptor );
+		if ( CollectionHelper.isEmpty( allUsages ) ) {
+			return;
+		}
+		allUsages.forEach( consumer );
 	}
 }

@@ -6,6 +6,8 @@
  */
 package org.hibernate.boot.annotations.model.internal;
 
+import java.util.function.Consumer;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.NaturalIdCache;
 import org.hibernate.boot.annotations.AnnotationSourceLogging;
@@ -42,11 +44,13 @@ public class EntityHierarchyImpl implements EntityHierarchy {
 	public EntityHierarchyImpl(
 			ClassDetails rootEntityClassDetails,
 			jakarta.persistence.AccessType defaultAccessType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
 			AnnotationProcessingContext processingContext) {
 		this.rootEntityTypeMetadata = new EntityTypeMetadataImpl(
 				rootEntityClassDetails,
 				this,
 				defaultAccessType,
+				typeConsumer,
 				processingContext
 		);
 

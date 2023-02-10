@@ -6,7 +6,7 @@
  */
 package org.hibernate.orm.test.boot.annotations.bind;
 
-import org.hibernate.boot.annotations.bind.internal.BindingCoordinator;
+import org.hibernate.boot.annotations.bind.internal.ManagedResourcesProcessor;
 import org.hibernate.boot.model.process.internal.ManagedResourcesImpl;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Steve Ebersole
  */
 @ServiceRegistry
-public class BindingCoordinatorSmokeTests {
+public class ManagedResourcesProcessorSmokeTests {
 	@Test
 	void simpleTest(ServiceRegistryScope scope) {
 		final MetadataBuildingContextTestingImpl buildingContext = new MetadataBuildingContextTestingImpl( scope.getRegistry() );
@@ -31,7 +31,7 @@ public class BindingCoordinatorSmokeTests {
 		managedResources.addAnnotatedClassReference( SimpleColumnEntity.class );
 		managedResources.addAnnotatedPackageName( getClass().getPackageName() );
 
-		BindingCoordinator.bindBootModel( managedResources, buildingContext );
+		ManagedResourcesProcessor.bindBootModel( managedResources, buildingContext );
 
 		final RootClass entityBinding = (RootClass) buildingContext
 				.getMetadataCollector()

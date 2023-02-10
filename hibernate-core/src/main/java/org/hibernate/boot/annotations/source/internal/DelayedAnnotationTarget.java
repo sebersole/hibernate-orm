@@ -77,6 +77,11 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 	}
 
 	@Override
+	public void forEachAnnotation(Consumer<AnnotationUsage<? extends Annotation>> consumer) {
+		usagesMap.forEach( (c, annotationUsages) -> annotationUsages.forEach( consumer ) );
+	}
+
+	@Override
 	public <A extends Annotation> List<AnnotationUsage<A>> getAnnotations(AnnotationDescriptor<A> type) {
 		//noinspection unchecked,rawtypes
 		return (List) usagesMap.get( type.getAnnotationType() );

@@ -84,7 +84,18 @@ public class AnnotationDescriptorRegistry {
 	 * E.g., given {@link NamedQuery} and {@link NamedQueries} passing in
 	 * {@code NamedQueries.class} would return the descriptor for {@code NamedQuery}.
 	 */
-	public <A extends Annotation> AnnotationDescriptor<A> getRepeatableDescriptor(Class<A> javaType) {
+	public <A extends Annotation> AnnotationDescriptor<A> getRepeatableDescriptor(AnnotationDescriptor<?> descriptor) {
+		return getRepeatableDescriptor( descriptor.getAnnotationType() );
+	}
+
+	/**
+	 * For the given annotation type, which is the container for repeatable
+	 * annotations, get the descriptor for the repeatable annotation.
+	 * <p/>
+	 * E.g., given {@link NamedQuery} and {@link NamedQueries} passing in
+	 * {@code NamedQueries.class} would return the descriptor for {@code NamedQuery}.
+	 */
+	public <A extends Annotation> AnnotationDescriptor<A> getRepeatableDescriptor(Class<?> javaType) {
 		//noinspection unchecked
 		return (AnnotationDescriptor<A>) repeatableDescriptorMap.get( javaType );
 	}

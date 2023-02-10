@@ -47,7 +47,7 @@ public class PropertyBinderSmokeTests {
 				return;
 			}
 
-			final Property property = buildProperty( attribute, entity, entityBinding.getTable(), entityBinding::getTable );
+			final Property property = buildProperty( attribute, entity, entityBinding::getTable, entityBinding::getTable );
 			verifySimpleColumnEntityProperty( entityBinding, property );
 		} );
 	}

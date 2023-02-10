@@ -6,6 +6,10 @@
  */
 package org.hibernate.boot.annotations.spi;
 
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -33,4 +37,10 @@ public interface AnnotationProcessingContext {
 	 * Registry of managed-classes
 	 */
 	ClassDetailsRegistry getClassDetailsRegistry();
+
+	void registerUsage(AnnotationUsage<?> usage);
+
+	<A extends Annotation> List<AnnotationUsage<A>> getAllUsages(AnnotationDescriptor<A> annotationDescriptor);
+
+	<A extends Annotation> void forEachUsage(AnnotationDescriptor<A> annotationDescriptor, Consumer<AnnotationUsage<A>> consumer);
 }

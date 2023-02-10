@@ -7,7 +7,9 @@
 package org.hibernate.boot.annotations.source.spi;
 
 /**
- * Descriptor for a Java package, mainly to act as AnnotationTarget
+ * Descriptor for a Java package, mainly to act as AnnotationTarget.
+ *
+ * Effectively a reference to the package's {@code package-info} class, if one
  *
  * @author Steve Ebersole
  */

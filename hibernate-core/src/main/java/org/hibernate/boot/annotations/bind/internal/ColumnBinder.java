@@ -9,9 +9,10 @@ package org.hibernate.boot.annotations.bind.internal;
 import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext;
-import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.mapping.Column;
+
+import static org.hibernate.boot.annotations.bind.internal.BindingHelper.extractValue;
 
 /**
  * @author Steve Ebersole
@@ -46,22 +47,18 @@ public class ColumnBinder {
 		result.setName( columnName( annotationUsage, defaultNameSupplier, processingContext ) );
 		result.setUnique( extractValue( annotationUsage, "unique", uniqueByDefault ) );
 		result.setNullable( extractValue( annotationUsage, "nullable", nullableByDefault ) );
-		result.setSqlType( extractValue( annotationUsage, "columnDefinition", null ) );
+		result.setSqlType( extractValue( annotationUsage, "columnDefinition" ) );
 		result.setLength( extractValue( annotationUsage, "length", lengthByDefault ) );
 		result.setPrecision( extractValue( annotationUsage, "precision", precisionByDefault ) );
 		result.setScale( extractValue( annotationUsage, "scale", scaleByDefault ) );
 		return result;
 	}
 
-	private static <T> T extractValue(AnnotationUsage<?> usage, String attrName, T defaultValue) {
-		return AnnotationsHelper.getValue( usage.getAttributeValue( attrName ), defaultValue );
-	}
-
 	private static String columnName(
 			AnnotationUsage<?> columnAnnotation,
 			Supplier<String> defaultNameSupplier,
 			LocalAnnotationProcessingContext processingContext) {
-		return AnnotationsHelper.getValue( columnAnnotation.getAttributeValue( "name" ), defaultNameSupplier );
+		return extractValue( columnAnnotation, "name", defaultNameSupplier );
 	}
 
 	private ColumnBinder() {

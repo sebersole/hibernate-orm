@@ -7,10 +7,12 @@
 package org.hibernate.boot.annotations.model.internal;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
+import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
@@ -57,8 +59,10 @@ public class EntityTypeMetadataImpl
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AccessType defaultAccessType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, hierarchy, true, defaultAccessType, processingContext );
+		super( classDetails, hierarchy, true, defaultAccessType, typeConsumer, processingContext );
+
 		this.hierarchy = hierarchy;
 
 		// NOTE: there is no annotation for `entity-name`; it comes exclusively from
@@ -130,8 +134,9 @@ public class EntityTypeMetadataImpl
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AbstractIdentifiableTypeMetadata superType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
 			AnnotationProcessingContext processingContext) {
-		super( classDetails, hierarchy, superType, processingContext );
+		super( classDetails, hierarchy, superType, typeConsumer, processingContext );
 		this.hierarchy = hierarchy;
 
 		// NOTE: this is no annotation for `entity-name`.  it comes exclusively from

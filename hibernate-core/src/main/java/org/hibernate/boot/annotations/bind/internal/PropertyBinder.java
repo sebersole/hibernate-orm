@@ -8,6 +8,7 @@ package org.hibernate.boot.annotations.bind.internal;
 
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.hibernate.MappingException;
 import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
@@ -31,11 +32,11 @@ public class PropertyBinder {
 	public static Property buildProperty(
 			AttributeMetadata attributeMetadata,
 			ManagedTypeMetadata declaringTypeMetadata,
-			Table implicitTable,
+			Supplier<Table> implicitTableAccess,
 			Function<String,Table> tableLocator) {
 		switch ( attributeMetadata.getNature() ) {
 			case BASIC: {
-				return buildBasicProperty( attributeMetadata, declaringTypeMetadata, implicitTable, tableLocator );
+				return buildBasicProperty( attributeMetadata, declaringTypeMetadata, implicitTableAccess, tableLocator );
 			}
 			case EMBEDDED: {
 				return buildEmbeddedProperty( attributeMetadata, declaringTypeMetadata );
@@ -65,14 +66,14 @@ public class PropertyBinder {
 	private static Property buildBasicProperty(
 			AttributeMetadata attributeMetadata,
 			ManagedTypeMetadata declaringTypeMetadata,
-			Table implicitTable,
+			Supplier<Table> implicitTableAccess,
 			Function<String, Table> tableLocator) {
 		final LocalAnnotationProcessingContext processingContext = declaringTypeMetadata.getLocalProcessingContext();
 		final Property property = new Property();
 		property.setName( attributeMetadata.getName() );
 
 		final AnnotationUsage<Column> columnAnnotation = attributeMetadata.getMember().getAnnotation( JpaAnnotations.COLUMN );
-		final Table table = determineColumnTable( columnAnnotation, implicitTable, tableLocator, processingContext );
+		final Table table = determineColumnTable( columnAnnotation, implicitTableAccess, tableLocator, processingContext );
 
 		final BasicValue valueMapping = new BasicValue( processingContext.getMetadataBuildingContext() );
 		valueMapping.setTable( table );
@@ -103,12 +104,12 @@ public class PropertyBinder {
 
 	private static Table determineColumnTable(
 			AnnotationUsage<Column> columnAnnotation,
-			Table implicitTable,
+			Supplier<Table> implicitTableAccess,
 			Function<String,Table> tableLocator,
 			LocalAnnotationProcessingContext processingContext) {
 		final String tableName = BindingHelper.extractValue( columnAnnotation, "table" );
 		if ( tableName == null ) {
-			return implicitTable;
+			return implicitTableAccess.get();
 		}
 
 		return tableLocator.apply( tableName );

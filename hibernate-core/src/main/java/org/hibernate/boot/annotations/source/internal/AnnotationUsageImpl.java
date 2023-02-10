@@ -32,6 +32,8 @@ public class AnnotationUsageImpl<A extends Annotation> implements AnnotationUsag
 		this.location = location;
 
 		this.valueMap = AnnotationHelper.extractAttributeValues( annotation, annotationDescriptor, processingContext );
+
+		processingContext.registerUsage( this );
 	}
 
 	@Override

@@ -45,6 +45,11 @@ public class OrmAnnotationDescriptorImpl<T extends Annotation> implements Annota
 		this.repeatableContainer = repeatableContainer;
 	}
 
+	@Override
+	public String getName() {
+		return annotationType.getName();
+	}
+
 	/**
 	 * The {@linkplain Class Java type} of the annotation.
 	 */
@@ -91,6 +96,10 @@ public class OrmAnnotationDescriptorImpl<T extends Annotation> implements Annota
 	@Override
 	public <A extends Annotation> void forEachAnnotation(AnnotationDescriptor<A> type, Consumer<AnnotationUsage<A>> consumer) {
 		// there are none
+	}
+
+	@Override
+	public void forEachAnnotation(Consumer<AnnotationUsage<? extends Annotation>> consumer) {
 	}
 
 	@Override

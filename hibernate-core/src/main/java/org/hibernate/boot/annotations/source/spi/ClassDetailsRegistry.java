@@ -107,5 +107,4 @@ public class ClassDetailsRegistry {
 		addManagedClass( name, created );
 		return created;
 	}
-
 }

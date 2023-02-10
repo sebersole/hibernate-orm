@@ -11,26 +11,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.boot.annotations.model.internal.EntityHierarchyBuilder;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
-import org.hibernate.boot.annotations.model.spi.MappedSuperclassTypeMetadata;
+import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
 import org.hibernate.boot.annotations.source.internal.AnnotationProcessingContextImpl;
-import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsBuilderImpl;
+import org.hibernate.boot.annotations.source.internal.NoPackageDetailsImpl;
+import org.hibernate.boot.annotations.source.internal.PackageDetailsImpl;
 import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsImpl;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
+import org.hibernate.boot.annotations.source.spi.PackageDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.model.convert.spi.ConverterDescriptor;
 import org.hibernate.boot.model.convert.spi.ConverterRegistry;
 import org.hibernate.boot.model.process.spi.ManagedResources;
+import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.spi.MetadataBuildingContext;
 import org.hibernate.internal.util.collections.CollectionHelper;
-import org.hibernate.mapping.Join;
-import org.hibernate.mapping.MappedSuperclass;
-import org.hibernate.mapping.PersistentClass;
+import org.hibernate.mapping.IdentifiableTypeClass;
 import org.hibernate.mapping.Property;
 import org.hibernate.mapping.RootClass;
 
@@ -38,16 +38,22 @@ import jakarta.persistence.AttributeConverter;
 
 import static org.hibernate.boot.annotations.AnnotationSourceLogging.ANNOTATION_SOURCE_LOGGER;
 import static org.hibernate.boot.annotations.AnnotationSourceLogging.ANNOTATION_SOURCE_LOGGER_DEBUG_ENABLED;
+import static org.hibernate.boot.annotations.model.internal.EntityHierarchyBuilder.createEntityHierarchies;
 
 /**
+ * Coordinates the processing of {@linkplain ManagedResources managed-resources}
+ * into Hibernate's {@linkplain org.hibernate.mapping boot model}.
+ *
  * @author Steve Ebersole
  */
-public class BindingCoordinator {
+public class ManagedResourcesProcessor {
 	private final AnnotationProcessingContext processingContext;
 
 	// cache some frequently used references
 	private final ClassDetailsRegistry classDetailsRegistry;
 	private final ConverterRegistry converterRegistry;
+
+	private final GlobalAnnotationProcessor globalAnnotationProcessor;
 
 	/**
 	 * Entry point for processing managed-resources into boot model references
@@ -59,20 +65,22 @@ public class BindingCoordinator {
 			ManagedResources managedResources,
 			MetadataBuildingContext buildingContext) {
 		final AnnotationProcessingContextImpl processingContext = new AnnotationProcessingContextImpl( buildingContext );
-		final BindingCoordinator bindingCoordinator = new BindingCoordinator( processingContext );
+		final ManagedResourcesProcessor managedResourcesProcessor = new ManagedResourcesProcessor( processingContext );
 
-		bindingCoordinator.prepare( managedResources );
+		managedResourcesProcessor.prepare( managedResources );
 
-		final Set<EntityHierarchy> entityHierarchies = EntityHierarchyBuilder.createEntityHierarchies( processingContext );
-		final Map<EntityHierarchy,RootClass> rootClasses = bindingCoordinator.processHierarchies( entityHierarchies, managedResources );
-		bindingCoordinator.processAttributes( entityHierarchies, rootClasses, managedResources );
+		final Set<EntityHierarchy> entityHierarchies = createEntityHierarchies( managedResourcesProcessor::processGlobalAnnotations, processingContext );
+		final Map<EntityHierarchy,RootClass> rootClasses = managedResourcesProcessor.processHierarchies( entityHierarchies, managedResources );
+		managedResourcesProcessor.processAttributes( entityHierarchies, rootClasses, managedResources );
 	}
 
-	private BindingCoordinator(AnnotationProcessingContext processingContext) {
+	private ManagedResourcesProcessor(AnnotationProcessingContext processingContext) {
 		this.processingContext = processingContext;
 
 		this.classDetailsRegistry = processingContext.getClassDetailsRegistry();
 		this.converterRegistry = processingContext.getMetadataBuildingContext().getMetadataCollector().getConverterRegistry();
+
+		this.globalAnnotationProcessor = new GlobalAnnotationProcessor( processingContext );
 	}
 
 	private void prepare(ManagedResources managedResources) {
@@ -85,6 +93,10 @@ public class BindingCoordinator {
 
 		// walks through the managed-resources and creates "intermediate model" references
 		prepareManagedResources( managedResources );
+	}
+
+	private void processGlobalAnnotations(ManagedTypeMetadata managedTypeMetadata) {
+		globalAnnotationProcessor.processGlobalAnnotation( managedTypeMetadata.getManagedClass() );
 	}
 
 	private Map<EntityHierarchy,RootClass> processHierarchies(Set<EntityHierarchy> entityHierarchies, ManagedResources managedResources) {
@@ -115,14 +127,16 @@ public class BindingCoordinator {
 		for ( EntityHierarchy entityHierarchy : entityHierarchies ) {
 			final EntityTypeMetadata rootEntityMetadata = entityHierarchy.getRoot();
 			final RootClass rootClass = rootClasses.get( entityHierarchy );
-			processAttributes( rootEntityMetadata, rootClass );
 			processAttributesUp( rootEntityMetadata, rootClass );
+			processAttributes( rootEntityMetadata, rootClass );
 			processAttributesDown( rootEntityMetadata, rootClass );
 		}
 	}
 
-	private void processAttributes(EntityTypeMetadata entityMetadata, PersistentClass persistentClass) {
-		entityMetadata.forEachAttribute( (index, attributeMetadata) -> {
+	private void processAttributes(
+			IdentifiableTypeMetadata identifiableTypeMetadata,
+			IdentifiableTypeClass identifiableTypeMapping) {
+		identifiableTypeMetadata.forEachAttribute( (index, attributeMetadata) -> {
 			if ( attributeMetadata.getMember().getAnnotation( JpaAnnotations.ID ) != null
 					|| attributeMetadata.getMember().getAnnotation( JpaAnnotations.EMBEDDED_ID ) != null ) {
 				// for now, skip...
@@ -130,119 +144,60 @@ public class BindingCoordinator {
 			}
 			final Property property = PropertyBinder.buildProperty(
 					attributeMetadata,
-					entityMetadata,
-					persistentClass.getTable(),
-					persistentClass::findTable
+					identifiableTypeMetadata,
+					identifiableTypeMapping::getImplicitTable,
+					identifiableTypeMapping::findTable
 			);
-			if ( property.getValue().getTable().equals( persistentClass.getTable() ) ) {
-				persistentClass.addProperty( property );
-
-			}
-			else {
-				final Join join = persistentClass.getSecondaryTable( property.getValue().getTable().getName() );
-				join.addProperty( property );
-			}
+			identifiableTypeMapping.applyProperty( property );
 		} );
 	}
 
-	private void processAttributes(
-			MappedSuperclassTypeMetadata mappedSuperclassMetadata,
-			MappedSuperclass mappedSuperclass) {
-		if ( mappedSuperclassMetadata.getNumberOfSubTypes() == 0 ) {
+	private void processAttributesUp(
+			IdentifiableTypeMetadata identifiableTypeMetadata,
+			IdentifiableTypeClass identifiableTypeMapping) {
+		final IdentifiableTypeMetadata superTypeMetadata = identifiableTypeMetadata.getSuperType();
+		if ( superTypeMetadata == null ) {
 			return;
 		}
 
-		throw new UnsupportedOperationException( "Not yet implemented" );
-//		mappedSuperclassMetadata.forEachAttribute( (index, attributeMetadata) -> {
-//			final Property property = PropertyBinder.buildProperty(
-//					attributeMetadata,
-//					mappedSuperclassMetadata,
-//					persistentClass.getTable(),
-//					mappedSuperclass::findTable
-//			);
-//			if ( property.getValue().getTable().equals( persistentClass.getTable() ) ) {
-//				persistentClass.addProperty( property );
-//
-//			}
-//			else {
-//				final Join join = persistentClass.getSecondaryTable( property.getValue().getTable().getName() );
-//				join.addProperty( property );
-//			}
-//		} );
+		final IdentifiableTypeClass superIdentifiableTypeClass = identifiableTypeMapping.getSuperType();
+		assert superIdentifiableTypeClass != null;
+
+		processAttributesUp( superTypeMetadata, superIdentifiableTypeClass );
+		processAttributes( superTypeMetadata, superIdentifiableTypeClass );
 	}
 
-	private void processAttributesUp(EntityTypeMetadata entityMetadata, PersistentClass persistentClass) {
-		final IdentifiableTypeMetadata superType = entityMetadata.getSuperType();
-		if ( superType == null ) {
+	private void processAttributesDown(
+			IdentifiableTypeMetadata identifiableTypeMetadata,
+			IdentifiableTypeClass identifiableTypeClass) {
+		if ( identifiableTypeMetadata.getNumberOfSubTypes() == 0 ) {
 			return;
 		}
 
-		if ( superType instanceof MappedSuperclassTypeMetadata ) {
-			final MappedSuperclassTypeMetadata mappedSuperclassMetadata = (MappedSuperclassTypeMetadata) superType;
-			final MappedSuperclass mappedSuperclassMapping = persistentClass.getSuperMappedSuperclass();
-
-			assert mappedSuperclassMapping != null;
-			assert mappedSuperclassMapping.getMappedClass().equals( mappedSuperclassMetadata.getManagedClass().toJavaClass() );
-
-			processAttributes( mappedSuperclassMetadata, mappedSuperclassMapping );
-			processAttributesUp( mappedSuperclassMetadata, mappedSuperclassMapping );
-		}
-		else {
-			final EntityTypeMetadata superEntityMetadata = (EntityTypeMetadata) superType;
-			final PersistentClass superPersistentClass = persistentClass.getSuperclass();
-
-			assert superPersistentClass != null;
-			assert superPersistentClass.getEntityName().equals( superEntityMetadata.getManagedClass().getName() );
-
-			processAttributes( superEntityMetadata, superPersistentClass );
-			processAttributesUp( superEntityMetadata, superPersistentClass );
-		}
-	}
-
-	private void processAttributesUp(MappedSuperclassTypeMetadata mappedSuperclassMetadata, MappedSuperclass mappedSuperclass) {
-
-	}
-
-	private void processAttributesDown(EntityTypeMetadata entityMetadata, PersistentClass persistentClass) {
-		if ( entityMetadata.getNumberOfSubTypes() == 0 ) {
-			return;
-		}
-
-		throw new UnsupportedOperationException( "Not yet implemented" );
-	}
-
-	private void processAttributesDown(MappedSuperclassTypeMetadata mappedSuperclassMetadata, MappedSuperclass mappedSuperclass) {
-		if ( mappedSuperclassMetadata.getNumberOfSubTypes() == 0 ) {
-			return;
-		}
-
-		throw new UnsupportedOperationException( "Not yet implemented" );
+		throw new UnsupportedOperationException( "Not implemented yet" );
 	}
 
 	private void processManagedPackage(String packageName) {
-		final ClassDetails packageInfoDetails;
-		try {
-			packageInfoDetails = processingContext.getClassDetailsRegistry().resolveManagedClass(
-					packageName + ".package-info",
-					ClassDetailsBuilderImpl.INSTANCE
-			);
+		final PackageDetails packageDetails = createManagedPackageDetails( packageName );
+		globalAnnotationProcessor.processGlobalAnnotation( packageDetails );
+	}
+
+	private PackageDetails createManagedPackageDetails(String packageName) {
+		final ClassLoaderService classLoaderService = processingContext.getMetadataBuildingContext()
+				.getBootstrapContext()
+				.getServiceRegistry()
+				.getService( ClassLoaderService.class );
+		final Class<?> packageInfoClass = classLoaderService.classForName( packageName + ".package-info" );
+
+		final PackageDetails packageDetails;
+		if ( packageInfoClass == null ) {
+			packageDetails = new NoPackageDetailsImpl( packageName );
 		}
-		catch (Exception e) {
-			return;
+		else {
+			packageDetails = new PackageDetailsImpl( packageInfoClass, processingContext );
 		}
 
-		assert packageInfoDetails != null;
-
-// todo (annotation-source) : AnnotationBinder#bindPackage
-//		handleIdGenerators( packageInfoDetails, context );
-//		bindTypeDescriptorRegistrations( packageInfoDetails, context );
-//		bindEmbeddableInstantiatorRegistrations( packageInfoDetails, context );
-//		bindUserTypeRegistrations( packageInfoDetails, context );
-//		bindCompositeUserTypeRegistrations( packageInfoDetails, context );
-//		bindConverterRegistrations( packageInfoDetails, context );
-//		bindGenericGenerators( packageInfoDetails, context );
-//		bindQueries( packageInfoDetails, context );
-//		bindFilterDefs( packageInfoDetails, context );
+		return packageDetails;
 	}
 
 	private void prepareManagedResources(ManagedResources managedResources) {
@@ -258,6 +213,9 @@ public class BindingCoordinator {
 				//noinspection unchecked
 				converterRegistry.addAttributeConverter( (Class<? extends AttributeConverter<?,?>>) managedClassReference );
 			}
+			else {
+				globalAnnotationProcessor.processGlobalAnnotation( classDetails );
+			}
 		}
 
 		for ( String managedClassName : managedResources.getAnnotatedClassNames() ) {
@@ -266,6 +224,9 @@ public class BindingCoordinator {
 			if ( isConverter( classDetails, attributeConverterClassDetails ) ) {
 				//noinspection unchecked
 				converterRegistry.addAttributeConverter( (Class<? extends AttributeConverter<?,?>>) classDetails.toJavaClass() );
+			}
+			else {
+				globalAnnotationProcessor.processGlobalAnnotation( classDetails );
 			}
 		}
 

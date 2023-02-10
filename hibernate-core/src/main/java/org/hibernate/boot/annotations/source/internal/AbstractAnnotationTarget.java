@@ -52,6 +52,11 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 	}
 
 	@Override
+	public void forEachAnnotation(Consumer<AnnotationUsage<? extends Annotation>> consumer) {
+		usageMap.forEach( (c, annotationUsages) -> annotationUsages.forEach( consumer ) );
+	}
+
+	@Override
 	public <A extends Annotation> AnnotationUsage<A> getAnnotation(AnnotationDescriptor<A> type) {
 		final List<AnnotationUsage<?>> annotationUsages = usageMap.get( type.getAnnotationType() );
 		if ( CollectionHelper.isEmpty( annotationUsages ) ) {

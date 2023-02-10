@@ -6,12 +6,18 @@
  */
 package org.hibernate.boot.annotations.bind.internal;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.function.Supplier;
 
+import org.hibernate.annotations.Parameter;
 import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.model.CustomSql;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
+import org.hibernate.internal.util.collections.ArrayHelper;
 
 /**
  * @author Steve Ebersole
@@ -63,6 +69,36 @@ public final class BindingHelper {
 			return defaultValueSupplier.get();
 		}
 		return AnnotationsHelper.getValue( usage.getAttributeValue( attrName ), defaultValueSupplier );
+	}
+
+	public static Properties extractProperties(AnnotationUsage<Parameter>[] parameters) {
+		final Properties result = new Properties();
+		if ( parameters != null ) {
+			for ( int i = 0; i < parameters.length; i++ ) {
+				final AnnotationUsage<Parameter> property = parameters[ i ];
+				result.setProperty(
+						extractValue( property, "name" ),
+						extractValue( property, "value" )
+				);
+			}
+		}
+		return result;
+	}
+
+	public static Map<String,String> extractParameterMap(AnnotationUsage<Parameter>[] parameters) {
+		if ( ArrayHelper.isEmpty( parameters ) ) {
+			return Collections.emptyMap();
+		}
+
+		final Map<String,String> result = new HashMap<>();
+		for ( int i = 0; i < parameters.length; i++ ) {
+			final AnnotationUsage<Parameter> property = parameters[ i ];
+			result.put(
+					extractValue( property, "name" ),
+					extractValue( property, "value" )
+			);
+		}
+		return result;
 	}
 
 //	public static BasicValue extractDiscriminatorValue(

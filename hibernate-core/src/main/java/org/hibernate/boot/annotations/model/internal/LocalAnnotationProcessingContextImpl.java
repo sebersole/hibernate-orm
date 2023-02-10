@@ -6,9 +6,15 @@
  */
 package org.hibernate.boot.annotations.model.internal;
 
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext;
 import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
+import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
+import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.boot.model.relational.Database;
@@ -62,5 +68,20 @@ public class LocalAnnotationProcessingContextImpl implements LocalAnnotationProc
 	@Override
 	public MetadataBuildingContext getMetadataBuildingContext() {
 		return parentProcessingContext.getMetadataBuildingContext();
+	}
+
+	@Override
+	public void registerUsage(AnnotationUsage<?> usage) {
+		parentProcessingContext.registerUsage( usage );
+	}
+
+	@Override
+	public <A extends Annotation> List<AnnotationUsage<A>> getAllUsages(AnnotationDescriptor<A> annotationDescriptor) {
+		return parentProcessingContext.getAllUsages( annotationDescriptor );
+	}
+
+	@Override
+	public <A extends Annotation> void forEachUsage(AnnotationDescriptor<A> annotationDescriptor, Consumer<AnnotationUsage<A>> consumer) {
+		parentProcessingContext.forEachUsage( annotationDescriptor, consumer );
 	}
 }

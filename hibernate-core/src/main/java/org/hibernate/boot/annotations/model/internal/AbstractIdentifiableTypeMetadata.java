@@ -75,18 +75,21 @@ public abstract class AbstractIdentifiableTypeMetadata
 			EntityHierarchy hierarchy,
 			boolean isRootEntity,
 			AccessType accessType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
 			AnnotationProcessingContext processingContext) {
 		super( classDetails, processingContext );
+
+		typeConsumer.accept( this );
 
 		this.hierarchy = hierarchy;
 		this.accessType = determineAccessType( accessType );
 
 		// walk up
-		this.superType = walkRootSuperclasses( classDetails, accessType );
+		this.superType = walkRootSuperclasses( classDetails, accessType, typeConsumer );
 
 		if ( isRootEntity ) {
 			// walk down
-			walkSubclasses( classDetails, this, this.accessType );
+			walkSubclasses( classDetails, this, this.accessType, typeConsumer );
 		}
 
 		// the idea here is to collect up class-level annotations and to apply
@@ -113,16 +116,16 @@ public abstract class AbstractIdentifiableTypeMetadata
 	 * @param hierarchy The hierarchy
 	 * @param superType The metadata for the super type.
 	 * @param processingContext The binding context
-	 *
-	 * @implNote We do not process subclasses here as they are processed from
-	 * {@link #AbstractIdentifiableTypeMetadata(ClassDetails, EntityHierarchy, boolean, AccessType, AnnotationProcessingContext)}
 	 */
 	public AbstractIdentifiableTypeMetadata(
 			ClassDetails classDetails,
 			EntityHierarchy hierarchy,
 			AbstractIdentifiableTypeMetadata superType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
 			AnnotationProcessingContext processingContext) {
 		super( classDetails, processingContext );
+
+		typeConsumer.accept( this );
 
 		this.hierarchy = hierarchy;
 		this.superType = superType;
@@ -137,7 +140,8 @@ public abstract class AbstractIdentifiableTypeMetadata
 
 	private AbstractIdentifiableTypeMetadata walkRootSuperclasses(
 			ClassDetails classDetails,
-			AccessType hierarchyAccessType) {
+			AccessType hierarchyAccessType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer) {
 		final ClassDetails superTypeClassDetails = classDetails.getSuperType();
 		if ( superTypeClassDetails == null ) {
 			return null;
@@ -158,6 +162,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 					superTypeClassDetails,
 					getHierarchy(),
 					hierarchyAccessType,
+					typeConsumer,
 					getLocalProcessingContext()
 			);
 			superType.addSubclass( this );
@@ -166,7 +171,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 		else {
 			// otherwise, we might have an "intermediate" subclass
 			if ( superTypeClassDetails.getSuperType() != null ) {
-				return walkRootSuperclasses( superTypeClassDetails, hierarchyAccessType );
+				return walkRootSuperclasses( superTypeClassDetails, hierarchyAccessType, typeConsumer );
 			}
 			else {
 				return null;
@@ -189,7 +194,8 @@ public abstract class AbstractIdentifiableTypeMetadata
 	private void walkSubclasses(
 			ClassDetails classDetails,
 			AbstractIdentifiableTypeMetadata superType,
-			AccessType defaultAccessType) {
+			AccessType defaultAccessType,
+			Consumer<IdentifiableTypeMetadata> typeConsumer) {
 		final ClassDetailsRegistry classDetailsRegistry = getLocalProcessingContext().getClassDetailsRegistry();
 		classDetailsRegistry.forEachDirectSubType( classDetails.getName(), (subTypeManagedClass) -> {
 			final AbstractIdentifiableTypeMetadata subTypeMetadata;
@@ -198,6 +204,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 						subTypeManagedClass,
 						getHierarchy(),
 						superType,
+						typeConsumer,
 						getLocalProcessingContext()
 				);
 				superType.addSubclass( subTypeMetadata );
@@ -207,6 +214,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 						subTypeManagedClass,
 						getHierarchy(),
 						superType,
+						typeConsumer,
 						getLocalProcessingContext()
 				);
 				superType.addSubclass( subTypeMetadata );
@@ -215,7 +223,7 @@ public abstract class AbstractIdentifiableTypeMetadata
 				subTypeMetadata = superType;
 			}
 
-			walkSubclasses( subTypeManagedClass, subTypeMetadata, defaultAccessType );
+			walkSubclasses( subTypeManagedClass, subTypeMetadata, defaultAccessType, typeConsumer );
 		} );
 	}
 

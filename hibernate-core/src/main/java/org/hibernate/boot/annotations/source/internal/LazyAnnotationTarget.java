@@ -49,6 +49,11 @@ public abstract class LazyAnnotationTarget implements AnnotationTarget {
 		return (List) getUsagesMap().get( type.getAnnotationType() );
 	}
 
+	@Override
+	public void forEachAnnotation(Consumer<AnnotationUsage<? extends Annotation>> consumer) {
+		getUsagesMap().forEach( (c, annotationUsages) -> annotationUsages.forEach( consumer ) );
+	}
+
 	private Map<Class<? extends Annotation>, List<AnnotationUsage<?>>> getUsagesMap() {
 		if ( usagesMap == null ) {
 			usagesMap = buildUsagesMap();

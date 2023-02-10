@@ -9,6 +9,7 @@ package org.hibernate.boot.annotations.model.internal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.model.AccessTypeDeterminationException;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
@@ -40,12 +41,15 @@ public class EntityHierarchyBuilder {
 	 * Pre-processes the annotated entities from the index and create a set of entity hierarchies which can be bound
 	 * to the metamodel.
 	 *
+	 * @param typeConsumer Callback for any identifiable-type metadata references
 	 * @param processingContext The binding context, giving access to needed services and information
 	 *
 	 * @return a set of {@code EntityHierarchySource} instances.
 	 */
-	public static Set<EntityHierarchy> createEntityHierarchies(AnnotationProcessingContext processingContext) {
-		return new EntityHierarchyBuilder( processingContext ).process();
+	public static Set<EntityHierarchy> createEntityHierarchies(
+			Consumer<IdentifiableTypeMetadata> typeConsumer,
+			AnnotationProcessingContext processingContext) {
+		return new EntityHierarchyBuilder( processingContext ).process( typeConsumer );
 	}
 
 	private final AnnotationProcessingContext processingContext;
@@ -55,13 +59,13 @@ public class EntityHierarchyBuilder {
 		this.processingContext = processingContext;
 	}
 
-	private Set<EntityHierarchy> process() {
+	private Set<EntityHierarchy> process(Consumer<IdentifiableTypeMetadata> typeConsumer) {
 		final Set<ClassDetails> rootEntityClassDetails = collectRootEntityTypes();
 		final Set<EntityHierarchy> hierarchies = CollectionHelper.setOfSize( rootEntityClassDetails.size() );
 
 		rootEntityClassDetails.forEach( (rootEntityManagedClass) -> {
 			final AccessType defaultAccessType = determineDefaultAccessTypeForHierarchy( rootEntityManagedClass );
-			hierarchies.add( new EntityHierarchyImpl( rootEntityManagedClass, defaultAccessType, processingContext ) );
+			hierarchies.add( new EntityHierarchyImpl( rootEntityManagedClass, defaultAccessType, typeConsumer, processingContext ) );
 		} );
 
 		if ( ANNOTATION_SOURCE_LOGGER_DEBUG_ENABLED ) {
@@ -206,4 +210,14 @@ public class EntityHierarchyBuilder {
 		// if we hit no opt-outs we have a root
 		return true;
 	}
+
+
+	/**
+	 * Used in tests
+	 */
+	public static Set<EntityHierarchy> createEntityHierarchies(AnnotationProcessingContext processingContext) {
+		return new EntityHierarchyBuilder( processingContext ).process( EntityHierarchyBuilder::ignore );
+	}
+
+	private static void ignore(IdentifiableTypeMetadata it) {}
 }

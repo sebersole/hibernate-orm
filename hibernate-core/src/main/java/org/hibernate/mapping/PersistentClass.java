@@ -54,7 +54,7 @@ import static org.hibernate.sql.Template.collectColumnNames;
  * @author Gavin King
  */
 public abstract class PersistentClass
-		implements AttributeContainer, TableContainer, Serializable, Filterable, MetaAttributable, Contributable {
+		implements IdentifiableTypeClass, AttributeContainer, TableContainer, Serializable, Filterable, MetaAttributable, Contributable {
 
 	private static final Alias PK_ALIAS = new Alias( 15, "PK" );
 
@@ -145,6 +145,20 @@ public abstract class PersistentClass
 	public void setClassName(String className) {
 		this.className = className == null ? null : className.intern();
 		this.mappedClass = null;
+	}
+
+	@Override
+	public IdentifiableTypeClass getSuperType() {
+		final PersistentClass superPersistentClass = getSuperclass();
+		if ( superPersistentClass != null ) {
+			return superPersistentClass;
+		}
+		return superMappedSuperclass;
+	}
+
+	@Override
+	public List<IdentifiableTypeClass> getSubTypes() {
+		throw new UnsupportedOperationException( "Not implemented yet" );
 	}
 
 	public String getProxyInterfaceName() {
@@ -312,11 +326,25 @@ public abstract class PersistentClass
 	}
 
 	@Override
+	public void applyProperty(Property property) {
+		if ( property.getValue().getTable().equals( getImplicitTable() ) ) {
+			addProperty( property );
+		}
+		else {
+			final Join secondaryTable = getSecondaryTable( property.getValue().getTable().getName() );
+			secondaryTable.addProperty( property );
+		}
+	}
+
+	@Override
 	public boolean contains(Property property) {
 		return properties.contains( property );
 	}
 
 	public abstract Table getTable();
+	public Table getImplicitTable() {
+		return getTable();
+	}
 
 	public String getEntityName() {
 		return entityName;

@@ -44,6 +44,11 @@ public class AnnotationDescriptorImpl<A extends Annotation>
 	}
 
 	@Override
+	public String getName() {
+		return annotationType.getName();
+	}
+
+	@Override
 	public Class<? extends Annotation> getAnnotationType() {
 		return annotationType;
 	}

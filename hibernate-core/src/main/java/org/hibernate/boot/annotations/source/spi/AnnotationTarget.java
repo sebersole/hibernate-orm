@@ -24,11 +24,6 @@ import org.hibernate.boot.annotations.AnnotationAccessException;
  */
 public interface AnnotationTarget {
 	/**
-	 * The kind of target
-	 */
-	Kind getKind();
-
-	/**
 	 * Subset of {@link java.lang.annotation.Target} for targets supported
 	 * for mapping annotations
 	 */
@@ -39,6 +34,15 @@ public interface AnnotationTarget {
 		METHOD,
 		PACKAGE
 	}
+
+	/**
+	 * The kind of target
+	 */
+	Kind getKind();
+
+	String getName();
+
+	void forEachAnnotation(Consumer<AnnotationUsage<? extends Annotation>> consumer);
 
 	/**
 	 * Get the use of the given annotation on this target.
