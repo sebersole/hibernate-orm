@@ -47,6 +47,9 @@ public class AttributeConverterManager implements ConverterAutoApplyHandler {
 	private Map<Class<?>, RegisteredConversion> registeredConversionsByDomainType;
 
 	public RegisteredConversion findRegisteredConversion(Class<?> domainType) {
+		if ( registeredConversionsByDomainType == null ) {
+			return null;
+		}
 		return registeredConversionsByDomainType.get( domainType );
 	}
 

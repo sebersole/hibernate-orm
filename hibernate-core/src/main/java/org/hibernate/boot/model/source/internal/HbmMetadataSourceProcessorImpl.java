@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmHibernateMapping;
+import org.hibernate.boot.jaxb.spi.BindableMappingDescriptor;
 import org.hibernate.boot.jaxb.spi.Binding;
 import org.hibernate.boot.model.process.spi.ManagedResources;
 import org.hibernate.boot.model.source.internal.hbm.EntityHierarchyBuilder;
@@ -31,12 +32,10 @@ import org.jboss.logging.Logger;
 public class HbmMetadataSourceProcessorImpl implements MetadataSourceProcessor {
 	private static final Logger log = Logger.getLogger( HbmMetadataSourceProcessorImpl.class );
 
-	private final MetadataBuildingContext rootBuildingContext;
-	private Collection<MappingDocument> mappingDocuments;
-
+	private final Collection<MappingDocument> mappingDocuments;
 	private final ModelBinder modelBinder;
 
-	private List<EntityHierarchySourceImpl> entityHierarchies;
+	private final List<EntityHierarchySourceImpl> entityHierarchies;
 
 	public HbmMetadataSourceProcessorImpl(
 			ManagedResources managedResources,
@@ -44,16 +43,14 @@ public class HbmMetadataSourceProcessorImpl implements MetadataSourceProcessor {
 		this( managedResources.getXmlMappingBindings(), rootBuildingContext );
 	}
 
-	@SuppressWarnings("unchecked")
 	public HbmMetadataSourceProcessorImpl(
-			Collection<Binding> xmlBindings,
+			Collection<Binding<BindableMappingDescriptor>> xmlBindings,
 			MetadataBuildingContext rootBuildingContext) {
-		this.rootBuildingContext = rootBuildingContext;
 		final EntityHierarchyBuilder hierarchyBuilder = new EntityHierarchyBuilder();
 
 		this.mappingDocuments = new ArrayList<>();
 
-		for ( Binding xmlBinding : xmlBindings ) {
+		for ( Binding<BindableMappingDescriptor> xmlBinding : xmlBindings ) {
 			if ( !(xmlBinding.getRoot() instanceof JaxbHbmHibernateMapping) ) {
 				continue;
 			}

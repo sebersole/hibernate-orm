@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import org.hibernate.annotations.Any;
 import org.hibernate.annotations.ManyToAny;
 import org.hibernate.boot.annotations.AnnotationSourceLogging;
+import org.hibernate.boot.annotations.model.MultipleAttributeNaturesException;
 import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
 import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext;
 import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;

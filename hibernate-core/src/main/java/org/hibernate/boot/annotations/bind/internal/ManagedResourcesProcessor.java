@@ -222,8 +222,7 @@ public class ManagedResourcesProcessor {
 			final ClassDetails classDetails = classDetailsRegistry.resolveManagedClass( managedClassName );
 			// if the Class is a converter, register it
 			if ( isConverter( classDetails, attributeConverterClassDetails ) ) {
-				//noinspection unchecked
-				converterRegistry.addAttributeConverter( (Class<? extends AttributeConverter<?,?>>) classDetails.toJavaClass() );
+				converterRegistry.addAttributeConverter( classDetails.toJavaClass() );
 			}
 			else {
 				globalAnnotationProcessor.processGlobalAnnotation( classDetails );
@@ -235,6 +234,16 @@ public class ManagedResourcesProcessor {
 				converterRegistry.addAttributeConverter( converterDescriptor );
 			}
 		}
+
+		if ( CollectionHelper.isNotEmpty( managedResources.getExtraQueryImports() ) ) {
+			managedResources.getExtraQueryImports().forEach( (name, target) -> {
+				processingContext.getMetadataBuildingContext()
+						.getMetadataCollector()
+						.addImport( name, target.getName() );
+			} );
+		}
+
+		XmlMappingProcessor.processXmlMappings( managedResources.getXmlMappingBindings(), processingContext );
 	}
 
 	private static boolean isConverter(ClassDetails classDetails, ClassDetails attributeConverterClassDetails) {

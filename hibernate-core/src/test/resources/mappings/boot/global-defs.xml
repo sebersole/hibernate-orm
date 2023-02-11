@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ License: GNU Lesser General Public License (LGPL), version 2.1 or later.
+  ~ See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
+  -->
+<entity-mappings xmlns="http://www.hibernate.org/xsd/orm/mapping" version="3.1">
+    <java-type class="java.lang.String" descriptor="org.hibernate.orm.test.boot.annotations.bind.global.CustomStringJavaType"/>
+    <jdbc-type descriptor="org.hibernate.orm.test.boot.annotations.bind.global.CustomVarcharJdbcType"/>
+    <user-type class="java.util.BitSet" descriptor="org.hibernate.orm.test.boot.annotations.bind.global.BitSetUserType"/>
+    <conversion converter="org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter" class="java.util.Map"/>
+
+    <filter-def name="filter1"/>
+    <sequence-generator name="seq1"/>
+
+    <named-query name="query1">
+        <query>from BasicEntity</query>
+    </named-query>
+
+    <named-native-query name="query2">
+        <query>select * from BasicEntity</query>
+    </named-native-query>
+
+    <converter class="org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter" />
+</entity-mappings>

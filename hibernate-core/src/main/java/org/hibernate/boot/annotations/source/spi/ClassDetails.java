@@ -114,5 +114,5 @@ public interface ClassDetails extends AnnotationTarget {
 		} );
 	}
 
-	Class<?> toJavaClass();
+	<X> Class<X> toJavaClass();
 }

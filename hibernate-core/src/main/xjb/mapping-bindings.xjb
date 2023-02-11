@@ -29,6 +29,12 @@
             <bindings node=".//xsd:element[@name='identifier-generator']">
 	            <property name="genericGenerators"/>
             </bindings>
+            <bindings node=".//xsd:element[@name='sequence-generator']">
+	            <property name="sequenceGenerators"/>
+            </bindings>
+            <bindings node=".//xsd:element[@name='table-generator']">
+	            <property name="tableGenerators"/>
+            </bindings>
             <bindings node=".//xsd:element[@name='database-object']">
 	            <property name="databaseObjects"/>
             </bindings>
@@ -58,6 +64,18 @@
             </bindings>
             <bindings node=".//xsd:element[@name='converter']">
 	            <property name="converters"/>
+            </bindings>
+            <bindings node=".//xsd:element[@name='java-type']">
+	            <property name="javaTypeRegistrations"/>
+            </bindings>
+            <bindings node=".//xsd:element[@name='jdbc-type']">
+	            <property name="jdbcTypeRegistrations"/>
+            </bindings>
+            <bindings node=".//xsd:element[@name='user-type']">
+	            <property name="userTypeRegistrations"/>
+            </bindings>
+            <bindings node=".//xsd:element[@name='conversion']">
+	            <property name="converterRegistrations"/>
             </bindings>
         </bindings>
 
