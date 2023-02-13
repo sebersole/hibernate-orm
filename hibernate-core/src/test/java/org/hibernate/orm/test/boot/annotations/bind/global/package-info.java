@@ -29,4 +29,4 @@ import org.hibernate.annotations.JdbcTypeRegistration;
 import org.hibernate.annotations.NamedNativeQuery;
 import org.hibernate.annotations.NamedQuery;
 import org.hibernate.annotations.TypeRegistration;
-import org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter;
+import org.hibernate.orm.test.mapping.mutability.converted.MapConverter;

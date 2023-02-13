@@ -10,7 +10,7 @@
     <java-type class="java.lang.String" descriptor="org.hibernate.orm.test.boot.annotations.bind.global.CustomStringJavaType"/>
     <jdbc-type descriptor="org.hibernate.orm.test.boot.annotations.bind.global.CustomVarcharJdbcType"/>
     <user-type class="java.util.BitSet" descriptor="org.hibernate.orm.test.boot.annotations.bind.global.BitSetUserType"/>
-    <conversion converter="org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter" class="java.util.Map"/>
+    <conversion converter="org.hibernate.orm.test.mapping.mutability.converted.MapConverter" class="java.util.Map"/>
 
     <filter-def name="filter1"/>
     <sequence-generator name="seq1"/>
@@ -23,5 +23,5 @@
         <query>select * from BasicEntity</query>
     </named-native-query>
 
-    <converter class="org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter" />
+    <converter class="org.hibernate.orm.test.mapping.mutability.converted.MapConverter" />
 </entity-mappings>

@@ -8,6 +8,7 @@ package org.hibernate.boot.annotations.bind.internal;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
@@ -15,6 +16,7 @@ import java.util.function.Supplier;
 import org.hibernate.annotations.Parameter;
 import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.model.CustomSql;
 import org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle;
 import org.hibernate.internal.util.collections.ArrayHelper;
@@ -142,5 +144,21 @@ public final class BindingHelper {
 //	}
 
 	private BindingHelper() {
+	}
+
+	public static <T> Class<T> extractClassValue(AnnotationUsage<?> usage, String attributeName) {
+		final ClassDetails descriptorClass = extractValue( usage, attributeName );
+		if ( descriptorClass == null ) {
+			throw new IllegalStateException(
+					String.format(
+							Locale.ROOT,
+							"Unexpected null attribute value - %s.%s",
+							usage.getAnnotationDescriptor().getName(),
+							attributeName
+					)
+			);
+		}
+		//noinspection unchecked
+		return (Class<T>) descriptorClass.toJavaClass();
 	}
 }

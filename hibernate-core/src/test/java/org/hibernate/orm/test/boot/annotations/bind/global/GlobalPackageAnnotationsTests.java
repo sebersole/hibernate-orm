@@ -14,7 +14,7 @@ import org.hibernate.boot.model.convert.internal.AttributeConverterManager;
 import org.hibernate.boot.model.convert.spi.RegisteredConversion;
 import org.hibernate.boot.model.process.internal.ManagedResourcesImpl;
 import org.hibernate.orm.test.boot.annotations.bind.BasicEntity;
-import org.hibernate.orm.test.mapping.converted.converter.mutabiity.MapConverter;
+import org.hibernate.orm.test.mapping.mutability.converted.MapConverter;
 import org.hibernate.type.SqlTypes;
 import org.hibernate.type.descriptor.java.JavaType;
 import org.hibernate.type.descriptor.jdbc.JdbcType;

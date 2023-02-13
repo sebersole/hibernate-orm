@@ -90,7 +90,11 @@
                 <xsd:element name="java-type" type="orm:java-type-registration" minOccurs="0" maxOccurs="unbounded" />
                 <xsd:element name="jdbc-type" type="orm:jdbc-type-registration" minOccurs="0" maxOccurs="unbounded" />
                 <xsd:element name="user-type" type="orm:user-type-registration" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="composite-user-type" type="orm:composite-user-type-registration" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="collection-user-type" type="orm:collection-user-type-registration" minOccurs="0" maxOccurs="unbounded" />
                 <xsd:element name="conversion" type="orm:converter-registration" minOccurs="0" maxOccurs="unbounded" />
+
+                <xsd:element name="embeddable-instantiator" type="orm:embeddable-instantiator-registration" minOccurs="0" maxOccurs="unbounded" />
 
                 <xsd:element name="filter-def" type="orm:filter-def" minOccurs="0" maxOccurs="unbounded" />
                 <xsd:element name="fetch-profile" type="orm:fetch-profile" minOccurs="0" maxOccurs="unbounded" />
@@ -185,6 +189,59 @@
         <xsd:attribute name="descriptor" use="required" type="xsd:string"/>
     </xsd:complexType>
 
+    <xsd:complexType name="composite-user-type-registration">
+        <xsd:annotation>
+            <xsd:documentation>
+                See @CompositeTypeRegistration
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="class" use="required" type="xsd:string"/>
+        <xsd:attribute name="descriptor" use="required" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="collection-user-type-registration">
+        <xsd:annotation>
+            <xsd:documentation>
+                See @CollectionTypeRegistration
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="param" minOccurs="0" maxOccurs="unbounded" type="configuration-parameter"/>
+        </xsd:sequence>
+        <xsd:attribute name="classification" use="required" type="orm:collection-classifications"/>
+        <xsd:attribute name="descriptor" use="required" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="configuration-parameter">
+        <xsd:annotation>
+            <xsd:documentation>
+                Configuration parameter user-types
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="name" use="required" type="xsd:string"/>
+        <xsd:attribute name="value" use="required" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:simpleType name="collection-classifications">
+        <xsd:annotation>
+            <xsd:documentation>
+                See `@org.hibernate.metamodel.CollectionClassification`
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="array"/>
+            <xsd:enumeration value="bag"/>
+            <xsd:enumeration value="id-bag"/>
+            <xsd:enumeration value="list"/>
+            <xsd:enumeration value="set"/>
+            <xsd:enumeration value="sorted-set"/>
+            <xsd:enumeration value="ordered-set"/>
+            <xsd:enumeration value="map"/>
+            <xsd:enumeration value="sorted-map"/>
+            <xsd:enumeration value="ordered-map"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
     <xsd:complexType name="converter-registration">
         <xsd:annotation>
             <xsd:documentation>
@@ -194,6 +251,16 @@
         <xsd:attribute name="converter" use="required" type="xsd:string"/>
         <xsd:attribute name="class" type="xsd:string"/>
         <xsd:attribute name="auto-apply" type="xsd:boolean" default="true"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="embeddable-instantiator-registration">
+        <xsd:annotation>
+            <xsd:documentation>
+                See @EmbeddableInstantiatorRegistration
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="embeddableClass" use="required" type="xsd:string"/>
+        <xsd:attribute name="instantiator" use="required" type="xsd:string"/>
     </xsd:complexType>
 
 
