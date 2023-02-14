@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.annotations.bind.internal;
+package org.hibernate.boot.annotations.bind.internal.global;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -21,7 +21,7 @@ import static org.hibernate.boot.annotations.source.spi.JpaAnnotations.TABLE_GEN
 
 /**
  * Processes "global" annotations which can be applied at a number of levels,
- * but are always considered global in scope
+ * but are always considered global in scope (generators, queries, etc)
  *
  * @author Steve Ebersole
  */

@@ -10,6 +10,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.HibernateAnnotations;
@@ -29,7 +30,7 @@ public class AnnotationDescriptorImpl<A extends Annotation>
 		extends AbstractAnnotationTarget
 		implements AnnotationDescriptor<A> {
 	private final Class<A> annotationType;
-	private final List<AttributeDescriptor<?>> attributeDescriptors;
+	private final List<AnnotationAttributeDescriptor<?>> attributeDescriptors;
 	private final AnnotationDescriptor<?> repeatableContainer;
 
 	public AnnotationDescriptorImpl(
@@ -54,7 +55,7 @@ public class AnnotationDescriptorImpl<A extends Annotation>
 	}
 
 	@Override
-	public List<AttributeDescriptor<?>> getAttributes() {
+	public List<AnnotationAttributeDescriptor<?>> getAttributes() {
 		return attributeDescriptors;
 	}
 
@@ -64,12 +65,12 @@ public class AnnotationDescriptorImpl<A extends Annotation>
 	}
 
 	@Override
-	public <X> AttributeDescriptor<X> getAttribute(String name) {
+	public <X> AnnotationAttributeDescriptor<X> getAttribute(String name) {
 		for ( int i = 0; i < attributeDescriptors.size(); i++ ) {
-			final AttributeDescriptor<?> attributeDescriptor = attributeDescriptors.get( i );
+			final AnnotationAttributeDescriptor<?> attributeDescriptor = attributeDescriptors.get( i );
 			if ( attributeDescriptor.getAttributeName().equals( name ) ) {
 				//noinspection unchecked
-				return (AttributeDescriptor<X>) attributeDescriptor;
+				return (AnnotationAttributeDescriptor<X>) attributeDescriptor;
 			}
 		}
 		throw new AnnotationAccessException( "No such attribute : " + annotationType.getName() + "." + name );

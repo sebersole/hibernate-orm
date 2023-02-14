@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -23,9 +24,9 @@ import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 public class AnnotationsHelper {
 	/**
 	 * Get the annotation attribute value.  Return {@code null} if the value is
-	 * {@linkplain AnnotationUsage.AttributeValue#isDefaultValue() the default}.
+	 * {@linkplain AnnotationAttributeValue#isDefaultValue() the default}.
 	 */
-	public static <T> T getValueOrNull(AnnotationUsage.AttributeValue attributeValue) {
+	public static <T> T getValueOrNull(AnnotationAttributeValue attributeValue) {
 		if ( attributeValue == null || attributeValue.isDefaultValue() ) {
 			return null;
 		}
@@ -34,9 +35,9 @@ public class AnnotationsHelper {
 
 	/**
 	 * Get the annotation attribute value, or {@code null} if its value is
-	 * {@linkplain AnnotationUsage.AttributeValue#isDefaultValue() the default}.
+	 * {@linkplain AnnotationAttributeValue#isDefaultValue() the default}.
 	 */
-	public static <T> T getValueOrNull(AnnotationUsage.AttributeValue attributeValue, T defaultValue) {
+	public static <T> T getValueOrNull(AnnotationAttributeValue attributeValue, T defaultValue) {
 		assert defaultValue != null;
 		if ( attributeValue == null || defaultValue.equals( attributeValue.getValue() ) ) {
 			return null;
@@ -44,14 +45,14 @@ public class AnnotationsHelper {
 		return attributeValue.getValue();
 	}
 
-	public static <T> T getValue(AnnotationUsage.AttributeValue attributeValue, T defaultValue) {
+	public static <T> T getValue(AnnotationAttributeValue attributeValue, T defaultValue) {
 		if ( attributeValue == null || attributeValue.isDefaultValue() ) {
 			return defaultValue;
 		}
 		return attributeValue.getValue();
 	}
 
-	public static <T> T getValue(AnnotationUsage.AttributeValue attributeValue, Supplier<T> defaultValueSupplier) {
+	public static <T> T getValue(AnnotationAttributeValue attributeValue, Supplier<T> defaultValueSupplier) {
 		if ( attributeValue == null || attributeValue.isDefaultValue() ) {
 			return defaultValueSupplier.get();
 		}
@@ -74,7 +75,7 @@ public class AnnotationsHelper {
 			final AnnotationDescriptor<?> repeatableDescriptor = annotationDescriptorRegistry.getRepeatableDescriptor( annotationJavaType );
 			if ( repeatableDescriptor != null ) {
 				// The usage type is a repeatable container.  Flatten its contained annotations
-				final AnnotationUsage.AttributeValue value = annotationUsage.getAttributeValue( "value" );
+				final AnnotationAttributeValue value = annotationUsage.getAttributeValue( "value" );
 				return value.getValue();
 			}
 			else {

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -84,7 +85,7 @@ public abstract class AbstractAnnotationTarget implements AnnotationTarget {
 		for ( int i = 0; i < annotationUsages.size(); i++ ) {
 			//noinspection unchecked
 			final AnnotationUsage<A> annotationUsage = (AnnotationUsage<A>) annotationUsages.get( i );
-			final AnnotationUsage.AttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
+			final AnnotationAttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
 			if ( attributeValue == null ) {
 				continue;
 			}

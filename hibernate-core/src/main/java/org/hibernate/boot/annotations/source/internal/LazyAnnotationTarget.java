@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -109,7 +110,7 @@ public abstract class LazyAnnotationTarget implements AnnotationTarget {
 
 		for ( int i = 0; i < annotationUsages.size(); i++ ) {
 			final AnnotationUsage<A> annotationUsage = annotationUsages.get( i );
-			final AnnotationUsage.AttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
+			final AnnotationAttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
 			if ( attributeValue == null ) {
 				continue;
 			}

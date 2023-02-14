@@ -28,17 +28,17 @@ public interface AnnotationDescriptor<A extends Annotation> extends AnnotationTa
 	/**
 	 * Descriptors for the attributes of the annotation
 	 */
-	List<AttributeDescriptor<?>> getAttributes();
+	List<AnnotationAttributeDescriptor<?>> getAttributes();
 
 	/**
 	 * Get the attribute descriptor for the named attribute
 	 */
-	<X> AttributeDescriptor<X> getAttribute(String name);
+	<X> AnnotationAttributeDescriptor<X> getAttribute(String name);
 
 	/**
 	 * Shorthand for {@code getAttribute("value")}
 	 */
-	default <X> AttributeDescriptor<X> getValueAttribute() {
+	default <X> AnnotationAttributeDescriptor<X> getValueAttribute() {
 		return getAttribute( "value" );
 	}
 
@@ -48,29 +48,4 @@ public interface AnnotationDescriptor<A extends Annotation> extends AnnotationTa
 	 */
 	AnnotationDescriptor<?> getRepeatableContainer();
 
-	/**
-	 * Describes an attribute of the annotation
-	 */
-	interface AttributeDescriptor<T> {
-		/**
-		 * The name of the attribute.
-		 */
-		String getAttributeName();
-
-		/**
-		 * The {@linkplain Class Java type} of the attribute
-		 */
-		Class<T> getAttributeType();
-
-		/**
-		 * The default value for this annotation
-		 */
-		T getAttributeDefault();
-
-		/**
-		 * Extract the value for the described attribute from
-		 * an instance of the containing annotation
-		 */
-		T extractRawValue(Annotation annotation);
-	}
 }

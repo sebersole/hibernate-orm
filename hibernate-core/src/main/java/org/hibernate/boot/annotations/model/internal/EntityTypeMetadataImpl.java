@@ -13,6 +13,7 @@ import org.hibernate.boot.annotations.model.spi.AttributeMetadata;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
@@ -88,7 +89,7 @@ public class EntityTypeMetadataImpl
 //		// Proxy generation
 //		final AnnotationUsage<Proxy> proxyAnnotation = classDetails.getAnnotation( HibernateAnnotations.PROXY );
 //		if ( proxyAnnotation != null ) {
-//			final AnnotationUsage.AttributeValue lazyValue = proxyAnnotation.getAttributeValue( "lazy" );
+//			final AnnotationUsage.AnnotationAttributeValue lazyValue = proxyAnnotation.getAttributeValue( "lazy" );
 //			if ( lazyValue != null ) {
 //				this.isLazy = lazyValue.asBoolean();
 //			}
@@ -97,7 +98,7 @@ public class EntityTypeMetadataImpl
 //			}
 //
 //			if ( this.isLazy ) {
-//				final AnnotationUsage.AttributeValue proxyClassValue = proxyAnnotation.getAttributeValue( "proxyClass" );
+//				final AnnotationUsage.AnnotationAttributeValue proxyClassValue = proxyAnnotation.getAttributeValue( "proxyClass" );
 //				if ( proxyClassValue != null && !proxyClassValue.isDefaultValue() ) {
 //					this.proxy = proxyClassValue.asString();
 //				}
@@ -117,7 +118,7 @@ public class EntityTypeMetadataImpl
 //
 //		final AnnotationUsage<DiscriminatorValue> discriminatorValueAnnotation = classDetails.getAnnotation( JpaAnnotations.DISCRIMINATOR_VALUE );
 //		if ( discriminatorValueAnnotation != null ) {
-//			final AnnotationUsage.AttributeValue discriminatorValueValue = discriminatorValueAnnotation.getValueAttributeValue();
+//			final AnnotationUsage.AnnotationAttributeValue discriminatorValueValue = discriminatorValueAnnotation.getValueAttributeValue();
 //			this.discriminatorMatchValue = discriminatorValueValue.asString();
 //		}
 //		else {
@@ -151,7 +152,7 @@ public class EntityTypeMetadataImpl
 	}
 
 	private String determineJpaEntityName(AnnotationUsage<Entity> entityAnnotation, String entityName) {
-		final AnnotationUsage.AttributeValue nameValue = entityAnnotation.getAttributeValue( "name" );
+		final AnnotationAttributeValue nameValue = entityAnnotation.getAttributeValue( "name" );
 		if ( nameValue != null && !nameValue.isDefaultValue() ) {
 			return nameValue.asString();
 		}
@@ -166,7 +167,7 @@ public class EntityTypeMetadataImpl
 //	private String determineCustomLoader() {
 //		final AnnotationUsage<Loader> loaderAnnotation = getManagedClass().getAnnotation( HibernateAnnotations.LOADER );
 //		if ( loaderAnnotation != null ) {
-//			final AnnotationUsage.AttributeValue namedQueryValue = loaderAnnotation.getAttributeValue( "namedQuery" );
+//			final AnnotationUsage.AnnotationAttributeValue namedQueryValue = loaderAnnotation.getAttributeValue( "namedQuery" );
 //			return namedQueryValue.asString();
 //		}
 //		return null;

@@ -37,6 +37,7 @@ import static org.hibernate.boot.annotations.AnnotationSourceLogging.ANNOTATION_
  * @author Steve Ebersole
  */
 public class EntityHierarchyBuilder {
+
 	/**
 	 * Pre-processes the annotated entities from the index and create a set of entity hierarchies which can be bound
 	 * to the metamodel.
@@ -53,9 +54,10 @@ public class EntityHierarchyBuilder {
 	}
 
 	private final AnnotationProcessingContext processingContext;
+
 	private final Set<ClassDetails> allKnownMappedSuperclassTypes = new HashSet<>();
 
-	private EntityHierarchyBuilder(AnnotationProcessingContext processingContext) {
+	public EntityHierarchyBuilder(AnnotationProcessingContext processingContext) {
 		this.processingContext = processingContext;
 	}
 

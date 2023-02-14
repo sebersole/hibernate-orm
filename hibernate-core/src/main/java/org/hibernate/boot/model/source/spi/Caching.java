@@ -10,6 +10,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.boot.CacheRegionDefinition;
 import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.internal.util.StringHelper;
@@ -59,7 +60,7 @@ public class Caching {
 		}
 	}
 
-	private static AccessType interpretAccessType(AnnotationUsage.AttributeValue usageValue, AccessType implicitValue) {
+	private static AccessType interpretAccessType(AnnotationAttributeValue usageValue, AccessType implicitValue) {
 		if ( usageValue != null ) {
 			final CacheConcurrencyStrategy strategy = usageValue.getValue();
 			return strategy.toAccessType();

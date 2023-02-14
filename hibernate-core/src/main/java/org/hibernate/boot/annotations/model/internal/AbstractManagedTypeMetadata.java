@@ -190,7 +190,7 @@ public abstract class AbstractManagedTypeMetadata implements OverrideAndConverte
 
 		if ( embedded != null
 				|| embeddedId != null
-				|| backingMember.getType().getAnnotation( JpaAnnotations.EMBEDDABLE ) != null ) {
+				|| ( backingMember.getType() != null && backingMember.getType().getAnnotation( JpaAnnotations.EMBEDDABLE ) != null ) ) {
 			natures.add( AttributeMetadata.AttributeNature.EMBEDDED );
 		}
 

@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
@@ -33,12 +34,12 @@ import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
  */
 public class OrmAnnotationDescriptorImpl<T extends Annotation> implements AnnotationDescriptor<T> {
 	private final Class<T> annotationType;
-	private final List<AttributeDescriptor<?>> attributeDescriptors;
+	private final List<AnnotationAttributeDescriptor<?>> attributeDescriptors;
 	private final AnnotationDescriptor<?> repeatableContainer;
 
 	public OrmAnnotationDescriptorImpl(
 			Class<T> annotationType,
-			List<AttributeDescriptor<?>> attributeDescriptors,
+			List<AnnotationAttributeDescriptor<?>> attributeDescriptors,
 			AnnotationDescriptor<?> repeatableContainer) {
 		this.annotationType = annotationType;
 		this.attributeDescriptors = attributeDescriptors;
@@ -62,17 +63,17 @@ public class OrmAnnotationDescriptorImpl<T extends Annotation> implements Annota
 	 * Descriptors for the attributes of this annotation
 	 */
 	@Override
-	public List<AttributeDescriptor<?>> getAttributes() {
+	public List<AnnotationAttributeDescriptor<?>> getAttributes() {
 		return attributeDescriptors;
 	}
 
 	@Override
-	public <X> AttributeDescriptor<X> getAttribute(String name) {
+	public <X> AnnotationAttributeDescriptor<X> getAttribute(String name) {
 		for ( int i = 0; i < attributeDescriptors.size(); i++ ) {
-			final AttributeDescriptor<?> attributeDescriptor = attributeDescriptors.get( i );
+			final AnnotationAttributeDescriptor<?> attributeDescriptor = attributeDescriptors.get( i );
 			if ( attributeDescriptor.getAttributeName().equals( name ) ) {
 				//noinspection unchecked
-				return (AttributeDescriptor<X>) attributeDescriptor;
+				return (AnnotationAttributeDescriptor<X>) attributeDescriptor;
 			}
 		}
 		throw new AnnotationAccessException( "No such attribute : " + annotationType.getName() + "." + name );

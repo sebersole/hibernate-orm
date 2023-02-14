@@ -30,6 +30,7 @@ import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.LocalAnnotationProcessingContext;
 import org.hibernate.boot.annotations.model.spi.ManagedTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.MappedSuperclassTypeMetadata;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
@@ -342,10 +343,10 @@ public class TypeBinder {
 			column.setLength( 31 );
 		}
 		else {
-			final AnnotationUsage.AttributeValue nameValue = annotation.getAttributeValue( "name" );
+			final AnnotationAttributeValue nameValue = annotation.getAttributeValue( "name" );
 			column.setName( getValue( nameValue, "DTYPE" ) );
 
-			final AnnotationUsage.AttributeValue discriminatorType = annotation.getAttributeValue( "discriminatorType" );
+			final AnnotationAttributeValue discriminatorType = annotation.getAttributeValue( "discriminatorType" );
 			final DiscriminatorType type = getValue( discriminatorType, DiscriminatorType.STRING );
 			switch ( type ) {
 				case CHAR: {
@@ -358,7 +359,7 @@ public class TypeBinder {
 				}
 				default: {
 					column.setSqlTypeCode( SqlTypes.VARCHAR );
-					final AnnotationUsage.AttributeValue length = annotation.getAttributeValue( "length" );
+					final AnnotationAttributeValue length = annotation.getAttributeValue( "length" );
 					column.setLength( getValue( length, 31 ) );
 				}
 			}

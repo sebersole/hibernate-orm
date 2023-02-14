@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 
 import org.hibernate.boot.annotations.source.internal.LazyAnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
-import org.hibernate.boot.annotations.source.spi.FieldDetails;
+import org.hibernate.boot.annotations.source.spi.MethodDetails;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 
 import static org.hibernate.boot.annotations.source.internal.ModifierUtils.isPersistableMethod;
@@ -18,7 +18,7 @@ import static org.hibernate.boot.annotations.source.internal.ModifierUtils.isPer
 /**
  * @author Steve Ebersole
  */
-public class MethodDetailsImpl extends LazyAnnotationTarget implements FieldDetails {
+public class MethodDetailsImpl extends LazyAnnotationTarget implements MethodDetails {
 	private final Method method;
 	private final ClassDetails type;
 

@@ -4,18 +4,19 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.annotations.bind.internal;
+package org.hibernate.boot.annotations.bind.internal.global;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.boot.annotations.bind.internal.BindingHelper;
+import org.hibernate.boot.annotations.bind.xml.spi.XmlDocumentAnnotationProcessingContext;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
-import org.hibernate.boot.annotations.xml.spi.XmlMappingAnnotationProcessingContext;
 import org.hibernate.boot.internal.ClassmateContext;
 import org.hibernate.boot.jaxb.mapping.JaxbCollectionUserTypeRegistration;
 import org.hibernate.boot.jaxb.mapping.JaxbCompositeUserTypeRegistration;
@@ -80,7 +81,7 @@ public class TypeContributionProcessor {
 
 	public static void processTypeContributions(
 			JaxbEntityMappings root,
-			XmlMappingAnnotationProcessingContext processingContext) {
+			XmlDocumentAnnotationProcessingContext processingContext) {
 		final TypeContributionProcessor processor = new TypeContributionProcessor( processingContext );
 		processor.processJavaTypeRegistrations( root.getJavaTypeRegistrations() );
 		processor.processJdbcTypeRegistrations( root.getJdbcTypeRegistrations() );

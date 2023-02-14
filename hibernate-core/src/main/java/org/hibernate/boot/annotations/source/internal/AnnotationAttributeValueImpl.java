@@ -8,25 +8,25 @@ package org.hibernate.boot.annotations.source.internal;
 
 import java.util.Objects;
 
-import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 
 /**
  * @author Steve Ebersole
  */
-public class AttributeValueImpl implements AnnotationUsage.AttributeValue {
-	private final AnnotationDescriptor.AttributeDescriptor<?> attributeDescriptor;
+public class AnnotationAttributeValueImpl implements AnnotationAttributeValue {
+	private final AnnotationAttributeDescriptor<?> attributeDescriptor;
 	private final Object value;
 
-	public AttributeValueImpl(AnnotationDescriptor.AttributeDescriptor attributeDescriptor, Object value) {
+	public AnnotationAttributeValueImpl(AnnotationAttributeDescriptor attributeDescriptor, Object value) {
 		this.attributeDescriptor = attributeDescriptor;
 		this.value = value;
 	}
 
 	@Override
-	public <T> AnnotationDescriptor.AttributeDescriptor<T> getAttributeDescriptor() {
+	public <T> AnnotationAttributeDescriptor<T> getAttributeDescriptor() {
 		//noinspection unchecked
-		return (AnnotationDescriptor.AttributeDescriptor<T>) attributeDescriptor;
+		return (AnnotationAttributeDescriptor<T>) attributeDescriptor;
 	}
 
 	@Override
@@ -39,8 +39,8 @@ public class AttributeValueImpl implements AnnotationUsage.AttributeValue {
 	public <T> T getValue(Class<T> type) {
 		// todo (annotation-source) : possibly add some simple conversions.
 
-		// todo (annotation-source) : or possibly typed AttributeDescriptor impls (`IntAttributeDescriptor`, ...)
-		//		which can be a factory for AttributeValue refs based on the descriptor type.
+		// todo (annotation-source) : or possibly typed AnnotationAttributeDescriptor impls (`IntAttributeDescriptor`, ...)
+		//		which can be a factory for AnnotationAttributeValue refs based on the descriptor type.
 
 		return getValue();
 	}

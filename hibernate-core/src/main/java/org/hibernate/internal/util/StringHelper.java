@@ -594,6 +594,16 @@ public final class StringHelper {
 		return prefix + '.' + name;
 	}
 
+	public static String qualifyConditionallyIfNot(String prefix, String name) {
+		if ( name == null ) {
+			throw new NullPointerException( "name was null attempting to build qualified name" );
+		}
+		if ( name.indexOf( '.' ) > 0 || isEmpty( prefix ) ) {
+			return name;
+		}
+		return prefix + '.' + name;
+	}
+
 	public static String qualifyConditionally(String prefix, String name) {
 		if ( name == null ) {
 			throw new NullPointerException( "name was null attempting to build qualified name" );

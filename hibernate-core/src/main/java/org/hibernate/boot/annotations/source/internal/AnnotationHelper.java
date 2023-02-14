@@ -22,12 +22,12 @@ import java.util.function.BiConsumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
 import org.hibernate.boot.annotations.source.internal.reflection.ClassDetailsImpl;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor.AttributeDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptorRegistry;
 import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
-import org.hibernate.boot.annotations.source.spi.AnnotationUsage.AttributeValue;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.ClassDetailsRegistry;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
@@ -86,7 +86,7 @@ public class AnnotationHelper {
 				if ( repeatableDescriptor != null ) {
 					usagesKey = repeatableDescriptor.getAnnotationType();
 					// `annotations[i]` is itself the container; flatten the repeated values
-					final AttributeDescriptor<Annotation[]> valueAttribute = typeAnnotationDescriptor.getValueAttribute();
+					final AnnotationAttributeDescriptor<Annotation[]> valueAttribute = typeAnnotationDescriptor.getValueAttribute();
 					final Annotation[] repeatableValues = valueAttribute.extractRawValue( typeAnnotation );
 					usages = arrayList( repeatableValues.length );
 					for ( int r = 0; r < repeatableValues.length; r++ ) {
@@ -125,9 +125,9 @@ public class AnnotationHelper {
 
 	/**
 	 * Given an {@code annotation} (and its {@linkplain OrmAnnotationDescriptorImpl descriptor}),
-	 * extract the {@link AttributeValue attribute values}.
+	 * extract the {@link AnnotationAttributeValue attribute values}.
 	 */
-	public static <A extends Annotation> Map<String, AttributeValue> extractAttributeValues(
+	public static <A extends Annotation> Map<String, AnnotationAttributeValue> extractAttributeValues(
 			A annotation,
 			AnnotationDescriptor<A> annotationDescriptor,
 			AnnotationProcessingContext processingContext) {
@@ -136,19 +136,19 @@ public class AnnotationHelper {
 		}
 
 		if ( annotationDescriptor.getAttributes().size() == 1 ) {
-			final AttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( 0 );
+			final AnnotationAttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( 0 );
 			return Collections.singletonMap(
 					attributeDescriptor.getAttributeName(),
-					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, processingContext ) )
+					new AnnotationAttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, processingContext ) )
 			);
 		}
 
-		final Map<String, AttributeValue> valueMap = new HashMap<>();
+		final Map<String, AnnotationAttributeValue> valueMap = new HashMap<>();
 		for ( int i = 0; i < annotationDescriptor.getAttributes().size(); i++ ) {
-			final AttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( i );
+			final AnnotationAttributeDescriptor<?> attributeDescriptor = annotationDescriptor.getAttributes().get( i );
 			valueMap.put(
 					attributeDescriptor.getAttributeName(),
-					new AttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, processingContext ) )
+					new AnnotationAttributeValueImpl( attributeDescriptor, extractAttributeValue( annotation, attributeDescriptor, processingContext ) )
 			);
 		}
 		return valueMap;
@@ -156,7 +156,7 @@ public class AnnotationHelper {
 
 	public static <A extends Annotation, T> T extractAttributeValue(
 			A annotation,
-			AttributeDescriptor<T> attributeDescriptor,
+			AnnotationAttributeDescriptor<T> attributeDescriptor,
 			AnnotationProcessingContext processingContext) {
 		final AnnotationDescriptorRegistry annotationDescriptorRegistry = processingContext.getAnnotationDescriptorRegistry();
 		final Object rawValue = extractRawAttributeValue( annotation, attributeDescriptor.getAttributeName() );

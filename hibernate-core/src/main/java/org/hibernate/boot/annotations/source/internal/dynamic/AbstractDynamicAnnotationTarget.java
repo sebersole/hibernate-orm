@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
  * See the lgpl.txt file in the root directory or http://www.gnu.org/licenses/lgpl-2.1.html.
  */
-package org.hibernate.boot.annotations.source.internal;
+package org.hibernate.boot.annotations.source.internal.dynamic;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -13,8 +13,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
+import org.hibernate.boot.annotations.source.internal.AnnotationUsageImpl;
+import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
-import org.hibernate.boot.annotations.source.spi.AnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.spi.AnnotationProcessingContext;
 import org.hibernate.internal.util.collections.CollectionHelper;
@@ -25,14 +27,15 @@ import org.hibernate.internal.util.collections.CollectionHelper;
  *
  * @author Steve Ebersole
  */
-public abstract class DelayedAnnotationTarget implements AnnotationTarget {
+public abstract class AbstractDynamicAnnotationTarget implements DynamicAnnotationTarget {
 	private final AnnotationProcessingContext processingContext;
 	private final Map<Class<? extends Annotation>,List<AnnotationUsage<?>>> usagesMap = new HashMap<>();
 
-	public DelayedAnnotationTarget(AnnotationProcessingContext processingContext) {
+	public AbstractDynamicAnnotationTarget(AnnotationProcessingContext processingContext) {
 		this.processingContext = processingContext;
 	}
 
+	@Override
 	public void apply(List<AnnotationUsage<?>> annotationUsages) {
 		// todo (annotation-source) : handle meta-annotations
 		annotationUsages.forEach( this::apply );
@@ -46,6 +49,7 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 	 * 		{@link AnnotationUsage#getAnnotationDescriptor() annotation type} is
 	 * 		already applied on this target.
 	 */
+	@Override
 	public void apply(AnnotationUsage<?> annotationUsage) {
 		final AnnotationDescriptor<?> annotationDescriptor = annotationUsage.getAnnotationDescriptor();
 		final Class<? extends Annotation> annotationJavaType = annotationDescriptor.getAnnotationType();
@@ -58,6 +62,7 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 		}
 	}
 
+	@Override
 	public void apply(Annotation[] annotations) {
 		// todo (annotation-source) : handle meta-annotations
 		for ( int i = 0; i < annotations.length; i++ ) {
@@ -65,7 +70,8 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 		}
 	}
 
-	protected void apply(Annotation annotation) {
+	@Override
+	public void apply(Annotation annotation) {
 		//noinspection rawtypes,unchecked
 		final AnnotationUsageImpl usage = new AnnotationUsageImpl(
 				annotation,
@@ -128,7 +134,7 @@ public abstract class DelayedAnnotationTarget implements AnnotationTarget {
 		for ( int i = 0; i < annotationUsages.size(); i++ ) {
 			//noinspection unchecked
 			final AnnotationUsage<A> annotationUsage = (AnnotationUsage<A>) annotationUsages.get( i );
-			final AnnotationUsage.AttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
+			final AnnotationAttributeValue attributeValue = annotationUsage.getAttributeValue( attributeName );
 			if ( attributeValue == null ) {
 				continue;
 			}

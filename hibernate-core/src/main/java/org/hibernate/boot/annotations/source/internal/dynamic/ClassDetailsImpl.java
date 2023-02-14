@@ -6,10 +6,11 @@
  */
 package org.hibernate.boot.annotations.source.internal.dynamic;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.hibernate.boot.annotations.source.internal.DelayedAnnotationTarget;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.annotations.source.spi.FieldDetails;
 import org.hibernate.boot.annotations.source.spi.MethodDetails;
@@ -21,16 +22,22 @@ import org.hibernate.internal.util.IndexedConsumer;
  *
  * @author Steve Ebersole
  */
-public class ClassDetailsImpl extends DelayedAnnotationTarget implements ClassDetails {
+public class ClassDetailsImpl extends AbstractDynamicAnnotationTarget implements ClassDetails {
 	private final String name;
+	private final String className;
 	private final ClassDetails superType;
+
+	private final List<FieldDetailsImpl> fields = new ArrayList<>();
+	private final List<MethodDetailsImpl> methods = new ArrayList<>();
 
 	public ClassDetailsImpl(
 			String name,
+			String className,
 			ClassDetailsImpl superType,
 			AnnotationProcessingContext processingContext) {
 		super( processingContext );
 		this.name = name;
+		this.className = className;
 		this.superType = superType;
 
 		processingContext.getClassDetailsRegistry().addManagedClass( name, this );
@@ -43,7 +50,7 @@ public class ClassDetailsImpl extends DelayedAnnotationTarget implements ClassDe
 
 	@Override
 	public String getClassName() {
-		return null;
+		return className;
 	}
 
 	@Override
@@ -63,26 +70,38 @@ public class ClassDetailsImpl extends DelayedAnnotationTarget implements ClassDe
 
 	@Override
 	public List<FieldDetails> getFields() {
-		throw new IllegalStateException( "Not yet implemented" );
+		//noinspection rawtypes,unchecked
+		return (List) fields;
 	}
 
 	@Override
 	public void forEachField(IndexedConsumer<FieldDetails> consumer) {
-		throw new IllegalStateException( "Not yet implemented" );
+		//noinspection unchecked,rawtypes
+		fields.forEach( (Consumer) consumer );
 	}
 
 	@Override
 	public List<MethodDetails> getMethods() {
-		throw new IllegalStateException( "Not yet implemented" );
+		//noinspection rawtypes,unchecked
+		return (List) methods;
 	}
 
 	@Override
 	public void forEachMethod(IndexedConsumer<MethodDetails> consumer) {
-		throw new IllegalStateException( "Not yet implemented" );
+		//noinspection unchecked,rawtypes
+		methods.forEach( (Consumer) consumer );
 	}
 
 	@Override
-	public Class<?> toJavaClass() {
+	public <X> Class<X> toJavaClass() {
 		throw new UnsupportedOperationException();
+	}
+
+	public void addField(FieldDetailsImpl field) {
+		fields.add( field );
+	}
+
+	public void addMethod(MethodDetailsImpl method) {
+		methods.add( method );
 	}
 }

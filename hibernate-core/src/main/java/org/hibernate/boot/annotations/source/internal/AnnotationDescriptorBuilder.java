@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.hibernate.Internal;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
 import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
 import org.hibernate.boot.annotations.source.spi.HibernateAnnotations;
 import org.hibernate.boot.annotations.source.spi.JpaAnnotations;
@@ -61,12 +62,12 @@ public class AnnotationDescriptorBuilder {
 	}
 
 	@Internal
-	public static List<OrmAnnotationDescriptorImpl.AttributeDescriptor<?>> extractAttributeDescriptors(Class<? extends Annotation> javaType) {
+	public static List<AnnotationAttributeDescriptor<?>> extractAttributeDescriptors(Class<? extends Annotation> javaType) {
 		final Method[] attributes = javaType.getDeclaredMethods();
-		final List<OrmAnnotationDescriptorImpl.AttributeDescriptor<?>> attributeDescriptors = new ArrayList<>();
+		final List<AnnotationAttributeDescriptor<?>> attributeDescriptors = new ArrayList<>();
 
 		for ( int i = 0; i < attributes.length; i++ ) {
-			attributeDescriptors.add( new AttributeDescriptorImpl<>( attributes[i] ) );
+			attributeDescriptors.add( new AnnotationAttributeDescriptorImpl<>( attributes[i] ) );
 		}
 
 		return attributeDescriptors;

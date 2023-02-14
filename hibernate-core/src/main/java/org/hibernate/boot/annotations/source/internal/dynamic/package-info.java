@@ -6,8 +6,9 @@
  */
 
 /**
- * Integrates {@code mapping.xml} metadata into the annotation binding process.
+ * Support for dynamic class and attribute mappings.  This includes
+ * XML mappings as well as ad-hoc class mappings (Envers, etc).
  *
  * @author Steve Ebersole
  */
-package org.hibernate.boot.annotations.xml;
+package org.hibernate.boot.annotations.source.internal.dynamic;

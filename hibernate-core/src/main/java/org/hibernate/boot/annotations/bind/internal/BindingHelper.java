@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 import org.hibernate.annotations.Parameter;
 import org.hibernate.boot.annotations.source.internal.AnnotationsHelper;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 import org.hibernate.boot.annotations.source.spi.ClassDetails;
 import org.hibernate.boot.model.CustomSql;
@@ -38,7 +39,7 @@ public final class BindingHelper {
 		final String sql = customSqlAnnotation.getAttributeValue( "sql" ).asString();
 		final boolean isCallable = customSqlAnnotation.getValueAttributeValue().asBoolean();
 
-		final AnnotationUsage.AttributeValue checkValue = customSqlAnnotation.getAttributeValue( "check" );
+		final AnnotationAttributeValue checkValue = customSqlAnnotation.getAttributeValue( "check" );
 		final ExecuteUpdateResultCheckStyle checkStyle;
 		if ( checkValue == null ) {
 			checkStyle = isCallable

@@ -7,6 +7,7 @@
 package org.hibernate.boot.model.source.spi;
 
 import org.hibernate.annotations.NaturalIdCache;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeValue;
 import org.hibernate.boot.annotations.source.spi.AnnotationUsage;
 
 /**
@@ -28,7 +29,7 @@ public class NaturalIdCaching {
 		this.enabled = cacheAnnotation != null;
 
 		if ( enabled ) {
-			final AnnotationUsage.AttributeValue regionValue = cacheAnnotation.getAttributeValue( "region" );
+			final AnnotationAttributeValue regionValue = cacheAnnotation.getAttributeValue( "region" );
 			if ( regionValue != null && !regionValue.isDefaultValue() ) {
 				// use the specified value
 				this.region = regionValue.getValue();

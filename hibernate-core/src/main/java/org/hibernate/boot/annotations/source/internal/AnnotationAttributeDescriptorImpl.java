@@ -11,15 +11,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.hibernate.boot.annotations.AnnotationAccessException;
-import org.hibernate.boot.annotations.source.spi.AnnotationDescriptor;
+import org.hibernate.boot.annotations.source.spi.AnnotationAttributeDescriptor;
 
 /**
  * @author Steve Ebersole
  */
-public class AttributeDescriptorImpl<T> implements AnnotationDescriptor.AttributeDescriptor<T> {
+public class AnnotationAttributeDescriptorImpl<T> implements AnnotationAttributeDescriptor<T> {
 	private final Method valueMethod;
 
-	public AttributeDescriptorImpl(Method valueMethod) {
+	public AnnotationAttributeDescriptorImpl(Method valueMethod) {
 		this.valueMethod = valueMethod;
 	}
 

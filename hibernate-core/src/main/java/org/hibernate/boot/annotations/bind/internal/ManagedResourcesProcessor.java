@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.boot.annotations.bind.internal.global.GlobalAnnotationProcessor;
+import org.hibernate.boot.annotations.bind.xml.internal.XmlMappingProcessor;
 import org.hibernate.boot.annotations.model.spi.EntityHierarchy;
 import org.hibernate.boot.annotations.model.spi.EntityTypeMetadata;
 import org.hibernate.boot.annotations.model.spi.IdentifiableTypeMetadata;
@@ -72,6 +74,8 @@ public class ManagedResourcesProcessor {
 		final Set<EntityHierarchy> entityHierarchies = createEntityHierarchies( managedResourcesProcessor::processGlobalAnnotations, processingContext );
 		final Map<EntityHierarchy,RootClass> rootClasses = managedResourcesProcessor.processHierarchies( entityHierarchies, managedResources );
 		managedResourcesProcessor.processAttributes( entityHierarchies, rootClasses, managedResources );
+
+		managedResourcesProcessor.finishUp();
 	}
 
 	private ManagedResourcesProcessor(AnnotationProcessingContext processingContext) {
@@ -200,6 +204,21 @@ public class ManagedResourcesProcessor {
 		return packageDetails;
 	}
 
+	/**
+	 * Performs a number of operations - <ol>
+	 *     <li>
+	 *         Iterates all known (explicit and discovered) annotated classes creating
+	 *         ClassDetails references and processing "global" annotations.  This
+	 *         includes additional handling for certain ClassDetail references, such as
+	 *         converters.
+	 *     </li>
+	 *     <li>
+	 *         Processes all XML mappings.  This also creates ClassDetails references,
+	 *         registers converters and processes "global annotations".  See
+	 *         {@link XmlMappingProcessor#processXmlMappings}
+	 *     </li>
+	 * </ol>>
+	 */
 	private void prepareManagedResources(ManagedResources managedResources) {
 		final ClassDetails attributeConverterClassDetails = classDetailsRegistry.resolveManagedClass(
 				AttributeConverter.class.getName(),
@@ -243,11 +262,17 @@ public class ManagedResourcesProcessor {
 			} );
 		}
 
+		// we already know all annotated classes (both listed and discovered) when we get here
 		XmlMappingProcessor.processXmlMappings( managedResources.getXmlMappingBindings(), processingContext );
 	}
 
 	private static boolean isConverter(ClassDetails classDetails, ClassDetails attributeConverterClassDetails) {
 		return classDetails.getAnnotation( JpaAnnotations.CONVERTER ) != null
 				|| classDetails.implementsInterface( attributeConverterClassDetails );
+	}
+
+	private void finishUp() {
+		// todo (annotation-source) : needed?
+		// atm nothing to do
 	}
 }
