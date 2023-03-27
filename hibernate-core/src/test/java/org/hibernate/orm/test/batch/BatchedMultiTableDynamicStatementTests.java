@@ -38,7 +38,6 @@ import static org.hibernate.cfg.AvailableSettings.STATEMENT_BATCH_SIZE;
 public class BatchedMultiTableDynamicStatementTests {
 
 	@Test
-	@FailureExpected( jiraKey = "HHH-16352", reason = "Dynamic statements + batching not working" )
 	@ServiceRegistry( settings = @Setting( name = STATEMENT_BATCH_SIZE, value = "2" ) )
 	@DomainModel( annotatedClasses = { Payment.class, CheckPayment.class } )
 	@SessionFactory( useCollectingStatementInspector = true )
