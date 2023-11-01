@@ -18,6 +18,7 @@ import org.hibernate.query.sqm.tree.SqmCopyContext;
 import org.hibernate.query.sqm.tree.SqmJoinType;
 import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
 import org.hibernate.query.sqm.tree.from.SqmFrom;
+import org.hibernate.query.sqm.tree.from.SqmTreatedAttributeJoin;
 import org.hibernate.spi.NavigablePath;
 
 /**
@@ -36,7 +37,7 @@ public class SqmSingularJoin<O,T> extends AbstractSqmAttributeJoin<O,T> {
 
 	public SqmSingularJoin(
 			SqmFrom<?,O> lhs,
-			SqmJoinable joinedNavigable,
+			SqmJoinable<? extends O, T> joinedNavigable,
 			String alias,
 			SqmJoinType joinType,
 			boolean fetched,
@@ -94,22 +95,22 @@ public class SqmSingularJoin<O,T> extends AbstractSqmAttributeJoin<O,T> {
 	}
 
 	@Override
-	public <S extends T> SqmTreatedSingularJoin<O,T,S> treatAs(Class<S> treatJavaType) {
+	public <S extends T> SqmTreatedAttributeJoin<O, T, S> treatAs(Class<S> treatJavaType) {
 		return treatAs( nodeBuilder().getDomainModel().entity( treatJavaType ) );
 	}
 
 	@Override
-	public <S extends T> SqmTreatedSingularJoin<O,T,S> treatAs(EntityDomainType<S> treatTarget) {
+	public <S extends T> SqmTreatedAttributeJoin<O, T, S> treatAs(EntityDomainType<S> treatTarget) {
 		return treatAs( treatTarget, null );
 	}
 
 	@Override
-	public <S extends T> SqmTreatedSingularJoin<O,T,S> treatAs(Class<S> treatJavaType, String alias) {
+	public <S extends T> SqmTreatedAttributeJoin<O, T, S> treatAs(Class<S> treatJavaType, String alias) {
 		return treatAs( nodeBuilder().getDomainModel().entity( treatJavaType ), alias );
 	}
 
 	@Override
-	public <S extends T> SqmTreatedSingularJoin<O,T,S> treatAs(EntityDomainType<S> treatTarget, String alias) {
+	public <S extends T> SqmTreatedAttributeJoin<O, T, S> treatAs(EntityDomainType<S> treatTarget, String alias) {
 		final SqmTreatedSingularJoin<O, T, S> treat = findTreat( treatTarget, alias );
 		if ( treat == null ) {
 			return addTreat( new SqmTreatedSingularJoin<>( this, treatTarget, alias ) );
