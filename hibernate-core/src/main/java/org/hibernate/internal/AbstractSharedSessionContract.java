@@ -822,6 +822,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		return interpretAndCreateSelectionQuery( hqlString, expectedResultType );
 	}
 
+
 	@Override
 	public <R> SelectionQuery<R> createSelectionQuery(CriteriaQuery<R> criteria) {
 		if ( criteria instanceof CriteriaDefinition ) {
@@ -1438,7 +1439,7 @@ public abstract class AbstractSharedSessionContract implements SharedSessionCont
 		}
 	}
 
-	private <T> QueryImplementor<T> createCriteriaQuery(SqmStatement<T> criteria, Class<T> resultType) {
+	protected <T> QueryImplementor<T> createCriteriaQuery(SqmStatement<T> criteria, Class<T> resultType) {
 		final QuerySqmImpl<T> query = new QuerySqmImpl<>( criteria, resultType, this );
 		applyQuerySettingsAndHints( query );
 		return query;
