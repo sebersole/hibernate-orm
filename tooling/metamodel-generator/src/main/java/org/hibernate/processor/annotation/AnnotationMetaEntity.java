@@ -51,6 +51,26 @@ import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.hibernate.jpamodelgen.Context;
+import org.hibernate.jpamodelgen.ImportContextImpl;
+import org.hibernate.jpamodelgen.ProcessLaterException;
+import org.hibernate.jpamodelgen.model.ImportContext;
+import org.hibernate.jpamodelgen.model.MetaAttribute;
+import org.hibernate.jpamodelgen.model.Metamodel;
+import org.hibernate.jpamodelgen.util.AccessTypeInformation;
+import org.hibernate.jpamodelgen.util.Constants;
+import org.hibernate.jpamodelgen.validation.ProcessorSessionFactory;
+import org.hibernate.jpamodelgen.validation.Validation;
+import org.hibernate.metamodel.model.domain.EntityDomainType;
+import org.hibernate.query.criteria.JpaEntityJoin;
+import org.hibernate.query.criteria.JpaRoot;
+import org.hibernate.query.criteria.JpaSelection;
+import org.hibernate.query.sqm.SqmExpressible;
+import org.hibernate.query.sqm.tree.SqmStatement;
+import org.hibernate.query.sqm.tree.expression.SqmParameter;
+import org.hibernate.query.sqm.tree.select.SqmSelectStatement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,6 +79,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
+
+import jakarta.persistence.AccessType;
 
 import static java.beans.Introspector.decapitalize;
 import static java.lang.Boolean.FALSE;
@@ -146,7 +168,7 @@ public class AnnotationMetaEntity extends AnnotationMeta {
 	 * The field or method call to obtain the session
 	 */
 	private String sessionGetter = "entityManager";
-	
+
 	private final Map<String,String> memberTypes = new HashMap<>();
 
 	public AnnotationMetaEntity(
@@ -396,7 +418,7 @@ public class AnnotationMetaEntity extends AnnotationMeta {
 		}
 		return null;
 	}
-	
+
 	private void setupSession() {
 		jakartaDataRepository = hasAnnotation( element, JD_REPOSITORY );
 		final ExecutableElement getter = findSessionGetter( element );
@@ -546,7 +568,7 @@ public class AnnotationMetaEntity extends AnnotationMeta {
 							name,
 							sessionType,
 							sessionVariableName,
-							dataStore(), 
+							dataStore(),
 							context.addInjectAnnotation(),
 							context.addNonnullAnnotation(),
 							false,
@@ -1752,7 +1774,6 @@ public class AnnotationMetaEntity extends AnnotationMeta {
 			return returnTypeName.equals( UNI_VOID )
 				|| returnTypeName.equals( UNI_BOOLEAN )
 				|| returnTypeName.equals( UNI_INTEGER );
-			
 		}
 		else {
 			// non-reactive
