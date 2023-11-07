@@ -310,7 +310,7 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 
 	@Override
 	public void lock(Object entity, LockModeType lockMode, LockOption... options) {
-
+		delegate.lock( entity, lockMode, options );
 	}
 
 	@Override

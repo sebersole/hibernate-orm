@@ -279,6 +279,7 @@ public class QualifiedJoinPathConsumer implements DotIdentifierConsumer {
 			currentPath = isTerminal
 					? currentPath.treatAs( treatTarget( entityName ), alias)
 					: currentPath.treatAs( treatTarget( entityName ) );
+			assert currentPath != null;
 			creationState.getCurrentProcessingState().getPathRegistry().register( currentPath );
 		}
 
