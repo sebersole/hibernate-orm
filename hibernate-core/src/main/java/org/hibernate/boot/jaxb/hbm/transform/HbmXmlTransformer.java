@@ -61,6 +61,7 @@ import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmNativeQueryPropertyReturnType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmNativeQueryReturnType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmNativeQueryScalarReturnType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmOnDeleteEnum;
+import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmOneToManyCollectionElementType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmOneToOneType;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmOuterJoinEnum;
 import org.hibernate.boot.jaxb.hbm.spi.JaxbHbmPolymorphismEnum;
@@ -123,6 +124,7 @@ import org.hibernate.boot.jaxb.mapping.spi.JaxbMapKeyColumnImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbNamedNativeQueryImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbNamedQueryImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbNaturalIdImpl;
+import org.hibernate.boot.jaxb.mapping.spi.JaxbNotFoundEnumImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbOneToManyImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbOneToOneImpl;
 import org.hibernate.boot.jaxb.mapping.spi.JaxbOrderColumnImpl;
@@ -265,7 +267,9 @@ public class HbmXmlTransformer {
 					)
 			);
 			case PICK -> {
-				if ( pickHandler != null ) pickHandler.handlePick( message, messageArgs );
+				if ( pickHandler != null ) {
+					pickHandler.handlePick( message, messageArgs );
+				}
 			}
 			case IGNORE -> TRANSFORMATION_LOGGER.debugf( message, messageArgs );
 			case WARN -> TRANSFORMATION_LOGGER.warnf( message, messageArgs );
@@ -1266,7 +1270,7 @@ public class HbmXmlTransformer {
 					attributes.getElementCollectionAttributes().add( transformElementCollection( pluralAttributeInfo ) );
 				}
 				else if ( pluralAttributeInfo.getOneToMany() != null ) {
-					attributes.getOneToManyAttributes().add( transformOneToManyCollection( pluralAttributeInfo ) );
+					attributes.getOneToManyAttributes().add( transformOneToManyCollection( pluralAttributeInfo.getOneToMany() ) );
 				}
 				else if ( pluralAttributeInfo.getManyToMany() != null ) {
 					attributes.getManyToManyAttributes().add( transformManyToManyCollection( pluralAttributeInfo ) );
@@ -1782,8 +1786,17 @@ public class HbmXmlTransformer {
 		return null;
 	}
 
-	private JaxbOneToManyImpl transformOneToManyCollection(PluralAttributeInfo pluralAttributeInfo) {
-		throw new MappingException( "OneToMany transformation not yet implemented", origin );
+	private JaxbOneToManyImpl transformOneToManyCollection(JaxbHbmOneToManyCollectionElementType hbmOneToMany) {
+		JaxbOneToManyImpl jaxbOneToMany = new JaxbOneToManyImpl();
+		if ( hbmOneToMany.isEmbedXml() != null ) {
+			TRANSFORMATION_LOGGER.warnf( "Transformation of embed-xml mapping not supported - `%s`", origin );
+		}
+		jaxbOneToMany.setTargetEntity( hbmOneToMany.getClazz() );
+		jaxbOneToMany.setName( hbmOneToMany.getEntityName() );
+//		jaxbOneToMany.set???( hbmOneToMany.getNode() );
+		jaxbOneToMany.setNotFound( JaxbNotFoundEnumImpl.fromValue( hbmOneToMany.getNotFound().value() ) );
+
+		return jaxbOneToMany;
 	}
 
 	private JaxbManyToManyImpl transformManyToManyCollection(PluralAttributeInfo pluralAttributeInfo) {
