@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.hibernate.AnnotationException;
+import org.hibernate.Internal;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.CollectionTypeRegistration;
 import org.hibernate.annotations.CollectionTypeRegistrations;
@@ -410,7 +411,7 @@ public final class AnnotationBinder {
 
 		bindQueries( annotatedClass, context );
 		handleImport( annotatedClass, context );
-		bindFilterDefs( annotatedClass, context );
+		//bindFilterDefs( annotatedClass, context );
 		bindTypeDescriptorRegistrations( annotatedClass, context );
 		bindEmbeddableInstantiatorRegistrations( annotatedClass, context );
 		bindUserTypeRegistrations( annotatedClass, context );
@@ -687,7 +688,7 @@ public final class AnnotationBinder {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static JdbcMapping resolveFilterParamType(Class<?> type, MetadataBuildingContext context) {
+	public static JdbcMapping resolveFilterParamType(Class<?> type, MetadataBuildingContext context) {
 		if ( UserType.class.isAssignableFrom( type ) ) {
 			return resolveUserType( (Class<UserType<?>>) type, context );
 		}
@@ -702,7 +703,8 @@ public final class AnnotationBinder {
 		}
 	}
 
-	private static BasicType<Object> resolveBasicType(Class<?> type, MetadataBuildingContext context) {
+	@Internal
+	public static BasicType<Object> resolveBasicType(Class<?> type, MetadataBuildingContext context) {
 		final TypeConfiguration typeConfiguration = context.getBootstrapContext().getTypeConfiguration();
 		final JavaType<Object> jtd = typeConfiguration.getJavaTypeRegistry().findDescriptor( type );
 		if ( jtd != null ) {
@@ -751,7 +753,8 @@ public final class AnnotationBinder {
 		}
 	}
 
-	private static JdbcMapping resolveUserType(Class<UserType<?>> userTypeClass, MetadataBuildingContext context) {
+	@Internal
+	public static JdbcMapping resolveUserType(Class<UserType<?>> userTypeClass, MetadataBuildingContext context) {
 		final UserType<?> userType = !context.getBuildingOptions().isAllowExtensionsInCdi()
 				? FallbackBeanInstanceProducer.INSTANCE.produceBeanInstance( userTypeClass )
 				: context.getBootstrapContext().getServiceRegistry()
@@ -760,7 +763,8 @@ public final class AnnotationBinder {
 		return new CustomType<>( userType, context.getBootstrapContext().getTypeConfiguration() );
 	}
 
-	private static JdbcMapping resolveAttributeConverter(Class<AttributeConverter<?, ?>> type, MetadataBuildingContext context) {
+	@Internal
+	public static JdbcMapping resolveAttributeConverter(Class<AttributeConverter<?, ?>> type, MetadataBuildingContext context) {
 		final BootstrapContext bootstrapContext = context.getBootstrapContext();
 		final ManagedBeanRegistry beanRegistry =
 				bootstrapContext.getServiceRegistry().requireService( ManagedBeanRegistry.class );
@@ -793,7 +797,8 @@ public final class AnnotationBinder {
 		);
 	}
 
-	private static JdbcMapping resolveJavaType(Class<JavaType<?>> type, MetadataBuildingContext context) {
+	@Internal
+	public static JdbcMapping resolveJavaType(Class<JavaType<?>> type, MetadataBuildingContext context) {
 		final TypeConfiguration typeConfiguration = context.getBootstrapContext().getTypeConfiguration();
 		final JavaType<?> jtd = getJavaType( type, context, typeConfiguration );
 		final JdbcType jdbcType = jtd.getRecommendedJdbcType( typeConfiguration.getCurrentBaseSqlTypeIndicators() );
