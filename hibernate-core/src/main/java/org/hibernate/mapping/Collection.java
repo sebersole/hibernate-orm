@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -28,7 +27,6 @@ import org.hibernate.engine.spi.Mapping;
 import org.hibernate.internal.FilterConfiguration;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.ArrayHelper;
-import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.resource.beans.spi.ManagedBean;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.CollectionType;
@@ -79,8 +77,6 @@ public abstract class Collection implements Fetchable, Value, Filterable, SoftDe
 	private Supplier<ManagedBean<? extends UserCollectionType>> customTypeBeanResolver;
 	private CollectionType cachedCollectionType;
 	private CollectionSemantics<?,?> cachedCollectionSemantics;
-
-	private Class<? extends CollectionPersister> collectionPersisterClass;
 
 	private final List<FilterConfiguration> filters = new ArrayList<>();
 	private final List<FilterConfiguration> manyToManyFilters = new ArrayList<>();
@@ -153,7 +149,6 @@ public abstract class Collection implements Fetchable, Value, Filterable, SoftDe
 		this.typeName = original.typeName;
 		this.typeParameters = original.typeParameters == null ? null : new Properties(original.typeParameters);
 		this.customTypeBeanResolver = original.customTypeBeanResolver;
-		this.collectionPersisterClass = original.collectionPersisterClass;
 		this.filters.addAll( original.filters );
 		this.manyToManyFilters.addAll( original.manyToManyFilters );
 		this.synchronizedTables.addAll( original.synchronizedTables );
@@ -360,14 +355,6 @@ public abstract class Collection implements Fetchable, Value, Filterable, SoftDe
 
 	public void setFetchMode(FetchMode fetchMode) {
 		this.fetchMode = fetchMode;
-	}
-
-	public void setCollectionPersisterClass(Class<? extends CollectionPersister> persister) {
-		this.collectionPersisterClass = persister;
-	}
-
-	public Class<? extends CollectionPersister> getCollectionPersisterClass() {
-		return collectionPersisterClass;
 	}
 
 	public void validate(Mapping mapping) throws MappingException {

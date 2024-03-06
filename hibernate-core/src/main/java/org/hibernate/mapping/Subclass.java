@@ -8,7 +8,6 @@ package org.hibernate.mapping;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 import org.hibernate.boot.spi.MetadataBuildingContext;
@@ -183,13 +182,6 @@ public class Subclass extends PersistentClass {
 	}
 
 	@Override
-	public Class<? extends EntityPersister> getEntityPersisterClass() {
-		return classPersisterClass == null
-				? getSuperclass().getEntityPersisterClass()
-				: classPersisterClass;
-	}
-
-	@Override
 	public Table getRootTable() {
 		return getSuperclass().getRootTable();
 	}
@@ -222,11 +214,6 @@ public class Subclass extends PersistentClass {
 		if ( isJoinedSubclass() ) {
 			getKey().createForeignKeyOfEntity( getSuperclass().getEntityName() );
 		}
-	}
-
-	@Override
-	public void setEntityPersisterClass(Class<? extends EntityPersister> classPersisterClass) {
-		this.classPersisterClass = classPersisterClass;
 	}
 
 
