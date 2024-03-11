@@ -274,7 +274,7 @@ class ColumnsBuilder {
 	 */
 	AnnotatedColumns overrideColumnFromMapperOrMapsIdProperty(boolean isId) {
 		final PropertyData override =
-				getPropertyOverriddenByMapperOrMapsId( isId, propertyHolder, property.getName(), buildingContext );
+				getPropertyOverriddenByMapperOrMapsId( isId, propertyHolder, property.resolveAttributeName(), buildingContext );
 		if ( override != null ) {
 			final AnnotatedJoinColumns joinColumns = buildExplicitJoinColumns( override.getAttributeMember(), override );
 			return joinColumns == null
