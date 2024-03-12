@@ -1017,7 +1017,7 @@ public class PropertyBinder {
 			);
 			if ( overridingProperty != null ) {
 				isOverridden = true;
-				final InheritanceState state = inheritanceStatePerClass.get( overridingProperty.getClassOrElementType() );
+				final InheritanceState state = inheritanceStatePerClass.get( overridingProperty.getClassOrElementType().determineRawClass() );
 				isComposite = state != null ? state.hasIdClassOrEmbeddedId() : isEmbedded( property, returnedClass );
 				//Get the new column
 				actualColumns = columnsBuilder.overrideColumnFromMapperOrMapsIdProperty( propertyBinder.isId() );
