@@ -895,42 +895,56 @@ public class EntityBinder {
 		}
 	}
 
-	private static void handleForeignKeys(ClassDetails clazzToProcess, MetadataBuildingContext context, DependantValue key) {
-		final AnnotationUsage<PrimaryKeyJoinColumn> pkJoinColumn = clazzToProcess.getAnnotationUsage( PrimaryKeyJoinColumn.class );
-		final AnnotationUsage<PrimaryKeyJoinColumns> pkJoinColumns = clazzToProcess.getAnnotationUsage( PrimaryKeyJoinColumns.class );
+	private static void handleForeignKeys(
+			ClassDetails clazzToProcess,
+			MetadataBuildingContext context,
+			DependantValue key) {
+		final AnnotationUsage<PrimaryKeyJoinColumns> pkJoinColumns =
+				clazzToProcess.getAnnotationUsage( PrimaryKeyJoinColumns.class );
+		final AnnotationUsage<PrimaryKeyJoinColumn> pkJoinColumn;
 		final boolean noConstraintByDefault = context.getBuildingOptions().isNoConstraintByDefault();
-		if ( pkJoinColumn != null && noConstraint( pkJoinColumn.getNestedUsage( "foreignKey" ), noConstraintByDefault )
-				|| pkJoinColumns != null && noConstraint( pkJoinColumns.getNestedUsage( "foreignKey" ), noConstraintByDefault ) ) {
-			key.disableForeignKey();
+		if ( pkJoinColumns == null ) {
+			pkJoinColumn = clazzToProcess.getAnnotationUsage( PrimaryKeyJoinColumn.class );
+			if ( pkJoinColumn != null
+					&& noConstraint( pkJoinColumn.getNestedUsage( "foreignKey" ), noConstraintByDefault ) ) {
+				key.disableForeignKey();
+				return;
+			}
 		}
 		else {
-			final AnnotationUsage<org.hibernate.annotations.ForeignKey> fk =
-					clazzToProcess.getAnnotationUsage( org.hibernate.annotations.ForeignKey.class );
-			if ( fk != null && isNotEmpty( fk.getString( "name" ) ) ) {
-				key.setForeignKeyName( fk.getString( "name" ) );
+			pkJoinColumn = null;
+			if ( noConstraint( pkJoinColumns.getNestedUsage( "foreignKey" ), noConstraintByDefault ) ) {
+				key.disableForeignKey();
+				return;
 			}
-			else {
-				final AnnotationUsage<ForeignKey> foreignKey = clazzToProcess.getAnnotationUsage( ForeignKey.class );
-				if ( noConstraint( foreignKey, noConstraintByDefault ) ) {
-					key.disableForeignKey();
-				}
-				else if ( foreignKey != null ) {
-					key.setForeignKeyName( nullIfEmpty( foreignKey.getString( "name" ) ) );
-					key.setForeignKeyDefinition( nullIfEmpty( foreignKey.getString( "foreignKeyDefinition" ) ) );
-				}
-				else if ( noConstraintByDefault ) {
-					key.disableForeignKey();
-				}
-				else if ( pkJoinColumns != null ) {
-					final AnnotationUsage<ForeignKey> nestedFk = pkJoinColumns.getNestedUsage( "foreignKey" );
-					key.setForeignKeyName( nullIfEmpty( nestedFk.getString( "name" ) ) );
-					key.setForeignKeyDefinition( nullIfEmpty( nestedFk.getString( "foreignKeyDefinition" ) ) );
-				}
-				else if ( pkJoinColumn != null ) {
-					final AnnotationUsage<ForeignKey> nestedFk = pkJoinColumn.getNestedUsage( "foreignKey" );
-					key.setForeignKeyName( nullIfEmpty( nestedFk.getString( "name" ) ) );
-					key.setForeignKeyDefinition( nullIfEmpty( nestedFk.getString( "foreignKeyDefinition" ) ) );
-				}
+		}
+
+		final AnnotationUsage<org.hibernate.annotations.ForeignKey> fk =
+				clazzToProcess.getAnnotationUsage( org.hibernate.annotations.ForeignKey.class );
+		if ( fk != null && isNotEmpty( fk.getString( "name" ) ) ) {
+			key.setForeignKeyName( fk.getString( "name" ) );
+		}
+		else {
+			final AnnotationUsage<ForeignKey> foreignKey = clazzToProcess.getAnnotationUsage( ForeignKey.class );
+			if ( noConstraint( foreignKey, noConstraintByDefault ) ) {
+				key.disableForeignKey();
+			}
+			else if ( foreignKey != null ) {
+				key.setForeignKeyName( nullIfEmpty( foreignKey.getString( "name" ) ) );
+				key.setForeignKeyDefinition( nullIfEmpty( foreignKey.getString( "foreignKeyDefinition" ) ) );
+			}
+			else if ( noConstraintByDefault ) {
+				key.disableForeignKey();
+			}
+			else if ( pkJoinColumns != null ) {
+				final AnnotationUsage<ForeignKey> nestedFk = pkJoinColumns.getNestedUsage( "foreignKey" );
+				key.setForeignKeyName( nullIfEmpty( nestedFk.getString( "name" ) ) );
+				key.setForeignKeyDefinition( nullIfEmpty( nestedFk.getString( "foreignKeyDefinition" ) ) );
+			}
+			else if ( pkJoinColumn != null ) {
+				final AnnotationUsage<ForeignKey> nestedFk = pkJoinColumn.getNestedUsage( "foreignKey" );
+				key.setForeignKeyName( nullIfEmpty( nestedFk.getString( "name" ) ) );
+				key.setForeignKeyDefinition( nullIfEmpty( nestedFk.getString( "foreignKeyDefinition" ) ) );
 			}
 		}
 	}
