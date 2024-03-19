@@ -500,8 +500,12 @@ public class ManagedTypeProcessor {
 					xmlDocumentContext.getModelBuildingContext()
 			);
 			classDetails.addAnnotationUsage( cacheableUsage );
-			XmlProcessingHelper.setIf( jaxbCaching.getRegion(), "region", cacheableUsage );
-			XmlProcessingHelper.setIf( convertCacheAccessType( jaxbCaching.getAccess() ), "access", cacheableUsage );
+			XmlProcessingHelper.applyAttributeIfSpecified( "region", jaxbCaching.getRegion(), cacheableUsage );
+			XmlProcessingHelper.applyAttributeIfSpecified(
+					"access",
+					convertCacheAccessType( jaxbCaching.getAccess() ),
+					cacheableUsage
+			);
 		}
 	}
 

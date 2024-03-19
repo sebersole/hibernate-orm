@@ -47,13 +47,18 @@ public class ElementCollectionAttributeProcessing {
 				memberDetails,
 				xmlDocumentContext
 		);
-		XmlProcessingHelper.setIf( jaxbElementCollection.getFetch(), "fetch", elementCollectionAnn );
-		elementCollectionAnn.setAttributeValue(
+		XmlProcessingHelper.applyAttributeIfSpecified(
+				"fetch",
+				jaxbElementCollection.getFetch(),
+				elementCollectionAnn
+		);
+		XmlProcessingHelper.applyAttributeIfSpecified(
 				"targetClass",
 				XmlAnnotationHelper.resolveJavaType(
 						jaxbElementCollection.getTargetClass(),
 						xmlDocumentContext.getModelBuildingContext()
-				)
+				).determineRawClass(),
+				elementCollectionAnn
 		);
 
 		CommonAttributeProcessing.applyAttributeBasics( jaxbElementCollection, memberDetails, elementCollectionAnn, accessType, xmlDocumentContext );
