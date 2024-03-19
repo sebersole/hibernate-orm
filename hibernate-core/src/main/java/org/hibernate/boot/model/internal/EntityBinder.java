@@ -157,7 +157,7 @@ import static org.hibernate.boot.model.internal.PropertyBinder.processElementAnn
 import static org.hibernate.boot.model.internal.PropertyHolderBuilder.buildPropertyHolder;
 import static org.hibernate.boot.model.internal.TableBinder.bindForeignKey;
 import static org.hibernate.boot.model.naming.Identifier.toIdentifier;
-import static org.hibernate.boot.models.internal.AnnotationUsageHelper.*;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyAttributeIfSpecified;
 import static org.hibernate.engine.OptimisticLockStyle.fromLockType;
 import static org.hibernate.engine.spi.ExecuteUpdateResultCheckStyle.fromResultCheckStyle;
 import static org.hibernate.internal.util.StringHelper.isEmpty;

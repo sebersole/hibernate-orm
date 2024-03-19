@@ -107,7 +107,8 @@ import static org.hibernate.boot.models.HibernateAnnotations.FILTER_DEF;
 import static org.hibernate.boot.models.HibernateAnnotations.JAVA_TYPE_REG;
 import static org.hibernate.boot.models.HibernateAnnotations.JDBC_TYPE_REG;
 import static org.hibernate.boot.models.HibernateAnnotations.TYPE_REG;
-import static org.hibernate.boot.models.internal.AnnotationUsageHelper.*;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyAttributeIfSpecified;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyStringAttributeIfSpecified;
 import static org.hibernate.internal.util.collections.CollectionHelper.arrayList;
 import static org.hibernate.internal.util.collections.CollectionHelper.isEmpty;
 

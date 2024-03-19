@@ -20,7 +20,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyJoinColumn;
 
-import static org.hibernate.boot.models.internal.AnnotationUsageHelper.*;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyAttributeIfSpecified;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyStringAttributeIfSpecified;
+
 
 /**
  * @author Emmanuel Bernard

@@ -47,7 +47,7 @@ import static org.hibernate.boot.model.internal.AnnotatedColumn.buildFormulaFrom
 import static org.hibernate.boot.model.internal.BinderHelper.getOverridableAnnotation;
 import static org.hibernate.boot.model.internal.BinderHelper.getPath;
 import static org.hibernate.boot.model.internal.BinderHelper.getPropertyOverriddenByMapperOrMapsId;
-import static org.hibernate.boot.models.internal.AnnotationUsageHelper.*;
+import static org.hibernate.boot.models.internal.AnnotationUsageHelper.applyAttributeIfSpecified;
 import static org.hibernate.internal.util.StringHelper.nullIfEmpty;
 
 /**
