@@ -394,6 +394,7 @@ public class MetadataBuildingProcess {
 		final SourceModelBuildingContext sourceModelBuildingContext = metadataCollector.getSourceModelBuildingContext();
 		final XmlPreProcessingResult xmlPreProcessingResult = XmlPreProcessor.preProcessXmlResources( managedResources );
 
+		metadataCollector.addPersistenceUnitMetadata( xmlPreProcessingResult.getPersistenceUnitMetadata() );
 		//noinspection unchecked
 		final List<String> allKnownClassNames = mutableJoin(
 				managedResources.getAnnotatedClassReferences().stream().map( Class::getName ).collect( Collectors.toList() ),
