@@ -4,7 +4,7 @@ goal=
 if [ "$RDBMS" == "h2" ] || [ "$RDBMS" == "" ]; then
   # This is the default.
   #   - special check for Jenkins CI jobs where we don't want to run preVerifyRelease
-  if ["$SYSTEM" != "jenkins"]; then
+  if [[-n "$CI_SYSTEM" && "$CI_SYSTEM" != "jenkins"]]; then
     goal="preVerifyRelease"
     # Settings needed for `preVerifyRelease` execution - for asciidoctor doc rendering
 	  export GRADLE_OPTS=-Dorg.gradle.jvmargs='-Dlog4j2.disableJmx -Xmx4g -XX:MaxMetaspaceSize=768m -XX:+HeapDumpOnOutOfMemoryError -Duser.language=en -Duser.country=US -Duser.timezone=UTC -Dfile.encoding=UTF-8'

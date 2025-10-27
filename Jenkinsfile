@@ -171,7 +171,7 @@ stage('Build') {
 						}
 						stage('Test') {
 							String args = "${buildEnv.additionalOptions ?: ''} ${state[buildEnv.tag]['additionalOptions'] ?: ''}"
-							withEnv(["RDBMS=${buildEnv.dbName}", "SYSTEM=jenkins"]) {
+							withEnv(["RDBMS=${buildEnv.dbName}", 'CI_SYSTEM=jenkins']) {
 								tryFinally({
 									if (buildEnv.dbLockableResource == null) {
 										withCredentials([file(credentialsId: 'sybase-jconnect-driver', variable: 'jconnect_driver')]) {
