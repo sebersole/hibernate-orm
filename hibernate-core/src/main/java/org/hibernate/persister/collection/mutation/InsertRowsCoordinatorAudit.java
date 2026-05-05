@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
+import org.hibernate.action.queue.decompose.collection.CollectionMutationTarget;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.audit.spi.AuditWorkQueue;
 import org.hibernate.audit.spi.CollectionAuditWriter;
