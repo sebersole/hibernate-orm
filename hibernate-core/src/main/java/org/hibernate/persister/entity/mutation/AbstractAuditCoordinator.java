@@ -237,7 +237,7 @@ abstract class AbstractAuditCoordinator extends AbstractMutationCoordinator impl
 			}
 
 			// Key columns
-			sourceMapping.getKeyMapping().forEachKeyColumn( insertBuilder::addKeyColumn );
+			sourceMapping.getKeyMapping().forEachKeyColumn( insertBuilder::addColumnAssignment );
 
 			mutations.add( insertBuilder.buildMutation() );
 		}
