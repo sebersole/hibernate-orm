@@ -2,25 +2,23 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Red Hat Inc. and Hibernate Authors
  */
-package org.hibernate.action.queue.graph;
+package org.hibernate.action.queue.internal.graph;
 
 
-import org.hibernate.action.queue.constraint.Constraint;
-import org.hibernate.action.queue.constraint.Deferrability;
-import org.hibernate.action.queue.constraint.ForeignKey;
-import org.hibernate.action.queue.constraint.UniqueConstraint;
+import org.hibernate.action.queue.internal.constraint.Constraint;
+import org.hibernate.action.queue.internal.constraint.Deferrability;
+import org.hibernate.action.queue.internal.constraint.ForeignKey;
+import org.hibernate.action.queue.internal.constraint.UniqueConstraint;
 import org.hibernate.metamodel.mapping.JdbcMapping;
 import org.hibernate.metamodel.mapping.SelectableConsumer;
 import org.hibernate.metamodel.mapping.SelectableMapping;
 import org.hibernate.metamodel.mapping.SelectableMappings;
 
-import static org.hibernate.action.queue.graph.Util.EMPTY_SELECTABLES;
+import static org.hibernate.action.queue.internal.graph.Util.EMPTY_SELECTABLES;
 
-/**
- * Test utilities for creating graph structures
- *
- * @author Steve Ebersole
- */
+/// Test utilities for creating graph structures
+///
+/// @author Steve Ebersole
 public class GraphTestUtils {
 	private static SelectableMappings selectable(String tableName, String columnName) {
 		final SelectableMapping selectableMapping = new SelectableMapping() {
@@ -121,9 +119,7 @@ public class GraphTestUtils {
 		};
 	}
 
-	/**
-	 * Create a GraphEdge for testing purposes.
-	 */
+	/// Create a GraphEdge for testing purposes.
 	public static GraphEdge createEdge(
 			GroupNode targetNode,
 			GroupNode keyNode,
@@ -164,9 +160,7 @@ public class GraphTestUtils {
 		return GraphEdge.preferredOrder( targetNode, keyNode, from, to, columnsToNull, constraint, breakCost, stableId );
 	}
 
-	/**
-	 * Create a simple breakable edge with default parameters
-	 */
+	/// Create a simple breakable edge with default parameters
 	public static GraphEdge createBreakableEdge(GroupNode from, GroupNode to, int breakCost) {
 		final ForeignKey fk = foreignKey(
 				"key_table",
@@ -178,9 +172,7 @@ public class GraphTestUtils {
 		return createEdge(from, to, from, to, true, breakCost, EMPTY_SELECTABLES, fk, System.nanoTime());
 	}
 
-	/**
-	 * Create an unbreakable edge
-	 */
+	/// Create an unbreakable edge
 	public static GraphEdge createUnbreakableEdge(GroupNode from, GroupNode to) {
 		final ForeignKey fk = foreignKey(
 				"key_table",

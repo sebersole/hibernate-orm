@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.hibernate.action.queue.decompose.collection.AuditCollectionMutationPlanContributor;
-import org.hibernate.action.queue.decompose.collection.CollectionMutationPlanContributor;
-import org.hibernate.action.queue.decompose.entity.AuditEntityMutationPlanContributor;
-import org.hibernate.action.queue.decompose.entity.EntityMutationPlanContributor;
+import org.hibernate.action.queue.internal.decompose.collection.AuditCollectionMutationPlanContributor;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPlanContributor;
+import org.hibernate.action.queue.internal.decompose.entity.AuditEntityMutationPlanContributor;
+import org.hibernate.action.queue.spi.decompose.entity.EntityMutationPlanContributor;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.mapping.AuxiliaryTableHolder;
 import org.hibernate.mapping.Collection;

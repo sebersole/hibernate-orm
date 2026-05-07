@@ -5,7 +5,7 @@
 package org.hibernate.id.insert;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.hibernate.action.queue.plan.FlushOperation;
+import org.hibernate.action.queue.spi.plan.FlushOperation;
 import org.hibernate.engine.jdbc.mutation.JdbcValueBindings;
 import org.hibernate.engine.jdbc.mutation.group.PreparedStatementDetails;
 import org.hibernate.engine.jdbc.spi.StatementPreparer;
@@ -126,7 +126,7 @@ public class GetGeneratedKeysDelegate extends AbstractReturningDelegate {
 				: preparer.prepareStatement( sql, columnNames );
 		try {
 
-			var valueBindings = new org.hibernate.action.queue.bind.JdbcValueBindings(
+			var valueBindings = new org.hibernate.action.queue.spi.bind.JdbcValueBindings(
 					operation.getMutatingTableDescriptor(),
 					jdbcOperation
 			);

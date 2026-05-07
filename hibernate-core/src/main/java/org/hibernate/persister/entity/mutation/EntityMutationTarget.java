@@ -5,8 +5,8 @@
 package org.hibernate.persister.entity.mutation;
 
 import org.hibernate.Incubating;
-import org.hibernate.action.queue.decompose.entity.GraphEntityMutationTarget;
-import org.hibernate.action.queue.meta.EntityTableDescriptor;
+import org.hibernate.action.queue.spi.decompose.entity.GraphEntityMutationTarget;
+import org.hibernate.action.queue.spi.meta.EntityTableDescriptor;
 import org.hibernate.sql.model.MutationTarget;
 
 /**

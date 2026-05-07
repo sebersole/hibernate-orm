@@ -159,7 +159,7 @@ public class PreparedStatementGroupStandard extends AbstractPreparedStatementGro
 				if ( tableMapping == null ) {
 					return -1;
 				}
-				return jdbcMutations.size() - tableMapping.getRelativePosition();
+				return jdbcMutations.size() - tableMapping.relativePosition();
 			} );
 		}
 		else {
@@ -168,7 +168,7 @@ public class PreparedStatementGroupStandard extends AbstractPreparedStatementGro
 				if ( tableMapping == null ) {
 					return -1;
 				}
-				return tableMapping.getRelativePosition();
+				return tableMapping.relativePosition();
 			} );
 		}
 

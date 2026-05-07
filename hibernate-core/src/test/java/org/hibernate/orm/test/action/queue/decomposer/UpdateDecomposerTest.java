@@ -10,18 +10,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.hibernate.action.internal.EntityUpdateAction;
-import org.hibernate.action.queue.MutationKind;
-import org.hibernate.action.queue.QueueType;
-import org.hibernate.action.queue.StatementShapeKey;
-import org.hibernate.action.queue.plan.FlushOperation;
-import org.hibernate.action.queue.plan.FlushOperationGroup;
+import org.hibernate.action.queue.spi.MutationKind;
+import org.hibernate.action.queue.spi.QueueType;
+import org.hibernate.action.queue.spi.StatementShapeKey;
+import org.hibernate.action.queue.spi.plan.FlushOperation;
+import org.hibernate.action.queue.internal.plan.FlushOperationGroup;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.engine.OptimisticLockStyle;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.action.queue.decompose.entity.UpdateDecomposer;
+import org.hibernate.action.queue.internal.decompose.entity.UpdateDecomposer;
 
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;

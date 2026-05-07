@@ -4,7 +4,7 @@
  */
 package org.hibernate.orm.test.action.queue.decomposer;
 
-import org.hibernate.action.queue.QueueType;
+import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.OptimisticLocking;
 import org.hibernate.annotations.OptimisticLockType;

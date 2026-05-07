@@ -7,7 +7,7 @@ package org.hibernate.sql.model;
 import java.util.function.Consumer;
 
 import org.hibernate.Incubating;
-import org.hibernate.action.queue.meta.TableDescriptor;
+import org.hibernate.action.queue.spi.meta.TableDescriptor;
 import org.hibernate.metamodel.mapping.ModelPartContainer;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 

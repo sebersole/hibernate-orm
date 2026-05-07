@@ -4,7 +4,7 @@
  */
 package org.hibernate.metamodel.spi;
 
-import org.hibernate.action.queue.PlanningOptions;
+import org.hibernate.action.queue.spi.PlanningOptions;
 import org.hibernate.boot.model.relational.SqlStringGenerationContext;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.boot.spi.MetadataImplementor;

@@ -4,7 +4,7 @@
  */
 package org.hibernate.id.insert;
 
-import org.hibernate.action.queue.plan.FlushOperation;
+import org.hibernate.action.queue.spi.plan.FlushOperation;
 import org.hibernate.engine.jdbc.mutation.JdbcValueBindings;
 import org.hibernate.engine.jdbc.mutation.group.PreparedStatementDetails;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -53,7 +53,7 @@ public abstract class AbstractReturningDelegate
 				.prepareStatement( sql );
 		try {
 
-			var valueBindings = new org.hibernate.action.queue.bind.JdbcValueBindings(
+			var valueBindings = new org.hibernate.action.queue.spi.bind.JdbcValueBindings(
 					operation.getMutatingTableDescriptor(),
 					jdbcOperation
 			);

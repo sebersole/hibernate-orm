@@ -5,7 +5,7 @@
 package org.hibernate.orm.test.action.queue;
 
 import jakarta.persistence.*;
-import org.hibernate.action.queue.QueueType;
+import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.ServiceRegistry;

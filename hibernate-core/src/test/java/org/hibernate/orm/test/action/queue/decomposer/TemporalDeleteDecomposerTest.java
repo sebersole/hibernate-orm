@@ -12,9 +12,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import org.hibernate.action.internal.EntityDeleteAction;
-import org.hibernate.action.queue.MutationKind;
-import org.hibernate.action.queue.QueueType;
-import org.hibernate.action.queue.plan.FlushOperation;
+import org.hibernate.action.queue.spi.MutationKind;
+import org.hibernate.action.queue.spi.QueueType;
+import org.hibernate.action.queue.spi.plan.FlushOperation;
 import org.hibernate.cfg.FlushSettings;
 import org.hibernate.cfg.StateManagementSettings;
 import org.hibernate.engine.spi.SessionFactoryImplementor;

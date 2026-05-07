@@ -6,7 +6,7 @@ package org.hibernate.persister.state.internal;
 
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
-import org.hibernate.action.queue.decompose.entity.EntityMutationPlanContributor;
+import org.hibernate.action.queue.spi.decompose.entity.EntityMutationPlanContributor;
 import org.hibernate.metamodel.mapping.AuxiliaryMapping;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;

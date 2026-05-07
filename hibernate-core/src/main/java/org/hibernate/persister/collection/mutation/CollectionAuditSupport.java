@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-import org.hibernate.action.queue.decompose.collection.CollectionMutationTarget;
-import org.hibernate.action.queue.meta.CollectionTableDescriptor;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
+import org.hibernate.action.queue.spi.meta.CollectionTableDescriptor;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.mutation.JdbcValueBindings;
@@ -222,7 +222,7 @@ public class CollectionAuditSupport {
 			Object ownerId,
 			AuditCollectionChange change,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		getRowMutationHelper().bindInsertValues(
 				collection,
 				ownerId,
@@ -283,7 +283,7 @@ public class CollectionAuditSupport {
 			Object ownerId,
 			AuditCollectionChange change,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		final var auditMapping = mutationTarget.getTargetPart().getAuditMapping();
 		final var collectionTableName = mutationTarget.getCollectionTableMapping().getTableName();
 		final var revEndMapping = auditMapping.getTransactionEndMapping( collectionTableName );

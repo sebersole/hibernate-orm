@@ -6,7 +6,7 @@ package org.hibernate.persister.collection.mutation;
 
 import java.util.function.UnaryOperator;
 
-import org.hibernate.action.queue.decompose.collection.CollectionMutationTarget;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.mutation.JdbcValueBindings;
@@ -95,7 +95,7 @@ final class AuditCollectionRowMutationHelper {
 			int rowPosition,
 			ModificationType modificationType,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( key == null ) {
 			throw new IllegalArgumentException( "null key for collection: " + mutationTarget.getRolePath() );
 		}
@@ -153,7 +153,7 @@ final class AuditCollectionRowMutationHelper {
 			Object rowValue,
 			int rowPosition,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		decomposeRowIdentity(
 				collection,
 				key,
@@ -226,7 +226,7 @@ final class AuditCollectionRowMutationHelper {
 			Object rowValue,
 			int rowPosition,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings,
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings,
 			ParameterUsage parameterUsage) {
 		attributeMapping.getKeyDescriptor().getKeyPart().decompose(
 				key, 0, jdbcValueBindings, null,
@@ -282,7 +282,7 @@ final class AuditCollectionRowMutationHelper {
 	}
 
 	private void bindValue(
-			org.hibernate.action.queue.bind.JdbcValueBindings bindings,
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings bindings,
 			Object jdbcValue,
 			SelectableMapping mapping,
 			ParameterUsage parameterUsage) {
@@ -306,7 +306,7 @@ final class AuditCollectionRowMutationHelper {
 	private void bindSettableValue(
 			int valueIndex,
 			boolean[] settable,
-			org.hibernate.action.queue.bind.JdbcValueBindings bindings,
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings bindings,
 			Object jdbcValue,
 			SelectableMapping mapping,
 			ParameterUsage parameterUsage) {

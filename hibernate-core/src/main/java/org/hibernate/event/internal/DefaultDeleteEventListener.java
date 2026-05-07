@@ -325,7 +325,7 @@ public class DefaultDeleteEventListener implements DeleteEventListener {
 	/**
 	 * Perform the entity deletion.  Well, as with most operations, does not
 	 * really perform it; just schedules an action/execution with the
-	 * {@link org.hibernate.action.queue.ActionQueue} for execution during flush.
+	 * {@link org.hibernate.action.queue.spi.ActionQueue} for execution during flush.
 	 *
 	 * @param session The originating session
 	 * @param entity The entity to delete

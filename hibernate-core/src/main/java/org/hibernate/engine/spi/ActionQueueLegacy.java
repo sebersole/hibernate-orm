@@ -61,7 +61,7 @@ import static org.hibernate.proxy.HibernateProxy.extractLazyInitializer;
  * queued here until a flush forces them to be executed against the database.
  * <p>
  * This is the legacy implementation. The new, currently incubating, implementation is
- * {@link org.hibernate.action.queue.GraphBasedActionQueue}.
+ * {@link org.hibernate.action.queue.internal.GraphBasedActionQueue}.
  *
  * @apiNote This class is logically part of the {@linkplain Executable action}
  *          subsystem and so it would more naturally belong in the package
@@ -72,7 +72,7 @@ import static org.hibernate.proxy.HibernateProxy.extractLazyInitializer;
  * @author Gail Badner
  * @author Anton Marsden
  */
-public class ActionQueueLegacy implements org.hibernate.action.queue.ActionQueue {
+public class ActionQueueLegacy implements org.hibernate.action.queue.spi.ActionQueue {
 
 	private final SessionImplementor session;
 

@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.Collection;
 import java.util.List;
 
-import org.hibernate.action.queue.QueueType;
+import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;

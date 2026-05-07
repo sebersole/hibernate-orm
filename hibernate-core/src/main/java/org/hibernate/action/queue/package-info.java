@@ -1,5 +1,5 @@
 /// Support for graph-based planning of operations correlating to [actions][org.hibernate.action.spi.Executable]
-/// encountered as part of the [org.hibernate.action.queue.ActionQueue].
+/// encountered as part of the [org.hibernate.action.queue.spi.ActionQueue].
 ///
 /// @author Steve Ebersole
 @Incubating

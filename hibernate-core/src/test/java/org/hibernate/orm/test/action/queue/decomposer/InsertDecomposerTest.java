@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.action.internal.EntityInsertAction;
-import org.hibernate.action.queue.MutationKind;
-import org.hibernate.action.queue.QueueType;
-import org.hibernate.action.queue.StatementShapeKey;
-import org.hibernate.action.queue.plan.FlushOperation;
-import org.hibernate.action.queue.plan.FlushOperationGroup;
+import org.hibernate.action.queue.spi.MutationKind;
+import org.hibernate.action.queue.spi.QueueType;
+import org.hibernate.action.queue.spi.StatementShapeKey;
+import org.hibernate.action.queue.spi.plan.FlushOperation;
+import org.hibernate.action.queue.internal.plan.FlushOperationGroup;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.event.spi.EventSource;
 import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.action.queue.decompose.entity.InsertDecomposer;
+import org.hibernate.action.queue.internal.decompose.entity.InsertDecomposer;
 
 import org.hibernate.testing.orm.junit.EntityManagerFactoryScope;
 import org.hibernate.testing.orm.junit.Jpa;

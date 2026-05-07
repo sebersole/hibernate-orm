@@ -131,7 +131,7 @@ public class EntityTableMappingImpl implements EntityTableMapping {
 		return keyMapping;
 	}
 
-	@Override public int getRelativePosition() {
+	@Override public int relativePosition() {
 		return relativePosition;
 	}
 

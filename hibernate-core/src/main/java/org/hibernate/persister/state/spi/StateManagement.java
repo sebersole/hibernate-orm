@@ -5,8 +5,8 @@
 package org.hibernate.persister.state.spi;
 
 import org.hibernate.Incubating;
-import org.hibernate.action.queue.decompose.collection.CollectionMutationPlanContributor;
-import org.hibernate.action.queue.decompose.entity.EntityMutationPlanContributor;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPlanContributor;
+import org.hibernate.action.queue.spi.decompose.entity.EntityMutationPlanContributor;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
 import org.hibernate.metamodel.mapping.AuxiliaryMapping;

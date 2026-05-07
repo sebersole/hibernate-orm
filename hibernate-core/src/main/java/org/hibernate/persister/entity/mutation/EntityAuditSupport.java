@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.action.queue.meta.EntityTableDescriptor;
+import org.hibernate.action.queue.spi.meta.EntityTableDescriptor;
 import org.hibernate.MappingException;
 import org.hibernate.audit.AuditException;
 import org.hibernate.audit.ModificationType;
@@ -56,8 +56,8 @@ import static org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.
 ///     used by the JDBC mutation operation, not the original entity table.</li>
 /// </ul>
 ///
-/// @implSpec Used by both [graph][org.hibernate.action.queue.QueueType#GRAPH] and
-/// [legacy][org.hibernate.action.queue.QueueType#LEGACY] action-queue paths.  This
+/// @implSpec Used by both [graph][org.hibernate.action.queue.spi.QueueType#GRAPH] and
+/// [legacy][org.hibernate.action.queue.spi.QueueType#LEGACY] action-queue paths.  This
 /// is just some shared infrastructure.
 ///
 /// @author Steve Ebersole
@@ -273,7 +273,7 @@ public class EntityAuditSupport {
 			boolean[] propertyInclusions,
 			ModificationType modificationType,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( auditTableMappings[tableIndex] == null ) {
 			return;
 		}
@@ -331,7 +331,7 @@ public class EntityAuditSupport {
 			int tableIndex,
 			Object id,
 			SharedSessionContractImplementor session,
-			org.hibernate.action.queue.bind.JdbcValueBindings jdbcValueBindings) {
+			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( auditTableMappings[tableIndex] == null ) {
 			return;
 		}
@@ -527,7 +527,7 @@ public class EntityAuditSupport {
 		final var identifierTableDescriptor = entityPersister.getIdentifierTableDescriptor();
 		return new EntityTableDescriptor(
 				auditTableMapping.getTableName(),
-				auditTableMapping.getRelativePosition(),
+				auditTableMapping.relativePosition(),
 				auditTableMapping.isIdentifierTable(),
 				auditTableMapping.isOptional(),
 				auditTableMapping.isInverse(),

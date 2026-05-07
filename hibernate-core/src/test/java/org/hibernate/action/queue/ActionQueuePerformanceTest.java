@@ -13,16 +13,14 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Performance comparison between legacy ActionQueue and graph-based ActionQueue.
- *
- * Run scenarios:
- * 1. Simple inserts (no FKs) - baseline
- * 2. Parent-child inserts (single FK)
- * 3. Complex graph (multiple FKs)
- * 4. Self-referencing FKs
- * 5. Circular dependencies
- */
+/// Performance comparison between legacy ActionQueue and graph-based ActionQueue.
+///
+/// Run scenarios:
+/// 1. Simple inserts (no FKs) - baseline
+/// 2. Parent-child inserts (single FK)
+/// 3. Complex graph (multiple FKs)
+/// 4. Self-referencing FKs
+/// 5. Circular dependencies
 public class ActionQueuePerformanceTest {
 
 	@Entity(name = "SimpleEntity")
@@ -109,9 +107,7 @@ public class ActionQueuePerformanceTest {
 		}
 	}
 
-	/**
-	 * Test simple inserts with no FK dependencies
-	 */
+	/// Test simple inserts with no FK dependencies
 	@DomainModel(annotatedClasses = SimpleEntity.class)
 	@SessionFactory
 	@ServiceRegistry(settings = @Setting(name = FlushSettings.FLUSH_QUEUE_TYPE, value = "legacy"))
@@ -132,9 +128,7 @@ public class ActionQueuePerformanceTest {
 		}
 	}
 
-	/**
-	 * Test parent-child inserts with FK dependencies
-	 */
+	/// Test parent-child inserts with FK dependencies
 	@DomainModel(annotatedClasses = {Parent.class, Child.class})
 	@SessionFactory
 	@ServiceRegistry(settings = @Setting(name = FlushSettings.FLUSH_QUEUE_TYPE, value = "legacy"))
@@ -155,9 +149,7 @@ public class ActionQueuePerformanceTest {
 		}
 	}
 
-	/**
-	 * Test self-referencing FKs (tree structure)
-	 */
+	/// Test self-referencing FKs (tree structure)
 	@DomainModel(annotatedClasses = Node.class)
 	@SessionFactory
 	@ServiceRegistry(settings = @Setting(name = FlushSettings.FLUSH_QUEUE_TYPE, value = "legacy"))

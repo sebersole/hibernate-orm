@@ -7,7 +7,7 @@ package org.hibernate.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.action.queue.support.ActionQueueFactoryServiceInitiator;
+import org.hibernate.action.queue.internal.support.ActionQueueFactoryServiceInitiator;
 import org.hibernate.boot.cfgxml.internal.CfgXmlAccessServiceInitiator;
 import org.hibernate.boot.internal.DefaultSessionFactoryBuilderInitiator;
 import org.hibernate.boot.registry.StandardServiceInitiator;

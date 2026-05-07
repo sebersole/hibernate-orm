@@ -7,7 +7,7 @@ package org.hibernate.persister.collection.mutation;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-import org.hibernate.action.queue.decompose.collection.CollectionMutationTarget;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
 import org.hibernate.audit.spi.AuditWorkQueue;
 import org.hibernate.audit.spi.CollectionAuditWriter;
 import org.hibernate.collection.spi.PersistentArrayHolder;

@@ -5,7 +5,7 @@
 package org.hibernate.sql.model;
 
 import org.hibernate.Incubating;
-import org.hibernate.action.queue.meta.TableDescriptor;
+import org.hibernate.action.queue.spi.meta.TableDescriptor;
 
 /**
  * Bridge interface combining legacy and graph-based mutation target contracts.

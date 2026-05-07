@@ -340,7 +340,7 @@ public abstract class AbstractMutationCoordinator {
 			String tableName) {
 		return new EntityTableMappingImpl(
 				tableName,
-				identifierTableMapping.getRelativePosition(),
+				identifierTableMapping.relativePosition(),
 				identifierTableMapping.getKeyMapping(),
 				identifierTableMapping.isOptional(),
 				identifierTableMapping.isInverse(),

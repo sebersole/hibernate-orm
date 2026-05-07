@@ -24,7 +24,7 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.creation.internal.SessionCreationOptions;
 import org.hibernate.engine.creation.internal.SharedSessionCreationOptions;
 import org.hibernate.engine.internal.PersistenceContexts;
-import org.hibernate.action.queue.ActionQueue;
+import org.hibernate.action.queue.spi.ActionQueue;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.engine.spi.EntityHolder;
 import org.hibernate.engine.spi.EntityKey;

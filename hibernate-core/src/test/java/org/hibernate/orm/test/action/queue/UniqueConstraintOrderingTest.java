@@ -5,7 +5,7 @@
 package org.hibernate.orm.test.action.queue;
 
 import jakarta.persistence.*;
-import org.hibernate.action.queue.QueueType;
+import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.cfg.FlushSettings;
 import org.hibernate.testing.orm.junit.DomainModel;

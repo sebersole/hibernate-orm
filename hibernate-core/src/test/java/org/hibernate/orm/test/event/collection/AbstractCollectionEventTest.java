@@ -6,7 +6,7 @@ package org.hibernate.orm.test.event.collection;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.action.queue.QueueType;
+import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.collection.spi.PersistentSet;
 import org.hibernate.dialect.HANADialect;

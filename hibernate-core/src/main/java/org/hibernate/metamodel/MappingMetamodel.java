@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import org.hibernate.Incubating;
 import org.hibernate.Internal;
-import org.hibernate.action.queue.constraint.ConstraintModel;
+import org.hibernate.action.queue.internal.constraint.ConstraintModel;
 import org.hibernate.metamodel.mapping.EmbeddableValuedModelPart;
 import org.hibernate.metamodel.mapping.MappingModelExpressible;
 import org.hibernate.metamodel.model.domain.NavigableRole;

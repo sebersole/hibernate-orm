@@ -4,7 +4,7 @@
  */
 package org.hibernate.sql.model.ast.builder;
 
-import org.hibernate.action.queue.meta.TableDescriptorAsTableMapping;
+import org.hibernate.action.queue.spi.meta.TableDescriptorAsTableMapping;
 import org.hibernate.engine.jdbc.mutation.ParameterUsage;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.persister.entity.EntityPersister;

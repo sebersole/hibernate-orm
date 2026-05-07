@@ -9,14 +9,14 @@ package org.hibernate.cfg;
 /// @author Steve Ebersole
 public interface FlushSettings {
 
-	/// Specifies the [org.hibernate.action.queue.ActionQueue] implementation to use.
-	/// Valid values are defined by [org.hibernate.action.queue.QueueType]:
+	/// Specifies the [org.hibernate.action.queue.spi.ActionQueue] implementation to use.
+	/// Valid values are defined by [org.hibernate.action.queue.spi.QueueType]:
 	///
-	///   - ["legacy"][org.hibernate.action.queue.QueueType#LEGACY] (default) - Uses the
+	///   - ["legacy"][org.hibernate.action.queue.spi.QueueType#LEGACY] (default) - Uses the
 	/// 	[traditional][org.hibernate.engine.spi.ActionQueueLegacy] ActionQueue implementation,
 	/// 	which requires hard-coded ordering and manual sorting of actions
-	///   - ["graph"][org.hibernate.action.queue.QueueType#GRAPH] - Uses the
-	/// 	[graph-based][org.hibernate.action.queue.GraphBasedActionQueue] ActionQueue implementation,
+	///   - ["graph"][org.hibernate.action.queue.spi.QueueType#GRAPH] - Uses the
+	/// 	[graph-based][org.hibernate.action.queue.internal.GraphBasedActionQueue] ActionQueue implementation,
 	/// 	which handles planning automatically based on defined constraints (foreign key dependencies,
 	/// 	unique keys, ...).
 	///
@@ -25,9 +25,9 @@ public interface FlushSettings {
 	/// provides improved handling of complex foreign key relationships and automatic
 	/// dependency resolution.
 	///
-	/// @see org.hibernate.action.queue.QueueType
-	/// @see org.hibernate.action.queue.ActionQueueFactory
-	/// @see org.hibernate.action.queue.support.ActionQueueFactoryService
+	/// @see org.hibernate.action.queue.spi.QueueType
+	/// @see org.hibernate.action.queue.spi.ActionQueueFactory
+	/// @see org.hibernate.action.queue.internal.support.ActionQueueFactoryService
 	///
 	/// @settingDefault `"legacy"`
 	///
@@ -36,7 +36,7 @@ public interface FlushSettings {
 
 	/// Whether to order operations by foreign-key as part of graph-based flush planning.
 	///
-	/// @see org.hibernate.action.queue.PlanningOptions#orderByForeignKeys()
+	/// @see org.hibernate.action.queue.spi.PlanningOptions#orderByForeignKeys()
 	///
 	/// @settingDefault true
 	///
@@ -45,7 +45,7 @@ public interface FlushSettings {
 
 	/// Whether to order operations by unique-key as part of graph-based flush planning.
 	///
-	/// @see org.hibernate.action.queue.PlanningOptions#orderByUniqueKeySlots()
+	/// @see org.hibernate.action.queue.spi.PlanningOptions#orderByUniqueKeySlots()
 	///
 	/// @settingDefault true
 	///
@@ -53,8 +53,8 @@ public interface FlushSettings {
 	String ORDER_BY_UNIQUE_KEY = "hibernate.flush.plan.uniquekey.order";
 
 	/// Controls whether deferrable constraints should create dependency
-	/// [edges][org.hibernate.action.queue.graph.GraphEdge]
-	/// in the [flush graph][org.hibernate.action.queue.graph.Graph].
+	/// [edges][org.hibernate.action.queue.internal.graph.GraphEdge]
+	/// in the [flush graph][org.hibernate.action.queue.internal.graph.Graph].
 	///
 	/// Assuming a constraint is deferrable -
 	///

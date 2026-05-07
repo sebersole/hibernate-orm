@@ -252,8 +252,8 @@ public class DetachedMultipleCollectionChangeTest {
 
 	private boolean isGraphBasedActionQueue(SessionFactoryScope scope) {
 		return scope.fromSession( s -> {
-			org.hibernate.action.queue.ActionQueue aq = s.unwrap(org.hibernate.event.spi.EventSource.class).getActionQueue();
-			return aq instanceof org.hibernate.action.queue.GraphBasedActionQueue;
+			org.hibernate.action.queue.spi.ActionQueue aq = s.unwrap(org.hibernate.event.spi.EventSource.class).getActionQueue();
+			return aq instanceof org.hibernate.action.queue.internal.GraphBasedActionQueue;
 		} );
 	}
 

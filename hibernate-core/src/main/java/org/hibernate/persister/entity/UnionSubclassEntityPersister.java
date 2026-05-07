@@ -24,8 +24,8 @@ import org.hibernate.HibernateException;
 
 import org.hibernate.Internal;
 import org.hibernate.MappingException;
-import org.hibernate.action.queue.meta.ColumnDescriptor;
-import org.hibernate.action.queue.meta.EntityTableDescriptor;
+import org.hibernate.action.queue.spi.meta.ColumnDescriptor;
+import org.hibernate.action.queue.spi.meta.EntityTableDescriptor;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.NaturalIdDataAccess;
 import org.hibernate.dialect.Dialect;
