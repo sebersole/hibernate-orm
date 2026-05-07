@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.hibernate.action.queue.decompose.collection.AuditCollectionMutationPlanContributor;
+import org.hibernate.action.queue.decompose.collection.CollectionMutationPlanContributor;
+import org.hibernate.action.queue.decompose.entity.AuditEntityMutationPlanContributor;
+import org.hibernate.action.queue.decompose.entity.EntityMutationPlanContributor;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.mapping.AuxiliaryTableHolder;
 import org.hibernate.mapping.Collection;
@@ -89,6 +93,16 @@ public class AuditStateManagement implements StateManagement {
 	public DeleteCoordinator createDeleteCoordinator(EntityPersister persister) {
 		return new DeleteCoordinatorAudit( persister, persister.getFactory(),
 				StandardStateManagement.INSTANCE.createDeleteCoordinator( persister ) );
+	}
+
+	@Override
+	public EntityMutationPlanContributor createEntityMutationPlanContributor(EntityPersister persister) {
+		return new AuditEntityMutationPlanContributor( persister, persister.getFactory() );
+	}
+
+	@Override
+	public CollectionMutationPlanContributor createCollectionMutationPlanContributor(CollectionPersister persister) {
+		return new AuditCollectionMutationPlanContributor( persister, persister.getFactory() );
 	}
 
 	@Override

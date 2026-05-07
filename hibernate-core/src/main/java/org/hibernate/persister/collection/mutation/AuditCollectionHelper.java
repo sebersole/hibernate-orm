@@ -80,6 +80,10 @@ public final class AuditCollectionHelper {
 		return auditTableMapping;
 	}
 
+	boolean useServerTransactionTimestamps() {
+		return useServerTransactionTimestamps;
+	}
+
 	MutationOperationGroup getAuditInsertOperationGroup() {
 		if ( auditInsertOperationGroup == null ) {
 			auditInsertOperationGroup = buildAuditInsertOperationGroup();

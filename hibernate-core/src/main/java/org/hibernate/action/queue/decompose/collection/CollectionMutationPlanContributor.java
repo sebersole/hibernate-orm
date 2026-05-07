@@ -15,6 +15,7 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.collection.BasicCollectionPersister;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.sql.model.MutationOperation;
 
 /**
@@ -60,6 +61,11 @@ public interface CollectionMutationPlanContributor {
 			Consumer<FlushOperation> operationConsumer) {
 	}
 
+	default void contributeCollectionChange(
+			CollectionChangeContext context,
+			Consumer<FlushOperation> operationConsumer) {
+	}
+
 	default void bindRemoveValues(
 			RemoveBindContext context,
 			JdbcValueBindings valueBindings) {
@@ -98,6 +104,16 @@ public interface CollectionMutationPlanContributor {
 			Object key,
 			Object rowValue,
 			int rowPosition,
+			int ordinalBase) {
+	}
+
+	record CollectionChangeContext(
+			CollectionPersister persister,
+			CollectionTableDescriptor tableDescriptor,
+			SessionFactoryImplementor factory,
+			CollectionJdbcOperations jdbcOperations,
+			PersistentCollection<?> collection,
+			Object key,
 			int ordinalBase) {
 	}
 

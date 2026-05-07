@@ -135,8 +135,8 @@ public class OneToManyPersister extends AbstractCollectionPersister {
 
 	protected CollectionDecomposer buildCollectionDecomposer() {
 		return useTablePerSubclassDecomposition
-				? new TablePerSubclassOneToManyDecomposer( this, getFactory() )
-				: new StandardOneToManyDecomposer( this, getFactory() );
+				? new TablePerSubclassOneToManyDecomposer( this, getFactory(), stateManagement.createCollectionMutationPlanContributor( this ) )
+				: new StandardOneToManyDecomposer( this, getFactory(), stateManagement.createCollectionMutationPlanContributor( this ) );
 	}
 
 	public boolean isDoWriteEvenWhenInverse() {

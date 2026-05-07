@@ -21,8 +21,11 @@ import java.util.function.Consumer;
 public class StandardOneToManyDecomposer extends AbstractOneToManyDecomposer {
 	private final CollectionJdbcOperations jdbcOperations;
 
-	public StandardOneToManyDecomposer(OneToManyPersister persister, SessionFactoryImplementor factory) {
-		super( persister, factory );
+	public StandardOneToManyDecomposer(
+			OneToManyPersister persister,
+			SessionFactoryImplementor factory,
+			CollectionMutationPlanContributor mutationPlanContributor) {
+		super( persister, factory, mutationPlanContributor );
 		this.jdbcOperations = buildJdbcOperations( persister.getCollectionTableDescriptor(), factory );
 	}
 

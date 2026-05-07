@@ -53,12 +53,15 @@ import static org.hibernate.sql.model.ast.builder.TableMutationBuilder.NULL;
 public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer {
 	protected final OneToManyPersister persister;
 	protected final SessionFactoryImplementor factory;
+	protected final CollectionMutationPlanContributor mutationPlanContributor;
 
 	public AbstractOneToManyDecomposer(
 			OneToManyPersister persister,
-			SessionFactoryImplementor factory) {
+			SessionFactoryImplementor factory,
+			CollectionMutationPlanContributor mutationPlanContributor) {
 		this.persister = persister;
 		this.factory = factory;
+		this.mutationPlanContributor = mutationPlanContributor;
 	}
 
 
@@ -172,6 +175,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		}
 
 		if ( !operations.isEmpty() ) {
+			contributeCollectionChange( collection, key, ordinalBase, session, operations::add );
 			// Attach it to the last operation
 			operations.get( operations.size() - 1 ).setPostExecutionCallback( postExecutionCallback );
 			operations.forEach( operationConsumer );
@@ -250,6 +254,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		}
 
 		if ( !operations.isEmpty() ) {
+			contributeCollectionChange( collection, key, ordinalBase, session, operations::add );
 			// Attach post-execution callback to the last operation
 			operations.get( operations.size() - 1 ).setPostExecutionCallback( postExecutionCallback );
 			operations.forEach( operationConsumer );
@@ -266,6 +271,26 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 
 	private Object affectedOwner(Object affectedOwner, PersistentCollection<?> collection) {
 		return affectedOwner == null ? collection.getOwner() : affectedOwner;
+	}
+
+	private void contributeCollectionChange(
+			PersistentCollection<?> collection,
+			Object key,
+			int ordinalBase,
+			SharedSessionContractImplementor session,
+			Consumer<FlushOperation> operationConsumer) {
+		mutationPlanContributor.contributeCollectionChange(
+				new CollectionMutationPlanContributor.CollectionChangeContext(
+						persister,
+						persister.getCollectionTableDescriptor(),
+						session.getFactory(),
+						null,
+						collection,
+						key,
+						ordinalBase
+				),
+				operationConsumer
+		);
 	}
 
 	private void applyShiftChanges(

@@ -166,8 +166,8 @@ public class BatchingPlanStepExecutor extends AbstractStepExecutor {
 		return staleStateException -> {
 			try {
 				return resultChecker.checkResult( 0, batchPosition, sqlString, session.getFactory() )
-						? staleStateException
-						: null;
+						? null
+						: staleStateException;
 			}
 			catch (HibernateException e) {
 				return e;

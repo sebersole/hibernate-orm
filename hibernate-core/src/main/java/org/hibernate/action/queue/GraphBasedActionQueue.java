@@ -19,6 +19,7 @@ import org.hibernate.action.internal.EntityInsertAction;
 import org.hibernate.action.internal.EntityUpdateAction;
 import org.hibernate.action.internal.OrphanRemovalAction;
 import org.hibernate.action.internal.QueuedOperationCollectionAction;
+import org.hibernate.action.queue.audit.GraphAuditMutationCollector;
 import org.hibernate.action.queue.constraint.ConstraintModel;
 import org.hibernate.action.queue.constraint.DeferrableConstraintMode;
 import org.hibernate.action.queue.support.GraphBasedActionQueueFactory;
@@ -53,6 +54,7 @@ import static org.hibernate.proxy.HibernateProxy.extractLazyInitializer;
 public class GraphBasedActionQueue implements ActionQueue {
 	private final SessionImplementor session;
 	private final FlushCoordinator flushCoordinator;
+	private final GraphAuditMutationCollector auditMutationCollector;
 	private final boolean deferIdentityInserts;
 
 	// Action lists - maintain same order as legacy ActionQueue for proper dependency resolution
@@ -82,6 +84,7 @@ public class GraphBasedActionQueue implements ActionQueue {
 			SessionImplementor session) {
 		this.session = session;
 		this.flushCoordinator = new FlushCoordinator( constraintModel, planningOptions, session );
+		this.auditMutationCollector = new GraphAuditMutationCollector();
 		this.deferIdentityInserts = deferIdentityInserts;
 
 		this.orphanCollectionRemovals = new ArrayList<>();
@@ -115,6 +118,7 @@ public class GraphBasedActionQueue implements ActionQueue {
 			SessionImplementor session) {
 		this.session = session;
 		this.flushCoordinator = flushCoordinator;
+		this.auditMutationCollector = new GraphAuditMutationCollector();
 		this.deferIdentityInserts = deferIdentityInserts;
 
 		this.orphanCollectionRemovals = orphanCollectionRemovals;
@@ -151,6 +155,10 @@ public class GraphBasedActionQueue implements ActionQueue {
 
 	public void setDeferrableConstraintMode(DeferrableConstraintMode deferrableConstraintMode) {
 		flushCoordinator.setDeferrableConstraintMode( deferrableConstraintMode );
+	}
+
+	public GraphAuditMutationCollector getAuditMutationCollector() {
+		return auditMutationCollector;
 	}
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -811,6 +819,7 @@ public class GraphBasedActionQueue implements ActionQueue {
 	/// Execute any registered [org.hibernate.action.spi.BeforeTransactionCompletionProcess].
 	public void beforeTransactionCompletion() {
 		if (!isTransactionCoordinatorShared) {
+			auditMutationCollector.executeAuditMutations( session );
 			transactionCompletionCallbacks.beforeTransactionCompletion();
 			session.getJdbcCoordinator().executeBatch();
 		}
@@ -821,6 +830,7 @@ public class GraphBasedActionQueue implements ActionQueue {
 	/// @param success Was the transaction successful
 	public void afterTransactionCompletion(boolean success) {
 		if (!isTransactionCoordinatorShared) {
+			auditMutationCollector.clear();
 			transactionCompletionCallbacks.afterTransactionCompletion(success);
 		}
 	}

@@ -314,6 +314,9 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 		}
 
 		// Create callback to handle post-execution work (afterAction, cache, events, stats)
+		if ( !operations.isEmpty() ) {
+			contributeCollectionChange( collection, key, ordinalBase, session, operations::add );
+		}
 		final PostCollectionUpdateHandling postUpdateHandling = new PostCollectionUpdateHandling(
 				persister,
 				collection,
@@ -1056,6 +1059,26 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 						key,
 						rowValue,
 						rowPosition,
+						ordinalBase
+				),
+				operationConsumer
+		);
+	}
+
+	private void contributeCollectionChange(
+			PersistentCollection<?> collection,
+			Object key,
+			int ordinalBase,
+			SharedSessionContractImplementor session,
+			Consumer<FlushOperation> operationConsumer) {
+		mutationPlanContributor.contributeCollectionChange(
+				new CollectionMutationPlanContributor.CollectionChangeContext(
+						persister,
+						tableDescriptor,
+						session.getFactory(),
+						jdbcOperations,
+						collection,
+						key,
 						ordinalBase
 				),
 				operationConsumer

@@ -26,8 +26,11 @@ import java.util.function.Consumer;
 public class TablePerSubclassOneToManyDecomposer extends AbstractOneToManyDecomposer {
 	private final IdentityMap<EntityPersister,CollectionJdbcOperations> operationsBySubclass;
 
-	public TablePerSubclassOneToManyDecomposer(OneToManyPersister persister, SessionFactoryImplementor factory) {
-		super( persister, factory );
+	public TablePerSubclassOneToManyDecomposer(
+			OneToManyPersister persister,
+			SessionFactoryImplementor factory,
+			CollectionMutationPlanContributor mutationPlanContributor) {
+		super( persister, factory, mutationPlanContributor );
 
 		var elementDescriptor = (EntityCollectionPart) persister.getAttributeMapping().getElementDescriptor();
 		var associatedType = elementDescriptor.getAssociatedEntityMappingType();
