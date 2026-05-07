@@ -246,33 +246,23 @@ public class CollectionAuditSupport {
 			SharedSessionContractImplementor session,
 			JdbcValueBindings jdbcValueBindings) {
 		final var tableName = auditHelper.getAuditTableMapping().getTableName();
-		final var txId = session.getCurrentTransactionIdentifier();
+		final var txId = session.getCurrentChangesetIdentifier();
 		final var auditMapping = mutationTarget.getTargetPart().getAuditMapping();
 		final var collectionTableName = mutationTarget.getCollectionTableMapping().getTableName();
-		final var revEndMapping = auditMapping.getTransactionEndMapping( collectionTableName );
+		final var revEndMapping = auditMapping.getInvalidatingChangesetIdMapping( collectionTableName );
 
 		if ( !auditHelper.useServerTransactionTimestamps() ) {
 			jdbcValueBindings.bindValue( txId, tableName, revEndMapping.getSelectionExpression(), ParameterUsage.SET );
 		}
 
-		final var revEndTsMapping = auditMapping.getTransactionEndTimestampMapping( collectionTableName );
-		if ( revEndTsMapping != null ) {
-			jdbcValueBindings.bindValue(
-					java.time.Instant.now(),
-					tableName,
-					revEndTsMapping.getSelectionExpression(),
-					ParameterUsage.SET
-			);
-		}
-
-			getRowMutationHelper().bindRestrictValues(
-					collection,
-					ownerId,
+		getRowMutationHelper().bindRestrictValues(
+				collection,
+				ownerId,
 				change.rawEntry(),
 				change.position(),
 				session,
 				jdbcValueBindings
-			);
+		);
 	}
 
 	/// Bind values for one graph-queue validity-strategy transaction-end UPDATE.
@@ -286,33 +276,24 @@ public class CollectionAuditSupport {
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		final var auditMapping = mutationTarget.getTargetPart().getAuditMapping();
 		final var collectionTableName = mutationTarget.getCollectionTableMapping().getTableName();
-		final var revEndMapping = auditMapping.getTransactionEndMapping( collectionTableName );
+		final var revEndMapping = auditMapping.getInvalidatingChangesetIdMapping( collectionTableName );
 
 		if ( !auditHelper.useServerTransactionTimestamps() ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					revEndMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}
 
-		final var revEndTsMapping = auditMapping.getTransactionEndTimestampMapping( collectionTableName );
-		if ( revEndTsMapping != null ) {
-			jdbcValueBindings.bindValue(
-					java.time.Instant.now(),
-					revEndTsMapping.getSelectionExpression(),
-					ParameterUsage.SET
-			);
-		}
-
-			getRowMutationHelper().bindRestrictValues(
-					collection,
-					ownerId,
+		getRowMutationHelper().bindRestrictValues(
+				collection,
+				ownerId,
 				change.rawEntry(),
 				change.position(),
 				session,
 				jdbcValueBindings
-			);
+		);
 	}
 
 	/// Compute row-level audit changes for an existing collection.

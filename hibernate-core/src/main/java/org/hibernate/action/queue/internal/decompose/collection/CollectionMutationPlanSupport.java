@@ -136,7 +136,7 @@ final class CollectionMutationPlanSupport {
 		final TemporalMapping temporalMapping = persister.getAttributeMapping().getTemporalMapping();
 		if ( temporalMapping != null && TemporalMutationHelper.isUsingParameters( session ) ) {
 			valueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getEndingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);

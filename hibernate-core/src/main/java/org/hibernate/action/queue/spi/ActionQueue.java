@@ -7,6 +7,7 @@ package org.hibernate.action.queue.spi;
 import org.hibernate.HibernateException;
 import org.hibernate.Incubating;
 import org.hibernate.PropertyValueException;
+import org.hibernate.Session;
 import org.hibernate.action.internal.BulkOperationCleanupAction;
 import org.hibernate.action.internal.CollectionRecreateAction;
 import org.hibernate.action.internal.CollectionRemoveAction;
@@ -212,6 +213,17 @@ public interface ActionQueue extends TransactionCompletionCallbacks {
 
 	/// Execute actions before transaction completion.
 	void beforeTransactionCompletion();
+
+	/// Record the changelog context generated while binding audit mutations.
+	///
+	/// Implementations that materialize audit work outside the legacy audit work queue use this hook to
+	/// receive the changelog instance and child session created by
+	/// [org.hibernate.audit.spi.ChangelogSupplier].  Implementations without graph-native audit
+	/// handling may ignore it.
+	///
+	/// @param changelog The changelog entity instance
+	/// @param changesetSession The child session used to persist the changelog entity
+	void setAuditChangesetContext(Object changelog, Session changesetSession);
 
 	/// Execute actions after transaction completion.
 	///

@@ -94,10 +94,10 @@ dependencies {
     // errors about mismatched versions if I do not include the runtime
     // dependency here.
     antlr libs.antlr
-    antlr libs.antlrRuntime
+	antlr libs.antlrRuntime
 
-    // JMH benchmarks
-    jmh jdbcLibs.h2
+	// JMH benchmarks
+	jmh libs.jdbc.h2
 }
 
 jar {

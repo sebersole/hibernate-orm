@@ -205,7 +205,7 @@ public class EntityInsertBindPlan implements BindPlan, OperationResultChecker {
 		);
 		if ( tableDescriptor.name().equals( temporalTableName ) ) {
 			valueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getStartingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);

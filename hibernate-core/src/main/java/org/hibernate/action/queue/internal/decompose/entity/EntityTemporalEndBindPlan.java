@@ -91,7 +91,7 @@ public class EntityTemporalEndBindPlan implements BindPlan, OperationResultCheck
 			SharedSessionContractImplementor session) {
 		if ( TemporalMutationHelper.isUsingParameters( session ) ) {
 			valueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getEndingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);

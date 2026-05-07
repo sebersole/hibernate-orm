@@ -11,6 +11,7 @@ import org.hibernate.Session;
 import org.hibernate.annotations.Changelog;
 import org.hibernate.audit.AuditException;
 import org.hibernate.audit.ChangesetListener;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.ServiceRegistry;
@@ -107,7 +108,12 @@ public class ChangelogSupplier<T> implements ChangesetIdentifierSupplier<T> {
 			listener.newChangeset( changelog );
 		}
 		final var childSession = persistChangelog( session, changelog );
-		sessionImpl.getAuditWorkQueue().setChangesetContext( changelog, childSession );
+		if ( sessionImpl instanceof SessionImplementor sessionImplementor ) {
+			sessionImplementor.getActionQueue().setAuditChangesetContext( changelog, childSession );
+		}
+		else {
+			sessionImpl.getAuditWorkQueue().setChangesetContext( changelog, childSession );
+		}
 		return (T) readChangesetId( changelog, persister, sessionImpl );
 	}
 

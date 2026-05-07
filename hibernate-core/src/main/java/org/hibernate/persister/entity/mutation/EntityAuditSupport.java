@@ -89,7 +89,7 @@ public class EntityAuditSupport {
 			auditedPropertyMask[i] = !entityPersister.isPropertyAuditedExcluded( i );
 		}
 		this.useServerTransactionTimestamps =
-				factory.getTransactionIdentifierService().useServerTimestamp( factory.getJdbcServices().getDialect() );
+				factory.getChangesetCoordinator().useServerTimestamp( factory.getJdbcServices().getDialect() );
 		this.currentTimestampFunctionName = useServerTransactionTimestamps
 				? factory.getJdbcServices().getDialect().currentTimestamp()
 				: null;
@@ -205,9 +205,9 @@ public class EntityAuditSupport {
 		final String sourceTableName = sourceMappings[tableIndex].getTableName();
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					tableName,
-					auditMapping.getTransactionIdMapping( sourceTableName ).getSelectionExpression(),
+					auditMapping.getChangesetIdMapping( sourceTableName ).getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}
@@ -233,26 +233,16 @@ public class EntityAuditSupport {
 		final EntityTableMapping[] sourceMappings = entityPersister.getTableMappings();
 		final String tableName = auditTableMappings[tableIndex].getTableName();
 		final String sourceTableName = sourceMappings[tableIndex].getTableName();
-		final var revEndMapping = auditMapping.getTransactionEndMapping( sourceTableName );
+		final var revEndMapping = auditMapping.getInvalidatingChangesetIdMapping( sourceTableName );
 		if ( revEndMapping == null ) {
 			return;
 		}
 
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					tableName,
 					revEndMapping.getSelectionExpression(),
-					ParameterUsage.SET
-			);
-		}
-
-		final var revEndTsMapping = auditMapping.getTransactionEndTimestampMapping( sourceTableName );
-		if ( revEndTsMapping != null ) {
-			jdbcValueBindings.bindValue(
-					java.time.Instant.now(),
-					tableName,
-					revEndTsMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}
@@ -312,8 +302,8 @@ public class EntityAuditSupport {
 		final String sourceTableName = sourceMappings[tableIndex].getTableName();
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
-					auditMapping.getTransactionIdMapping( sourceTableName ).getSelectionExpression(),
+					session.getCurrentChangesetIdentifier(),
+					auditMapping.getChangesetIdMapping( sourceTableName ).getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}
@@ -337,24 +327,15 @@ public class EntityAuditSupport {
 		}
 		final EntityTableMapping[] sourceMappings = entityPersister.getTableMappings();
 		final String sourceTableName = sourceMappings[tableIndex].getTableName();
-		final var revEndMapping = auditMapping.getTransactionEndMapping( sourceTableName );
+		final var revEndMapping = auditMapping.getInvalidatingChangesetIdMapping( sourceTableName );
 		if ( revEndMapping == null ) {
 			return;
 		}
 
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					revEndMapping.getSelectionExpression(),
-					ParameterUsage.SET
-			);
-		}
-
-		final var revEndTsMapping = auditMapping.getTransactionEndTimestampMapping( sourceTableName );
-		if ( revEndTsMapping != null ) {
-			jdbcValueBindings.bindValue(
-					java.time.Instant.now(),
-					revEndTsMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}
@@ -444,7 +425,7 @@ public class EntityAuditSupport {
 			}
 
 			final var sourceTableName = sourceMapping.getTableName();
-			final var txIdMapping = auditMapping.getTransactionIdMapping( sourceTableName );
+			final var txIdMapping = auditMapping.getChangesetIdMapping( sourceTableName );
 			final var modTypeMapping = auditMapping.getModificationTypeMapping( sourceTableName );
 			insertBuilder.addColumnAssignment( txIdMapping, useServerTransactionTimestamps ? currentTimestampFunctionName : "?" );
 			if ( modTypeMapping != null ) {
@@ -471,17 +452,12 @@ public class EntityAuditSupport {
 				continue;
 			}
 			final String sourceTableName = sourceMappings[i].getTableName();
-			final var revEndMapping = auditMapping.getTransactionEndMapping( sourceTableName );
+			final var revEndMapping = auditMapping.getInvalidatingChangesetIdMapping( sourceTableName );
 			if ( revEndMapping == null ) {
 				continue;
 			}
 			final var updateBuilder = new TableUpdateBuilderStandard<>( entityPersister, auditTableMappings[i], factory );
 			updateBuilder.addColumnAssignment( revEndMapping, useServerTransactionTimestamps ? currentTimestampFunctionName : "?" );
-
-			final var revEndTsMapping = auditMapping.getTransactionEndTimestampMapping( sourceTableName );
-			if ( revEndTsMapping != null ) {
-				updateBuilder.addColumnAssignment( revEndTsMapping, "?" );
-			}
 
 			sourceMappings[i].getKeyMapping().forEachKeyColumn(
 					(position, keyColumn) -> updateBuilder.addKeyRestrictionBinding( keyColumn )

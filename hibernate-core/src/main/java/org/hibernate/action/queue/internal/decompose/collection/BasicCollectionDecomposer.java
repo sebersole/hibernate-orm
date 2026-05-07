@@ -1241,7 +1241,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				&& session.getFactory().getSessionFactoryOptions().getTemporalTableStrategy() == SINGLE_TABLE
 				&& TemporalMutationHelper.isUsingParameters( session ) ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getStartingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);

@@ -4,20 +4,25 @@
  */
 package org.hibernate.action.queue.internal.audit;
 
-import org.hibernate.action.queue.spi.plan.FlushOperation;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import org.hibernate.Session;
 import org.hibernate.action.queue.spi.MutationKind;
 import org.hibernate.action.queue.spi.bind.BindPlan;
 import org.hibernate.action.queue.spi.bind.JdbcValueBindings;
 import org.hibernate.action.queue.spi.bind.OperationResultChecker;
 import org.hibernate.action.queue.internal.exec.PlanStepExecutorFactory;
 import org.hibernate.action.queue.spi.plan.FlushOperation;
+import org.hibernate.audit.EntityTrackingChangesetListener;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.audit.spi.AuditChangeSet;
+import org.hibernate.audit.spi.ChangelogSupplier;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.EntityKey;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -31,6 +36,8 @@ import org.hibernate.persister.collection.mutation.CollectionAuditSupport.AuditC
 /// @author Steve Ebersole
 public class GraphAuditMutationCollector {
 	private final AuditChangeSet<EntityAuditSupport, CollectionAuditSupport> changeSet = new AuditChangeSet<>();
+	private Object changelog;
+	private @Nullable Session changesetSession;
 
 	public void entityChanged(
 			EntityKey entityKey,
@@ -54,10 +61,21 @@ public class GraphAuditMutationCollector {
 		return !changeSet.isEmpty();
 	}
 
+	public void setChangesetContext(Object changelog, Session changesetSession) {
+		this.changelog = changelog;
+		this.changesetSession = changesetSession;
+	}
+
 	public void executeAuditMutations(SharedSessionContractImplementor session) {
 		if ( changeSet.isEmpty() ) {
 			return;
 		}
+
+		// Audit row bind plans need the current changeset id.  When the id is backed by
+		// a @Changelog, resolving it persists the changelog row through a child session.
+		// Do that before creating audit-row JDBC batches so the nested changelog insert cannot
+		// execute and release an empty parent batch before the audit row is added to it.
+		session.getCurrentChangesetIdentifier();
 
 		final List<AuditChangeSet.EntityChange<EntityAuditSupport>> entityChanges = changeSet.entityChanges();
 		final List<AuditChangeSet.CollectionChange<CollectionAuditSupport>> collectionChanges =
@@ -73,14 +91,75 @@ public class GraphAuditMutationCollector {
 				executor.execute( operations, null, null );
 				executor.finishUp();
 			}
+			executeChangesetCallbacks( entityChanges, session );
 		}
 		finally {
-			changeSet.clear();
+			clear();
 		}
 	}
 
 	public void clear() {
 		changeSet.clear();
+		changelog = null;
+		changesetSession = null;
+	}
+
+	private void executeChangesetCallbacks(
+			List<AuditChangeSet.EntityChange<EntityAuditSupport>> entityChanges,
+			SharedSessionContractImplementor session) {
+		if ( changelog == null || entityChanges.isEmpty() ) {
+			return;
+		}
+
+		final var supplier = ChangelogSupplier.resolve( session.getFactory().getServiceRegistry() );
+		final var listener = resolveTrackingListener( supplier );
+		if ( listener != null ) {
+			for ( var change : entityChanges ) {
+				final var entityKey = change.entityKey();
+				listener.entityChanged(
+						entityKey.getPersister().getMappedClass(),
+						entityKey.getIdentifier(),
+						change.modificationType(),
+						changelog
+				);
+			}
+		}
+		populateModifiedEntityNames( supplier, entityChanges, session );
+	}
+
+	private void populateModifiedEntityNames(
+			@Nullable ChangelogSupplier<?> supplier,
+			List<AuditChangeSet.EntityChange<EntityAuditSupport>> entityChanges,
+			SharedSessionContractImplementor session) {
+		if ( supplier == null || supplier.getModifiedEntitiesProperty() == null ) {
+			return;
+		}
+
+		final var persister = session.getEntityPersister(
+				supplier.getChangelogClass().getName(),
+				changelog
+		);
+		final var attr = persister.findAttributeMapping( supplier.getModifiedEntitiesProperty() );
+		//noinspection unchecked
+		var entityNames = (Set<String>) persister.getValue( changelog, attr.getStateArrayPosition() );
+		if ( entityNames == null ) {
+			entityNames = new HashSet<>();
+			persister.setValue( changelog, attr.getStateArrayPosition(), entityNames );
+		}
+		for ( var change : entityChanges ) {
+			entityNames.add( change.entityKey().getEntityName() );
+		}
+		if ( changesetSession != null ) {
+			changesetSession.flush();
+		}
+	}
+
+	private static @Nullable EntityTrackingChangesetListener resolveTrackingListener(
+			@Nullable ChangelogSupplier<?> supplier) {
+		if ( supplier != null && supplier.getListener() instanceof EntityTrackingChangesetListener listener ) {
+			return listener;
+		}
+		return null;
 	}
 
 	private void createEntityTransactionEndOperations(

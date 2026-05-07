@@ -21,6 +21,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.HibernateException;
 import org.hibernate.Internal;
 import org.hibernate.PropertyValueException;
+import org.hibernate.Session;
 import org.hibernate.TransientPropertyValueException;
 import org.hibernate.action.internal.AbstractEntityInsertAction;
 import org.hibernate.action.internal.BulkOperationCleanupAction;
@@ -559,6 +560,11 @@ public class ActionQueueLegacy implements org.hibernate.action.queue.spi.ActionQ
 			// One such pending batch could be the pessimistic version increment for an entity
 			session.getJdbcCoordinator().executeBatch();
 		}
+	}
+
+	@Override
+	public void setAuditChangesetContext(Object changelog, Session changesetSession) {
+		session.getAuditWorkQueue().setChangesetContext( changelog, changesetSession );
 	}
 
 	/**

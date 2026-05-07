@@ -800,7 +800,7 @@ public class HistoryEntityMutationPlanContributor implements EntityMutationPlanC
 			SharedSessionContractImplementor session) {
 		if ( TemporalMutationHelper.isUsingParameters( session ) ) {
 			valueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getStartingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);
@@ -812,7 +812,7 @@ public class HistoryEntityMutationPlanContributor implements EntityMutationPlanC
 			SharedSessionContractImplementor session) {
 		if ( TemporalMutationHelper.isUsingParameters( session ) ) {
 			valueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
+					session.getCurrentChangesetIdentifier(),
 					temporalMapping.getEndingColumnMapping().getSelectionExpression(),
 					ParameterUsage.SET
 			);

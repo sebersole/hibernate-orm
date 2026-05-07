@@ -112,8 +112,8 @@ final class AuditCollectionRowMutationHelper {
 
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentTransactionIdentifier(),
-					transactionIdMapping.getSelectionExpression(),
+					session.getCurrentChangesetIdentifier(),
+					changesetIdMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
 		}

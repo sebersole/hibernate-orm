@@ -175,7 +175,7 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 			bindRowValues( jdbcValueBindings, session );
 			if ( TemporalMutationHelper.isUsingParameters( session ) ) {
 				jdbcValueBindings.bindValue(
-						session.getCurrentTransactionIdentifier(),
+						session.getCurrentChangesetIdentifier(),
 						temporalMapping.getStartingColumnMapping().getSelectionExpression(),
 						ParameterUsage.SET
 				);
