@@ -106,10 +106,11 @@ public class OneToManyPersister extends AbstractCollectionPersister {
 
 		rowMutationOperations = buildRowMutationOperations();
 		stateManagement = collectionBinding.getStateManagement();
-		insertRowsCoordinator = stateManagement.createInsertRowsCoordinator( this );
-		updateRowsCoordinator = stateManagement.createUpdateRowsCoordinator( this );
-		deleteRowsCoordinator = stateManagement.createDeleteRowsCoordinator( this );
-		removeCoordinator = stateManagement.createRemoveCoordinator( this );
+		final var legacyIntegration = stateManagement.getLegacyIntegration();
+		insertRowsCoordinator = legacyIntegration.createInsertRowsCoordinator( this );
+		updateRowsCoordinator = legacyIntegration.createUpdateRowsCoordinator( this );
+		deleteRowsCoordinator = legacyIntegration.createDeleteRowsCoordinator( this );
+		removeCoordinator = legacyIntegration.createRemoveCoordinator( this );
 		writeIndexCoordinator = buildWriteIndexCoordinator();
 	}
 
@@ -134,9 +135,11 @@ public class OneToManyPersister extends AbstractCollectionPersister {
 	}
 
 	protected CollectionDecomposer buildCollectionDecomposer() {
+		final var mutationPlanContributor = stateManagement.getGraphIntegration()
+				.createCollectionMutationPlanContributor( this );
 		return useTablePerSubclassDecomposition
-				? new TablePerSubclassOneToManyDecomposer( this, getFactory(), stateManagement.createCollectionMutationPlanContributor( this ) )
-				: new StandardOneToManyDecomposer( this, getFactory(), stateManagement.createCollectionMutationPlanContributor( this ) );
+				? new TablePerSubclassOneToManyDecomposer( this, getFactory(), mutationPlanContributor )
+				: new StandardOneToManyDecomposer( this, getFactory(), mutationPlanContributor );
 	}
 
 	public boolean isDoWriteEvenWhenInverse() {

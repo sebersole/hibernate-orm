@@ -89,10 +89,11 @@ public class BasicCollectionPersister extends AbstractCollectionPersister {
 		this.rowMutationOperations = buildRowMutationOperations();
 
 		stateManagement = collectionBinding.getStateManagement();
-		this.insertRowsCoordinator = stateManagement.createInsertRowsCoordinator( this );
-		this.updateCoordinator = stateManagement.createUpdateRowsCoordinator( this );
-		this.deleteRowsCoordinator = stateManagement.createDeleteRowsCoordinator( this );
-		this.removeCoordinator = stateManagement.createRemoveCoordinator( this );
+		final var legacyIntegration = stateManagement.getLegacyIntegration();
+		this.insertRowsCoordinator = legacyIntegration.createInsertRowsCoordinator( this );
+		this.updateCoordinator = legacyIntegration.createUpdateRowsCoordinator( this );
+		this.deleteRowsCoordinator = legacyIntegration.createDeleteRowsCoordinator( this );
+		this.removeCoordinator = legacyIntegration.createRemoveCoordinator( this );
 	}
 
 	@Override
@@ -112,7 +113,7 @@ public class BasicCollectionPersister extends AbstractCollectionPersister {
 		return new BasicCollectionDecomposer(
 				this,
 				getFactory(),
-				stateManagement.createCollectionMutationPlanContributor( this )
+				stateManagement.getGraphIntegration().createCollectionMutationPlanContributor( this )
 		);
 	}
 

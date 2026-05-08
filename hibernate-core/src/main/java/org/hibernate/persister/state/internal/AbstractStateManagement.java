@@ -6,7 +6,6 @@ package org.hibernate.persister.state.internal;
 
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.RootClass;
-import org.hibernate.action.queue.spi.decompose.entity.EntityMutationPlanContributor;
 import org.hibernate.metamodel.mapping.AuxiliaryMapping;
 import org.hibernate.metamodel.mapping.PluralAttributeMapping;
 import org.hibernate.metamodel.mapping.SingularAttributeMapping;
@@ -42,6 +41,7 @@ import org.hibernate.persister.entity.mutation.UpdateCoordinator;
 import org.hibernate.persister.entity.mutation.UpdateCoordinatorNoOp;
 import org.hibernate.persister.entity.mutation.UpdateCoordinatorStandard;
 import org.hibernate.persister.state.spi.StateManagement;
+import org.hibernate.persister.state.spi.StateManagementLegacyIntegration;
 
 import static org.hibernate.internal.util.collections.ArrayHelper.isAnyTrue;
 
@@ -50,17 +50,14 @@ import static org.hibernate.internal.util.collections.ArrayHelper.isAnyTrue;
  *
  * @since 7.4
  */
-public abstract class AbstractStateManagement implements StateManagement {
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Graph ActionQueue integration
-
-	@Override
-	public EntityMutationPlanContributor createEntityMutationPlanContributor(EntityPersister persister) {
-		return EntityMutationPlanContributor.STANDARD;
-	}
-
+public abstract class AbstractStateManagement implements StateManagement, StateManagementLegacyIntegration {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Legacy ActionQueue integration
+
+	@Override
+	public StateManagementLegacyIntegration getLegacyIntegration() {
+		return this;
+	}
 
 	@Override
 	public InsertCoordinator createInsertCoordinator(EntityPersister persister) {

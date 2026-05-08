@@ -121,6 +121,7 @@ import org.hibernate.metamodel.mapping.EntityRowIdMapping;
 import org.hibernate.metamodel.mapping.EntityVersionMapping;
 import org.hibernate.metamodel.mapping.ForeignKeyDescriptor;
 import org.hibernate.metamodel.mapping.JdbcMapping;
+import org.hibernate.metamodel.mapping.LegacyAuxiliaryMutationSupport;
 import org.hibernate.metamodel.mapping.ManagedMappingType;
 import org.hibernate.metamodel.mapping.MappingType;
 import org.hibernate.metamodel.mapping.ModelPart;
@@ -3430,7 +3431,7 @@ public abstract class AbstractEntityPersister
 		return new InsertDecomposer(
 				this,
 				factory,
-				stateManagement.createEntityMutationPlanContributor( this )
+				stateManagement.getGraphIntegration().createEntityMutationPlanContributor( this )
 		);
 	}
 
@@ -3438,7 +3439,7 @@ public abstract class AbstractEntityPersister
 		return new UpdateDecomposer(
 				this,
 				factory,
-				stateManagement.createEntityMutationPlanContributor( this )
+				stateManagement.getGraphIntegration().createEntityMutationPlanContributor( this )
 		);
 	}
 
@@ -3446,7 +3447,7 @@ public abstract class AbstractEntityPersister
 		return new DeleteDecomposerStandard(
 				this,
 				factory,
-				stateManagement.createEntityMutationPlanContributor( this )
+				stateManagement.getGraphIntegration().createEntityMutationPlanContributor( this )
 		);
 	}
 
@@ -3481,10 +3482,11 @@ public abstract class AbstractEntityPersister
 					createGeneratedValuesProcessor( UPDATE, updateGeneratedAttributes );
 		}
 
-		insertCoordinator = stateManagement.createInsertCoordinator( this );
-		updateCoordinator = stateManagement.createUpdateCoordinator( this );
-		deleteCoordinator = stateManagement.createDeleteCoordinator( this );
-		mergeCoordinator = stateManagement.createMergeCoordinator( this );
+		final var legacyIntegration = stateManagement.getLegacyIntegration();
+		insertCoordinator = legacyIntegration.createInsertCoordinator( this );
+		updateCoordinator = legacyIntegration.createUpdateCoordinator( this );
+		deleteCoordinator = legacyIntegration.createDeleteCoordinator( this );
+		mergeCoordinator = legacyIntegration.createMergeCoordinator( this );
 
 		//select SQL
 		sqlVersionSelectString = generateSelectVersionString();
@@ -4002,8 +4004,8 @@ public abstract class AbstractEntityPersister
 
 	@Override
 	public void addAuxiliaryToInsertGroup(MutationGroupBuilder insertGroupBuilder) {
-		if ( auxiliaryMapping != null ) {
-			auxiliaryMapping.addToInsertGroup( insertGroupBuilder, this );
+		if ( auxiliaryMapping instanceof LegacyAuxiliaryMutationSupport legacyMutationSupport ) {
+			legacyMutationSupport.addToInsertGroup( insertGroupBuilder, this );
 		}
 	}
 

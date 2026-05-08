@@ -446,8 +446,13 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 	}
 
 	/// Plan all mutation operations based on a pre-computed change set.
-	/// This is much more efficient than the original approach of multiple O(N²) scans.
-	/// Processes changes in three phases: DELETE → UPDATE_ORDER → INSERT
+	///
+	/// This path avoids multiple collection scans by consuming removals, index
+	/// shifts, additions, and value changes from the change set.  The produced
+	/// operations are assigned ordinals from the collection mutation slots so
+	/// deletes happen before row/order updates, and inserts happen after them.
+	/// State-management contributors may replace or add operations for each
+	/// logical row change.
 	private void planOperationsFromChangeSet(
 			CollectionChangeSet changeSet,
 			PersistentCollection<?> collection,
@@ -460,37 +465,32 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 		final var insertRowPlan = jdbcOperations.insertRowPlan();
 		final var orderUpdatePlan = jdbcOperations.updateIndexPlan();
 
-		// Phase 1: DELETE removed elements
+		// Removed rows are planned in the DELETE slot.
 		if ( deleteRowPlan != null && !changeSet.removals().isEmpty() ) {
 			final int deleteOrdinal = calculateOrdinal( ordinalBase, Slot.DELETE );
 			for ( CollectionChangeSet.Removal removal : changeSet.removals() ) {
-				// Removal implements SnapshotPositioned, so pass directly
-				final BindPlan bindPlan = new SingleRowDeleteBindPlan(
-						persister,
-						collection,
-						key,
-						removal,  // Implements SnapshotPositioned
-						deleteRowPlan.restrictions()
-				);
-
 				operationConsumer.accept( new FlushOperation(
 						tableDescriptor,
 						MutationKind.DELETE,
 						deleteRowPlan.jdbcOperation(),
-						bindPlan,
+						new SingleRowDeleteBindPlan(
+								persister,
+								collection,
+								key,
+								removal,
+								deleteRowPlan.restrictions()
+						),
 						deleteOrdinal,
 						"DeleteRow[" + removal.snapshotIndex() + "](" + persister.getRolePath() + ")"
 				) );
 			}
 		}
 
-		// Phase 2: Handle position shifts
-		// Strategy depends on whether we can safely update the element value at each position:
-		// - WITH custom SQL: Use VALUE updates so custom SQL receives element values, matching legacy behavior
-		// - Plain non-indexed many-to-many collections without declared unique constraints: use VALUE updates
-		// - Otherwise: use ORDER updates with two-phase temp values
-		// Note: for reasons discussed on PersistentMap#computeEntityCollectionChangeSet and
-		// 		#computeElementCollectionChangeSet, shifts are not supported for Maps only Lists
+		// Position shifts either update the value stored at each position, or
+		// update the index/order column itself.  Value updates are needed for
+		// custom SQL and are safe for some many-to-many shapes.  Otherwise, order
+		// updates use temporary positions to avoid unique-key conflicts.  The
+		// change-set builders only report shifts for list-like collections.
 		if ( !changeSet.shifts().isEmpty() ) {
 			final var updateRowPlan = jdbcOperations.updateRowPlan();
 			final boolean hasCustomSql = tableDescriptor.updateDetails().getCustomSql() != null;
@@ -506,31 +506,28 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				final int updateOrdinal = calculateOrdinal( ordinalBase, Slot.UPDATE );
 
 				for ( CollectionChangeSet.Shift shift : changeSet.shifts() ) {
-					// Update the element VALUE at the new position
-					// This is "UPDATE SET element = X WHERE position = Y"
-					final BindPlan bindPlan = new SingleRowUpdateBindPlan(
-							persister,
-							collection,
-							key,
-							shift.element(),
-							(int) shift.currentIndex(),  // Use current position for both binding and restrictions
-							updateRowPlan.values(),
-							updateRowPlan.restrictions()
-					);
-
 					operationConsumer.accept( new FlushOperation(
 							tableDescriptor,
 							MutationKind.UPDATE,
 							updateRowPlan.jdbcOperation(),
-							bindPlan,
+							new SingleRowUpdateBindPlan(
+									persister,
+									collection,
+									key,
+									shift.element(),
+									(int) shift.currentIndex(),
+									updateRowPlan.values(),
+									updateRowPlan.restrictions()
+							),
 							updateOrdinal,
 							"UpdateRow[" + shift.snapshotIndex() + "→" + shift.currentIndex() + "](" + persister.getRolePath() + ")"
 					) );
 				}
 			}
 			else if ( orderUpdatePlan != null ) {
-				// WITHOUT custom SQL: Use ORDER updates with two-phase temp values
-				// This handles unique constraints by temporarily moving to safe values
+				// Move shifted rows through temporary order values before assigning
+				// their final values.  The two ordinal buckets preserve ordering
+				// while still allowing batching within each bucket.
 				final List<FlushOperation> tempPhaseOps = new ArrayList<>();
 				final List<FlushOperation> finalPhaseOps = new ArrayList<>();
 
@@ -541,8 +538,6 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 
 				for ( CollectionChangeSet.Shift shift : changeSet.shifts() ) {
 					final int tempPosition = tempOffset + (int) shift.currentIndex();
-
-					// TEMP PHASE: Move from old position to temporary position
 					tempPhaseOps.add( new FlushOperation(
 							tableDescriptor,
 							MutationKind.UPDATE_ORDER,
@@ -552,8 +547,8 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 									collection,
 									key,
 									shift.element(),
-									(int) shift.snapshotIndex(),  // WHERE: old position
-									tempPosition,              // SET: temporary position
+									(int) shift.snapshotIndex(),
+									tempPosition,
 									orderUpdatePlan.values(),
 									orderUpdatePlan.restrictions()
 							),
@@ -561,7 +556,6 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 							"UpdateRowTemp[" + shift.snapshotIndex() + "→" + tempPosition + "](" + persister.getRolePath() + ")"
 					) );
 
-					// FINAL PHASE: Move from temporary position to final position
 					finalPhaseOps.add( new FlushOperation(
 							tableDescriptor,
 							MutationKind.UPDATE_ORDER,
@@ -571,8 +565,8 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 									collection,
 									key,
 									shift.element(),
-									tempPosition,              // WHERE: temporary position
-									(int) shift.currentIndex(),   // SET: final position
+									tempPosition,
+									(int) shift.currentIndex(),
 									orderUpdatePlan.values(),
 									orderUpdatePlan.restrictions()
 							),
@@ -586,41 +580,35 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 			}
 		}
 
-		// Phase 3: INSERT added elements
+		// Added rows are planned in the INSERT slot.
 		if ( insertRowPlan != null && !changeSet.additions().isEmpty() ) {
-				final int insertOrdinal = calculateOrdinal( ordinalBase, Slot.INSERT );
-				for ( CollectionChangeSet.Addition addition : changeSet.additions() ) {
-					// For Maps, create a Map.Entry from (key=addition.index(), value=addition.element())
-					// For Lists, use the element directly and pass the numeric index
-					final boolean isMap = persister.getCollectionSemantics().getCollectionClassification().isMap();
-					final Object rowValue;
-					final int entryIndex;
+			final int insertOrdinal = calculateOrdinal( ordinalBase, Slot.INSERT );
+			for ( CollectionChangeSet.Addition addition : changeSet.additions() ) {
+				final boolean isMap = persister.getCollectionSemantics().getCollectionClassification().isMap();
+				final Object rowValue;
+				final int entryIndex;
 
-					if ( isMap ) {
-						// For Maps: bindInsertRowValues expects a Map.Entry to extract both key and value
-						rowValue = new AbstractMap.SimpleImmutableEntry<>( addition.index(), addition.element() );
-						entryIndex = -1;  // Not used for Maps
-					}
-					else {
-						// For Lists: rowValue is the element, and entryIndex is the position
-						rowValue = addition.element();
-						entryIndex = (Integer) addition.index();
-					}
-
-					final BindPlan bindPlan = new SingleRowInsertBindPlan(
-						persister,
-						insertRowPlan.values(),
-						collection,
-						key,
-						rowValue,
-						entryIndex
-				);
+				if ( isMap ) {
+					rowValue = new AbstractMap.SimpleImmutableEntry<>( addition.index(), addition.element() );
+					entryIndex = -1;
+				}
+				else {
+					rowValue = addition.element();
+					entryIndex = (Integer) addition.index();
+				}
 
 				operationConsumer.accept( new FlushOperation(
 						tableDescriptor,
 						MutationKind.INSERT,
 						insertRowPlan.jdbcOperation(),
-						bindPlan,
+						new SingleRowInsertBindPlan(
+								persister,
+								insertRowPlan.values(),
+								collection,
+								key,
+								rowValue,
+								entryIndex
+						),
 						insertOrdinal,
 						"InsertRow[" + addition.index() + "](" + persister.getRolePath() + ")"
 				) );
@@ -636,8 +624,8 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 			}
 		}
 
-		// Phase 4: VALUE CHANGE for element collections
-		// Update rows where the value changed at the same position/key
+		// Value changes update rows whose key/index is stable but whose element
+		// value changed.
 		final var updateRowPlan = jdbcOperations.updateRowPlan();
 		if ( updateRowPlan != null && !changeSet.valueChanges().isEmpty() ) {
 			final int updateOrdinal = calculateOrdinal( ordinalBase, Slot.UPDATE );
@@ -658,37 +646,31 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 					continue;
 				}
 
-				// For Maps, need to create a Map.Entry with (key, newValue)
-				// For Lists, the index is the position and entry is just the element
 				final Object entry;
 				final int entryIndex;
 
 				if ( persister.getCollectionSemantics().getCollectionClassification().isMap() ) {
-					// For Maps: create Map.Entry(mapKey, newValue)
 					entry = new AbstractMap.SimpleImmutableEntry<>( valueChange.index(), valueChange.newValue() );
-					entryIndex = -1;  // Maps don't use numeric index
+					entryIndex = -1;
 				}
 				else {
-					// For Lists: entry is the element, index is the position
 					entry = valueChange.newValue();
 					entryIndex = (Integer) valueChange.index();
 				}
-
-				final BindPlan bindPlan = new SingleRowUpdateBindPlan(
-						persister,
-						collection,
-						key,
-						entry,
-						entryIndex,
-						updateRowPlan.values(),
-						updateRowPlan.restrictions()
-				);
 
 				operationConsumer.accept( new FlushOperation(
 						tableDescriptor,
 						MutationKind.UPDATE,
 						updateRowPlan.jdbcOperation(),
-						bindPlan,
+						new SingleRowUpdateBindPlan(
+								persister,
+								collection,
+								key,
+								entry,
+								entryIndex,
+								updateRowPlan.values(),
+								updateRowPlan.restrictions()
+						),
 						updateOrdinal,
 						"UpdateValue[" + valueChange.index() + "](" + persister.getRolePath() + ")"
 				) );
@@ -743,17 +725,13 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 			return;
 		}
 
-		// Use two-phase update strategy to avoid unique constraint violations:
-		// Phase 1: Move all shifting elements to temporary positions (no conflicts)
-		// Phase 2: Move from temporary positions to final positions
-		// All operations in each phase have the SAME ordinal, enabling batching
+		// Move shifted rows through temporary order values before assigning
+		// their final values.  Each step uses one ordinal bucket, preserving the
+		// required ordering while still allowing batching within the bucket.
 
 		final List<FlushOperation> finalPhaseOps = new ArrayList<>();
 
-		// All temp-phase operations use same ordinal for batching
 		final var tempPhaseOrdinal = calculateOrdinal( ordinalBase, Slot.UPDATE );
-
-		// All final-phase operations use same ordinal for batching (executes after temp phase)
 		final int finalPhaseOrdinal = tempPhaseOrdinal + 1;
 
 		// Temporary position offset - use high value to avoid conflicts
@@ -777,11 +755,9 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				}
 			}
 
-			// If entity exists in snapshot but at different position, create two-phase UPDATE
 			if ( snapshotPos >= 0 && snapshotPos != currentPos ) {
 				final int tempPosition = tempOffset + currentPos;
 
-				// TEMP PHASE: Move from old position to temporary position
 				operationConsumer.accept( new FlushOperation(
 						tableDescriptor,
 						MutationKind.UPDATE_ORDER,
@@ -791,16 +767,15 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 								collection,
 								key,
 								currentEntity,
-								snapshotPos,     // WHERE: old position
-								tempPosition,    // SET: temporary position
+								snapshotPos,
+								tempPosition,
 								orderUpdatePlan.values(),
 								orderUpdatePlan.restrictions()
 						),
-						tempPhaseOrdinal,  // Same ordinal for all temp ops - enables batching!
+						tempPhaseOrdinal,
 						"UpdateRowTemp[" + snapshotPos + "→" + tempPosition + "](" + persister.getRolePath() + ")"
 				) );
 
-				// FINAL PHASE: Move from temporary position to final position
 				finalPhaseOps.add( new FlushOperation(
 						tableDescriptor,
 						MutationKind.UPDATE_ORDER,
@@ -810,21 +785,20 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 								collection,
 								key,
 								currentEntity,
-								tempPosition,    // WHERE: temporary position
-								currentPos,      // SET: final position
+								tempPosition,
+								currentPos,
 								orderUpdatePlan.values(),
 								orderUpdatePlan.restrictions()
 						),
-						finalPhaseOrdinal,  // Same ordinal for all final ops - enables batching!
+						finalPhaseOrdinal,
 						"UpdateRowFinal[" + tempPosition + "→" + currentPos + "](" + persister.getRolePath() + ")"
 				) );
 			}
 		}
 
-		// All temp-phase operations were already added as we created them - they should come first
-		// for better planning.
-		// Now, add all final-phase operations.
-		// Same ordinals within each phase enable JDBC batching.
+		// Temporary-position operations were emitted immediately.  Append the
+		// final-position operations after them so the ordinal sequence mirrors
+		// the required execution order.
 		finalPhaseOps.forEach( operationConsumer );
 	}
 
@@ -926,20 +900,18 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 					}
 
 					if ( position >= 0 ) {
-						final BindPlan bindPlan = new SingleRowInsertBindPlan(
-								persister,
-								insertRowPlan.values(),
-								collection,
-								key,
-								addedEntity,
-								position
-						);
-
 						operationConsumer.accept( new FlushOperation(
 								tableDescriptor,
 								MutationKind.INSERT,
 								insertRowPlan.jdbcOperation(),
-								bindPlan,
+								new SingleRowInsertBindPlan(
+										persister,
+										insertRowPlan.values(),
+										collection,
+										key,
+										addedEntity,
+										position
+								),
 								insertOrdinal,
 								"InsertRow[" + insertCount + "](" + persister.getRolePath() + ")"
 						) );
@@ -973,20 +945,18 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				final Object entry = entries.next();
 
 				if ( collection.includeInInsert( entry, entryCount, collection, persister.getAttributeMapping() ) ) {
-					final BindPlan bindPlan = new SingleRowInsertBindPlan(
-							persister,
-							insertRowPlan.values(),
-							collection,
-							key,
-							entry,
-							entryCount
-					);
-
 					operationConsumer.accept( new FlushOperation(
 							tableDescriptor,
 							MutationKind.INSERT,
 							insertRowPlan.jdbcOperation(),
-							bindPlan,
+							new SingleRowInsertBindPlan(
+									persister,
+									insertRowPlan.values(),
+									collection,
+									key,
+									entry,
+									entryCount
+							),
 							insertOrdinal,
 							"InsertRow[" + entryCount + "](" + persister.getRolePath() + ")"
 					) );
