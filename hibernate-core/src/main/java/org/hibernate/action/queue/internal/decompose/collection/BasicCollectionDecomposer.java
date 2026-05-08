@@ -39,6 +39,7 @@ import org.hibernate.sql.model.ast.builder.TableDeleteBuilderStandard;
 import org.hibernate.sql.model.ast.builder.TableInsertBuilderStandard;
 import org.hibernate.sql.model.ast.builder.TableUpdateBuilderStandard;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -587,26 +588,26 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 
 		// Phase 3: INSERT added elements
 		if ( insertRowPlan != null && !changeSet.additions().isEmpty() ) {
-			final int insertOrdinal = calculateOrdinal( ordinalBase, Slot.INSERT );
-			for ( CollectionChangeSet.Addition addition : changeSet.additions() ) {
-				// For Maps, create a Map.Entry from (key=addition.index(), value=addition.element())
-				// For Lists, use the element directly and pass the numeric index
-				final boolean isMap = persister.getCollectionSemantics().getCollectionClassification().isMap();
-				final Object rowValue;
-				final int entryIndex;
+				final int insertOrdinal = calculateOrdinal( ordinalBase, Slot.INSERT );
+				for ( CollectionChangeSet.Addition addition : changeSet.additions() ) {
+					// For Maps, create a Map.Entry from (key=addition.index(), value=addition.element())
+					// For Lists, use the element directly and pass the numeric index
+					final boolean isMap = persister.getCollectionSemantics().getCollectionClassification().isMap();
+					final Object rowValue;
+					final int entryIndex;
 
-				if ( isMap ) {
-					// For Maps: bindInsertRowValues expects a Map.Entry to extract both key and value
-					rowValue = Map.entry( addition.index(), addition.element() );
-					entryIndex = -1;  // Not used for Maps
-				}
-				else {
-					// For Lists: rowValue is the element, and entryIndex is the position
-					rowValue = addition.element();
-					entryIndex = (Integer) addition.index();
-				}
+					if ( isMap ) {
+						// For Maps: bindInsertRowValues expects a Map.Entry to extract both key and value
+						rowValue = new AbstractMap.SimpleImmutableEntry<>( addition.index(), addition.element() );
+						entryIndex = -1;  // Not used for Maps
+					}
+					else {
+						// For Lists: rowValue is the element, and entryIndex is the position
+						rowValue = addition.element();
+						entryIndex = (Integer) addition.index();
+					}
 
-				final BindPlan bindPlan = new SingleRowInsertBindPlan(
+					final BindPlan bindPlan = new SingleRowInsertBindPlan(
 						persister,
 						insertRowPlan.values(),
 						collection,
@@ -664,7 +665,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 
 				if ( persister.getCollectionSemantics().getCollectionClassification().isMap() ) {
 					// For Maps: create Map.Entry(mapKey, newValue)
-					entry = Map.entry( valueChange.index(), valueChange.newValue() );
+					entry = new AbstractMap.SimpleImmutableEntry<>( valueChange.index(), valueChange.newValue() );
 					entryIndex = -1;  // Maps don't use numeric index
 				}
 				else {

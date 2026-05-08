@@ -7,7 +7,7 @@ package org.hibernate.action.queue.internal.decompose.collection;
 import org.hibernate.action.queue.spi.decompose.collection.CollectionJdbcOperations;
 import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPlanContributor;
 
-import java.util.Map;
+import java.util.AbstractMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -134,7 +134,7 @@ public class TemporalCollectionMutationPlanContributor implements CollectionMuta
 		final Object insertRowValue;
 		final int entryIndex;
 		if ( isMap ) {
-			insertRowValue = Map.entry( valueChange.index(), valueChange.newValue() );
+			insertRowValue = new AbstractMap.SimpleImmutableEntry<>( valueChange.index(), valueChange.newValue() );
 			entryIndex = -1;
 		}
 		else {
