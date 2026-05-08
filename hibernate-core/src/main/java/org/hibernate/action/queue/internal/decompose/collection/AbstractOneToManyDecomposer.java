@@ -245,7 +245,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		}
 		else {
 			final var changeSet = collection.getChangeSet( persister );
-			if ( changeSet != null && !changeSet.isEmpty() && persister.hasIndex() ) {
+			if ( changeSet != null && !changeSet.isEmpty() && persister.hasIndex() && hasNumericChangeSetIndexes( changeSet ) ) {
 				applyIndexedChangeSet( changeSet, collection, key, ordinalBase, session, operations::add );
 			}
 			else {
@@ -269,6 +269,25 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 					postExecutionCallback
 			) );
 		}
+	}
+
+	private boolean hasNumericChangeSetIndexes(CollectionChangeSet changeSet) {
+		for ( CollectionChangeSet.Removal removal : changeSet.removals() ) {
+			if ( !( removal.snapshotIndex() instanceof Number ) ) {
+				return false;
+			}
+		}
+		for ( CollectionChangeSet.Addition addition : changeSet.additions() ) {
+			if ( !( addition.index() instanceof Number ) ) {
+				return false;
+			}
+		}
+		for ( CollectionChangeSet.Shift shift : changeSet.shifts() ) {
+			if ( !( shift.snapshotIndex() instanceof Number ) || !( shift.currentIndex() instanceof Number ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private Object affectedOwner(Object affectedOwner, PersistentCollection<?> collection) {
