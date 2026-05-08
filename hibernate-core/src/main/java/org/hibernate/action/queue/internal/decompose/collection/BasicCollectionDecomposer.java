@@ -65,6 +65,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 	private final CollectionTableDescriptor tableDescriptor;
 	private final CollectionMutationPlanContributor mutationPlanContributor;
 	private final CollectionJdbcOperations jdbcOperations;
+	private final boolean tableHasNonPrimaryUniqueConstraints;
 
 	public BasicCollectionDecomposer(
 			BasicCollectionPersister persister,
@@ -82,6 +83,11 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 		this.tableDescriptor = persister.getCollectionTableDescriptor();
 		this.mutationPlanContributor = mutationPlanContributor;
 		this.jdbcOperations = buildJdbcOperations( factory );
+		this.tableHasNonPrimaryUniqueConstraints = factory.getMappingMetamodel()
+				.getConstraintModel()
+				.getUniqueConstraintsForTable( tableDescriptor.name() )
+				.stream()
+				.anyMatch( uniqueConstraint -> !uniqueConstraint.isPrimaryKey() );
 	}
 
 	@Override
@@ -489,10 +495,12 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 			final var updateRowPlan = jdbcOperations.updateRowPlan();
 			final boolean hasCustomSql = tableDescriptor.updateDetails().getCustomSql() != null;
 			final boolean indexedEntityCollection = persister.getElementType().isEntityType()
-					&& persister.hasIndex()
-					&& orderUpdatePlan != null;
+					&& persister.hasIndex();
 			final boolean canUpdateValuesAtPositions = hasCustomSql
-					|| !indexedEntityCollection && persister.isManyToMany() && !tableDescriptor.hasUniqueConstraints();
+					&& ( !indexedEntityCollection
+							|| persister.isManyToMany() && !tableHasNonPrimaryUniqueConstraints )
+					|| canUpdateIndexedManyToManyValuesAtPositions( changeSet, updateRowPlan )
+					|| !indexedEntityCollection && persister.isManyToMany() && !tableHasNonPrimaryUniqueConstraints;
 
 			if ( canUpdateValuesAtPositions && updateRowPlan != null ) {
 				final int updateOrdinal = calculateOrdinal( ordinalBase, Slot.UPDATE );
@@ -684,6 +692,18 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				) );
 			}
 		}
+	}
+
+	private boolean canUpdateIndexedManyToManyValuesAtPositions(
+			CollectionChangeSet changeSet,
+			CollectionJdbcOperations.UpdateRowPlan updateRowPlan) {
+		return updateRowPlan != null
+				&& persister.isManyToMany()
+				&& persister.getElementType().isEntityType()
+				&& persister.hasIndex()
+				&& !tableHasNonPrimaryUniqueConstraints
+				&& changeSet.removals().isEmpty()
+				&& changeSet.additions().isEmpty();
 	}
 
 	private void planOrderOnlyUpdateOperations(

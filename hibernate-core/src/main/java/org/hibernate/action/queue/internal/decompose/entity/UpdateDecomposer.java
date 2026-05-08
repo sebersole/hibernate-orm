@@ -52,6 +52,7 @@ import java.util.function.Consumer;
 
 import static org.hibernate.action.queue.internal.decompose.entity.DecompositionHelper.hasValueGenerationOnExecution;
 import static org.hibernate.generator.EventType.UPDATE;
+import static org.hibernate.internal.CoreMessageLogger.CORE_LOGGER;
 import static org.hibernate.internal.util.collections.ArrayHelper.EMPTY_INT_ARRAY;
 import static org.hibernate.internal.util.collections.ArrayHelper.join;
 import static org.hibernate.internal.util.collections.ArrayHelper.trim;
@@ -226,6 +227,7 @@ public class UpdateDecomposer extends AbstractDecomposer<EntityUpdateAction> {
 
 		// Determine which fields are updateable
 		final boolean[] updateability = entityPersister.getPropertyUpdateability();
+		logImmutablePropertyModifications( dirtyAttributeIndexes, updateability );
 
 		// Create values analysis to track which tables need updating
 		final var valuesAnalysis = new UpdateValuesAnalysis(
@@ -335,6 +337,21 @@ public class UpdateDecomposer extends AbstractDecomposer<EntityUpdateAction> {
 		);
 
 		emitTailOperations( previousOperation, additionalOperations, postUpdateHandling, ordinalBase, operationConsumer );
+	}
+
+	private void logImmutablePropertyModifications(int[] dirtyAttributeIndexes, boolean[] updateability) {
+		if ( dirtyAttributeIndexes == null ) {
+			return;
+		}
+		for ( int dirtyAttributeIndex : dirtyAttributeIndexes ) {
+			if ( !updateability[dirtyAttributeIndex] ) {
+				final AttributeMapping attributeMapping = entityPersister.getAttributeMapping( dirtyAttributeIndex );
+				CORE_LOGGER.ignoreImmutablePropertyModification(
+						attributeMapping.getAttributeName(),
+						entityPersister.getEntityName()
+				);
+			}
+		}
 	}
 
 	private void emitTailOperations(
