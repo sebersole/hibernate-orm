@@ -7,9 +7,6 @@ package org.hibernate.action.queue.internal.decompose.collection;
 import org.hibernate.action.queue.spi.decompose.collection.CollectionJdbcOperations;
 import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPlanContributor;
 import org.hibernate.action.queue.spi.decompose.collection.OneToManyDecomposer;
-import org.hibernate.action.queue.spi.decompose.collection.CollectionJdbcOperations;
-import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPlanContributor;
-import org.hibernate.action.queue.spi.decompose.collection.OneToManyDecomposer;
 
 import org.hibernate.action.internal.CollectionRecreateAction;
 import org.hibernate.action.internal.CollectionUpdateAction;
@@ -139,7 +136,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				// For one-to-many collections, the "insert" is actually an UPDATE that sets the FK
 				// Use MutationKind.UPDATE so it's ordered AFTER entity INSERTs via FK edges
 				final FlushOperation plannedOp = new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						MutationKind.UPDATE,
 						insertRowPlan.jdbcOperation(),
 						bindPlan,
@@ -163,7 +160,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 
 
 				var  writeIndexFlushOp = new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						MutationKind.UPDATE_ORDER,
 						jdbcOperations.updateIndexPlan().jdbcOperation(),
 						writeIndexBindPlan,
@@ -248,8 +245,8 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		}
 		else {
 			final var changeSet = collection.getChangeSet( persister );
-			if ( changeSet != null && !changeSet.shifts().isEmpty() && persister.hasIndex() ) {
-				applyShiftChanges( changeSet, collection, key, ordinalBase, session, operations::add );
+			if ( changeSet != null && !changeSet.isEmpty() && persister.hasIndex() ) {
+				applyIndexedChangeSet( changeSet, collection, key, ordinalBase, session, operations::add );
 			}
 			else {
 				applyUpdateRemovals( collection, key, ordinalBase, session, operations::add );
@@ -298,6 +295,40 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		);
 	}
 
+	private void applyIndexedChangeSet(
+			CollectionChangeSet changeSet,
+			PersistentCollection<?> collection,
+			Object key,
+			int ordinalBase,
+			SharedSessionContractImplementor session,
+			Consumer<FlushOperation> operationConsumer) {
+		final int deleteOrdinal = calculateOrdinal( ordinalBase, Slot.DELETE );
+		for ( CollectionChangeSet.Removal removal : changeSet.removals() ) {
+			final var jdbcOperations = selectJdbcOperations( removal.element(), session );
+			assert jdbcOperations != null;
+			final var deleteRowPlan = jdbcOperations.deleteRowPlan();
+			if ( deleteRowPlan != null ) {
+				operationConsumer.accept( new FlushOperation(
+						jdbcOperations.tableDescriptor(),
+						// technically an UPDATE
+						MutationKind.UPDATE,
+						deleteRowPlan.jdbcOperation(),
+						new SingleRowDeleteBindPlan(
+								persister,
+								collection,
+								key,
+								removal.element(),
+								deleteRowPlan.restrictions()
+						),
+						deleteOrdinal,
+						"DeleteRow[" + removal.snapshotIndex() + "](" + persister.getRolePath() + ")"
+				) );
+			}
+		}
+
+		applyShiftChanges( changeSet, collection, key, ordinalBase, session, operationConsumer );
+	}
+
 	private void applyShiftChanges(
 			CollectionChangeSet changeSet,
 			PersistentCollection<?> collection,
@@ -318,7 +349,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			final var deleteRowPlan = jdbcOperations.deleteRowPlan();
 			if ( deleteRowPlan != null ) {
 				operationConsumer.accept( new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						// technically an UPDATE
 						MutationKind.UPDATE,
 						wrapShiftOperation(
@@ -339,7 +370,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			else if ( jdbcOperations.updateIndexPlan() != null ) {
 				final int tempPosition = tempOffset + ( (Number) shift.currentIndex() ).intValue();
 				operationConsumer.accept( new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						MutationKind.UPDATE_ORDER,
 						jdbcOperations.updateIndexPlan().jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
@@ -356,7 +387,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				) );
 
 				finalOrderOperations.add( new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						MutationKind.UPDATE_ORDER,
 						jdbcOperations.updateIndexPlan().jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
@@ -381,7 +412,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			final var insertRowPlan = jdbcOperations.insertRowPlan();
 			if ( insertRowPlan != null ) {
 				operationConsumer.accept( new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						// technically an UPDATE
 						MutationKind.UPDATE,
 						wrapShiftOperation(
@@ -408,7 +439,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			final var insertRowPlan = jdbcOperations.insertRowPlan();
 			if ( insertRowPlan != null ) {
 				operationConsumer.accept( new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						// technically an UPDATE
 						MutationKind.UPDATE,
 						insertRowPlan.jdbcOperation(),
@@ -430,6 +461,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 						key,
 						addition.element(),
 						( (Number) addition.index() ).intValue(),
+						jdbcOperations.tableDescriptor(),
 						jdbcOperations.updateIndexPlan(),
 						writeIndexOrdinal,
 						"WriteIndex[" + addition.index() + "](" + persister.getRolePath() + ")",
@@ -460,7 +492,11 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				final var jdbcOperations = selectJdbcOperations( entry, session );
 				assert jdbcOperations != null;
 				if ( jdbcOperations.updateIndexPlan() != null ) {
-					queuedIndexWrites.add( new QueuedIndexWrite( entry, jdbcOperations.updateIndexPlan() ) );
+					queuedIndexWrites.add( new QueuedIndexWrite(
+							entry,
+							jdbcOperations.tableDescriptor(),
+							jdbcOperations.updateIndexPlan()
+					) );
 				}
 			}
 		}
@@ -474,6 +510,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 							key,
 							queuedIndexWrite.entry(),
 							entryPosition,
+							queuedIndexWrite.tableDescriptor(),
 							queuedIndexWrite.updateIndexPlan(),
 							writeIndexOrdinal,
 							"WriteQueuedIndex[" + entryPosition + "](" + persister.getRolePath() + ")",
@@ -492,7 +529,10 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		operations.forEach( operationConsumer );
 	}
 
-	private record QueuedIndexWrite(Object entry, CollectionJdbcOperations.UpdateRowPlan updateIndexPlan) {
+	private record QueuedIndexWrite(
+			Object entry,
+			TableDescriptor tableDescriptor,
+			CollectionJdbcOperations.UpdateRowPlan updateIndexPlan) {
 	}
 
 	@SuppressWarnings("removal")
@@ -591,7 +631,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			);
 
 			final FlushOperation plannedOp = new FlushOperation(
-					persister.getCollectionTableDescriptor(),
+					jdbcOperations.tableDescriptor(),
 					// technically an UPDATE
 					MutationKind.UPDATE,
 					deleteRowPlan.jdbcOperation(),
@@ -640,7 +680,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				);
 
 				final FlushOperation plannedOp = new FlushOperation(
-						persister.getCollectionTableDescriptor(),
+						jdbcOperations.tableDescriptor(),
 						MutationKind.UPDATE_ORDER,
 						updateIndexPlan.jdbcOperation(),
 						bindPlan,
@@ -703,7 +743,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 					// For one-to-many collections, the "insert" is actually an UPDATE that sets the FK
 					// Use MutationKind.UPDATE so it's ordered AFTER entity INSERTs via FK edges
 					final FlushOperation plannedOp = new FlushOperation(
-							persister.getCollectionTableDescriptor(),
+							jdbcOperations.tableDescriptor(),
 							// technically an UPDATE
 							MutationKind.UPDATE,
 							insertRowPlan.jdbcOperation(),
@@ -720,6 +760,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 							key,
 							entry,
 							entryCount,
+							jdbcOperations.tableDescriptor(),
 							jdbcOperations.updateIndexPlan(),
 							writeIndexOrdinal,
 							"WriteIndex[" + entryCount + "](" + persister.getRolePath() + ")",
@@ -739,6 +780,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			Object key,
 			Object entry,
 			int entryPosition,
+			TableDescriptor tableDescriptor,
 			CollectionJdbcOperations.UpdateRowPlan updateIndexPlan,
 			int ordinal,
 			String description,
@@ -748,7 +790,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		}
 
 		operationConsumer.accept( new FlushOperation(
-				persister.getCollectionTableDescriptor(),
+				tableDescriptor,
 				MutationKind.UPDATE_ORDER,
 				updateIndexPlan.jdbcOperation(),
 				new SingleRowUpdateBindPlan(
@@ -805,6 +847,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 
 		return new CollectionJdbcOperations(
 				persister,
+				tableDescriptor,
 				insertRowPlan,
 				null, // one-to-many doesn't update element values, only FK/ORDER
 				updateIndexPlan,  // ORDER column updates for inverse @OrderColumn collections
@@ -990,7 +1033,11 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			return null;
 		}
 
-		final var tableReference = new MutatingTableReference( persister.getCollectionTableMapping() );
+		final CollectionTableMapping tableMapping = new CollectionTableMapping(
+				persister.getCollectionTableMapping(),
+				collectionTableDescriptor.name()
+		);
+		final var tableReference = new MutatingTableReference( tableMapping );
 		final var updateBuilder = new CollectionRowDeleteByUpdateSetNullBuilder<>(
 				persister,
 				tableReference,

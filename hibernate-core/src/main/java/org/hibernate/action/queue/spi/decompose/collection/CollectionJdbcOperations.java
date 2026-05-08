@@ -6,6 +6,7 @@ package org.hibernate.action.queue.spi.decompose.collection;
 
 import org.hibernate.Incubating;
 import org.hibernate.action.queue.spi.bind.JdbcValueBindings;
+import org.hibernate.action.queue.spi.meta.TableDescriptor;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.sql.model.MutationOperation;
@@ -24,6 +25,7 @@ import org.hibernate.sql.model.MutationOperation;
 @Incubating
 public record CollectionJdbcOperations(
 		CollectionMutationTarget target,
+		TableDescriptor tableDescriptor,
 		InsertRowPlan insertRowPlan,
 		UpdateRowPlan updateRowPlan,
 		UpdateRowPlan updateIndexPlan,

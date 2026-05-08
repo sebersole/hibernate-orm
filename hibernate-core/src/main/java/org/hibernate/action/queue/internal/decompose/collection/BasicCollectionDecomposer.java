@@ -1101,6 +1101,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 
 		return new CollectionJdbcOperations(
 				persister,
+				persister.getCollectionTableDescriptor(),
 				insertRowPlan,
 				updateRowPlan,
 				orderUpdatePlan,
