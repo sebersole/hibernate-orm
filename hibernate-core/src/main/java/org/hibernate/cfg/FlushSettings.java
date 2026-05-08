@@ -12,24 +12,22 @@ public interface FlushSettings {
 	/// Specifies the [org.hibernate.action.queue.spi.ActionQueue] implementation to use.
 	/// Valid values are defined by [org.hibernate.action.queue.spi.QueueType]:
 	///
-	///   - ["legacy"][org.hibernate.action.queue.spi.QueueType#LEGACY] (default) - Uses the
-	/// 	[traditional][org.hibernate.engine.spi.ActionQueueLegacy] ActionQueue implementation,
-	/// 	which requires hard-coded ordering and manual sorting of actions
-	///   - ["graph"][org.hibernate.action.queue.spi.QueueType#GRAPH] - Uses the
+	///   - ["graph"][org.hibernate.action.queue.spi.QueueType#GRAPH] (default) - Uses the
 	/// 	[graph-based][org.hibernate.action.queue.internal.GraphBasedActionQueue] ActionQueue implementation,
 	/// 	which handles planning automatically based on defined constraints (foreign key dependencies,
 	/// 	unique keys, ...).
-	///
-	///
-	/// @apiNote The graph-based implementation is experimental and
-	/// provides improved handling of complex foreign key relationships and automatic
-	/// dependency resolution.
+	///   - ["legacy"][org.hibernate.action.queue.spi.QueueType#LEGACY] - Uses the
+	/// 	[traditional][org.hibernate.engine.spi.ActionQueueLegacy] ActionQueue implementation,
+	/// 	which requires hard-coded ordering and manual sorting of actions
 	///
 	/// @see org.hibernate.action.queue.spi.QueueType
 	/// @see org.hibernate.action.queue.spi.ActionQueueFactory
 	/// @see org.hibernate.action.queue.internal.support.ActionQueueFactoryService
 	///
-	/// @settingDefault `"legacy"`
+	/// @apiNote The legacy implementation remains available by explicitly setting
+	/// this property to `"legacy"`.
+	///
+	/// @settingDefault `"graph"`
 	///
 	/// @since 8.0
 	String FLUSH_QUEUE_TYPE = "hibernate.flush.queue.type";

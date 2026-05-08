@@ -7,7 +7,6 @@ package org.hibernate.action.queue.internal.support;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hibernate.action.queue.spi.QueueType;
 import org.hibernate.boot.registry.StandardServiceInitiator;
-import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.spi.ServiceRegistryImplementor;
 
 import java.util.Map;
@@ -22,8 +21,7 @@ public class ActionQueueFactoryServiceInitiator implements StandardServiceInitia
 	public @Nullable ActionQueueFactoryService initiateService(
 			Map<String, Object> configurationValues,
 			ServiceRegistryImplementor registry) {
-		var setting = ConfigurationHelper.getString( FLUSH_QUEUE_TYPE, configurationValues, "legacy" );
-		return new ActionQueueFactoryService( QueueType.fromSetting( setting ) );
+		return new ActionQueueFactoryService( QueueType.fromSetting( configurationValues.get( FLUSH_QUEUE_TYPE ) ) );
 	}
 
 	@Override
