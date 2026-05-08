@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.hibernate.action.queue.spi.MutationKind;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
 import org.hibernate.action.queue.spi.plan.FlushOperation;
 import org.hibernate.collection.spi.CollectionChangeSet;
 import org.hibernate.metamodel.mapping.TemporalMapping;
@@ -45,10 +46,10 @@ public class TemporalCollectionMutationPlanContributor implements CollectionMuta
 		final var tableMapping = createTableMapping( context.tableDescriptor() );
 		final var mutatingTable = new MutatingTableReference( tableMapping );
 		final var updateBuilder = new TableUpdateBuilderStandard<>(
-				context.persister(),
+				(CollectionMutationTarget) context.persister(),
 				mutatingTable,
 				context.factory(),
-				context.persister().getSqlWhereString()
+				context.sqlWhereString()
 		);
 		applyRowDeleteRestrictions( context.persister(), null, updateBuilder );
 		final var mutation = buildTemporalDeleteMutation( updateBuilder, mutatingTable, temporalMapping );
@@ -81,10 +82,10 @@ public class TemporalCollectionMutationPlanContributor implements CollectionMuta
 		final var tableMapping = createTableMapping( context.tableDescriptor() );
 		final var mutatingTable = new MutatingTableReference( tableMapping );
 		final var updateBuilder = new TableUpdateBuilderStandard<>(
-				context.persister(),
+				(CollectionMutationTarget) context.persister(),
 				mutatingTable,
 				context.factory(),
-				context.persister().getSqlWhereString()
+				context.sqlWhereString()
 		);
 		applyRemoveRestrictions( context.persister(), null, updateBuilder );
 		return buildTemporalDeleteMutation( updateBuilder, mutatingTable, temporalMapping )
@@ -127,7 +128,7 @@ public class TemporalCollectionMutationPlanContributor implements CollectionMuta
 						context.jdbcOperations().deleteRowPlan().restrictions()
 				),
 				calculateOrdinal( context.ordinalBase(), Slot.DELETE ),
-				"DeleteValue[" + valueChange.index() + "](" + context.persister().getRolePath() + ")"
+				"DeleteValue[" + valueChange.index() + "](" + context.persister().getRole() + ")"
 		) );
 
 		final boolean isMap = context.persister().getCollectionSemantics().getCollectionClassification().isMap();
@@ -154,7 +155,7 @@ public class TemporalCollectionMutationPlanContributor implements CollectionMuta
 						entryIndex
 				),
 				calculateOrdinal( context.ordinalBase(), Slot.INSERT ),
-				"InsertValue[" + valueChange.index() + "](" + context.persister().getRolePath() + ")"
+				"InsertValue[" + valueChange.index() + "](" + context.persister().getRole() + ")"
 		) );
 		return true;
 	}

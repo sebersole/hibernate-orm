@@ -9,6 +9,7 @@ import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationPla
 import org.hibernate.action.queue.spi.MutationKind;
 import org.hibernate.action.queue.spi.bind.BindPlan;
 import org.hibernate.action.queue.spi.bind.JdbcValueBindings;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
 import org.hibernate.action.queue.spi.meta.CollectionTableDescriptor;
 import org.hibernate.action.queue.spi.meta.TableDescriptorAsTableMapping;
 import org.hibernate.action.queue.spi.plan.FlushOperation;
@@ -16,7 +17,7 @@ import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.jdbc.mutation.ParameterUsage;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.mapping.TemporalMapping;
-import org.hibernate.persister.collection.BasicCollectionPersister;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.mutation.TemporalMutationHelper;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.model.MutationOperation;
@@ -36,13 +37,16 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 	public void contributeAdditionalInsert(
 			RowInsertContext context,
 			java.util.function.Consumer<FlushOperation> operationConsumer) {
+		if ( !( context.tableDescriptor() instanceof CollectionTableDescriptor collectionTableDescriptor ) ) {
+			return;
+		}
 		final TemporalMapping temporalMapping = resolveTemporalMapping( context );
 		if ( temporalMapping == null ) {
 			return;
 		}
 
 		final CollectionTableDescriptor historyTableDescriptor = createHistoryTableDescriptor(
-				context.tableDescriptor(),
+				collectionTableDescriptor,
 				temporalMapping
 		);
 		final MutationOperation historyInsert = buildHistoryInsertOperation(
@@ -65,12 +69,12 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 						temporalMapping
 				),
 				calculateOrdinal( context.ordinalBase(), Slot.INSERT ) + 500,
-				"InsertRow(" + context.persister().getRolePath() + "#history)"
+				"InsertRow(" + context.persister().getRole() + "#history)"
 		) );
 	}
 
 	private static MutationOperation buildHistoryInsertOperation(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			CollectionTableDescriptor historyTableDescriptor,
 			TemporalMapping temporalMapping,
 			org.hibernate.engine.spi.SessionFactoryImplementor factory) {
@@ -81,7 +85,7 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 				false
 		);
 		final var insertBuilder = new TableInsertBuilderStandard(
-				persister,
+				(CollectionMutationTarget) persister,
 				new MutatingTableReference( tableMapping ),
 				factory
 		);
@@ -142,7 +146,7 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 	}
 
 	private static class HistoryInsertBindPlan implements BindPlan {
-		private final BasicCollectionPersister persister;
+		private final CollectionPersister persister;
 		private final PersistentCollection<?> collection;
 		private final Object key;
 		private final Object entry;
@@ -150,7 +154,7 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 		private final TemporalMapping temporalMapping;
 
 		private HistoryInsertBindPlan(
-				BasicCollectionPersister persister,
+				CollectionPersister persister,
 				PersistentCollection<?> collection,
 				Object key,
 				Object entry,
@@ -202,7 +206,7 @@ public class HistoryCollectionMutationPlanContributor implements CollectionMutat
 				final var indexDescriptor = attributeMapping.getIndexDescriptor();
 				if ( indexDescriptor != null ) {
 					indexDescriptor.decompose(
-							persister.incrementIndexByBase( collection.getIndex( entry, entryIndex, persister ) ),
+							persister.getIndexIncrementer().apply( collection.getIndex( entry, entryIndex, persister ) ),
 							(valueIndex, value, jdbcValueMapping) -> {
 								if ( persister.getIndexColumnIsSettable()[valueIndex] ) {
 									jdbcValueBindings.bindAssignment( valueIndex, value, jdbcValueMapping );

@@ -1528,6 +1528,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				new CollectionMutationPlanContributor.DeleteRowPlanContext(
 						persister,
 						tableDescriptor,
+						persister.getSqlWhereString(),
 						factory
 				),
 				() -> buildStandardDeleteRowPlan( factory )
@@ -1672,6 +1673,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 				new CollectionMutationPlanContributor.RemoveOperationContext(
 						persister,
 						tableDescriptor,
+						persister.getSqlWhereString(),
 						factory
 				),
 				() -> buildStandardRemoveOperation( factory )

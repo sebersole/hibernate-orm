@@ -144,6 +144,16 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				);
 
 				operations.add( plannedOp );
+				contributeAdditionalInsert(
+						jdbcOperations,
+						collection,
+						key,
+						entry,
+						entryCount,
+						ordinalBase,
+						session,
+						operations::add
+				);
 			}
 
 			if ( jdbcOperations.updateIndexPlan() != null ) {
@@ -235,7 +245,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 							persister.getCollectionTableDescriptor(),
 							MutationKind.UPDATE,
 							removeOperation,
-							new RemoveBindPlan( key, persister ),
+							new RemoveBindPlan( key, persister, mutationPlanContributor ),
 							calculateOrdinal( ordinalBase, Slot.DELETE ),
 							"RemoveAllRows(" + persister.getRolePath() + ")"
 					) );
@@ -307,6 +317,31 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 						null,
 						collection,
 						key,
+						ordinalBase
+				),
+				operationConsumer
+		);
+	}
+
+	private void contributeAdditionalInsert(
+			CollectionJdbcOperations jdbcOperations,
+			PersistentCollection<?> collection,
+			Object key,
+			Object rowValue,
+			int rowPosition,
+			int ordinalBase,
+			SharedSessionContractImplementor session,
+			Consumer<FlushOperation> operationConsumer) {
+		mutationPlanContributor.contributeAdditionalInsert(
+				new CollectionMutationPlanContributor.RowInsertContext(
+						persister,
+						jdbcOperations.tableDescriptor(),
+						session.getFactory(),
+						jdbcOperations,
+						collection,
+						key,
+						rowValue,
+						rowPosition,
 						ordinalBase
 				),
 				operationConsumer
@@ -431,22 +466,24 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 			assert jdbcOperations != null;
 			final var insertRowPlan = jdbcOperations.insertRowPlan();
 			if ( insertRowPlan != null ) {
+				final var insertOperation = wrapShiftOperation(
+						insertRowPlan.jdbcOperation(),
+						false
+				);
+				final var insertBindPlan = new SingleRowInsertBindPlan(
+						persister,
+						insertRowPlan.values(),
+						collection,
+						key,
+						shift.element(),
+						( (Number) shift.currentIndex() ).intValue()
+				);
 				operationConsumer.accept( new FlushOperation(
 						jdbcOperations.tableDescriptor(),
 						// technically an UPDATE
 						MutationKind.UPDATE,
-						wrapShiftOperation(
-								insertRowPlan.jdbcOperation(),
-								false
-						),
-						new SingleRowInsertBindPlan(
-								persister,
-								insertRowPlan.values(),
-								collection,
-								key,
-								shift.element(),
-								( (Number) shift.currentIndex() ).intValue()
-						),
+						insertOperation,
+						insertBindPlan,
 						insertOrdinal,
 						"InsertShift[" + shift.currentIndex() + "](" + persister.getRolePath() + ")"
 				) );
@@ -474,6 +511,16 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 						insertOrdinal,
 						"InsertRow[" + addition.index() + "](" + persister.getRolePath() + ")"
 				) );
+				contributeAdditionalInsert(
+						jdbcOperations,
+						collection,
+						key,
+						addition.element(),
+						( (Number) addition.index() ).intValue(),
+						ordinalBase,
+						session,
+						operationConsumer
+				);
 			}
 			else {
 				planWriteIndex(
@@ -773,6 +820,16 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 					);
 
 					operationConsumer.accept( plannedOp );
+					contributeAdditionalInsert(
+							jdbcOperations,
+							collection,
+							key,
+							entry,
+							entryCount,
+							ordinalBase,
+							session,
+							operationConsumer
+					);
 				}
 				else {
 					planWriteIndex(
@@ -831,10 +888,15 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 	protected static class RemoveBindPlan implements BindPlan {
 		private final Object key;
 		private final OneToManyPersister mutationTarget;
+		private final CollectionMutationPlanContributor mutationPlanContributor;
 
-		public RemoveBindPlan(Object key, OneToManyPersister mutationTarget) {
+		public RemoveBindPlan(
+				Object key,
+				OneToManyPersister mutationTarget,
+				CollectionMutationPlanContributor mutationPlanContributor) {
 			this.key = key;
 			this.mutationTarget = mutationTarget;
+			this.mutationPlanContributor = mutationPlanContributor;
 		}
 
 		@Override
@@ -842,17 +904,13 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 				JdbcValueBindings valueBindings,
 				FlushOperation flushOperation,
 				SharedSessionContractImplementor session) {
-			var fkDescriptor = mutationTarget.getAttributeMapping().getKeyDescriptor();
-			fkDescriptor.getKeyPart().decompose(
-					key,
-					(valueIndex, value, jdbcValueMapping) -> {
-						valueBindings.bindValue(
-								value,
-								jdbcValueMapping.getSelectionExpression(),
-								ParameterUsage.RESTRICT
-						);
-					},
-					session
+			mutationPlanContributor.bindRemoveValues(
+					new CollectionMutationPlanContributor.RemoveBindContext(
+							mutationTarget,
+							key,
+							session
+					),
+					valueBindings
 			);
 		}
 	}
@@ -1052,7 +1110,18 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		if ( !persister.needsRemove() ) {
 			return null;
 		}
+		return mutationPlanContributor.buildDeleteRowPlan(
+				new CollectionMutationPlanContributor.DeleteRowPlanContext(
+						persister,
+						collectionTableDescriptor,
+						persister.getSqlWhereString(),
+						factory
+				),
+				() -> buildStandardDeleteRowPlan( collectionTableDescriptor )
+		);
+	}
 
+	private CollectionJdbcOperations.DeleteRowPlan buildStandardDeleteRowPlan(TableDescriptor collectionTableDescriptor) {
 		final CollectionTableMapping tableMapping = new CollectionTableMapping(
 				persister.getCollectionTableMapping(),
 				collectionTableDescriptor.name()
@@ -1135,7 +1204,18 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 		if ( !persister.needsRemove() ) {
 			return null;
 		}
+		return mutationPlanContributor.buildRemoveOperation(
+				new CollectionMutationPlanContributor.RemoveOperationContext(
+						persister,
+						tableDescriptor,
+						persister.getSqlWhereString(),
+						factory
+				),
+				() -> buildStandardRemoveOperation( tableDescriptor )
+		);
+	}
 
+	private MutationOperation buildStandardRemoveOperation(TableDescriptor tableDescriptor) {
 		final var collectionTableMapping = persister.getCollectionTableMapping();
 		final var tableReference = new MutatingTableReference( collectionTableMapping );
 		if ( collectionTableMapping.getDeleteDetails().getCustomSql() != null ) {

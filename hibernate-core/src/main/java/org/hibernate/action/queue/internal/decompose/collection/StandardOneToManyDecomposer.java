@@ -67,11 +67,11 @@ public class StandardOneToManyDecomposer extends AbstractOneToManyDecomposer {
 
 		final FlushOperation plannedOp = new FlushOperation(
 				persister.getCollectionTableDescriptor(),
-				// technically an UPDATE
-				MutationKind.UPDATE,
-				jdbcOperation,
-				new RemoveBindPlan( action.getKey(), persister ),
-				ordinalBase * 1_000,
+					// technically an UPDATE
+					MutationKind.UPDATE,
+					jdbcOperation,
+					new RemoveBindPlan( action.getKey(), persister, mutationPlanContributor ),
+					ordinalBase * 1_000,
 				"RemoveAllRows(" + persister.getRolePath() + ")"
 		);
 

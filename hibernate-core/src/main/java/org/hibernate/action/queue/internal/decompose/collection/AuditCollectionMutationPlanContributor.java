@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import org.hibernate.HibernateException;
 import org.hibernate.action.queue.internal.GraphBasedActionQueue;
 import org.hibernate.action.queue.spi.plan.FlushOperation;
+import org.hibernate.action.queue.spi.meta.CollectionTableDescriptor;
 import org.hibernate.audit.ModificationType;
 import org.hibernate.collection.spi.PersistentArrayHolder;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -49,7 +50,7 @@ public class AuditCollectionMutationPlanContributor implements CollectionMutatio
 		contributeCollectionChange(
 				new CollectionChangeContext(
 						context.persister(),
-						context.tableDescriptor(),
+						collectionTableDescriptor( context ),
 						context.factory(),
 						context.jdbcOperations(),
 						context.collection(),
@@ -58,6 +59,12 @@ public class AuditCollectionMutationPlanContributor implements CollectionMutatio
 				),
 				operationConsumer
 		);
+	}
+
+	private CollectionTableDescriptor collectionTableDescriptor(RowInsertContext context) {
+		return context.tableDescriptor() instanceof CollectionTableDescriptor collectionTableDescriptor
+				? collectionTableDescriptor
+				: ( (CollectionMutationTarget) persister ).getCollectionTableDescriptor();
 	}
 
 	@Override

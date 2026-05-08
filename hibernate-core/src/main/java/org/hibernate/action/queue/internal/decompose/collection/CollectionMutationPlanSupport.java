@@ -5,7 +5,8 @@
 package org.hibernate.action.queue.internal.decompose.collection;
 
 
-import org.hibernate.action.queue.spi.meta.CollectionTableDescriptor;
+import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
+import org.hibernate.action.queue.spi.meta.TableDescriptor;
 import org.hibernate.action.queue.spi.meta.TableDescriptorAsTableMapping;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.collection.spi.SnapshotIndexed;
@@ -13,7 +14,7 @@ import org.hibernate.engine.jdbc.mutation.ParameterUsage;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.mapping.TemporalMapping;
 import org.hibernate.metamodel.mapping.internal.ManyToManyCollectionPart;
-import org.hibernate.persister.collection.BasicCollectionPersister;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.hibernate.persister.entity.mutation.TemporalMutationHelper;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.model.ast.LogicalTableUpdate;
@@ -25,7 +26,7 @@ final class CollectionMutationPlanSupport {
 	private CollectionMutationPlanSupport() {
 	}
 
-	static TableDescriptorAsTableMapping createTableMapping(CollectionTableDescriptor tableDescriptor) {
+	static TableDescriptorAsTableMapping createTableMapping(TableDescriptor tableDescriptor) {
 		return new TableDescriptorAsTableMapping(
 				tableDescriptor,
 				0,
@@ -35,7 +36,7 @@ final class CollectionMutationPlanSupport {
 	}
 
 	static void applyRowDeleteRestrictions(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			TableDeleteBuilderStandard deleteBuilder,
 			TableUpdateBuilderStandard<?> updateBuilder) {
 		final var attribute = persister.getAttributeMapping();
@@ -50,7 +51,7 @@ final class CollectionMutationPlanSupport {
 
 		final var indexDescriptor = attribute.getIndexDescriptor();
 		final var identifierDescriptor = attribute.getIdentifierDescriptor();
-		if ( indexDescriptor != null && persister.hasPhysicalIndexColumn() ) {
+		if ( indexDescriptor != null && hasPhysicalIndexColumn( persister ) ) {
 			indexDescriptor.forEachSelectable( (index, jdbcMapping) -> {
 				if ( updateBuilder != null ) {
 					updateBuilder.addKeyRestriction( jdbcMapping );
@@ -96,7 +97,7 @@ final class CollectionMutationPlanSupport {
 	}
 
 	static void applyRemoveRestrictions(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			TableDeleteBuilderStandard deleteBuilder,
 			TableUpdateBuilderStandard<?> updateBuilder) {
 		persister.getAttributeMapping().getKeyDescriptor().getKeyPart().forEachSelectable( (index, jdbcMapping) -> {
@@ -130,7 +131,7 @@ final class CollectionMutationPlanSupport {
 	}
 
 	static void bindTemporalEndingValue(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings valueBindings,
 			SharedSessionContractImplementor session) {
 		final TemporalMapping temporalMapping = persister.getAttributeMapping().getTemporalMapping();
@@ -144,7 +145,7 @@ final class CollectionMutationPlanSupport {
 	}
 
 	static void bindRemoveRestrictions(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			Object key,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings valueBindings) {
@@ -162,7 +163,7 @@ final class CollectionMutationPlanSupport {
 	}
 
 	static void bindDeleteRestrictions(
-			BasicCollectionPersister persister,
+			CollectionPersister persister,
 			PersistentCollection<?> collection,
 			Object key,
 			Object rowValue,
@@ -190,10 +191,10 @@ final class CollectionMutationPlanSupport {
 
 		final var indexDescriptor = attribute.getIndexDescriptor();
 		final var identifierDescriptor = attribute.getIdentifierDescriptor();
-		if ( indexDescriptor != null && persister.hasPhysicalIndexColumn() ) {
+		if ( indexDescriptor != null && hasPhysicalIndexColumn( persister ) ) {
 			final Object indexValue = rowValue instanceof SnapshotIndexed<?> ? actualKey : rowValue;
 			indexDescriptor.decompose(
-					persister.incrementIndexByBase( indexValue ),
+					persister.getIndexIncrementer().apply( indexValue ),
 					jdbcValueBindings::bindUpdateRestriction,
 					session
 			);
@@ -227,5 +228,9 @@ final class CollectionMutationPlanSupport {
 				);
 			}
 		}
+	}
+
+	private static boolean hasPhysicalIndexColumn(CollectionPersister persister) {
+		return ( (CollectionMutationTarget) persister ).hasPhysicalIndexColumn();
 	}
 }

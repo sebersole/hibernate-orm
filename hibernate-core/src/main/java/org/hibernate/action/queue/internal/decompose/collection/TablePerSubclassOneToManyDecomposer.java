@@ -160,11 +160,11 @@ public class TablePerSubclassOneToManyDecomposer extends AbstractOneToManyDecomp
 		operationsBySubclass.forEach( (entityPersister, jdbcOperations) -> {
 			operations.add( new FlushOperation(
 					jdbcOperations.tableDescriptor(),
-					// technically an UPDATE
-					MutationKind.UPDATE,
-					jdbcOperations.removeOperation(),
-					new RemoveBindPlan( action.getKey(), persister ),
-					ordinalBase * 1_000,
+						// technically an UPDATE
+						MutationKind.UPDATE,
+						jdbcOperations.removeOperation(),
+						new RemoveBindPlan( action.getKey(), persister, mutationPlanContributor ),
+						ordinalBase * 1_000,
 					"RemoveAllRows(" + persister.getRolePath() + ")"
 			) );
 		} );
