@@ -62,7 +62,7 @@ public class AuditCollectionMutationPlanContributor implements CollectionMutatio
 								ownerChange.entity(),
 								ownerChange.values(),
 								ModificationType.MOD,
-								auditMutationSupport.getOwnerMutationSupport()
+								ownerChange.ownerMutationSupport()
 						);
 					}
 					collector.collectionChanged(

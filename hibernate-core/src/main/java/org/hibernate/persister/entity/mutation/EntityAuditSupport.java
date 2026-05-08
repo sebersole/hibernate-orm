@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.Incubating;
 import org.hibernate.action.queue.spi.meta.EntityTableDescriptor;
 import org.hibernate.MappingException;
 import org.hibernate.audit.AuditException;
@@ -43,27 +44,64 @@ import static org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.
 /// This support deliberately stops at the mutation-model boundary. Legacy
 /// coordinators consume the generated mutation groups through the normal
 /// mutation executor, while the graph queue turns the same groups into
-/// {@code FlushOperation}s. Keeping the support here avoids teaching either
+/// `FlushOperation`s. Keeping the support here avoids teaching either
 /// execution path about the other.
 ///
 /// The main invariants guarded by this type are:
-/// <ul>
-///     <li>audit table resolution follows the entity table mappings, including
-///     secondary tables and inheritance layouts;</li>
-///     <li>validity-strategy transaction-end updates are generated before the
-///     new audit insert and restrict on {@code REVEND is null};</li>
-///     <li>generated graph table descriptors describe the physical audit table
-///     used by the JDBC mutation operation, not the original entity table.</li>
-/// </ul>
+///
+/// - Audit table resolution follows the entity table mappings, including
+/// secondary tables and inheritance layouts.
+/// - Validity-strategy transaction-end updates are generated before the new
+/// audit insert and restrict on `REVEND is null`.
+/// - Generated graph table descriptors describe the physical audit table used by
+/// the JDBC mutation operation, not the original entity table.
 ///
 /// @implSpec Used by both [graph][org.hibernate.action.queue.spi.QueueType#GRAPH] and
 /// [legacy][org.hibernate.action.queue.spi.QueueType#LEGACY] action-queue paths.  This
 /// is just some shared infrastructure.
 ///
 /// @author Steve Ebersole
-///
 /// @since 8.0
+@Incubating
 public class EntityAuditSupport {
+
+	/// A resolved per-table audit mutation operation.
+	///
+	/// The descriptor identifies the audit table as seen by the graph queue,
+	/// while the mutation operation is the SQL-model operation shared with
+	/// legacy mutation execution infrastructure.
+	public record AuditMutationOperation(
+			int tableIndex,
+			EntityTableDescriptor tableDescriptor,
+			MutationOperation operation) {
+	}
+
+	/// Execution-agnostic plan for one per-table audit insert operation belonging
+	/// to a logical audited entity change.
+	///
+	/// The property inclusion mask is the already audit-masked set of entity
+	/// properties that should be bound for this logical entity change. Dynamic
+	/// insert planning may update this mask while resolving generated values, so
+	/// the plan takes an owned copy after resolution.
+	public record AuditInsertPlan(
+			AuditMutationOperation operation,
+			boolean[] propertyInclusions) {
+		public AuditInsertPlan {
+			propertyInclusions = propertyInclusions.clone();
+		}
+
+		@Override
+		public boolean[] propertyInclusions() {
+			return propertyInclusions.clone();
+		}
+	}
+
+	/// Execution-agnostic plan for closing the previous validity audit row.
+	public record TransactionEndPlan(
+			AuditMutationOperation operation) {
+	}
+
+
 	private final EntityPersister entityPersister;
 	private final SessionFactoryImplementor factory;
 	private final AuditMapping auditMapping;
@@ -143,7 +181,7 @@ public class EntityAuditSupport {
 				: staticAuditInsertMutationGroup;
 	}
 
-	public List<AuditMutationOperation> resolveAuditInsertOperations(
+	private List<AuditMutationOperation> resolveAuditInsertOperations(
 			boolean[] propertyInclusions,
 			Object entity,
 			SharedSessionContractImplementor session) {
@@ -153,10 +191,48 @@ public class EntityAuditSupport {
 				: createMutationOperations( mutationGroup );
 	}
 
-	public List<AuditMutationOperation> resolveTransactionEndUpdateOperations() {
+	/// Resolve the per-table audit insert plans for an audited entity change.
+	///
+	/// The returned plans are still execution-agnostic: they identify the JDBC
+	/// mutation operation and the property inclusion mask needed to bind that
+	/// operation, but they do not create graph queue [FlushOperation][org.hibernate.action.queue.spi.plan.FlushOperation]
+	/// instances or legacy mutation executors. The returned insert plans retain
+	/// an owned copy of the resolved property inclusion mask.
+	public List<AuditInsertPlan> resolveAuditInsertPlans(
+			boolean[] propertyInclusions,
+			Object entity,
+			SharedSessionContractImplementor session) {
+		final var operations = resolveAuditInsertOperations( propertyInclusions, entity, session );
+		if ( operations.isEmpty() ) {
+			return List.of();
+		}
+		final List<AuditInsertPlan> plans = new ArrayList<>( operations.size() );
+		for ( var operation : operations ) {
+			plans.add( new AuditInsertPlan( operation, propertyInclusions ) );
+		}
+		return plans;
+	}
+
+	private List<AuditMutationOperation> resolveTransactionEndUpdateOperations() {
 		return transactionEndUpdateMutationGroup == null
 				? List.of()
 				: createMutationOperations( transactionEndUpdateMutationGroup );
+	}
+
+	/// Resolve the per-table validity-strategy transaction-end update plans.
+	///
+	/// The returned plans describe the update operations needed to close the
+	/// previous audit rows. Queue-specific code decides how to execute them.
+	public List<TransactionEndPlan> resolveTransactionEndUpdatePlans() {
+		final var operations = resolveTransactionEndUpdateOperations();
+		if ( operations.isEmpty() ) {
+			return List.of();
+		}
+		final List<TransactionEndPlan> plans = new ArrayList<>( operations.size() );
+		for ( var operation : operations ) {
+			plans.add( new TransactionEndPlan( operation ) );
+		}
+		return plans;
 	}
 
 	public void bindAuditInsertValues(
@@ -262,6 +338,7 @@ public class EntityAuditSupport {
 			Object[] values,
 			boolean[] propertyInclusions,
 			ModificationType modificationType,
+			Object changesetId,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( auditTableMappings[tableIndex] == null ) {
@@ -302,7 +379,7 @@ public class EntityAuditSupport {
 		final String sourceTableName = sourceMappings[tableIndex].getTableName();
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentChangesetIdentifier(),
+					changesetId,
 					auditMapping.getChangesetIdMapping( sourceTableName ).getSelectionExpression(),
 					ParameterUsage.SET
 			);
@@ -320,6 +397,7 @@ public class EntityAuditSupport {
 	public void bindTransactionEndValues(
 			int tableIndex,
 			Object id,
+			Object changesetId,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( auditTableMappings[tableIndex] == null ) {
@@ -334,7 +412,7 @@ public class EntityAuditSupport {
 
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentChangesetIdentifier(),
+					changesetId,
 					revEndMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
@@ -562,11 +640,5 @@ public class EntityAuditSupport {
 		attributeMapping.forEachSelectable( (j, mapping) ->
 				insertBuilder.addColumnAssignment( mapping, writePropertyValue ? "?" : columnValues[j] )
 		);
-	}
-
-	public record AuditMutationOperation(
-			int tableIndex,
-			EntityTableDescriptor tableDescriptor,
-			MutationOperation operation) {
 	}
 }

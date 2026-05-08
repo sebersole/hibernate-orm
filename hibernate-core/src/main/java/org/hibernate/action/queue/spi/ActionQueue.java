@@ -214,12 +214,11 @@ public interface ActionQueue extends TransactionCompletionCallbacks {
 	/// Execute actions before transaction completion.
 	void beforeTransactionCompletion();
 
-	/// Record the changelog context generated while binding audit mutations.
+	/// Record the changelog context generated while binding legacy audit mutations.
 	///
-	/// Implementations that materialize audit work outside the legacy audit work queue use this hook to
-	/// receive the changelog instance and child session created by
-	/// [org.hibernate.audit.spi.ChangelogSupplier].  Implementations without graph-native audit
-	/// handling may ignore it.
+	/// @apiNote This hook exists for [org.hibernate.engine.spi.ActionQueueLegacy], whose audit work queue
+	/// receives changelog context as a side effect of resolving the current changeset id. The graph
+	/// queue resolves changelog context directly from the session and ignores this callback.
 	///
 	/// @param changelog The changelog entity instance
 	/// @param changesetSession The child session used to persist the changelog entity

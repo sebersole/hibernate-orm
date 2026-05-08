@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import org.hibernate.Incubating;
 import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
 import org.hibernate.action.queue.spi.meta.CollectionTableDescriptor;
 import org.hibernate.audit.ModificationType;
@@ -27,34 +30,83 @@ import org.hibernate.sql.model.MutationOperation;
 import org.hibernate.sql.model.MutationOperationGroup;
 import org.hibernate.type.Type;
 
-/// Shared construction, diffing, and binding support for audited collection row mutations.
+/// Shared diffing, operation planning, and binding support for audited collection row mutations.
 ///
-/// Like {@link org.hibernate.persister.entity.mutation.EntityAuditSupport},
-/// this type stops at the mutation-model boundary. Legacy collection audit
-/// coordinators consume the operation groups through the normal mutation
-/// executor, while the graph queue materializes the same operations as
-/// {@code FlushOperation}s during transaction completion.
+/// Like [EntityAuditSupport], this type keeps audit operation construction
+/// queue-neutral. Legacy collection audit coordinators consume operation groups
+/// through the normal mutation executor, while the graph queue materializes
+/// execution-agnostic plans as `FlushOperation`s during transaction completion.
+/// This type also owns collection-row diffing and owner-entity audit-change
+/// resolution because those are audit semantics shared by both queues.
 ///
 /// The main invariants guarded here are:
-/// <ul>
-///     <li>collection audit rows are derived from the collection's original
-///     snapshot and final in-memory state;</li>
-///     <li>row identity is delegated to {@link AuditCollectionRowMutationHelper}
-///     so keyed, indexed, identifier, element, and one-to-many join-column
-///     shapes bind consistently;</li>
-///     <li>validity-strategy transaction-end updates use the same row identity
-///     as audit inserts and restrict on {@code REVEND is null};</li>
-///     <li>owner entity MOD audit changes are resolved here as logical audit
-///     changes, not by teaching collection coordinators about graph execution.</li>
-/// </ul>
+///
+/// - Collection audit rows are derived from the collection's original snapshot
+/// and final in-memory state.
+/// - Row identity is delegated to `AuditCollectionRowMutationHelper` so keyed,
+/// indexed, identifier, element, and one-to-many join-column shapes bind
+/// consistently.
+/// - Validity-strategy transaction-end updates use the same row identity as
+/// audit inserts and restrict on `REVEND is null`.
+/// - Owner entity `MOD` audit changes are resolved here as logical audit
+/// changes, not by teaching collection coordinators about graph execution.
 ///
 /// @author Steve Ebersole
-///
 /// @since 8.0
+@Incubating
 public class CollectionAuditSupport {
+
+	/// A resolved collection audit mutation operation.
+	///
+	/// The descriptor identifies the audit collection table as seen by the graph
+	/// queue, while the mutation operation is the SQL-model operation shared with
+	/// legacy mutation execution infrastructure.
+	public record AuditCollectionOperation(
+			CollectionTableDescriptor tableDescriptor,
+			MutationOperation operation) {
+	}
+
+	/// Execution-agnostic plan for inserting collection audit rows.
+	public record AuditInsertPlan(
+			AuditCollectionOperation operation) {
+	}
+
+	/// Execution-agnostic plan for closing previous validity audit rows.
+	public record TransactionEndPlan(
+			AuditCollectionOperation operation) {
+	}
+
+	/// One row-level collection audit change.
+	///
+	/// The raw entry is the collection entry used by the collection wrapper and
+	/// row mutation helper. For snapshot-map deletes, such as identifier bags, it
+	/// may be the snapshot `Map.Entry` so the original row identifier remains
+	/// available for transaction-end binding.
+	///
+	/// The position is the collection-entry iteration position used by collection
+	/// wrappers when resolving identifiers or indexes.
+	public record AuditCollectionChange(
+			Object rawEntry,
+			int position,
+			ModificationType modificationType) {
+	}
+
+	/// Owning entity audit change implied by a collection mutation.
+	///
+	/// Collection row audit changes are accompanied by a logical owner `MOD`
+	/// audit change when the owner is itself audited and can be resolved from the
+	/// session.
+	public record OwnerAuditChange(
+			EntityKey entityKey,
+			Object entity,
+			Object[] values,
+			EntityAuditSupport ownerMutationSupport) {
+	}
+
+
 	private final CollectionMutationTarget mutationTarget;
 	private final AuditCollectionHelper auditHelper;
-	private final EntityAuditSupport ownerMutationSupport;
+	private final @Nullable EntityAuditSupport ownerMutationSupport;
 
 	public CollectionAuditSupport(
 			CollectionMutationTarget mutationTarget,
@@ -72,17 +124,17 @@ public class CollectionAuditSupport {
 				indexIncrementer,
 				auditMapping
 		);
-		this.ownerMutationSupport = new EntityAuditSupport(
-				mutationTarget.getTargetPart().getCollectionDescriptor().getOwnerEntityPersister(),
-				sessionFactory
-		);
+		final var ownerPersister = mutationTarget.getTargetPart().getCollectionDescriptor().getOwnerEntityPersister();
+		this.ownerMutationSupport = ownerPersister.getAuditMapping() == null
+				? null
+				: new EntityAuditSupport( ownerPersister, sessionFactory );
 	}
 
 	public CollectionMutationTarget getMutationTarget() {
 		return mutationTarget;
 	}
 
-	public EntityAuditSupport getOwnerMutationSupport() {
+	public @Nullable EntityAuditSupport getOwnerMutationSupport() {
 		return ownerMutationSupport;
 	}
 
@@ -100,7 +152,7 @@ public class CollectionAuditSupport {
 			SharedSessionContractImplementor session) {
 		final var collectionDescriptor = mutationTarget.getTargetPart().getCollectionDescriptor();
 		final var ownerPersister = collectionDescriptor.getOwnerEntityPersister();
-		if ( ownerPersister.getAuditMapping() == null ) {
+		if ( ownerMutationSupport == null ) {
 			return null;
 		}
 		final var ownerEntityKey = session.generateEntityKey( ownerId, ownerPersister );
@@ -116,7 +168,8 @@ public class CollectionAuditSupport {
 		return new OwnerAuditChange(
 				ownerEntityKey,
 				owner,
-				ownerPersister.getValues( owner )
+				ownerPersister.getValues( owner ),
+				ownerMutationSupport
 		);
 	}
 
@@ -132,14 +185,34 @@ public class CollectionAuditSupport {
 		return auditHelper.getTransactionEndUpdateGroup();
 	}
 
-	public AuditCollectionOperation resolveAuditInsertOperation() {
+	private AuditCollectionOperation resolveAuditInsertOperation() {
 		final var group = getAuditInsertOperationGroup();
 		return group == null ? null : createOperation( group.getSingleOperation() );
 	}
 
-	public AuditCollectionOperation resolveTransactionEndUpdateOperation() {
+	/// Resolve the audit insert plan for row-level collection audit changes.
+	///
+	/// The returned plan is execution-agnostic. It identifies the JDBC mutation
+	/// operation that inserts audit rows, while queue-specific code decides how
+	/// to materialize and execute that operation.
+	public AuditInsertPlan resolveAuditInsertPlan() {
+		final var operation = resolveAuditInsertOperation();
+		return operation == null ? null : new AuditInsertPlan( operation );
+	}
+
+	private AuditCollectionOperation resolveTransactionEndUpdateOperation() {
 		final var group = getTransactionEndUpdateGroup();
 		return group == null ? null : createOperation( group.getSingleOperation() );
+	}
+
+	/// Resolve the validity-strategy transaction-end plan for collection audit rows.
+	///
+	/// The returned plan describes the update operation used to close previous
+	/// audit rows for changed collection-row identities. A {@code null} result
+	/// means the active audit strategy does not require this update.
+	public TransactionEndPlan resolveTransactionEndUpdatePlan() {
+		final var operation = resolveTransactionEndUpdateOperation();
+		return operation == null ? null : new TransactionEndPlan( operation );
 	}
 
 	private AuditCollectionOperation createOperation(MutationOperation operation) {
@@ -221,6 +294,7 @@ public class CollectionAuditSupport {
 			PersistentCollection<?> collection,
 			Object ownerId,
 			AuditCollectionChange change,
+			Object changesetId,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		getRowMutationHelper().bindInsertValues(
@@ -229,6 +303,7 @@ public class CollectionAuditSupport {
 				change.rawEntry(),
 				change.position(),
 				change.modificationType(),
+				changesetId,
 				session,
 				jdbcValueBindings
 		);
@@ -272,6 +347,7 @@ public class CollectionAuditSupport {
 			PersistentCollection<?> collection,
 			Object ownerId,
 			AuditCollectionChange change,
+			Object changesetId,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		final var auditMapping = mutationTarget.getTargetPart().getAuditMapping();
@@ -280,7 +356,7 @@ public class CollectionAuditSupport {
 
 		if ( !auditHelper.useServerTransactionTimestamps() ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentChangesetIdentifier(),
+					changesetId,
 					revEndMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
@@ -313,12 +389,10 @@ public class CollectionAuditSupport {
 					computeMapChanges( collection, collectionDescriptor, (Map<?, ?>) snapshot, elementType ) :
 					computeListChanges( collection, collectionDescriptor, snapshot, elementType );
 		}
-		else {
-			final Collection<?> snapshotElements = snapshot instanceof Map<?, ?> snapshotMap
-					? snapshotMap.values()
-					: (Collection<?>) snapshot;
-			return computeUnindexedChanges( collection, collectionDescriptor, snapshotElements, elementType );
+		else if ( snapshot instanceof Map<?, ?> snapshotMap ) {
+			return computeUnindexedMapChanges( collection, collectionDescriptor, snapshotMap, elementType );
 		}
+		return computeUnindexedChanges( collection, collectionDescriptor, (Collection<?>) snapshot, elementType );
 	}
 
 	private List<AuditCollectionChange> computeMapChanges(
@@ -399,7 +473,8 @@ public class CollectionAuditSupport {
 		final var entries = collection.entries( collectionDescriptor );
 		int i = 0;
 		while ( entries.hasNext() ) {
-			final Object element = collection.getElement( entries.next() );
+			final Object entry = entries.next();
+			final Object element = collection.getElement( entry );
 			if ( element != null ) {
 				boolean matched = false;
 				for ( var it = remaining.iterator(); it.hasNext(); ) {
@@ -410,7 +485,7 @@ public class CollectionAuditSupport {
 					}
 				}
 				if ( !matched ) {
-					changes.add( new AuditCollectionChange( element, i, ModificationType.ADD ) );
+					changes.add( new AuditCollectionChange( entry, i, ModificationType.ADD ) );
 				}
 			}
 			i++;
@@ -423,20 +498,39 @@ public class CollectionAuditSupport {
 		return changes;
 	}
 
-	public record AuditCollectionOperation(
-			CollectionTableDescriptor tableDescriptor,
-			MutationOperation operation) {
-	}
+	private List<AuditCollectionChange> computeUnindexedMapChanges(
+			PersistentCollection<?> collection,
+			CollectionPersister collectionDescriptor,
+			Map<?, ?> snapshot,
+			Type elementType) {
+		final var remaining = new ArrayList<>( snapshot.entrySet() );
+		final List<AuditCollectionChange> changes = new ArrayList<>();
 
-	public record AuditCollectionChange(
-			Object rawEntry,
-			int position,
-			ModificationType modificationType) {
-	}
+		final var entries = collection.entries( collectionDescriptor );
+		int i = 0;
+		while ( entries.hasNext() ) {
+			final Object entry = entries.next();
+			final Object element = collection.getElement( entry );
+			if ( element != null ) {
+				boolean matched = false;
+				for ( var it = remaining.iterator(); it.hasNext(); ) {
+					if ( elementType.isSame( element, it.next().getValue() ) ) {
+						it.remove();
+						matched = true;
+						break;
+					}
+				}
+				if ( !matched ) {
+					changes.add( new AuditCollectionChange( entry, i, ModificationType.ADD ) );
+				}
+			}
+			i++;
+		}
 
-	public record OwnerAuditChange(
-			EntityKey entityKey,
-			Object entity,
-			Object[] values) {
+		for ( var entry : remaining ) {
+			changes.add( new AuditCollectionChange( entry, i++, ModificationType.DEL ) );
+		}
+
+		return changes;
 	}
 }

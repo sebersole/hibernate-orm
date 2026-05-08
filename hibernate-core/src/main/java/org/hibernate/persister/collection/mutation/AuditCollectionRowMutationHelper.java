@@ -4,6 +4,7 @@
  */
 package org.hibernate.persister.collection.mutation;
 
+import java.util.Map;
 import java.util.function.UnaryOperator;
 
 import org.hibernate.action.queue.spi.decompose.collection.CollectionMutationTarget;
@@ -94,6 +95,7 @@ final class AuditCollectionRowMutationHelper {
 			Object rowValue,
 			int rowPosition,
 			ModificationType modificationType,
+			Object changesetId,
 			SharedSessionContractImplementor session,
 			org.hibernate.action.queue.spi.bind.JdbcValueBindings jdbcValueBindings) {
 		if ( key == null ) {
@@ -112,7 +114,7 @@ final class AuditCollectionRowMutationHelper {
 
 		if ( !useServerTransactionTimestamps ) {
 			jdbcValueBindings.bindValue(
-					session.getCurrentChangesetIdentifier(),
+					changesetId,
 					changesetIdMapping.getSelectionExpression(),
 					ParameterUsage.SET
 			);
@@ -187,7 +189,7 @@ final class AuditCollectionRowMutationHelper {
 		final var identifierDescriptor = attributeMapping.getIdentifierDescriptor();
 		if ( identifierDescriptor != null ) {
 			identifierDescriptor.decompose(
-					collection.getIdentifier( rowValue, rowPosition ),
+					resolveIdentifier( collection, rowValue, rowPosition ),
 					0, jdbcValueBindings, null,
 					(valueIndex, bindings, unused, jdbcValue, mapping) ->
 							bindValue( bindings, jdbcValue, mapping, parameterUsage ),
@@ -210,7 +212,7 @@ final class AuditCollectionRowMutationHelper {
 		}
 
 		attributeMapping.getElementDescriptor().decompose(
-				collection.getElement( rowValue ),
+				resolveElement( collection, rowValue ),
 				0,
 				elementColumnIsSettable,
 				jdbcValueBindings,
@@ -238,7 +240,7 @@ final class AuditCollectionRowMutationHelper {
 		final var identifierDescriptor = attributeMapping.getIdentifierDescriptor();
 		if ( identifierDescriptor != null ) {
 			identifierDescriptor.decompose(
-					collection.getIdentifier( rowValue, rowPosition ),
+					resolveIdentifier( collection, rowValue, rowPosition ),
 					0, jdbcValueBindings, null,
 					(valueIndex, bindings, unused, jdbcValue, mapping) ->
 							bindValue( bindings, jdbcValue, mapping, parameterUsage ),
@@ -261,7 +263,7 @@ final class AuditCollectionRowMutationHelper {
 		}
 
 		attributeMapping.getElementDescriptor().decompose(
-				collection.getElement( rowValue ),
+				resolveElement( collection, rowValue ),
 				0,
 				elementColumnIsSettable,
 				jdbcValueBindings,
@@ -279,6 +281,21 @@ final class AuditCollectionRowMutationHelper {
 		if ( !mapping.isFormula() ) {
 			bindings.bindValue( jdbcValue, auditTableName, mapping.getSelectionExpression(), parameterUsage );
 		}
+	}
+
+	private Object resolveIdentifier(
+			PersistentCollection<?> collection,
+			Object rowValue,
+			int rowPosition) {
+		return rowValue instanceof Map.Entry<?, ?> entry
+				? entry.getKey()
+				: collection.getIdentifier( rowValue, rowPosition );
+	}
+
+	private Object resolveElement(PersistentCollection<?> collection, Object rowValue) {
+		return rowValue instanceof Map.Entry<?, ?> entry
+				? entry.getValue()
+				: collection.getElement( rowValue );
 	}
 
 	private void bindValue(

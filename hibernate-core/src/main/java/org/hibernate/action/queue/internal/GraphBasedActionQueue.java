@@ -830,7 +830,7 @@ public class GraphBasedActionQueue implements ActionQueue {
 
 	@Override
 	public void setAuditChangesetContext(Object changelog, org.hibernate.Session changesetSession) {
-		auditMutationCollector.setChangesetContext( changelog, changesetSession );
+		// Graph audit execution resolves changelog context directly from the session.
 	}
 
 	/// Performs cleanup of any held cache soft locks.

@@ -507,6 +507,11 @@ public class SessionDelegatorBaseImpl implements SessionImplementor {
 	}
 
 	@Override
+	public @Nullable Object getCurrentChangesetContext() {
+		return delegate.getCurrentChangesetContext();
+	}
+
+	@Override
 	public void afterTransactionBegin() {
 		delegate.afterTransactionBegin();
 	}

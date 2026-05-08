@@ -26,6 +26,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hibernate.CacheMode;
 import org.hibernate.EntityNameResolver;
 import org.hibernate.audit.AuditLog;
+import org.hibernate.audit.spi.ChangelogSupplier;
 import org.hibernate.audit.spi.AuditWorkQueue;
 import org.hibernate.Filter;
 import org.hibernate.HibernateException;
@@ -216,6 +217,7 @@ abstract class AbstractSharedSessionContract implements SharedSessionContractImp
 	private Integer jdbcBatchSize;
 
 	private transient Object currentChangesetId;
+	private transient Object currentChangesetContext;
 
 	private boolean criteriaCopyTreeEnabled;
 	private boolean criteriaPlanCacheEnabled;
@@ -1037,9 +1039,25 @@ abstract class AbstractSharedSessionContract implements SharedSessionContractImp
 	}
 
 	private Object generateCurrentChangesetIdentifier() {
-		return changesetIdSupplier == null
-				? null
-				: changesetIdSupplier.generateIdentifier( this );
+		if ( changesetIdSupplier == null ) {
+			return null;
+		}
+		if ( changesetIdSupplier instanceof ChangelogSupplier<?> changelogSupplier ) {
+			final var changesetContext = changelogSupplier.generateContext( this );
+			currentChangesetContext = changesetContext;
+			changelogSupplier.registerLegacyContext( this, changesetContext );
+			return changesetContext.changesetId();
+		}
+		return changesetIdSupplier.generateIdentifier( this );
+	}
+
+	@Override
+	public @Nullable Object getCurrentChangesetContext() {
+		if ( currentChangesetContext != null ) {
+			return currentChangesetContext;
+		}
+		getCurrentChangesetIdentifier();
+		return currentChangesetContext;
 	}
 
 	@Override
@@ -1052,6 +1070,7 @@ abstract class AbstractSharedSessionContract implements SharedSessionContractImp
 
 	protected void clearTransactionStartInstant() {
 		currentChangesetId = null;
+		currentChangesetContext = null;
 	}
 
 	@Override
