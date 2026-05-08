@@ -556,7 +556,7 @@ public class StandardGraphBuilder implements GraphBuilder {
 		}
 
 		for ( FlushOperationGroup group : groups ) {
-			if ( group.kind() == MutationKind.UPDATE ) {
+			if ( group.kind() == MutationKind.UPDATE || group.kind() == MutationKind.UPDATE_ORDER ) {
 				String tableName = (group.tableExpression());
 				if ( !constraintModel.getUniqueConstraintsForTable( tableName ).isEmpty() ) {
 					GroupNode updateNode = findGroupNode( nodes, group );
@@ -761,6 +761,9 @@ public class StandardGraphBuilder implements GraphBuilder {
 			if ( conflictingChanges != null ) {
 				for ( UpdateSlotChange change2 : conflictingChanges ) {
 					if ( change1 == change2 ) {
+						continue;
+					}
+					if ( change1.node() == change2.node() ) {
 						continue;
 					}
 

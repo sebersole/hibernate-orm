@@ -54,7 +54,7 @@ public class UniqueSlotExtractor {
 	public List<UniqueSlot> extractSlots(FlushOperation operation) {
 		List<UniqueSlot> slots = new ArrayList<>();
 
-		if (operation.getKind() == MutationKind.UPDATE) {
+		if ( operation.getKind() == MutationKind.UPDATE || operation.getKind() == MutationKind.UPDATE_ORDER ) {
 			return extractUpdateSlots(operation);
 		}
 
@@ -126,9 +126,10 @@ public class UniqueSlotExtractor {
 		if ( bindPlan == null ) {
 			return slots;
 		}
-		if (!(bindPlan instanceof EntityUpdateBindPlan updateBindPlan)) {
+		if ( operation.getKind() == MutationKind.UPDATE_ORDER
+				|| !( bindPlan instanceof EntityUpdateBindPlan updateBindPlan ) ) {
 			for (UniqueConstraint constraint : constraints) {
-				if ( constraint.isPrimaryKey() ) {
+				if ( operation.getKind() != MutationKind.UPDATE_ORDER && constraint.isPrimaryKey() ) {
 					continue;
 				}
 				Object[] collectionValues = bindPlan.getUniqueConstraintValues( constraint, session );
@@ -166,7 +167,7 @@ public class UniqueSlotExtractor {
 	public List<UniqueSlot> extractOldSlots(FlushOperation operation) {
 		List<UniqueSlot> slots = new ArrayList<>();
 
-		if ( operation.getKind() != MutationKind.UPDATE ) {
+		if ( operation.getKind() != MutationKind.UPDATE && operation.getKind() != MutationKind.UPDATE_ORDER ) {
 			return slots;
 		}
 
@@ -177,7 +178,20 @@ public class UniqueSlotExtractor {
 		}
 
 		final var bindPlan = operation.getBindPlan();
-		if ( !( bindPlan instanceof EntityUpdateBindPlan updateBindPlan ) ) {
+		if ( bindPlan == null ) {
+			return slots;
+		}
+		if ( operation.getKind() == MutationKind.UPDATE_ORDER
+				|| !( bindPlan instanceof EntityUpdateBindPlan updateBindPlan ) ) {
+			for ( UniqueConstraint constraint : constraints ) {
+				if ( operation.getKind() != MutationKind.UPDATE_ORDER && constraint.isPrimaryKey() ) {
+					continue;
+				}
+				final Object[] values = bindPlan.getPreviousUniqueConstraintValues( constraint, session );
+				if ( values != null ) {
+					slots.add( new UniqueSlot( tableName, values, constraint ) );
+				}
+			}
 			return slots;
 		}
 

@@ -54,6 +54,17 @@ public interface BindPlan {
 		return null;
 	}
 
+	/// Extract the values this operation previously assigned to a unique constraint.
+	///
+	/// This is mainly used for non-entity UPDATE-style operations whose bind plan
+	/// already knows both the old row locator and the new assigned values.
+	@Nullable
+	default Object[] getPreviousUniqueConstraintValues(
+			UniqueConstraint constraint,
+			SharedSessionContractImplementor session) {
+		return null;
+	}
+
 	/// Bind JDBC values for the operation being executed.
 	///
 	/// @param valueBindings the JDBC value bindings to populate

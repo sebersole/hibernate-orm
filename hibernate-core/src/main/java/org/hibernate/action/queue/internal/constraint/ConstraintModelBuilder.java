@@ -588,12 +588,26 @@ public final class ConstraintModelBuilder {
 		}
 
 		final String tableName = table.getQualifiedName( sqlStringGenerationContext );
+		final var primaryKey = table.getPrimaryKey();
+		if ( primaryKey != null && descriptor.isManyToMany() && descriptor.hasIndex() ) {
+			addCollectionUniqueConstraint(
+					attributeMapping,
+					uniqueConstraints,
+					tableName,
+					"PRIMARY",
+					UniqueConstraint.ConstraintType.PRIMARY_KEY,
+					primaryKey.getColumns(),
+					primaryKey
+			);
+		}
+
 		for ( UniqueKey uniqueKey : table.getUniqueKeys().values() ) {
-			addCollectionUniqueKeyConstraint(
+			addCollectionUniqueConstraint(
 					attributeMapping,
 					uniqueConstraints,
 					tableName,
 					uniqueKey.getName(),
+					UniqueConstraint.ConstraintType.UNIQUE_KEY,
 					uniqueKey.getColumns(),
 					uniqueKey
 			);
@@ -601,11 +615,12 @@ public final class ConstraintModelBuilder {
 
 		for ( Column column : table.getColumns() ) {
 			if ( column.isUnique() && !table.isPrimaryKey( column ) ) {
-				addCollectionUniqueKeyConstraint(
+				addCollectionUniqueConstraint(
 						attributeMapping,
 						uniqueConstraints,
 						tableName,
 						column.getUniqueKeyName(),
+						UniqueConstraint.ConstraintType.UNIQUE_KEY,
 						List.of( column ),
 						null
 				);
@@ -613,11 +628,12 @@ public final class ConstraintModelBuilder {
 		}
 	}
 
-	private void addCollectionUniqueKeyConstraint(
+	private void addCollectionUniqueConstraint(
 			PluralAttributeMapping attributeMapping,
 			List<UniqueConstraint> uniqueConstraints,
 			String tableName,
 			String constraintName,
+			UniqueConstraint.ConstraintType type,
 			List<Column> columns,
 			org.hibernate.mapping.Constraint constraint) {
 		final SelectableMappings runtimeColumns = resolveCollectionUniqueKeyRuntimeColumns(
@@ -633,7 +649,7 @@ public final class ConstraintModelBuilder {
 		uniqueConstraints.add( new UniqueConstraint(
 				runtimeTableName,
 				constraintName,
-				UniqueConstraint.ConstraintType.UNIQUE_KEY,
+				type,
 				runtimeColumns,
 				determineConstraintDeferrability( constraint ),
 				areColumnsNullable( runtimeColumns ),
@@ -708,7 +724,13 @@ public final class ConstraintModelBuilder {
 		}
 
 		for ( int i = 0; i < selectableMappings.getJdbcTypeCount(); i++ ) {
-			final SelectableMapping selectable = selectableMappings.getSelectable( i );
+			final SelectableMapping selectable;
+			try {
+				selectable = selectableMappings.getSelectable( i );
+			}
+			catch (ArrayIndexOutOfBoundsException ignored) {
+				return null;
+			}
 			if ( !selectable.isFormula()
 					&& columnMatches( tableName, column, selectable ) ) {
 				return selectable;

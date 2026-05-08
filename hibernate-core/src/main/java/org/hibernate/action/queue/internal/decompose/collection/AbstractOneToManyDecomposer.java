@@ -35,7 +35,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.mapping.internal.EntityCollectionPart;
 import org.hibernate.persister.collection.mutation.CollectionTableMapping;
 import org.hibernate.persister.collection.OneToManyPersister;
-import org.hibernate.persister.collection.mutation.OrderOnlyUpdateBindPlan;
 import org.hibernate.sql.exec.spi.JdbcParameterBinder;
 import org.hibernate.sql.model.jdbc.JdbcMutationOperation;
 import org.hibernate.sql.model.jdbc.JdbcValueDescriptor;
@@ -393,6 +392,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 						MutationKind.UPDATE_ORDER,
 						jdbcOperations.updateIndexPlan().jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
+								persister,
 								collection,
 								key,
 								shift.element(),
@@ -410,6 +410,7 @@ public abstract class AbstractOneToManyDecomposer implements OneToManyDecomposer
 						MutationKind.UPDATE_ORDER,
 						jdbcOperations.updateIndexPlan().jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
+								persister,
 								collection,
 								key,
 								shift.element(),

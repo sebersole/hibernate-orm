@@ -31,7 +31,6 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metamodel.CollectionClassification;
 import org.hibernate.metamodel.mapping.TemporalMapping;
 import org.hibernate.persister.collection.BasicCollectionPersister;
-import org.hibernate.persister.collection.mutation.OrderOnlyUpdateBindPlan;
 import org.hibernate.persister.entity.mutation.TemporalMutationHelper;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.model.MutationOperation;
@@ -548,6 +547,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 							MutationKind.UPDATE_ORDER,
 							orderUpdatePlan.jdbcOperation(),
 							new OrderOnlyUpdateBindPlan(
+									persister,
 									collection,
 									key,
 									shift.element(),
@@ -566,6 +566,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 							MutationKind.UPDATE_ORDER,
 							orderUpdatePlan.jdbcOperation(),
 							new OrderOnlyUpdateBindPlan(
+									persister,
 									collection,
 									key,
 									shift.element(),
@@ -785,6 +786,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 						MutationKind.UPDATE_ORDER,
 						orderUpdatePlan.jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
+								persister,
 								collection,
 								key,
 								currentEntity,
@@ -803,6 +805,7 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 						MutationKind.UPDATE_ORDER,
 						orderUpdatePlan.jdbcOperation(),
 						new OrderOnlyUpdateBindPlan(
+								persister,
 								collection,
 								key,
 								currentEntity,
