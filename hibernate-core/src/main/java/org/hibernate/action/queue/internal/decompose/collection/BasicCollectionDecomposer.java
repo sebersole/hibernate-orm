@@ -165,6 +165,13 @@ public class BasicCollectionDecomposer implements CollectionDecomposer {
 		);
 
 		if ( !operations.isEmpty() ) {
+			contributeCollectionChange(
+					action.getCollection(),
+					action.getKey(),
+					ordinalBase,
+					session,
+					operations::add
+			);
 			// Attach it to the last operation
 			operations.get( operations.size() - 1 ).setPostExecutionCallback( postExecutionCallback );
 			operations.forEach( operationConsumer );

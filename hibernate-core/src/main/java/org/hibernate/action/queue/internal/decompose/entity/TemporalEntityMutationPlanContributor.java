@@ -22,7 +22,6 @@ import org.hibernate.generator.BeforeExecutionGenerator;
 import org.hibernate.generator.Generator;
 import org.hibernate.metamodel.mapping.TemporalMapping;
 import org.hibernate.persister.entity.EntityPersister;
-import org.hibernate.persister.entity.UnionSubclassEntityPersister;
 import org.hibernate.sql.ast.tree.expression.ColumnReference;
 import org.hibernate.sql.model.MutationOperation;
 import org.hibernate.sql.model.ast.MutatingTableReference;
@@ -38,6 +37,7 @@ public class TemporalEntityMutationPlanContributor implements EntityMutationPlan
 	private final EntityPersister entityPersister;
 	private final SessionFactoryImplementor sessionFactory;
 	private final TemporalMapping temporalMapping;
+	private final EntityInsertMutationPlanner insertMutationPlanner;
 	private final MutationOperation staticEndOperation;
 
 	public TemporalEntityMutationPlanContributor(
@@ -46,6 +46,7 @@ public class TemporalEntityMutationPlanContributor implements EntityMutationPlan
 		this.entityPersister = entityPersister;
 		this.sessionFactory = sessionFactory;
 		this.temporalMapping = entityPersister.getTemporalMapping();
+		this.insertMutationPlanner = new EntityInsertMutationPlanner( entityPersister, sessionFactory );
 		this.staticEndOperation = buildEndOperation( null, null, effectiveOptimisticLockStyle( null, null ), null );
 	}
 
@@ -153,14 +154,13 @@ public class TemporalEntityMutationPlanContributor implements EntityMutationPlan
 	private void contributeReplacementInsert(
 			UpdateContext context,
 			Consumer<FlushOperation> operationConsumer) {
-		final InsertDecomposer insertDecomposer = (InsertDecomposer) entityPersister.getInsertDecomposer();
-		final boolean hasStateDependentInsertGenerator = insertDecomposer.preInsertInMemoryValueGeneration(
+		final boolean hasStateDependentInsertGenerator = insertMutationPlanner.preInsertInMemoryValueGeneration(
 				context.state(),
 				context.entity(),
 				context.session()
 		);
-		final boolean[] effectiveInsertability = insertDecomposer.resolveInsertability( context.state() );
-		final Map<String, TableInsert> insertGroup = insertDecomposer.resolveInsertOperations(
+		final boolean[] effectiveInsertability = insertMutationPlanner.resolveInsertability( context.state() );
+		final Map<String, TableInsert> insertGroup = insertMutationPlanner.resolveInsertOperations(
 				effectiveInsertability,
 				context.entity(),
 				context.identifier(),
@@ -192,11 +192,8 @@ public class TemporalEntityMutationPlanContributor implements EntityMutationPlan
 				continue;
 			}
 
-			final BindPlan bindPlan = new EntityInsertBindPlan(
-					entityPersister instanceof UnionSubclassEntityPersister
-							? entityPersister.getIdentifierTableDescriptor()
-							: tableDescriptor,
-					entityPersister,
+			final BindPlan bindPlan = insertMutationPlanner.createInsertBindPlan(
+					tableDescriptor,
 					context.entity(),
 					context.identifier(),
 					context.state(),
