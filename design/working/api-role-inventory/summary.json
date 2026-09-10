@@ -1,0 +1,59 @@
+{
+  "apiTypes": 2258,
+  "shapes": {
+    "EXTENSIBLE_CLASS": 1284,
+    "FINAL_CLASS": 86,
+    "INTERFACE": 458,
+    "ENUM": 118,
+    "ANNOTATION": 222,
+    "NO_PUBLIC_OR_PROTECTED_CONSTRUCTOR": 39,
+    "SEALED_REVIEW": 9,
+    "ABSTRACT_CLASS": 42
+  },
+  "proposals": {
+    "UNREVIEWED_OWNER_OR_BENCHMARK_ONLY": 499,
+    "UNREVIEWED_NO_DIRECT_EVIDENCE": 1212,
+    "OUTSIDE_ORDINARY_EXTENSION_REVIEW": 465,
+    "IMPLEMENT_CANDIDATE_REVIEW_EVIDENCE": 81,
+    "IMPLEMENT_CANDIDATE_STRONGER_CONTEXT": 1
+  },
+  "artifacts": {
+    "hibernate-core-8.1.0-SNAPSHOT.jar": 1819,
+    "hibernate-jcache-8.1.0-SNAPSHOT.jar": 3,
+    "hibernate-community-dialects-8.1.0-SNAPSHOT.jar": 126,
+    "hibernate-envers-8.1.0-SNAPSHOT.jar": 102,
+    "hibernate-models-1.3.0.jar": 17,
+    "hibernate-micrometer-8.1.0-SNAPSHOT.jar": 4,
+    "hibernate-maven-plugin-8.1.0-SNAPSHOT.jar": 8,
+    "hibernate-processor-8.1.0-SNAPSHOT.jar": 38,
+    "hibernate-spatial-8.1.0-SNAPSHOT.jar": 68,
+    "hibernate-ant-8.1.0-SNAPSHOT.jar": 34,
+    "hibernate-reveng-8.1.0-SNAPSHOT.jar": 39
+  },
+  "eligible": 1793,
+  "eligibleIncubating": 256,
+  "eligibleCompatibilityArtifacts": 1575,
+  "sourceDeclarations": 30518,
+  "sourceFiles": 18417,
+  "bytecodeClasses": 44497,
+  "bytecodeWithUniqueCurrentSource": 30560,
+  "bytecodeOmittedSourceMissingOrAmbiguous": 13937,
+  "bytecodeSourceNewer": 655,
+  "sourceParentReferencesUnresolved": 2491,
+  "head": "92376012611f35359728d6faa0de13a008776d8c",
+  "metadataSourceVersion": "8.1.0-SNAPSHOT",
+  "metadataSha256": "ebcfcb0114262db57f1d00bcdb763f8299f74c8c2a616a9c952e42df4817f9f3",
+  "highConfidenceImplementRecommendations": 21,
+  "useOnlyReviewCandidates": 8,
+  "grammarExtensionShapes": 377,
+  "mixedCategoryApiTypes": 159,
+  "extensionTypesWithMixedCategoryMembers": 150,
+  "stableExtensionTypesInCompatibilityArtifacts": 1319,
+  "highConfidenceIncubating": 7,
+  "preliminaryRoleDispositions": {
+    "UNREVIEWED": 1764,
+    "ORDINARY_USE_SPECIAL_OR_NONEXTENSIBLE_SHAPE": 465,
+    "USE_IMPLEMENT_RECOMMENDED": 21,
+    "USE_ONLY_REVIEW_CANDIDATE": 8
+  }
+}

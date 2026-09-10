@@ -1,0 +1,283 @@
+= Preliminary API Role Inventory
+:toc:
+:sectanchors:
+
+This is a temporary investigation report, not an approved classification
+ledger. No API annotations, roles, packages, or compatibility policies were
+changed. Recommendations require Steve's review.
+
+== Snapshot and scope
+
+Inventory produced on 2026-09-09 from branch `user-tooling`, commit
+`92376012611f35359728d6faa0de13a008776d8c`, using freshly generated
+`8.1.0-SNAPSHOT` classification metadata.
+
+The canonical JSON SHA-256 is
+`ebcfcb0114262db57f1d00bcdb763f8299f74c8c2a616a9c952e42df4817f9f3`.
+This is the uncompressed input digest, not the published gzip sidecar.
+
+All 2,258 API-classified types in the configured aggregate index are included,
+not just the artifacts currently selected for migration enforcement. No new
+artifact was added to either configuration. The inventory includes 1,819 Core,
+126 community Dialect, 102 Envers, 68 Spatial, 39 reverse-engineering,
+38 processor, 34 Ant, 17 Hibernate Models, 8 Maven-plugin, 4 Micrometer, and
+3 JCache types. The independently versioned Models artifact is 1.3.0.
+
+Generated local reports:
+
+* link:api-role-inventory/inventory.md[Complete type inventory and implementation evidence].
+* link:api-role-inventory/recommendations.md[Preliminary recommendations with source and test links].
+* link:api-role-inventory/inventory.json[Complete machine-readable inventory, evidence, and recommendations].
+* link:api-role-inventory/summary.json[Counts and provenance].
+* link:api-role-inventory/unresolved-source-parents.json[Unresolved source-parent references].
+
+The reports and their reproduction helpers live alongside the design under
+`design/working/api-role-inventory/`. Raw scan data remains under ignored
+`target/api-role-inventory/` and can be regenerated or removed with build
+output. The inventory is still a temporary review artifact, not a proposed
+permanent metadata publication or second source of truth.
+
+== Type shapes
+
+[cols="3,1",options="header"]
+|===
+|Shape |Count
+|Non-final concrete classes with public/protected constructors |1,284
+|Non-sealed interfaces |458
+|Non-final abstract classes with public/protected constructors |42
+|Sealed types requiring special review |9
+|Annotation types |222
+|Enums |118
+|Final classes |86
+|Other classes without public/protected constructors |39
+|Total |2,258
+|===
+
+The first four groups give 1,793 extension-review shapes, of which 256 are
+currently incubating. Of those 1,793, 1,575 belong to artifacts selected for
+migration enforcement; 1,319 are both in that scope and not incubating.
+
+These are structural counts, not promises of supported extension. Public and
+protected accessibility is examined along with enclosing types and constructor
+access. Sealed types are not blindly classified as externally implementable.
+The other 465 types are outside this initial ordinary-extension review;
+in particular, annotation implementations have special semantics and are not
+claimed to be Java-impossible merely because annotation types are set aside.
+
+The apparent workload is inflated by 377 extensible types in generated grammar
+packages. Many function implementations, Envers boot-model classes, and other
+implementation-oriented classes also currently resolve to API. Those deserve
+a category-intent review before deciding that their Java extensibility is a
+supported application contract. This report does not reclassify them.
+
+== Automatic evidence triage
+
+The first pass divides the 1,793 extension-review shapes as follows:
+
+[cols="3,1",options="header"]
+|===
+|Direct evidence found |Types
+|Tests, test infrastructure, or another ORM module |81
+|Standalone provider-fixture context |1
+|Only the owning module's implementation or benchmarks |499
+|No direct implementation evidence located |1,212
+|===
+
+The 82 types with evidence outside the owner's ordinary implementation are a
+priority review queue, not 82 approved extension contracts. Indirect subtype
+and override-signature evidence is retained separately. Source and bytecode
+observations are labeled and may describe the same relationship; do not sum
+raw evidence rows as independent implementations.
+
+Owning-module implementations are deliberately distinguished from cross-module
+use. For example, Envers implementing its own `AuditReader` is not stronger
+evidence of supported application implementation than Core implementing
+`Session`. Runtime mocks and proxies are not statically generated classes in
+the scan; concrete test doubles are evidence only, not contract approval.
+
+== Preliminary role recommendations
+
+Source documentation and representative tests support 21 high-confidence
+recommendations for `USE + IMPLEMENT`, assuming their existing API category
+is retained. Fourteen are non-incubating; seven are currently incubating.
+
+[cols="2,4",options="header"]
+|===
+|Family |Types
+|JDBC work callbacks and bases
+|`Work`, `ReturningWork`, `AbstractWork`, `AbstractReturningWork`
+|Application callbacks
+|`Interceptor`, `EntityNameResolver`, `CustomEntityDirtinessStrategy`,
+`CustomEntityDirtinessStrategy.AttributeChecker`, `SessionFactoryObserver`
+|Naming strategies
+|`ImplicitNamingStrategy`, `PhysicalNamingStrategy`
+|Result transformation
+|`TupleTransformer`, `ResultListTransformer`
+|Criteria construction
+|`CriteriaDefinition`
+|Envers callbacks
+|`RevisionListener`, `EntityTrackingRevisionListener`
+|Value/identifier generation
+|`BeforeExecutionGenerator`, `OnExecutionGenerator`, `IdentifierGenerator`
+|Custom annotation binding
+|`TypeBinder`, `AttributeBinder`
+|===
+
+The generated recommendations report gives the exact declaration, lifecycle,
+documentation evidence, and representative test locations for each type.
+This is a deliberately bounded manually reviewed shortlist, not a claim
+that other API types lack implementation contracts.
+
+`ImplicitNamingStrategy` illustrates why documentation matters: its Javadoc
+explicitly anticipates application implementations, even though many tests
+extend its standard implementation rather than implementing the interface
+directly. That adds an important recommendation beyond the direct-evidence
+queue.
+
+`CriteriaDefinition` is particularly useful for designing API roles. Its
+documented usage is an anonymous subclass with an initializer block; supported
+subclassing does not require the application to override an abstract method.
+TYPE-level implementation intent must protect this usage too.
+
+Eight additional types are reasonable candidates to review for explicitly
+use-only intent: `Session`, `StatelessSession`, `SessionFactory`, `Query`,
+`SelectionQuery`, `MutationQuery`, `Metadata`, and `MetadataBuilder`.
+They remain unreviewed. Third-party wrappers and delegators must be considered;
+neither their facade shape nor the absence of repository implementations is
+proof that implementation has never been supported.
+
+== Counterexamples and design implications
+
+=== Tests are not automatically extension contracts
+
+The provider-fixture evidence for `SqlStringGenerationContext` is
+`ExampleSchemaExporterTest.FixtureContext`. This is a test context supplied
+to an exporter test, not by itself proof of a supported application extension
+point. `GeneratorCreationContext` likewise has unit-test and test-infrastructure
+implementations which require interpretation. Neither is on the high-confidence
+shortlist.
+
+`HibernateCriteriaBuilder` has a real cross-module subtype in Spatial. This
+establishes an in-repository dependency and may indicate a supported extension
+surface, but does not alone resolve what arbitrary external applications may
+implement. It remains a separate contract-review candidate.
+
+=== Member classifications must remain independent
+
+159 API types have directly declared methods, fields, or constructors whose
+effective category differs from the enclosing API type. Of these, 150 are
+in the extension-review shapes. This count includes many community Dialects;
+it is not 150 demonstrated needs for member-level API-role annotations.
+
+For example, `CustomEntityDirtinessStrategy` is an API type with documented
+application implementation, but four callback methods are individually SPI
+classified. An API type's role must not overwrite these categories, nor may
+the presence of SPI-classified callbacks make the documented implementation
+obligations disappear. Constructors and inherited obligations need similarly
+explicit treatment in the future working specification.
+
+TYPE-only API role declarations still look viable. The evidence does not
+justify adding member-level API-role annotations now. It does establish that
+role propagation cannot simply replace every member's independent category
+or existing SPI roles with those of the enclosing type.
+
+=== Lifecycle and category are separate decisions
+
+Seven of the 21 strongest implementation candidates are incubating. They still
+have recognizable implementation intent, even though they do not carry the
+stable compatibility guarantee. Do not omit their role inventory or promote
+their lifecycle status as part of adopting roles.
+
+Likewise, being API-classified today does not settle whether a generator or
+bootstrap extension would ultimately be better classified as SPI. This
+inventory records the current category and participation evidence; a category
+change is a separate, compatibility-sensitive decision.
+
+== Method and coverage limitations
+
+. Regenerated canonical classification metadata using the existing Gradle task.
+. Parsed 18,417 tracked Java files using the JDK compiler's parse-only API:
+  30,518 named, local, and anonymous class declarations. Annotation processors
+  and Java code were not executed.
+. Scanned 44,497 existing compiled classes across ORM subprojects using ASM,
+  collecting hierarchy, member signatures, sealed/inner-class structure, and
+  LambdaMetafactory sites for lambda and method-reference implementation evidence.
+. Resolved source parents against canonical and repository type names using
+  explicit imports, package/enclosing scope, and unambiguous wildcard imports.
+. Checked public/protected constructor access and collected direct, indirect,
+  and override-signature observations; reviewed representative documentation
+  and tests before making the 21 strong recommendations.
+
+Six documentation Java snippets had parse errors because they are fragments,
+not complete compilation units. There were 2,491 unresolved source-parent
+references, including external-library types absent from the inventory.
+The source pass is parse-only, not a complete javac symbol analysis. Static
+imports of nested types and some local/generated constructs can remain
+unresolved. Javadoc and AsciiDoc examples were inspected selectively, not
+parsed exhaustively as Java programs.
+
+Only 30,560 scanned class files could be associated with a unique current
+source file and a current named declaration or anonymous/local class shape.
+13,937 were excluded from supplementary bytecode evidence because source was
+missing, ambiguous, or the named declaration no longer existed. The scan
+encountered 655 uniquely source-associated classes with newer source than
+bytecode; included observations carry a freshness warning. These counts do
+not claim that the cached tests were freshly rebuilt for this inventory.
+
+Anonymous/local binary names cannot be matched completely without fresh
+compilation. Bytecode evidence and matching override signatures are therefore
+supplementary observations, not proof of a current compiled consumer or a
+complete Java overriding analysis. No test suite was executed. Repository
+evidence cannot establish the absence of implementations in external code.
+
+== Verification and reproduction
+
+Executed:
+
+[source,shell]
+----
+./gradlew :documentation:generateClassificationMetadata --console=plain
+----
+
+Result: `BUILD SUCCESSFUL in 36s`; 93 actionable tasks, 28 executed,
+40 from cache, 25 up-to-date. The first sandboxed attempt failed to open the
+Gradle wrapper lock; the authorized rerun succeeded. No tracked production or
+test sources changed during generation.
+
+The temporary scanner was compiled with JDK 25 and the locally cached ASM
+9.9.1 JAR. Its source and analysis helpers are preserved under
+`design/working/api-role-inventory/reproduction/`. The executed sequence below
+records the original temporary locations. To regenerate after relocation,
+use the preserved helpers instead; `prepare.py` and the Java scanner still
+use `target/api-role-inventory/` for raw inputs, while `analyze.py` and
+`recommendations.py` now write reports to `design/working/api-role-inventory/`.
+
+Original executed sequence:
+
+[source,shell]
+----
+python3 /private/tmp/hibernate-api-inventory.UoLqZb/prepare.py
+javac -cp /Users/steveebersole/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.9.1/2ceea6ab43bcae1979b2a6d85fc0ca429877e5ab/asm-9.9.1.jar -d /private/tmp/hibernate-api-inventory.UoLqZb /private/tmp/hibernate-api-inventory.UoLqZb/InventoryScan.java
+java -cp /private/tmp/hibernate-api-inventory.UoLqZb:/Users/steveebersole/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.9.1/2ceea6ab43bcae1979b2a6d85fc0ca429877e5ab/asm-9.9.1.jar InventoryScan . classes target/api-role-inventory/classes.list target/api-role-inventory/bytecode.jsonl
+java -Xmx2g -cp /private/tmp/hibernate-api-inventory.UoLqZb:/Users/steveebersole/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.9.1/2ceea6ab43bcae1979b2a6d85fc0ca429877e5ab/asm-9.9.1.jar InventoryScan . sources target/api-role-inventory/sources.list target/api-role-inventory/sources.jsonl
+python3 /private/tmp/hibernate-api-inventory.UoLqZb/analyze.py
+python3 /private/tmp/hibernate-api-inventory.UoLqZb/recommendations.py
+----
+
+All final scanner and analysis commands succeeded. Assertions check total
+counts, known interface/abstract-class examples, lambda evidence for `Work`,
+and the owning-module-only treatment of `AuditReader`. Source-link targets
+and the metadata digest were checked. These investigation helpers are not
+production tooling or a substitute for its eventual tests.
+
+== Recommended next step
+
+Use the 21 strong recommendations and representative ambiguous cases as
+fixtures for the future TYPE-only API-role specification. Review the remaining
+evidence queue by feature family, with category and lifecycle decisions kept
+separate. Do not require completion of all 1,793 extension-review shapes before
+delivering consumer classification reporting.
+
+No unreviewed declaration should become use-only automatically. Approved
+decisions eventually belong in source and contract documentation; this
+temporary report can then be discarded rather than maintained as a ledger.

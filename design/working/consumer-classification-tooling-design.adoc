@@ -1,0 +1,374 @@
+= Consumer Classification and Compatibility Tooling
+:toc:
+:sectanchors:
+
+Status: proposed design; awaiting Steve's design approval.
+
+This starts the SDD progression: design proposal, working specification,
+approved specification, implementation. This document does not approve
+implementation. API role adoption and external migration compatibility
+enforcement are future work, not prerequisites for classification reporting.
+
+== Goals and boundaries
+
+Give application and integration developers tooling to understand their
+dependencies on Hibernate contracts, including internal, incubating,
+deprecated, and removal-marked declarations. Report API and SPI usage without
+requiring the consumer to declare that its entire project is an application
+or a service provider.
+
+Keep three concerns distinct:
+
+* Classification reporting describes dependencies on one resolved Hibernate
+  installation using the available classification metadata.
+* Classification policy validation evaluates those observations against
+  configurable usage policies.
+* Migration compatibility compares old and new contracts, interpreted using
+  category, lifecycle, supported participation roles, and release horizons.
+
+These concerns should share metadata resolution, declaration identities,
+bytecode analysis infrastructure, and a Gradle tooling distribution. They must
+not share an undifferentiated verdict or force migration analysis into a
+classification-reporting invocation.
+
+The first implementation delivers consumer classification reporting and its
+metadata-resolution behavior. It does not introduce API role annotations,
+reclassify Hibernate APIs, or expose a new consumer migration validator.
+
+== Current implementation
+
+The published `org.hibernate.orm.dialect-provider` plugin already resolves
+family metadata, scans provider bytecode, validates provider boundaries, and
+integrates Dialect contract tests. Its default workflow attaches provider
+verification to `check` and creates a Dialect-specific test source set.
+
+The shared `ClassificationMetadataResolver` already handles mutable family
+endpoints, checksum verification, origin-and-family cache isolation, offline
+operation, refresh, and concurrent writers. Reuse it.
+
+The repository's canonical model separates API/SPI/internal category from
+lifecycle flags. Its external provider metadata reader currently retains
+category and SPI roles but not lifecycle facts. Consumer reporting needs a
+richer projection of the existing canonical data, not an independent
+annotation classifier.
+
+`ProviderBoundaryAnalyzer` contains useful ASM scanning and inherited-target
+resolution, but also provider-specific assumptions and failure policies.
+Separate observation from that policy before reusing it for applications.
+
+`ClassificationMigrationValidator` currently handles stable API conservatively:
+it reports applicable Java changes without API-role filtering. SPI changes
+are filtered by the existing independent roles. Preserve this protection
+until API implementation intent is explicitly reviewed.
+
+== Proposed user-facing architecture
+
+Introduce a generic plugin entry point, provisionally
+`org.hibernate.orm.classification`, in the existing tooling distribution.
+Do not rename or remove the existing Dialect plugin or its published entry
+points. The generic entry point must not create Dialect test source sets,
+add the Dialect testkit, or assume that the project implements a Dialect.
+
+The Dialect adapter should reuse the generic services where appropriate.
+Applying both entry points must not register duplicate shared tasks or run
+the same scan unnecessarily. Preserve existing Dialect task semantics and
+its current `check` integration during this refactoring; generic reporting
+is explicit by default and is not attached to `check`.
+
+A typed extension configures source sets or input artifacts, package filters,
+metadata origin or local input, and report outputs. Default analysis roots
+are the project's main compiled output. Its dependencies supply resolution
+context; they are not automatically scanned as consumer roots. Additional
+source sets and project modules are opt-in. Actual resolved artifacts, not
+only requested dependency strings, determine Hibernate versions and ownership.
+
+The initial task name is provisionally `reportHibernateUsage`. Exact task,
+extension, report-schema, and engine API names belong in the working
+specification. The engine remains Gradle-independent so later command-line,
+Maven, or Ant adapters do not require a second analyzer. Shipping native
+Maven or Ant plugins is excluded from this increment.
+
+== Classification observations and reports
+
+Preserve source declaration, referenced target, resolved declaring target,
+artifact ownership, and dependency kind. Cover signatures, calls, fields,
+inheritance, overrides, generic signatures, annotation class selections,
+and bytecode-represented method references, subject to explicit scan coverage.
+Inherited calls must resolve against the consumer's actual dependency
+bytecode before matching the canonical metadata declaration.
+
+Category and lifecycle are orthogonal: a target can be API and incubating,
+or SPI and deprecated. The report must preserve every applicable fact.
+API/SPI usage is informational by default; a project containing both is not
+an error. An annotation selecting an SPI class must remain distinguishable
+from implementing or invoking that SPI.
+
+Provide deterministic text and JSON reports, with summary counts and
+declaration-level evidence. The report records analyzed artifacts and
+versions, metadata source version and checksum, selected scope, and coverage
+limitations. Deduplication must not erase distinct dependency kinds or
+different source declarations. Prefer summaries on the console and detailed
+evidence in the files to avoid overwhelming consumers.
+
+Internal and incubating usage should be visible as warnings; deprecated and
+removal-marked usage should be separately identifiable. Classification
+reporting does not fail merely because usage findings exist. Malformed or
+unusable inputs are task failures, not a clean report. A later, separate
+policy-validation task can offer severity configuration and narrowly scoped
+suppressions without changing report facts. Use semantic causes, not opaque
+numeric rule codes; cause, severity, and classification facts are distinct.
+
+Missing metadata for an identified Hibernate target is an explicit unknown
+classification/coverage finding. Never silently treat it as API, internal,
+or safe. Missing dependency bytecode similarly records incomplete resolution.
+Unknown category must not be conflated with unknown API implementation intent.
+
+Reflection driven by strings, erased source constructs, inlined constants,
+runtime-generated code, and configuration-file references cannot all be
+recovered from compiled bytecode. Do not claim exhaustive source or runtime
+coverage. Do not expand the first increment into reflective execution or
+parsing arbitrary application configuration.
+
+== Family metadata and publication
+
+Retain one public document and SHA-256 sidecar per `X.Y` family, at the
+existing documentation-site endpoints. Do not publish patch-specific
+metadata URLs, metadata to Maven Central, or a public archive per release.
+
+The proposed normal policy is rolling publication on Final releases. Generate
+metadata from the release artifacts, validate compatibility against the
+previous family baseline where applicable, and only then replace the public
+document and checksum. Initial-family releases retain the existing
+cross-family API-baseline selection where applicable; first publication of
+metadata must follow the guarded bootstrap policy. Snapshot and prerelease
+publication must not replace a family's established Final metadata.
+
+Family publication and compatibility-baseline selection are distinct concepts
+even when compatibility uses the currently published family document. Do not
+broaden which artifacts carry compatibility guarantees merely because
+consumer reporting can observe them. In particular, the compatibility
+artifact manifest is not the complete classification-reporting ownership list.
+
+For consumer reporting, a source-version mismatch within the same family
+produces a warning and analysis continues. Emit the warning in the console
+and structured report, including both exact versions. Do not turn this
+warning into rejection merely because the metadata came from an older or
+newer patch. Missing declarations remain unknown findings.
+
+Different families are rejected by default. An explicitly selected different
+family may be supported as a clearly labeled advisory analysis, never as
+evidence of compatibility. Preserve explicit local metadata/mirror support
+for development builds. Metadata source-version mismatch is not permission
+to accept conflicting resolved ORM module versions, a corrupt checksum, or
+an unsupported schema.
+
+Audit shared release-upload behavior before altering publication wiring:
+skipped publication must neither upload stale staged files nor delete the
+remote family metadata. Readers must not install an inconsistent metadata/
+checksum pair during publication. Retain validated-cache protections and
+define recovery/retry behavior in the specification. Do not promise
+historical reproducibility from a mutable URL: record the digest, and allow
+users to preserve a local metadata file for reproducible analysis.
+
+== API roles: maintainability assessment
+
+API `USE` is the ordinary implicit contract. Requiring an annotation on every
+API declaration would create substantial noise with little additional value.
+The important additional decision is whether implementation, subclassing,
+or overriding is supported. Review should focus on externally extensible
+types and exceptional members, not all public declarations.
+
+The initial audit is significant, especially for interfaces, abstract
+classes, protected hooks, and inherited members. Ongoing maintenance should
+be bounded if intent is recorded alongside source declarations and normal
+code review addresses new extension points. Changes to a reviewed contract
+are automatically evaluated against its role policy; a declaration does not
+need repeated manual approval merely because its source changes.
+
+Avoid a permanent second inventory or whitelist duplicating Java declarations.
+A future explicit source marker should distinguish reviewed `USE`-only API
+from API supporting both `USE` and `IMPLEMENT`. A dedicated TYPE-only `@API`
+annotation is the preferred candidate. Ordinary API `USE` remains implicit;
+no annotation is required simply to support normal application use. Do not
+introduce package-level or member-level API-role declarations initially.
+Its exact signature, targets, retention, and public role-enum placement remain
+for the deferred API-role specification. Do not repurpose `@SPI` to classify
+application APIs or relocate `SPI.Role` as part of reporting infrastructure.
+
+Implementation support on a reviewed extensible type should cover its
+supported exposed implementation surface under explicit propagation rules,
+without individually marking every ordinary override. Constructor access,
+independent member category/SPI classifications, internal exclusions, and
+inherited declarations need deliberate rules. Resolve hierarchy explicitly;
+do not use Java annotation `@Inherited`. Neither Java non-finality nor public
+interface status proves supported implementation. Package-wide defaults
+must not silently mark all existing or future extension points reviewed.
+
+API `SUPPLY` is deferred. Recognizing supported implementation obligations
+provides the immediate compatibility benefit; supply lifecycle and wiring
+contracts would require additional work not needed for the initial report.
+
+The separately authorized link:api-role-inventory.adoc[preliminary API role
+inventory] provides a source/test-backed review queue and highlights mixed
+member categories and documented anonymous subclassing. It does not approve
+role classifications or implementation of this design.
+
+== Honest transition to API roles
+
+Keep resolved role intent separate from whether implementation intent has
+actually been determined. The conceptual model is:
+
+[cols="1,2,3",options="header"]
+|===
+|Review state |Role knowledge |Compatibility interpretation
+|Unreviewed
+|API use is supported; implementation intent is unknown
+|Retain conservative implementation-sensitive findings and explain the uncertainty.
+|Reviewed, use-only
+|Explicit `USE` without `IMPLEMENT`
+|Apply use-sensitive rules; absence of implementation support is an intentional decision.
+|Reviewed, implementable
+|Explicit `USE` and `IMPLEMENT`
+|Apply both role policies.
+|Not applicable
+|External implementation is structurally impossible for the particular declaration
+|No implementation-policy decision is needed; use and linkage analysis still apply.
+|===
+
+These are conceptual states, not a finalized serialized enum. For example,
+structural impossibility for a final type must not be misapplied to a
+non-final type merely because its current methods happen to be final.
+
+Old metadata and new metadata lacking an explicit API implementation decision
+mean unreviewed, not reviewed use-only. Keep uncertainty/provenance separate
+from role sets and diagnostic severity. Preserve existing conservative
+compatibility failures during transition; uncertainty must not automatically
+downgrade them into nonblocking warnings. Ordinary classification reports
+need not warn about every unreviewed API target. Surface this uncertainty
+when an implementation-sensitive compatibility decision actually depends on it.
+
+Analyze obligations established by the baseline, not just declarations in the
+new release. Adding a use-only marker now must not retroactively erase an
+older implementation obligation or suppress conservative findings against
+an unreviewed baseline. Narrowing an established supported role is itself
+a compatibility change. Resolving historical uncertainty requires an explicit,
+reviewed decision with version-control evidence, not inference from silence.
+
+Adopt incrementally: review high-value API extension points as they change,
+and later require an explicit decision for newly introduced extensible API
+types. Report audit coverage by relevant extension points, not by the raw
+count of every method or field. Avoid a broad package-level reviewed marker
+or global 'all APIs are use-only' switch to make coverage appear complete.
+
+== Future compatibility architecture
+
+Use category-neutral internal role concepts, without exposing SPI-only types
+as the generic consumer model. Separate declaration facts, dependency
+observations, Java migration changes, and policy decisions. That allows the
+same generic plugin to later expose migration tooling without changing what
+the usage report means.
+
+Reserve the distinction between library-wide compatibility guarantees and
+the impact on one consumer's observed dependencies. A consumer-specific
+report cannot prove the absence of source, reflection, behavioral, or
+unobserved implementation breaks. Source and binary compatibility findings
+must retain their existing distinctions.
+
+Future API roles retain the major-version compatibility horizon; SPI roles
+retain the `X.Y` horizon. Lifecycle exclusions remain separate. Do not add
+API-role fields to the published format solely as empty placeholders in the
+first increment. Specify and test legacy-metadata interpretation now, and
+introduce a versioned schema change only when those facts are produced and
+consumed. Never reinterpret existing `spiRoles` as reviewed API-role intent.
+
+== Alternatives and tradeoffs
+
+* Extending only the Dialect plugin is smaller initially, but imposes Dialect
+  terminology and test infrastructure on ordinary applications. Prefer a
+  generic entry point sharing the distribution and engine.
+* A new independently implemented consumer scanner is simpler to isolate,
+  but risks different inherited-member and annotation behavior. Prefer
+  reusable observation infrastructure with regression-tested policy adapters.
+* Initial-Final-only publication gives a fixed reference but misses later
+  contracts and lifecycle changes unless explicitly refreshed. Prefer rolling
+  Final metadata with mismatch warnings, without patch-specific publication.
+* Explicit roles everywhere give apparent completeness at high maintenance
+  cost. Implicit use plus explicit extension-point review is more sustainable.
+* Assuming every API is implementable is conservative but noisy; assuming
+  none is implementable is unsafe. Preserve unknown intent until reviewed.
+* A persistent external API-role ledger separates intent from declarations
+  and can drift. Prefer source-local decisions and generated review coverage.
+
+== Tests, verification, and documentation
+
+The working specification must define compiled consumer fixtures for API,
+SPI, internal and lifecycle combinations, inherited calls, subclassing,
+overrides, annotation class selection, generics, and method references.
+Include mixed application/provider code without requiring project-wide roles.
+
+Test actual-dependency resolution against metadata from older and newer
+patches, unknown declarations, mismatched families, corrupt checksums,
+offline and refresh modes, local files, concurrent resolution, source-set
+selection, and independently versioned classified artifacts. Verify generic
+plugin application does not introduce Dialect test dependencies, and applying
+both plugins preserves existing provider behavior.
+
+Measure cold and warm execution, parsing memory, and report sizes with the
+real family metadata. Avoid repeated parsing/scanning within one invocation.
+Performance measurements inform optimization; do not promise a numerical
+budget before measuring. The default must not scan all transitive dependency
+implementations or materialize every possible transitive reference path.
+
+Run focused engine/reader tests first, then complete tooling and provider
+fixture tests, Gradle plugin validation/publication smoke tests, and affected
+repository classification/compatibility tests. Generate affected Javadoc,
+guides, and classification reports if Java contracts change. Distinguish new
+classification findings from the existing backlog. Record exact verification
+commands and outcomes in the implementation record created after approval.
+
+Future role tests must include legacy unreviewed metadata, explicit use-only
+and implementable contracts, inherited/member exceptions, role narrowing,
+and both source recompilation and binary execution fixtures. Reporting work
+must not weaken today's conservative API checks.
+
+Document application usage separately from the Dialect Provider Guide, link
+the guides, and update `classification-tooling.adoc` for Hibernate developers
+and release maintainers. Explain mixed audiences, warning/unknown semantics,
+scope and coverage limits, family publication, and future compatibility
+boundaries. Follow existing Java conventions, including Markdown Javadoc,
+`@since 8.0` for new contracts, and `@author Steve Ebersole` on new Java files.
+
+== Proposed delivery boundaries and acceptance
+
+. Specify and implement generic consumer classification reporting, metadata
+  projection/resolution, and version-mismatch warnings. Retain existing
+  provider behavior and published metadata compatibility.
+. Verify and align family Final-release publication and its documentation as
+  a separately reviewable release-infrastructure change. Do not hold the
+  report engine hostage to unrelated compatibility expansion.
+. Later specify configurable usage-policy enforcement if desired.
+. Separately approve API-role representation, the incremental review policy,
+  and role-sensitive API compatibility enforcement. External consumer
+  migration analysis remains its own later increment.
+
+The initial implementation is accepted when ordinary application and mixed
+integration projects can produce accurate, deterministic, scoped usage
+reports using family metadata; patch mismatches warn without rejecting the
+analysis; unknowns are visible; existing provider tooling remains compatible;
+and no new API-role policy or external compatibility guarantee is inferred.
+
+== Decisions requested
+
+* Approve the generic plugin entry point in the existing tooling distribution,
+  with classification reporting first and no default `check` dependency.
+* Approve rolling Final-release family metadata with same-family source-version
+  mismatch warnings, rather than per-release metadata publication.
+* Approve implicit API use, source-local explicit extension-point review, and
+  a distinct unreviewed state as the future API-role direction.
+* Approve preserving conservative baseline checks until historical role intent
+  is explicitly resolved, rather than treating absent roles as use-only.
+
+After design approval, develop the first reporting increment into a working
+specification with exact APIs, data/report schemas, migration matrices,
+resolution and failure behavior, test cases, commands, and acceptance criteria.
+Stop for specification approval before implementation.
