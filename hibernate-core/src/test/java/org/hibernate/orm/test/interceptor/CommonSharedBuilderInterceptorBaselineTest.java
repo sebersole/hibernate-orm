@@ -7,15 +7,16 @@ package org.hibernate.orm.test.interceptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.hibernate.Interceptor;
-import org.hibernate.Session;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
+import org.hibernate.engine.creation.CommonBuilder;
 import org.hibernate.engine.creation.CommonSharedBuilder;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -25,7 +26,6 @@ import org.hibernate.testing.util.ServiceRegistryUtil;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,29 +34,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hibernate.cfg.SessionEventSettings.INTERCEPTOR;
 import static org.hibernate.cfg.SessionEventSettings.SESSION_SCOPED_INTERCEPTOR;
 
-/**
- * Baseline (pre-CDI) {@code [CommonSharedBuilder]} cross-check
- * every {@link CommonSharedBuilder} interceptor action on a child session, crossed against
- * every SessionFactory-level interceptor end-state, for both stateful and stateless
- * children. Per the approved scope cut, the parent session is always stateful -
- * {@link org.hibernate.SharedSessionBuilder#interceptor()} and
- * {@link org.hibernate.SharedStatelessSessionBuilder#interceptor()} were both confirmed
- * (by reading source) to resolve identically off the parent's already-resolved
- * {@code Interceptor}, regardless of the parent's own stateful/stateless kind.
- */
+/// Baselines factory configuration, parent interceptor state, and child builder actions
+/// across all stateful/stateless parent and child combinations.
+///
+/// Factory state and parent state are independent axes: a parent may use a factory
+/// default, replace it, or suppress it. A child uses factory defaults unless it
+/// explicitly supplies or shares an interceptor. These tests establish identity
+/// and acquisition behavior; CDI destruction will require separate lifecycle tests.
+///
+/// @author Steve Ebersole
 @JiraKey("HHH-12168")
 class CommonSharedBuilderInterceptorBaselineTest {
 
-	enum EndState { NONE, GLOBAL, SCOPED }
+	/// Keep both scoped acquisition paths in the matrix, since sharing and suppression
+	/// must avoid acquisition through either path.
+	enum EndState {
+		NONE, GLOBAL, SCOPED_CLASS, SCOPED_SUPPLIER;
 
-	enum ChildAction { DEFAULT, EXPLICIT_INSTANCE, NO_INTERCEPTOR, NO_SESSION_INTERCEPTOR_CREATION, SHARE_PARENT }
+		boolean isScoped() {
+			return this == SCOPED_CLASS || this == SCOPED_SUPPLIER;
+		}
+	}
+
+	enum ParentAction { DEFAULT, EXPLICIT_INSTANCE, EXPLICIT_NULL, NO_INTERCEPTOR, NO_SESSION_INTERCEPTOR_CREATION }
+
+	enum ChildAction { DEFAULT, EXPLICIT_INSTANCE, EXPLICIT_NULL, NO_INTERCEPTOR, NO_SESSION_INTERCEPTOR_CREATION, SHARE_PARENT }
+
+	private static int scopedSupplierCalls;
 
 	private static StandardServiceRegistry noneRegistry;
 	private static StandardServiceRegistry globalRegistry;
-	private static StandardServiceRegistry scopedRegistry;
+	private static StandardServiceRegistry scopedClassRegistry;
+	private static StandardServiceRegistry scopedSupplierRegistry;
 	private static SessionFactoryImplementor noneFactory;
 	private static SessionFactoryImplementor globalFactory;
-	private static SessionFactoryImplementor scopedFactory;
+	private static SessionFactoryImplementor scopedClassFactory;
+	private static SessionFactoryImplementor scopedSupplierFactory;
 
 	@BeforeAll
 	static void buildSessionFactories() {
@@ -66,8 +79,14 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		globalRegistry = buildRegistry( Map.of( INTERCEPTOR, MarkerInterceptor.class ) );
 		globalFactory = buildSessionFactory( globalRegistry );
 
-		scopedRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, StatefulInterceptor.class ) );
-		scopedFactory = buildSessionFactory( scopedRegistry );
+		scopedClassRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, CountingInterceptor.class ) );
+		scopedClassFactory = buildSessionFactory( scopedClassRegistry );
+
+		scopedSupplierRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, (Supplier<Interceptor>) () -> {
+			scopedSupplierCalls++;
+			return new CountingInterceptor();
+		} ) );
+		scopedSupplierFactory = buildSessionFactory( scopedSupplierRegistry );
 	}
 
 	@AfterAll
@@ -76,8 +95,10 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		StandardServiceRegistryBuilder.destroy( noneRegistry );
 		globalFactory.close();
 		StandardServiceRegistryBuilder.destroy( globalRegistry );
-		scopedFactory.close();
-		StandardServiceRegistryBuilder.destroy( scopedRegistry );
+		scopedClassFactory.close();
+		StandardServiceRegistryBuilder.destroy( scopedClassRegistry );
+		scopedSupplierFactory.close();
+		StandardServiceRegistryBuilder.destroy( scopedSupplierRegistry );
 	}
 
 	private static StandardServiceRegistry buildRegistry(Map<String, Object> settings) {
@@ -98,46 +119,113 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		return switch ( state ) {
 			case NONE -> noneFactory;
 			case GLOBAL -> globalFactory;
-			case SCOPED -> scopedFactory;
+			case SCOPED_CLASS -> scopedClassFactory;
+			case SCOPED_SUPPLIER -> scopedSupplierFactory;
 		};
 	}
 
 	static Stream<Arguments> matrixCells() {
+		return parentCells().flatMap( cell -> Stream.of( ChildAction.values() )
+				.map( action -> Arguments.of( cell.get()[0], cell.get()[1], cell.get()[2], cell.get()[3], action ) ) );
+	}
+
+	static Stream<Arguments> parentCells() {
 		final List<Arguments> cells = new ArrayList<>();
 		for ( var state : EndState.values() ) {
-			for ( var action : ChildAction.values() ) {
-				for ( var statefulChild : new boolean[] { true, false } ) {
-					cells.add( Arguments.of( state, action, statefulChild ) );
+			for ( var parentAction : ParentAction.values() ) {
+				for ( var statefulParent : new boolean[] { true, false } ) {
+					for ( var statefulChild : new boolean[] { true, false } ) {
+						cells.add( Arguments.of( state, parentAction, statefulParent, statefulChild ) );
+					}
 				}
 			}
 		}
 		return cells.stream();
 	}
 
-	@ParameterizedTest(name = "[{index}] {0} x {1} x statefulChild={2}")
+	/// A parent with an explicit interceptor is only one case. In particular, a parent
+	/// with no active interceptor exposes the empty-instance fallback during sharing,
+	/// while a parent with a scoped interceptor lets us distinguish borrowing from
+	/// acquiring another instance of the same class.
+	@ParameterizedTest(name = "{0}, parent={1}, statefulParent={2}, statefulChild={3}, child={4}")
 	@MethodSource("matrixCells")
-	void crossProduct(EndState state, ChildAction action, boolean statefulChild) {
+	void crossProduct(EndState state, ParentAction parentAction, boolean statefulParent,
+			boolean statefulChild, ChildAction action) {
 		final var sessionFactory = factoryFor( state );
-		// the parent always carries its own distinct, explicit interceptor, so that
-		// SHARE_PARENT is unambiguously distinguishable from whatever the SF state alone
-		// would otherwise resolve to.
-		final var parentMarker = new MarkerInterceptor();
 		final var childMarker = new MarkerInterceptor();
-
-		try ( Session parent = sessionFactory.withOptions().interceptor( parentMarker ).openSession() ) {
+		try ( var parent = openParent( state, parentAction, statefulParent ) ) {
+			final var parentInterceptor = parent.getInterceptor();
 			final CommonSharedBuilder childBuilder =
 					statefulChild ? parent.sessionWithOptions() : parent.statelessWithOptions();
-
-			try ( var child = openChildWithAction( childBuilder, action, childMarker ) ) {
-				final var resolved = child.getInterceptor();
-				switch ( action ) {
-					case DEFAULT -> assertDefaultResolution( state, sessionFactory, resolved );
-					case EXPLICIT_INSTANCE -> assertThat( resolved ).isSameAs( childMarker );
-					case NO_INTERCEPTOR -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
-					case NO_SESSION_INTERCEPTOR_CREATION -> assertNoSessionInterceptorCreationResolution( state, sessionFactory, resolved );
-					case SHARE_PARENT -> assertThat( resolved ).isSameAs( parentMarker );
+			final int expectedCreations = state.isScoped()
+					&& (action == ChildAction.DEFAULT
+						|| action == ChildAction.SHARE_PARENT && parentInterceptor == EmptyInterceptor.INSTANCE) ? 1 : 0;
+			Interceptor previousChildInterceptor = null;
+			// Reusing the builder must acquire a fresh scoped bean, but keep a shared instance.
+			for ( int i = 0; i < 2; i++ ) {
+				final int callsBefore = scopedSupplierCalls;
+				final int creationsBefore = CountingInterceptor.creations;
+				try ( var child = openChildWithAction( childBuilder, action, childMarker ) ) {
+					final var resolved = child.getInterceptor();
+					switch ( action ) {
+						case DEFAULT -> assertDefaultResolution( state, sessionFactory, resolved );
+						case EXPLICIT_INSTANCE -> assertThat( resolved ).isSameAs( childMarker );
+						case EXPLICIT_NULL, NO_INTERCEPTOR -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
+						case NO_SESSION_INTERCEPTOR_CREATION -> assertNoSessionInterceptorCreationResolution( state, sessionFactory, resolved );
+						case SHARE_PARENT -> {
+							if ( parentInterceptor == EmptyInterceptor.INSTANCE ) {
+								// Sharing copies the interceptor instance, not the parent's suppression flags.
+								// EmptyInterceptor is treated as unspecified, so factory defaults apply.
+								assertDefaultResolution( state, sessionFactory, resolved );
+							}
+							else {
+								assertThat( resolved ).isSameAs( parentInterceptor );
+							}
+						}
+					}
+					if ( expectedCreations == 1 ) {
+						assertThat( resolved ).isNotSameAs( parentInterceptor ).isNotSameAs( previousChildInterceptor );
+					}
+					previousChildInterceptor = resolved;
 				}
+				// A borrowed interceptor must not be accompanied by an unused scoped allocation.
+				assertThat( scopedSupplierCalls - callsBefore ).isEqualTo( state == EndState.SCOPED_SUPPLIER ? expectedCreations : 0 );
+				assertThat( CountingInterceptor.creations - creationsBefore ).isEqualTo( expectedCreations );
+				assertThat( parent.isOpen() ).isTrue();
+				assertThat( parent.getInterceptor() ).isSameAs( parentInterceptor );
 			}
+		}
+	}
+
+	private SharedSessionContractImplementor openParent(EndState state, ParentAction action, boolean stateful) {
+		final var factory = factoryFor( state );
+		final CommonBuilder builder = stateful ? factory.withOptions() : factory.withStatelessOptions();
+		final var explicit = new MarkerInterceptor();
+		switch ( action ) {
+			case DEFAULT -> {}
+			case EXPLICIT_INSTANCE -> builder.interceptor( explicit );
+			case EXPLICIT_NULL -> builder.interceptor( null );
+			case NO_INTERCEPTOR -> builder.noInterceptor();
+			case NO_SESSION_INTERCEPTOR_CREATION -> builder.noSessionInterceptorCreation();
+		}
+		final int callsBefore = scopedSupplierCalls;
+		final int creationsBefore = CountingInterceptor.creations;
+		final var parent = (SharedSessionContractImplementor) builder.open();
+		try {
+			switch ( action ) {
+				case DEFAULT -> assertDefaultResolution( state, factory, parent.getInterceptor() );
+				case EXPLICIT_INSTANCE -> assertThat( parent.getInterceptor() ).isSameAs( explicit );
+				case EXPLICIT_NULL, NO_INTERCEPTOR -> assertThat( parent.getInterceptor() ).isSameAs( EmptyInterceptor.INSTANCE );
+				case NO_SESSION_INTERCEPTOR_CREATION -> assertNoSessionInterceptorCreationResolution( state, factory, parent.getInterceptor() );
+			}
+			final int expectedCreations = state.isScoped() && action == ParentAction.DEFAULT ? 1 : 0;
+			assertThat( scopedSupplierCalls - callsBefore ).isEqualTo( state == EndState.SCOPED_SUPPLIER ? expectedCreations : 0 );
+			assertThat( CountingInterceptor.creations - creationsBefore ).isEqualTo( expectedCreations );
+			return parent;
+		}
+		catch (RuntimeException | Error e) {
+			parent.close();
+			throw e;
 		}
 	}
 
@@ -145,7 +233,7 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		switch ( state ) {
 			case NONE -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 			case GLOBAL -> assertThat( resolved ).isSameAs( sessionFactory.getSessionFactoryOptions().getInterceptor() );
-			case SCOPED -> assertThat( resolved ).isInstanceOf( StatefulInterceptor.class );
+			case SCOPED_CLASS, SCOPED_SUPPLIER -> assertThat( resolved ).isInstanceOf( CountingInterceptor.class );
 		}
 	}
 
@@ -154,7 +242,7 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		switch ( state ) {
 			case NONE -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 			case GLOBAL -> assertThat( resolved ).isSameAs( sessionFactory.getSessionFactoryOptions().getInterceptor() );
-			case SCOPED -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
+			case SCOPED_CLASS, SCOPED_SUPPLIER -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 		}
 	}
 
@@ -163,6 +251,7 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		switch ( action ) {
 			case DEFAULT -> {}
 			case EXPLICIT_INSTANCE -> builder.interceptor( childMarker );
+			case EXPLICIT_NULL -> builder.interceptor( null );
 			case NO_INTERCEPTOR -> builder.noInterceptor();
 			case NO_SESSION_INTERCEPTOR_CREATION -> builder.noSessionInterceptorCreation();
 			case SHARE_PARENT -> builder.interceptor();
@@ -170,42 +259,48 @@ class CommonSharedBuilderInterceptorBaselineTest {
 		return (SharedSessionContractImplementor) builder.open();
 	}
 
-	// ---------------------------------------------------------------
-	// Order test: SHARE_PARENT (bare interceptor()) sets the child builder's interceptor
-	// field directly, which CommonOptions#resolveInterceptor checks before ever consulting
-	// the noSessionInterceptorCreation gate - so combining the two should be order-independent.
-	// ---------------------------------------------------------------
-
-	@Test
-	void shareParentAndNoSessionInterceptorCreation_Stateful() {
-		assertShareParentOrderIndependence( true );
-	}
-
-	@Test
-	void shareParentAndNoSessionInterceptorCreation_Stateless() {
-		assertShareParentOrderIndependence( false );
-	}
-
-	private void assertShareParentOrderIndependence(boolean statefulChild) {
-		final var parentMarker = new MarkerInterceptor();
-
-		try ( Session parent = noneFactory.withOptions().interceptor( parentMarker ).openSession() ) {
-			final CommonSharedBuilder builder1 =
-					statefulChild ? parent.sessionWithOptions() : parent.statelessWithOptions();
-			builder1.interceptor().noSessionInterceptorCreation();
-			try ( var child1 = (SharedSessionContractImplementor) builder1.open() ) {
-				assertThat( child1.getInterceptor() ).isSameAs( parentMarker );
+	/// Sharing an existing interceptor and disabling scoped creation are independent
+	/// options, so their call order must not matter. If the parent has EmptyInterceptor,
+	/// the child may still use a global default, but must not acquire a scoped instance.
+	@ParameterizedTest(name = "{0}, parent={1}, statefulParent={2}, statefulChild={3}")
+	@MethodSource("parentCells")
+	void shareParentAndNoSessionInterceptorCreation(
+			EndState state, ParentAction parentAction, boolean statefulParent, boolean statefulChild) {
+		try ( var parent = openParent( state, parentAction, statefulParent ) ) {
+			final var expected = parent.getInterceptor();
+			final int callsBefore = scopedSupplierCalls;
+			final int creationsBefore = CountingInterceptor.creations;
+			for ( var shareFirst : new boolean[] { true, false } ) {
+				final CommonSharedBuilder builder =
+						statefulChild ? parent.sessionWithOptions() : parent.statelessWithOptions();
+				if ( shareFirst ) {
+					builder.interceptor().noSessionInterceptorCreation();
+				}
+				else {
+					builder.noSessionInterceptorCreation().interceptor();
+				}
+				try ( var child = (SharedSessionContractImplementor) builder.open() ) {
+					if ( expected == EmptyInterceptor.INSTANCE ) {
+						assertNoSessionInterceptorCreationResolution( state, factoryFor( state ), child.getInterceptor() );
+					}
+					else {
+						assertThat( child.getInterceptor() ).isSameAs( expected );
+					}
+				}
 			}
-
-			final CommonSharedBuilder builder2 =
-					statefulChild ? parent.sessionWithOptions() : parent.statelessWithOptions();
-			builder2.noSessionInterceptorCreation().interceptor();
-			try ( var child2 = (SharedSessionContractImplementor) builder2.open() ) {
-				assertThat( child2.getInterceptor() ).isSameAs( parentMarker );
-			}
+			assertThat( scopedSupplierCalls ).isEqualTo( callsBefore );
+			assertThat( CountingInterceptor.creations ).isEqualTo( creationsBefore );
 		}
 	}
 
 	public static class MarkerInterceptor implements Interceptor {
+	}
+
+	public static class CountingInterceptor implements Interceptor {
+		static int creations;
+
+		public CountingInterceptor() {
+			creations++;
+		}
 	}
 }

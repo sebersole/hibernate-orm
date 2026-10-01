@@ -7,6 +7,7 @@ package org.hibernate.orm.test.interceptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.hibernate.Interceptor;
@@ -38,20 +39,40 @@ import static org.hibernate.cfg.SessionEventSettings.SESSION_SCOPED_INTERCEPTOR;
  * {@link CommonBuilder} interceptor action, crossed against every SessionFactory-level
  * interceptor end-state, for both stateful and stateless sessions opened directly from
  * the {@link org.hibernate.SessionFactory}.
+ * <p>
+ * Factory configuration is established separately by
+ * {@link SessionFactoryInterceptorConfigurationTest}. Here, an explicit session
+ * interceptor replaces the factory default, {@code noInterceptor()} suppresses
+ * both scopes, and {@code noSessionInterceptorCreation()} suppresses only scoped
+ * creation. An explicit {@code null} is equivalent to {@code noInterceptor()}.
+ *
+ * @author Steve Ebersole
  */
 @JiraKey("HHH-12168")
 class CommonBuilderInterceptorBaselineTest {
 
-	enum EndState { NONE, GLOBAL, SCOPED }
+	/// Class-based and supplier-based scoped factories must obey the same rules,
+	/// even when their acquisition paths differ.
+	enum EndState {
+		NONE, GLOBAL, SCOPED_CLASS, SCOPED_SUPPLIER;
+
+		boolean isScoped() {
+			return this == SCOPED_CLASS || this == SCOPED_SUPPLIER;
+		}
+	}
 
 	enum Action { DEFAULT, EXPLICIT_INSTANCE, EXPLICIT_NULL, NO_INTERCEPTOR, NO_SESSION_INTERCEPTOR_CREATION }
 
+	private static int scopedSupplierCalls;
+
 	private static StandardServiceRegistry noneRegistry;
 	private static StandardServiceRegistry globalRegistry;
-	private static StandardServiceRegistry scopedRegistry;
+	private static StandardServiceRegistry scopedClassRegistry;
+	private static StandardServiceRegistry scopedSupplierRegistry;
 	private static SessionFactoryImplementor noneFactory;
 	private static SessionFactoryImplementor globalFactory;
-	private static SessionFactoryImplementor scopedFactory;
+	private static SessionFactoryImplementor scopedClassFactory;
+	private static SessionFactoryImplementor scopedSupplierFactory;
 
 	@BeforeAll
 	static void buildSessionFactories() {
@@ -61,8 +82,14 @@ class CommonBuilderInterceptorBaselineTest {
 		globalRegistry = buildRegistry( Map.of( INTERCEPTOR, MarkerInterceptor.class ) );
 		globalFactory = buildSessionFactory( globalRegistry );
 
-		scopedRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, StatefulInterceptor.class ) );
-		scopedFactory = buildSessionFactory( scopedRegistry );
+		scopedClassRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, CountingInterceptor.class ) );
+		scopedClassFactory = buildSessionFactory( scopedClassRegistry );
+
+		scopedSupplierRegistry = buildRegistry( Map.of( SESSION_SCOPED_INTERCEPTOR, (Supplier<Interceptor>) () -> {
+			scopedSupplierCalls++;
+			return new CountingInterceptor();
+		} ) );
+		scopedSupplierFactory = buildSessionFactory( scopedSupplierRegistry );
 	}
 
 	@AfterAll
@@ -71,8 +98,10 @@ class CommonBuilderInterceptorBaselineTest {
 		StandardServiceRegistryBuilder.destroy( noneRegistry );
 		globalFactory.close();
 		StandardServiceRegistryBuilder.destroy( globalRegistry );
-		scopedFactory.close();
-		StandardServiceRegistryBuilder.destroy( scopedRegistry );
+		scopedClassFactory.close();
+		StandardServiceRegistryBuilder.destroy( scopedClassRegistry );
+		scopedSupplierFactory.close();
+		StandardServiceRegistryBuilder.destroy( scopedSupplierRegistry );
 	}
 
 	private static StandardServiceRegistry buildRegistry(Map<String, Object> settings) {
@@ -93,7 +122,8 @@ class CommonBuilderInterceptorBaselineTest {
 		return switch ( state ) {
 			case NONE -> noneFactory;
 			case GLOBAL -> globalFactory;
-			case SCOPED -> scopedFactory;
+			case SCOPED_CLASS -> scopedClassFactory;
+			case SCOPED_SUPPLIER -> scopedSupplierFactory;
 		};
 	}
 
@@ -116,6 +146,8 @@ class CommonBuilderInterceptorBaselineTest {
 		final var explicitInstance = new MarkerInterceptor();
 		final CommonBuilder builder = stateful ? sessionFactory.withOptions() : sessionFactory.withStatelessOptions();
 
+		final int callsBefore = scopedSupplierCalls;
+		final int creationsBefore = CountingInterceptor.creations;
 		try ( var session = openWithAction( builder, action, explicitInstance ) ) {
 			final var resolved = session.getInterceptor();
 			switch ( action ) {
@@ -125,25 +157,28 @@ class CommonBuilderInterceptorBaselineTest {
 				case NO_SESSION_INTERCEPTOR_CREATION -> assertNoSessionInterceptorCreationResolution( state, sessionFactory, resolved );
 			}
 		}
+		// Checking the returned instance alone would miss a scoped interceptor that
+		// was unnecessarily created and discarded when overridden or suppressed.
+		final int expectedCreations = state.isScoped() && action == Action.DEFAULT ? 1 : 0;
+		assertThat( scopedSupplierCalls - callsBefore ).isEqualTo( state == EndState.SCOPED_SUPPLIER ? expectedCreations : 0 );
+		assertThat( CountingInterceptor.creations - creationsBefore ).isEqualTo( expectedCreations );
 	}
 
 	private void assertDefaultResolution(EndState state, SessionFactoryImplementor sessionFactory, Interceptor resolved) {
 		switch ( state ) {
 			case NONE -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 			case GLOBAL -> assertThat( resolved ).isSameAs( sessionFactory.getSessionFactoryOptions().getInterceptor() );
-			case SCOPED -> assertThat( resolved ).isInstanceOf( StatefulInterceptor.class );
+			case SCOPED_CLASS, SCOPED_SUPPLIER -> assertThat( resolved ).isInstanceOf( CountingInterceptor.class );
 		}
 	}
 
 	private void assertNoSessionInterceptorCreationResolution(
 			EndState state, SessionFactoryImplementor sessionFactory, Interceptor resolved) {
 		switch ( state ) {
-			// Baseline (pre-CDI) fact: noSessionInterceptorCreation() only gates the SESSION_SCOPED_INTERCEPTOR
-			// supplier - a GLOBAL interceptor is checked first in CommonOptions#resolveInterceptor and is
-			// unaffected. This is the behavior the CDI branch's InterceptorStrategy regresses later.
+			// Suppressing session-scoped creation leaves the global interceptor active.
 			case NONE -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 			case GLOBAL -> assertThat( resolved ).isSameAs( sessionFactory.getSessionFactoryOptions().getInterceptor() );
-			case SCOPED -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
+			case SCOPED_CLASS, SCOPED_SUPPLIER -> assertThat( resolved ).isSameAs( EmptyInterceptor.INSTANCE );
 		}
 	}
 
@@ -238,5 +273,13 @@ class CommonBuilderInterceptorBaselineTest {
 	}
 
 	public static class MarkerInterceptor implements Interceptor {
+	}
+
+	public static class CountingInterceptor implements Interceptor {
+		static int creations;
+
+		public CountingInterceptor() {
+			creations++;
+		}
 	}
 }

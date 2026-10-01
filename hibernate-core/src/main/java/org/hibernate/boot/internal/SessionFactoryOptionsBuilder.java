@@ -1733,26 +1733,33 @@ public class SessionFactoryOptionsBuilder implements SessionFactoryOptions {
 
 	public void applyInterceptor(@Nullable Interceptor interceptor) {
 		this.interceptor = interceptor;
+
+		// also a trigger to unset `statelessInterceptorSupplier`
+		//   todo : in the CDI Interceptor work this should be covered automagically by the `ConfiguredInterceptor` abstraction
+		this.statelessInterceptorSupplier = null;
 	}
 
 	public void applyStatelessInterceptor(@Nonnull Class<? extends Interceptor> statelessInterceptorClass) {
-		applyStatelessInterceptorSupplier(
-				() -> {
-					try {
-						return statelessInterceptorClass.newInstance();
-					}
-					catch (InstantiationException | IllegalAccessException e) {
-						throw new HibernateException(
-								"Could not supply stateless Interceptor of class '"
-								+ statelessInterceptorClass.getName() + "'", e
-						);
-					}
-				}
-		);
+		applyStatelessInterceptorSupplier( () -> {
+			try {
+				return statelessInterceptorClass.newInstance();
+			}
+			catch (InstantiationException | IllegalAccessException e) {
+				throw new HibernateException(
+						"Could not supply stateless Interceptor of class '"
+						+ statelessInterceptorClass.getName() + "'", e
+				);
+			}
+		} );
 	}
 
 	public void applyStatelessInterceptorSupplier(@Nullable Supplier<? extends Interceptor> statelessInterceptorSupplier) {
 		this.statelessInterceptorSupplier = statelessInterceptorSupplier;
+
+		// also a trigger to unset `interceptor`
+		//   todo : in the CDI Interceptor work this should be covered automagically by the `ConfiguredInterceptor` abstraction
+		//			- though Class versus Supplier is an important distinction there....
+		this.interceptor = null;
 	}
 
 	public void applySqmFunctionRegistry(@Nullable SqmFunctionRegistry sqmFunctionRegistry) {
