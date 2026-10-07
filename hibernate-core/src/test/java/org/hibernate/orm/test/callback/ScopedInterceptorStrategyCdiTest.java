@@ -204,6 +204,54 @@ class ScopedInterceptorStrategyCdiTest {
 		} );
 	}
 
+	/// Sharing after disabling interceptors must restore the child's responsibility
+	/// to release its shared reference when it closes.
+	@Test
+	@CdiContainer(beanClasses = { CdiScopedInterceptor.class, InjectedService.class })
+	void sharingAfterNoInterceptorReleasesSharedReference(CdiContainerScope cdi) {
+		withScopedSessionFactory( cdi, sessionFactory -> {
+			final CdiScopedInterceptor interceptorRef;
+			try ( var parent = sessionFactory.withOptions().openSession() ) {
+				interceptorRef = (CdiScopedInterceptor) parent.getInterceptor();
+				try ( var child = (SessionImplementor) parent.sessionWithOptions()
+						.noInterceptor()
+						.interceptor()
+						.openSession() ) {
+					assertSame( interceptorRef, child.getInterceptor() );
+				}
+				assertEquals( 0, interceptorRef.destructions,
+						"The parent still owns the interceptor after the child closes" );
+			}
+			// Check before factory shutdown, which could otherwise hide a leaked reference.
+			assertEquals( 1, interceptorRef.destructions,
+					"Closing both owners must destroy the shared interceptor" );
+		} );
+	}
+
+	/// Explicit borrowing overrides an earlier sharing request. It must neither
+	/// register an additional owner nor release the parent's reference.
+	@Test
+	@CdiContainer(beanClasses = { CdiScopedInterceptor.class, InjectedService.class })
+	void explicitBorrowingAfterSharingDoesNotLeakSharedReference(CdiContainerScope cdi) {
+		withScopedSessionFactory( cdi, sessionFactory -> {
+			final CdiScopedInterceptor interceptorRef;
+			try ( var parent = sessionFactory.withOptions().openSession() ) {
+				interceptorRef = (CdiScopedInterceptor) parent.getInterceptor();
+				try ( var child = (SessionImplementor) parent.sessionWithOptions()
+						.interceptor()
+						.interceptor( interceptorRef )
+						.openSession() ) {
+					assertSame( interceptorRef, child.getInterceptor() );
+				}
+				assertEquals( 0, interceptorRef.destructions,
+						"Closing the borrower must not destroy the parent's interceptor" );
+			}
+			// The parent is the sole owner after the explicit-instance override.
+			assertEquals( 1, interceptorRef.destructions,
+					"Closing the parent must destroy the interceptor without an extra shared reference" );
+		} );
+	}
+
 	@ParameterizedTest
 	@ValueSource(ints = { 0, 1, 2 })
 	@CdiContainer(beanClasses = { CdiScopedInterceptor.class, InjectedService.class })
